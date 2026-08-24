@@ -12,6 +12,10 @@
 
 ## Scope and frozen dependencies
 
+Before Task 1, the implementation worker must read docs/architecture/2026-08-25-legacy-six-version-decision-memory.md and record a short reuse/prohibition note. The five named fixtures are evaluation data only: production modules, prompts, Skills, retrieval corpora, examples, routing rules, and keyword lists may not import, embed, or infer their expected answers. One Lead owns final strategy/topic judgment; model-backed specialists, if later added, return bounded evidence or review outputs and do not form a fixed adviser chain or vote.
+
+The five questions are persisted readiness state, not a fixed sequential interview program. Existing user material may answer them, unknown remains explicit, and the interaction asks only the most decision-relevant missing item. The six content-world lenses are recall prompts that may return empty candidate questions; lens count, branch richness, keywords, or an industry example never selects the content root. Content-world choice, named-entity/event discovery, topic selection, presentation format, and commercial connection remain separate decisions.
+
 This is Plan 02 from `2026-08-24-00-ip-saas-master-roadmap.md`. It depends on Plan 01 and must not introduce `AsyncSession`, asynchronous FastAPI application services, a vector database, paid provider calls in ordinary tests, a second project model, or a second audit/outbox abstraction.
 
 Use these Plan 01 imports exactly:
@@ -13884,6 +13888,12 @@ git commit -m "fix: gate intelligence providers on crash reconciliation"
 
 ## Final acceptance checklist
 
+- [ ] The implementation task records its Checkpoint 0 comparison against the legacy decision memory, including every reused frozen contract/test and every rejected legacy runtime, prompt, hard semantic gate, and state owner.
+- [ ] A production-boundary test proves backend/src and shipped prompt/Skill/retrieval assets cannot import or contain the five named fixture answers. Fruit, gold gifts, TikTok live guild, platform self-marketing, and under-specified mother remain test-only evaluation anchors.
+- [ ] After prompts and thresholds are frozen, at least two evaluator-held cross-industry unseen cases run through the same public product path. Their expected business judgments were unavailable to production prompts and implementers during tuning; seen-case success is not reported as generalization.
+- [ ] Every material claim persists exactly one epistemic status—user fact, external evidence, model interpretation, creative hypothesis, unknown, or actual result—and tests reject silent promotion from interpretation/hypothesis/unknown to fact.
+- [ ] Run traces prove there is one final Lead judgment and no mandatory adviser roster, vote, permanent audit array, ContentRootLab, global business-attention injector, or dependency on map-marketing-content-world.
+- [ ] Any new Agent, Skill, semantic gate, durable state owner, or default context block has a held-out failure record, unchanged baseline, smallest-candidate comparison, fact/quality/Token/latency/cost results, and executable deletion path; otherwise it is absent.
 - [ ] `rg -n "AsyncSession|async def" backend/src/ip_saas/modules/intelligence` returns no matches.
 - [ ] `rg -n "model_config = ConfigDict\(extra=\"forbid\"" backend/src/ip_saas/modules/intelligence/contracts.py` returns the shared strict base, and the reflection contract test proves every structured output inherits it.
 - [ ] `uv run alembic heads` from `backend/` prints exactly `0002_intelligence (head)` with `down_revision = "0001_foundation"`.

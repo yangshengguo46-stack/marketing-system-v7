@@ -228,6 +228,17 @@ Every paid or potentially long-running Agent/media operation calls `TaskSubmissi
 
 `frontend/src/lib/api/schema.d.ts` is the only generated OpenAPI type file. Feature code passes backend paths beginning with `/v1/` to Plan 01's shared `apiRequest`; that client alone adds the browser `/api` reverse-proxy prefix. A feature may use direct `fetch` against the application only for a non-JSON stream/upload that the shared client intentionally does not support; that request applies `/api` exactly once and reuses `requireAccessToken()`. A direct upload to a server-issued pre-signed TOS URL uses that external URL unchanged and must not prepend `/api` or attach the application's bearer token. No plan creates `generated.ts`, a second JSON client, or a browser request to a bare backend `/v1` URL.
 
+### 3.11 Legacy-decision and complexity gate
+
+Every implementation worker must first read docs/architecture/2026-08-25-legacy-six-version-decision-memory.md. Its retention and prohibition rules are normative across all six plans.
+
+- One Lead owns final marketing judgment. Specialist agents are invoked only when the current task needs their bounded output; no fixed adviser roster, vote, or permanent audit array is allowed.
+- The five named business cases are frozen evaluation fixtures, never production prompt examples, Skill answers, retrieval hints, or keyword patches. Generalization claims require separately frozen cross-industry unseen cases.
+- Semantic choices remain model proposals with explicit unknowns. Code enforces only mechanical truth such as tenancy, lineage, versions, hashes, confirmation grants, budgets, tool-call limits, billing, idempotency, and reconciliation.
+- No new Agent, Skill, semantic gate, runtime, durable state owner, or default context block may enter a plan without a recorded held-out business failure, unchanged baseline, smallest candidate, blind quality comparison, fact-error comparison, Token/latency/cost comparison, and deletion path.
+- Legacy reuse starts from frozen decisions, tests, contracts, and pure domain algorithms. It never copies a whole old runtime, long prompt, uncommitted worktree, industry gold answer, cache, credential, or second state machine.
+- Capability reports must distinguish code presence, mechanical contract proof, live provider reachability, business blind-review acceptance, and real publication/retro evidence.
+
 ## 4. Baseline developer commands
 
 All detailed plans must preserve these commands:
@@ -337,6 +348,7 @@ This matrix is a completeness control, not a summary. A requirement is implement
 
 ## 8. Required execution checkpoints
 
+- [ ] **Checkpoint 0:** Re-read the six-version decision memory, record which frozen legacy contracts/tests (if any) the task will reuse, and prove the change does not reintroduce a prohibited runtime, prompt answer, hard semantic gate, or second state owner.
 - [ ] **Checkpoint 1:** Execute Plan 01 and freeze OpenAPI/event contracts before parallel feature work.
 - [ ] **Checkpoint 2:** Execute Plan 02 and freeze the content-lineage contracts.
 - [ ] **Checkpoint 3:** Execute Plan 03 against Plan 01's explicit limit seam and freeze media contracts.
