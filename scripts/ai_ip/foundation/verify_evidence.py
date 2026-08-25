@@ -7,6 +7,7 @@ import re
 import stat
 import subprocess
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -282,6 +283,10 @@ class ForbiddenEvidenceError(EvidenceError):
         self.matches = matches
 
 
+class UnsafeEvidenceError(EvidenceError):
+    pass
+
+
 @dataclass(frozen=True)
 class EvidenceDisposition:
     platform: str
@@ -473,13 +478,13 @@ def _absolute_directory(path: Path, label: str) -> Path:
         raise EvidenceError(f"{label} must be an absolute non-symlink directory")
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
-        raise EvidenceError(f"{label} contains a {unsafe} component")
+        raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
     try:
         resolved = lexical.resolve(strict=True)
     except OSError as error:
         raise EvidenceError(f"{label} must exist") from error
     if not resolved.is_dir():
-        raise EvidenceError(f"{label} must be a directory")
+        raise UnsafeEvidenceError(f"{label} must be a directory")
     return resolved
 
 
@@ -489,13 +494,13 @@ def _absolute_file(path: Path, label: str) -> Path:
         raise EvidenceError(f"{label} must be an absolute non-symlink file")
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
-        raise EvidenceError(f"{label} contains a {unsafe} component")
+        raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
     try:
         resolved = lexical.resolve(strict=True)
     except OSError as error:
         raise EvidenceError(f"{label} must exist") from error
     if not resolved.is_file():
-        raise EvidenceError(f"{label} must be a file")
+        raise UnsafeEvidenceError(f"{label} must be a file")
     return resolved
 
 
@@ -540,17 +545,17 @@ def _open_stable_directory(
         else:
             before = path.stat(follow_symlinks=False)
     except OSError as error:
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"unable to inspect public evidence directory: {path.name}"
         ) from error
     if expected_state is not None and not _same_file_state(expected_state, before):
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"public evidence directory changed before traversal: {path.name}"
         )
     if not stat.S_ISDIR(before.st_mode):
-        raise EvidenceError(f"unsafe public evidence directory: {path.name}")
+        raise UnsafeEvidenceError(f"unsafe public evidence directory: {path.name}")
     if getattr(before, "st_file_attributes", 0) & 0x400:
-        raise EvidenceError(f"reparse public evidence directory: {path.name}")
+        raise UnsafeEvidenceError(f"reparse public evidence directory: {path.name}")
     if not _descriptor_relative_traversal_available():
         return None, before
     flags = os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0)
@@ -560,13 +565,19 @@ def _open_stable_directory(
         else:
             descriptor = os.open(path, flags)
     except OSError as error:
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"unable to open public evidence directory: {path.name}"
         ) from error
-    opened = os.fstat(descriptor)
+    try:
+        opened = os.fstat(descriptor)
+    except OSError as error:
+        os.close(descriptor)
+        raise UnsafeEvidenceError(
+            f"unable to inspect opened public evidence directory: {path.name}"
+        ) from error
     if not _same_file_state(before, opened):
         os.close(descriptor)
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"public evidence directory changed before traversal: {path.name}"
         )
     return descriptor, opened
@@ -578,7 +589,7 @@ def _entry_state(path: Path, dir_fd: int | None, name: str | None) -> os.stat_re
             return os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
         return path.stat(follow_symlinks=False)
     except OSError as error:
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"unable to inspect public evidence file: {path.name}"
         ) from error
 
@@ -592,11 +603,13 @@ def _open_stable_regular(
 ) -> tuple[int, os.stat_result]:
     before = _entry_state(path, dir_fd, name)
     if expected_state is not None and not _same_file_state(expected_state, before):
-        raise EvidenceError(f"public evidence file changed before scan: {path.name}")
+        raise UnsafeEvidenceError(
+            f"public evidence file changed before scan: {path.name}"
+        )
     if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
-        raise EvidenceError(f"unsafe public evidence file: {path.name}")
+        raise UnsafeEvidenceError(f"unsafe public evidence file: {path.name}")
     if getattr(before, "st_file_attributes", 0) & 0x400:
-        raise EvidenceError(f"reparse public evidence file: {path.name}")
+        raise UnsafeEvidenceError(f"reparse public evidence file: {path.name}")
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
         if dir_fd is not None and name is not None:
@@ -604,39 +617,75 @@ def _open_stable_regular(
         else:
             descriptor = os.open(path, flags)
     except OSError as error:
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"unable to open public evidence file: {path.name}"
         ) from error
-    opened = os.fstat(descriptor)
+    try:
+        opened = os.fstat(descriptor)
+    except OSError as error:
+        os.close(descriptor)
+        raise UnsafeEvidenceError(
+            f"unable to inspect opened public evidence file: {path.name}"
+        ) from error
     if not _same_file_state(before, opened):
         os.close(descriptor)
-        raise EvidenceError(f"public evidence file changed before scan: {path.name}")
+        raise UnsafeEvidenceError(
+            f"public evidence file changed before scan: {path.name}"
+        )
     return descriptor, opened
+
+
+def _bounded_file_chunks(
+    descriptor: int, captured_size: int, label: str
+) -> Iterator[bytes]:
+    remaining = captured_size
+    while remaining:
+        try:
+            chunk = os.read(descriptor, min(CHUNK_SIZE, remaining))
+        except OSError as error:
+            raise UnsafeEvidenceError(
+                f"unable to read public evidence: {label}"
+            ) from error
+        if not chunk or len(chunk) > remaining:
+            raise UnsafeEvidenceError(
+                f"public evidence file ended before captured size: {label}"
+            )
+        remaining -= len(chunk)
+        yield chunk
+    try:
+        overrun = os.read(descriptor, 1)
+    except OSError as error:
+        raise UnsafeEvidenceError(
+            f"unable to probe public evidence: {label}"
+        ) from error
+    if overrun:
+        raise UnsafeEvidenceError(
+            f"public evidence file exceeded captured size: {label}"
+        )
 
 
 def _stable_file_bytes(path: Path) -> bytes:
     descriptor, before = _open_stable_regular(path)
     chunks: list[bytes] = []
     try:
-        while True:
-            chunk = os.read(descriptor, CHUNK_SIZE)
-            if not chunk:
-                break
+        for chunk in _bounded_file_chunks(descriptor, before.st_size, path.name):
             chunks.append(chunk)
         after = os.fstat(descriptor)
     finally:
         os.close(descriptor)
     try:
-        final = path.stat(follow_symlinks=False)
-    except OSError as error:
-        raise EvidenceError(
+        final = _entry_state(path, None, None)
+    except UnsafeEvidenceError as error:
+        raise UnsafeEvidenceError(
             f"public evidence file changed after read: {path.name}"
         ) from error
     if not _same_file_state(before, after) or not _same_file_state(before, final):
-        raise EvidenceError(f"public evidence file changed while read: {path.name}")
+        raise UnsafeEvidenceError(
+            f"public evidence file changed while read: {path.name}"
+        )
     payload = b"".join(chunks)
     if len(payload) != before.st_size:
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"public evidence file size changed while read: {path.name}"
         )
     return payload
@@ -648,10 +697,7 @@ def _scan_one(path: Path, display_path: str) -> tuple[ForbiddenMatch, ...]:
     overlap = b""
     total = 0
     try:
-        while True:
-            chunk = os.read(descriptor, CHUNK_SIZE)
-            if not chunk:
-                break
+        for chunk in _bounded_file_chunks(descriptor, before.st_size, display_path):
             total += len(chunk)
             window = overlap + chunk
             for rule_id, pattern in FORBIDDEN_BYTE_RULES.items():
@@ -662,9 +708,9 @@ def _scan_one(path: Path, display_path: str) -> tuple[ForbiddenMatch, ...]:
     finally:
         os.close(descriptor)
     try:
-        final = path.stat(follow_symlinks=False)
-    except OSError as error:
-        raise EvidenceError(
+        final = _entry_state(path, None, None)
+    except UnsafeEvidenceError as error:
+        raise UnsafeEvidenceError(
             f"public evidence file changed after scan: {display_path}"
         ) from error
     if (
@@ -672,7 +718,7 @@ def _scan_one(path: Path, display_path: str) -> tuple[ForbiddenMatch, ...]:
         or not _same_file_state(before, after)
         or not _same_file_state(before, final)
     ):
-        raise EvidenceError(
+        raise UnsafeEvidenceError(
             f"public evidence file changed while scanned: {display_path}"
         )
     return tuple(sorted(found))
@@ -700,6 +746,7 @@ class _FileSnapshot:
         dir_fd: int | None = None,
         relative_name: str | None = None,
         expected_state: os.stat_result | None = None,
+        max_payload_bytes: int | None = None,
     ) -> "_FileSnapshot":
         descriptor, before = _open_stable_regular(
             path,
@@ -707,22 +754,26 @@ class _FileSnapshot:
             name=relative_name,
             expected_state=expected_state,
         )
-        if keep_payload and before.st_size > MAX_PUBLIC_JSON_BYTES:
+        payload_limit = MAX_PUBLIC_JSON_BYTES
+        if max_payload_bytes is not None:
+            payload_limit = min(payload_limit, max_payload_bytes)
+        if keep_payload and before.st_size > payload_limit:
             os.close(descriptor)
-            raise EvidenceError(f"public JSON exceeds per-file limit: {display}")
+            raise EvidenceError(f"public JSON exceeds retained limit: {display}")
         digest = hashlib.sha256()
         payload_chunks: list[bytes] | None = [] if keep_payload else None
         matches: set[ForbiddenMatch] = set()
         overlap = b""
         total = 0
         try:
-            while True:
-                chunk = os.read(descriptor, CHUNK_SIZE)
-                if not chunk:
-                    break
+            for chunk in _bounded_file_chunks(descriptor, before.st_size, display):
                 total += len(chunk)
                 digest.update(chunk)
                 if payload_chunks is not None:
+                    if total > payload_limit:
+                        raise EvidenceError(
+                            f"public JSON exceeds retained limit: {display}"
+                        )
                     payload_chunks.append(chunk)
                 window = overlap + chunk
                 for rule_id, pattern in FORBIDDEN_BYTE_RULES.items():
@@ -734,8 +785,8 @@ class _FileSnapshot:
             os.close(descriptor)
         try:
             final = _entry_state(path, dir_fd, relative_name)
-        except EvidenceError as error:
-            raise EvidenceError(
+        except UnsafeEvidenceError as error:
+            raise UnsafeEvidenceError(
                 f"public evidence file changed after read: {display}"
             ) from error
         if (
@@ -743,7 +794,9 @@ class _FileSnapshot:
             or not _same_file_state(before, after)
             or not _same_file_state(before, final)
         ):
-            raise EvidenceError(f"public evidence file changed while read: {display}")
+            raise UnsafeEvidenceError(
+                f"public evidence file changed while read: {display}"
+            )
         payload = b"".join(payload_chunks) if payload_chunks is not None else None
         return cls(
             path,
@@ -767,10 +820,7 @@ class _FileSnapshot:
         digest = hashlib.sha256()
         total = 0
         try:
-            while True:
-                chunk = os.read(descriptor, CHUNK_SIZE)
-                if not chunk:
-                    break
+            for chunk in _bounded_file_chunks(descriptor, self.size, self.display):
                 total += len(chunk)
                 digest.update(chunk)
             after = os.fstat(descriptor)
@@ -778,8 +828,8 @@ class _FileSnapshot:
             os.close(descriptor)
         try:
             final = _entry_state(self.path, self.dir_fd, self.relative_name)
-        except EvidenceError as error:
-            raise EvidenceError(
+        except UnsafeEvidenceError as error:
+            raise UnsafeEvidenceError(
                 f"public evidence file changed after consumption: {self.display}"
             ) from error
         if (
@@ -789,7 +839,7 @@ class _FileSnapshot:
             or not _same_file_state(reopened, after)
             or not _same_file_state(reopened, final)
         ):
-            raise EvidenceError(
+            raise UnsafeEvidenceError(
                 f"public evidence file changed after consumption: {self.display}"
             )
 
@@ -813,7 +863,7 @@ class _EvidenceSnapshot:
         try:
             return sorted(os.scandir(target), key=lambda entry: entry.name)
         except OSError as error:
-            raise EvidenceError("unable to enumerate public evidence") from error
+            raise UnsafeEvidenceError("unable to enumerate public evidence") from error
 
     def _root_unchanged(self) -> None:
         if self.root_state is None:
@@ -822,11 +872,11 @@ class _EvidenceSnapshot:
             lexical = self.root.stat(follow_symlinks=False)
             opened = os.fstat(self.root_fd) if self.root_fd is not None else lexical
         except OSError as error:
-            raise EvidenceError("public evidence root changed") from error
+            raise UnsafeEvidenceError("public evidence root changed") from error
         if not _same_file_state(self.root_state, lexical) or not _same_file_state(
             self.root_state, opened
         ):
-            raise EvidenceError("public evidence root changed")
+            raise UnsafeEvidenceError("public evidence root changed")
 
     def _enumerate_names_and_types(self) -> None:
         entries = self._scandir()
@@ -835,20 +885,22 @@ class _EvidenceSnapshot:
             path = self.root / name
             try:
                 metadata = _entry_state(path, self.root_fd, name)
-            except EvidenceError as error:
-                raise EvidenceError(
+            except UnsafeEvidenceError as error:
+                raise UnsafeEvidenceError(
                     f"unable to inspect public evidence: {name}"
                 ) from error
             if (
                 stat.S_ISLNK(metadata.st_mode)
                 or getattr(metadata, "st_file_attributes", 0) & 0x400
             ):
-                raise EvidenceError(f"unsafe public evidence entry: {name}")
+                raise UnsafeEvidenceError(f"unsafe public evidence entry: {name}")
             if stat.S_ISREG(metadata.st_mode):
                 if metadata.st_nlink != 1:
-                    raise EvidenceError(f"hardlinked public evidence file: {name}")
+                    raise UnsafeEvidenceError(
+                        f"hardlinked public evidence file: {name}"
+                    )
             elif not stat.S_ISDIR(metadata.st_mode):
-                raise EvidenceError(f"special public evidence file: {name}")
+                raise UnsafeEvidenceError(f"special public evidence file: {name}")
             self.entry_states[name] = metadata
         self._root_unchanged()
 
@@ -868,26 +920,31 @@ class _EvidenceSnapshot:
             MAX_TOTAL_PUBLIC_JSON_BYTES
         ):
             raise EvidenceError("total public JSON exceeds snapshot limit")
+        remaining_retained = MAX_TOTAL_PUBLIC_JSON_BYTES
         for name in sorted(actual):
             path = self.root / name
+            keep_payload = not name.endswith(".log")
             self.files[name] = _FileSnapshot.capture(
                 path,
                 name,
-                keep_payload=not name.endswith(".log"),
+                keep_payload=keep_payload,
                 dir_fd=self.root_fd,
                 relative_name=name if self.root_fd is not None else None,
                 expected_state=self.entry_states[name],
+                max_payload_bytes=remaining_retained if keep_payload else None,
             )
+            if keep_payload:
+                remaining_retained -= self.files[name].size
         self._root_unchanged()
 
     def validate_final_state(self) -> None:
         entries = self._scandir()
         if {entry.name for entry in entries} != set(self.entry_states):
-            raise EvidenceError("public evidence tree changed after enumeration")
+            raise UnsafeEvidenceError("public evidence tree changed after enumeration")
         for name, before in self.entry_states.items():
             final = _entry_state(self.root / name, self.root_fd, name)
             if not _same_file_state(before, final):
-                raise EvidenceError(f"public evidence entry changed: {name}")
+                raise UnsafeEvidenceError(f"public evidence entry changed: {name}")
         for snapshot in self.files.values():
             snapshot.validate_final_state()
         self._root_unchanged()
@@ -936,7 +993,9 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
             except OSError as error:
                 if descriptor is not None:
                     os.close(descriptor)
-                raise EvidenceError("unable to enumerate public evidence") from error
+                raise UnsafeEvidenceError(
+                    "unable to enumerate public evidence"
+                ) from error
             names: set[str] = set()
             directories.append((path, display, descriptor, state, names))
             for entry in entries:
@@ -950,7 +1009,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                     stat.S_ISLNK(metadata.st_mode)
                     or getattr(metadata, "st_file_attributes", 0) & 0x400
                 ):
-                    raise EvidenceError(
+                    raise UnsafeEvidenceError(
                         f"unsafe public evidence entry: {child_display}"
                     )
                 names.add(child_name)
@@ -960,7 +1019,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                     )
                 elif stat.S_ISREG(metadata.st_mode):
                     if metadata.st_nlink != 1:
-                        raise EvidenceError(
+                        raise UnsafeEvidenceError(
                             f"hardlinked public evidence file: {child_display}"
                         )
                     snapshots.append(
@@ -976,7 +1035,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                         )
                     )
                 else:
-                    raise EvidenceError(
+                    raise UnsafeEvidenceError(
                         f"special public evidence file: {child_display}"
                     )
         for path, display, descriptor, state, names in directories:
@@ -986,7 +1045,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                 lexical = path.stat(follow_symlinks=False)
                 opened = os.fstat(descriptor) if descriptor is not None else lexical
             except OSError as error:
-                raise EvidenceError(
+                raise UnsafeEvidenceError(
                     "public evidence tree changed after scan"
                 ) from error
             if (
@@ -995,7 +1054,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                 or not _same_file_state(state, opened)
             ):
                 label = display or canonical.name
-                raise EvidenceError(
+                raise UnsafeEvidenceError(
                     f"public evidence directory changed after scan: {label}"
                 )
         for snapshot in snapshots:
@@ -1160,11 +1219,11 @@ def _capture_matrix(
 ) -> tuple[Path, _FileSnapshot, object, capture.Matrix]:
     try:
         matrix = _absolute_file(matrix_path, "matrix")
-    except EvidenceError as error:
+        snapshot = _FileSnapshot.capture(
+            matrix, "required-command-matrix.json", keep_payload=True
+        )
+    except UnsafeEvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
-    snapshot = _FileSnapshot.capture(
-        matrix, "required-command-matrix.json", keep_payload=True
-    )
     if snapshot.matches:
         raise ForbiddenEvidenceError(snapshot.matches)
     if snapshot.payload is None:
@@ -1180,7 +1239,10 @@ def _capture_matrix(
     try:
         return matrix, snapshot, parsed, _matrix_from_value(parsed)
     except BaseException:
-        snapshot.validate_final_state()
+        try:
+            snapshot.validate_final_state()
+        except UnsafeEvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
         raise
 
 
@@ -1519,7 +1581,7 @@ def _verify_evidence(
         raise EvidenceError("evidence root layout differs from platform/mode")
     try:
         root = _absolute_directory(lexical_root, "evidence root")
-    except EvidenceError as error:
+    except UnsafeEvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
     matrix_capture = _capture_matrix(request.matrix_path)
     matrix = matrix_capture[3]
@@ -1619,12 +1681,15 @@ def _verify_evidence(
         return disposition
     finally:
         try:
-            matrix_capture[1].validate_final_state()
+            try:
+                matrix_capture[1].validate_final_state()
+            except UnsafeEvidenceError as error:
+                raise ForbiddenEvidenceError(()) from error
         finally:
             try:
                 if evidence is not None:
                     evidence.validate_final_state()
-            except EvidenceError as error:
+            except UnsafeEvidenceError as error:
                 raise ForbiddenEvidenceError(()) from error
             finally:
                 if evidence is not None:
@@ -1659,7 +1724,7 @@ def _safe_public_value(value: object, label: str) -> None:
             raise EvidenceError(f"{label} contains forbidden content")
     if (
         value.startswith("/")
-        or value.startswith("\\\\")
+        or value.startswith("\\")
         or re.match(r"(?i)^[A-Z]:[\\/]", value)
     ):
         raise EvidenceError(f"{label} contains an absolute path")
@@ -1944,17 +2009,24 @@ def verify_frozen_final(request: FinalVerificationRequest) -> dict[str, object]:
             request.business_verification_receipt,
             "business verification receipt",
         )
-    except EvidenceError as error:
+    except UnsafeEvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
     if index_path != repo / "docs/evidence/business-proof/index.json":
         raise EvidenceError("report index path differs")
-    consumed = (
-        _FileSnapshot.capture(report_path, "selected-report.json", keep_payload=True),
-        _FileSnapshot.capture(index_path, "report-index.json", keep_payload=True),
-        _FileSnapshot.capture(
-            receipt_path, "business-verification-receipt.json", keep_payload=True
-        ),
-    )
+    try:
+        consumed = (
+            _FileSnapshot.capture(
+                report_path, "selected-report.json", keep_payload=True
+            ),
+            _FileSnapshot.capture(index_path, "report-index.json", keep_payload=True),
+            _FileSnapshot.capture(
+                receipt_path,
+                "business-verification-receipt.json",
+                keep_payload=True,
+            ),
+        )
+    except UnsafeEvidenceError as error:
+        raise ForbiddenEvidenceError(()) from error
     matches = tuple(sorted(match for item in consumed for match in item.matches))
     if matches:
         raise ForbiddenEvidenceError(matches)
@@ -2002,7 +2074,7 @@ def verify_frozen_final(request: FinalVerificationRequest) -> dict[str, object]:
     try:
         for item in consumed:
             item.validate_final_state()
-    except EvidenceError as error:
+    except UnsafeEvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
     _publish_create_new(request.verification_output, payload, repo)
     return output
