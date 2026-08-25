@@ -250,12 +250,47 @@ def test_packed_replace_ref_for_locked_commit_is_rejected(
         repo, "commit-tree", upstream_tree, "-m", "substitute locked upstream"
     )
     _git(repo, "replace", upstream_sha, replacement_commit)
-    _git(repo, "pack-refs", "--all", "--prune")
     replace_ref = f"refs/replace/{upstream_sha}"
+    loose_replace_ref_path = Path(
+        _git(
+            repo,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            replace_ref,
+        )
+    )
+    packed_refs_path = Path(
+        _git(
+            repo,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "packed-refs",
+        )
+    )
+    packed_refs_before = (
+        packed_refs_path.read_text(encoding="utf-8")
+        if packed_refs_path.is_file()
+        else ""
+    )
+    assert loose_replace_ref_path.is_file()
+    assert replace_ref not in packed_refs_before
     assert _git(repo, "for-each-ref", "--format=%(refname)", "refs/replace/") == (
         replace_ref
     )
-    assert replace_ref in (repo / ".git/packed-refs").read_text(encoding="utf-8")
+
+    with pytest.raises(
+        verifier.VerificationError, match="Git replace refs are forbidden"
+    ):
+        verifier.verify_repository(repo)
+
+    _git(repo, "pack-refs", "--all", "--prune")
+    assert not os.path.lexists(os.fspath(loose_replace_ref_path))
+    assert replace_ref in packed_refs_path.read_text(encoding="utf-8")
+    assert _git(repo, "for-each-ref", "--format=%(refname)", "refs/replace/") == (
+        replace_ref
+    )
 
     with pytest.raises(
         verifier.VerificationError, match="Git replace refs are forbidden"
