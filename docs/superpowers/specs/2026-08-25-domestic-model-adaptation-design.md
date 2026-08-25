@@ -168,11 +168,11 @@ G4p 的目标是证明产品接缝可移植，不是宣布第二供应商已可�
 6. 不使用第二供应商的 E1/E2 结果冒充 E3；
 7. 单独签发 G4p `ProviderRouteEvidenceRef`，证明业务域无 provider 分支与限制 profile 完整；G4p 不能从 E1/E2 自动推导。
 
-G4p 不阻塞 Plan 01、Plan 03、G4a、G4b、首发火山 customer release、内部/邀请测试、真实媒体纵切或发布学习闭环；失败只让第二 route 保持 disabled。只有发布物要启用或宣传该第二 provider/model，或把它加入自动切换候选集时，G4p 及对应更高业务、发布、账本与客户激活证据才成为该 route 的门禁。
+G4p 不阻塞 Plan 01、Plan 03、G4a、G4b、首发火山 customer release、内部/邀请测试、真实媒体纵切或发布学习闭环；失败只让该后续非火山 provider route 保持 disabled。只有发布物要启用或宣传该非火山 provider/model，或把它加入自动切换候选集时，G4p 及对应更高业务、发布、账本与客户激活证据才成为该 route 的门禁。
 
-### 7.3 第二 route 的单一资格 owner
+### 7.3 后续非火山 G4p route 的单一资格 owner
 
-Plan 06 的 provider 合同 owner 只负责在真实接缝上生成可重复的 `provider-onboarding-e0-e2/<route-id>` child-plan 模板并完成 G4p/E0–E2；它不能预写尚不存在的 Plan 08/10/14 runner。只有产品决定继续资格化某条第二 route，且所需 runner 已由前序计划真实建立后，同一个 qualification owner 才使用 `superpowers:writing-plans` 为该 routeId 编写非阻塞 `provider-qualification/<route-id>` child plan，并汇总：
+Plan 06 的 provider 合同 owner 只负责在真实接缝上生成可重复的 `provider-onboarding-e0-e2/<route-id>` child-plan 模板并完成 G4p/E0–E2；它不能预写尚不存在的 Plan 08/10/14 runner。只有产品决定继续资格化某条后续非火山 G4p route，且所需 runner 已由前序计划真实建立后，同一个 qualification owner 才使用 `superpowers:writing-plans` 为该 routeId 编写非阻塞 `provider-qualification/<route-id>` child plan，并汇总：
 
 1. 复用 Plan 03 的冻结加新 unseen 盲评 runner，独立取得该 route 的 E3；
 2. 复用 Plan 08 的 customer token、hold、ProviderAttempt、回执、对账和故障注入 runner，独立取得该 route 的 G4b/G7；
@@ -188,7 +188,7 @@ Plan 06 的 provider 合同 owner 只负责在真实接缝上生成可重复的 
 3. Plans 02–03 先深化 Mission/Lead/Artifact 和内容质量。
 4. Plan 06 建立统一 `ProviderCapabilityProfile`、明确能力默认拒绝、平台网关 contract runner，并完成火山 G4a。
 5. 不阻塞 Plans 07–10 或首发火山发布的前提下，为火山托管 GLM 增加独立 model-route 证据；它不计作 G4p。后续再选择非火山 provider 完成 G4p，并用通义 Responses 路径校验原生协议 profile。
-6. 只有要在某个发布物中启用、宣传或自动切换到第二 route 时，该发布物才同时要求 G4p、对应 G4b/G7 和更高业务/发布证据。
+6. 只有要在某个发布物中启用、宣传或自动切换到后续非火山 G4p route 时，该发布物才同时要求 G4p、对应 G4b/G7 和更高业务/发布证据。
 
 ## 9. 明确延后
 

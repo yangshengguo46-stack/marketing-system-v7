@@ -2,7 +2,7 @@
 
 - **日期：** 2026-08-24
 - **最新修订：** 2026-08-25
-- **状态：** 产品范围 v1.1；架构规格 v1.4 与国产模型适配 v1.5 已于 2026-08-25 获用户确认，批准进入 Phase 0A decision tip 与实施计划。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
+- **状态：** 产品范围 v1.1；架构规格 v1.4 与国产模型适配 v1.5 已于 2026-08-25 获用户确认，批准写入 Phase 0A decision tip；执行仍按总台账逐门推进。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
 - **目标市场：** 中国大陆用户为主；首版重点服务抖音、小红书内容，保留服务海外 TikTok 业务题材的能力，但不直接接入 TikTok 发布接口
 - **模型与媒体供应商：** 火山引擎 / 火山方舟作为首条真实 provider；用户现有方舟凭证可访问 GLM，故 GLM 作为优先文本 Agent model route，Seedream/Seedance/TTS 继续承担首发媒体路线；跨 provider 候选后续按能力矩阵选择
 - **正式客户端：** Windows 11；macOS 同期仅作内部使用和邀请测试
@@ -625,7 +625,7 @@ Mission
 
 新模型不能自动进入生产。必须先运行固定测试集，再由平台管理员切换。Retiring 模型提前迁移；Shutdown 模型禁止创建新任务。
 
-Plan 06 的 provider contract owner 在创建 routeId 后持续承担该路线的 qualification ownership。首发火山和后续第二路线都在所需 runner 实际存在后，由同一 owner 校验各阶段 closure 并签署 `ProviderRoutePreReleaseRecord`；Plan 14 只消费该记录并为目标 customer/default/advertised release 或自动切换签发最终 `ProviderRouteQualificationBundle`。内部/邀请 evidence canary 不等待 pre-release/final bundle，而由签名 `ProviderRouteCanaryAuthorization` 精确限制 routeId、目标阶段、允许用户/构建、预算、时限、地域和权利范围。
+Plan 06 的 provider contract owner 在创建 routeId 后持续承担该路线的 qualification ownership。首发火山路线和后续非火山 G4p 路线都在所需 runner 实际存在后，由同一 owner 校验各阶段 closure 并签署 `ProviderRoutePreReleaseRecord`；Plan 14 只消费该记录并为目标 customer/default/advertised release 或自动切换签发最终 `ProviderRouteQualificationBundle`。内部/邀请 evidence canary 不等待 pre-release/final bundle，而由签名 `ProviderRouteCanaryAuthorization` 精确限制 routeId、目标阶段、允许用户/构建、预算、时限、地域和权利范围。
 
 ### 15.2 能力网关协议
 
@@ -793,7 +793,7 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 - 在本地事务前后、云端冻结前后、供应商接受前后、回调前后、结果保全后和下载中逐点杀进程；恢复后恰好一次用户结算，已完成产物不丢失。
 - Windows 安装、首次启动、浏览器关闭、重启、断网、更新失败、磁盘不足和只读恢复均完成真实演练。
 - customer build 不出现 OpenAI/ChatGPT 登录、环境 API key、用户 provider override 或读取既有 `~/.codex` 内容的路径；所有真实模型调用都能关联唯一 CloudCapabilityOperation。
-- 每个进入 customer/default/advertised release 或自动切换集的 routeId 都有完整 `ProviderRouteIdentity`、各阶段 `ProviderRouteEvidenceRef` 和目标发布物的最终 `ProviderRouteQualificationBundle`；内部预算下为取得 E3/E4 而运行的 evidence canary 使用独立签名 `ProviderRouteCanaryAuthorization`，不能冒充客户生产资格。未通过业务质量门的第二路线保持 disabled，不能因 E1/E2 通过进入默认路由或自动切换。
+- 每个进入 customer/default/advertised release 或自动切换集的 routeId 都有完整 `ProviderRouteIdentity`、各阶段 `ProviderRouteEvidenceRef` 和目标发布物的最终 `ProviderRouteQualificationBundle`；内部预算下为取得 E3/E4 而运行的 evidence canary 使用独立签名 `ProviderRouteCanaryAuthorization`，不能冒充客户生产资格。未通过业务质量门的后续非火山 G4p 路线保持 disabled，不能因 E1/E2 通过进入默认路由或自动切换。
 - 产品根、全局 state/log、回收站和永久删除后执行明文与孤儿 Blob 扫描；客户正文只能存在于明确的加密项目存储、用户主动导出或任务级临时文件。
 - 来自任意外部网页、另一本地用户、错误 Host/Origin、缺失 CSRF 或未认证 WebSocket 的调用都不能操作 Business Server；正常用户无额外登录步骤且业务工具能力不受损。
 - `ai-ip-desktop`、`partner-management`、`internal-console` 分别构建、发布和回滚；N/N-1 API 测试保证任一云端后台升级不强迫桌面同步升级。
@@ -952,7 +952,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 ### 21.3 裁决规则
 
 - Codex 是已批准的底座，不因需要修改 core/app-server/protocol/state 就自动回退；“需要深改”本身不是失败。若某个原生机制妨碍业务能力，应先建立未改基线，再在 fork 中替换并用业务盲评、可靠性和成本证明收益。
-- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明首发模型内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G4p 是按 provider 绑定的非阻塞 onboarding proof：未通过时第二 route 保持 disabled，不阻止已通过 G4a/G4b 的首发火山链；只有要启用、宣传或自动切换到该 route 时，才必须继续通过对应业务、发布、账本与客户激活门。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
+- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明首发模型内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G4p 是按 provider 绑定的非阻塞 onboarding proof：未通过时后续非火山 provider route 保持 disabled，不阻止已通过 G4a/G4b 的首发火山链；只有要启用、宣传或自动切换到该 route 时，才必须继续通过对应业务、发布、账本与客户激活门。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
 - 只有来源/许可不可接受、目标 Windows 无法运行、平台模型完全无法适配，或 Codex 在真实业务盲评中经多轮最小改造仍显著劣于可用替代方案时，才重新发起底座决策；不得静默回到 DeerFlow。
 - 证明结果保存命令、日志、JUnit、Windows 环境、迁移前后校验和、故障注入记录、盲评原始表、供应商合同结果和对应阶段的来源证据：G0 保存源码依赖/许可/资产清单，Plan 14 对每个实际可分发物生成 SBOM。页面能打开、线程能聊天或单次漂亮样例不构成业务通过。
 
