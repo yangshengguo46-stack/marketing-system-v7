@@ -201,6 +201,7 @@ class ValidEvidenceFixture:
     matrix: Path
     baseline: Path
     post: Path
+    windows_baseline: Path
     windows_post: Path
     request: verifier.VerificationRequest
     post_request: verifier.VerificationRequest
@@ -214,13 +215,16 @@ class ValidEvidenceFixture:
         tmp_path.mkdir(parents=True, exist_ok=True)
         repo = tmp_path / "tested"
         tools = tmp_path / "tools"
-        baseline = tmp_path / "baseline"
-        post = tmp_path / "post"
-        windows_post = tmp_path / "windows" / "post"
+        foundation_root = tmp_path / "public-foundation"
+        baseline = foundation_root / "macos-x86_64" / "baseline"
+        post = foundation_root / "macos-x86_64" / "post"
+        windows_baseline = foundation_root / "windows-11-x64" / "baseline"
+        windows_post = foundation_root / "windows-11-x64" / "post"
         repo.mkdir()
         tools.mkdir()
-        baseline.mkdir()
+        baseline.mkdir(parents=True)
         post.mkdir()
+        windows_baseline.mkdir(parents=True)
         windows_post.mkdir(parents=True)
         _git(repo, "init", "-q")
         _git(repo, "config", "user.name", "Evidence Test")
@@ -286,6 +290,7 @@ class ValidEvidenceFixture:
             for root, platform_id, architecture, mode in (
                 (baseline, "macos-x86_64", "x86_64", "baseline"),
                 (post, "macos-x86_64", "x86_64", "post"),
+                (windows_baseline, "windows-11-x64", "AMD64", "baseline"),
                 (windows_post, "windows-11-x64", "AMD64", "post"),
             ):
                 recorder.host_id = lambda *args, value=platform_id, **kwargs: value
@@ -322,6 +327,7 @@ class ValidEvidenceFixture:
             matrix.resolve(),
             baseline.resolve(),
             post.resolve(),
+            windows_baseline.resolve(),
             windows_post.resolve(),
             request,
             post_request,
@@ -365,6 +371,7 @@ class ValidEvidenceFixture:
             matrix=mapped(self.matrix),
             baseline=mapped(self.baseline),
             post=mapped(self.post),
+            windows_baseline=mapped(self.windows_baseline),
             windows_post=mapped(self.windows_post),
             request=request,
             post_request=post_request,
@@ -514,6 +521,33 @@ def test_valid_evidence_returns_full_immutable_disposition(tmp_path: Path) -> No
     assert disposition.status == "PASS"
 
 
+@pytest.mark.parametrize("layout_error", ["mode_leaf", "platform_parent"])
+def test_library_rejects_non_authoritative_evidence_leaf_layout(
+    layout_error: str,
+    tmp_path: Path,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    if layout_error == "mode_leaf":
+        relocated = fixture.baseline.parent / "relocated"
+    else:
+        relocated = fixture.baseline.parent.parent / "wrong-platform" / "baseline"
+    shutil.copytree(fixture.baseline, relocated)
+    request = replace(fixture.request, evidence_root=relocated)
+    with pytest.raises(verifier.EvidenceError, match="evidence root.*layout"):
+        verifier.verify_evidence(request)
+
+
+def test_post_library_requires_exact_post_leaf_with_baseline_sibling(
+    tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    relocated = fixture.post.parent / "relocated"
+    shutil.copytree(fixture.post, relocated)
+    with pytest.raises(verifier.EvidenceError, match="evidence root.*layout"):
+        verifier.verify_evidence(replace(fixture.post_request, evidence_root=relocated))
+
+
 def test_post_accepts_only_failures_already_blocked_in_baseline(tmp_path: Path) -> None:
     fixture = ValidEvidenceFixture.create(tmp_path, blocked_baseline=True)
     disposition = verifier.verify_evidence(fixture.post_request)
@@ -619,17 +653,19 @@ def test_verify_rejects_identical_manifest_inode_swap_after_scan(
     valid_evidence_template: ValidEvidenceFixture,
 ) -> None:
     fixture = valid_evidence_template.clone(tmp_path)
-    real_scan = verifier.scan_forbidden_evidence
+    matches = verifier._EvidenceSnapshot.matches
 
-    def scan_then_swap(root: Path) -> tuple[verifier.ForbiddenMatch, ...]:
-        matches = real_scan(root)
-        manifest = root / "host-bootstrap.manifest.json"
-        replacement = root / "replacement.tmp"
+    def matches_then_swap(
+        snapshot: verifier._EvidenceSnapshot,
+    ) -> tuple[verifier.ForbiddenMatch, ...]:
+        result = matches(snapshot)
+        manifest = snapshot.root / "host-bootstrap.manifest.json"
+        replacement = snapshot.root / "replacement.tmp"
         replacement.write_bytes(manifest.read_bytes())
         replacement.replace(manifest)
-        return matches
+        return result
 
-    monkeypatch.setattr(verifier, "scan_forbidden_evidence", scan_then_swap)
+    monkeypatch.setattr(verifier._EvidenceSnapshot, "matches", matches_then_swap)
     with pytest.raises(verifier.EvidenceError):
         verifier.verify_evidence(fixture.request)
 
@@ -641,20 +677,163 @@ def test_recursive_scanner_rejects_identical_entry_swap_after_child_scan(
     root.mkdir()
     path = root / "safe.log"
     path.write_bytes(b"safe\n")
-    scan_one = verifier._scan_one
+    capture_file = verifier._FileSnapshot.capture.__func__
 
-    def scan_then_swap(
-        target: Path, display: str
-    ) -> tuple[verifier.ForbiddenMatch, ...]:
-        matches = scan_one(target, display)
+    def capture_then_swap(
+        cls: type[verifier._FileSnapshot],
+        target: Path,
+        display: str,
+        **options: object,
+    ) -> verifier._FileSnapshot:
+        snapshot = capture_file(cls, target, display, **options)
         replacement = target.with_name("replacement.tmp")
         replacement.write_bytes(target.read_bytes())
         replacement.replace(target)
-        return matches
+        return snapshot
 
-    monkeypatch.setattr(verifier, "_scan_one", scan_then_swap)
+    monkeypatch.setattr(
+        verifier._FileSnapshot, "capture", classmethod(capture_then_swap)
+    )
     with pytest.raises(verifier.EvidenceError):
         verifier.scan_forbidden_evidence(root)
+
+
+def test_recursive_scanner_rejects_empty_root_directory_swap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "evidence"
+    root.mkdir()
+    detached = tmp_path / "detached"
+    scandir = os.scandir
+    swapped = False
+
+    def scandir_then_swap(path: object) -> object:
+        nonlocal swapped
+        entries = list(scandir(path))
+        if Path(path) == root and not swapped:
+            swapped = True
+            root.rename(detached)
+            root.mkdir()
+        return iter(entries)
+
+    monkeypatch.setattr(os, "scandir", scandir_then_swap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.scan_forbidden_evidence(root)
+
+
+def test_file_snapshot_scans_hashes_and_retains_the_same_bytes(tmp_path: Path) -> None:
+    path = tmp_path / "public.json"
+    payload = b'{"safe":"Bearer abcdefgh12345678"}\n'
+    path.write_bytes(payload)
+    snapshot = verifier._FileSnapshot.capture(path, "public.json", keep_payload=True)
+    assert snapshot.payload == payload
+    assert snapshot.sha256 == hashlib.sha256(payload).hexdigest()
+    assert snapshot.matches == (verifier.ForbiddenMatch("public.json", "bearer-token"),)
+
+
+def test_evidence_snapshot_uses_descriptor_relative_nofollow_capture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "baseline"
+    root.mkdir()
+    (root / "safe.json").write_bytes(b"{}\n")
+    open_regular = verifier._open_stable_regular
+    observed: list[tuple[int | None, str | None]] = []
+
+    def observe_open(path: Path, **options: object) -> tuple[int, os.stat_result]:
+        observed.append((options.get("dir_fd"), options.get("name")))
+        return open_regular(path, **options)
+
+    monkeypatch.setattr(verifier, "_open_stable_regular", observe_open)
+    snapshot = verifier._EvidenceSnapshot(root)
+    try:
+        snapshot.require_exact({"safe.json"}, set())
+        snapshot.validate_final_state()
+    finally:
+        snapshot.close()
+    assert any(dir_fd is not None and name == "safe.json" for dir_fd, name in observed)
+
+
+def test_evidence_snapshot_windows_fallback_rehashes_same_inode_rewrite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "baseline"
+    root.mkdir()
+    path = root / "safe.json"
+    path.write_bytes(b"{}\n")
+    monkeypatch.setattr(
+        verifier, "_descriptor_relative_traversal_available", lambda: False
+    )
+    snapshot = verifier._EvidenceSnapshot(root)
+    try:
+        snapshot.require_exact({"safe.json"}, set())
+        assert snapshot.root_fd is None
+        _rewrite_same_inode_same_size_and_restore_mtime(path)
+        with pytest.raises(verifier.EvidenceError):
+            snapshot.validate_final_state()
+    finally:
+        snapshot.close()
+
+
+def _rewrite_same_inode_same_size_and_restore_mtime(path: Path) -> None:
+    before = path.stat(follow_symlinks=False)
+    payload = bytearray(path.read_bytes())
+    assert payload
+    payload[0] ^= 1
+    with path.open("r+b", buffering=0) as output:
+        output.write(payload)
+        os.fsync(output.fileno())
+    os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+    after = path.stat(follow_symlinks=False)
+    assert (before.st_ino, before.st_size, before.st_mtime_ns) == (
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+    )
+
+
+def test_verify_rehashes_manifest_after_same_inode_rewrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    matches = verifier._EvidenceSnapshot.matches
+
+    def matches_then_rewrite(
+        snapshot: verifier._EvidenceSnapshot,
+    ) -> tuple[verifier.ForbiddenMatch, ...]:
+        result = matches(snapshot)
+        _rewrite_same_inode_same_size_and_restore_mtime(
+            snapshot.root / "host-bootstrap.manifest.json"
+        )
+        return result
+
+    monkeypatch.setattr(verifier._EvidenceSnapshot, "matches", matches_then_rewrite)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_verify_rehashes_log_after_same_inode_rewrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    validate_command = verifier._validate_command
+
+    def validate_then_rewrite(*args: object, **kwargs: object) -> bool:
+        result = validate_command(*args, **kwargs)
+        command = args[2]
+        if command.id == "base-pass":
+            _rewrite_same_inode_same_size_and_restore_mtime(
+                fixture.baseline / "base-pass.stdout.log"
+            )
+        return result
+
+    monkeypatch.setattr(verifier, "_validate_command", validate_then_rewrite)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
 
 
 def test_log_verification_streams_without_whole_file_materialization(
@@ -701,6 +880,92 @@ def test_verify_rejects_identical_matrix_swap_after_snapshot(
     )
     with pytest.raises(verifier.EvidenceError):
         verifier.verify_evidence(fixture.request)
+
+
+def test_verify_rehashes_matrix_after_same_inode_rewrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    matrix_from_value = verifier._matrix_from_value
+
+    def parse_then_rewrite(parsed: object) -> object:
+        matrix = matrix_from_value(parsed)
+        _rewrite_same_inode_same_size_and_restore_mtime(fixture.matrix)
+        return matrix
+
+    monkeypatch.setattr(verifier, "_matrix_from_value", parse_then_rewrite)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_unexpected_json_is_rejected_before_payload_retention(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    (fixture.baseline / "unexpected.json").write_bytes(b"12345")
+    capture_file = verifier._FileSnapshot.capture.__func__
+
+    def reject_unexpected_capture(
+        cls: type[verifier._FileSnapshot],
+        path: Path,
+        display: str,
+        *,
+        keep_payload: bool,
+    ) -> verifier._FileSnapshot:
+        if display == "unexpected.json":
+            raise AssertionError("unexpected JSON was retained")
+        return capture_file(cls, path, display, keep_payload=keep_payload)
+
+    monkeypatch.setattr(verifier, "MAX_PUBLIC_JSON_BYTES", 4, raising=False)
+    monkeypatch.setattr(
+        verifier._FileSnapshot, "capture", classmethod(reject_unexpected_capture)
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_evidence_snapshot_rejects_per_json_limit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    monkeypatch.setattr(verifier, "MAX_PUBLIC_JSON_BYTES", 1, raising=False)
+    with pytest.raises(verifier.EvidenceError, match="JSON.*limit"):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_evidence_snapshot_rejects_total_json_limit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    monkeypatch.setattr(verifier, "MAX_PUBLIC_JSON_BYTES", 1024 * 1024, raising=False)
+    monkeypatch.setattr(verifier, "MAX_TOTAL_PUBLIC_JSON_BYTES", 1, raising=False)
+    with pytest.raises(verifier.EvidenceError, match="total public JSON.*limit"):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_matrix_snapshot_rejects_public_json_limit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    monkeypatch.setattr(verifier, "MAX_PUBLIC_JSON_BYTES", 1, raising=False)
+    bootstrap = _strict_json(fixture.baseline / "host-bootstrap.manifest.json")
+    with pytest.raises(verifier.EvidenceError, match="JSON.*limit"):
+        verifier._bindings(
+            fixture.repo,
+            fixture.matrix,
+            bootstrap["testedGitSha"],
+            bootstrap["toolsGitSha"],
+        )
 
 
 def test_cli_exits_zero_one_and_two_and_publishes_exact_summary(
@@ -937,31 +1202,15 @@ class FinalFixture:
             evidence.baseline / "baseline-summary.json",
             verifier.disposition_dict(mac_baseline),
         )
-        windows_baseline_root = evidence.windows_post.parent / "baseline"
-        windows_baseline_root.mkdir()
-        for name in (
-            "host-bootstrap.manifest.json",
-            "base-pass.manifest.json",
-            "base-pass.stdout.log",
-            "base-pass.stderr.log",
-            "base-paired.manifest.json",
-            "base-paired.stdout.log",
-            "base-paired.stderr.log",
-        ):
-            shutil.copyfile(evidence.windows_post / name, windows_baseline_root / name)
-        for path in evidence.windows_post.glob("*.version.*.log"):
-            shutil.copyfile(path, windows_baseline_root / path.name)
-        for path in evidence.windows_post.glob("dependency-install.*.log"):
-            shutil.copyfile(path, windows_baseline_root / path.name)
         windows_baseline = verifier.verify_evidence(
             replace(
                 evidence.request,
-                evidence_root=windows_baseline_root,
+                evidence_root=evidence.windows_baseline,
                 platform="windows-11-x64",
             )
         )
         _write_json(
-            windows_baseline_root / "baseline-summary.json",
+            evidence.windows_baseline / "baseline-summary.json",
             verifier.disposition_dict(windows_baseline),
         )
         report = (
@@ -1046,6 +1295,7 @@ class FinalFixture:
             matrix=mapped(original.matrix),
             baseline=mapped(original.baseline),
             post=mapped(original.post),
+            windows_baseline=mapped(original.windows_baseline),
             windows_post=mapped(original.windows_post),
             request=replace(
                 original.request,
@@ -1137,6 +1387,68 @@ def test_frozen_final_rejects_identical_report_swap_before_publication(
     assert not fixture.output.exists()
 
 
+def test_frozen_final_rehashes_report_after_same_inode_rewrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    validate_report = verifier._validate_report
+
+    def validate_then_rewrite(
+        path: Path, repo: Path, candidate_sha: str, payload: bytes
+    ) -> dict[str, object]:
+        report = validate_report(path, repo, candidate_sha, payload)
+        _rewrite_same_inode_same_size_and_restore_mtime(path)
+        return report
+
+    monkeypatch.setattr(verifier, "_validate_report", validate_then_rewrite)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+    assert not fixture.output.exists()
+
+
+def test_frozen_final_publication_is_last_irreversible_action(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    publish = verifier._publish_create_new
+
+    def publish_then_mutate(path: Path, payload: bytes, repo: Path) -> None:
+        publish(path, payload, repo)
+        replacement = fixture.report.with_name("post-publication-replacement.tmp")
+        replacement.write_bytes(fixture.report.read_bytes())
+        replacement.replace(fixture.report)
+
+    monkeypatch.setattr(verifier, "_publish_create_new", publish_then_mutate)
+    try:
+        result = verifier.verify_frozen_final(fixture.request)
+    except verifier.EvidenceError:
+        assert not fixture.output.exists()
+    else:
+        assert result["foundationDecision"] == "PASS_TO_PHASE_0B"
+        assert fixture.output.exists()
+
+
+def test_frozen_final_adapter_failure_leaves_no_output_or_temp(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    monkeypatch.setattr(
+        verifier.capture,
+        "_publish_create_new",
+        lambda temp, final: (_ for _ in ()).throw(OSError("publish failed")),
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+    assert not fixture.output.exists()
+    assert not list(fixture.output.parent.glob("*.tmp-*"))
+
+
 def test_final_publication_failure_removes_reserved_temp(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1153,6 +1465,43 @@ def test_final_publication_failure_removes_reserved_temp(
     with pytest.raises(verifier.EvidenceError, match="already exists"):
         verifier._publish_create_new(output, b"payload\n", repo)
     assert not list(output_parent.glob("*.tmp-*"))
+
+
+@pytest.mark.parametrize(
+    "private_key",
+    [
+        "apiKey",
+        "api_key",
+        "api-key",
+        "accessToken",
+        "access_token",
+        "access-token",
+        "secretKey",
+        "secret_key",
+        "secret-key",
+        "secret",
+    ],
+)
+def test_final_semantic_filter_rejects_nested_credential_key(
+    private_key: str,
+) -> None:
+    with pytest.raises(verifier.EvidenceError):
+        verifier._safe_public_value(
+            {"allowedEnvelope": {private_key: "opaque"}}, "public value"
+        )
+
+
+@pytest.mark.parametrize(
+    "absolute_path",
+    [r"\\server\share", r"\\?\C:\private", r"\\.\pipe\private"],
+)
+def test_final_semantic_filter_rejects_unc_and_device_paths(
+    absolute_path: str,
+) -> None:
+    with pytest.raises(verifier.EvidenceError):
+        verifier._safe_public_value(
+            {"allowedEnvelope": {"safeField": absolute_path}}, "public value"
+        )
 
 
 @pytest.mark.parametrize(
@@ -1256,6 +1605,43 @@ def test_final_rejects_boolean_integer_primitives(
         verifier.verify_frozen_final(fixture.request)
 
 
+def test_final_rejects_boolean_selected_attempt_ordinal(
+    tmp_path: Path, final_fixture_template: FinalFixture
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    receipt = _strict_json(fixture.receipt)
+    receipt["selectedAttemptOrdinal"] = True
+    _write_json(fixture.receipt, receipt)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+
+
+def test_final_input_rejects_public_json_limit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    mac = verifier.verify_evidence(
+        replace(fixture.evidence.post_request, evidence_root=fixture.evidence.post)
+    )
+    windows = verifier.verify_evidence(
+        replace(
+            fixture.evidence.post_request,
+            evidence_root=fixture.evidence.windows_post,
+            platform="windows-11-x64",
+        )
+    )
+    monkeypatch.setattr(
+        verifier,
+        "verify_evidence",
+        lambda request: mac if request.platform == "macos-x86_64" else windows,
+    )
+    monkeypatch.setattr(verifier, "MAX_PUBLIC_JSON_BYTES", 1, raising=False)
+    with pytest.raises(verifier.EvidenceError, match="JSON.*limit"):
+        verifier.verify_frozen_final(fixture.request)
+
+
 def test_baseline_rejects_boolean_schema_version(
     tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
 ) -> None:
@@ -1264,6 +1650,18 @@ def test_baseline_rejects_boolean_schema_version(
     bootstrap = _strict_json(bootstrap_path)
     bootstrap["schemaVersion"] = True
     _write_json(bootstrap_path, bootstrap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_baseline_rejects_boolean_manifest_expected_exit(
+    tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    manifest_path = fixture.baseline / "base-pass.manifest.json"
+    manifest = _strict_json(manifest_path)
+    manifest["expectedExit"] = False
+    _write_json(manifest_path, manifest)
     with pytest.raises(verifier.EvidenceError):
         verifier.verify_evidence(fixture.request)
 
@@ -1316,6 +1714,7 @@ def test_frozen_final_rejects_tampering_and_private_fields(
     mutation: str, tmp_path: Path, final_fixture_template: FinalFixture
 ) -> None:
     fixture = final_fixture_template.clone(tmp_path)
+    expected_error: str | None = None
     if mutation == "multiple_selected":
         index = _strict_json(fixture.index)
         duplicate = dict(index["attempts"][0])
@@ -1329,6 +1728,8 @@ def test_frozen_final_rejects_tampering_and_private_fields(
         duplicate["materialsCommitment"] = "1" * 64
         index["attempts"].append(duplicate)
         _write_json(fixture.index, index)
+        _refresh_final_bindings(fixture)
+        expected_error = "select exactly one report"
     elif mutation in {"report_candidate", "index_candidate", "receipt_candidate"}:
         target = {
             "report_candidate": fixture.report,
@@ -1338,11 +1739,16 @@ def test_frozen_final_rejects_tampering_and_private_fields(
         value = _strict_json(target)
         if mutation == "report_candidate":
             value["forkSha"] = "0" * 40
+            expected_error = "selected report candidate binding differs"
         elif mutation == "index_candidate":
             value["attempts"][0]["candidateSha"] = "0" * 40
+            expected_error = "selected report/index binding differs"
         else:
             value["candidateSha"] = "0" * 40
+            expected_error = "business receipt candidateSha binding differs"
         _write_json(target, value)
+        if mutation in {"report_candidate", "index_candidate"}:
+            _refresh_final_bindings(fixture)
     elif mutation in {"receipt_report_sha", "receipt_index_sha", "receipt_extra"}:
         value = _strict_json(fixture.receipt)
         key = {
@@ -1380,7 +1786,7 @@ def test_frozen_final_rejects_tampering_and_private_fields(
         )
     else:
         raise AssertionError(mutation)
-    with pytest.raises(verifier.EvidenceError):
+    with pytest.raises(verifier.EvidenceError, match=expected_error):
         verifier.verify_frozen_final(fixture.request)
 
 
@@ -1536,6 +1942,114 @@ def test_final_cli_resolves_exact_sibling_paired_post_roots(
     assert verifier.main(_final_cli_args()) == 0
     assert requests[0].mac_post_root == Path("/evidence/macos-x86_64/post")
     assert requests[0].windows_post_root == Path("/evidence/windows-11-x64/post")
+
+
+def _assert_forbidden_cli_result(
+    result: int, capsys: pytest.CaptureFixture[str]
+) -> None:
+    output = capsys.readouterr()
+    assert result == 1
+    assert json.loads(output.out)["status"] == "INVALID_FORBIDDEN_CONTENT"
+    assert output.err == ""
+
+
+def test_baseline_cli_reports_symlink_evidence_root_as_forbidden_only(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    unsafe_parent = tmp_path / "unsafe" / "macos-x86_64"
+    unsafe_parent.mkdir(parents=True)
+    unsafe_root = unsafe_parent / "baseline"
+    unsafe_root.symlink_to(fixture.baseline, target_is_directory=True)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(unsafe_root),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+def test_baseline_cli_reports_symlink_matrix_as_forbidden_only(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    real_matrix = fixture.matrix.with_name("matrix-real.json")
+    fixture.matrix.rename(real_matrix)
+    fixture.matrix.symlink_to(real_matrix)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(fixture.baseline),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+@pytest.mark.parametrize("target_name", ["report", "index", "receipt"])
+def test_final_cli_reports_symlink_consumed_input_as_forbidden_only(
+    target_name: str,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    target = {
+        "report": fixture.report,
+        "index": fixture.index,
+        "receipt": fixture.receipt,
+    }[target_name]
+    real_target = target.with_name(f"{target.stem}-real.json")
+    target.rename(real_target)
+    target.symlink_to(real_target)
+    foundation = fixture.evidence.baseline.parent.parent
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.evidence.repo),
+                "--matrix",
+                str(fixture.evidence.matrix),
+                "--evidence-root",
+                str(foundation),
+                "--candidate-sha",
+                fixture.evidence.tested_sha,
+                "--selected-report",
+                str(fixture.report),
+                "--report-index",
+                str(fixture.index),
+                "--business-verification-receipt",
+                str(fixture.receipt),
+                "--verification-output",
+                str(fixture.output),
+            ]
+        ),
+        capsys,
+    )
 
 
 @pytest.mark.parametrize(

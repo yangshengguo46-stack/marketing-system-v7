@@ -17,6 +17,8 @@ import capture_command as capture
 
 EvidenceError = capture.EvidenceError
 CHUNK_SIZE = 1024 * 1024
+MAX_PUBLIC_JSON_BYTES = 16 * 1024 * 1024
+MAX_TOTAL_PUBLIC_JSON_BYTES = 64 * 1024 * 1024
 SHA_256_PATTERN = re.compile(r"[0-9a-f]{64}")
 SHA_1_PATTERN = re.compile(r"[0-9a-f]{40}")
 RFC3339_UTC_PATTERN = re.compile(
@@ -247,6 +249,7 @@ PRIVATE_PUBLIC_KEYS = {
     "output",
     "outputbody",
 }
+PRIVATE_CREDENTIAL_KEYS = {"apikey", "accesstoken", "secretkey", "secret"}
 PRIVATE_PUBLIC_VALUE_PATTERN = re.compile(
     r"(?i)(?:\b(?:thread|response|reviewer)[-_ ]?id\b|"
     r"\b(?:thread|reviewer)[-_ ][A-Za-z0-9]{3,}\b|"
@@ -514,20 +517,92 @@ def _same_file_state(left: os.stat_result, right: os.stat_result) -> bool:
     )
 
 
-def _open_stable_regular(path: Path) -> tuple[int, os.stat_result]:
+def _descriptor_relative_traversal_available() -> bool:
+    return (
+        os.open in os.supports_dir_fd
+        and os.stat in os.supports_dir_fd
+        and os.stat in os.supports_follow_symlinks
+        and os.scandir in os.supports_fd
+        and hasattr(os, "O_DIRECTORY")
+    )
+
+
+def _open_stable_directory(
+    path: Path,
+    *,
+    parent_fd: int | None = None,
+    name: str | None = None,
+    expected_state: os.stat_result | None = None,
+) -> tuple[int | None, os.stat_result]:
     try:
-        before = path.stat(follow_symlinks=False)
+        if parent_fd is not None and name is not None:
+            before = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+        else:
+            before = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise EvidenceError(
+            f"unable to inspect public evidence directory: {path.name}"
+        ) from error
+    if expected_state is not None and not _same_file_state(expected_state, before):
+        raise EvidenceError(
+            f"public evidence directory changed before traversal: {path.name}"
+        )
+    if not stat.S_ISDIR(before.st_mode):
+        raise EvidenceError(f"unsafe public evidence directory: {path.name}")
+    if getattr(before, "st_file_attributes", 0) & 0x400:
+        raise EvidenceError(f"reparse public evidence directory: {path.name}")
+    if not _descriptor_relative_traversal_available():
+        return None, before
+    flags = os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        if parent_fd is not None and name is not None:
+            descriptor = os.open(name, flags, dir_fd=parent_fd)
+        else:
+            descriptor = os.open(path, flags)
+    except OSError as error:
+        raise EvidenceError(
+            f"unable to open public evidence directory: {path.name}"
+        ) from error
+    opened = os.fstat(descriptor)
+    if not _same_file_state(before, opened):
+        os.close(descriptor)
+        raise EvidenceError(
+            f"public evidence directory changed before traversal: {path.name}"
+        )
+    return descriptor, opened
+
+
+def _entry_state(path: Path, dir_fd: int | None, name: str | None) -> os.stat_result:
+    try:
+        if dir_fd is not None and name is not None:
+            return os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+        return path.stat(follow_symlinks=False)
     except OSError as error:
         raise EvidenceError(
             f"unable to inspect public evidence file: {path.name}"
         ) from error
+
+
+def _open_stable_regular(
+    path: Path,
+    *,
+    dir_fd: int | None = None,
+    name: str | None = None,
+    expected_state: os.stat_result | None = None,
+) -> tuple[int, os.stat_result]:
+    before = _entry_state(path, dir_fd, name)
+    if expected_state is not None and not _same_file_state(expected_state, before):
+        raise EvidenceError(f"public evidence file changed before scan: {path.name}")
     if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
         raise EvidenceError(f"unsafe public evidence file: {path.name}")
     if getattr(before, "st_file_attributes", 0) & 0x400:
         raise EvidenceError(f"reparse public evidence file: {path.name}")
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
-        descriptor = os.open(path, flags)
+        if dir_fd is not None and name is not None:
+            descriptor = os.open(name, flags, dir_fd=dir_fd)
+        else:
+            descriptor = os.open(path, flags)
     except OSError as error:
         raise EvidenceError(
             f"unable to open public evidence file: {path.name}"
@@ -612,12 +687,29 @@ class _FileSnapshot:
     sha256: str
     payload: bytes | None
     matches: tuple[ForbiddenMatch, ...]
+    dir_fd: int | None = None
+    relative_name: str | None = None
 
     @classmethod
     def capture(
-        cls, path: Path, display: str, *, keep_payload: bool
+        cls,
+        path: Path,
+        display: str,
+        *,
+        keep_payload: bool,
+        dir_fd: int | None = None,
+        relative_name: str | None = None,
+        expected_state: os.stat_result | None = None,
     ) -> "_FileSnapshot":
-        descriptor, before = _open_stable_regular(path)
+        descriptor, before = _open_stable_regular(
+            path,
+            dir_fd=dir_fd,
+            name=relative_name,
+            expected_state=expected_state,
+        )
+        if keep_payload and before.st_size > MAX_PUBLIC_JSON_BYTES:
+            os.close(descriptor)
+            raise EvidenceError(f"public JSON exceeds per-file limit: {display}")
         digest = hashlib.sha256()
         payload_chunks: list[bytes] | None = [] if keep_payload else None
         matches: set[ForbiddenMatch] = set()
@@ -641,8 +733,8 @@ class _FileSnapshot:
         finally:
             os.close(descriptor)
         try:
-            final = path.stat(follow_symlinks=False)
-        except OSError as error:
+            final = _entry_state(path, dir_fd, relative_name)
+        except EvidenceError as error:
             raise EvidenceError(
                 f"public evidence file changed after read: {display}"
             ) from error
@@ -661,16 +753,42 @@ class _FileSnapshot:
             digest.hexdigest(),
             payload,
             tuple(sorted(matches)),
+            dir_fd,
+            relative_name,
         )
 
     def validate_final_state(self) -> None:
+        descriptor, reopened = _open_stable_regular(
+            self.path,
+            dir_fd=self.dir_fd,
+            name=self.relative_name,
+            expected_state=self.state,
+        )
+        digest = hashlib.sha256()
+        total = 0
         try:
-            final = self.path.stat(follow_symlinks=False)
-        except OSError as error:
+            while True:
+                chunk = os.read(descriptor, CHUNK_SIZE)
+                if not chunk:
+                    break
+                total += len(chunk)
+                digest.update(chunk)
+            after = os.fstat(descriptor)
+        finally:
+            os.close(descriptor)
+        try:
+            final = _entry_state(self.path, self.dir_fd, self.relative_name)
+        except EvidenceError as error:
             raise EvidenceError(
                 f"public evidence file changed after consumption: {self.display}"
             ) from error
-        if not _same_file_state(self.state, final):
+        if (
+            total != self.size
+            or digest.hexdigest() != self.sha256
+            or not _same_file_state(self.state, reopened)
+            or not _same_file_state(reopened, after)
+            or not _same_file_state(reopened, final)
+        ):
             raise EvidenceError(
                 f"public evidence file changed after consumption: {self.display}"
             )
@@ -680,102 +798,104 @@ class _EvidenceSnapshot:
     def __init__(self, root: Path) -> None:
         self.root = root
         self.files: dict[str, _FileSnapshot] = {}
-        self.directories: list[tuple[Path, os.stat_result]] = []
-        self._capture_tree()
+        self.entry_states: dict[str, os.stat_result] = {}
+        self.root_fd: int | None = None
+        self.root_state: os.stat_result | None = None
+        try:
+            self.root_fd, self.root_state = _open_stable_directory(root)
+            self._enumerate_names_and_types()
+        except BaseException:
+            self.close()
+            raise
 
-    def _capture_tree(self) -> None:
-        pending = [self.root]
-        while pending:
-            directory = pending.pop()
+    def _scandir(self) -> list[os.DirEntry[str]]:
+        target: int | Path = self.root_fd if self.root_fd is not None else self.root
+        try:
+            return sorted(os.scandir(target), key=lambda entry: entry.name)
+        except OSError as error:
+            raise EvidenceError("unable to enumerate public evidence") from error
+
+    def _root_unchanged(self) -> None:
+        if self.root_state is None:
+            raise EvidenceError("public evidence root snapshot is unavailable")
+        try:
+            lexical = self.root.stat(follow_symlinks=False)
+            opened = os.fstat(self.root_fd) if self.root_fd is not None else lexical
+        except OSError as error:
+            raise EvidenceError("public evidence root changed") from error
+        if not _same_file_state(self.root_state, lexical) or not _same_file_state(
+            self.root_state, opened
+        ):
+            raise EvidenceError("public evidence root changed")
+
+    def _enumerate_names_and_types(self) -> None:
+        entries = self._scandir()
+        for entry in entries:
+            name = _safe_basename(entry.name, "public evidence path component")
+            path = self.root / name
             try:
-                before = directory.stat(follow_symlinks=False)
-                entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
-                after = directory.stat(follow_symlinks=False)
-            except OSError as error:
-                raise EvidenceError("unable to enumerate public evidence") from error
-            if not stat.S_ISDIR(before.st_mode) or not _same_file_state(before, after):
+                metadata = _entry_state(path, self.root_fd, name)
+            except EvidenceError as error:
                 raise EvidenceError(
-                    "public evidence directory changed while enumerated"
-                )
-            self.directories.append((directory, before))
-            for entry in entries:
-                path = Path(entry.path)
-                relative = path.relative_to(self.root)
-                display = relative.as_posix()
-                for part in relative.parts:
-                    _safe_basename(part, "public evidence path component")
-                try:
-                    metadata = entry.stat(follow_symlinks=False)
-                except OSError as error:
-                    raise EvidenceError(
-                        f"unable to inspect public evidence: {display}"
-                    ) from error
-                if (
-                    stat.S_ISLNK(metadata.st_mode)
-                    or getattr(metadata, "st_file_attributes", 0) & 0x400
-                ):
-                    raise EvidenceError(f"unsafe public evidence entry: {display}")
-                if stat.S_ISDIR(metadata.st_mode):
-                    pending.append(path)
-                elif stat.S_ISREG(metadata.st_mode):
-                    if metadata.st_nlink != 1:
-                        raise EvidenceError(
-                            f"hardlinked public evidence file: {display}"
-                        )
-                    snapshot = _FileSnapshot.capture(
-                        path, display, keep_payload=path.suffix != ".log"
-                    )
-                    self.files[display] = snapshot
-                else:
-                    raise EvidenceError(f"special public evidence file: {display}")
+                    f"unable to inspect public evidence: {name}"
+                ) from error
+            if (
+                stat.S_ISLNK(metadata.st_mode)
+                or getattr(metadata, "st_file_attributes", 0) & 0x400
+            ):
+                raise EvidenceError(f"unsafe public evidence entry: {name}")
+            if stat.S_ISREG(metadata.st_mode):
+                if metadata.st_nlink != 1:
+                    raise EvidenceError(f"hardlinked public evidence file: {name}")
+            elif not stat.S_ISDIR(metadata.st_mode):
+                raise EvidenceError(f"special public evidence file: {name}")
+            self.entry_states[name] = metadata
+        self._root_unchanged()
+
+    def require_exact(self, required_names: set[str], optional_names: set[str]) -> None:
+        allowed = required_names | optional_names
+        actual = set(self.entry_states)
+        if required_names - actual or actual - allowed:
+            raise EvidenceError("evidence completeness differs from the matrix")
+        if any(not stat.S_ISREG(self.entry_states[name].st_mode) for name in actual):
+            raise EvidenceError("evidence completeness differs from the matrix")
+        retained = [name for name in actual if not name.endswith(".log")]
+        if any(
+            self.entry_states[name].st_size > MAX_PUBLIC_JSON_BYTES for name in retained
+        ):
+            raise EvidenceError("public JSON exceeds per-file limit")
+        if sum(self.entry_states[name].st_size for name in retained) > (
+            MAX_TOTAL_PUBLIC_JSON_BYTES
+        ):
+            raise EvidenceError("total public JSON exceeds snapshot limit")
+        for name in sorted(actual):
+            path = self.root / name
+            self.files[name] = _FileSnapshot.capture(
+                path,
+                name,
+                keep_payload=not name.endswith(".log"),
+                dir_fd=self.root_fd,
+                relative_name=name if self.root_fd is not None else None,
+                expected_state=self.entry_states[name],
+            )
+        self._root_unchanged()
 
     def validate_final_state(self) -> None:
-        final_files: set[str] = set()
-        final_directories: set[Path] = set()
-        pending = [self.root]
-        while pending:
-            directory = pending.pop()
-            final_directories.add(directory)
-            try:
-                entries = list(os.scandir(directory))
-            except OSError as error:
-                raise EvidenceError("public evidence directory changed") from error
-            for entry in entries:
-                path = Path(entry.path)
-                display = path.relative_to(self.root).as_posix()
-                try:
-                    metadata = entry.stat(follow_symlinks=False)
-                except OSError as error:
-                    raise EvidenceError(
-                        f"public evidence entry changed: {display}"
-                    ) from error
-                if getattr(metadata, "st_file_attributes", 0) & 0x400:
-                    raise EvidenceError(
-                        f"public evidence entry became reparse: {display}"
-                    )
-                if stat.S_ISDIR(metadata.st_mode):
-                    pending.append(path)
-                elif stat.S_ISREG(metadata.st_mode):
-                    final_files.add(display)
-                else:
-                    raise EvidenceError(
-                        f"public evidence entry changed type: {display}"
-                    )
-        if final_files != set(self.files) or final_directories != {
-            path for path, _ in self.directories
-        }:
+        entries = self._scandir()
+        if {entry.name for entry in entries} != set(self.entry_states):
             raise EvidenceError("public evidence tree changed after enumeration")
+        for name, before in self.entry_states.items():
+            final = _entry_state(self.root / name, self.root_fd, name)
+            if not _same_file_state(before, final):
+                raise EvidenceError(f"public evidence entry changed: {name}")
         for snapshot in self.files.values():
             snapshot.validate_final_state()
-        for directory, before in self.directories:
-            try:
-                final = directory.stat(follow_symlinks=False)
-            except OSError as error:
-                raise EvidenceError("public evidence directory changed") from error
-            if not _same_file_state(before, final):
-                raise EvidenceError(
-                    "public evidence directory changed after enumeration"
-                )
+        self._root_unchanged()
+
+    def close(self) -> None:
+        if self.root_fd is not None:
+            os.close(self.root_fd)
+            self.root_fd = None
 
     def json(self, name: str, label: str) -> dict[str, object]:
         try:
@@ -796,72 +916,97 @@ class _EvidenceSnapshot:
 
 def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
     canonical = _absolute_directory(Path(root), "evidence root")
-    matches: set[ForbiddenMatch] = set()
-    pending = [canonical]
-    observed: list[tuple[Path, os.stat_result, str]] = []
-    while pending:
-        directory = pending.pop()
-        try:
-            entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
-        except OSError as error:
-            raise EvidenceError("unable to enumerate public evidence") from error
-        for entry in entries:
-            relative = Path(entry.path).relative_to(canonical)
-            display = relative.as_posix()
-            for part in relative.parts:
-                _safe_basename(part, "public evidence path component")
+    directories: list[tuple[Path, str, int | None, os.stat_result, set[str]]] = []
+    snapshots: list[_FileSnapshot] = []
+    pending: list[tuple[Path, str, int | None, str | None, os.stat_result | None]] = [
+        (canonical, "", None, None, None)
+    ]
+    try:
+        while pending:
+            path, display, parent_fd, name, expected = pending.pop()
+            descriptor, state = _open_stable_directory(
+                path,
+                parent_fd=parent_fd,
+                name=name,
+                expected_state=expected,
+            )
+            target: int | Path = descriptor if descriptor is not None else path
             try:
-                metadata = entry.stat(follow_symlinks=False)
+                entries = sorted(os.scandir(target), key=lambda entry: entry.name)
+            except OSError as error:
+                if descriptor is not None:
+                    os.close(descriptor)
+                raise EvidenceError("unable to enumerate public evidence") from error
+            names: set[str] = set()
+            directories.append((path, display, descriptor, state, names))
+            for entry in entries:
+                child_name = _safe_basename(
+                    entry.name, "public evidence path component"
+                )
+                child_display = f"{display}/{child_name}" if display else child_name
+                child = path / child_name
+                metadata = _entry_state(child, descriptor, child_name)
+                if (
+                    stat.S_ISLNK(metadata.st_mode)
+                    or getattr(metadata, "st_file_attributes", 0) & 0x400
+                ):
+                    raise EvidenceError(
+                        f"unsafe public evidence entry: {child_display}"
+                    )
+                names.add(child_name)
+                if stat.S_ISDIR(metadata.st_mode):
+                    pending.append(
+                        (child, child_display, descriptor, child_name, metadata)
+                    )
+                elif stat.S_ISREG(metadata.st_mode):
+                    if metadata.st_nlink != 1:
+                        raise EvidenceError(
+                            f"hardlinked public evidence file: {child_display}"
+                        )
+                    snapshots.append(
+                        _FileSnapshot.capture(
+                            child,
+                            child_display,
+                            keep_payload=False,
+                            dir_fd=descriptor,
+                            relative_name=child_name
+                            if descriptor is not None
+                            else None,
+                            expected_state=metadata,
+                        )
+                    )
+                else:
+                    raise EvidenceError(
+                        f"special public evidence file: {child_display}"
+                    )
+        for path, display, descriptor, state, names in directories:
+            target = descriptor if descriptor is not None else path
+            try:
+                final_names = {entry.name for entry in os.scandir(target)}
+                lexical = path.stat(follow_symlinks=False)
+                opened = os.fstat(descriptor) if descriptor is not None else lexical
             except OSError as error:
                 raise EvidenceError(
-                    f"unable to inspect public evidence: {display}"
+                    "public evidence tree changed after scan"
                 ) from error
             if (
-                stat.S_ISLNK(metadata.st_mode)
-                or getattr(metadata, "st_file_attributes", 0) & 0x400
+                final_names != names
+                or not _same_file_state(state, lexical)
+                or not _same_file_state(state, opened)
             ):
-                raise EvidenceError(f"unsafe public evidence entry: {display}")
-            if stat.S_ISDIR(metadata.st_mode):
-                pending.append(Path(entry.path))
-            elif stat.S_ISREG(metadata.st_mode):
-                if metadata.st_nlink != 1:
-                    raise EvidenceError(f"hardlinked public evidence file: {display}")
-                matches.update(_scan_one(Path(entry.path), display))
-            else:
-                raise EvidenceError(f"special public evidence file: {display}")
-            observed.append((Path(entry.path), metadata, display))
-    for path, before, display in observed:
-        try:
-            final = path.stat(follow_symlinks=False)
-        except OSError as error:
-            raise EvidenceError(
-                f"public evidence entry changed after scan: {display}"
-            ) from error
-        if not _same_file_state(before, final):
-            raise EvidenceError(f"public evidence entry changed after scan: {display}")
-    final_entries: set[str] = set()
-    pending = [canonical]
-    while pending:
-        directory = pending.pop()
-        try:
-            entries = list(os.scandir(directory))
-        except OSError as error:
-            raise EvidenceError("public evidence tree changed after scan") from error
-        for entry in entries:
-            path = Path(entry.path)
-            display = path.relative_to(canonical).as_posix()
-            final_entries.add(display)
-            try:
-                metadata = entry.stat(follow_symlinks=False)
-            except OSError as error:
+                label = display or canonical.name
                 raise EvidenceError(
-                    f"public evidence entry changed after scan: {display}"
-                ) from error
-            if stat.S_ISDIR(metadata.st_mode):
-                pending.append(path)
-    if final_entries != {display for _, _, display in observed}:
-        raise EvidenceError("public evidence tree changed after scan")
-    return tuple(sorted(matches))
+                    f"public evidence directory changed after scan: {label}"
+                )
+        for snapshot in snapshots:
+            snapshot.validate_final_state()
+        return tuple(
+            sorted(match for snapshot in snapshots for match in snapshot.matches)
+        )
+    finally:
+        for _, _, descriptor, _, _ in directories:
+            if descriptor is not None:
+                os.close(descriptor)
 
 
 def _git_environment() -> dict[str, str]:
@@ -1010,14 +1155,50 @@ def _matrix_from_value(parsed: object) -> capture.Matrix:
     return capture.Matrix(1, tuple(commands))
 
 
+def _capture_matrix(
+    matrix_path: Path,
+) -> tuple[Path, _FileSnapshot, object, capture.Matrix]:
+    try:
+        matrix = _absolute_file(matrix_path, "matrix")
+    except EvidenceError as error:
+        raise ForbiddenEvidenceError(()) from error
+    snapshot = _FileSnapshot.capture(
+        matrix, "required-command-matrix.json", keep_payload=True
+    )
+    if snapshot.matches:
+        raise ForbiddenEvidenceError(snapshot.matches)
+    if snapshot.payload is None:
+        raise EvidenceError("internal matrix snapshot differs")
+    try:
+        parsed = json.loads(
+            snapshot.payload,
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_json_constant,
+        )
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise EvidenceError("invalid matrix JSON") from error
+    try:
+        return matrix, snapshot, parsed, _matrix_from_value(parsed)
+    except BaseException:
+        snapshot.validate_final_state()
+        raise
+
+
 def _bindings(
     repo_root: Path,
     matrix_path: Path,
     tested_sha_value: object,
     tools_sha_value: object,
+    *,
+    preloaded_matrix: tuple[Path, _FileSnapshot, object, capture.Matrix] | None = None,
 ) -> tuple[_GitBindings, capture.Matrix]:
     repo = _absolute_directory(repo_root, "repo root")
-    matrix = _absolute_file(matrix_path, "matrix")
+    if preloaded_matrix is None:
+        matrix, matrix_snapshot, parsed, loaded_matrix = _capture_matrix(matrix_path)
+    else:
+        matrix, matrix_snapshot, parsed, loaded_matrix = preloaded_matrix
+        if Path(matrix_path) != matrix:
+            raise EvidenceError("preloaded matrix path differs")
     tested_repo = _git_root(repo, "tested")
     if tested_repo != repo:
         raise EvidenceError("repo root must be a Git top-level")
@@ -1031,9 +1212,6 @@ def _bindings(
         matrix_relative = matrix.relative_to(tools_repo).as_posix()
     except ValueError as error:
         raise EvidenceError("matrix is outside its tools repository") from error
-    matrix_snapshot = _FileSnapshot.capture(
-        matrix, "required-command-matrix.json", keep_payload=True
-    )
     try:
         if matrix_snapshot.matches:
             raise ForbiddenEvidenceError(matrix_snapshot.matches)
@@ -1049,15 +1227,6 @@ def _bindings(
             "scripts/ai_ip/foundation/capture_command.py",
             "recorder",
         )
-        try:
-            parsed = json.loads(
-                current_matrix,
-                object_pairs_hook=_reject_duplicate_keys,
-                parse_constant=_reject_json_constant,
-            )
-        except (json.JSONDecodeError, UnicodeDecodeError) as error:
-            raise EvidenceError("invalid matrix JSON") from error
-        loaded_matrix = _matrix_from_value(parsed)
         semantic_sha = _sha256(canonical_json_bytes(parsed))
         locks = {
             key: _sha256(_commit_blob(tested_repo, tested_sha, relative, relative))
@@ -1213,10 +1382,8 @@ def _validate_command(
         raise EvidenceError(f"{command.id} schemaVersion differs")
     if value["commandId"] != command.id or value["phase"] != command.phase:
         raise EvidenceError(f"{command.id} matrix identity differs")
-    if (
-        value["argv"] != list(command.argv)
-        or value["expectedExit"] != command.expected_exit
-    ):
+    expected_exit = _integer(value["expectedExit"], f"{command.id} expectedExit")
+    if value["argv"] != list(command.argv) or expected_exit != command.expected_exit:
         raise EvidenceError(f"{command.id} matrix command differs")
     _validate_context(value, bindings, platform_id, command.id)
     started = _rfc3339_utc(value["startedAt"], f"{command.id} startedAt")
@@ -1300,6 +1467,39 @@ def disposition_dict(disposition: EvidenceDisposition) -> dict[str, object]:
     }
 
 
+def _expected_evidence_names(
+    commands: tuple[capture.CommandSpec, ...], mode: str
+) -> tuple[set[str], set[str]]:
+    required = {
+        "host-bootstrap.manifest.json",
+        "dependency-install.stdout.log",
+        "dependency-install.stderr.log",
+    }
+    for tool_name in capture.REQUIRED_TOOL_NAMES:
+        required.update(
+            {
+                f"{tool_name}.version.stdout.log",
+                f"{tool_name}.version.stderr.log",
+            }
+        )
+    for command in commands:
+        required.update(
+            {
+                f"{command.id}.manifest.json",
+                f"{command.id}.stdout.log",
+                f"{command.id}.stderr.log",
+            }
+        )
+        if capture.selection_argv(command) is not None:
+            required.update(
+                {
+                    f"{command.id}.selection.stdout.log",
+                    f"{command.id}.selection.stderr.log",
+                }
+            )
+    return required, {f"{mode}-summary.json"}
+
+
 def verify_evidence(request: VerificationRequest) -> EvidenceDisposition:
     return _verify_evidence(request, require_summary=False)
 
@@ -1311,12 +1511,24 @@ def _verify_evidence(
         raise EvidenceError("unknown platform")
     if request.mode not in {"baseline", "post"}:
         raise EvidenceError("unknown evidence mode")
-    root = _absolute_directory(request.evidence_root, "evidence root")
+    lexical_root = Path(request.evidence_root)
+    if (
+        lexical_root.name != request.mode
+        or lexical_root.parent.name != request.platform
+    ):
+        raise EvidenceError("evidence root layout differs from platform/mode")
     try:
-        evidence = _EvidenceSnapshot(root)
+        root = _absolute_directory(lexical_root, "evidence root")
     except EvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
-    bindings: _GitBindings | None = None
+    matrix_capture = _capture_matrix(request.matrix_path)
+    matrix = matrix_capture[3]
+    commands = matrix.required_for(request.platform, request.mode)
+    if not commands:
+        matrix_capture[1].validate_final_state()
+        raise EvidenceError("matrix has no required commands")
+    required_files, optional_files = _expected_evidence_names(commands, request.mode)
+    evidence: _EvidenceSnapshot | None = None
     try:
         try:
             compatibility_matches = scan_forbidden_evidence(root)
@@ -1324,6 +1536,11 @@ def _verify_evidence(
             raise
         except EvidenceError as error:
             raise ForbiddenEvidenceError(()) from error
+        try:
+            evidence = _EvidenceSnapshot(root)
+        except EvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
+        evidence.require_exact(required_files, optional_files)
         matches = tuple(sorted(set(compatibility_matches) | set(evidence.matches())))
         if matches:
             raise ForbiddenEvidenceError(matches)
@@ -1333,10 +1550,8 @@ def _verify_evidence(
             request.matrix_path,
             bootstrap.get("testedGitSha"),
             bootstrap.get("toolsGitSha"),
+            preloaded_matrix=matrix_capture,
         )
-        commands = matrix.required_for(request.platform, request.mode)
-        if not commands:
-            raise EvidenceError("matrix has no required commands")
         expected_files = {"host-bootstrap.manifest.json"}
         _validate_bootstrap(
             evidence, bootstrap, bindings, request.platform, expected_files
@@ -1365,10 +1580,7 @@ def _verify_evidence(
             tuple(blocked),
         )
         summary_name = f"{request.mode}-summary.json"
-        actual_files = set(evidence.files)
-        unexpected = actual_files - expected_files - {summary_name}
-        missing = expected_files - actual_files
-        if missing or unexpected:
+        if expected_files != required_files:
             raise EvidenceError("evidence completeness differs from the matrix")
         expected_summary = canonical_json_bytes(disposition_dict(disposition)) + b"\n"
         if summary_name in evidence.files:
@@ -1406,12 +1618,17 @@ def _verify_evidence(
                 raise EvidenceError("post evidence contains an unpaired failure")
         return disposition
     finally:
-        if bindings is not None:
-            bindings.matrix_snapshot.validate_final_state()
         try:
-            evidence.validate_final_state()
-        except EvidenceError as error:
-            raise ForbiddenEvidenceError(()) from error
+            matrix_capture[1].validate_final_state()
+        finally:
+            try:
+                if evidence is not None:
+                    evidence.validate_final_state()
+            except EvidenceError as error:
+                raise ForbiddenEvidenceError(()) from error
+            finally:
+                if evidence is not None:
+                    evidence.close()
 
 
 def _safe_public_value(value: object, label: str) -> None:
@@ -1419,7 +1636,11 @@ def _safe_public_value(value: object, label: str) -> None:
         for key, item in value.items():
             if not isinstance(key, str):
                 raise EvidenceError(f"{label} contains a non-string key")
-            if key.casefold() in PRIVATE_PUBLIC_KEYS:
+            normalized_key = key.casefold().replace("_", "").replace("-", "")
+            if (
+                key.casefold() in PRIVATE_PUBLIC_KEYS
+                or normalized_key in PRIVATE_CREDENTIAL_KEYS
+            ):
                 raise EvidenceError(f"{label} contains a private-material key")
             _safe_public_value(key, f"{label} key")
             _safe_public_value(item, f"{label}.{key}")
@@ -1436,7 +1657,11 @@ def _safe_public_value(value: object, label: str) -> None:
     for pattern in FORBIDDEN_BYTE_RULES.values():
         if re.search(pattern, encoded) is not None:
             raise EvidenceError(f"{label} contains forbidden content")
-    if value.startswith("/") or re.match(r"(?i)^[A-Z]:[\\/]", value):
+    if (
+        value.startswith("/")
+        or value.startswith("\\\\")
+        or re.match(r"(?i)^[A-Z]:[\\/]", value)
+    ):
         raise EvidenceError(f"{label} contains an absolute path")
     if PRIVATE_PUBLIC_VALUE_PATTERN.search(value) is not None:
         raise EvidenceError(f"{label} contains private material")
@@ -1603,6 +1828,9 @@ def _validate_receipt(
     _safe_public_value(receipt, "business verification receipt")
     if _integer(receipt["schemaVersion"], "business receipt schemaVersion") != 1:
         raise EvidenceError("business receipt schemaVersion differs")
+    selected_ordinal = _integer(
+        receipt["selectedAttemptOrdinal"], "business receipt selectedAttemptOrdinal"
+    )
     expected = {
         "publicRunId": report["publicRunId"],
         "candidateSha": candidate_sha,
@@ -1618,7 +1846,8 @@ def _validate_receipt(
         "capabilityStatus": report["capabilityStatus"],
     }
     for key, value in expected.items():
-        if receipt[key] != value:
+        actual = selected_ordinal if key == "selectedAttemptOrdinal" else receipt[key]
+        if actual != value:
             raise EvidenceError(f"business receipt {key} binding differs")
     for key in (
         "reportSha256",
@@ -1708,87 +1937,75 @@ def verify_frozen_final(request: FinalVerificationRequest) -> dict[str, object]:
         or mac.matrix_sha256 != windows.matrix_sha256
     ):
         raise EvidenceError("native post evidence bindings differ")
-    report_path = _absolute_file(request.selected_report, "selected report")
-    index_path = _absolute_file(request.report_index, "report index")
-    if index_path != repo / "docs/evidence/business-proof/index.json":
-        raise EvidenceError("report index path differs")
-    receipt_path = _absolute_file(
-        request.business_verification_receipt, "business verification receipt"
-    )
     try:
-        consumed = (
-            _FileSnapshot.capture(
-                report_path, "selected-report.json", keep_payload=True
-            ),
-            _FileSnapshot.capture(index_path, "report-index.json", keep_payload=True),
-            _FileSnapshot.capture(
-                receipt_path, "business-verification-receipt.json", keep_payload=True
-            ),
+        report_path = _absolute_file(request.selected_report, "selected report")
+        index_path = _absolute_file(request.report_index, "report index")
+        receipt_path = _absolute_file(
+            request.business_verification_receipt,
+            "business verification receipt",
         )
     except EvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
-    try:
-        matches = tuple(sorted(match for item in consumed for match in item.matches))
-        if matches:
-            raise ForbiddenEvidenceError(matches)
-        report_payload, index_payload, receipt_payload = (
-            item.payload for item in consumed
-        )
-        if report_payload is None or index_payload is None or receipt_payload is None:
-            raise EvidenceError("internal public evidence snapshot differs")
-        report = _validate_report(report_path, repo, candidate_sha, report_payload)
-        report_sha = consumed[0].sha256
-        index, chosen = _validate_index(
-            index_payload, report, candidate_sha, report_sha
-        )
-        del index
-        index_sha = consumed[1].sha256
-        receipt = _validate_receipt(
-            receipt_payload, report, chosen, candidate_sha, report_sha, index_sha
-        )
-        disposition_payload = lambda item: (
-            canonical_json_bytes(disposition_dict(item)) + b"\n"
-        )
-        output = {
-            key: receipt[key]
-            for key in BUSINESS_RECEIPT_KEYS
-            if key
-            not in {
-                "candidateAllowedDiffSha256",
-                "schemaVersion",
-            }
+    if index_path != repo / "docs/evidence/business-proof/index.json":
+        raise EvidenceError("report index path differs")
+    consumed = (
+        _FileSnapshot.capture(report_path, "selected-report.json", keep_payload=True),
+        _FileSnapshot.capture(index_path, "report-index.json", keep_payload=True),
+        _FileSnapshot.capture(
+            receipt_path, "business-verification-receipt.json", keep_payload=True
+        ),
+    )
+    matches = tuple(sorted(match for item in consumed for match in item.matches))
+    if matches:
+        raise ForbiddenEvidenceError(matches)
+    report_payload, index_payload, receipt_payload = (item.payload for item in consumed)
+    if report_payload is None or index_payload is None or receipt_payload is None:
+        raise EvidenceError("internal public evidence snapshot differs")
+    report = _validate_report(report_path, repo, candidate_sha, report_payload)
+    report_sha = consumed[0].sha256
+    index, chosen = _validate_index(index_payload, report, candidate_sha, report_sha)
+    del index
+    index_sha = consumed[1].sha256
+    receipt = _validate_receipt(
+        receipt_payload, report, chosen, candidate_sha, report_sha, index_sha
+    )
+    disposition_payload = lambda item: (
+        canonical_json_bytes(disposition_dict(item)) + b"\n"
+    )
+    output = {
+        key: receipt[key]
+        for key in BUSINESS_RECEIPT_KEYS
+        if key
+        not in {
+            "candidateAllowedDiffSha256",
+            "schemaVersion",
         }
-        output.update(
-            {
-                "schemaVersion": 1,
-                "requiredMatrixSha256": mac.matrix_sha256,
-                "macPostEvidenceCommitment": _sha256(disposition_payload(mac)),
-                "windowsPostEvidenceCommitment": _sha256(disposition_payload(windows)),
-                "candidateAllowedDiffSha256": receipt["candidateAllowedDiffSha256"],
-                "liveProofVerificationSha256": consumed[2].sha256,
-                "G0": "PASS",
-                "G1": "PASS",
-                "foundationDecision": "PASS_TO_PHASE_0B",
-                "verifierSha256": _sha256(_stable_file_bytes(Path(__file__).resolve())),
-            }
-        )
-        if set(output) != FINAL_OUTPUT_KEYS:
-            raise EvidenceError("internal final output allowlist differs")
-        _safe_public_value(output, "final verification output")
-        payload = canonical_json_bytes(output) + b"\n"
-        try:
-            for item in consumed:
-                item.validate_final_state()
-        except EvidenceError as error:
-            raise ForbiddenEvidenceError(()) from error
-        _publish_create_new(request.verification_output, payload, repo)
-        return output
-    finally:
-        try:
-            for item in consumed:
-                item.validate_final_state()
-        except EvidenceError as error:
-            raise ForbiddenEvidenceError(()) from error
+    }
+    output.update(
+        {
+            "schemaVersion": 1,
+            "requiredMatrixSha256": mac.matrix_sha256,
+            "macPostEvidenceCommitment": _sha256(disposition_payload(mac)),
+            "windowsPostEvidenceCommitment": _sha256(disposition_payload(windows)),
+            "candidateAllowedDiffSha256": receipt["candidateAllowedDiffSha256"],
+            "liveProofVerificationSha256": consumed[2].sha256,
+            "G0": "PASS",
+            "G1": "PASS",
+            "foundationDecision": "PASS_TO_PHASE_0B",
+            "verifierSha256": _sha256(_stable_file_bytes(Path(__file__).resolve())),
+        }
+    )
+    if set(output) != FINAL_OUTPUT_KEYS:
+        raise EvidenceError("internal final output allowlist differs")
+    _safe_public_value(output, "final verification output")
+    payload = canonical_json_bytes(output) + b"\n"
+    try:
+        for item in consumed:
+            item.validate_final_state()
+    except EvidenceError as error:
+        raise ForbiddenEvidenceError(()) from error
+    _publish_create_new(request.verification_output, payload, repo)
+    return output
 
 
 def _forbidden_output(error: ForbiddenEvidenceError) -> bytes:
