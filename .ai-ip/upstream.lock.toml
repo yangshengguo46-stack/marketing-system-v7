@@ -1,0 +1,14 @@
+[openai_codex]
+repository = "https://github.com/openai/codex.git"
+sha = "4ef1d4b89bd419c976b04fefa0fd36844e898340"
+integration = "git-merge-ancestor"
+license = "Apache-2.0"
+planning_base = "58baf3b21da4768d5f608264c3224660338ef517"
+decision_tip = "7a774b01933157ffd4437013543b8a5326c8cb31"
+source_import = "35261a3ea0704f09b6c0e85c815e30e870f9564c"
+
+[product]
+name = "AI IP 1.1"
+runtime = "codex-app-server"
+deerflow_dependency = false
+origin_status = "unconfigured"

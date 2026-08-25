@@ -1,2 +1,9 @@
 codex-rs/app-server-protocol/schema/** linguist-generated
 codex-rs/hooks/schema/generated/** linguist-generated
+
+# AI IP evidence and reproducible lockfiles
+docs/evidence/**/*.stdout.log -text
+docs/evidence/**/*.stderr.log -text
+codex-rs/Cargo.lock text eol=lf
+MODULE.bazel.lock text eol=lf
+pnpm-lock.yaml text eol=lf
