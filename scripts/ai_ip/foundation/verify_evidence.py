@@ -467,7 +467,9 @@ def _unsafe_path_component(path: Path) -> str | None:
             ) from error
         if stat.S_ISLNK(metadata.st_mode):
             return "symlink"
-        if getattr(metadata, "st_file_attributes", 0) & 0x400:
+        if getattr(metadata, "st_file_attributes", 0) & 0x400 or getattr(
+            metadata, "st_reparse_tag", 0
+        ):
             return "reparse"
     return None
 
@@ -504,6 +506,13 @@ def _absolute_file(path: Path, label: str) -> Path:
     return resolved
 
 
+def _reparse_state(value: os.stat_result) -> tuple[int, int]:
+    return (
+        getattr(value, "st_file_attributes", 0) & 0x400,
+        getattr(value, "st_reparse_tag", 0),
+    )
+
+
 def _same_file_state(left: os.stat_result, right: os.stat_result) -> bool:
     return (
         left.st_dev,
@@ -512,6 +521,7 @@ def _same_file_state(left: os.stat_result, right: os.stat_result) -> bool:
         left.st_nlink,
         left.st_size,
         left.st_mtime_ns,
+        _reparse_state(left),
     ) == (
         right.st_dev,
         right.st_ino,
@@ -519,7 +529,17 @@ def _same_file_state(left: os.stat_result, right: os.stat_result) -> bool:
         right.st_nlink,
         right.st_size,
         right.st_mtime_ns,
+        _reparse_state(right),
     )
+
+
+def _safe_fstat(descriptor: int, label: str) -> os.stat_result:
+    try:
+        return os.fstat(descriptor)
+    except OSError as error:
+        raise UnsafeEvidenceError(
+            f"unable to inspect opened public evidence: {label}"
+        ) from error
 
 
 def _descriptor_relative_traversal_available() -> bool:
@@ -529,7 +549,128 @@ def _descriptor_relative_traversal_available() -> bool:
         and os.stat in os.supports_follow_symlinks
         and os.scandir in os.supports_fd
         and hasattr(os, "O_DIRECTORY")
+        and hasattr(os, "O_NOFOLLOW")
     )
+
+
+def _unsafe_reparse_state(value: os.stat_result) -> bool:
+    return _reparse_state(value) != (0, 0)
+
+
+def _require_safe_directory_state(value: os.stat_result, label: str) -> None:
+    if stat.S_ISLNK(value.st_mode) or not stat.S_ISDIR(value.st_mode):
+        raise UnsafeEvidenceError(f"unsafe public evidence directory: {label}")
+    if _unsafe_reparse_state(value):
+        raise UnsafeEvidenceError(f"reparse public evidence directory: {label}")
+
+
+def _open_absolute_parent_nofollow(path: Path) -> int:
+    lexical = Path(path)
+    if not lexical.is_absolute():
+        raise UnsafeEvidenceError("public evidence path must be absolute")
+    anchor = Path(lexical.anchor)
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    try:
+        current_fd = os.open(anchor, flags)
+    except OSError as error:
+        raise UnsafeEvidenceError("unable to open public evidence anchor") from error
+    try:
+        anchor_state = _safe_fstat(current_fd, str(anchor))
+        _require_safe_directory_state(anchor_state, str(anchor))
+        current = anchor
+        for component in lexical.parent.parts[1:]:
+            current /= component
+            try:
+                before = os.stat(
+                    component,
+                    dir_fd=current_fd,
+                    follow_symlinks=False,
+                )
+            except OSError as error:
+                raise UnsafeEvidenceError(
+                    f"unable to inspect public evidence directory: {current.name}"
+                ) from error
+            _require_safe_directory_state(before, current.name)
+            try:
+                next_fd = os.open(component, flags, dir_fd=current_fd)
+            except OSError as error:
+                raise UnsafeEvidenceError(
+                    f"unable to open public evidence directory: {current.name}"
+                ) from error
+            try:
+                opened = _safe_fstat(next_fd, current.name)
+                _require_safe_directory_state(opened, current.name)
+                if not _same_file_state(before, opened):
+                    raise UnsafeEvidenceError(
+                        "public evidence directory changed before traversal: "
+                        f"{current.name}"
+                    )
+            except BaseException:
+                os.close(next_fd)
+                raise
+            os.close(current_fd)
+            current_fd = next_fd
+        result = current_fd
+        current_fd = -1
+        return result
+    finally:
+        if current_fd >= 0:
+            os.close(current_fd)
+
+
+def _fallback_component_states(path: Path, label: str) -> tuple[os.stat_result, ...]:
+    lexical = Path(path)
+    if not lexical.is_absolute():
+        raise UnsafeEvidenceError(f"public evidence path must be absolute: {label}")
+    current = Path(lexical.anchor)
+    components = [current]
+    for component in lexical.parent.parts[1:]:
+        current /= component
+        components.append(current)
+    states: list[os.stat_result] = []
+    for component in components:
+        try:
+            value = component.lstat()
+        except OSError as error:
+            raise UnsafeEvidenceError(
+                f"unable to inspect public evidence directory: {label}"
+            ) from error
+        _require_safe_directory_state(value, component.name or str(component))
+        states.append(value)
+    return tuple(states)
+
+
+def _same_component_states(
+    before: tuple[os.stat_result, ...], after: tuple[os.stat_result, ...]
+) -> bool:
+    return len(before) == len(after) and all(
+        _same_file_state(left, right) for left, right in zip(before, after)
+    )
+
+
+def _absolute_leaf_state(path: Path, label: str) -> os.stat_result:
+    lexical = Path(path)
+    if _descriptor_relative_traversal_available():
+        parent_fd = _open_absolute_parent_nofollow(lexical)
+        try:
+            if lexical == Path(lexical.anchor):
+                return _safe_fstat(parent_fd, label)
+            return _entry_state(lexical, parent_fd, lexical.name)
+        finally:
+            os.close(parent_fd)
+    before = _fallback_component_states(lexical, label)
+    try:
+        leaf = lexical.lstat()
+    except OSError as error:
+        raise UnsafeEvidenceError(
+            f"unable to inspect public evidence file: {label}"
+        ) from error
+    after = _fallback_component_states(lexical, label)
+    if not _same_component_states(before, after):
+        raise UnsafeEvidenceError(
+            f"public evidence path changed while inspected: {label}"
+        )
+    return leaf
 
 
 def _open_stable_directory(
@@ -539,42 +680,74 @@ def _open_stable_directory(
     name: str | None = None,
     expected_state: os.stat_result | None = None,
 ) -> tuple[int | None, os.stat_result]:
+    anchored_parent_fd: int | None = None
     try:
         if parent_fd is not None and name is not None:
             before = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+        elif _descriptor_relative_traversal_available():
+            anchored_parent_fd = _open_absolute_parent_nofollow(path)
+            if path == Path(path.anchor):
+                before = _safe_fstat(anchored_parent_fd, path.name or str(path))
+            else:
+                before = os.stat(
+                    path.name,
+                    dir_fd=anchored_parent_fd,
+                    follow_symlinks=False,
+                )
         else:
-            before = path.stat(follow_symlinks=False)
+            before_components = _fallback_component_states(path, path.name)
+            before = path.lstat()
     except OSError as error:
+        if anchored_parent_fd is not None:
+            os.close(anchored_parent_fd)
         raise UnsafeEvidenceError(
             f"unable to inspect public evidence directory: {path.name}"
         ) from error
     if expected_state is not None and not _same_file_state(expected_state, before):
+        if anchored_parent_fd is not None:
+            os.close(anchored_parent_fd)
         raise UnsafeEvidenceError(
             f"public evidence directory changed before traversal: {path.name}"
         )
-    if not stat.S_ISDIR(before.st_mode):
-        raise UnsafeEvidenceError(f"unsafe public evidence directory: {path.name}")
-    if getattr(before, "st_file_attributes", 0) & 0x400:
-        raise UnsafeEvidenceError(f"reparse public evidence directory: {path.name}")
+    try:
+        _require_safe_directory_state(before, path.name or str(path))
+    except BaseException:
+        if anchored_parent_fd is not None:
+            os.close(anchored_parent_fd)
+        raise
     if not _descriptor_relative_traversal_available():
+        after_components = _fallback_component_states(path, path.name)
+        if not _same_component_states(before_components, after_components):
+            raise UnsafeEvidenceError(
+                f"public evidence directory changed before traversal: {path.name}"
+            )
         return None, before
     flags = os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0)
     try:
         if parent_fd is not None and name is not None:
             descriptor = os.open(name, flags, dir_fd=parent_fd)
+        elif path == Path(path.anchor):
+            if anchored_parent_fd is None:
+                raise UnsafeEvidenceError("public evidence anchor is unavailable")
+            descriptor = anchored_parent_fd
+            anchored_parent_fd = None
         else:
-            descriptor = os.open(path, flags)
+            if anchored_parent_fd is None:
+                raise UnsafeEvidenceError("public evidence parent is unavailable")
+            descriptor = os.open(path.name, flags, dir_fd=anchored_parent_fd)
     except OSError as error:
         raise UnsafeEvidenceError(
             f"unable to open public evidence directory: {path.name}"
         ) from error
+    finally:
+        if anchored_parent_fd is not None:
+            os.close(anchored_parent_fd)
     try:
-        opened = os.fstat(descriptor)
-    except OSError as error:
+        opened = _safe_fstat(descriptor, path.name or str(path))
+        _require_safe_directory_state(opened, path.name or str(path))
+    except BaseException:
         os.close(descriptor)
-        raise UnsafeEvidenceError(
-            f"unable to inspect opened public evidence directory: {path.name}"
-        ) from error
+        raise
     if not _same_file_state(before, opened):
         os.close(descriptor)
         raise UnsafeEvidenceError(
@@ -601,37 +774,64 @@ def _open_stable_regular(
     name: str | None = None,
     expected_state: os.stat_result | None = None,
 ) -> tuple[int, os.stat_result]:
-    before = _entry_state(path, dir_fd, name)
+    del dir_fd, name
+    lexical = Path(path)
+    parent_fd: int | None = None
+    before_components: tuple[os.stat_result, ...] | None = None
+    if _descriptor_relative_traversal_available():
+        parent_fd = _open_absolute_parent_nofollow(lexical)
+        try:
+            before = _entry_state(lexical, parent_fd, lexical.name)
+        except UnsafeEvidenceError:
+            os.close(parent_fd)
+            raise
+    else:
+        before_components = _fallback_component_states(lexical, path.name)
+        before = _entry_state(lexical, None, None)
     if expected_state is not None and not _same_file_state(expected_state, before):
+        if parent_fd is not None:
+            os.close(parent_fd)
         raise UnsafeEvidenceError(
             f"public evidence file changed before scan: {path.name}"
         )
     if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+        if parent_fd is not None:
+            os.close(parent_fd)
         raise UnsafeEvidenceError(f"unsafe public evidence file: {path.name}")
-    if getattr(before, "st_file_attributes", 0) & 0x400:
+    if _unsafe_reparse_state(before):
+        if parent_fd is not None:
+            os.close(parent_fd)
         raise UnsafeEvidenceError(f"reparse public evidence file: {path.name}")
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
-        if dir_fd is not None and name is not None:
-            descriptor = os.open(name, flags, dir_fd=dir_fd)
+        if parent_fd is not None:
+            descriptor = os.open(lexical.name, flags, dir_fd=parent_fd)
         else:
-            descriptor = os.open(path, flags)
+            descriptor = os.open(lexical, flags)
     except OSError as error:
         raise UnsafeEvidenceError(
             f"unable to open public evidence file: {path.name}"
         ) from error
+    finally:
+        if parent_fd is not None:
+            os.close(parent_fd)
     try:
-        opened = os.fstat(descriptor)
-    except OSError as error:
+        opened = _safe_fstat(descriptor, path.name)
+    except BaseException:
         os.close(descriptor)
-        raise UnsafeEvidenceError(
-            f"unable to inspect opened public evidence file: {path.name}"
-        ) from error
-    if not _same_file_state(before, opened):
+        raise
+    if _unsafe_reparse_state(opened) or not _same_file_state(before, opened):
         os.close(descriptor)
         raise UnsafeEvidenceError(
             f"public evidence file changed before scan: {path.name}"
         )
+    if before_components is not None:
+        after_components = _fallback_component_states(lexical, path.name)
+        if not _same_component_states(before_components, after_components):
+            os.close(descriptor)
+            raise UnsafeEvidenceError(
+                f"public evidence path changed before scan: {path.name}"
+            )
     return descriptor, opened
 
 
@@ -670,11 +870,11 @@ def _stable_file_bytes(path: Path) -> bytes:
     try:
         for chunk in _bounded_file_chunks(descriptor, before.st_size, path.name):
             chunks.append(chunk)
-        after = os.fstat(descriptor)
+        after = _safe_fstat(descriptor, path.name)
     finally:
         os.close(descriptor)
     try:
-        final = _entry_state(path, None, None)
+        final = _absolute_leaf_state(path, path.name)
     except UnsafeEvidenceError as error:
         raise UnsafeEvidenceError(
             f"public evidence file changed after read: {path.name}"
@@ -704,11 +904,11 @@ def _scan_one(path: Path, display_path: str) -> tuple[ForbiddenMatch, ...]:
                 if re.search(pattern, window) is not None:
                     found.add(ForbiddenMatch(display_path, rule_id))
             overlap = window[-CHUNK_SIZE:]
-        after = os.fstat(descriptor)
+        after = _safe_fstat(descriptor, display_path)
     finally:
         os.close(descriptor)
     try:
-        final = _entry_state(path, None, None)
+        final = _absolute_leaf_state(path, display_path)
     except UnsafeEvidenceError as error:
         raise UnsafeEvidenceError(
             f"public evidence file changed after scan: {display_path}"
@@ -780,11 +980,11 @@ class _FileSnapshot:
                     if re.search(pattern, window) is not None:
                         matches.add(ForbiddenMatch(display, rule_id))
                 overlap = window[-CHUNK_SIZE:]
-            after = os.fstat(descriptor)
+            after = _safe_fstat(descriptor, display)
         finally:
             os.close(descriptor)
         try:
-            final = _entry_state(path, dir_fd, relative_name)
+            final = _absolute_leaf_state(path, display)
         except UnsafeEvidenceError as error:
             raise UnsafeEvidenceError(
                 f"public evidence file changed after read: {display}"
@@ -823,11 +1023,11 @@ class _FileSnapshot:
             for chunk in _bounded_file_chunks(descriptor, self.size, self.display):
                 total += len(chunk)
                 digest.update(chunk)
-            after = os.fstat(descriptor)
+            after = _safe_fstat(descriptor, self.display)
         finally:
             os.close(descriptor)
         try:
-            final = _entry_state(self.path, self.dir_fd, self.relative_name)
+            final = _absolute_leaf_state(self.path, self.display)
         except UnsafeEvidenceError as error:
             raise UnsafeEvidenceError(
                 f"public evidence file changed after consumption: {self.display}"
@@ -869,9 +1069,15 @@ class _EvidenceSnapshot:
         if self.root_state is None:
             raise EvidenceError("public evidence root snapshot is unavailable")
         try:
-            lexical = self.root.stat(follow_symlinks=False)
-            opened = os.fstat(self.root_fd) if self.root_fd is not None else lexical
-        except OSError as error:
+            lexical = _absolute_leaf_state(self.root, self.root.name)
+            opened = (
+                _safe_fstat(self.root_fd, self.root.name)
+                if self.root_fd is not None
+                else lexical
+            )
+            _require_safe_directory_state(lexical, self.root.name)
+            _require_safe_directory_state(opened, self.root.name)
+        except UnsafeEvidenceError as error:
             raise UnsafeEvidenceError("public evidence root changed") from error
         if not _same_file_state(self.root_state, lexical) or not _same_file_state(
             self.root_state, opened
@@ -889,10 +1095,7 @@ class _EvidenceSnapshot:
                 raise UnsafeEvidenceError(
                     f"unable to inspect public evidence: {name}"
                 ) from error
-            if (
-                stat.S_ISLNK(metadata.st_mode)
-                or getattr(metadata, "st_file_attributes", 0) & 0x400
-            ):
+            if stat.S_ISLNK(metadata.st_mode) or _unsafe_reparse_state(metadata):
                 raise UnsafeEvidenceError(f"unsafe public evidence entry: {name}")
             if stat.S_ISREG(metadata.st_mode):
                 if metadata.st_nlink != 1:
@@ -942,7 +1145,7 @@ class _EvidenceSnapshot:
         if {entry.name for entry in entries} != set(self.entry_states):
             raise UnsafeEvidenceError("public evidence tree changed after enumeration")
         for name, before in self.entry_states.items():
-            final = _entry_state(self.root / name, self.root_fd, name)
+            final = _absolute_leaf_state(self.root / name, name)
             if not _same_file_state(before, final):
                 raise UnsafeEvidenceError(f"public evidence entry changed: {name}")
         for snapshot in self.files.values():
@@ -1005,10 +1208,7 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                 child_display = f"{display}/{child_name}" if display else child_name
                 child = path / child_name
                 metadata = _entry_state(child, descriptor, child_name)
-                if (
-                    stat.S_ISLNK(metadata.st_mode)
-                    or getattr(metadata, "st_file_attributes", 0) & 0x400
-                ):
+                if stat.S_ISLNK(metadata.st_mode) or _unsafe_reparse_state(metadata):
                     raise UnsafeEvidenceError(
                         f"unsafe public evidence entry: {child_display}"
                     )
@@ -1042,9 +1242,15 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
             target = descriptor if descriptor is not None else path
             try:
                 final_names = {entry.name for entry in os.scandir(target)}
-                lexical = path.stat(follow_symlinks=False)
-                opened = os.fstat(descriptor) if descriptor is not None else lexical
-            except OSError as error:
+                lexical = _absolute_leaf_state(path, display or canonical.name)
+                opened = (
+                    _safe_fstat(descriptor, display or canonical.name)
+                    if descriptor is not None
+                    else lexical
+                )
+                _require_safe_directory_state(lexical, display or canonical.name)
+                _require_safe_directory_state(opened, display or canonical.name)
+            except (OSError, UnsafeEvidenceError) as error:
                 raise UnsafeEvidenceError(
                     "public evidence tree changed after scan"
                 ) from error

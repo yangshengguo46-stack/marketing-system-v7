@@ -1,3 +1,4 @@
+import errno
 import hashlib
 import importlib.util
 import json
@@ -2022,6 +2023,305 @@ def _assert_forbidden_cli_result(
     assert result == 1
     assert json.loads(output.out)["status"] == "INVALID_FORBIDDEN_CONTENT"
     assert output.err == ""
+
+
+def _inject_post_read_fstat_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_read = os.read
+    real_fstat = os.fstat
+    read_descriptors: set[int] = set()
+
+    def track_read(descriptor: int, byte_count: int) -> bytes:
+        payload = real_read(descriptor, byte_count)
+        read_descriptors.add(descriptor)
+        return payload
+
+    def fail_after_read(descriptor: int) -> os.stat_result:
+        if descriptor in read_descriptors:
+            raise OSError("injected post-read fstat")
+        return real_fstat(descriptor)
+
+    monkeypatch.setattr(verifier.os, "read", track_read)
+    monkeypatch.setattr(verifier.os, "fstat", fail_after_read)
+
+
+def _replace_parent_with_symlink_to_original(parent: Path) -> Path:
+    detached = parent.with_name(f"{parent.name}-detached")
+    parent.rename(detached)
+    parent.symlink_to(detached, target_is_directory=True)
+    return detached
+
+
+def test_stable_file_bytes_normalizes_post_read_fstat_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "public.json"
+    path.write_bytes(b"{}\n")
+    _inject_post_read_fstat_failure(monkeypatch)
+    with pytest.raises(verifier.UnsafeEvidenceError):
+        verifier._stable_file_bytes(path)
+
+
+def test_recursive_scanner_normalizes_post_read_fstat_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "evidence"
+    root.mkdir()
+    (root / "safe.log").write_bytes(b"safe\n")
+    _inject_post_read_fstat_failure(monkeypatch)
+    with pytest.raises(verifier.UnsafeEvidenceError):
+        verifier.scan_forbidden_evidence(root)
+
+
+def test_baseline_cli_reports_post_read_matrix_fstat_failure_as_forbidden_only(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    _inject_post_read_fstat_failure(monkeypatch)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(fixture.baseline),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+def test_final_cli_reports_post_read_input_fstat_failure_as_forbidden_only(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    _stub_final_native_evidence(monkeypatch, fixture)
+    _inject_post_read_fstat_failure(monkeypatch)
+    _assert_forbidden_cli_result(
+        verifier.main(_final_fixture_cli_args(fixture)), capsys
+    )
+
+
+@pytest.mark.parametrize("force_fallback", [False, True], ids=["posix", "fallback"])
+def test_file_snapshot_rejects_parent_symlink_to_original_on_final_rehash(
+    force_fallback: bool,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    path = parent / "public.json"
+    path.write_bytes(b"{}\n")
+    if force_fallback:
+        monkeypatch.setattr(
+            verifier, "_descriptor_relative_traversal_available", lambda: False
+        )
+    snapshot = verifier._FileSnapshot.capture(path, path.name, keep_payload=True)
+    _replace_parent_with_symlink_to_original(path.parent)
+    with pytest.raises(verifier.UnsafeEvidenceError):
+        snapshot.validate_final_state()
+
+
+def test_baseline_cli_rejects_matrix_parent_symlink_to_original(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    matrix_from_value = verifier._matrix_from_value
+
+    def parse_then_swap(parsed: object) -> verifier.capture.Matrix:
+        matrix = matrix_from_value(parsed)
+        _replace_parent_with_symlink_to_original(fixture.matrix.parent)
+        return matrix
+
+    monkeypatch.setattr(verifier, "_matrix_from_value", parse_then_swap)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(fixture.baseline),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+def test_baseline_cli_rejects_evidence_parent_symlink_to_original(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    require_exact = verifier._EvidenceSnapshot.require_exact
+
+    def require_then_swap(
+        snapshot: verifier._EvidenceSnapshot,
+        required_names: set[str],
+        optional_names: set[str],
+    ) -> None:
+        require_exact(snapshot, required_names, optional_names)
+        if snapshot.root == fixture.baseline:
+            _replace_parent_with_symlink_to_original(snapshot.root.parent)
+
+    monkeypatch.setattr(verifier._EvidenceSnapshot, "require_exact", require_then_swap)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(fixture.baseline),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+def test_final_cli_rejects_report_parent_symlink_to_original(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    _stub_final_native_evidence(monkeypatch, fixture)
+    validate_receipt = verifier._validate_receipt
+
+    def validate_then_swap(*args: object, **kwargs: object) -> dict[str, object]:
+        receipt = validate_receipt(*args, **kwargs)
+        _replace_parent_with_symlink_to_original(fixture.report.parent)
+        return receipt
+
+    monkeypatch.setattr(verifier, "_validate_receipt", validate_then_swap)
+    _assert_forbidden_cli_result(
+        verifier.main(_final_fixture_cli_args(fixture)), capsys
+    )
+
+
+def test_file_snapshot_rejects_reparse_after_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "public.json"
+    path.write_bytes(b"{}\n")
+    snapshot = verifier._FileSnapshot.capture(path, path.name, keep_payload=True)
+    real_read = os.read
+    real_fstat = os.fstat
+    read_descriptors: set[int] = set()
+
+    def track_read(descriptor: int, byte_count: int) -> bytes:
+        payload = real_read(descriptor, byte_count)
+        read_descriptors.add(descriptor)
+        return payload
+
+    def add_reparse_after_read(descriptor: int) -> object:
+        value = real_fstat(descriptor)
+        if descriptor not in read_descriptors:
+            return value
+        return SimpleNamespace(
+            st_dev=value.st_dev,
+            st_ino=value.st_ino,
+            st_mode=value.st_mode,
+            st_nlink=value.st_nlink,
+            st_size=value.st_size,
+            st_mtime_ns=value.st_mtime_ns,
+            st_file_attributes=0x400,
+            st_reparse_tag=1,
+        )
+
+    monkeypatch.setattr(verifier.os, "read", track_read)
+    monkeypatch.setattr(verifier.os, "fstat", add_reparse_after_read)
+    with pytest.raises(verifier.UnsafeEvidenceError):
+        snapshot.validate_final_state()
+
+
+@pytest.mark.parametrize("inject_failure", [False, True], ids=["pass", "failure"])
+def test_file_snapshot_descriptor_lifecycle_closes_owned_descriptors(
+    inject_failure: bool,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    path = parent / "public.json"
+    path.write_bytes(b"{}\n")
+    real_open = os.open
+    real_stat = os.stat
+    real_fstat = os.fstat
+    descriptors: list[int] = []
+    recording = False
+
+    def record_open(
+        path_value: object, flags: int, *args: object, **kwargs: object
+    ) -> int:
+        descriptor = real_open(path_value, flags, *args, **kwargs)
+        if recording:
+            descriptors.append(descriptor)
+        return descriptor
+
+    def fail_parent_component(
+        path_value: object, *args: object, **kwargs: object
+    ) -> os.stat_result:
+        if (
+            inject_failure
+            and path_value == "parent"
+            and kwargs.get("dir_fd") is not None
+            and kwargs.get("follow_symlinks") is False
+        ):
+            raise OSError("injected parent component failure")
+        return real_stat(path_value, *args, **kwargs)
+
+    monkeypatch.setattr(verifier.os, "open", record_open)
+    monkeypatch.setattr(verifier.os, "stat", fail_parent_component)
+    monkeypatch.setattr(
+        verifier, "_descriptor_relative_traversal_available", lambda: True
+    )
+    recording = True
+    try:
+        if inject_failure:
+            with pytest.raises(verifier.UnsafeEvidenceError):
+                verifier._FileSnapshot.capture(path, path.name, keep_payload=True)
+        else:
+            snapshot = verifier._FileSnapshot.capture(
+                path, path.name, keep_payload=True
+            )
+            snapshot.validate_final_state()
+    finally:
+        recording = False
+    assert descriptors
+    for descriptor in descriptors:
+        with pytest.raises(OSError) as error:
+            real_fstat(descriptor)
+        assert error.value.errno == errno.EBADF
 
 
 def _final_fixture_cli_args(fixture: FinalFixture) -> list[str]:
