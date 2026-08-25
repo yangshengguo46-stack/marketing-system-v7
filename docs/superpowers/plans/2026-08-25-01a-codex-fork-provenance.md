@@ -31,6 +31,7 @@
 **Files:**
 
 - Verify only: `docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md`
+- Verify only: `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`
 - Verify only: `docs/architecture/2026-08-25-legacy-six-version-decision-memory.md`
 - Verify only: `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`
 - Verify only: `docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md`
@@ -48,6 +49,15 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 test "$(git rev-parse 58baf3b)" = "58baf3b21da4768d5f608264c3224660338ef517"
 git merge-base --is-ancestor 58baf3b21da4768d5f608264c3224660338ef517 HEAD
 git show HEAD:docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md >/dev/null
+git show HEAD:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md >/dev/null
+git show HEAD:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md \
+  | rg -F -x -- '- **批准标记：** `APPROVED_FOR_DECISION_TIP`' >/dev/null
+git show HEAD:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md \
+  | rg -F -x -- '- **状态：** 架构 v1.5 已批准；用户已确认方案 B 的书面规格，允许进入 Phase 0A decision tip' >/dev/null
+test "$(git show HEAD:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md \
+  | awk '/^- \[x\] / { count += 1 } END { print count + 0 }')" = "9"
+! git show HEAD:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md \
+  | rg -n 'PENDING_WRITTEN_REVIEW|^- \[ \] ' >/dev/null
 git show HEAD:docs/architecture/2026-08-25-legacy-six-version-decision-memory.md >/dev/null
 git show HEAD:docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md >/dev/null
 git show HEAD:docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md >/dev/null
@@ -229,7 +239,10 @@ apply_patch <<'PATCH'
 +
 +
 +def _valid_repository(
-+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    *,
++    domestic_model_approved: bool = True,
 +) -> tuple[Path, str, str, str]:
 +    repo = tmp_path / "fork"
 +    repo.mkdir()
@@ -254,7 +267,26 @@ apply_patch <<'PATCH'
 +    planning_base_sha = _commit(repo, "planning base")
 +    _write(repo / "docs/decision.md", "planning base\ndecision tip\n")
 +    for relative_path in verifier.REQUIRED_DECISION_PATHS:
-+        _write(repo / relative_path, f"decision input: {relative_path}\n")
++        content = f"decision input: {relative_path}\n"
++        if relative_path == verifier.DOMESTIC_MODEL_DECISION_PATH:
++            if domestic_model_approved:
++                content += f"{verifier.DOMESTIC_MODEL_APPROVED_STATUS_LINE}\n"
++                content += f"{verifier.DOMESTIC_MODEL_APPROVAL_MARKER}\n"
++                content += "## 10. 书面验收清单\n"
++                content += "\n".join(
++                    f"- [x] approved decision item {index}" for index in range(1, 10)
++                )
++                content += "\n## 11. 锁定源码依据\n"
++            else:
++                content += "- **状态：** 架构 v1.5 候选；等待书面复核\n"
++                content += f"{verifier.DOMESTIC_MODEL_APPROVAL_MARKER}\n"
++                content += f"{verifier.DOMESTIC_MODEL_PENDING_MARKER}\n"
++                content += "## 10. 书面验收清单\n"
++                content += "\n".join(
++                    f"- [ ] pending decision item {index}" for index in range(1, 10)
++                )
++                content += "\n## 11. 锁定源码依据\n"
++        _write(repo / relative_path, content)
 +    decision_tip_sha = _commit(repo, "decision tip")
 +
 +    _git(repo, "switch", "-c", "product", upstream_sha)
@@ -511,6 +543,20 @@ apply_patch <<'PATCH'
 +        verifier.verify_repository(repo, require_clean=False)
 +
 +
++def test_domestic_model_decision_must_be_fully_approved(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    repo, _, _, _ = _valid_repository(
++        tmp_path, monkeypatch, domestic_model_approved=False
++    )
++
++    with pytest.raises(
++        verifier.VerificationError,
++        match="domestic-model decision is not fully approved for the decision tip",
++    ):
++        verifier.verify_repository(repo, require_clean=False)
++
++
 +def test_decision_tip_must_descend_from_planning_base(
 +    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 +) -> None:
@@ -544,7 +590,7 @@ apply_patch <<'PATCH'
 PATCH
 ```
 
-Expected: `scripts/ai_ip/foundation/test_verify_upstream_lock.py` exists with the complete 16-case suite above; no implementation file exists yet.
+Expected: `scripts/ai_ip/foundation/test_verify_upstream_lock.py` exists with the complete 17-case suite above; no implementation file exists yet.
 
 - [ ] **Step 3：运行测试并确认 RED 来自缺失实现**
 
@@ -610,11 +656,25 @@ apply_patch <<'PATCH'
 +
 +REQUIRED_DECISION_PATHS = (
 +    "docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md",
++    "docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md",
 +    "docs/architecture/2026-08-25-legacy-six-version-decision-memory.md",
 +    "docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md",
 +    "docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md",
 +    "docs/superpowers/plans/2026-08-25-01a-codex-fork-provenance.md",
 +)
++DOMESTIC_MODEL_DECISION_PATH = (
++    "docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md"
++)
++DOMESTIC_MODEL_APPROVAL_MARKER = (
++    "- **批准标记：** `APPROVED_FOR_DECISION_TIP`"
++)
++DOMESTIC_MODEL_PENDING_MARKER = (
++    "- **批准标记：** `PENDING_WRITTEN_REVIEW`"
++)
++DOMESTIC_MODEL_APPROVED_STATUS_LINE = (
++    "- **状态：** 架构 v1.5 已批准；用户已确认方案 B 的书面规格，允许进入 Phase 0A decision tip"
++)
++DOMESTIC_MODEL_ACCEPTANCE_ITEM_COUNT = 9
 +
 +REQUIRED_PATHS = (
 +    ".ai-ip/AGENTS.override.md",
@@ -845,6 +905,42 @@ apply_patch <<'PATCH'
 +            decision_object.returncode == 0 and decision_object.stdout.strip() == b"blob",
 +            f"decision tip missing required file: {relative_path}",
 +        )
++    domestic_model_decision = _git_bytes(
++        repo, "show", f"{decision_tip}:{DOMESTIC_MODEL_DECISION_PATH}"
++    ).decode("utf-8")
++    domestic_model_lines = domestic_model_decision.splitlines()
++    _require(
++        domestic_model_lines.count(DOMESTIC_MODEL_APPROVAL_MARKER) == 1,
++        "domestic-model decision is not fully approved for the decision tip",
++    )
++    status_lines = [
++        line for line in domestic_model_lines if line.startswith("- **状态：** ")
++    ]
++    _require(
++        status_lines == [DOMESTIC_MODEL_APPROVED_STATUS_LINE],
++        "domestic-model decision is not fully approved for the decision tip",
++    )
++    _require(
++        DOMESTIC_MODEL_PENDING_MARKER not in domestic_model_lines,
++        "domestic-model decision is not fully approved for the decision tip",
++    )
++    try:
++        checklist_start = domestic_model_lines.index("## 10. 书面验收清单")
++        checklist_end = domestic_model_lines.index("## 11. 锁定源码依据")
++    except ValueError as error:
++        raise VerificationError(
++            "domestic-model decision is not fully approved for the decision tip"
++        ) from error
++    checklist_lines = [
++        line
++        for line in domestic_model_lines[checklist_start + 1 : checklist_end]
++        if re.fullmatch(r"- \[(?: |x|X)\] .+", line)
++    ]
++    _require(
++        len(checklist_lines) == DOMESTIC_MODEL_ACCEPTANCE_ITEM_COUNT
++        and all(line.startswith("- [x] ") for line in checklist_lines),
++        "domestic-model decision is not fully approved for the decision tip",
++    )
 +    source_import_parents = _git_text(
 +        repo, "show", "-s", "--format=%P", source_import
 +    ).split()
@@ -981,7 +1077,7 @@ Expected: the verifier contains no non-stdlib runtime dependency and performs no
 PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_verify_upstream_lock.py
 ```
 
-Expected: exit `0` and `16 passed`.
+Expected: exit `0` and `17 passed`.
 
 - [ ] **Step 6：检查 diff 并提交 verifier 边界**
 
@@ -1258,7 +1354,7 @@ fi
 git diff --check
 ```
 
-Expected: exit `0`, `16 passed`, no `rg` match, and no whitespace error.
+Expected: exit `0`, `17 passed`, no `rg` match, and no whitespace error.
 
 - [ ] **Step 12：提交来源治理边界**
 
@@ -1289,7 +1385,7 @@ test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
 
-Expected: verifier prints `PASS`, pytest prints `16 passed`, no path under `codex-rs/` differs from the pinned ancestor, and the worktree remains clean.
+Expected: verifier prints `PASS`, pytest prints `17 passed`, no path under `codex-rs/` differs from the pinned ancestor, and the worktree remains clean.
 
 ---
 

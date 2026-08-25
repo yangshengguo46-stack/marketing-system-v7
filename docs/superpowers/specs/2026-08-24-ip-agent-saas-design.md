@@ -2,12 +2,12 @@
 
 - **日期：** 2026-08-24
 - **最新修订：** 2026-08-25
-- **状态：** 产品范围 v1.1；架构规格 v1.4 已于 2026-08-25 获用户确认，批准进入实施计划。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
+- **状态：** 产品范围 v1.1；架构规格 v1.4 已于 2026-08-25 获用户确认，批准进入实施计划。v1.5 国产模型适配采用方案 B，当前等待用户对书面规格最终复核；复核前不得冻结 Phase 0A decision tip。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
 - **目标市场：** 中国大陆用户为主；首版重点服务抖音、小红书内容，保留服务海外 TikTok 业务题材的能力，但不直接接入 TikTok 发布接口
-- **模型与媒体供应商：** 火山引擎 / 火山方舟 / 豆包体系
+- **模型与媒体供应商：** 火山引擎 / 火山方舟 / 豆包体系作为首条真实运营目标；模型层按统一国产供应商能力合同渐进适配，第二供应商在实施时按能力矩阵选择
 - **正式客户端：** Windows 11；macOS 同期仅作内部使用和邀请测试
 
-本文件是当前唯一产品与架构规格。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。v1.3 DeerFlow/云 SaaS 旧计划已归档为历史输入；现役入口是 `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`。Plan 01 是 G0–G2 program gate，不是一份可直接执行的巨型计划；当前只可执行 master §9 列出的 executable child plan。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
+本文件是当前产品与总体架构规格；国产模型 provider 专项边界由 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md` 细化。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。v1.3 DeerFlow/云 SaaS 旧计划已归档为历史输入；现役入口是 `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`。Plan 01 是 G0–G2 program gate，不是一份可直接执行的巨型计划；当前只有 master §9 列出的 child plan 达到 execution depth，书面批准前仍保持 gated。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
 
 ## 1. 产品定义
 
@@ -136,6 +136,7 @@ Lead 在 Mission 已授权预算内可以连续试错，不逐次弹出付费确
 - 云端只承担身份、设备授权、创作点账本、能力资格、供应商路由、调用回执、临时媒体保全和用户主动开启的端到端加密备份。
 - 系统默认允许 Lead 联网研究、读写项目文件、运行脚本、使用 Shell、Skills/MCP、FFmpeg 和已授权媒体能力；普通风险以标注、建议和可撤销版本处理，不用大面积硬阻断阉割业务能力。
 - 模型、搜索、图片、视频和语音统一通过平台能力网关调用，不开放 BYOK。业务代码引用能力与质量档位，不写死具体模型 ID。
+- 模型适配使用显式 `ProviderCapabilityProfile` 和五级证据状态，不把供应商名称、compatibility name 或通用 provider 的默认值当作能力真相。统一合同保留各模型的差异化能力，不把业务压缩成所有供应商的最低能力交集。
 - 用户可一次授权 Mission 总预算和单次高成本上限；授权范围内 Lead 自主执行，不逐调用打断。
 - 本地客户产品、代理管理系统和平台内部后台是三个独立发布物。代理和平台后台只共享云端账号、账户、账本及调用回执，不拥有客户本地项目的读取通道。
 
@@ -156,7 +157,7 @@ Codex AI IP Business Server（一个本地产品进程）
     Account / Device / Entitlement / Credit Ledger / Pricing
     CapabilityOperation / ProviderReceipt / Encrypted Backup
                   ↓
- Responses / Search / Seedream / Seedance / TTS
+ Domestic Model Adapters / Search / Seedream / Seedance / TTS
 
 partner-management                 internal-console
 独立云端 Web 系统                    独立云端 Web 系统
@@ -207,11 +208,12 @@ AI IP 1.1 保留这套根 Thread/Turn/tool loop，并把“对代码任务负责
 - `codex-state`：统一管理本地数据库发现、迁移、恢复和索引；AI IP 业务表使用独立 `ai_ip_1.sqlite`，不硬塞进 Codex 现有 state 数据库。
 - 新增 `codex-ai-ip-domain`：保存纯业务对象、不变量、版本和依赖图。
 - 新增 `codex-ai-ip-runtime`：将 Mission、BusinessTask 与 Codex Thread/Turn/Skill/MCP/临时子 Agent 绑定，负责上下文装配和结构化产物提交。
-- 新增 `codex-ai-ip-provider`：连接平台能力网关，处理预算、幂等调用、签名回执和 Responses/Search/Seedream/Seedance/TTS 能力。
+- 新增 `codex-ai-ip-provider`：连接平台能力网关，处理显式能力 profile、预算、幂等调用、签名回执和 Responses/Search/Seedream/Seedance/TTS 能力；Mission、Artifact 和业务 Skill 不接触 provider/model 分支。
 - 新增 `codex-ai-ip-media`：管理镜头、下载、FFmpeg、字幕、质检和本地导出。
 - 新增 `codex-ai-ip-backup`：在设备端完成分块加密、清单、上传和恢复。
 - Web 界面可以使用仓内 React/TypeScript，但其静态产物由同一个 Business Server 提供；UI 不维护第二套业务状态或决策，因此不是外部套壳。
 - 客户构建必须接管 `codex-login`/`AuthManager`、`codex-model-provider-info`、`codex-model-provider` 和 `codex-api` 的真实调用链：删除 OpenAI/ChatGPT 登录与用户 provider override 心智，改用可刷新、可撤销的 DeviceRegistration 凭证；所有 Responses 调用只注册平台能力网关，开发测试旁路只能存在于不可发布的 internal build。
+- `codex-model-provider` 的生产能力声明必须来自平台签名目录，不能沿用通用 provider 对工具、图片、搜索或网络能力的乐观默认。原生 Responses 与协议翻译 adapter 都在同一 contract runner 下逐字段证明；无法等价表达的供应商能力明确为 unavailable。
 - 新增 Rust `ai-ip-host` 组件管理 Windows 启动、系统托盘、单实例、崩溃监督、签名更新和打开浏览器；它不保存业务状态、不调用模型，也不成为第二套后端。
 - `codex-core` 只承载真正通用的业务运行模式、上下文片段、Artifact event 和工具调度；账户、账本、Project 表和具体业务流程不能继续塞入已复杂的 core。
 
@@ -327,7 +329,7 @@ Lead 为内容维护可变 CreativeBrief，可包含核心问题、主体、变�
 
 ### 9.2 正式媒体能力
 
-- 火山方舟 Responses API：文本 Agent、工具调用和多模态理解。
+- 火山方舟 Responses API：首条真实文本 Agent、工具调用和多模态理解链路。
 - Seedream：角色、场景、商品参考、封面和故事板。
 - Seedance：AI 情景镜头、视频编辑和延展；所有结果必须质检。
 - 豆包标准 TTS：口播、旁白和角色声音。
@@ -615,21 +617,25 @@ Mission
 - 只有超出已授权预算、使用未授权真人肖像/声音、向项目外发送未授权敏感原件、永久删除或执行发布等不可逆动作由代码硬阻断。
 - 硬边界触发时，系统必须同时提供能继续推进业务的合法替代路径，例如匿名化、改成明确虚构、改用合成角色、降低成本档位或保存为未发布草稿；不能只说“无法完成”。
 
-## 15. Codex 本地产品、火山能力与云端薄控制面
+## 15. Codex 本地产品、国产模型能力与云端薄控制面
 
 ### 15.1 能力注册表
 
-云端后台保存能力、完整模型 ID、生命周期、账号可用状态、输入输出模态、参数范围、价格版本、质量版本、处理地域、供应商留存条款和回归测试结果。本地产品只缓存已签名、带有效期的能力目录，不依赖写死的模型名称。
+云端后台保存能力、完整模型 ID、不可变 deployment/revision、生命周期、账号可用状态、输入输出模态、参数范围、价格版本、质量版本、处理地域、供应商留存条款和回归测试结果。本地产品只缓存已签名、带有效期的 `ProviderCapabilityProfile`，不依赖写死的模型名称。稳定 `ProviderRouteIdentity` 精确包含 `capabilityKey`、`capabilityContractVersion`、`qualityTier`、`qualityProfileVersion`、`provider`、`model`、`deployment`、`immutableRevision`、`adapterVersion`、`executionProfileVersion`、`processingRegion`，按 typed RFC 8785 JCS 取 SHA-256 得到路径安全 `routeId`。所有 key 必须存在、字符串非空 NFC；只有无 deployment 维度时该字段可为 JSON null，`processingRegion` 未取得合同证据时不能进入 E2。每个 E0–E4、G4p、G4b、G7 和 release 证据另以 `ProviderRouteEvidenceRef` 绑定 routeId、stage、`testedForkSha`、stage-specific subject/dependency closure、runner/suite 和原始证据 digest；E3 closure 必须包含实际 Business Runtime、Lead instructions、生产 Skills、Prompt/context/schema，不能只看 adapter。跨 fork 只在相应阶段 closure 被证明未漂移时引用旧证据，否则重跑受影响阶段。低级状态不能覆盖高级状态，route identity、evidence ref 和状态只属于 registry/router/attempt/receipt，不写回 Mission 或 Artifact。
 
 新模型不能自动进入生产。必须先运行固定测试集，再由平台管理员切换。Retiring 模型提前迁移；Shutdown 模型禁止创建新任务。
 
+Plan 06 的 provider contract owner 在创建 routeId 后持续承担该路线的 qualification ownership。首发火山和后续第二路线都在所需 runner 实际存在后，由同一 owner 校验各阶段 closure 并签署 `ProviderRoutePreReleaseRecord`；Plan 14 只消费该记录并为目标 customer/default/advertised release 或自动切换签发最终 `ProviderRouteQualificationBundle`。内部/邀请 evidence canary 不等待 pre-release/final bundle，而由签名 `ProviderRouteCanaryAuthorization` 精确限制 routeId、目标阶段、允许用户/构建、预算、时限、地域和权利范围。
+
 ### 15.2 能力网关协议
 
-- Codex 文本模型通过平台提供的 Responses-compatible endpoint 调用；必须在真实火山账号上验证流式输出、工具调用、多模态输入、取消、用量和错误语义，不能因 URL 看似兼容就宣布可用。
+- Codex 文本模型通过平台提供的规范化 Responses 子集调用。火山作为首条真实运营目标；第二国产 Agent 候选优先评估 GLM，通义作为原生 Responses 协议对照。厂商顺序是评测优先级，不是硬编码业务路由。
+- 原生 Responses adapter 与 Chat Completions/厂商原生协议翻译 adapter 使用同一合同 runner，逐项验证流式文本、结构化 Artifact、工具闭环、多模态声明、取消、usage、实际 revision 和错误语义；不能因 URL 或 compatibility name 看似兼容就宣布可用。
 - customer build 的模型调用顺序固定为：用 DeviceRegistration 刷新短期设备令牌 → 创建/恢复 CloudCapabilityOperation 与 hold → `codex-model-provider` 经 `codex-ai-ip-provider` 调用平台 Responses endpoint → 持久化签名用量与结算回执。OpenAI/ChatGPT OAuth、环境 API key 和本地 provider override 在该构建中不可达。
 - Web Search、Seedream、Seedance 和 TTS 作为有版本的业务工具能力暴露；每次调用都绑定 CloudCapabilityOperation、价格版本和最终供应商回执。
 - 平台密钥只存在云端。任何本地 Skill、MCP、脚本或浏览器页面都不能取得供应商密钥。
-- 供应商切换只允许在相同业务能力已经通过质量回归时自动发生；价格超预算、权利范围改变或输出语义明显变化时必须返回 Lead 重新决策。
+- 首版不承诺跨供应商自动故障切换。未来只有 routeId 独立取得 E4、G4p、对应 G4b/G7，并由 Plan 14 签发最终 `ProviderRouteQualificationBundle`，且地域、权利、留存与预算范围不扩大时，才可进入自动切换候选集；`submission_unknown`、供应商任务已受理或部分流已交付等不可安全重放状态不得跨 provider 自动重试。价格超预算、权利范围改变或输出语义明显变化时必须返回 Lead 重新决策。
+- GLM Coding Plan 等限定个人或指定工具使用的订阅额度不能进入产品网关、转售或代理调用；正式适配必须使用允许产品集成的开放平台 API 或单独企业合同，并在能力 profile 中保存合同范围证据。
 
 ### 15.3 媒体结果保全与本地落盘
 
@@ -737,17 +743,18 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 ### 17.1 测试层级
 
 1. 锁定 Codex 原样提交并通过上游 Rust、App Server、Sandbox、Skill/MCP、Thread/Turn 和 Windows 基线测试。
-2. 火山 Responses 兼容与 Search、Seedream、Seedance、TTS 真实账号合同测试。
-3. 最小真实 Mission 纵切：一句业务目标和现有素材直接形成可发布 ContentPackage；不以完成固定表单或固定 Agent 流程代替结果。
-4. 五类冻结项目情景测试；直播公会必须按品牌/组织 IP 完成达人招募漏斗，不得答成老板个人 IP。
-5. 冻结方案后才揭晓的跨行业 unseen 测试；五类项目不得进入生产 Prompt、Skill 示例、检索金答案、few-shot 或关键词补丁。
-6. 运营、编导和目标行业从业者对普通通用 AI 对照版进行盲评。
-7. 全程委托、自主预算、动态跳步/回退/并行和不必要打断率测试。
-8. 媒体质量、连续性、局部重做、权利和最终导出测试。
-9. 本地所有权、独立产品配置根、SQLCipher/Blob 加密、断网编辑、Windows 重启、Business Server/Runtime 崩溃和 side-by-side 更新测试。
-10. 账本随机交易、能力幂等、供应商清单、最终账单和故障注入对账测试。
-11. 本地明文副本扫描、恶意网页/Origin/CSRF/WS 测试、云端最小留存、SupportBundle、提示词注入、设备隔离、端到端加密备份与恢复测试。
-12. 真实商家封闭发布和平台自营销测试。
+2. 文本模型统一合同测试：火山 Responses 完成首条真实账号 E1/E2 合同；第二国产 Agent 只在独立 G4p lane 被实例化时使用同一 runner 完成其 exact route 的 E1/E2，失败只让该 route 保持 disabled，不能继承火山结果或阻塞其他 child plan。
+3. 火山首发非文本工具合同测试：Search route 在 E1/E2 后复用 Plan 03 research/evidence suite 取得 E3；Seedream、Seedance、TTS 分别完成真实账号、临时结果保全、usage/成本和错误语义 E1/E2，再由 Plans 09–10 取得媒体 E3/E4。不能把这些能力要求强加给纯文本第二 Agent route。
+4. 最小真实 Mission 纵切：一句业务目标和现有素材直接形成可发布 ContentPackage；不以完成固定表单或固定 Agent 流程代替结果。
+5. 五类冻结项目情景测试；直播公会必须按品牌/组织 IP 完成达人招募漏斗，不得答成老板个人 IP。
+6. 冻结方案后才揭晓的跨行业 unseen 测试；五类项目不得进入生产 Prompt、Skill 示例、检索金答案、few-shot 或关键词补丁。
+7. 运营、编导和目标行业从业者对普通通用 AI 对照版进行盲评。
+8. 全程委托、自主预算、动态跳步/回退/并行和不必要打断率测试。
+9. 媒体质量、连续性、局部重做、权利和最终导出测试。
+10. 本地所有权、独立产品配置根、SQLCipher/Blob 加密、断网编辑、Windows 重启、Business Server/Runtime 崩溃和 side-by-side 更新测试。
+11. 账本随机交易、能力幂等、供应商清单、最终账单和故障注入对账测试。
+12. 本地明文副本扫描、恶意网页/Origin/CSRF/WS 测试、云端最小留存、SupportBundle、提示词注入、设备隔离、端到端加密备份与恢复测试。
+13. 真实商家封闭发布和平台自营销测试。
 
 ### 17.2 营销质量
 
@@ -786,6 +793,7 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 - 在本地事务前后、云端冻结前后、供应商接受前后、回调前后、结果保全后和下载中逐点杀进程；恢复后恰好一次用户结算，已完成产物不丢失。
 - Windows 安装、首次启动、浏览器关闭、重启、断网、更新失败、磁盘不足和只读恢复均完成真实演练。
 - customer build 不出现 OpenAI/ChatGPT 登录、环境 API key、用户 provider override 或读取既有 `~/.codex` 内容的路径；所有真实模型调用都能关联唯一 CloudCapabilityOperation。
+- 每个进入 customer/default/advertised release 或自动切换集的 routeId 都有完整 `ProviderRouteIdentity`、各阶段 `ProviderRouteEvidenceRef` 和目标发布物的最终 `ProviderRouteQualificationBundle`；内部预算下为取得 E3/E4 而运行的 evidence canary 使用独立签名 `ProviderRouteCanaryAuthorization`，不能冒充客户生产资格。未通过业务质量门的第二路线保持 disabled，不能因 E1/E2 通过进入默认路由或自动切换。
 - 产品根、全局 state/log、回收站和永久删除后执行明文与孤儿 Blob 扫描；客户正文只能存在于明确的加密项目存储、用户主动导出或任务级临时文件。
 - 来自任意外部网页、另一本地用户、错误 Host/Origin、缺失 CSRF 或未认证 WebSocket 的调用都不能操作 Business Server；正常用户无额外登录步骤且业务工具能力不受损。
 - `ai-ip-desktop`、`partner-management`、`internal-console` 分别构建、发布和回滚；N/N-1 API 测试保证任一云端后台升级不强迫桌面同步升级。
@@ -809,7 +817,7 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 子项目 0 分成两个连续轨道，避免再次演变成数月基础设施前置：
 
 - **0A 业务证明优先：** 锁定并原样验证 Codex。机械测试只用隔离、可销毁的 fake/录制 provider；G2 则在用户明确批准的披露、次数、Token、时长、留存和隔离账户硬预算内，用 coordinator 自有或已获授权的真实新案例执行一次原子 paired live provider 盲评。先以最小 business instructions、Mission、Artifact schema 和业务 Skills 完成一个非五类冻结案例的 ContentPackage；不以尚未完成 SQLCipher、Windows 安装器或云端账本为由延期。
-- **0B 业务能力先深化、再产品化：** 只有 0A 证明方向值得继续后，先完成 Mission/Lead/Artifact 内核与完整内容能力的冻结/unseen 真人盲评，并用隔离评测 broker 在目标火山模型上运行完整冻结集与新 unseen；通过业务护城河门禁后，才完成 Windows 11、localhost UI、产品专用配置根、SQLCipher/加密 Blob、崩溃重建、火山 Responses 产品网关适配及最小内部预算调用。产品适配后重跑 Plan 03 已授权回归集和一个新选 unseen，不重用已按留存协议删除的 Plan 01 私有案例，也不把已见过的案例叫 held-out。
+- **0B 业务能力先深化、再产品化：** 只有 0A 证明方向值得继续后，先完成 Mission/Lead/Artifact 内核与完整内容能力的冻结/unseen 真人盲评，并用隔离评测 broker 在目标火山模型上运行完整冻结集与新 unseen；通过业务护城河门禁后，才完成 Windows 11、localhost UI、产品专用配置根、SQLCipher/加密 Blob、崩溃重建、统一模型能力合同、火山 Responses 产品网关适配及最小内部预算调用。产品适配后重跑 Plan 03 已授权回归集和一个新选 unseen，不重用已按留存协议删除的 Plan 01 私有案例，也不把已见过的案例叫 held-out。第二国产 Agent adapter 在这一接缝稳定后作为非阻塞 onboarding proof lane 进入，失败只让该 route 保持 disabled，不倒逼修改业务对象或延期既有业务纵切。
 
 子项目 0 的最终通过仍要求“一句目标＋现有材料→可直接使用的 ContentPackage”；页面、线程、工具或账本能运行都不能替代该结果。
 
@@ -868,7 +876,7 @@ Seedream、Seedance、标准 TTS、故事板、镜头任务、可选低清预览
 
 ## 20. 规格确认补充条款（2026-08-25）
 
-本节记录初版规格完成后的实现边界。20.1 至 20.4 形成产品 v1.1 的方法与供应商护栏；20.5 固化前六轮审计中仍有效的经验。第 6、10、15、17、18、21、22 节形成架构 v1.4：以 Codex 本地 Business Server、Mission 全程委托和业务能力优先取代 v1.3 DeerFlow 云端 SaaS 假设。后续计划、代码和验收报告若与这些章节冲突，以 v1.4 为准并提交显式变更记录。
+本节记录初版规格完成后的实现边界。20.1 至 20.4 形成产品 v1.1 的方法与供应商护栏；20.5 固化前六轮审计中仍有效的经验。第 6、10、15、17、18、21、22 节形成架构 v1.4：以 Codex 本地 Business Server、Mission 全程委托和业务能力优先取代 v1.3 DeerFlow 云端 SaaS 假设。国产模型的 v1.5 候选边界由 `2026-08-25-domestic-model-adaptation-design.md` 定义，只有用户完成书面复核后才覆盖相应 v1.4 provider 条款。后续计划、代码和验收报告若与已批准版本冲突，以最新已批准规格为准并提交显式变更记录。
 
 ### 20.1 所有行业共用的内容世界扩展
 
@@ -897,7 +905,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 
 ### 20.4 真实供应商启用条件
 
-子项目 0 可以使用平台内部预算完成火山 Responses 和媒体能力 PoC，但任何客户创作点环境在开启真实供应商前，必须完成本地 CapabilityOperation 预写、云端 hold/operation/audit/outbox 同事务、供应商请求清单、最终账单逐笔匹配、零调用证明和杀进程演练。该条件只阻止未经计量的真实付费调用，不阻止使用 fake provider、录制回放或本地工具继续开发和评测业务能力。
+子项目 0 可以使用平台内部预算完成火山 Responses 和媒体能力 PoC，但任何客户创作点环境在开启真实供应商前，必须完成本地 CapabilityOperation 预写、云端 hold/operation/audit/outbox 同事务、供应商请求清单、最终账单逐笔匹配、零调用证明和杀进程演练。每个新增国产模型路线都必须生成独立 `ProviderRouteIdentity`/routeId 和分阶段 `ProviderRouteEvidenceRef`，不能继承火山的可达、业务质量或结算结果；受个人或指定工具使用限制的 Coding Plan 额度不得进入产品网关。该条件只阻止未经计量的真实付费调用，不阻止使用 fake provider、录制回放或本地工具继续开发和评测业务能力；第二供应商 onboarding 失败也不阻止已通过门禁的火山业务纵切继续。
 
 ### 20.5 前六轮系统审计护栏
 
@@ -932,8 +940,9 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 | G1 Codex 原样基线 | 在目标 Windows 11 和开发 macOS 上运行上游 build/test、App Server、Thread 恢复、Skill/MCP、Sandbox 与基本工具 | 原样失败被记录并与产品改动区分；关键运行路径可重复 |
 | G2 非编码业务可控性 | 使用最小 business instructions、结构化 Artifact 和临时 Skill 完成一个非五类固定案例的真实任务 | 能形成有业务价值的 ContentPackage，不退化成 coding assistant 或聊天答案 |
 | G3 localhost 产品入口 | App Server 同进程提供静态 UI、同源 RPC/stream、上传下载；验证随机端口、bootstrap 会话、Host/Origin/CSRF/WS 和单实例 fencing | 不依赖 Electron/云端 C 网关，状态和流可恢复；恶意网页和旧进程无权操作 |
-| G4a 火山内部能力兼容 | 用隔离内部凭证真实验证 Responses 流式、工具、多模态、取消、用量及 Search/Seedream/Seedance/TTS；客户设备令牌和客户点数保持关闭 | 目标模型与能力合同可用，完整冻结集加新 unseen 的业务质量不回归；只授权有预算上限的内部/邀请使用 |
-| G4b 火山客户激活 | 在 G4a 之上验证客户设备令牌、客户点数、产品网关和无旁路配置 | customer build 无 OpenAI 登录/BYOK 旁路；交易、回执、对账、幂等和供应商合同测试同时通过 |
+| G4a 首发国产模型内部能力兼容 | 以火山为首条目标，用隔离内部凭证经产品 provider seam 真实验证 Responses 流式、工具、多模态、取消、用量及 Search/Seedream/Seedance/TTS；客户设备令牌和客户点数保持关闭 | Plan 06 的 aggregate gate 只要求：文本 Agent routeId 独立取得 E1/E2，并在相同 product adapter/execution profile 上重跑完整冻结集加新 unseen 取得 E3；Search route 取得 E1/E2 并复用 Plan 03 research suite 取得 E3；Seedream、Seedance、TTS 分别取得 E1/E2。媒体 E3/E4 不属于 G4a，通过后由 Plans 09–10 独立取得。不得继承 evaluation-broker route 资格，只授权有预算上限的内部/邀请使用 |
+| G4b 首发模型客户激活 | 在 G4a 之上验证客户设备令牌、客户点数、产品网关和无旁路配置 | customer build 无 OpenAI 登录/BYOK 旁路；交易、回执、对账、幂等和供应商合同测试同时通过 |
+| G4p 第二国产模型可移植性 | 第二 `ProviderRouteIdentity` 使用相同 contract runner 独立完成机械和受预算约束的真实可达证明；GLM 为优先候选，最终按能力矩阵选择 | 该 routeId 分别取得 E1/E2 refs 和独立 G4p `ProviderRouteEvidenceRef`；后者证明业务域无 provider 分支与限制 profile 完整，不能由 E1/E2 推导。route 默认 disabled，失败不阻塞 G2/G6/G4a 或首发火山链，低阶证据不能冒充生产质量资格 |
 | G5 本地真相与迁移 | 产品专用根、SQLCipher、加密 Blob、rollout/StepReceipt、原子提交、断网、崩溃和 side-by-side 更新 | 无正文明文旁路，已保存产物不丢失；切换后新写入不被旧快照覆盖 |
 | G6 业务纵切与盲评 | 从一句目标到可发布 ContentPackage；普通 AI/Codex 对照、冻结案例、unseen 和真人盲评 | 业务结果达到第 17 节标准，流程完成率不能代替内容质量 |
 | G7 能力调用与账本 | fake/real provider 执行 `local operation/outbox → cloud hold/operation/audit/outbox → provider → receipt → settle` 并逐点杀进程 | 不重复扣点、不重复有效任务、不丢成本；不明费用进入对账 |
@@ -943,7 +952,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 ### 21.3 裁决规则
 
 - Codex 是已批准的底座，不因需要修改 core/app-server/protocol/state 就自动回退；“需要深改”本身不是失败。若某个原生机制妨碍业务能力，应先建立未改基线，再在 fork 中替换并用业务盲评、可靠性和成本证明收益。
-- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
+- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明首发模型内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G4p 是按 provider 绑定的非阻塞 onboarding proof：未通过时第二 route 保持 disabled，不阻止已通过 G4a/G4b 的首发火山链；只有要启用、宣传或自动切换到该 route 时，才必须继续通过对应业务、发布、账本与客户激活门。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
 - 只有来源/许可不可接受、目标 Windows 无法运行、平台模型完全无法适配，或 Codex 在真实业务盲评中经多轮最小改造仍显著劣于可用替代方案时，才重新发起底座决策；不得静默回到 DeerFlow。
 - 证明结果保存命令、日志、JUnit、Windows 环境、迁移前后校验和、故障注入记录、盲评原始表、供应商合同结果和对应阶段的来源证据：G0 保存源码依赖/许可/资产清单，Plan 14 对每个实际可分发物生成 SBOM。页面能打开、线程能聊天或单次漂亮样例不构成业务通过。
 
@@ -966,7 +975,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 - 不自动追踪、合并或部署 `upstream/main`。每次升级在独立 `integration/upstream-<sha>` 分支完成。
 - 同步前记录旧/新 SHA、Breaking Changes、安全与 Sandbox 修复、App Server 协议、state/migration、模型 provider、依赖变化和 patch 冲突；同步后更新 patch ledger。
 - 保留 merge ancestry。由于产品是深度 fork，可以选择完整合并、范围清晰的带出处 cherry-pick 或重新实现；每次必须说明为何选择该方式，不能无记录地复制代码。
-- 必跑上游原生测试、Windows 安装与更新、本地 Mission/Artifact、business protocol、state/migration、火山能力、媒体落盘、账本黄金链路、云端最小留存、固定案例/unseen 盲评和三个发布物独立回滚。
+- 必跑上游原生测试、Windows 安装与更新、本地 Mission/Artifact、business protocol、state/migration、统一模型合同、火山首发能力、所有启用的第二 provider route、媒体落盘、账本黄金链路、云端最小留存、固定案例/unseen 盲评和三个发布物独立回滚。
 - 每个同步必须人工审阅；不得自动合入产品主干或自动部署生产。已被上游覆盖或不再需要的 fork patch 必须删除。
 
 ### 22.3 运行期降级与回退
@@ -1008,6 +1017,10 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 - [Codex App Server 官方文档](https://learn.chatgpt.com/docs/app-server)
 - [Codex SDK 官方文档](https://learn.chatgpt.com/docs/codex-sdk)
 - [Codex as a platform](https://learn.chatgpt.com/blog/codex-as-a-platform)
+- [智谱 GLM 长程 Agent 模型说明](https://docs.bigmodel.cn/cn/guide/models/text/glm-5.2)
+- [Z.AI Chat Completion API](https://docs.z.ai/api-reference/llm/chat-completion)
+- [GLM Coding Plan 使用限制](https://docs.z.ai/legal-agreement/subscription-terms)
+- [阿里云百炼 Responses API](https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-responses)
 - [Apache RocketMQ Clients](https://github.com/apache/rocketmq-clients)
 - [Formance Ledger](https://github.com/formancehq/ledger)
 - [TigerBeetle](https://github.com/tigerbeetle/tigerbeetle)

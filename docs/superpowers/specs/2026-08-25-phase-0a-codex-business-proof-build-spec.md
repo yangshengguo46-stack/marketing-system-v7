@@ -8,6 +8,8 @@
 
 **Locked stack:** OpenAI Codex `4ef1d4b89bd419c976b04fefa0fd36844e898340`，Rust 1.95.0，Python 3.11，Bazel，macOS x86_64，Windows 11 x64。
 
+**国产模型决策边界：** 本规格同时受 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md` 约束。Phase 0A 的 `providerRole=targetVolcengine|approvedReference` 只是本次 paired proof 的证据角色：`targetVolcengine` 保留为首条火山业务链标签，不能进入 Mission/Artifact/Lead 领域模型。第二国产 provider 的 G4p 属于 Plan 06 接缝稳定后的非阻塞 onboarding proof，不进入本规格，也不得把下述 broker 改造成多供应商生产网关。
+
 ---
 
 未经最终业务门禁，不得开始 Plan 02。每个新行为依次执行 RED 测试、最小实现、GREEN 测试、提交；对 pinned 上游已有 seam 先做 characterization，若测试直接 GREEN 就保存 test-only 证据，不为追求形式主动制造失败。对 pinned 上游 `AGENTS.md` 要求的 `just fix` 例外：先完成 GREEN，再运行 fix；若 fix 产生语义改动，开启新 RED/GREEN 循环，若只是机械 lint 修正，按上游规则不重复同一测试。
@@ -36,7 +38,7 @@
 
 本计划只交付 G0–G2：来源锁定、Codex 原样基线、最小 Lead 的真实业务证明。
 
-本计划明确不做：Electron、外置 sidecar、localhost 产品 UI、客户数据库、SQLCipher、云端 IAM/积分/账本、媒体生成、发布、代理管理、内部后台、安装包或数字人。它们必须等待本计划写出 `PASS_TO_PHASE_0B`。
+本计划明确不做：Electron、外置 sidecar、localhost 产品 UI、客户数据库、SQLCipher、云端 IAM/积分/账本、生产能力网关、供应商注册表、第二国产 provider onboarding、媒体生成、发布、代理管理、内部后台、安装包或数字人。它们必须等待本计划写出 `PASS_TO_PHASE_0B`。
 
 运行不变量：
 
@@ -47,6 +49,7 @@
 5. 评测权限仅用于保护私有案例和凭证：材料可读、文件不可改、工具网络关闭；这不是客户产品的业务权限设计，也不得被复制成日后阉割业务能力的默认策略。
 6. 任一审批请求、用户输入请求、空 usage、未知线程请求、第三次顶层运行、重试、超时、仓库变脏、案例材料改变、目录污染、catalog 漂移、晚到子线程或无法绑定的费用，都使本次证明失效；不得“修日志”后判通过。
 7. 私有案例、材料、Prompt 展开值、模型输出、线程 ID、盲评映射和评审原文全部留在 Git 外；仓库只提交哈希、聚合分数、成本、结论和无正文证明。
+8. 生产 crate 和发布包不得依赖或包含 `codex-ai-ip-eval`、`live-pair`、盲评 rubric、stdin credential path 或 Phase 0A broker CLI。可以复用经独立 characterization 证明的低层 Responses/SSE codec，但不能复用评测状态机；本 broker 不增加 IAM、DeviceRegistration、账本、路由注册表、多租户、持久 ProviderAttempt、回调或供应商对账。
 
 上游 seam 决策：
 
@@ -59,6 +62,7 @@
 | Responses proxy | `codex-rs/responses-api-proxy/` | **直接修改**，抽出可复用 server、请求 gate 与脱敏 observer；现有 CLI 行为保持兼容 |
 | 业务 contracts | `codex-rs/ai-ip-domain/`, `codex-rs/ai-ip-runtime/` | **新增**，保持独立且可测试 |
 | 一次性证明器 | `codex-rs/ai-ip-eval/` | **新增**、`publish = false`，迁移后可删除 |
+| 生产模型能力网关 | `codex-rs/ai-ip-provider/` 与云端 Capability Gateway | **本阶段不创建**；Plan 06 才建立统一能力 profile、火山 G4a 和后续 route-scoped G4p |
 
 主要预期触达文件图（executable child plan 才拥有 exact file authority）：
 
@@ -79,7 +83,7 @@ codex-rs/ai-ip-eval/{Cargo.toml,BUILD.bazel,src/*,tests/fixtures/*}
 codex-rs/app-server/tests/suite/v2/{mod.rs,raw_response_subagents.rs,ai_ip_strict_output.rs}
 codex-rs/app-server/src/request_processors/thread_processor.rs  # 仅集成测试证实 race 时
 ai-ip-evals/rubrics/{content-package-blind-review.json,reviewer-submission.schema.json,BUILD.bazel}
-ai-ip-evals/schemas/{held-out-attestation.schema.json,cost-receipt.schema.json,frozen-run-context.schema.json,business-report.schema.json,attempt-index.schema.json,verification.schema.json,BUILD.bazel}
+ai-ip-evals/schemas/{held-out-attestation.schema.json,cost-receipt.schema.json,frozen-run-context.schema.json,business-report.schema.json,report-index.schema.json,attempt-index.schema.json,verification.schema.json,retention-closeout.schema.json,BUILD.bazel}
 docs/evidence/foundation/*
 docs/evidence/business-proof/README.md
 docs/evidence/business-proof/index.json
@@ -115,6 +119,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ai_ip_decision_tip="$(git rev-parse HEAD)"
 test "$(git cat-file -t "$ai_ip_decision_tip")" = commit
 git merge-base --is-ancestor 58baf3b "$ai_ip_decision_tip"
+git show "$ai_ip_decision_tip:docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md" >/dev/null
 git show "$ai_ip_decision_tip:docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md" >/dev/null
 git show "$ai_ip_decision_tip:docs/superpowers/plans/2026-08-25-01a-codex-fork-provenance.md" >/dev/null
 git worktree add ../ai-ip-phase-0a -b codex/phase-0a-business-proof 4ef1d4b89bd419c976b04fefa0fd36844e898340
@@ -682,6 +687,19 @@ pub struct Usage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ProviderRole {
+    TargetVolcengine,
+    ApprovedReference,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ProofBrokerCompatibilityName {
+    #[serde(rename = "OpenAI")]
+    OpenAi,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "executionMode", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum ModeEvidence {
     Replay {
@@ -692,7 +710,7 @@ pub enum ModeEvidence {
         provider_budget_evidence_sha256: String,
         approval_commitment: String,
         provider_endpoint_commitment: String,
-        provider_role: String,
+        provider_role: ProviderRole,
         arm_order_commitment: String,
         rate_card_sha256: String,
         billing_policy_sha256: String,
@@ -749,8 +767,7 @@ pub struct RunManifest {
     pub actual_model_revision: String,
     pub deployment_or_fingerprint_commitment: Option<String>,
     pub provider_label: String,
-    pub provider_role: String,
-    pub provider_compatibility_name: String,
+    pub provider_compatibility_name: ProofBrokerCompatibilityName,
     pub authorized_evaluation_run_cost_fen: u64,
     pub max_provider_request_attempts: u64,
     pub max_total_tokens: i64,
@@ -770,7 +787,8 @@ pub struct RunManifest {
 - 每个 raw completion 必须满足 `totalTokens = inputTokens + outputTokens`、`cachedInputTokens + cacheWriteInputTokens <= inputTokens`、`reasoningOutputTokens <= outputTokens`；任一负数或内部不一致在聚合前失败。
 - replay 只验证机械流程，manifest 明确 `executionMode: replay`，永远不能进入 G2 report；
 - replay 的 case boundary 规则由 test 自建临时 `.git` 目录；committed fixture 本身不被误当 live private case。
-- `ModeEvidence` 从类型上分开 replay/live。两个 live manifest 必须绑定同一 attestation、provider budget evidence、approval commitment、provider endpoint commitment、arm-order commitment、pair 总上限与 retention deadline；broker receipt 再绑定这些字段，后处理不得替换审批证据。Replay 只能绑定 committed fixture set SHA，不伪造审批/预算证据，`execution_mode` 与 enum variant 不一致即拒绝。
+- `ModeEvidence` 从类型上分开 replay/live。`ProviderRole` 只存在于 `Live` variant，并且只接受 `targetVolcengine` 或 `approvedReference`；顶层 `RunManifest` 不重复 providerRole，Replay 没有该字段且不能伪造一个 live token。两个 live manifest 必须绑定同一 attestation、provider budget evidence、approval commitment、provider endpoint commitment、arm-order commitment、pair 总上限与 retention deadline；broker receipt 通过 exact `frozenRunContextSha256`/`executionContextSha256` 绑定这些冻结字段，后处理必须重算 context hash，不能把间接绑定误写成 receipt 的重复明文字段，也不得替换审批证据。Replay 只能绑定 committed fixture set SHA，不伪造审批/预算证据，`execution_mode` 与 enum variant 不一致即拒绝。typed round-trip/JSON Schema 测试必须拒绝未知 role、Replay 携带 role、Live 缺 role、顶层重复 role 及内外不一致 fixture。
+- `ProofBrokerCompatibilityName` 是 pinned Codex proof broker 的单值 compatibility switch，序列化只能是精确 `"OpenAI"`；manifest 和 business-report Schema 使用 `const`/等价单值约束，测试拒绝 `"openai"`、真实供应商名和任意其他值，并证明它不能满足 `providerRole`、target evidence 或真实 `providerLabel`。
 - evaluator request canonicalization 集成测试直接比较两臂完整 typed `TurnStartParams`，证明 root text、Schema 和唯一 `additionalContext` entry 的 key/value/kind 逐字节相同，且 kind 为 `Untrusted`；不为静态常量写重复值测试，也不让 runtime crate 依赖 App Server protocol。
 - 真实 App Server → mock Responses 的集成测试放在 `codex-rs/app-server/tests/suite/v2/ai_ip_strict_output.rs`，复用该 package 已有 `TestAppServer`/mock Responses，解析实际 provider-visible request，断言 output format 使用 Work Package 4 转换后的 Schema 且 `strict=true`。app-server 只以 dev-dependency/Bazel test dependency 引入 `codex-ai-ip-runtime`；evaluator 的 Cargo/Bazel 单测只用 fake stdio server 验证客户端和 typed request deep equality，不偷偷依赖 target 目录里“恰好已构建”的 `codex` binary。
 - evaluator/App Server mock Responses 集成测试还必须解析实际 provider-visible request，断言 output format 使用 Work Package 4 转换后的 Schema 且 `strict=true`；Work Package 4 本身不伪造该集成层。
@@ -1217,7 +1235,7 @@ git commit -m "test: add atomic Codex AI IP paired runner"
 - 新建：`ai-ip-evals/rubrics/BUILD.bazel`
 - 新建：`ai-ip-evals/schemas/held-out-attestation.schema.json`
 - 新建：`ai-ip-evals/schemas/cost-receipt.schema.json`
-- 新建：`ai-ip-evals/schemas/{frozen-run-context.schema.json,business-report.schema.json,report-index.schema.json,attempt-index.schema.json,verification.schema.json}`
+- 新建：`ai-ip-evals/schemas/{frozen-run-context.schema.json,business-report.schema.json,report-index.schema.json,attempt-index.schema.json,verification.schema.json,retention-closeout.schema.json}`
 - 新建：`ai-ip-evals/schemas/BUILD.bazel`
 - 新建：`codex-rs/ai-ip-eval/src/{blind.rs,score.rs,cost.rs,commitment.rs,report.rs,verify.rs,publish.rs,checkpoint.rs,retention.rs}`
 - 修改：`codex-rs/ai-ip-eval/src/{lib.rs,main.rs,model.rs,eval_tests.rs}`
@@ -1295,7 +1313,7 @@ review bundle 不包含 condition、Home、Skill、耗时、token、成本、线
 
 `blind-pack` 的 live 模式使用 `--seed-dir`：从 OS CSPRNG 生成三个 32-byte seed，以 `create_new` 和 owner-only 权限（Unix `0600`；Windows 当前用户 ACL）写入 coordinator 目录；任一路径已存在即失败。Replay 不用 `--seed-dir`，而要求恰好三次重复的 `--replay-seed <value>`（Clap `Vec<String>`），三值必须显式不同；该参数在 live 拒绝。不得要求调用方预先提供一个不存在的 live seed 文件。两种模式的 `blind-pack` 还必须从 frozen context 解析 canonical privateRoot，做 containment/reparse/hardlink 检查后，以 owner-only 权限原子创建空的 `reviews/` drop-dir 并立即写入 inventory；已存在或非空即失败。操作员不得用另一个 shell 自己拼 `$PRIVATE_ROOT/reviews`。
 
-`codex-rs/ai-ip-eval/BUILD.bazel` 必须把 `tests/fixtures/**` 作为 test runfiles（`test_data_extra = glob(["tests/fixtures/**"])`），并同时保留 Skill、rubric 和 schema 三个 filegroup。`ai-ip-evals/rubrics/BUILD.bazel` 的 `filegroup(name = "rubrics", ...)` 与 `ai-ip-evals/schemas/BUILD.bazel` 的 `filegroup(name = "schemas", ...)` 都使用精确 `visibility = ["//codex-rs/ai-ip-eval:__pkg__"]`，不能依赖 Bazel 默认 private visibility。eval 测试的 `find_resource!` 参数精确使用 `tests/fixtures/<file>`、`../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md`、`../../ai-ip-evals/rubrics/<file>.json` 和 `../../ai-ip-evals/schemas/<file>.json`；禁止依赖 cwd。
+`codex-rs/ai-ip-eval/BUILD.bazel` 必须把 `tests/fixtures/**` 作为 test runfiles（`test_data_extra = glob(["tests/fixtures/**"])`），并同时保留 Skill、rubric 和 schema 三个 filegroup。`ai-ip-evals/rubrics/BUILD.bazel` 的 `filegroup(name = "rubrics", ...)` 与 `ai-ip-evals/schemas/BUILD.bazel` 的 `filegroup(name = "schemas", ...)` 都使用精确 `visibility = ["//codex-rs/ai-ip-eval:__pkg__"]`，不能依赖 Bazel 默认 private visibility；schemas filegroup 必须显式包含本 Work Package 列出的每个 schema，包括 `report-index.schema.json` 与 `retention-closeout.schema.json`。eval 测试的 `find_resource!` 参数精确使用 `tests/fixtures/<file>`、`../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md`、`../../ai-ip-evals/rubrics/<file>.json` 和 `../../ai-ip-evals/schemas/<file>.json`；禁止依赖 cwd。
 
 完成 blind/score 边界后先独立验证并提交，不把整个 Work Package 6 塞进一个超大 commit：
 
@@ -1315,7 +1333,7 @@ git commit -m "test: freeze AI IP blind review contract"
 
 #### Contract 4：实现成本 receipt
 
-先增加 cost/live-only 与四个发布 verifier 的失败测试：replay、空 cost receipt、未绑定 broker receipt、broker/App Server `(responseId, usage)` 多重集不等、过期/倒置 RFC3339 retention、未来 `signedAt`、attestation/budget/endpoint/order commitment 不一致均不能 PASS；`verify-report` 拒绝额外字段、secret/path/ID 和错误 proof root；`verify-live-proof` 拒绝 attempt/cost/mapping/usage/timeline 任一篡改；`publish-report` 拒绝错误 destination/CAS/bytes，但在私有 transaction marker 精确匹配时能从第一文件已写的 crash 恢复；`finalize-checkpoint` 拒绝手工 PASS、过期、candidate 后 shipping code 改动、origin 伪造和不同 bytes 半写，只允许相同 marker/HEAD/bytes 的恢复。写完这些具体 fixture/test 后先运行下列 focused 命令观察 RED；RED 必须是对应 subcommand/行为不存在或返回错误结果，不能只是测试未登记。随后实现、重跑 focused/Cargo/Bazel 全部 GREEN，最后再与实现一起提交；不得提交一个故意失败的 RED commit。
+先增加 cost/live-only 与四个发布 verifier 的失败测试：replay、空 cost receipt、未绑定 broker receipt、broker/App Server `(responseId, usage)` 多重集不等、过期/倒置 RFC3339 retention、未来 `signedAt`、attestation/budget/endpoint/order commitment 不一致均不能 PASS；`verify-report` 拒绝额外字段、secret/path/ID 和错误 proof root；`verify-live-proof` 拒绝 attempt/cost/mapping/usage/timeline 任一篡改；`publish-report` 拒绝错误 destination/CAS/bytes，但在私有 transaction marker 精确匹配时能从第一文件已写的 crash 恢复；`finalize-checkpoint` 拒绝手工 PASS、过期、candidate 后 shipping code 改动、origin 伪造和不同 bytes 半写，只允许相同 marker/HEAD/bytes 的恢复。shipping-boundary fixtures 还必须有三条恶意闭环：customer Cargo target 把 `codex-ai-ip-eval` 变成 normal dependency、release Bazel filegroup 纳入 evaluator binary/private fixtures、installer/package manifest 纳入 `codex-ai-ip-eval` 或 `codex-responses-api-proxy` 二进制；三者都先 RED 后被 verifier 拒绝。另有 positive control：customer target 只复用经 allowlist 的 `codex_responses_api_proxy` 低层 library codec/server API、未打包 proxy binary、stdin credential surface 或 evaluator state 时必须通过，防止隔离测试误伤可复用底层能力。写完这些具体 fixture/test 后先运行下列 focused 命令观察 RED；RED 必须是对应 subcommand/行为不存在或返回错误结果，不能只是测试未登记。随后实现、重跑 focused/Cargo/Bazel 全部 GREEN，最后再与实现一起提交；不得提交一个故意失败的 RED commit。
 
 ```bash
 just test -p codex-ai-ip-eval
@@ -1362,7 +1380,7 @@ let reported_cost_fen = u64::try_from(rounded / 1_000_000)?;
 
 若供应商账单提供更高的权威实际金额，receipt 使用更高值并保留两者；不能用估算值覆盖真实费用。provider attempt cap、deadline、每请求固定 `max_output_tokens` 与隔离账户/预付总额是事前硬闸；单臂 total-token/成本是事后 proof-validity ceiling，不伪称能在未知输入 usage 前阻止所有超额。两个 receipt 分别超过已批准单臂 validity ceiling、总和超过批准总上限，都使 proof INVALID；供应商隔离账户的总额必须不高于用户批准总额。
 
-`held-out-attestation.json` 在 candidate 冻结且新案例已选定后、任何 provider 请求前签署，因为审批必须针对实际案例与材料而非空白授权。字段至少为：`candidateSha`、`candidateFrozenAt`、`caseSelectedAt`、`caseSha256`、`sourceMaterialsSha256`、canonical `privateRoot`、case class 声明、`notOneOfFiveFrozenClasses=true`、材料授权范围、provider/model disclosure、`providerRole=targetVolcengine|approvedReference`、target provider/model evidence commitment、三名 reviewer disclosure、每人私有的 qualification class/经验签名（至少两人 `experiencedOperatorOrDirector=true`）、用户 `approvalId`、approved total/per-run fen、attempt/token/time ceilings、每请求 `maxOutputTokens`、`signedAt`、`retentionDeadline`、provider budget evidence SHA、rate-card SHA、billing-policy/source commitment、FX policy/evidence SHA、费率币种/生效时间。运行时用 `DateTime::parse_from_rfc3339`，要求 `candidateSha == forkSha`、`candidateFrozenAt < caseSelectedAt <= signedAt <= runStart < retentionDeadline`，并要求 case/material/privateRoot 与 frozen context、两臂 manifest 精确一致。`approvedReference` 可产生 Plan 01 业务方法信号，但不能被标成 target，也不能满足 Plan 03 的火山门或 G4a。
+`held-out-attestation.json` 在 candidate 冻结且新案例已选定后、任何 provider 请求前签署，因为审批必须针对实际案例与材料而非空白授权。字段至少为：`candidateSha`、`candidateFrozenAt`、`caseSelectedAt`、`caseSha256`、`sourceMaterialsSha256`、canonical `privateRoot`、case class 声明、`notOneOfFiveFrozenClasses=true`、材料授权范围、provider/model disclosure、`providerRole=targetVolcengine|approvedReference`、target provider/model evidence commitment、三名 reviewer disclosure、每人私有的 qualification class/经验签名（至少两人 `experiencedOperatorOrDirector=true`）、用户 `approvalId`、approved total/per-run fen、attempt/token/time ceilings、每请求 `maxOutputTokens`、`signedAt`、`retentionDeadline`、provider budget evidence SHA、rate-card SHA、billing-policy/source commitment、FX policy/evidence SHA、费率币种/生效时间。运行时用 `DateTime::parse_from_rfc3339`，要求 `candidateSha == forkSha`、`candidateFrozenAt < caseSelectedAt <= signedAt <= runStart < retentionDeadline`，并要求 case/material/privateRoot 与 frozen context、两臂 manifest 精确一致。`approvedReference` 可产生 Plan 01 业务方法信号，但不能被标成 target，也不能满足 Plan 03 的火山门或 G4a；本 schema 不表达第二国产 provider 的 G4p，后续 onboarding proof 必须使用产品能力合同另建证据，不能复用或改名本次结果。
 
 ### 6.4 只提交无正文 report
 
@@ -1382,7 +1400,7 @@ let reported_cost_fen = u64::try_from(rounded / 1_000_000)?;
   "modelLabel": "approved-sanitized-model-revision",
   "providerLabel": "approved-actual-provider",
   "providerCompatibilityName": "OpenAI",
-  "providerRole": "targetVolcengine|approvedReference",
+  "providerRole": "targetVolcengine",
   "frozenRunContextCommitment": "salted-hmac-sha256",
   "executionContextCommitment": "salted-hmac-sha256",
   "attemptIndexRootCommitment": "salted-hmac-sha256",
@@ -1467,7 +1485,7 @@ git commit -m "test: bind AI IP proof cost and report"
 
 #### Contract 6：实现 retention closeout，而不假装 SSD 安全擦除
 
-先增加并运行 destructive closeout 失败测试：拒绝仓库/Home/磁盘根/系统临时根或其祖先路径、marker/pair/proof mismatch、未到期且无新 approval、有 in-flight、删除失败和重复调用；失败 receipt 必须诚实且不得伪造物理安全擦除。
+先增加并运行 destructive closeout 失败测试：拒绝仓库/Home/磁盘根/系统临时根或其祖先路径、marker/pair/proof mismatch、未到期且无新 approval、有 in-flight、删除失败和重复调用；失败 receipt 必须诚实且不得伪造物理安全擦除。`retention-closeout.schema.json` 使用 exact allowlist/`additionalProperties=false` 和相互一致的 status/boolean 约束；negative fixtures 覆盖未知字段、缺 proof-root/inventory commitment、成功状态却 `proofCopiesDeleted=false`、伪造 `physicalSecureErasureGuaranteed=true` 与失败状态缺原因。
 
 ```bash
 just test -p codex-ai-ip-eval
@@ -1477,7 +1495,7 @@ just test -p codex-ai-ip-eval
 
 CLI 增加 `retention-closeout`。它只接受 attestation 中记录的 canonical private root，并要求目录内 pair marker 与 `pairId`/proof root 匹配；拒绝仓库、`/`、用户 Home、系统临时根本身及其任何祖先。到期自动授权逻辑删除；提前删除必须有新的 approval ID。
 
-每个 pair marker 必须在运行期间 append + `fsync` 出完整派生私有路径 inventory：`inputs/` 内的 attestation/budget/rate/billing/FX 运行专用原件、导入的 case/material proof copies、source-retention disclosure、Home/CODEX_HOME、rollout/state/cache/tmp、transcript/stderr、eval-tree、broker/attempt/cost、reviewer/mapping/reviews、seed/key/context 全部列出。closeout 重做 canonical containment，拒绝 symlink/junction/reparse/hardlink，并在删除前要求实际整树 exact 等于 inventory：有未列文件或漏列文件都失败，不做选择性删除。删除前确认无 App Server/broker/evaluator in-flight，然后删整个 canonical private root；删除后确认 root 不存在，在 root 外写无正文 `retention-closeout.json`：pair/report/proof-root commitments、inventory commitment、scheduled/deleted RFC3339、status、operator、`proofCopiesDeleted=true|false`、`externalUserSourcesRetained=true`、方法 `logical-filesystem-delete`、`physicalSecureErasureGuaranteed=false` 和失败原因。receipt 不含外部源路径；用户可读报告必须直说用户原始项目素材仍保留、删除完成仅指 proof copies 和运行专用证明输入，不能笼统宣称“全部私有源数据已删除”。
+每个 pair marker 必须在运行期间 append + `fsync` 出完整派生私有路径 inventory：`inputs/` 内的 attestation/budget/rate/billing/FX 运行专用原件、导入的 case/material proof copies、source-retention disclosure、Home/CODEX_HOME、rollout/state/cache/tmp、transcript/stderr、eval-tree、broker/attempt/cost、reviewer/mapping/reviews、seed/key/context 全部列出。closeout 重做 canonical containment，拒绝 symlink/junction/reparse/hardlink，并在删除前要求实际整树 exact 等于 inventory：有未列文件或漏列文件都失败，不做选择性删除。删除前确认无 App Server/broker/evaluator in-flight，然后删整个 canonical private root；删除后确认 root 不存在，在 root 外写通过 `retention-closeout.schema.json` exact 校验的无正文 `retention-closeout.json`：pair/report/proof-root commitments、inventory commitment、scheduled/deleted RFC3339、status、operator、`proofCopiesDeleted=true|false`、`externalUserSourcesRetained=true`、方法 `logical-filesystem-delete`、`physicalSecureErasureGuaranteed=false` 和失败原因。receipt 不含外部源路径；用户可读报告必须直说用户原始项目素材仍保留、删除完成仅指 proof copies 和运行专用证明输入，不能笼统宣称“全部私有源数据已删除”。
 
 无法安全删除时不得伪造成功：保留失败 receipt、立即通知用户并阻止任何 retention-complete 声明。公开 business report 初始为 `retentionStatus=pending` 并记录 closeout receipt 的预期相对位置；到期后只提交无正文 receipt。协调器台账必须在 deadline 前创建明确到期任务，但本计划不擅自创建外部自动化。
 
@@ -1931,6 +1949,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 - 校验 license/NOTICE/完整 upstream ancestry，并读取 `.ai-ip/upstream.lock.toml` 的 `origin_status`：本计划值为 `unconfigured` 时实际 `origin` 必须不存在，不能伪造产品 URL；`upstream` 仍必须是锁定官方 URL。未来配置 origin 时必须先更新 lock/发布证据；
 - 在 retention deadline 前由冻结 Rust `verify-live-proof` 从 private run root 重建 business report，重做整树 `(responseId,usage)`、cost/attempt/time/审批上限与 HMAC/Merkle 校验；不得只信公开 report 字段；
 - 校验仓库没有 case、材料、Prompt 展开值、package、mapping、review、private provider/broker/cost receipt、transcript、thread/response ID 或 secret pattern；唯一 receipt 例外是到期后按 schema allowlist 的无正文 `retention-closeout.json`，verifier 必须检查其字段和 proof-root commitment；
+- 做 shipping dependency/package negative scan：customer shipping target 的 normal dependency 不得包含 `codex-ai-ip-eval`；安装包与发布 filegroup 不得包含 evaluator/private fixtures、`codex-ai-ip-eval` 或 `codex-responses-api-proxy` 二进制和 stdin credential surface。`codex-ai-ip-eval` 保持 `publish=false`，proof-only broker/evaluator targets 保持 private/non-shipping，也不得实现生产 Capability Gateway、provider registry 或 route selection；经 positive control 证明的 `codex_responses_api_proxy` 低层 library codec/server API 可以复用，不能把整个上游 crate 误判为不可发布；
 - 校验 shipping Skill/runtime/Cargo/BUILD 不引用六版永久禁用的 `map-marketing-content-world`、`ContentRootLab` 或固定内容根选择器；
 - 校验主取证工作树 clean，独立 evaluator worktree 仍精确为 candidate/clean；并对 `candidate..HEAD` 做 exact partition：除已选 report/index bookkeeping、macOS/Windows native evidence、workspace disposition 和 checkpoint 前 patch-ledger evidence 外不允许任何路径，shipping code 必须与 candidate 字节一致。
 
@@ -2021,6 +2040,7 @@ Phase 0A 完成必须同时满足：
 - 没有 `codex exec` 评测桥、第二套编排器、固定 Agent DAG 或禁用子代理；
 - App Server typed `additionalContext`、原生 Skill discovery、root/descendant raw usage 和 broker gate 均有测试；
 - provider secret 从未进入 Codex 子进程、配置、环境导出、日志或 Git；
+- `codex-ai-ip-eval` 保持 `publish=false`，proof-only broker/evaluator targets 保持 private/non-shipping；三类恶意 dependency/filegroup/package fixture 证明 evaluator 与 proxy binary 不进入 customer 发布物，同时 positive control 证明允许复用低层 proxy library，且整个 Phase 0A surface 没有演化为 Capability Gateway/registry/router；
 - 一个真正新案例完成三人盲评和费用绑定；
 - 仓库只有无正文 report + verification，以及到期后允许的无正文 retention closeout receipt；
 - checkpoint 明确为 `PASS_TO_PHASE_0B` 才允许 Plan 02。
