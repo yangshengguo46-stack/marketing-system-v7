@@ -42,3 +42,18 @@ No entry may contain credentials, private cases, prompt or response bodies, revi
 - Gate disposition: Phase 0A.1 is complete; Phase 0A.2 is the only current executable child; G0/G1/G2 remain open and `PASS_TO_PHASE_0B=false`.
 - Upstream-sync risk: documentation-only. A change to the pinned source, Work Package 2 contract, matrix content, or reviewed plan tip invalidates this authorization and requires a new append-only entry and review.
 - Rollback: revert plan-review commits `b90d1297f406cd8dd85aa916d4ba7c68b630ed2b`, `05f29df8ac56d5953dd18f471fab2d04cf11a6d0`, and `cfa71ea4f88207595c5d0b4baed05dccf9361ef0` in that order after reviewing each diff; never rewrite imported ancestry. F-0003 separately owns any later tool or baseline-evidence rollback.
+
+## F-0002A — Repair and reauthorize native tool version probes
+
+- Owner: Phase 0A.2 Task 0 plan-probe repair under `superpowers:systematic-debugging` and `superpowers:subagent-driven-development`.
+- Upstream base: `4ef1d4b89bd419c976b04fefa0fd36844e898340`.
+- Repaired and independently reviewed plan tip: `1dc50293df13f1c5ae574d750ca6f26538441d7e`.
+- Historical relationship: F-0002 remains append-only history; F-0002A reauthorizes the same Phase 0A.2 child at the repaired plan tip and changes no product scope.
+- Classification: **modify** only the Phase 0A.2 plan's uv, cargo-nextest, and Bazelisk output-shape contracts; **preserve** all versions, SHAs, matrix content, runtime, `codex-rs/**`, provider rules, gates, and business contracts.
+- Root cause: exact locked artifacts produced `uv 0.11.3` plus build metadata, multi-line `cargo-nextest 0.9.103` metadata, and raw Bazelisk npm package version `v1.28.1`; the original assertions rejected those legitimate exact artifacts.
+- Repair: authorize first-nonempty-line prefix-plus-exact-version-token checks for uv/nextest and exact raw `v1.28.1` for Bazelisk, with Task 0 and Task 6 kept consistent.
+- Regression/review proof: all three repaired real-tool assertions exit 0; direct Bazel SHA remains `aa7e5fc364eaaba7f4f271dbf8c14172a5433f663cca6b130325df4b6569b3f0`; upstream-lock verifier and `codex-rs` zero-diff pass; independent task reviewer verdict is `Approved` with no Critical, Important, or Minor findings.
+- Provider disposition: `providerMode=not-run`; `paidProviderCost=0`; no API key located or read.
+- Gate disposition: Phase 0A.2 remains the only current executable child; `G0=OPEN`, `G1=OPEN`, `G2=OPEN`, `PASS_TO_PHASE_0B=false`.
+- Upstream-sync risk: any later change to version-output shapes or repaired plan tip requires another append-only entry and review.
+- Rollback: identify and review the later ledger-only commit through Git history, revert it, then revert plan repair commit `1dc50293df13f1c5ae574d750ca6f26538441d7e`; never rewrite imported ancestry.
