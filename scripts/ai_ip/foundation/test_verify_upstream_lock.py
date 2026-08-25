@@ -55,6 +55,7 @@ def _valid_repository(
     monkeypatch: pytest.MonkeyPatch,
     *,
     domestic_model_approved: bool = True,
+    decision_symlink_path: str | None = None,
 ) -> tuple[Path, str, str, str]:
     repo = tmp_path / "fork"
     repo.mkdir()
@@ -99,7 +100,30 @@ def _valid_repository(
                 )
                 content += "\n## 11. 锁定源码依据\n"
         _write(repo / relative_path, content)
-    decision_tip_sha = _commit(repo, "decision tip")
+    if decision_symlink_path is None:
+        decision_tip_sha = _commit(repo, "decision tip")
+    else:
+        _git(repo, "add", "-A")
+        link_payload = tmp_path / "decision-link-payload"
+        _write(link_payload, "missing-target")
+        link_blob = _git(repo, "hash-object", "-w", str(link_payload))
+        _git(
+            repo,
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            f"120000,{link_blob},{decision_symlink_path}",
+        )
+        _git(repo, "commit", "-m", "decision tip")
+        decision_tip_sha = _git(repo, "rev-parse", "HEAD")
+        _git(
+            repo,
+            "restore",
+            "--worktree",
+            "--source=HEAD",
+            "--",
+            decision_symlink_path,
+        )
 
     _git(repo, "switch", "-c", "product", upstream_sha)
     _git(
@@ -171,6 +195,52 @@ def test_valid_fork_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
         "originStatus": "unconfigured",
         "upstreamSha": upstream_sha,
     }
+
+
+def test_all_git_subprocesses_disable_lazy_fetch_and_optional_locks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = tmp_path / "fork"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    monkeypatch.setenv("AI_IP_TEST_SENTINEL", "preserved")
+    captured_environments: list[dict[str, str] | None] = []
+    run = subprocess.run
+
+    def capture_environment(
+        *args: object, **kwargs: object
+    ) -> subprocess.CompletedProcess:
+        captured_environments.append(kwargs.get("env"))
+        return run(*args, **kwargs)
+
+    monkeypatch.setattr(verifier.subprocess, "run", capture_environment)
+
+    completed = verifier._run_git(repo, "rev-parse", "--git-dir")
+
+    assert completed.returncode == 0
+    assert len(captured_environments) == 1
+    environment = captured_environments[0]
+    assert environment is not None
+    assert environment["AI_IP_TEST_SENTINEL"] == "preserved"
+    assert environment["GIT_NO_LAZY_FETCH"] == "1"
+    assert environment["GIT_OPTIONAL_LOCKS"] == "0"
+
+
+def test_decision_tip_required_input_rejects_git_symlink_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    symlink_path = verifier.REQUIRED_DECISION_PATHS[0]
+    repo, _, _, _ = _valid_repository(
+        tmp_path,
+        monkeypatch,
+        decision_symlink_path=symlink_path,
+    )
+
+    with pytest.raises(
+        verifier.VerificationError,
+        match="decision tip required file must be a single 100644 blob",
+    ):
+        verifier.verify_repository(repo)
 
 
 def test_dirty_tree_is_rejected(

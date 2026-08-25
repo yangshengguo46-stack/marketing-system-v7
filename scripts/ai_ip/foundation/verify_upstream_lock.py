@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -102,6 +103,11 @@ def _run_git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
         ["git", "-C", str(repo), *args],
         check=False,
         capture_output=True,
+        env={
+            **os.environ,
+            "GIT_NO_LAZY_FETCH": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+        },
     )
 
 
@@ -290,13 +296,26 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         "planning base is not an ancestor of decision tip",
     )
     for relative_path in REQUIRED_DECISION_PATHS:
-        decision_object = _run_git(
-            repo, "cat-file", "-t", f"{decision_tip}:{relative_path}"
-        )
+        decision_entries = [
+            entry
+            for entry in _git_bytes(
+                repo, "ls-tree", "-z", decision_tip, "--", relative_path
+            ).split(b"\0")
+            if entry
+        ]
         _require(
-            decision_object.returncode == 0
-            and decision_object.stdout.strip() == b"blob",
+            decision_entries,
             f"decision tip missing required file: {relative_path}",
+        )
+        metadata, separator, entry_path = decision_entries[0].partition(b"\t")
+        metadata_fields = metadata.split(b" ")
+        _require(
+            len(decision_entries) == 1
+            and separator == b"\t"
+            and metadata_fields[:2] == [b"100644", b"blob"]
+            and len(metadata_fields) == 3
+            and entry_path == relative_path.encode("utf-8"),
+            f"decision tip required file must be a single 100644 blob: {relative_path}",
         )
     domestic_model_decision = _git_bytes(
         repo, "show", f"{decision_tip}:{DOMESTIC_MODEL_DECISION_PATH}"
