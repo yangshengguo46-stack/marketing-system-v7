@@ -4,9 +4,9 @@
 
 **Goal:** Build the fail-closed native evidence tooling and record the unchanged pinned Codex macOS x86_64 focused baseline before any AI IP runtime or business code is modified.
 
-**Architecture:** Three standard-library Python 3.11 CLIs own command capture, public evidence verification, and frozen evaluator dispatch. A committed machine matrix is the only command authority; a detached tools worktree runs the recorder, a separate detached pinned-Codex worktree is tested, and the product worktree receives evidence. This child records macOS evidence and emits a two-ref transfer bundle; Windows 11 evidence is a later independent child on the exact same tools SHA and remains mandatory before G1 can pass.
+**Architecture:** Three standard-library Python 3.11 CLIs own command capture, public evidence verification, and frozen evaluator dispatch. A committed machine matrix is the only command authority; a detached tools worktree runs the recorder, a separate detached pinned-Codex worktree is tested, and the product worktree receives evidence. This child records macOS evidence and emits a two-ref transfer bundle; Windows 11 evidence is a later independent child on the exact same tools SHA. Approved isolated G2 work may proceed while Windows is pending, but G1 stays open and Work Package 9 cannot emit `PASS_TO_PHASE_0B` until Windows baseline and post evidence verify.
 
-**Tech Stack:** OpenAI Codex `4ef1d4b89bd419c976b04fefa0fd36844e898340`, AI IP fork base `97cf8fb49df8fa6ac742d1eadd3645a04447dfc3`, CPython 3.11.15, `uv` 0.11.3, Rust/Cargo 1.95.0, cargo-nextest 0.9.103, cargo-deny 0.20.2, pnpm 10.34.5, DotSlash 0.5.8, Bazelisk 1.28.1 with Bazel 9.0.0, Git, pytest 8.3.5.
+**Tech Stack:** OpenAI Codex `4ef1d4b89bd419c976b04fefa0fd36844e898340`, AI IP fork base `97cf8fb49df8fa6ac742d1eadd3645a04447dfc3`, CPython 3.11.15, `uv` 0.11.3, Rust/Cargo 1.95.0, cargo-nextest 0.9.103, cargo-deny 0.20.2, pnpm 10.34.5, DotSlash 0.5.8, Bazelisk npm package 1.28.1, Bazel 9.0.0, host Git 2.54.0, host just 1.58.0, host Node 26.4.0/npm 11.17.0, pytest 8.3.5.
 
 **Spec:** `docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md` Work Package 2, constrained by `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md` and `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`.
 
@@ -22,9 +22,9 @@
 - A nonzero required command is preserved as `BLOCKED_BASELINE`; no caller option may ignore, relabel, delete, or replace it.
 - Raw stdout/stderr are captured as bytes with incremental SHA-256. Evidence paths store safe relative basenames only; no API key, bearer, customer content, private case, prompt/response body, reviewer mapping, or generated media may enter evidence or Git.
 - `providerMode=not-run` and `paidProviderCost=0`; this child must not locate or read the API key the user authorized for later provider work.
-- Windows baseline may run later and in parallel with subsequent approved business work, but no G1 or `PASS_TO_PHASE_0B` claim is legal until verified native Windows 11 x64 baseline and post evidence exist.
+- Windows baseline may run later and in parallel with subsequent approved isolated G2 business work. G1 remains open, and no Work Package 9 final checkpoint or `PASS_TO_PHASE_0B` claim is legal until verified native Windows 11 x64 baseline and post evidence exist.
 - Run `just fmt` after code edits. Use the exact focused pytest commands below. Do not run direct `cargo test`. Ask the user before the complete workspace `just test`, then record `passed`, `failed`, or `not-run/declined` without treating it as a required matrix item.
-- Each implementation task ends with a coherent commit, a clean worktree, `python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"`, `git diff --check`, and `codex-rs` zero-diff verification against the pinned upstream.
+- Each implementation task receives the exact Task 0 environment, ends with a coherent commit and clean worktree, runs `"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"`, `git diff --check`, and the tracked `codex-rs` zero-diff check against pinned upstream.
 
 ---
 
@@ -45,7 +45,7 @@
 - All 13 filtered tests in the matrix exist at the pinned SHA and aggregate through `tests/all.rs`.
 - `source-assets` matches 151 pinned files; `ai-ip-assets/**` correctly matches zero before later work packages.
 - The eight `postOnly` entries deliberately reference future AI IP crates/tests/assets; baseline verification must require that they remain unexecuted, not pretend they exist.
-- Current host fact before implementation: Darwin x86_64 with 193 GiB free; Rust 1.95.0 is installed outside the ordinary PATH; cargo-nextest, cargo-deny, Bazel/Bazelisk, exact pnpm, exact uv, and exact DotSlash require an isolated bootstrap.
+- Current host fact before implementation: Darwin x86_64 with 193 GiB free. Rust 1.95.0 is installed outside the ordinary PATH. Git 2.54.0, just 1.58.0, Node 26.4.0, and npm 11.17.0 are characterized host prerequisites at fixed `/usr/local/bin` paths; any version/path drift is `BLOCKED_BOOTSTRAP`. CPython, uv, cargo-nextest, cargo-deny, Bazel/Bazelisk, pnpm, and DotSlash are provisioned beneath one task-specific external root.
 
 ## File Responsibility Map
 
@@ -64,6 +64,86 @@
 
 ---
 
+## Task 0: Provision the exact development/evidence tool root
+
+**Files:**
+- Create outside Git only: one task-specific tool root returned by `mktemp -d`.
+- Modify no repository file.
+
+**Interfaces:**
+- Produces coordinator-owned absolute variables `AI_IP_TOOL_ROOT`, `AI_IP_UV_ROOT`, `AI_IP_CARGO_ROOT`, `AI_IP_NPM_ROOT`, `AI_IP_DIRECT_BIN`, `AI_IP_RUST_BIN`, and `AI_IP_DEV_PATH`.
+- The coordinator passes those exact values to every later implementation task; no task assumes shell variables survive between agents or code fences.
+
+- [ ] **Step 1: Characterize mandatory host prerequisites and create the external root**
+
+```bash
+set -euo pipefail
+test "$(/usr/local/bin/git --version)" = "git version 2.54.0"
+test "$(/usr/local/bin/just --version)" = "just 1.58.0"
+test "$(/usr/local/bin/node --version)" = "v26.4.0"
+test "$(/usr/local/bin/npm --version)" = "11.17.0"
+test "$(/usr/local/bin/uv --version)" = "uv 0.11.11 (Homebrew 2026-05-06 x86_64-apple-darwin)"
+AI_IP_TOOL_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/ai-ip-native-tools.XXXXXX")"
+AI_IP_CARGO_ROOT="$AI_IP_TOOL_ROOT/cargo-tools"
+AI_IP_NPM_ROOT="$AI_IP_TOOL_ROOT/npm-tools"
+AI_IP_PYTHON_ROOT="$AI_IP_TOOL_ROOT/python-3.11.15"
+AI_IP_UV_ROOT="$AI_IP_TOOL_ROOT/uv-0.11.3"
+AI_IP_DIRECT_BIN="$AI_IP_TOOL_ROOT/direct-bin"
+AI_IP_RUST_BIN="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin"
+mkdir -p "$AI_IP_DIRECT_BIN"
+test "$("$AI_IP_RUST_BIN/rustc" --version | awk '{print $2}')" = 1.95.0
+```
+
+Expected: every prerequisite comparison is exact and the new root is outside the repository. Any mismatch stops as `BLOCKED_BOOTSTRAP`; do not silently substitute another host executable.
+
+- [ ] **Step 2: Install the isolated version-pinned tools**
+
+```bash
+set -euo pipefail
+UV_CACHE_DIR="$AI_IP_TOOL_ROOT/uv-cache" UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" \
+  /usr/local/bin/uv python install 3.11.15
+UV_CACHE_DIR="$AI_IP_TOOL_ROOT/uv-cache" UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" \
+  /usr/local/bin/uv venv --python 3.11.15 "$AI_IP_UV_ROOT"
+UV_CACHE_DIR="$AI_IP_TOOL_ROOT/uv-cache" UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" \
+  /usr/local/bin/uv pip install \
+  --python "$AI_IP_UV_ROOT/bin/python" uv==0.11.3
+CARGO_HOME="$AI_IP_TOOL_ROOT/cargo-install-cache" \
+  "$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-nextest --version 0.9.103
+CARGO_HOME="$AI_IP_TOOL_ROOT/cargo-install-cache" \
+  "$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-deny --version 0.20.2
+(cd "$AI_IP_TOOL_ROOT" && /usr/local/bin/npm install \
+  --prefix "$AI_IP_NPM_ROOT" --cache "$AI_IP_TOOL_ROOT/npm-cache" \
+  --ignore-scripts --package-lock=false \
+  pnpm@10.34.5 fb-dotslash@0.5.8 @bazel/bazelisk@1.28.1)
+curl -fsSLo "$AI_IP_DIRECT_BIN/bazel" \
+  https://releases.bazel.build/9.0.0/release/bazel-9.0.0-darwin-x86_64
+test "$(shasum -a 256 "$AI_IP_DIRECT_BIN/bazel" | awk '{print $1}')" = \
+  aa7e5fc364eaaba7f4f271dbf8c14172a5433f663cca6b130325df4b6569b3f0
+chmod 0755 "$AI_IP_DIRECT_BIN/bazel"
+```
+
+Expected: installation is confined to `AI_IP_TOOL_ROOT`. The Bazel 9.0.0 Darwin x86_64 binary must match the official release SHA-256 above before it becomes executable.
+
+- [ ] **Step 3: Freeze the process-local tool path and verify it**
+
+```bash
+set -euo pipefail
+AI_IP_DEV_PATH="$AI_IP_UV_ROOT/bin:$AI_IP_CARGO_ROOT/bin:$AI_IP_DIRECT_BIN:$AI_IP_NPM_ROOT/node_modules/.bin:$AI_IP_RUST_BIN:/usr/local/bin:/usr/bin:/bin"
+test "$(PATH="$AI_IP_DEV_PATH" python --version)" = "Python 3.11.15"
+test "$(PATH="$AI_IP_DEV_PATH" uv --version)" = "uv 0.11.3"
+test "$(PATH="$AI_IP_DEV_PATH" cargo --version | awk '{print $2}')" = 1.95.0
+test "$(PATH="$AI_IP_DEV_PATH" cargo nextest --version | awk '{print $2}')" = 0.9.103
+test "$(PATH="$AI_IP_DEV_PATH" cargo deny --version | awk '{print $2}')" = 0.20.2
+test "$(PATH="$AI_IP_DEV_PATH" pnpm --version)" = 10.34.5
+test "$(PATH="$AI_IP_DEV_PATH" dotslash --version | awk '{print $2}')" = 0.5.8
+test "$(PATH="$AI_IP_DEV_PATH" bazel --version | awk '{print $2}')" = 9.0.0
+test "$(node -p 'require(process.argv[1]).version' "$AI_IP_NPM_ROOT/node_modules/@bazel/bazelisk/package.json")" = 1.28.1
+```
+
+Expected: every isolated version is exact. Record all seven absolute variables in the coordinator's execution state and inject them into Tasks 1–8. Do not commit the root or its paths.
+
+---
+
 ### Task 1: Freeze the exact command matrix and source characterization
 
 **Files:**
@@ -78,7 +158,7 @@
 
 - [ ] **Step 1: Write the matrix contract test before the loader exists**
 
-Add tests that construct the complete expected ID/phase/platform map in Python, load the committed JSON through `capture_command.load_matrix`, and compare the whole normalized value rather than individual fields. Also assert the exact counts `30`, `22`, `8`, and macOS baseline applicable count `20`.
+Load the committed JSON through `capture_command.load_matrix` and assert the SHA-256 of its canonical whole-object bytes is exactly `53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8`. That reviewed semantic digest locks every ID, platform, phase, argv element, order, and expected exit without creating a second hand-maintained 30-command authority in Python. Also assert the complete ID set and exact counts `30`, `22`, `8`, and macOS baseline applicable count `20`.
 
 ```python
 EXPECTED_IDS = {
@@ -113,8 +193,11 @@ EXPECTED_IDS = {
     "post-bazel-rust",
     "post-bazel-assets",
 }
+EXPECTED_MATRIX_SHA256 = "53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8"
 
 def test_required_matrix_is_exact_and_frozen() -> None:
+    parsed = load_json_without_duplicate_keys(MATRIX_PATH)
+    assert hashlib.sha256(capture.canonical_json_bytes(parsed)).hexdigest() == EXPECTED_MATRIX_SHA256
     matrix = capture.load_matrix(MATRIX_PATH)
     assert {item.id for item in matrix.commands} == EXPECTED_IDS
     assert len(matrix.commands) == 30
@@ -135,7 +218,7 @@ Add parameterized rejection for duplicate JSON keys, duplicate command IDs, unkn
 Run:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider \
   scripts/ai_ip/foundation/test_capture_command.py::test_required_matrix_is_exact_and_frozen
 ```
@@ -234,7 +317,7 @@ def selection_argv(command: CommandSpec) -> tuple[str, ...] | None:
 Run:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider \
   scripts/ai_ip/foundation/test_capture_command.py \
   scripts/ai_ip/foundation/test_verify_upstream_lock.py
@@ -245,7 +328,7 @@ Expected: all tests pass; the upstream-lock suite remains `25 passed` within the
 - [ ] **Step 6: Format, verify scope, and commit the frozen matrix boundary**
 
 ```bash
-PATH="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:$PATH" just fmt
+PATH="$AI_IP_DEV_PATH" just fmt
 git diff --check
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
 git add -- \
@@ -254,7 +337,7 @@ git add -- \
   scripts/ai_ip/foundation/required_command_matrix.json
 git diff --cached --check
 git commit -m "test: freeze native Codex command matrix"
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
+"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
 
@@ -272,8 +355,8 @@ Expected: clean commit containing exactly the three paths above.
 - Consumes: `Matrix`, `CommandSpec`, `selection_argv`, and the committed matrix.
 - Produces CLI modes:
   - command capture: `capture_command.py --repo-root ABS --evidence-dir ABS --matrix ABS --name ID`
-  - bootstrap capture: `capture_command.py --repo-root ABS --evidence-dir ABS --matrix ABS --bootstrap-tools-json ABS`
-- Produces `<id>.{stdout,stderr}.log`, optional `<id>.selection.{stdout,stderr}.log`, `<id>.manifest.json`, `dependency-install.{stdout,stderr}.log`, and `host-bootstrap.manifest.json` using create-new semantics.
+  - bootstrap capture: `capture_command.py --repo-root ABS --evidence-dir ABS --matrix ABS --bootstrap`
+- Produces `<id>.{stdout,stderr}.log`, optional `<id>.selection.{stdout,stderr}.log`, `<id>.manifest.json`, `<tool-id>.version.{stdout,stderr}.log`, `dependency-install.{stdout,stderr}.log`, and `host-bootstrap.manifest.json` using create-new semantics.
 
 - [ ] **Step 1: Add recorder RED tests for the full failure surface**
 
@@ -359,10 +442,18 @@ def test_capture_never_overwrites_or_leaves_final_partial_files(tmp_path: Path) 
     assert (harness.evidence / "fixture-command.manifest.json").read_bytes() == first_manifest
     assert not list(harness.evidence.glob("*.tmp-*"))
 
+def test_concurrent_same_id_has_one_complete_winner_and_no_overwrite(tmp_path: Path) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    install_barrier_fixture(harness.repo)
+    first, second = run_two_captures_concurrently(harness, "fixture-command")
+    assert sorted([first.returncode, second.returncode]) == [0, 1]
+    verify_complete_fixture_evidence(harness.evidence, "fixture-command")
+    assert not list(harness.evidence.glob("*.tmp-*"))
+
 def test_bootstrap_manifest_requires_exact_tool_set_and_records_hashes(tmp_path: Path) -> None:
     harness = RecorderHarness.create(tmp_path)
-    tools_json = write_exact_fake_tools(tmp_path / "tools.json")
-    completed = harness.run("--bootstrap-tools-json", str(tools_json))
+    install_exact_fake_tool_path(harness, tmp_path / "tool-bin")
+    completed = harness.run("--bootstrap")
     manifest = load_strict_json(harness.evidence / "host-bootstrap.manifest.json")
     assert completed.returncode == 0
     assert set(manifest["tools"]) == REQUIRED_TOOL_NAMES
@@ -371,12 +462,12 @@ def test_bootstrap_manifest_requires_exact_tool_set_and_records_hashes(tmp_path:
     assert manifest["dependencyInstall"]["exitCode"] == 0
 ```
 
-Implement the five named fixture helpers above in the same test file; each accepts only its declared path/value inputs and returns the concrete paths or bytes asserted by the test. The binary-stream fixture writes at least 1 MiB plus non-UTF-8 bytes to each stream, exits `7`, and asserts byte count, SHA-256, and `exitCode == 7`. It must demonstrate with a patched reader that every `read()` request is at most 1 MiB, so the recorder never decodes or requests the complete streams at once. The bootstrap fixture supplies exact absolute executables for `python`, `uv`, `git`, `just`, `dotslash`, `rustc`, `cargo`, `cargo-nextest`, `cargo-deny`, `node`, `pnpm`, `bazelisk`, and `bazel` through an exact JSON object; separate tests remove one tool and add one unknown tool and require exit `1` before any final manifest exists.
+Implement the named fixture helpers above in the same test file; each accepts only its declared path/value inputs and returns the concrete paths or bytes asserted by the test. The binary-stream fixture writes at least 1 MiB plus non-UTF-8 bytes to each stream, exits `7`, and asserts byte count, SHA-256, and `exitCode == 7`. It must demonstrate with a patched reader that every `read()` request is at most 1 MiB, so the recorder never decodes or requests the complete streams at once. The bootstrap fixture constructs a PATH containing only exact fixture executables for `python`, `uv`, `git`, `just`, `dotslash`, `rustc`, `cargo`, `cargo-nextest`, `cargo-deny`, `node`, `pnpm`, `bazelisk`, and `bazel`; a separate test removes each required tool in turn and requires exit `1` before any final manifest exists. The real recorder resolves every tool itself from its sanitized PATH, canonicalizes the result, and accepts no caller-supplied tool path or tool JSON.
 
 - [ ] **Step 2: Run recorder RED**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_capture_command.py \
   -k 'capture or bootstrap or filtered'
 ```
@@ -403,9 +494,13 @@ def paths_are_disjoint(left: Path, right: Path) -> bool:
 
 Require `repo-root` to be a Git top-level with a clean index/worktree, 40-lowercase-hex HEAD, no shallow/promisor/replace/graft state, and exact lock files. Resolve the tools repository from the non-symlink `__file__`, require it clean, require `matrix` to be a tracked stage-0 `100644` blob inside that tools repository, and require tools tree, tested tree, and evidence tree to be pairwise disjoint.
 
-- [ ] **Step 4: Implement binary streaming and atomic create-new publication**
+Build child environments from a fixed allowlist: `PATH`, `HOME`, `TMPDIR`, `TMP`, `TEMP`, `SystemRoot`, `ComSpec`, `PATHEXT`, `CARGO_HOME`, `CARGO_TARGET_DIR`, `npm_config_store_dir`, `SSL_CERT_FILE`, and `SSL_CERT_DIR`. Drop every ambient `GIT_*`, credential/token/key variable, dynamic-library injection variable, Python path/home variable, and package-manager auth variable. Then add the fixed hardened Git variables from Global Constraints. Unit tests seed representative hostile values in every rejected family and prove none reaches a fixture child. Missing OS-required variables or any allowed variable containing NUL is a pre-execution error.
 
-Use `subprocess.Popen(..., stdout=PIPE, stderr=PIPE, shell=False, cwd=repo_root, env=sanitized_env)`. Each reader thread repeatedly reads `1024 * 1024` byte chunks, writes to a same-directory exclusive temporary file, updates `hashlib.sha256`, counts bytes, flushes, and `os.fsync`s. Join both readers, wait for the real process, fsync the evidence directory, then publish logs followed by the manifest. No final destination may pre-exist; on any exception remove only this invocation's temp files and never overwrite evidence.
+- [ ] **Step 4: Implement binary streaming and race-safe create-new publication**
+
+Use `subprocess.Popen(..., stdout=PIPE, stderr=PIPE, shell=False, cwd=repo_root, env=sanitized_env)`. Each reader thread repeatedly reads `1024 * 1024` byte chunks, writes to a same-directory exclusive temporary file, updates `hashlib.sha256`, counts bytes, flushes, and `os.fsync`s. Join both readers, wait for the real process, and fsync every temp file.
+
+Publish with `os.link(temp_path, final_path)`, which is an atomic same-filesystem create-new operation on native APFS and NTFS and fails when the final name already exists; never use check-then-`os.replace` on an unreserved destination. Link all logs in deterministic name order, fsync the evidence directory, link the manifest last as the commit marker, fsync again, then unlink the temp names. Track the final paths successfully linked by this invocation. On a handled exception before manifest publication, unlink only those tracked links after verifying their inode/file identity still equals the invocation's temp file, then fsync the directory. A process kill can leave manifest-less log links; the verifier reports their exact safe relative names as invalid orphan evidence and blocks recapture. Removal then requires a reviewed, explicit operator action against only those reported paths; the recorder never auto-deletes an earlier invocation. The normal exception and two-concurrent-invocation tests must leave exactly one complete winner and no overwrite.
 
 ```python
 @dataclass(frozen=True)
@@ -444,12 +539,12 @@ COMMAND_MANIFEST_KEYS = {
 
 `status` is `PASS` only when exit code equals expected; otherwise `BLOCKED_BASELINE`. `selection` is JSON null for ordinary commands or an exact object containing `argv`, `exitCode`, `testCount`, `stdout`, and `stderr`. Lock keys are exactly `cargoLockSha256`, `pnpmLockSha256`, and `bazelLockSha256`.
 
-`host-bootstrap.manifest.json` has exactly `schemaVersion`, `platform`, `architecture`, `osVersion`, `osBuild`, `testedGitSha`, `toolsGitSha`, `recorderSha256`, `matrixSha256`, `locks`, `tools`, `dependencyInstall`, `createdAt`, `administratorToken`. Each tool value contains only `versionArgv`, `versionExitCode`, `versionStdoutSha256`, `versionStderrSha256`, `executableSha256`, and `executableBytes`; no absolute executable path is stored. `dependencyInstall` contains exactly `argv`, `exitCode`, `startedAt`, `endedAt`, `stdout`, and `stderr`, where the two stream receipts use the same shape as command manifests. Bootstrap mode itself runs exactly `pnpm install --frozen-lockfile` with the supplied pinned `pnpm` executable, records both logs, and rejects a nonzero exit or any tested-tree dirt before publishing the manifest. `administratorToken` is JSON null on macOS.
+`host-bootstrap.manifest.json` has exactly `schemaVersion`, `platform`, `architecture`, `osVersion`, `osBuild`, `testedGitSha`, `toolsGitSha`, `recorderSha256`, `matrixSha256`, `locks`, `tools`, `dependencyInstall`, `createdAt`, `administratorToken`. Each tool value contains only `versionArgv`, `versionExitCode`, `versionStdout`, `versionStderr`, `executableSha256`, and `executableBytes`; both version streams use the full safe-relative `StreamReceipt` shape, and no absolute executable path is stored. For Bazelisk, `versionArgv` records the Node package-json probe for exact package version 1.28.1; Bazel is a separately hashed direct 9.0.0 binary. `dependencyInstall` contains exactly `argv`, `exitCode`, `startedAt`, `endedAt`, `stdout`, and `stderr`, where the two stream receipts use the same shape. Bootstrap mode itself resolves the exact tool set from sanitized PATH, runs every version probe and exactly `pnpm install --frozen-lockfile`, records all logs, and rejects a missing/duplicate-resolved tool, nonzero version/install exit, version mismatch, or tested-tree tracked/index dirt before publishing the manifest. `administratorToken` is JSON null on macOS.
 
 - [ ] **Step 6: Run recorder GREEN and all foundation Python tests**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider \
   scripts/ai_ip/foundation/test_capture_command.py \
   scripts/ai_ip/foundation/test_verify_upstream_lock.py
@@ -460,12 +555,12 @@ Expected: PASS, including byte-for-byte stream receipts and all fail-closed path
 - [ ] **Step 7: Format and commit the recorder**
 
 ```bash
-PATH="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:$PATH" just fmt
+PATH="$AI_IP_DEV_PATH" just fmt
 git diff --check
 git add -- scripts/ai_ip/foundation/capture_command.py scripts/ai_ip/foundation/test_capture_command.py
 git diff --cached --check
 git commit -m "test: add native Codex evidence recorder"
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
+"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
@@ -482,6 +577,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 - Consumes: committed matrix plus bootstrap/command/log evidence.
 - Produces baseline/post CLI: `verify_evidence.py --repo-root ABS --matrix ABS --evidence-root ABS --platform macos-x86_64|windows-11-x64 --mode baseline|post`.
 - Produces frozen final CLI with exactly: `--candidate-sha`, `--selected-report`, `--report-index`, `--business-verification-receipt`, `--verification-output` plus the public foundation inputs above.
+- Produces library API `scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]`; every verifier mode calls it before accepting evidence.
 - Writes final output with create-new semantics; baseline/post modes are read-only.
 
 - [ ] **Step 1: Write tamper and completeness RED tests**
@@ -510,7 +606,25 @@ def test_public_evidence_tampering_is_rejected(mutation: str, tmp_path: Path) ->
 
 Positive baseline requires the exact platform command set and permits recorded `BLOCKED_BASELINE` while returning an overall `blocked` disposition; it never silently passes a nonzero required item. Post mode requires all `baselineAndPost + postOnly` items and accepts a post failure only if its ID exactly exists in baseline disposition; any new or unknown post failure is rejected.
 
-- [ ] **Step 2: Write frozen final CLI RED tests**
+- [ ] **Step 2: Freeze forbidden-content scanner rules in RED tests**
+
+The scanner reads every regular evidence file in 1 MiB overlapping chunks and reports only safe relative file name plus rule ID, never matched bytes. Freeze these byte-regex rules exactly:
+
+```python
+FORBIDDEN_BYTE_RULES = {
+    "unix-user-home": rb"/(?:Users|home)/[^/\x00-\x20]+/",
+    "windows-user-home": rb"(?i:[A-Z]:\\Users\\[^\\\x00-\x20]+\\)",
+    "authorization-header": rb"(?i:authorization\s*:\s*[^\s]+)",
+    "bearer-token": rb"(?i:\bbearer\s+[A-Za-z0-9._~+/=-]{8,})",
+    "credential-assignment": rb"(?i:(?:api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*[^\s,;]+)",
+    "codex-auth-path": rb"(?i:(?:\.codex[/\\])?auth\.json)",
+    "private-json-body-key": rb'"(?:prompt|responseBody|caseBody|reviewerMapping|privateCase)"\s*:',
+}
+```
+
+Tests place each prohibited sample across both a single chunk and a chunk boundary and require its exact rule ID. Negative fixtures include `prompt engineering`, `response status`, the literal field name `prompt` without JSON-key syntax, ordinary SHA-256 strings, nextest test names, and safe relative paths. Further tests reject symlink, hardlink (`st_nlink != 1`), FIFO/device, path escape, and a file that changes size/inode while scanned.
+
+- [ ] **Step 3: Write frozen final CLI RED tests**
 
 Tests freeze exact CLI names and public fields. They must reject repeated/multiple selected reports, report/index/candidate mismatch, receipt fields outside the allowlist, any field or value containing an absolute path, bearer/key/secret, thread/response/reviewer ID, private root, prompt/output body, NaN/Infinity, or duplicate JSON key. `argparse` must reject `--private-run-root`, key, attestation, and ignore-failure options because they are not defined.
 
@@ -529,18 +643,18 @@ FINAL_OUTPUT_KEYS = {
 
 The Python verifier treats the Rust business verification receipt as opaque-but-exact public evidence: it verifies the allowlisted object, digests, candidate/report/index bindings, and copies only the fields above. It does not read a private run root, commitment key, case, transcript, provider secret, or review material and does not recompute business quality.
 
-- [ ] **Step 3: Run verifier RED**
+- [ ] **Step 4: Run verifier RED**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_verify_evidence.py
 ```
 
 Expected: FAIL with `ModuleNotFoundError` or missing verifier entry points, not fixture syntax failure.
 
-- [ ] **Step 4: Implement exact baseline/post verification**
+- [ ] **Step 5: Implement exact baseline/post verification and mandatory content scan**
 
-Implement strict duplicate-key JSON loading, whole-object key allowlists, lower-hex digest validation, RFC3339 UTC ordering, relative safe-basename checks, and chunked log/hash recomputation. Recompute matrix semantic SHA, recorder blob from `toolsGitSha:scripts/ai_ip/foundation/capture_command.py`, lock blobs from `testedGitSha`, and require every tools/tested SHA to be a real commit without replacements/grafts.
+Implement strict duplicate-key JSON loading, whole-object key allowlists, lower-hex digest validation, RFC3339 UTC ordering, relative safe-basename checks, chunked log/hash recomputation, and the exact Step 2 scanner. Recompute matrix semantic SHA, recorder blob from `toolsGitSha:scripts/ai_ip/foundation/capture_command.py`, lock blobs from `testedGitSha`, and require every tools/tested SHA to be a real commit without replacements/grafts. Every baseline, post, and final call scans all consumed public evidence first; any match or unsafe file returns exit `1` and prints only compact JSON `{schemaVersion:1,status:"INVALID_FORBIDDEN_CONTENT",matches:[{path,ruleId}]}` with safe sorted relative paths.
 
 The returned receipt is an immutable value:
 
@@ -562,14 +676,14 @@ class EvidenceDisposition:
 
 CLI stdout prints one compact JSON object containing this disposition and exits `0` only for `PASS`; it exits `2` for valid but blocked evidence and `1` for invalid evidence. No `--ignore-*` argument exists.
 
-- [ ] **Step 5: Implement create-new frozen final output**
+- [ ] **Step 6: Implement create-new frozen final output**
 
-Require all five final arguments together or none. Final mode first verifies macOS and Windows post evidence, then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository by exclusive temp/create-new + fsync + atomic publication. An existing output, symlink, path inside the repository, or parent reparse/symlink is rejected.
+Require all five final arguments together or none. Final mode first verifies macOS and Windows post evidence, then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository through a same-directory exclusive temp file, file `fsync`, atomic create-new `os.link`, directory `fsync`, and temp unlink. An existing output, symlink, path inside the repository, parent reparse/symlink, or filesystem without the required same-filesystem create-new primitive is rejected; no `os.replace` may target an unreserved final name.
 
-- [ ] **Step 6: Run verifier GREEN and regression tests**
+- [ ] **Step 7: Run verifier GREEN and regression tests**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider \
   scripts/ai_ip/foundation/test_verify_evidence.py \
   scripts/ai_ip/foundation/test_capture_command.py \
@@ -578,15 +692,15 @@ PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
 
 Expected: PASS.
 
-- [ ] **Step 7: Format and commit the public verifier**
+- [ ] **Step 8: Format and commit the public verifier**
 
 ```bash
-PATH="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:$PATH" just fmt
+PATH="$AI_IP_DEV_PATH" just fmt
 git diff --check
 git add -- scripts/ai_ip/foundation/verify_evidence.py scripts/ai_ip/foundation/test_verify_evidence.py
 git diff --cached --check
 git commit -m "test: verify native Codex evidence"
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
+"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
@@ -600,7 +714,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 - Create: `scripts/ai_ip/foundation/test_run_frozen_eval.py`
 
 **Interfaces:**
-- Consumes CLI: `run_frozen_eval.py --context ABS -- SUBCOMMAND [args...]`.
+- Consumes CLI: `run_frozen_eval.py --context ABS -- EVALUATOR_SUBCOMMAND`, optionally followed by evaluator argument tokens; the tokens after `--` are arguments to the frozen evaluator, never an executable path.
 - Consumes the frozen wrapper projection from the larger future context: root `schemaVersion`, `executionMode`, `candidateSha`, `privateRoot`, and `frozenEvaluator`; replay additionally requires `fixtureSetSha256`, while live additionally requires `providerRole`, `providerBudgetEvidenceSha256`, and `retentionDeadline`.
 - Produces no manifest and no business result; after verification it calls direct `os.execve` with one appended `--frozen-run-context ABS`.
 
@@ -615,7 +729,7 @@ Create one valid replay and one valid live context in temporary directories. Eac
         "relative_context", "context_symlink", "bad_schema_version", "bad_mode",
         "cross_mode_field", "wrong_platform", "windows_without_exe", "candidate_mismatch",
         "worktree_dirty", "worktree_head_drift", "binary_hash_drift", "binary_symlink",
-        "duplicate_frozen_context", "override_model", "override_provider", "override_case",
+        "alternate_executable_token", "duplicate_frozen_context", "override_model", "override_provider", "override_case",
         "override_binary", "override_budget", "override_timeout", "override_limit",
     ],
 )
@@ -627,12 +741,12 @@ def test_frozen_eval_rejects_authority_drift(mutation: str, tmp_path: Path) -> N
     assert not fixture.child_receipt.exists()
 ```
 
-`FrozenEvalFixture.create` initializes the detached clean evaluator worktree, writes the fully keyed replay/live context, and installs the executable child; `apply_mutation` performs one listed authority drift and rejects unknown names. The two positive tests spawn the wrapper as a subprocess and assert the child receives its original argv plus exactly one `--frozen-run-context` and the canonical absolute context path.
+`FrozenEvalFixture.create` initializes the detached clean evaluator worktree, writes the fully keyed replay/live context, and installs the executable child; `apply_mutation` performs one listed authority drift and rejects unknown names. The two positive tests invoke `-- replay-pair --fixture-safe-flag value` and assert the frozen child receives argv exactly `[frozen_binary, "replay-pair", "--fixture-safe-flag", "value", "--frozen-run-context", canonical_context]`. The alternate-executable test passes an absolute path, `./relative-program`, and a first token containing `/` or `\\`; all fail before either program executes.
 
 - [ ] **Step 2: Run wrapper RED**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_run_frozen_eval.py
 ```
 
@@ -667,12 +781,12 @@ def reject_authority_overrides(argv: tuple[str, ...]) -> None:
             raise FrozenEvalError(f"child argv overrides frozen authority: {name}")
 ```
 
-Require `privateRoot`, evaluator worktree, evaluator binary, and context to be absolute, canonical, pairwise correctly contained, regular non-symlink paths. Reject dirty evaluator Git state, wrong HEAD, shallow/replace/graft metadata, non-`.exe` Windows evaluator, and host mismatch. Call `os.execve(executable, final_argv, sanitized_environment)` directly; never use a shell.
+Require `privateRoot`, evaluator worktree, evaluator binary, and context to be absolute, canonical, pairwise correctly contained, regular non-symlink paths. Reject dirty evaluator Git state, wrong HEAD, shallow/replace/graft metadata, non-`.exe` Windows evaluator, and host mismatch. Require at least one token after `--`; its first token is a nonempty evaluator subcommand that does not start with `-`, contain `/` or `\\`, or equal `.`/`..`. Resolve the executable only from the current-platform pair in `frozenEvaluator`; caller argv never selects or replaces it. Call `os.execve(frozen_executable, [str(frozen_executable), *child_argv, "--frozen-run-context", str(context)], sanitized_environment)` directly; never use a shell.
 
 - [ ] **Step 4: Run wrapper GREEN and all foundation tests**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider \
   scripts/ai_ip/foundation/test_run_frozen_eval.py \
   scripts/ai_ip/foundation/test_verify_evidence.py \
@@ -684,12 +798,23 @@ Expected: PASS.
 
 - [ ] **Step 5: Write the evidence README**
 
-Document exact layout, immutable/create-new rule, three-tree isolation, the 30-entry matrix, `PASS` versus `BLOCKED_BASELINE`, tools/tested SHA binding, Windows two-ref transfer and later return child, forced staging of only ignored stdout/stderr logs, absence of provider calls, and rollback. State explicitly that manifest host labels plus bootstrap hashes establish a reproducible provenance claim but cannot cryptographically prove that an untrusted remote machine is physical Windows.
+Create `docs/evidence/foundation/README.md` with exactly these level-two sections in this order: `Claims and non-claims`, `Directory layout`, `Three-tree isolation`, `Capture and create-new rules`, `Verification and status`, `Windows transfer and return`, `Forbidden content`, `Retention`, and `Rollback`. Document the 30-entry matrix; `PASS` versus `BLOCKED_BASELINE`; tools/tested SHA binding; Windows two-ref transfer and later return child; forced staging of only ignored stdout/stderr logs; absence of provider calls; and rollback. State explicitly that manifest host labels plus bootstrap hashes establish a reproducible provenance claim but cannot cryptographically prove that an untrusted remote machine is physical Windows.
+
+Run:
+
+```bash
+test "$(rg -n '^## ' docs/evidence/foundation/README.md | sed 's/^[0-9]*:## //' | paste -sd '|' -)" = \
+  'Claims and non-claims|Directory layout|Three-tree isolation|Capture and create-new rules|Verification and status|Windows transfer and return|Forbidden content|Retention|Rollback'
+rg -F 'providerMode=not-run' docs/evidence/foundation/README.md
+rg -F 'paidProviderCost=0' docs/evidence/foundation/README.md
+```
+
+Expected: exact heading order and both no-provider claims are present.
 
 - [ ] **Step 6: Format and commit the frozen wrapper/documentation boundary**
 
 ```bash
-PATH="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:$PATH" just fmt
+PATH="$AI_IP_DEV_PATH" just fmt
 git diff --check
 git add -- \
   scripts/ai_ip/foundation/run_frozen_eval.py \
@@ -697,7 +822,7 @@ git add -- \
   docs/evidence/foundation/README.md
 git diff --cached --check
 git commit -m "test: freeze native evaluation evidence boundary"
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
+"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
@@ -718,10 +843,10 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 - [ ] **Step 1: Run the complete Python foundation suite on the candidate tools SHA**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_*.py
-PATH="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:$PATH" just fmt-check
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
+PATH="$AI_IP_DEV_PATH" just fmt-check
+"$AI_IP_UV_ROOT/bin/python" scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
 
@@ -769,87 +894,91 @@ Expected: bundle verifies and advertises exactly two named refs. Record the abso
 
 ---
 
-### Task 6: Bootstrap an isolated, exact macOS x86_64 toolchain and record it
+### Task 6: Record the exact macOS x86_64 toolchain and dependency install
 
 **Files:**
 - Generate: `docs/evidence/foundation/macos-x86_64/host-bootstrap.manifest.json`
-- Generate: tool-version stdout/stderr logs beneath the same directory.
+- Generate: 13 tool-version stdout/stderr log pairs and one dependency-install stdout/stderr pair beneath the same directory.
 
 **Interfaces:**
-- Consumes detached tools/tested worktrees and `AI_IP_TOOLS_SHA` from Task 5.
-- Produces exact tool paths JSON for recorder bootstrap mode and a validated host manifest.
+- Consumes the exact Task 0 environment, detached tools/tested worktrees, and `AI_IP_TOOLS_SHA` from Task 5.
+- Produces a validated host manifest without accepting caller-supplied tool paths.
 
-- [ ] **Step 1: Create a task-specific external tool root and expose Rust 1.95.0**
+Bootstrap mode resolves and records this exact table. “Exact output” compares the one trimmed nonempty stream byte-for-byte. “Version token” splits ASCII whitespace, requires the named prefix and exact token, and records all remaining build metadata without using it as authority. Bazelisk reads strict package JSON through the listed Node probe:
 
-Do not repurpose `$HOME`, `$CODEX_HOME`, or global PATH persistently. The already installed host `uv` is only a bootstrap downloader; capture its version and executable SHA in the execution handoff, but do not treat it as an evidence tool. All evidence CLIs and pytest run with the isolated CPython 3.11.15 and pinned `uv` 0.11.3 created below.
+| Tool ID | Version argv/probe | Validation |
+|---|---|---|
+| `python` | `python --version` | exact output `Python 3.11.15` |
+| `uv` | `uv --version` | exact output `uv 0.11.3` |
+| `git` | `git --version` | exact output `git version 2.54.0` |
+| `just` | `just --version` | exact output `just 1.58.0` |
+| `dotslash` | `dotslash --version` | exact output `DotSlash 0.5.8` |
+| `rustc` | `rustc --version` | prefix `rustc`, version token `1.95.0` |
+| `cargo` | `cargo --version` | prefix `cargo`, version token `1.95.0` |
+| `cargo-nextest` | `cargo nextest --version` | output contains exactly one standalone version token `0.9.103` and starts with `cargo-nextest` |
+| `cargo-deny` | `cargo deny --version` | prefix `cargo-deny`, version token `0.20.2` |
+| `node` | `node --version` | exact output `v26.4.0` |
+| `pnpm` | `pnpm --version` | exact output `10.34.5` |
+| `bazelisk` | `node -p require(resolved-package-json).version` | exact output `1.28.1` |
+| `bazel` | `bazel --version` | exact output `bazel 9.0.0` |
+
+- [ ] **Step 1: Revalidate the coordinator-provided tool root and immutable prerequisites**
+
+Do not repurpose `$HOME`, `$CODEX_HOME`, or global PATH persistently. The coordinator must inject the same exact Task 0 variables; this task does not recreate or upgrade tools after `AI_IP_TOOLS_SHA` is sealed.
 
 ```bash
 set -euo pipefail
-AI_IP_TOOL_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/ai-ip-native-tools.XXXXXX")"
-AI_IP_CARGO_ROOT="$AI_IP_TOOL_ROOT/cargo-tools"
-AI_IP_NPM_ROOT="$AI_IP_TOOL_ROOT/npm-tools"
-AI_IP_PYTHON_ROOT="$AI_IP_TOOL_ROOT/python-3.11.15"
-AI_IP_UV_ROOT="$AI_IP_TOOL_ROOT/uv-0.11.3"
-AI_IP_RUST_BIN="/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin"
-test "$("$AI_IP_RUST_BIN/rustc" --version | awk '{print $2}')" = 1.95.0
-UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" uv python install 3.11.15
-UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" uv venv --python 3.11.15 "$AI_IP_UV_ROOT"
-UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_ROOT" uv pip install \
-  --python "$AI_IP_UV_ROOT/bin/python" uv==0.11.3
-"$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-nextest --version 0.9.103
-"$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-deny --version 0.20.2
-npm install --prefix "$AI_IP_NPM_ROOT" --ignore-scripts --package-lock=false \
-  pnpm@10.34.5 fb-dotslash@0.5.8 @bazel/bazelisk@1.28.1
+: "${AI_IP_TOOL_ROOT:?Task 0 tool root required}"
+: "${AI_IP_UV_ROOT:?Task 0 uv root required}"
+: "${AI_IP_CARGO_ROOT:?Task 0 cargo root required}"
+: "${AI_IP_NPM_ROOT:?Task 0 npm root required}"
+: "${AI_IP_DIRECT_BIN:?Task 0 direct-bin required}"
+: "${AI_IP_RUST_BIN:?Task 0 Rust bin required}"
+: "${AI_IP_DEV_PATH:?Task 0 PATH required}"
+test -d "$AI_IP_TOOL_ROOT"
+test "$(shasum -a 256 "$AI_IP_DIRECT_BIN/bazel" | awk '{print $1}')" = \
+  aa7e5fc364eaaba7f4f271dbf8c14172a5433f663cca6b130325df4b6569b3f0
+test "$(/usr/local/bin/git --version)" = "git version 2.54.0"
+test "$(/usr/local/bin/just --version)" = "just 1.58.0"
+test "$(/usr/local/bin/node --version)" = "v26.4.0"
 ```
 
-Expected: exact versions install under the task-specific temporary root. Installation network/cache failures are bootstrap failures, not Codex baseline failures.
+Expected: all injected roots still exist and every host prerequisite is unchanged. A mismatch is `BLOCKED_BOOTSTRAP`, not a Codex baseline failure.
 
-- [ ] **Step 2: Set the process-local PATH and verify every exact version**
-
-```bash
-set -euo pipefail
-export PATH="$AI_IP_UV_ROOT/bin:$AI_IP_CARGO_ROOT/bin:$AI_IP_NPM_ROOT/node_modules/.bin:$AI_IP_RUST_BIN:/usr/local/bin:/usr/bin:/bin"
-test "$(uv --version)" = "uv 0.11.3"
-test "$(python --version)" = "Python 3.11.15"
-test "$(cargo --version | awk '{print $2}')" = 1.95.0
-test "$(rustc --version | awk '{print $2}')" = 1.95.0
-test "$(cargo nextest --version | awk '{print $2}')" = 0.9.103
-test "$(cargo deny --version | awk '{print $2}')" = 0.20.2
-test "$(pnpm --version)" = 10.34.5
-test "$(dotslash --version | awk '{print $2}')" = 0.5.8
-test "$(bazelisk version | sed -n 's/^Bazelisk version: v//p')" = 1.28.1
-test "$(bazel --version | awk '{print $2}')" = 9.0.0
-test "$(just --version | awk '{print $2}')" = 1.58.0
-test "$(node --version)" = v26.4.0
-```
-
-Every comparison above is exact. If any command prints a different value, stop as `BLOCKED_BOOTSTRAP`, retain only the external install logs, and amend this reviewed plan before changing a parser or accepted version.
-
-- [ ] **Step 3: Prepare isolated build roots without mutating the tested tree**
+- [ ] **Step 2: Prepare external build/cache roots and the new evidence directory**
 
 ```bash
 set -euo pipefail
-export CARGO_TARGET_DIR="$AI_IP_NATIVE_ROOT/cargo-target"
-export CARGO_HOME="$AI_IP_NATIVE_ROOT/cargo-home"
-mkdir -p "$CARGO_TARGET_DIR" "$CARGO_HOME"
+AI_IP_CARGO_TARGET_DIR="$AI_IP_NATIVE_ROOT/cargo-target"
+AI_IP_CARGO_HOME="$AI_IP_NATIVE_ROOT/cargo-home"
+AI_IP_PNPM_STORE_DIR="$AI_IP_NATIVE_ROOT/pnpm-store"
+AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64"
+mkdir -p "$AI_IP_CARGO_TARGET_DIR" "$AI_IP_CARGO_HOME" "$AI_IP_PNPM_STORE_DIR"
+test ! -e "$AI_IP_EVIDENCE_DIR"
+mkdir "$AI_IP_EVIDENCE_DIR"
+test "$(cd "$AI_IP_EVIDENCE_DIR" && pwd -P)" = "$AI_IP_EVIDENCE_DIR"
 test -z "$(git -C "$AI_IP_NATIVE_WORKTREE" status --porcelain=v1 --untracked-files=all)"
 ```
 
-Expected: build/cache roots are outside the tested tree and the tested tree is clean. The recorder's bootstrap mode owns the exact dependency-install command and its receipt in the next step.
+Expected: caches are outside the tested tree; the new evidence directory is an exact canonical directory in the product worktree; tested and tools trees are still clean.
 
-- [ ] **Step 4: Generate the exact bootstrap-tools JSON outside Git and capture the host manifest**
-
-The JSON contains exactly the absolute paths for the 13 tools listed in Task 2. Keep `CARGO_TARGET_DIR` and `CARGO_HOME` pointed at the two external directories from Step 3, then invoke:
+- [ ] **Step 3: Run bootstrap capture with an explicit sanitized environment**
 
 ```bash
+set -euo pipefail
+PATH="$AI_IP_DEV_PATH" \
+CARGO_TARGET_DIR="$AI_IP_CARGO_TARGET_DIR" \
+CARGO_HOME="$AI_IP_CARGO_HOME" \
+PNPM_HOME="$AI_IP_NPM_ROOT" \
+npm_config_store_dir="$AI_IP_PNPM_STORE_DIR" \
 "$AI_IP_UV_ROOT/bin/python" "$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/capture_command.py" \
   --repo-root "$AI_IP_NATIVE_WORKTREE" \
-  --evidence-dir "$PWD/docs/evidence/foundation/macos-x86_64" \
+  --evidence-dir "$AI_IP_EVIDENCE_DIR" \
   --matrix "$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/required_command_matrix.json" \
-  --bootstrap-tools-json "$AI_IP_BOOTSTRAP_TOOLS_JSON"
+  --bootstrap
 ```
 
-Expected: bootstrap mode runs and records exact `pnpm install --frozen-lockfile`, creates the manifest with `platform=macos`, `architecture=x86_64`, exact pinned/tool SHAs and exact tool hashes, and proves tested and tools trees remain clean.
+Expected: bootstrap mode records 13 version-log pairs, runs and records exact `pnpm install --frozen-lockfile` with its store redirected by environment to `AI_IP_PNPM_STORE_DIR`, creates the manifest with `platform=macos`, `architecture=x86_64`, exact pinned/tool SHAs and executable hashes, and proves tracked source/index cleanliness of tested and tools trees. Ignored pnpm installation outputs may exist in the tested tree and are explicitly not a claim of filesystem byte identity.
 
 ---
 
@@ -871,6 +1000,13 @@ set -euo pipefail
 AI_IP_RECORDER="$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/capture_command.py"
 AI_IP_COMMAND_MATRIX="$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/required_command_matrix.json"
 AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64"
+AI_IP_CARGO_TARGET_DIR="$AI_IP_NATIVE_ROOT/cargo-target"
+AI_IP_CARGO_HOME="$AI_IP_NATIVE_ROOT/cargo-home"
+AI_IP_PNPM_STORE_DIR="$AI_IP_NATIVE_ROOT/pnpm-store"
+export PATH="$AI_IP_DEV_PATH"
+export CARGO_TARGET_DIR="$AI_IP_CARGO_TARGET_DIR"
+export CARGO_HOME="$AI_IP_CARGO_HOME"
+export npm_config_store_dir="$AI_IP_PNPM_STORE_DIR"
 for AI_IP_MATRIX_ID in \
   fmt-check app-server-protocol app-server-transport state thread-store \
   app-server-process thread-start thread-resume executor-skill mcp-tool process-exec fs \
@@ -893,6 +1029,7 @@ The `|| true` is allowed only in this outer evidence-collection loop because the
 
 ```bash
 set +e
+set -C
 "$AI_IP_UV_ROOT/bin/python" "$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/verify_evidence.py" \
   --repo-root "$PWD" \
   --matrix "$AI_IP_COMMAND_MATRIX" \
@@ -900,6 +1037,7 @@ set +e
   --platform macos-x86_64 \
   --mode baseline > "$AI_IP_EVIDENCE_DIR/baseline-summary.json"
 AI_IP_BASELINE_VERIFY_EXIT=$?
+set +C
 set -e
 test "$AI_IP_BASELINE_VERIFY_EXIT" -eq 0 -o "$AI_IP_BASELINE_VERIFY_EXIT" -eq 2
 ```
@@ -910,9 +1048,50 @@ Expected: exit `0` and summary `status=PASS`, or exit `2` and exact nonempty `bl
 
 Ask the user explicitly whether to run the complete workspace `just test`. If approved, run the exact command from the detached tested tree with the isolated environment, stream stdout/stderr to an external task-specific directory, preserve its real exit code, and record `status` as `passed` or `failed` plus the computed 64-character lowercase SHA-256 strings of both logs in the ledger; the external logs are not committed and the frozen required matrix is unchanged. If declined, record `workspaceSuite={"status":"not-run/declined"}`. The required focused baseline result is independent and cannot be upgraded or downgraded by this optional suite.
 
+Approved path:
+
+```bash
+set -euo pipefail
+AI_IP_WORKSPACE_SUITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ai-ip-workspace-suite.XXXXXX")"
+set +e
+(cd "$AI_IP_NATIVE_WORKTREE" && \
+  PATH="$AI_IP_DEV_PATH" \
+  CARGO_TARGET_DIR="$AI_IP_CARGO_TARGET_DIR" \
+  CARGO_HOME="$AI_IP_CARGO_HOME" \
+  npm_config_store_dir="$AI_IP_PNPM_STORE_DIR" \
+  just test) \
+  > "$AI_IP_WORKSPACE_SUITE_DIR/workspace.stdout.log" \
+  2> "$AI_IP_WORKSPACE_SUITE_DIR/workspace.stderr.log"
+AI_IP_WORKSPACE_SUITE_EXIT=$?
+set -e
+AI_IP_WORKSPACE_STDOUT_SHA256="$(shasum -a 256 "$AI_IP_WORKSPACE_SUITE_DIR/workspace.stdout.log" | awk '{print $1}')"
+AI_IP_WORKSPACE_STDERR_SHA256="$(shasum -a 256 "$AI_IP_WORKSPACE_SUITE_DIR/workspace.stderr.log" | awk '{print $1}')"
+test "$AI_IP_WORKSPACE_SUITE_EXIT" -ge 0
+test "${#AI_IP_WORKSPACE_STDOUT_SHA256}" -eq 64
+test "${#AI_IP_WORKSPACE_STDERR_SHA256}" -eq 64
+```
+
+Record `status=passed` only when exit is `0`; otherwise record `status=failed` and the real nonzero exit. Record the external directory and both digests in the private execution handoff. The declined path runs no command and records the exact ledger value `workspaceSuite={"status":"not-run/declined"}`.
+
 - [ ] **Step 4: Scan evidence for forbidden content before staging**
 
-Run a byte-safe scanner that rejects the current user home path, `Authorization:`, `Bearer `, common API-key assignments, `.codex/auth.json`, prompt/response body field names, and any private case/reviewer marker. The scanner may print file names and rule IDs only, never matching secret bytes. Add its exact implementation and tests to `verify_evidence.py` before using it if the verifier does not already own this scan.
+Invoke the already committed Task 3 scanner over the complete evidence directory, including `baseline-summary.json`:
+
+```bash
+"$AI_IP_UV_ROOT/bin/python" - "$AI_IP_TOOLS_WORKTREE" "$AI_IP_EVIDENCE_DIR" <<'PY'
+import sys
+from pathlib import Path
+
+tools_root = Path(sys.argv[1])
+sys.path.insert(0, str(tools_root / "scripts" / "ai_ip" / "foundation"))
+from verify_evidence import scan_forbidden_evidence
+
+matches = scan_forbidden_evidence(Path(sys.argv[2]))
+for match in matches:
+    print(f"{match.path}\t{match.rule_id}")
+raise SystemExit(1 if matches else 0)
+PY
+```
 
 Expected: zero forbidden matches. A match blocks staging until the producing command/evidence path is corrected and recaptured; never edit logs in place.
 
@@ -926,7 +1105,7 @@ Expected: zero forbidden matches. A match blocks staging until the producing com
 
 **Interfaces:**
 - Consumes verified PASS macOS baseline.
-- Produces the Phase 0A.2 handoff and authorizes only the next business-contract child plus an independent Windows-baseline child; it does not close G0–G2.
+- Produces the Phase 0A.2 handoff and authorizes only a new executable child for Work Package 3's pure `ContentPackage` contract plus an independent Windows-baseline child. It does not authorize master-roadmap Plan 02 and does not close G0–G2.
 
 - [ ] **Step 1: Stop if the macOS required baseline is blocked**
 
@@ -934,7 +1113,23 @@ Read `baseline-summary.json`. If status is not `PASS`, append an F-0003 `BLOCKED
 
 - [ ] **Step 2: Append the F-0003 ledger entry for a passing baseline**
 
-The ledger entry records: owner and plan path; upstream/tested SHA; exact tools SHA; classification `preserve/add`; paths; business reason; Python test command; matrix SHA; macOS evidence summary SHA; bundle SHA; optional workspace suite disposition; `providerMode=not-run`; `paidProviderCost=0`; Windows `pending-independent-child`; sync risk; and rollback. It must say that only macOS focused baseline is proven and that G0/G1/G2/`PASS_TO_PHASE_0B` remain open.
+Append one section titled exactly `## F-0003 — Add native evidence tools and capture macOS baseline`. Use this exact field order and source contract:
+
+1. `Owner`: Phase 0A.2 plus this plan path.
+2. `Upstream base` and `testedGitSha`: both exact pinned SHA `4ef1d4b89bd419c976b04fefa0fd36844e898340`.
+3. `toolsGitSha`: the exact Task 5 40-lowercase-hex commit.
+4. `Classification`: **preserve** `codex-rs/**`; **add** the seven foundation tool/test/matrix files, evidence README, and macOS evidence.
+5. `Business reason`: establish trustworthy unchanged-Codex regression evidence before business implementation.
+6. `Regression proof`: the exact all-foundation pytest command from Task 5, matrix semantic SHA `53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8`, and the computed SHA-256 of `baseline-summary.json`.
+7. `Transfer proof`: computed bundle SHA-256 and its two exact advertised refs.
+8. `Workspace suite`: either `not-run/declined`, or `passed|failed` with real exit code and both computed external-log digests from Task 7 Step 3.
+9. `Provider`: literal `providerMode=not-run` and `paidProviderCost=0`.
+10. `Platform disposition`: literal `macOS focused baseline=PASS` and `WindowsBaseline=pending-independent-child`.
+11. `Open gates`: literal `G0=OPEN`, `G1=OPEN`, `G2=OPEN`, `PASS_TO_PHASE_0B=false`.
+12. `Upstream-sync risk`: changes to the matrix, recorder, lock files, or tool versions invalidate evidence and require recapture on both native platforms.
+13. `Rollback`: resolve the evidence commit by `git log --format='%H %s' -- docs/evidence/foundation/macos-x86_64`, review its exact diff, then revert only that commit and the tool commits in reverse order; never rewrite imported ancestry.
+
+Before staging, re-read the appended section and assert every referenced SHA is 40 lowercase hex for Git or 64 lowercase hex for SHA-256 and exactly matches its source file/command. The entry must say that only macOS focused baseline is proven and Work Package 2 remains open.
 
 - [ ] **Step 3: Stage exact evidence paths, including ignored logs, and commit**
 
@@ -957,13 +1152,14 @@ Expected: commit contains only verified macOS evidence and the ledger entry. No 
 
 ```bash
 set -euo pipefail
-python3 scripts/ai_ip/foundation/verify_upstream_lock.py --repo "$PWD"
-PYTHONDONTWRITEBYTECODE=1 uv run --python 3.11 --with pytest==8.3.5 \
+AI_IP_REPO_ROOT="$(pwd -P)"
+"$AI_IP_UV_ROOT/bin/python" "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/verify_upstream_lock.py" --repo "$AI_IP_REPO_ROOT"
+PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_*.py
-uv run --python 3.11 scripts/ai_ip/foundation/verify_evidence.py \
-  --repo-root "$PWD" \
-  --matrix scripts/ai_ip/foundation/required_command_matrix.json \
-  --evidence-root docs/evidence/foundation/macos-x86_64 \
+"$AI_IP_UV_ROOT/bin/python" "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/verify_evidence.py" \
+  --repo-root "$AI_IP_REPO_ROOT" \
+  --matrix "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/required_command_matrix.json" \
+  --evidence-root "$AI_IP_REPO_ROOT/docs/evidence/foundation/macos-x86_64" \
   --platform macos-x86_64 \
   --mode baseline
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
@@ -972,7 +1168,7 @@ git fsck --full --strict --no-reflogs --no-dangling
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
 
-Expected: both verifiers PASS, all Python tests pass, macOS baseline disposition is PASS, strict fsck succeeds, `codex-rs` is unchanged, and the worktree is clean.
+Expected: both verifiers PASS, all Python tests pass, macOS baseline disposition is PASS, strict fsck succeeds, tracked `codex-rs` has no diff from pinned upstream, and the worktree is clean.
 
 - [ ] **Step 5: Deliver the checkpoint handoff**
 
@@ -1008,6 +1204,6 @@ The plan intentionally splits the two native hosts at the business-approved seam
 
 ## Completion Boundary
 
-This plan completes only when the evidence tools are committed, the exact tools SHA is bundled with the pinned Codex ref, the unchanged native macOS x86_64 20-command baseline is verifiably PASS, evidence contains no prohibited content, `codex-rs` remains byte-identical to pinned upstream, and all reviews/machine checks pass.
+This plan completes only when the evidence tools are committed, the exact tools SHA is bundled with the pinned Codex ref, the unchanged native macOS x86_64 20-command baseline is verifiably PASS, evidence contains no prohibited content, tracked `codex-rs` is Git-tree-equivalent to pinned upstream, and all reviews/machine checks pass.
 
 The plan does not prove Windows, G0, G1, G2, business quality, a provider route, or a product. The next executable work may be (a) the first pure `ContentPackage` business-contract child after the macOS baseline PASS, and/or (b) the independent Windows baseline child on this exact tools SHA. Windows may not block approved isolated business work, but it remains mandatory before the final Phase 0A checkpoint.
