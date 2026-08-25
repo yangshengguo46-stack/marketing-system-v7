@@ -583,6 +583,8 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 - Consumes: committed matrix plus bootstrap/command/log evidence.
 - Produces baseline/post CLI: `verify_evidence.py --repo-root ABS --matrix ABS --evidence-root ABS --platform macos-x86_64|windows-11-x64 --mode baseline|post`, with optional create-new `--summary-output ABS` bound to the exact evidence root/mode summary name.
 - Produces frozen final CLI with exactly: `--candidate-sha`, `--selected-report`, `--report-index`, `--business-verification-receipt`, `--verification-output` plus the public foundation inputs above.
+- `--evidence-root` is mode-specific: baseline/post receives the exact leaf `<foundation>/<platform>/baseline` or `<foundation>/<platform>/post`.
+- Frozen-final receives the foundation directory itself, resolves `<foundation>/<platform>/post`, and pairs it only with the exact sibling `<foundation>/<platform>/baseline`.
 - Produces library API `scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]`; every verifier mode calls it before accepting evidence.
 - Writes final and requested summary output with create-new semantics; baseline/post verification is otherwise read-only.
 
@@ -610,7 +612,7 @@ def test_public_evidence_tampering_is_rejected(mutation: str, tmp_path: Path) ->
 
 `ValidEvidenceFixture.create` must invoke the real recorder for every required synthetic command and return a valid `VerificationRequest`; `apply_mutation` implements each listed mutation as one exact filesystem or JSON change and rejects unknown mutation names. Add a separate positive test asserting the full `EvidenceDisposition` value and verifier CLI exit codes `0`, `1`, and `2`.
 
-Positive baseline requires the exact platform command set and permits recorded `BLOCKED_BASELINE` while returning an overall `blocked` disposition; it never silently passes a nonzero required item. Post mode requires all `baselineAndPost + postOnly` items and accepts a post failure only if its ID exactly exists in baseline disposition; any new or unknown post failure is rejected.
+Positive baseline requires the exact platform command set and permits recorded `BLOCKED_BASELINE` while returning an overall `blocked` disposition; it never silently passes a nonzero required item. Post mode requires all `baselineAndPost + postOnly` items and accepts a post failure only if its ID exactly exists in the recomputed disposition from its exact sibling baseline leaf; a baseline summary copied into the Post root, any alternate pairing root, and any new or unknown post failure are rejected.
 
 - [ ] **Step 2: Freeze forbidden-content scanner rules in RED tests**
 
@@ -680,11 +682,11 @@ class EvidenceDisposition:
         return "PASS" if not self.blocked_ids else "BLOCKED_BASELINE"
 ```
 
-CLI stdout prints one compact canonical JSON object containing this disposition and exits `0` only for `PASS`; it exits `2` for valid but blocked evidence and `1` for invalid evidence. With `--summary-output`, baseline must target exactly `<evidence-root>/baseline-summary.json` and post exactly `<evidence-root>/post-summary.json`; the verifier publishes the same stdout bytes through `publish_create_new` only after all verification succeeds. Without that flag, an existing exact-name summary is allowed only when its canonical bytes equal the freshly recomputed disposition; an unexpected summary name or mismatched bytes is invalid. No `--ignore-*` argument exists.
+CLI stdout prints one compact canonical JSON object containing this disposition and exits `0` only for `PASS`; it exits `2` for valid but blocked evidence and `1` for invalid evidence. Baseline/post `--evidence-root` is the exact mode leaf, whose basename must equal `baseline` or `post` and whose parent basename must equal `--platform`. With `--summary-output`, baseline must target exactly `<foundation>/<platform>/baseline/baseline-summary.json` and post exactly `<foundation>/<platform>/post/post-summary.json`; the verifier publishes the same stdout bytes through `publish_create_new` only after all verification succeeds. Without that flag, an existing exact-name summary is allowed only when its canonical bytes equal the freshly recomputed disposition; an unexpected summary name or mismatched bytes is invalid. No `--ignore-*` argument exists.
 
 - [ ] **Step 6: Implement create-new frozen final output**
 
-Require all five final arguments together or none. Final mode first verifies macOS and Windows post evidence, then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository through a same-directory exclusive temp file, file `fsync`, and the same tested `publish_create_new` adapter used by the recorder. An existing output, symlink, path inside the repository, parent reparse/symlink, or unsupported filesystem is rejected; no `os.replace` may target an unreserved final name.
+Require all five final arguments together or none. Final mode interprets `--evidence-root` as the foundation directory, resolves only `<foundation>/macos-x86_64/post` and `<foundation>/windows-11-x64/post`, verifies each Post leaf against only its exact `../baseline` sibling, and rejects an absent, relocated, or implicit-migration baseline. It then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository through a same-directory exclusive temp file, file `fsync`, and the same tested `publish_create_new` adapter used by the recorder. An existing output, symlink, path inside the repository, parent reparse/symlink, or unsupported filesystem is rejected; no `os.replace` may target an unreserved final name.
 
 - [ ] **Step 7: Run verifier GREEN and regression tests**
 
@@ -903,7 +905,7 @@ Expected: bundle verifies and advertises exactly two named refs. Record the abso
 ### Task 6: Record the exact macOS x86_64 toolchain and dependency install
 
 **Files:**
-- Generate: `docs/evidence/foundation/macos-x86_64/host-bootstrap.manifest.json`
+- Generate: `docs/evidence/foundation/macos-x86_64/baseline/host-bootstrap.manifest.json`
 - Generate: 13 tool-version stdout/stderr log pairs and one dependency-install stdout/stderr pair beneath the same directory.
 
 **Interfaces:**
@@ -958,10 +960,10 @@ set -euo pipefail
 AI_IP_CARGO_TARGET_DIR="$AI_IP_NATIVE_ROOT/cargo-target"
 AI_IP_CARGO_HOME="$AI_IP_NATIVE_ROOT/cargo-home"
 AI_IP_PNPM_STORE_DIR="$AI_IP_NATIVE_ROOT/pnpm-store"
-AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64"
+AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64/baseline"
 mkdir -p "$AI_IP_CARGO_TARGET_DIR" "$AI_IP_CARGO_HOME" "$AI_IP_PNPM_STORE_DIR"
 test ! -e "$AI_IP_EVIDENCE_DIR"
-mkdir "$AI_IP_EVIDENCE_DIR"
+mkdir -p "$AI_IP_EVIDENCE_DIR"
 test "$(cd "$AI_IP_EVIDENCE_DIR" && pwd -P)" = "$AI_IP_EVIDENCE_DIR"
 test -z "$(git -C "$AI_IP_NATIVE_WORKTREE" status --porcelain=v1 --untracked-files=all)"
 ```
@@ -991,9 +993,9 @@ Expected: bootstrap mode records 13 version-log pairs, runs and records exact `p
 ### Task 7: Capture the unchanged macOS focused baseline
 
 **Files:**
-- Generate: `docs/evidence/foundation/macos-x86_64/<command-id>.manifest.json`
+- Generate: `docs/evidence/foundation/macos-x86_64/baseline/<command-id>.manifest.json`
 - Generate: matching stdout/stderr and selection logs.
-- Generate: `docs/evidence/foundation/macos-x86_64/baseline-summary.json`
+- Generate: `docs/evidence/foundation/macos-x86_64/baseline/baseline-summary.json`
 
 **Interfaces:**
 - Consumes exact matrix/tools/bootstrap from Tasks 1–6.
@@ -1005,7 +1007,7 @@ Expected: bootstrap mode records 13 version-log pairs, runs and records exact `p
 set -euo pipefail
 AI_IP_RECORDER="$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/capture_command.py"
 AI_IP_COMMAND_MATRIX="$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/required_command_matrix.json"
-AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64"
+AI_IP_EVIDENCE_DIR="$PWD/docs/evidence/foundation/macos-x86_64/baseline"
 AI_IP_CARGO_TARGET_DIR="$AI_IP_NATIVE_ROOT/cargo-target"
 AI_IP_CARGO_HOME="$AI_IP_NATIVE_ROOT/cargo-home"
 AI_IP_PNPM_STORE_DIR="$AI_IP_NATIVE_ROOT/pnpm-store"
@@ -1104,7 +1106,7 @@ Expected: zero forbidden matches. A match blocks staging until the producing com
 ### Task 8: Commit verified baseline evidence and close the child boundary
 
 **Files:**
-- Generate/track: `docs/evidence/foundation/macos-x86_64/**`
+- Generate/track: `docs/evidence/foundation/macos-x86_64/baseline/**`
 - Modify: `docs/architecture/codex-fork-patch-ledger.md`
 
 **Interfaces:**
@@ -1113,7 +1115,7 @@ Expected: zero forbidden matches. A match blocks staging until the producing com
 
 - [ ] **Step 1: Stop if the macOS required baseline is blocked**
 
-Read `baseline-summary.json`. If status is not `PASS`, append an F-0003 `BLOCKED_BASELINE` disposition listing exact IDs and no removal/ignore mechanism, commit the honest evidence only if review confirms it contains useful reproducible failures, and stop. Do not authorize Work Package 3 until the required macOS baseline is recaptured as PASS.
+Read `docs/evidence/foundation/macos-x86_64/baseline/baseline-summary.json`. If status is not `PASS`, append an F-0003 `BLOCKED_BASELINE` disposition listing exact IDs and no removal/ignore mechanism, commit the honest evidence only if review confirms it contains useful reproducible failures, and stop. Do not authorize Work Package 3 until the required macOS baseline is recaptured as PASS.
 
 - [ ] **Step 2: Append the F-0003 ledger entry for a passing baseline**
 
@@ -1124,7 +1126,7 @@ Append one section titled exactly `## F-0003 — Add native evidence tools and c
 3. `toolsGitSha`: the exact Task 5 40-lowercase-hex commit.
 4. `Classification`: **preserve** `codex-rs/**`; **add** the seven foundation tool/test/matrix files, evidence README, and macOS evidence.
 5. `Business reason`: establish trustworthy unchanged-Codex regression evidence before business implementation.
-6. `Regression proof`: the exact all-foundation pytest command from Task 5, matrix semantic SHA `04deab6a2769e491b2b313a1f3b44bd11b1ce7f58b5f6893b12e8cb8105c140a`, and the computed SHA-256 of `baseline-summary.json`.
+6. `Regression proof`: the exact all-foundation pytest command from Task 5, matrix semantic SHA `04deab6a2769e491b2b313a1f3b44bd11b1ce7f58b5f6893b12e8cb8105c140a`, and the computed SHA-256 of `docs/evidence/foundation/macos-x86_64/baseline/baseline-summary.json`.
 7. `Transfer proof`: computed bundle SHA-256 and its two exact advertised refs.
 8. `Workspace suite`: either `not-run/declined`, or `passed|failed` with real exit code and both computed external-log digests from Task 7 Step 3.
 9. `Provider`: literal `providerMode=not-run` and `paidProviderCost=0`.
@@ -1140,12 +1142,12 @@ Before staging, re-read the appended section and assert every referenced SHA is 
 ```bash
 set -euo pipefail
 git add -- \
-  docs/evidence/foundation/macos-x86_64/*.json \
+  docs/evidence/foundation/macos-x86_64/baseline/*.json \
   docs/architecture/codex-fork-patch-ledger.md
 git add -f -- \
-  docs/evidence/foundation/macos-x86_64/*.stdout.log \
-  docs/evidence/foundation/macos-x86_64/*.stderr.log
-test -z "$(git diff --cached --name-only | sed -n '\#^docs/evidence/foundation/macos-x86_64/#d;\#^docs/architecture/codex-fork-patch-ledger.md$#d;p')"
+  docs/evidence/foundation/macos-x86_64/baseline/*.stdout.log \
+  docs/evidence/foundation/macos-x86_64/baseline/*.stderr.log
+test -z "$(git diff --cached --name-only | sed -n '\#^docs/evidence/foundation/macos-x86_64/baseline/#d;\#^docs/architecture/codex-fork-patch-ledger.md$#d;p')"
 git diff --cached --check
 git commit -m "test: capture pinned Codex macOS baseline"
 ```
@@ -1157,13 +1159,26 @@ Expected: commit contains only verified macOS evidence and the ledger entry. No 
 ```bash
 set -euo pipefail
 AI_IP_REPO_ROOT="$(pwd -P)"
+AI_IP_PLAN="$AI_IP_REPO_ROOT/docs/superpowers/plans/2026-08-25-01b-codex-native-evidence-macos-baseline.md"
+AI_IP_TASK_3="$(sed -n '/^### Task 3:/,/^### Task 4:/p' "$AI_IP_PLAN")"
+AI_IP_TASKS_6_8="$(sed -n '/^### Task 6:/,/^## Work Package 2 Coverage/p' "$AI_IP_PLAN")"
+AI_IP_PLATFORM_ROOT='docs/evidence/foundation/macos-x86_64'
+printf '%s\n' "$AI_IP_TASK_3" | rg -n -F -- '`--evidence-root` is mode-specific: baseline/post receives the exact leaf `<foundation>/<platform>/baseline` or `<foundation>/<platform>/post`.'
+printf '%s\n' "$AI_IP_TASK_3" | rg -n -F -- 'Frozen-final receives the foundation directory itself, resolves `<foundation>/<platform>/post`, and pairs it only with the exact sibling `<foundation>/<platform>/baseline`.'
+! printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "AI_IP_EVIDENCE_DIR=\"\$PWD/$AI_IP_PLATFORM_ROOT\""
+! printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "--evidence-root \"\$AI_IP_REPO_ROOT/$AI_IP_PLATFORM_ROOT\""
+! printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -- "$AI_IP_PLATFORM_ROOT/(host-bootstrap\\.manifest\\.json|<command-id>\\.manifest\\.json|baseline-summary\\.json|\\*\\.(json|stdout\\.log|stderr\\.log))"
+printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "AI_IP_EVIDENCE_DIR=\"\$PWD/$AI_IP_PLATFORM_ROOT/baseline\""
+printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "--evidence-root \"\$AI_IP_REPO_ROOT/$AI_IP_PLATFORM_ROOT/baseline\""
+printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "$AI_IP_PLATFORM_ROOT/baseline/*.json"
+printf '%s\n' "$AI_IP_TASKS_6_8" | rg -n -F -- "\\#^$AI_IP_PLATFORM_ROOT/baseline/#d"
 "$AI_IP_UV_ROOT/bin/python" "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/verify_upstream_lock.py" --repo "$AI_IP_REPO_ROOT"
 PATH="$AI_IP_DEV_PATH" PYTHONDONTWRITEBYTECODE=1 uv run --python "$AI_IP_UV_ROOT/bin/python" --with pytest==8.3.5 \
   pytest -q -p no:cacheprovider scripts/ai_ip/foundation/test_*.py
 "$AI_IP_UV_ROOT/bin/python" "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/verify_evidence.py" \
   --repo-root "$AI_IP_REPO_ROOT" \
   --matrix "$AI_IP_REPO_ROOT/scripts/ai_ip/foundation/required_command_matrix.json" \
-  --evidence-root "$AI_IP_REPO_ROOT/docs/evidence/foundation/macos-x86_64" \
+  --evidence-root "$AI_IP_REPO_ROOT/docs/evidence/foundation/macos-x86_64/baseline" \
   --platform macos-x86_64 \
   --mode baseline
 test -z "$(git diff --name-only 4ef1d4b89bd419c976b04fefa0fd36844e898340..HEAD -- codex-rs)"
@@ -1203,6 +1218,8 @@ PASS_TO_PHASE_0B=false
 | Evidence commit and machine verification | Task 8 | macOS evidence only; G0/G1/G2 remain open |
 
 The plan intentionally splits the two native hosts at the business-approved seam in Work Package 2 Contract 4. It does not reinterpret a partial macOS result as completion of the parent Work Package.
+
+The future independent Windows evidence child uses the same `windows-11-x64/baseline/` and `windows-11-x64/post/` leaf convention; this plan does not claim that Windows evidence exists.
 
 ---
 

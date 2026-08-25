@@ -57,3 +57,18 @@ No entry may contain credentials, private cases, prompt or response bodies, revi
 - Gate disposition: Phase 0A.2 remains the only current executable child; `G0=OPEN`, `G1=OPEN`, `G2=OPEN`, `PASS_TO_PHASE_0B=false`.
 - Upstream-sync risk: any later change to version-output shapes or repaired plan tip requires another append-only entry and review.
 - Rollback: identify and review the later ledger-only commit through Git history, revert it, then revert plan repair commit `1dc50293df13f1c5ae574d750ca6f26538441d7e`; never rewrite imported ancestry.
+
+## F-0002B — Repair and reauthorize native evidence directory pairing
+
+- Owner: Phase 0A.2 Task 3 review repair under `superpowers:receiving-code-review` and `superpowers:subagent-driven-development`.
+- Upstream base: `4ef1d4b89bd419c976b04fefa0fd36844e898340`.
+- Repair base: reviewed Task 3 implementation tip `7d537e2c72edf3f76ec3d3f431e9117e507f7b7f`; this entry and the repaired plan land as one governance commit before verifier repair resumes.
+- Historical relationship: F-0002 and F-0002A remain byte-preserved append-only history; F-0002B reauthorizes only the same Phase 0A.2 evidence-layout contract and changes no product, provider, model, or business scope.
+- Classification: **modify** only the Phase 0A.2 plan's baseline/post evidence-directory layout; **preserve** the matrix, recorder, verifier implementation and tests, runtime, `codex-rs/**`, provider rules, gates, and business contracts.
+- Root cause: independent Task 3 review recomputed that trustworthy Post failure pairing requires an immutable sibling Baseline leaf, while Tasks 6–8 still created and verified the macOS Baseline directly at the platform root; the plan therefore lacked a unique baseline/post pairing authority.
+- Repair: baseline/post CLI receives an exact `<foundation>/<platform>/baseline|post` leaf, frozen-final receives the foundation directory and resolves each platform's `post` leaf, every Post pairs only with its exact sibling `baseline`, Tasks 6–8 use `docs/evidence/foundation/macos-x86_64/baseline/`, and the future independent Windows child uses the same leaf convention without claiming Windows evidence exists.
+- Regression/review proof: exact documentation RED exposed all missing contracts and platform-root executable paths; the same plan-fence assertions must pass after repair, together with upstream-lock verification, `git diff --check`, `codex-rs` zero diff, append-only ledger-prefix proof, and an independent review before implementation resumes.
+- Provider disposition: `providerMode=not-run`; `paidProviderCost=0`; no API key was located or read.
+- Gate disposition: Phase 0A.2 remains the only current executable child; `G0=OPEN`, `G1=OPEN`, `G2=OPEN`, `PASS_TO_PHASE_0B=false`.
+- Upstream-sync risk: evidence tooling or future plans that assume evidence lives directly at a platform root must migrate explicitly to the exact sibling-leaf contract and recapture affected native evidence; no implicit migration or copied Baseline summary is authorized.
+- Rollback: locate the cohesive F-0002B governance commit by this exact section title, review its two-document diff, and revert that commit only; never rewrite imported ancestry or remove F-0002/F-0002A history.
