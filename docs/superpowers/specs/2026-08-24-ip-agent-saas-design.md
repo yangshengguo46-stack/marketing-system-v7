@@ -2,12 +2,12 @@
 
 - **日期：** 2026-08-24
 - **最新修订：** 2026-08-25
-- **状态：** 产品范围 v1.1；架构规格 v1.4 待用户复核。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
+- **状态：** 产品范围 v1.1；架构规格 v1.4 已于 2026-08-25 获用户确认，批准进入实施计划。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
 - **目标市场：** 中国大陆用户为主；首版重点服务抖音、小红书内容，保留服务海外 TikTok 业务题材的能力，但不直接接入 TikTok 发布接口
 - **模型与媒体供应商：** 火山引擎 / 火山方舟 / 豆包体系
 - **正式客户端：** Windows 11；macOS 同期仅作内部使用和邀请测试
 
-本文件是当前唯一产品与架构规格。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。现有 `docs/superpowers/plans/` 及 v1.3 DeerFlow 采用方案只作为历史输入，在按本规格重写并经用户复核前不得执行。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
+本文件是当前唯一产品与架构规格。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。v1.3 DeerFlow/云 SaaS 旧计划已归档为历史输入；现役入口是 `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`。Plan 01 是 G0–G2 program gate，不是一份可直接执行的巨型计划；当前只可执行 master §9 列出的 executable child plan。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
 
 ## 1. 产品定义
 
@@ -162,6 +162,17 @@ partner-management                 internal-console
 独立云端 Web 系统                    独立云端 Web 系统
           └──────────→ 同一云端商业与能力控制面 ←──────────┘
 ```
+
+#### 6.2.1 Codex harness 的工作方式与产品映射
+
+Codex harness 是一个持续的回合式执行内核，不是预先画死的多 Agent DAG。一个根 Thread 承载长期上下文，一个 Turn 接收当前目标和状态；Lead 在每一轮判断下一步，可以直接生成结果，也可以调用 Shell、文件、浏览器、Skill、MCP 或创建有边界的临时子 Thread。工具结果和子 Thread 回执成为新的 Item 回到根 Thread，Lead 再判断、纠错、并行、回退或结束。App Server 负责 Thread/Turn/Item 生命周期、流式事件、恢复、配置、批准与外部控制面；它暴露 harness，但不替 Lead 预设固定业务流程。
+
+AI IP 1.1 保留这套根 Thread/Turn/tool loop，并把“对代码任务负责”替换成“对 Mission 的影响力结果负责”：
+
+- 根 Thread 对一个 Mission 的最终 ContentPackage 和下一步行动负责；不会把定位、脚本、镜头分别永久分配给一组互相投票的 Agent。
+- Skill 是按需加载的方法与约束，MCP/本地工具/云端 Capability 是执行动作，临时子 Thread 只承担可隔离的研究、媒资或独立审查；它们都不拥有第二套 Mission、Artifact 或 Memory 真相。
+- 上下文压缩、暂停、恢复或子任务失败不能改变业务真相；正式状态只由本地 Mission/Artifact 图和追加式 receipt 承载，Thread/Turn 是运行证据。
+- 用户只看到目标、产物、版本、成本和下一步，不必管理 harness 里的 Thread、Item、Skill 或子 Agent。深 fork 直接修改 core/App Server/protocol/state 来完成这层映射，不新增 Electron 或外置编排壳。
 
 ### 6.3 三个独立产品面
 
@@ -797,8 +808,8 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 
 子项目 0 分成两个连续轨道，避免再次演变成数月基础设施前置：
 
-- **0A 业务证明优先：** 锁定并原样验证 Codex，用隔离、可销毁的内部样本和 fake/录制 provider，先以最小 business instructions、Mission、Artifact schema 和业务 Skills 完成一个非五类冻结案例的 ContentPackage，并立即做普通 Codex/AI 对照盲评。该轨道不处理真实客户敏感数据，不以尚未完成 SQLCipher、Windows 安装器或云端账本为由延期。
-- **0B 产品化基础：** 只有 0A 证明业务方向值得继续后，才完成 Windows 11、localhost UI、产品专用配置根、SQLCipher/加密 Blob、崩溃重建、火山 Responses 网关适配及最小内部预算调用，再对同一 held-out Mission 复测，确保产品化没有削弱业务质量。
+- **0A 业务证明优先：** 锁定并原样验证 Codex。机械测试只用隔离、可销毁的 fake/录制 provider；G2 则在用户明确批准的披露、次数、Token、时长、留存和隔离账户硬预算内，用 coordinator 自有或已获授权的真实新案例执行一次原子 paired live provider 盲评。先以最小 business instructions、Mission、Artifact schema 和业务 Skills 完成一个非五类冻结案例的 ContentPackage；不以尚未完成 SQLCipher、Windows 安装器或云端账本为由延期。
+- **0B 业务能力先深化、再产品化：** 只有 0A 证明方向值得继续后，先完成 Mission/Lead/Artifact 内核与完整内容能力的冻结/unseen 真人盲评，并用隔离评测 broker 在目标火山模型上运行完整冻结集与新 unseen；通过业务护城河门禁后，才完成 Windows 11、localhost UI、产品专用配置根、SQLCipher/加密 Blob、崩溃重建、火山 Responses 产品网关适配及最小内部预算调用。产品适配后重跑 Plan 03 已授权回归集和一个新选 unseen，不重用已按留存协议删除的 Plan 01 私有案例，也不把已见过的案例叫 held-out。
 
 子项目 0 的最终通过仍要求“一句目标＋现有材料→可直接使用的 ContentPackage”；页面、线程、工具或账本能运行都不能替代该结果。
 
@@ -907,21 +918,22 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 
 - 官方上游：`https://github.com/openai/codex`。
 - 首选锁定基线：`4ef1d4b89bd419c976b04fefa0fd36844e898340`，提交时间 2026-08-24。构建、测试和发布输入必须使用完整 SHA，禁止使用浮动 `main`、`latest` 或仅凭本机安装版本代替源码锁定。
-- 采用方式是保留 Git 祖先关系的整仓深度 fork。`origin` 指向产品 fork，`upstream` 只读指向 OpenAI 官方仓；DeerFlow 不进入依赖图或回退链，第六版和其他旧实现只作为方法证据，不能整仓移植。
+- 采用方式是保留 Git 祖先关系的整仓深度 fork。`upstream` 只读指向 OpenAI 官方仓；当前本地决策仓未配置产品 `origin`，G0 必须记录 `productOriginStatus=unconfigured`。首次协作推送或发布前必须配置并验证产品 fork URL，此后 `origin` 才指向产品 fork。DeerFlow 不进入依赖图或回退链，第六版和其他旧实现只作为方法证据，不能整仓移植。
 - 每个发布物记录 `upstream_sha`、`fork_sha`、Cargo/npm 锁摘要、Windows 安装包或镜像 digest、本地与云端迁移版本、默认 Skill 清单和 fork patch ledger 摘要。
 - Codex 开源部分使用 Apache-2.0；必须保留 LICENSE/NOTICE、版权声明和修改说明。IDE 扩展与 Codex 云端产品不属于本次开源复用范围；新增 Rust、JavaScript、FFmpeg、字体、图标、Skills、模型与媒体资产另行生成 SBOM 和许可证清单。
 
 ### 21.2 Foundation Proof
 
-基础证明不以“尽量不改 Codex”为目标；用户已经选择直接动刀。A 段先保存原样上游基线，B 段立即验证 AI IP Business Server 的关键假设。G0–G4 完成后即可进入真实业务纵切，不等待全部代理与云平台能力齐备；G5–G9 在相应能力面向真实客户前完成。
+基础证明不以“尽量不改 Codex”为目标；用户已经选择直接动刀。A 段先保存原样上游基线，B 段立即验证 AI IP Business Server 的关键假设。G0–G2 完成后即可继续深化隔离业务纵切；G6 的完整内容盲评在 UI、加密存储和商业 provider 工程之前完成。G3–G5 及 G7–G9 是对应能力面向真实客户前的产品化/发布门，不能倒过来阻止 fake、回放或经单独批准的隔离业务实验。
 
 | 证明 | 最小证据 | 通过标准 |
 |---|---|---|
-| G0 来源、许可与锁定 | 校验完整 SHA、干净工作树、Cargo/npm 锁文件、Apache-2.0、依赖和资产来源 | 来源可复现，SBOM/NOTICE 完整，不依赖浮动分支 |
+| G0 来源、许可与锁定 | 校验完整 SHA、干净工作树、Cargo/npm 锁文件、Apache-2.0、源码依赖/许可/资产清单、NOTICE 和产品 origin 状态 | 来源可复现，源码阶段清单/NOTICE 完整，不依赖浮动分支；可分发物完整 SBOM 在 Plan 14 按具体发布物生成 |
 | G1 Codex 原样基线 | 在目标 Windows 11 和开发 macOS 上运行上游 build/test、App Server、Thread 恢复、Skill/MCP、Sandbox 与基本工具 | 原样失败被记录并与产品改动区分；关键运行路径可重复 |
 | G2 非编码业务可控性 | 使用最小 business instructions、结构化 Artifact 和临时 Skill 完成一个非五类固定案例的真实任务 | 能形成有业务价值的 ContentPackage，不退化成 coding assistant 或聊天答案 |
 | G3 localhost 产品入口 | App Server 同进程提供静态 UI、同源 RPC/stream、上传下载；验证随机端口、bootstrap 会话、Host/Origin/CSRF/WS 和单实例 fencing | 不依赖 Electron/云端 C 网关，状态和流可恢复；恶意网页和旧进程无权操作 |
-| G4 火山能力兼容 | 真实验证 Responses 流式、工具、多模态、取消、用量；验证设备令牌与 Search/Seedream/Seedance/TTS | customer build 无 OpenAI登录/BYOK 旁路；不兼容项有网关适配和合同测试 |
+| G4a 火山内部能力兼容 | 用隔离内部凭证真实验证 Responses 流式、工具、多模态、取消、用量及 Search/Seedream/Seedance/TTS；客户设备令牌和客户点数保持关闭 | 目标模型与能力合同可用，完整冻结集加新 unseen 的业务质量不回归；只授权有预算上限的内部/邀请使用 |
+| G4b 火山客户激活 | 在 G4a 之上验证客户设备令牌、客户点数、产品网关和无旁路配置 | customer build 无 OpenAI 登录/BYOK 旁路；交易、回执、对账、幂等和供应商合同测试同时通过 |
 | G5 本地真相与迁移 | 产品专用根、SQLCipher、加密 Blob、rollout/StepReceipt、原子提交、断网、崩溃和 side-by-side 更新 | 无正文明文旁路，已保存产物不丢失；切换后新写入不被旧快照覆盖 |
 | G6 业务纵切与盲评 | 从一句目标到可发布 ContentPackage；普通 AI/Codex 对照、冻结案例、unseen 和真人盲评 | 业务结果达到第 17 节标准，流程完成率不能代替内容质量 |
 | G7 能力调用与账本 | fake/real provider 执行 `local operation/outbox → cloud hold/operation/audit/outbox → provider → receipt → settle` 并逐点杀进程 | 不重复扣点、不重复有效任务、不丢成本；不明费用进入对账 |
@@ -931,9 +943,9 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 ### 21.3 裁决规则
 
 - Codex 是已批准的底座，不因需要修改 core/app-server/protocol/state 就自动回退；“需要深改”本身不是失败。若某个原生机制妨碍业务能力，应先建立未改基线，再在 fork 中替换并用业务盲评、可靠性和成本证明收益。
-- G0–G4 是开始业务纵切的最低证明；G5–G9 在对应功能交付真实客户前成为发布门。任何工程门都不能阻止使用 fake provider、录制回放或隔离实验继续提高业务能力。
+- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
 - 只有来源/许可不可接受、目标 Windows 无法运行、平台模型完全无法适配，或 Codex 在真实业务盲评中经多轮最小改造仍显著劣于可用替代方案时，才重新发起底座决策；不得静默回到 DeerFlow。
-- 证明结果保存命令、日志、JUnit、Windows 环境、迁移前后校验和、故障注入记录、盲评原始表、供应商合同结果和 SBOM。页面能打开、线程能聊天或单次漂亮样例不构成业务通过。
+- 证明结果保存命令、日志、JUnit、Windows 环境、迁移前后校验和、故障注入记录、盲评原始表、供应商合同结果和对应阶段的来源证据：G0 保存源码依赖/许可/资产清单，Plan 14 对每个实际可分发物生成 SBOM。页面能打开、线程能聊天或单次漂亮样例不构成业务通过。
 
 ## 22. 爆改所有权、上游同步与回退
 
@@ -976,7 +988,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 
 ### 22.5 实施台账重写义务
 
-在本规格经用户复核后，必须使用 superpowers `writing-plans` 重写总台账和 Plan 01 起始路径。重写至少删除或替换：
+本规格已于 2026-08-25 获用户复核，并使用 superpowers `writing-plans` 重写总台账、Phase 0A build specification 与首个 executable child plan。后续每个 child plan 仍必须逐项删除或替换：
 
 - DeerFlow、LangGraph、FastAPI C 端 Gateway、云端客户 Project/PostgreSQL、Redis stream bridge 和三个云端 Web 产品的旧路径。
 - Electron、外置 Codex sidecar、未改造的通用 App Server 套壳和第二套 C 端业务后端。
@@ -986,7 +998,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 - 先完成完整 SaaS/代理基础设施才开始验证内容业务能力的顺序。
 - 任何没有 Codex upstream path、现有测试、保留/修改/替换决定、业务收益证明和删除路径的抽象层。
 
-新台账必须先执行子项目 0，只引用锁定 Codex 提交中的真实文件路径，并在每个任务中明确是保留、直接修改、替换还是新增。第一条业务纵切必须使用新的真实项目，不得把五类冻结测试的答案带入实现。未完成规格复核前，本轮不开始代码实现。
+现役台账先执行子项目 0，只引用锁定 Codex 提交中的真实文件路径，并在每个 child plan 中明确是保留、直接修改、替换还是新增。第一条业务纵切必须使用新的真实项目，不得把五类冻结测试的答案带入实现。代码实现只可从 master §9 当前列出的 executable child plan 开始。
 
 ## 23. 官方依据索引
 
