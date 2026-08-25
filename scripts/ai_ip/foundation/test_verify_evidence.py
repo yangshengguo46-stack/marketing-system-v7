@@ -2053,6 +2053,142 @@ def _replace_parent_with_symlink_to_original(parent: Path) -> Path:
     return detached
 
 
+def test_baseline_cli_rejects_parent_substitution_between_inspection_and_canonicalization(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    unsafe_path_component = verifier._unsafe_path_component
+
+    def inspect_then_swap(path: Path) -> str | None:
+        result = unsafe_path_component(path)
+        if path == fixture.baseline:
+            _replace_parent_with_symlink_to_original(path.parent)
+        return result
+
+    monkeypatch.setattr(verifier, "_unsafe_path_component", inspect_then_swap)
+    _assert_forbidden_cli_result(
+        verifier.main(
+            [
+                "--repo-root",
+                str(fixture.repo),
+                "--matrix",
+                str(fixture.matrix),
+                "--evidence-root",
+                str(fixture.baseline),
+                "--platform",
+                "macos-x86_64",
+                "--mode",
+                "baseline",
+            ]
+        ),
+        capsys,
+    )
+
+
+def test_fallback_component_failure_after_leaf_open_closes_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "public.json"
+    path.write_bytes(b"{}\n")
+    fallback_component_states = verifier._fallback_component_states
+    real_open = os.open
+    real_fstat = os.fstat
+    leaf_descriptors: list[int] = []
+    component_calls = 0
+
+    def record_leaf_open(
+        path_value: object, flags: int, *args: object, **kwargs: object
+    ) -> int:
+        descriptor = real_open(path_value, flags, *args, **kwargs)
+        if Path(path_value) == path:
+            leaf_descriptors.append(descriptor)
+        return descriptor
+
+    def fail_post_open_component_check(
+        checked_path: Path, label: str
+    ) -> tuple[os.stat_result, ...]:
+        nonlocal component_calls
+        component_calls += 1
+        if component_calls == 2:
+            raise verifier.UnsafeEvidenceError("injected fallback component failure")
+        return fallback_component_states(checked_path, label)
+
+    monkeypatch.setattr(
+        verifier, "_descriptor_relative_traversal_available", lambda: False
+    )
+    monkeypatch.setattr(verifier.os, "open", record_leaf_open)
+    monkeypatch.setattr(
+        verifier, "_fallback_component_states", fail_post_open_component_check
+    )
+    try:
+        with pytest.raises(verifier.UnsafeEvidenceError):
+            verifier._open_stable_regular(path)
+        assert len(leaf_descriptors) == 1
+        with pytest.raises(OSError) as error:
+            real_fstat(leaf_descriptors[0])
+        assert error.value.errno == errno.EBADF
+    finally:
+        for descriptor in leaf_descriptors:
+            try:
+                real_fstat(descriptor)
+            except OSError:
+                continue
+            os.close(descriptor)
+
+
+def test_windows_fallback_without_nofollow_rejects_post_open_leaf_reparse(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "public.json"
+    path.write_bytes(b"{}\n")
+    entry_state = verifier._entry_state
+    real_open = os.open
+    descriptor: int | None = None
+    reparse_armed = False
+
+    def open_then_arm_reparse(
+        path_value: object, flags: int, *args: object, **kwargs: object
+    ) -> int:
+        nonlocal reparse_armed
+        opened = real_open(path_value, flags, *args, **kwargs)
+        if Path(path_value) == path:
+            reparse_armed = True
+        return opened
+
+    def post_open_reparse_state(
+        checked_path: Path, dir_fd: int | None, name: str | None
+    ) -> object:
+        value = entry_state(checked_path, dir_fd, name)
+        if reparse_armed and checked_path == path:
+            return SimpleNamespace(
+                st_dev=value.st_dev,
+                st_ino=value.st_ino,
+                st_mode=value.st_mode,
+                st_nlink=value.st_nlink,
+                st_size=value.st_size,
+                st_mtime_ns=value.st_mtime_ns,
+                st_file_attributes=0x400,
+                st_reparse_tag=1,
+            )
+        return value
+
+    monkeypatch.setattr(
+        verifier, "_descriptor_relative_traversal_available", lambda: False
+    )
+    monkeypatch.setattr(verifier.os, "O_NOFOLLOW", 0)
+    monkeypatch.setattr(verifier.os, "open", open_then_arm_reparse)
+    monkeypatch.setattr(verifier, "_entry_state", post_open_reparse_state)
+    try:
+        with pytest.raises(verifier.UnsafeEvidenceError):
+            descriptor, _ = verifier._open_stable_regular(path)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def test_stable_file_bytes_normalizes_post_read_fstat_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

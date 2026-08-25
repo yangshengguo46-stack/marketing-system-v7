@@ -481,13 +481,10 @@ def _absolute_directory(path: Path, label: str) -> Path:
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
         raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
-    try:
-        resolved = lexical.resolve(strict=True)
-    except OSError as error:
-        raise EvidenceError(f"{label} must exist") from error
-    if not resolved.is_dir():
+    metadata = _absolute_leaf_state(lexical, label)
+    if not stat.S_ISDIR(metadata.st_mode) or _unsafe_reparse_state(metadata):
         raise UnsafeEvidenceError(f"{label} must be a directory")
-    return resolved
+    return lexical
 
 
 def _absolute_file(path: Path, label: str) -> Path:
@@ -497,13 +494,10 @@ def _absolute_file(path: Path, label: str) -> Path:
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
         raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
-    try:
-        resolved = lexical.resolve(strict=True)
-    except OSError as error:
-        raise EvidenceError(f"{label} must exist") from error
-    if not resolved.is_file():
+    metadata = _absolute_leaf_state(lexical, label)
+    if not stat.S_ISREG(metadata.st_mode) or _unsafe_reparse_state(metadata):
         raise UnsafeEvidenceError(f"{label} must be a file")
-    return resolved
+    return lexical
 
 
 def _reparse_state(value: os.stat_result) -> tuple[int, int]:
@@ -817,21 +811,29 @@ def _open_stable_regular(
             os.close(parent_fd)
     try:
         opened = _safe_fstat(descriptor, path.name)
+        if _unsafe_reparse_state(opened) or not _same_file_state(before, opened):
+            raise UnsafeEvidenceError(
+                f"public evidence file changed before scan: {path.name}"
+            )
+        if before_components is not None:
+            after_leaf = _entry_state(lexical, None, None)
+            if (
+                not stat.S_ISREG(after_leaf.st_mode)
+                or after_leaf.st_nlink != 1
+                or _unsafe_reparse_state(after_leaf)
+                or not _same_file_state(before, after_leaf)
+            ):
+                raise UnsafeEvidenceError(
+                    f"public evidence file changed before scan: {path.name}"
+                )
+            after_components = _fallback_component_states(lexical, path.name)
+            if not _same_component_states(before_components, after_components):
+                raise UnsafeEvidenceError(
+                    f"public evidence path changed before scan: {path.name}"
+                )
     except BaseException:
         os.close(descriptor)
         raise
-    if _unsafe_reparse_state(opened) or not _same_file_state(before, opened):
-        os.close(descriptor)
-        raise UnsafeEvidenceError(
-            f"public evidence file changed before scan: {path.name}"
-        )
-    if before_components is not None:
-        after_components = _fallback_component_states(lexical, path.name)
-        if not _same_component_states(before_components, after_components):
-            os.close(descriptor)
-            raise UnsafeEvidenceError(
-                f"public evidence path changed before scan: {path.name}"
-            )
     return descriptor, opened
 
 
