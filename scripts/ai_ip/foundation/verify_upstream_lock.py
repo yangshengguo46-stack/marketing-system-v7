@@ -112,6 +112,7 @@ def _run_git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
             "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_CONFIG_VALUE_0": "false",
             "GIT_NO_LAZY_FETCH": "1",
+            "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_OPTIONAL_LOCKS": "0",
             "GIT_TERMINAL_PROMPT": "0",
         }
@@ -167,6 +168,50 @@ def _require(condition: bool, message: str) -> None:
         raise VerificationError(message)
 
 
+def _absolute_git_path(repo: Path, option: str, label: str) -> Path:
+    path = Path(_git_text(repo, "rev-parse", "--path-format=absolute", option))
+    _require(path.is_absolute(), f"{label} is not absolute: {path}")
+    _require(path.is_dir(), f"{label} is not a directory: {path}")
+    return path
+
+
+def _reject_git_object_substitution(repo: Path) -> None:
+    replace_refs = _git_text(
+        repo, "for-each-ref", "--format=%(refname)", "refs/replace/"
+    ).splitlines()
+    _require(not replace_refs, f"Git replace refs are forbidden: {replace_refs}")
+
+    git_admin_dir = _absolute_git_path(repo, "--git-dir", "Git admin directory")
+    git_common_dir = _absolute_git_path(
+        repo, "--git-common-dir", "Git common directory"
+    )
+    git_grafts_path = Path(
+        _git_text(
+            repo,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "info/grafts",
+        )
+    )
+    _require(
+        git_grafts_path.is_absolute(),
+        f"Git info/grafts path is not absolute: {git_grafts_path}",
+    )
+    grafts_paths = {
+        git_admin_dir / "info/grafts",
+        git_common_dir / "info/grafts",
+        git_grafts_path,
+    }
+    forbidden_grafts = [
+        path for path in grafts_paths if os.path.lexists(os.fspath(path))
+    ]
+    _require(
+        not forbidden_grafts,
+        f"Git info/grafts entries are forbidden: {sorted(map(str, forbidden_grafts))}",
+    )
+
+
 def _read_lock(repo: Path) -> tuple[dict[str, Any], str]:
     path = repo / ".ai-ip/upstream.lock.toml"
     try:
@@ -213,6 +258,7 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
     repo = repo.resolve(strict=True)
     top_level = Path(_git_text(repo, "rev-parse", "--show-toplevel")).resolve()
     _require(top_level == repo, f"--repo must be the worktree root: {top_level}")
+    _reject_git_object_substitution(repo)
     _require_equal(
         _git_text(repo, "rev-parse", "--is-shallow-repository"),
         "false",

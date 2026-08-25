@@ -235,9 +235,78 @@ def test_all_git_subprocesses_disable_lazy_fetch_and_optional_locks(
         "GIT_CONFIG_NOSYSTEM": "1",
         "GIT_CONFIG_VALUE_0": "false",
         "GIT_NO_LAZY_FETCH": "1",
+        "GIT_NO_REPLACE_OBJECTS": "1",
         "GIT_OPTIONAL_LOCKS": "0",
         "GIT_TERMINAL_PROMPT": "0",
     }
+
+
+def test_packed_replace_ref_for_locked_commit_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, upstream_sha, _, _ = _valid_repository(tmp_path, monkeypatch)
+    upstream_tree = _git(repo, "show", "-s", "--format=%T", upstream_sha)
+    replacement_commit = _git(
+        repo, "commit-tree", upstream_tree, "-m", "substitute locked upstream"
+    )
+    _git(repo, "replace", upstream_sha, replacement_commit)
+    _git(repo, "pack-refs", "--all", "--prune")
+    replace_ref = f"refs/replace/{upstream_sha}"
+    assert _git(repo, "for-each-ref", "--format=%(refname)", "refs/replace/") == (
+        replace_ref
+    )
+    assert replace_ref in (repo / ".git/packed-refs").read_text(encoding="utf-8")
+
+    with pytest.raises(
+        verifier.VerificationError, match="Git replace refs are forbidden"
+    ):
+        verifier.verify_repository(repo)
+
+
+def test_common_git_grafts_entry_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, upstream_sha, _, _ = _valid_repository(tmp_path, monkeypatch)
+    linked_worktree = tmp_path / "linked-worktree"
+    _git(repo, "worktree", "add", "--detach", str(linked_worktree), "HEAD")
+    source_import_sha = _git(
+        repo, "rev-list", "--first-parent", "--merges", f"{upstream_sha}..HEAD"
+    ).splitlines()[0]
+    source_import_parents = _git(repo, "show", "-s", "--format=%P", source_import_sha)
+    common_git_dir = Path(
+        _git(
+            linked_worktree,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+        )
+    )
+    grafts_path = common_git_dir / "info/grafts"
+    _write(grafts_path, f"{source_import_sha} {source_import_parents}\n")
+
+    with pytest.raises(
+        verifier.VerificationError, match="Git info/grafts entries are forbidden"
+    ):
+        verifier.verify_repository(linked_worktree)
+
+    _write(grafts_path, "")
+    with pytest.raises(
+        verifier.VerificationError, match="Git info/grafts entries are forbidden"
+    ):
+        verifier.verify_repository(linked_worktree)
+
+    grafts_path.unlink()
+    try:
+        grafts_path.symlink_to(tmp_path / "missing-grafts-target")
+    except OSError:
+        return
+    assert grafts_path.is_symlink()
+    assert not grafts_path.exists()
+
+    with pytest.raises(
+        verifier.VerificationError, match="Git info/grafts entries are forbidden"
+    ):
+        verifier.verify_repository(linked_worktree)
 
 
 def test_git_subprocess_ignores_ambient_repository_redirection(
