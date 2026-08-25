@@ -1,13 +1,14 @@
 # AI IP 1.1 国产模型适配设计
 
 - **日期：** 2026-08-25
-- **状态：** 架构 v1.5 候选；用户已选择方案 B，等待对本书面规格的最终复核
-- **批准标记：** `PENDING_WRITTEN_REVIEW`
+- **状态：** 架构 v1.5 已批准；用户已确认方案 B 的书面规格，允许进入 Phase 0A decision tip
+- **批准标记：** `APPROVED_FOR_DECISION_TIP`
 - **决策：** 单一国产首发模型真实跑通业务链，同时以统一能力合同证明第二国产路线可接入；不把多供应商同时上线设为首版业务证明前置条件
 - **首条运营目标：** 火山方舟 / 豆包模型与媒体能力
-- **第二模型候选：** GLM 作为 Agent 能力优先候选，通义作为原生 Responses 协议对照；最终实际 provider/model/deployment/revision 仍由能力合同、商业授权和 AI IP 业务盲评决定
+- **优先 Agent 模型路线：** 火山方舟托管的 GLM 作为优先业务评测路线，通义作为原生 Responses 协议对照；最终实际 model/deployment/revision 仍由能力合同、商业授权和 AI IP 业务盲评决定，跨 provider G4p 另选非火山路线
+- **当前可用接入事实：** 用户确认现有火山方舟凭证已包含 GLM 模型访问范围；实现只记录 `provider=Volcengine Ark` 与实际 GLM model/deployment/revision，不记录、复制或提交 API key
 
-本文件是 `2026-08-24-ip-agent-saas-design.md` 的 provider 专项设计输入。若本文与主规格发生冲突，在 v1.5 获用户书面确认前停止实施并修正文档；确认后由主规格、总台账、Phase 0A 构建规格和本文共同约束实现。本文不授权立即调用任何付费模型。Phase 0A.1 来源导入是当前唯一达到 execution depth 的 child plan，但在本文件获得用户书面确认前保持 gated。
+本文件是 `2026-08-24-ip-agent-saas-design.md` 的 provider 专项设计输入。v1.5 已获用户书面确认，由主规格、总台账、Phase 0A 构建规格和本文共同约束实现。本文不授权立即调用任何付费模型；Phase 0A.1 来源导入现已解除书面规格 gate，仍须按其 clean-tree、decision-tip 和来源锁机器门执行。
 
 ## 1. 为什么不是“换一个 Base URL”
 
@@ -26,10 +27,11 @@
 
 ## 2. 采用的方案 B
 
-首版按两条不互相阻塞的证据线推进：
+首版按三条不互相阻塞的证据线推进：
 
 1. **首发业务线：** 火山方舟作为第一条真实运营目标，完成平台网关、真实模型调用、冻结加新 unseen 业务回归和内部预算证明。业务盲评先于第二供应商工程。
-2. **可移植性线：** 同一个产品 provider seam 优先对 GLM 完成相同机械合同和一次受预算约束的真实可达证明，并用通义的原生 Responses 路径作为协议对照。它证明产品没有被火山字段锁死，但不自动取得生产路由或故障切换资格；若 GLM 的正式产品 API、合同或必要能力不满足要求，再按同一矩阵选择其他国产模型。
+2. **Agent 模型线：** 现有火山方舟凭证内的 GLM 按 `provider=Volcengine Ark` 建立独立 model route，优先参加 Agent 业务盲评；它能证明同一 provider 下不把业务写死到豆包模型，但不能冒充跨 provider 的 G4p。
+3. **跨 provider 可移植性线：** 后续选择一个非火山实际 provider 使用同一产品 seam 完成 G4p，并用通义原生 Responses 路径作为协议对照。该线不自动取得生产路由或故障切换资格，也不阻塞火山托管 GLM 的业务评测与首发链。
 
 方案 B 明确拒绝两个极端：既不只写一个空扩展接口，也不要求火山、通义、DeepSeek 等多家在业务证明前同时完整上线。
 
@@ -185,12 +187,12 @@ Plan 06 的 provider 合同 owner 只负责在真实接缝上生成可重复的 
 2. Plan 01 继续完成来源、上游基线和最小业务证明；不在 proof broker 中建设多供应商产品网关。
 3. Plans 02–03 先深化 Mission/Lead/Artifact 和内容质量。
 4. Plan 06 建立统一 `ProviderCapabilityProfile`、明确能力默认拒绝、平台网关 contract runner，并完成火山 G4a。
-5. 不阻塞 Plans 07–10 或首发火山发布的前提下，为 GLM 优先候选增加 adapter 和 G4p 证据，并用通义 Responses 路径校验原生协议 profile。
+5. 不阻塞 Plans 07–10 或首发火山发布的前提下，为火山托管 GLM 增加独立 model-route 证据；它不计作 G4p。后续再选择非火山 provider 完成 G4p，并用通义 Responses 路径校验原生协议 profile。
 6. 只有要在某个发布物中启用、宣传或自动切换到第二 route 时，该发布物才同时要求 G4p、对应 G4b/G7 和更高业务/发布证据。
 
 ## 9. 明确延后
 
-- 第二供应商最终落定的 provider、模型 ID、endpoint、region 和 deployment/revision；当前只冻结 GLM 优先评估、通义协议对照的顺序；
+- 跨 provider G4p 的实际 provider、模型 ID、endpoint、region 和 deployment/revision；火山托管 GLM 只冻结为优先 Agent 评测路线，不代表第二 provider 已落定；
 - 三家以上同时上线；
 - 用户自选模型、BYOK 或用户 endpoint；
 - 跨供应商自动故障切换；
@@ -204,15 +206,15 @@ Plan 06 的 provider 合同 owner 只负责在真实接缝上生成可重复的 
 
 本设计只有在以下项目同时成立时才可标记为用户批准并进入来源冻结：
 
-- [ ] 用户确认方案 B 的书面边界与 G4p 时序；
-- [ ] 主规格明确火山是首条运营目标，业务层是 provider-neutral；
-- [ ] 总台账把第二供应商可移植性证明放在业务门之后的非阻塞 onboarding lane，且只在启用或宣传该 route 前成为门禁；
-- [ ] Phase 0A 规格明确 proof broker 不是生产多供应商网关；
-- [ ] Phase 0A.1 provenance plan 把本文件列为 required decision input；
-- [ ] 所有文档继续禁止 customer BYOK 和 provider override；
-- [ ] 不把第二供应商适配变成 Plan 01/03 业务证明的阻塞项；
-- [ ] 不把 E1/E2 宣称成 E3/E4。
-- [ ] 稳定 routeId、阶段 EvidenceRef、pre-release record 与 Plan 14 最终 bundle 不发生 fork-SHA 或门禁自循环。
+- [x] 用户确认方案 B 的书面边界与 G4p 时序；
+- [x] 主规格明确火山是首条运营目标，业务层是 provider-neutral；
+- [x] 总台账把第二供应商可移植性证明放在业务门之后的非阻塞 onboarding lane，且只在启用或宣传该 route 前成为门禁；
+- [x] Phase 0A 规格明确 proof broker 不是生产多供应商网关；
+- [x] Phase 0A.1 provenance plan 把本文件列为 required decision input；
+- [x] 所有文档继续禁止 customer BYOK 和 provider override；
+- [x] 不把第二供应商适配变成 Plan 01/03 业务证明的阻塞项；
+- [x] 不把 E1/E2 宣称成 E3/E4。
+- [x] 稳定 routeId、阶段 EvidenceRef、pre-release record 与 Plan 14 最终 bundle 不发生 fork-SHA 或门禁自循环。
 
 ## 11. 锁定源码依据
 

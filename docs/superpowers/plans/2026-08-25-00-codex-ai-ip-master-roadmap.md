@@ -6,13 +6,13 @@
 
 **Architecture:** Preserve this repository's decision history while merging the exact OpenAI Codex Git ancestor, then turn Codex App Server into the single local AI IP Business Server. Customer project truth remains encrypted on the device; a thin cloud plane owns identity, credits, provider operations, and encrypted backup only; partner and internal management remain separate products.
 
-**Tech Stack:** OpenAI Codex commit `4ef1d4b89bd419c976b04fefa0fd36844e898340`, Rust 2024 workspace, Codex App Server v2, React/TypeScript/Vite local UI, SQLCipher and envelope-encrypted blobs, Axum/SQLx/PostgreSQL cloud services, RocketMQ, TOS, a normalized domestic-model Responses profile (Volcengine launch route; GLM priority portability candidate; Qwen protocol control), Seedream/Seedance/TTS, FFmpeg, Windows 11.
+**Tech Stack:** OpenAI Codex commit `4ef1d4b89bd419c976b04fefa0fd36844e898340`, Rust 2024 workspace, Codex App Server v2, React/TypeScript/Vite local UI, SQLCipher and envelope-encrypted blobs, Axum/SQLx/PostgreSQL cloud services, RocketMQ, TOS, a normalized domestic-model Responses profile (Volcengine launch provider; Ark-hosted GLM priority Agent route; Qwen protocol control; later non-Volcengine G4p), Seedream/Seedance/TTS, FFmpeg, Windows 11.
 
 ---
 
 ## 1. Authority and current repository state
 
-This roadmap is the only active implementation ledger for AI IP 1.1. It implements the approved specification at `docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md`, the candidate domestic-model decision at `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`, and the retained lessons at `docs/architecture/2026-08-25-legacy-six-version-decision-memory.md`. The domestic-model document has approach approval but still requires the user's written-spec review before Phase 0A freezes the decision tip.
+This roadmap is the only active implementation ledger for AI IP 1.1. It implements the approved specification at `docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md`, the user-approved domestic-model decision at `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`, and the retained lessons at `docs/architecture/2026-08-25-legacy-six-version-decision-memory.md`. The domestic-model written decision is approved for the Phase 0A decision tip.
 
 At roadmap authoring time, commit `58baf3b` contains documentation only:
 
@@ -43,7 +43,8 @@ Plan 01 is the Phase 0A program gate covering G0–G2, not one directly executab
         └─ business blind-review PASS → 04 Local Business Server entry (G3)
            └─ 05 Encrypted local project runtime (G5)
               └─ 06 Domestic model gateway + Volcengine launch vertical (G4a)
-                 ├─ non-blocking provider onboarding → GLM-priority portability proof (G4p; route disabled until higher gates)
+                 ├─ Ark-hosted GLM Agent route (same Volcengine provider; not G4p)
+                 ├─ non-blocking provider onboarding → later non-Volcengine portability proof (G4p; route disabled until higher gates)
                  ├─ internal budget → 09 Generative media studio → 10 Publication and learning loop
                  └─ commercial track → 07 Cloud identity and credit ledger
                     └─ 08 Capability operation and reconciliation (G4b + G7)
@@ -79,7 +80,7 @@ Hard ordering rules:
 | **03 — Content capability and business evaluation** | Research, evidence, strategy, topics, scripts, Douyin/Xiaohongshu variants, ContentPackage, project memory, frozen scenarios, unseen cases, and human blind review | Plan 02 | Approved 70% paired-win rule and zero-offset severe-failure rules pass; before Checkpoint 03, the full frozen-plus-new-unseen suite also runs through the designated launch Volcengine model via the isolated evaluation broker | §§3, 7.2–7.5, 8.3–8.5, 11, 17.1–17.3, 18/subproject 1, 20, 21/G6 |
 | **04 — Local Business Server entry** | One Codex App Server process serves random-loopback HTTP/WS, static UI, upload/download, bootstrap session, CSRF/Origin/Host protection, single instance, and fencing; fake provider completes Mission → ContentPackage in the browser | Plan 03 PASS | Security tests plus browser vertical; no Electron, sidecar, or second C-end backend | §§6.1–6.4, 15.4, 15.6, 17.4, 21/G3 |
 | **05 — Encrypted local project runtime** | Product root, SQLCipher, project DEK and AEAD blobs, immutable Artifacts, encrypted rollout/receipts, atomic commits, offline editing, crash reconstruction, recycle bin, permanent delete, and side-by-side migration | Plan 04 | Kill-process recovery and plaintext/orphan scan show no lost committed Artifact or duplicate side effect | §§6.5–6.6, 10, 16.2–16.6, 17.4, 21/G5 |
-| **06 — Domestic model gateway and Volcengine launch vertical** | Explicit provider capability profiles, normalized Responses contract runner, and a Volcengine internal credential reach the product provider seam; Responses streaming/tools/multimodal/cancel/usage and Search/Seedream/Seedance/TTS contracts are proven under an approved internal budget. The provider contract owner also delivers only the repeatable, non-blocking `provider-onboarding-e0-e2/<route-id>` template for GLM-priority G4p work | Plan 05 | G4a's Plan 06 exit stops at: text Agent E1/E2 plus route E3 from its own rerun; Search E1/E2 plus route E3 from the Plan 03 research suite; Seedream/Seedance/TTS E1/E2 only. Media E3/E4 are explicitly outside G4a and cannot create a Plan 09→06 cycle. No route inherits evaluation-broker qualification; customer auth/credits remain disabled; G4p failure only disables the second route | §§6.4, 9.2, 10.6–10.7, 13.3, 15.1–15.3, 20.4, 21/G4a/G4p |
+| **06 — Domestic model gateway and Volcengine launch vertical** | Explicit provider capability profiles, normalized Responses contract runner, and a Volcengine internal credential reach the product provider seam; Responses streaming/tools/multimodal/cancel/usage and Search/Seedream/Seedance/TTS contracts are proven under an approved internal budget. The Ark-hosted GLM model receives its own Volcengine route evidence as the priority text Agent route. The provider contract owner also delivers only the repeatable, non-blocking `provider-onboarding-e0-e2/<route-id>` template for later non-Volcengine G4p work | Plan 05 | G4a's Plan 06 exit stops at: text Agent E1/E2 plus route E3 from its own rerun; Search E1/E2 plus route E3 from the Plan 03 research suite; Seedream/Seedance/TTS E1/E2 only. Media E3/E4 are explicitly outside G4a and cannot create a Plan 09→06 cycle. No route inherits evaluation-broker qualification; customer auth/credits remain disabled; Ark-hosted GLM does not count as G4p, and G4p failure only disables the later cross-provider route | §§6.4, 9.2, 10.6–10.7, 13.3, 15.1–15.3, 20.4, 21/G4a/G4p |
 | **07 — Cloud identity and credit ledger** | IAM, device registration, Account hierarchy, wallet, append-only ledger, PricingVersion, MissionSpendGrant, internal cost centers, audiences, and allowlists; no project-content tables | Plans 03 and 06 PASS | At least 10,000 randomized ledger sequences preserve all invariants | §§4.1–4.2, 10 cloud objects, 13, 15.4–15.5, 17.4 |
 | **08 — Capability operations and reconciliation** | Local operation/outbox → cloud hold/operation/audit/outbox transaction → ProviderAttempt → signed receipt → settlement, including global ID/digest rules, 72-hour resolution, callbacks, retention, customer device token, and customer-credit activation | Plans 06 and 07 | G4b and G7 pass: customer build has no OpenAI login/BYOK bypass; point-by-point process-kill tests prove one user settlement, no duplicate effective supplier task, and no lost supplier cost | §§10.4–10.7, 13.3, 14.1, 15.1–15.3, 16.2, 16.7, 17.3–17.4, 20.4, 21/G4b/G7 |
 | **09 — Generative media studio** | Seedream, Seedance, standard TTS, storyboard, Shot, optional preview, high-resolution generation, FFmpeg, captions, AI labels, QC, local delivery, and per-shot redo | Plans 03, 05, and 06; approved internal budget, customer credits disabled | One real media artifact lands locally; execution/delivery/internal-cost states remain orthogonal; product and rights tests pass. For every media route proposed for later qualification, a frozen media set plus a newly selected unseen case receives human blind/QC review and emits a route-scoped E3 `ProviderRouteEvidenceRef` with its stage closure. Plan 08 is required only before customer-paid activation | §§9, 10.4, 14.2–14.6, 15.3–15.4, 17.1/8, 18/subproject 3 |
@@ -161,7 +162,7 @@ Every refusal at an irreversible boundary must return a usable alternative: anon
 ### 5.6 Domestic model provider neutrality
 
 - Mission, Lead, Artifact, ContentPackage, and business Skills express `capabilityKey + capabilityContractVersion + qualityTier + requiredFeatures`; they contain no provider/model branch.
-- Volcengine is the first real `ProviderBinding` and G4a target, not a business-domain type. GLM is the priority second Agent candidate and Qwen is the native-Responses protocol control; neither becomes a production route without its own bound evidence.
+- Volcengine is the first real `ProviderBinding` and G4a target, not a business-domain type. The GLM model available through the user's Volcengine Ark account is the priority Agent route under that same provider and requires its own route evidence; it does not count as G4p. Qwen is the native-Responses protocol control, and a later non-Volcengine route must independently prove cross-provider portability.
 - Pinned Codex continues to speak one characterized Responses profile. Native-provider protocol translation happens only in the cloud adapter, never in `codex-core`, the business domain, or a second Agent loop.
 - Every routeId advances independently through mechanical, live, business, and publication evidence. Low-level evidence and compatibility names cannot be promoted into business quality.
 - A stable `ProviderRouteIdentity` is a typed object containing `capabilityKey + capabilityContractVersion + qualityTier + qualityProfileVersion + provider + model + deployment + immutableRevision + adapterVersion + executionProfileVersion + processingRegion`; all keys exist, strings are non-empty NFC, only a truly absent deployment dimension uses JSON null, and unresolved processing region cannot reach E2. RFC 8785 JCS + SHA-256 produces the path-safe routeId. Each E0–E4/G4p/G4b/G7/release stage's separate `ProviderRouteEvidenceRef` binds `testedForkSha`, stage-specific subject/dependency closure, runner/suite, and evidence digests. E3 includes Business Runtime/Lead instructions/production Skills/Prompt-context-schema, not only the adapter; G4p separately proves provider-neutral domain and restriction profile. Mission/Artifact contains neither object, and changed relevant code cannot silently inherit evidence.
@@ -228,18 +229,18 @@ Business acceptance evidence is always shown separately from mechanical test evi
 
 At every checkpoint, stop for a user-readable report: business outcome, working capabilities, stubbed capabilities, tests, paid cost, data location, known risk, rollback, and explicit continue/correct decision.
 
-## 9. Current gated child plan
+## 9. Current executable child plan
 
 Phase 0A's non-executable build and acceptance specification:
 
 `docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md`
 
-Domestic-model decision input awaiting final written review:
+Approved domestic-model decision input:
 
 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`
 
-Only child plan at execution depth, currently gated:
+Only child plan currently at execution depth:
 
 `docs/superpowers/plans/2026-08-25-01a-codex-fork-provenance.md`
 
-Phase 0A.1 starts only after the user marks the domestic-model written decision approved; until then it remains listed but gated because Task 1 freezes the exact decision tip. It only establishes the verifiable source/fork boundary. It does not close G0–G2, produce `PASS_TO_PHASE_0B`, or authorize Plan 02. The remaining Work Packages in the build specification must each be converted into a new executable child plan with `superpowers:writing-plans` after the preceding child exposes real files, tests, and failure modes. Do not infer implementation details from the superseded 2026-08-24 documents.
+The user has approved the domestic-model written decision, so Phase 0A.1 may start from the clean committed decision tip frozen by Task 1. It only establishes the verifiable source/fork boundary. It does not close G0–G2, produce `PASS_TO_PHASE_0B`, authorize paid provider calls, or authorize Plan 02. The remaining Work Packages in the build specification must each be converted into a new executable child plan with `superpowers:writing-plans` after the preceding child exposes real files, tests, and failure modes. Do not infer implementation details from the superseded 2026-08-24 documents.
