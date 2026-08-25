@@ -241,6 +241,6 @@ Approved domestic-model decision input:
 
 Only child plan currently at execution depth:
 
-`docs/superpowers/plans/2026-08-25-01a-codex-fork-provenance.md`
+`docs/superpowers/plans/2026-08-25-01b-codex-native-evidence-macos-baseline.md`
 
-The user has approved the domestic-model written decision, so Phase 0A.1 may start from the clean committed decision tip frozen by Task 1. It only establishes the verifiable source/fork boundary. It does not close G0–G2, produce `PASS_TO_PHASE_0B`, authorize paid provider calls, or authorize Plan 02. The remaining Work Packages in the build specification must each be converted into a new executable child plan with `superpowers:writing-plans` after the preceding child exposes real files, tests, and failure modes. Do not infer implementation details from the superseded 2026-08-24 documents.
+Phase 0A.1 (`docs/superpowers/plans/2026-08-25-01a-codex-fork-provenance.md`) is complete at the verified source-import boundary. Phase 0A.2 now owns Work Package 2's evidence tools and the unchanged native macOS x86_64 focused baseline. It changes no Codex runtime or business behavior, performs no provider call, does not read an API key, and leaves native Windows 11 x64 evidence as an independent mandatory child on the exact same tools SHA. It does not close G0–G2, produce `PASS_TO_PHASE_0B`, authorize paid provider calls, or authorize Plan 02. The remaining Work Packages in the build specification must each be converted into a new executable child plan with `superpowers:writing-plans` after the preceding child exposes real files, tests, and failure modes. Do not infer implementation details from the superseded 2026-08-24 documents.
