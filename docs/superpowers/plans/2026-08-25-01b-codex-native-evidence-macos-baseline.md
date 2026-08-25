@@ -108,8 +108,12 @@ UV_CACHE_DIR="$AI_IP_TOOL_ROOT/uv-cache" UV_PYTHON_INSTALL_DIR="$AI_IP_PYTHON_RO
   /usr/local/bin/uv pip install \
   --python "$AI_IP_UV_ROOT/bin/python" uv==0.11.3
 CARGO_HOME="$AI_IP_TOOL_ROOT/cargo-install-cache" \
+PATH="$AI_IP_RUST_BIN:/usr/local/bin:/usr/bin:/bin" \
+RUSTC="$AI_IP_RUST_BIN/rustc" \
   "$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-nextest --version 0.9.103
 CARGO_HOME="$AI_IP_TOOL_ROOT/cargo-install-cache" \
+PATH="$AI_IP_RUST_BIN:/usr/local/bin:/usr/bin:/bin" \
+RUSTC="$AI_IP_RUST_BIN/rustc" \
   "$AI_IP_RUST_BIN/cargo" install --root "$AI_IP_CARGO_ROOT" --locked cargo-deny --version 0.20.2
 (cd "$AI_IP_TOOL_ROOT" && /usr/local/bin/npm install \
   --prefix "$AI_IP_NPM_ROOT" --cache "$AI_IP_TOOL_ROOT/npm-cache" \
@@ -158,7 +162,7 @@ Expected: every isolated version is exact. Record all seven absolute variables i
 
 - [ ] **Step 1: Write the matrix contract test before the loader exists**
 
-Load the committed JSON through `capture_command.load_matrix` and assert the SHA-256 of its canonical whole-object bytes is exactly `53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8`. That reviewed semantic digest locks every ID, platform, phase, argv element, order, and expected exit without creating a second hand-maintained 30-command authority in Python. Also assert the complete ID set and exact counts `30`, `22`, `8`, and macOS baseline applicable count `20`.
+Load the committed JSON through `capture_command.load_matrix` and assert the SHA-256 of its canonical whole-object bytes is exactly `04deab6a2769e491b2b313a1f3b44bd11b1ce7f58b5f6893b12e8cb8105c140a`. That reviewed semantic digest locks every ID, platform, phase, argv element, order, and expected exit without creating a second hand-maintained 30-command authority in Python. Also assert the complete ID set and exact counts `30`, `22`, `8`, and macOS baseline applicable count `20`.
 
 ```python
 EXPECTED_IDS = {
@@ -193,7 +197,7 @@ EXPECTED_IDS = {
     "post-bazel-rust",
     "post-bazel-assets",
 }
-EXPECTED_MATRIX_SHA256 = "53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8"
+EXPECTED_MATRIX_SHA256 = "04deab6a2769e491b2b313a1f3b44bd11b1ce7f58b5f6893b12e8cb8105c140a"
 
 def test_required_matrix_is_exact_and_frozen() -> None:
     parsed = load_json_without_duplicate_keys(MATRIX_PATH)
@@ -500,7 +504,9 @@ Build child environments from a fixed allowlist: `PATH`, `HOME`, `TMPDIR`, `TMP`
 
 Use `subprocess.Popen(..., stdout=PIPE, stderr=PIPE, shell=False, cwd=repo_root, env=sanitized_env)`. Each reader thread repeatedly reads `1024 * 1024` byte chunks, writes to a same-directory exclusive temporary file, updates `hashlib.sha256`, counts bytes, flushes, and `os.fsync`s. Join both readers, wait for the real process, and fsync every temp file.
 
-Publish with `os.link(temp_path, final_path)`, which is an atomic same-filesystem create-new operation on native APFS and NTFS and fails when the final name already exists; never use check-then-`os.replace` on an unreserved destination. Link all logs in deterministic name order, fsync the evidence directory, link the manifest last as the commit marker, fsync again, then unlink the temp names. Track the final paths successfully linked by this invocation. On a handled exception before manifest publication, unlink only those tracked links after verifying their inode/file identity still equals the invocation's temp file, then fsync the directory. A process kill can leave manifest-less log links; the verifier reports their exact safe relative names as invalid orphan evidence and blocks recapture. Removal then requires a reviewed, explicit operator action against only those reported paths; the recorder never auto-deletes an earlier invocation. The normal exception and two-concurrent-invocation tests must leave exactly one complete winner and no overwrite.
+Implement one private `publish_create_new(temp_path, final_path)` platform adapter and use it everywhere. On POSIX/APFS, call `os.link(temp_path, final_path)`, fsync the containing directory through an `O_DIRECTORY` descriptor, then unlink the temp name. On native Windows/NTFS, call `MoveFileExW(temp_path, final_path, MOVEFILE_WRITE_THROUGH)` through standard-library `ctypes` without `MOVEFILE_REPLACE_EXISTING`; `ERROR_FILE_EXISTS`/`ERROR_ALREADY_EXISTS` is the same preexisting-output failure, and every other false return includes `GetLastError` in the safe error. Temp files are same-directory and individually flushed first. Unit tests exercise both adapters through injected syscall shims; the later native Windows child reruns the real Windows branch and proves second publication cannot overwrite.
+
+Publish all logs in deterministic name order and the manifest last as the commit marker. Track final paths successfully published by this invocation. On a handled exception before manifest publication, unlink only those tracked paths after verifying file identity still equals the invocation's temp receipt, then flush the POSIX directory or use write-through Windows cleanup. A process kill can leave manifest-less log files; the verifier reports their exact safe relative names as invalid orphan evidence and blocks recapture. Removal then requires a reviewed, explicit operator action against only those reported paths; the recorder never auto-deletes an earlier invocation. The normal exception and two-concurrent-invocation tests must leave exactly one complete winner and no overwrite.
 
 ```python
 @dataclass(frozen=True)
@@ -575,10 +581,10 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **Interfaces:**
 - Consumes: committed matrix plus bootstrap/command/log evidence.
-- Produces baseline/post CLI: `verify_evidence.py --repo-root ABS --matrix ABS --evidence-root ABS --platform macos-x86_64|windows-11-x64 --mode baseline|post`.
+- Produces baseline/post CLI: `verify_evidence.py --repo-root ABS --matrix ABS --evidence-root ABS --platform macos-x86_64|windows-11-x64 --mode baseline|post`, with optional create-new `--summary-output ABS` bound to the exact evidence root/mode summary name.
 - Produces frozen final CLI with exactly: `--candidate-sha`, `--selected-report`, `--report-index`, `--business-verification-receipt`, `--verification-output` plus the public foundation inputs above.
 - Produces library API `scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]`; every verifier mode calls it before accepting evidence.
-- Writes final output with create-new semantics; baseline/post modes are read-only.
+- Writes final and requested summary output with create-new semantics; baseline/post verification is otherwise read-only.
 
 - [ ] **Step 1: Write tamper and completeness RED tests**
 
@@ -674,11 +680,11 @@ class EvidenceDisposition:
         return "PASS" if not self.blocked_ids else "BLOCKED_BASELINE"
 ```
 
-CLI stdout prints one compact JSON object containing this disposition and exits `0` only for `PASS`; it exits `2` for valid but blocked evidence and `1` for invalid evidence. No `--ignore-*` argument exists.
+CLI stdout prints one compact canonical JSON object containing this disposition and exits `0` only for `PASS`; it exits `2` for valid but blocked evidence and `1` for invalid evidence. With `--summary-output`, baseline must target exactly `<evidence-root>/baseline-summary.json` and post exactly `<evidence-root>/post-summary.json`; the verifier publishes the same stdout bytes through `publish_create_new` only after all verification succeeds. Without that flag, an existing exact-name summary is allowed only when its canonical bytes equal the freshly recomputed disposition; an unexpected summary name or mismatched bytes is invalid. No `--ignore-*` argument exists.
 
 - [ ] **Step 6: Implement create-new frozen final output**
 
-Require all five final arguments together or none. Final mode first verifies macOS and Windows post evidence, then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository through a same-directory exclusive temp file, file `fsync`, atomic create-new `os.link`, directory `fsync`, and temp unlink. An existing output, symlink, path inside the repository, parent reparse/symlink, or filesystem without the required same-filesystem create-new primitive is rejected; no `os.replace` may target an unreserved final name.
+Require all five final arguments together or none. Final mode first verifies macOS and Windows post evidence, then verifies a single report selected by an append-only report index and an exact public Rust receipt. The final output contains exactly `FINAL_OUTPUT_KEYS`, is canonical JSON plus LF, and is written to an absolute path outside the repository through a same-directory exclusive temp file, file `fsync`, and the same tested `publish_create_new` adapter used by the recorder. An existing output, symlink, path inside the repository, parent reparse/symlink, or unsupported filesystem is rejected; no `os.replace` may target an unreserved final name.
 
 - [ ] **Step 7: Run verifier GREEN and regression tests**
 
@@ -1029,15 +1035,14 @@ The `|| true` is allowed only in this outer evidence-collection loop because the
 
 ```bash
 set +e
-set -C
 "$AI_IP_UV_ROOT/bin/python" "$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/verify_evidence.py" \
   --repo-root "$PWD" \
   --matrix "$AI_IP_COMMAND_MATRIX" \
   --evidence-root "$AI_IP_EVIDENCE_DIR" \
   --platform macos-x86_64 \
-  --mode baseline > "$AI_IP_EVIDENCE_DIR/baseline-summary.json"
+  --mode baseline \
+  --summary-output "$AI_IP_EVIDENCE_DIR/baseline-summary.json"
 AI_IP_BASELINE_VERIFY_EXIT=$?
-set +C
 set -e
 test "$AI_IP_BASELINE_VERIFY_EXIT" -eq 0 -o "$AI_IP_BASELINE_VERIFY_EXIT" -eq 2
 ```
@@ -1075,22 +1080,21 @@ Record `status=passed` only when exit is `0`; otherwise record `status=failed` a
 
 - [ ] **Step 4: Scan evidence for forbidden content before staging**
 
-Invoke the already committed Task 3 scanner over the complete evidence directory, including `baseline-summary.json`:
+Re-run the already committed Task 3 verifier without an output path. This recomputes the summary, validates the existing create-new summary, and scans the complete evidence directory. Bytecode remains disabled so the detached tools tree cannot gain `__pycache__`:
 
 ```bash
-"$AI_IP_UV_ROOT/bin/python" - "$AI_IP_TOOLS_WORKTREE" "$AI_IP_EVIDENCE_DIR" <<'PY'
-import sys
-from pathlib import Path
-
-tools_root = Path(sys.argv[1])
-sys.path.insert(0, str(tools_root / "scripts" / "ai_ip" / "foundation"))
-from verify_evidence import scan_forbidden_evidence
-
-matches = scan_forbidden_evidence(Path(sys.argv[2]))
-for match in matches:
-    print(f"{match.path}\t{match.rule_id}")
-raise SystemExit(1 if matches else 0)
-PY
+set +e
+PYTHONDONTWRITEBYTECODE=1 "$AI_IP_UV_ROOT/bin/python" \
+  "$AI_IP_TOOLS_WORKTREE/scripts/ai_ip/foundation/verify_evidence.py" \
+  --repo-root "$PWD" \
+  --matrix "$AI_IP_COMMAND_MATRIX" \
+  --evidence-root "$AI_IP_EVIDENCE_DIR" \
+  --platform macos-x86_64 \
+  --mode baseline > /dev/null
+AI_IP_RESCAN_EXIT=$?
+set -e
+test "$AI_IP_RESCAN_EXIT" -eq 0 -o "$AI_IP_RESCAN_EXIT" -eq 2
+test -z "$(git -C "$AI_IP_TOOLS_WORKTREE" status --porcelain=v1 --untracked-files=all)"
 ```
 
 Expected: zero forbidden matches. A match blocks staging until the producing command/evidence path is corrected and recaptured; never edit logs in place.
@@ -1120,7 +1124,7 @@ Append one section titled exactly `## F-0003 — Add native evidence tools and c
 3. `toolsGitSha`: the exact Task 5 40-lowercase-hex commit.
 4. `Classification`: **preserve** `codex-rs/**`; **add** the seven foundation tool/test/matrix files, evidence README, and macOS evidence.
 5. `Business reason`: establish trustworthy unchanged-Codex regression evidence before business implementation.
-6. `Regression proof`: the exact all-foundation pytest command from Task 5, matrix semantic SHA `53bfe999975caa6be80401cab816ce02595f82185e2439938de089c264ae20f8`, and the computed SHA-256 of `baseline-summary.json`.
+6. `Regression proof`: the exact all-foundation pytest command from Task 5, matrix semantic SHA `04deab6a2769e491b2b313a1f3b44bd11b1ce7f58b5f6893b12e8cb8105c140a`, and the computed SHA-256 of `baseline-summary.json`.
 7. `Transfer proof`: computed bundle SHA-256 and its two exact advertised refs.
 8. `Workspace suite`: either `not-run/declined`, or `passed|failed` with real exit code and both computed external-log digests from Task 7 Step 3.
 9. `Provider`: literal `providerMode=not-run` and `paidProviderCost=0`.
