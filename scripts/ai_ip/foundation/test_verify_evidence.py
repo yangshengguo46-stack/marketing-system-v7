@@ -7,7 +7,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -216,12 +216,12 @@ class ValidEvidenceFixture:
         tools = tmp_path / "tools"
         baseline = tmp_path / "baseline"
         post = tmp_path / "post"
-        windows_post = tmp_path / "windows-post"
+        windows_post = tmp_path / "windows" / "post"
         repo.mkdir()
         tools.mkdir()
         baseline.mkdir()
         post.mkdir()
-        windows_post.mkdir()
+        windows_post.mkdir(parents=True)
         _git(repo, "init", "-q")
         _git(repo, "config", "user.name", "Evidence Test")
         _git(repo, "config", "user.email", "evidence@example.invalid")
@@ -339,6 +339,39 @@ class ValidEvidenceFixture:
     def _manifest(self, root: Path, command_id: str) -> Path:
         return root / f"{command_id}.manifest.json"
 
+    def clone(self, destination: Path) -> "ValidEvidenceFixture":
+        source_root = self.repo.parent
+        root = destination / "evidence-fixture"
+        shutil.copytree(source_root, root)
+
+        def mapped(path: Path) -> Path:
+            return root / path.relative_to(source_root)
+
+        request = replace(
+            self.request,
+            repo_root=mapped(self.repo),
+            matrix_path=mapped(self.matrix),
+            evidence_root=mapped(self.baseline),
+        )
+        post_request = replace(
+            self.post_request,
+            repo_root=mapped(self.repo),
+            matrix_path=mapped(self.matrix),
+            evidence_root=mapped(self.post),
+        )
+        return ValidEvidenceFixture(
+            repo=mapped(self.repo),
+            tools=mapped(self.tools),
+            matrix=mapped(self.matrix),
+            baseline=mapped(self.baseline),
+            post=mapped(self.post),
+            windows_post=mapped(self.windows_post),
+            request=request,
+            post_request=post_request,
+            tested_sha=self.tested_sha,
+            tools_sha=self.tools_sha,
+        )
+
     def _mutate_json(self, path: Path, key: str, value: object) -> None:
         parsed = _strict_json(path)
         parsed[key] = value
@@ -408,6 +441,28 @@ class ValidEvidenceFixture:
             raise AssertionError(f"unknown mutation: {mutation}")
 
 
+@pytest.fixture(scope="session")
+def valid_evidence_template(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> ValidEvidenceFixture:
+    fixture = ValidEvidenceFixture.create(tmp_path_factory.mktemp("valid-evidence"))
+    disposition = verifier.verify_evidence(fixture.request)
+    _write_json(
+        fixture.baseline / "baseline-summary.json",
+        verifier.disposition_dict(disposition),
+    )
+    return fixture
+
+
+@pytest.fixture(scope="session")
+def blocked_evidence_template(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> ValidEvidenceFixture:
+    return ValidEvidenceFixture.create(
+        tmp_path_factory.mktemp("blocked-evidence"), blocked_baseline=True
+    )
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -464,6 +519,188 @@ def test_post_accepts_only_failures_already_blocked_in_baseline(tmp_path: Path) 
     disposition = verifier.verify_evidence(fixture.post_request)
     assert disposition.status == "BLOCKED_BASELINE"
     assert disposition.blocked_ids == ("base-paired",)
+
+
+def _block_post_command(fixture: ValidEvidenceFixture, command_id: str) -> None:
+    manifest_path = fixture.post / f"{command_id}.manifest.json"
+    manifest = _strict_json(manifest_path)
+    manifest["exitCode"] = 9
+    manifest["status"] = "BLOCKED_BASELINE"
+    _write_json(manifest_path, manifest)
+
+
+def test_post_rejects_forged_baseline_summary_inside_post_root(
+    tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    forged = {
+        "schemaVersion": 1,
+        "platform": "macos-x86_64",
+        "mode": "baseline",
+        "testedGitSha": fixture.tested_sha,
+        "toolsGitSha": fixture.tools_sha,
+        "matrixSha256": hashlib.sha256(
+            verifier.canonical_json_bytes(_strict_json(fixture.matrix))
+        ).hexdigest(),
+        "commandIds": ["base-pass", "base-paired", "post-extra"],
+        "blockedIds": ["post-extra"],
+        "status": "BLOCKED_BASELINE",
+    }
+    _write_json(fixture.post / "baseline-summary.json", forged)
+    _block_post_command(fixture, "post-extra")
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.post_request)
+
+
+def test_post_rejects_post_root_baseline_summary_even_when_post_passes(
+    tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    _write_json(
+        fixture.post / "baseline-summary.json",
+        {
+            "schemaVersion": 1,
+            "platform": "macos-x86_64",
+            "mode": "baseline",
+            "testedGitSha": fixture.tested_sha,
+            "toolsGitSha": fixture.tools_sha,
+            "matrixSha256": hashlib.sha256(
+                verifier.canonical_json_bytes(_strict_json(fixture.matrix))
+            ).hexdigest(),
+            "commandIds": ["base-pass", "base-paired"],
+            "blockedIds": [],
+            "status": "PASS",
+        },
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.post_request)
+
+
+def test_post_rejects_tampered_sibling_baseline_evidence(
+    tmp_path: Path, blocked_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = blocked_evidence_template.clone(tmp_path)
+    with (fixture.baseline / "base-paired.stdout.log").open("ab") as output:
+        output.write(b"tampered\n")
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.post_request)
+
+
+@pytest.mark.parametrize("summary_state", ["missing", "mismatched"])
+def test_post_requires_exact_recomputed_sibling_baseline_summary(
+    summary_state: str,
+    tmp_path: Path,
+    blocked_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = blocked_evidence_template.clone(tmp_path)
+    summary = fixture.baseline / "baseline-summary.json"
+    if summary_state == "missing":
+        summary.unlink()
+    else:
+        value = _strict_json(summary)
+        value["blockedIds"] = []
+        value["status"] = "PASS"
+        _write_json(summary, value)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.post_request)
+
+
+def test_post_pairs_only_against_recomputed_historical_baseline(
+    tmp_path: Path, blocked_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = blocked_evidence_template.clone(tmp_path)
+    disposition = verifier.verify_evidence(fixture.post_request)
+    assert disposition.blocked_ids == ("base-paired",)
+
+
+def test_verify_rejects_identical_manifest_inode_swap_after_scan(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    real_scan = verifier.scan_forbidden_evidence
+
+    def scan_then_swap(root: Path) -> tuple[verifier.ForbiddenMatch, ...]:
+        matches = real_scan(root)
+        manifest = root / "host-bootstrap.manifest.json"
+        replacement = root / "replacement.tmp"
+        replacement.write_bytes(manifest.read_bytes())
+        replacement.replace(manifest)
+        return matches
+
+    monkeypatch.setattr(verifier, "scan_forbidden_evidence", scan_then_swap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+def test_recursive_scanner_rejects_identical_entry_swap_after_child_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "evidence"
+    root.mkdir()
+    path = root / "safe.log"
+    path.write_bytes(b"safe\n")
+    scan_one = verifier._scan_one
+
+    def scan_then_swap(
+        target: Path, display: str
+    ) -> tuple[verifier.ForbiddenMatch, ...]:
+        matches = scan_one(target, display)
+        replacement = target.with_name("replacement.tmp")
+        replacement.write_bytes(target.read_bytes())
+        replacement.replace(target)
+        return matches
+
+    monkeypatch.setattr(verifier, "_scan_one", scan_then_swap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.scan_forbidden_evidence(root)
+
+
+def test_log_verification_streams_without_whole_file_materialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    stable_file_bytes = verifier._stable_file_bytes
+
+    def reject_log_materialization(path: Path) -> bytes:
+        if path.suffix == ".log":
+            raise AssertionError("log was materialized")
+        return stable_file_bytes(path)
+
+    monkeypatch.setattr(verifier, "_stable_file_bytes", reject_log_materialization)
+    assert verifier.verify_evidence(fixture.request).status == "PASS"
+
+
+def test_verify_rejects_identical_matrix_swap_after_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    valid_evidence_template: ValidEvidenceFixture,
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    capture_file = verifier._FileSnapshot.capture.__func__
+
+    def capture_then_swap(
+        cls: type[verifier._FileSnapshot],
+        path: Path,
+        display: str,
+        *,
+        keep_payload: bool,
+    ) -> verifier._FileSnapshot:
+        snapshot = capture_file(cls, path, display, keep_payload=keep_payload)
+        if display == "required-command-matrix.json":
+            replacement = path.with_name("matrix-replacement.tmp")
+            replacement.write_bytes(path.read_bytes())
+            replacement.replace(path)
+        return snapshot
+
+    monkeypatch.setattr(
+        verifier._FileSnapshot, "capture", classmethod(capture_then_swap)
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
 
 
 def test_cli_exits_zero_one_and_two_and_publishes_exact_summary(
@@ -695,6 +932,38 @@ class FinalFixture:
     @classmethod
     def create(cls, tmp_path: Path) -> "FinalFixture":
         evidence = ValidEvidenceFixture.create(tmp_path / "foundation")
+        mac_baseline = verifier.verify_evidence(evidence.request)
+        _write_json(
+            evidence.baseline / "baseline-summary.json",
+            verifier.disposition_dict(mac_baseline),
+        )
+        windows_baseline_root = evidence.windows_post.parent / "baseline"
+        windows_baseline_root.mkdir()
+        for name in (
+            "host-bootstrap.manifest.json",
+            "base-pass.manifest.json",
+            "base-pass.stdout.log",
+            "base-pass.stderr.log",
+            "base-paired.manifest.json",
+            "base-paired.stdout.log",
+            "base-paired.stderr.log",
+        ):
+            shutil.copyfile(evidence.windows_post / name, windows_baseline_root / name)
+        for path in evidence.windows_post.glob("*.version.*.log"):
+            shutil.copyfile(path, windows_baseline_root / path.name)
+        for path in evidence.windows_post.glob("dependency-install.*.log"):
+            shutil.copyfile(path, windows_baseline_root / path.name)
+        windows_baseline = verifier.verify_evidence(
+            replace(
+                evidence.request,
+                evidence_root=windows_baseline_root,
+                platform="windows-11-x64",
+            )
+        )
+        _write_json(
+            windows_baseline_root / "baseline-summary.json",
+            verifier.disposition_dict(windows_baseline),
+        )
         report = (
             evidence.repo
             / "docs/evidence/business-proof/public-run-1234567890abcdef/report.json"
@@ -811,6 +1080,21 @@ class FinalFixture:
         return FinalFixture(root, evidence, report, index, receipt, output, request)
 
 
+def _refresh_final_bindings(fixture: FinalFixture) -> None:
+    report_sha = hashlib.sha256(fixture.report.read_bytes()).hexdigest()
+    index = _strict_json(fixture.index)
+    index["attempts"][0]["reportSha256"] = report_sha
+    _write_json(fixture.index, index)
+    receipt = _strict_json(fixture.receipt)
+    report = _strict_json(fixture.report)
+    receipt["reportSha256"] = report_sha
+    receipt["reportIndexSha256"] = hashlib.sha256(
+        fixture.index.read_bytes()
+    ).hexdigest()
+    receipt["capabilityStatus"] = report["capabilityStatus"]
+    _write_json(fixture.receipt, receipt)
+
+
 @pytest.fixture(scope="session")
 def final_fixture_template(tmp_path_factory: pytest.TempPathFactory) -> FinalFixture:
     return FinalFixture.create(tmp_path_factory.mktemp("final-template"))
@@ -828,6 +1112,29 @@ def test_frozen_final_verifies_public_bindings_and_writes_exact_allowlist(
     assert result["foundationDecision"] == "PASS_TO_PHASE_0B"
     with pytest.raises(verifier.EvidenceError):
         verifier.verify_frozen_final(fixture.request)
+
+
+def test_frozen_final_rejects_identical_report_swap_before_publication(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    validate_report = verifier._validate_report
+
+    def validate_then_swap(
+        path: Path, repo: Path, candidate_sha: str, payload: bytes
+    ) -> dict[str, object]:
+        report = validate_report(path, repo, candidate_sha, payload)
+        replacement = path.with_name("report-replacement.tmp")
+        replacement.write_bytes(path.read_bytes())
+        replacement.replace(path)
+        return report
+
+    monkeypatch.setattr(verifier, "_validate_report", validate_then_swap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+    assert not fixture.output.exists()
 
 
 def test_final_publication_failure_removes_reserved_temp(
@@ -849,6 +1156,145 @@ def test_final_publication_failure_removes_reserved_temp(
 
 
 @pytest.mark.parametrize(
+    "private_value",
+    [
+        "thread-123",
+        "response-123",
+        "reviewer-123",
+        "private material",
+        "prompt body",
+        "output body",
+    ],
+)
+def test_final_rejects_private_material_in_allowed_nested_value(
+    private_value: str,
+    tmp_path: Path,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    report = _strict_json(fixture.report)
+    report["capabilityStatus"]["mechanicalContracts"] = private_value
+    _write_json(fixture.report, report)
+    _refresh_final_bindings(fixture)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+
+
+@pytest.mark.parametrize(
+    "private_key",
+    [
+        "threadId",
+        "responseId",
+        "reviewerId",
+        "privateRoot",
+        "prompt",
+        "outputBody",
+        "reviewerMapping",
+        "privateCase",
+        "caseBody",
+    ],
+)
+def test_final_rejects_private_material_in_allowed_nested_key(
+    private_key: str,
+    tmp_path: Path,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    report = _strict_json(fixture.report)
+    report["genericUsage"] = {private_key: "opaque"}
+    _write_json(fixture.report, report)
+    _refresh_final_bindings(fixture)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+
+
+def test_final_allows_benign_prompt_and_response_terms(
+    tmp_path: Path, final_fixture_template: FinalFixture
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    report = _strict_json(fixture.report)
+    report["capabilityStatus"]["mechanicalContracts"] = (
+        "prompt engineering response status"
+    )
+    report["genericUsage"] = {"promptTokens": 12, "responseStatus": "complete"}
+    _write_json(fixture.report, report)
+    _refresh_final_bindings(fixture)
+    assert verifier.verify_frozen_final(fixture.request)["G2"] == "PASS"
+
+
+@pytest.mark.parametrize(
+    ("target", "field"),
+    [
+        ("report", "schemaVersion"),
+        ("index", "schemaVersion"),
+        ("receipt", "schemaVersion"),
+        ("attempt", "attemptOrdinal"),
+    ],
+)
+def test_final_rejects_boolean_integer_primitives(
+    target: str,
+    field: str,
+    tmp_path: Path,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    path = {
+        "report": fixture.report,
+        "index": fixture.index,
+        "receipt": fixture.receipt,
+        "attempt": fixture.index,
+    }[target]
+    value = _strict_json(path)
+    if target == "attempt":
+        value["attempts"][0][field] = True
+    else:
+        value[field] = True
+    _write_json(path, value)
+    if target in {"report", "index", "attempt"}:
+        _refresh_final_bindings(fixture)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+
+
+def test_baseline_rejects_boolean_schema_version(
+    tmp_path: Path, valid_evidence_template: ValidEvidenceFixture
+) -> None:
+    fixture = valid_evidence_template.clone(tmp_path)
+    bootstrap_path = fixture.baseline / "host-bootstrap.manifest.json"
+    bootstrap = _strict_json(bootstrap_path)
+    bootstrap["schemaVersion"] = True
+    _write_json(bootstrap_path, bootstrap)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_evidence(fixture.request)
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    [
+        "2030-01-01T12:00:00Z",
+        "2030-01-01 12:00:00.000000Z",
+        "2030-01-01T12:00:00.000000z",
+        "2030-01-01T12:00:00.000000+00:00",
+        "2030-01-01T12:00:00.0000000Z",
+    ],
+)
+def test_rfc3339_utc_requires_exact_canonical_grammar(timestamp: str) -> None:
+    with pytest.raises(verifier.EvidenceError):
+        verifier._rfc3339_utc(timestamp, "timestamp")
+
+
+def test_final_requires_report_generation_before_live_verification(
+    tmp_path: Path, final_fixture_template: FinalFixture
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    receipt = _strict_json(fixture.receipt)
+    receipt["verifiedAt"] = "2029-12-31T23:59:59.000000Z"
+    _write_json(fixture.receipt, receipt)
+    with pytest.raises(verifier.EvidenceError):
+        verifier.verify_frozen_final(fixture.request)
+
+
+@pytest.mark.parametrize(
     "mutation",
     [
         "multiple_selected",
@@ -861,12 +1307,6 @@ def test_final_publication_failure_removes_reserved_temp(
         "absolute_path",
         "bearer",
         "credential",
-        "thread_id",
-        "response_id",
-        "reviewer_id",
-        "private_root",
-        "prompt_body",
-        "output_body",
         "nan",
         "infinity",
         "duplicate_key",
@@ -881,6 +1321,10 @@ def test_frozen_final_rejects_tampering_and_private_fields(
         duplicate = dict(index["attempts"][0])
         duplicate["attemptOrdinal"] = 2
         duplicate["publicRunId"] = "second-public-run-1234567890"
+        duplicate["reportPath"] = (
+            "docs/evidence/business-proof/second-public-run-1234567890/report.json"
+        )
+        duplicate["supersedes"] = index["attempts"][0]["publicRunId"]
         duplicate["caseCommitment"] = "f" * 64
         duplicate["materialsCommitment"] = "1" * 64
         index["attempts"].append(duplicate)
@@ -908,36 +1352,25 @@ def test_frozen_final_rejects_tampering_and_private_fields(
         }[mutation]
         value[key] = HEX_64 if mutation != "receipt_extra" else True
         _write_json(fixture.receipt, value)
-    elif mutation in {
-        "absolute_path",
-        "bearer",
-        "credential",
-        "thread_id",
-        "response_id",
-        "reviewer_id",
-        "private_root",
-        "prompt_body",
-        "output_body",
-    }:
-        value = _strict_json(fixture.receipt)
-        key, item = {
-            "absolute_path": ("extra", "/private/run"),
-            "bearer": ("extra", "Bearer abcdefgh12345678"),
-            "credential": ("apiKey", "opaque-value"),
-            "thread_id": ("threadId", "thread-123"),
-            "response_id": ("responseId", "response-123"),
-            "reviewer_id": ("reviewerId", "reviewer-123"),
-            "private_root": ("privateRoot", "opaque"),
-            "prompt_body": ("prompt", "body"),
-            "output_body": ("outputBody", "body"),
-        }[mutation]
-        value[key] = item
-        _write_json(fixture.receipt, value)
+    elif mutation in {"absolute_path", "bearer", "credential"}:
+        report = _strict_json(fixture.report)
+        report["genericUsage"] = {
+            "safeField": {
+                "absolute_path": "/private/run",
+                "bearer": "Bearer abcdefgh12345678",
+                "credential": "api_key=opaque-value",
+            }[mutation]
+        }
+        _write_json(fixture.report, report)
+        _refresh_final_bindings(fixture)
     elif mutation in {"nan", "infinity"}:
-        payload = fixture.receipt.read_text(encoding="utf-8").rstrip("\n}")
+        payload = fixture.report.read_text(encoding="utf-8")
         constant = "NaN" if mutation == "nan" else "Infinity"
-        fixture.receipt.write_text(
-            payload + f',"extra":{constant}}}\n', encoding="utf-8"
+        fixture.report.write_text(
+            payload.replace(
+                '"genericUsage":{}', f'"genericUsage":{{"value":{constant}}}', 1
+            ),
+            encoding="utf-8",
         )
     elif mutation == "duplicate_key":
         payload = fixture.receipt.read_text(encoding="utf-8")
@@ -983,3 +1416,205 @@ def test_final_cli_requires_all_five_final_arguments(
         )
     assert error.value.code == 2
     assert "required together" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("option", "value"),
+    [
+        ("--repo-root", "/repo"),
+        ("--matrix", "/matrix.json"),
+        ("--evidence-root", "/evidence"),
+        ("--platform", "macos-x86_64"),
+        ("--mode", "baseline"),
+        ("--summary-output", "/summary.json"),
+        ("--candidate-sha", "0" * 40),
+        ("--selected-report", "/report.json"),
+        ("--report-index", "/index.json"),
+        ("--business-verification-receipt", "/receipt.json"),
+        ("--verification-output", "/verification.json"),
+    ],
+)
+def test_cli_rejects_repeated_option_occurrences(
+    option: str, value: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as error:
+        verifier._parser().parse_args([option, value, option, value])
+    assert error.value.code == 2
+    assert "may not be repeated" in capsys.readouterr().err
+
+
+def _baseline_cli_args() -> list[str]:
+    return [
+        "--repo-root",
+        "/repo",
+        "--matrix",
+        "/matrix.json",
+        "--evidence-root",
+        "/evidence",
+        "--platform",
+        "macos-x86_64",
+        "--mode",
+        "baseline",
+    ]
+
+
+def _final_cli_args() -> list[str]:
+    return [
+        "--repo-root",
+        "/repo",
+        "--matrix",
+        "/matrix.json",
+        "--evidence-root",
+        "/evidence",
+        "--candidate-sha",
+        "0" * 40,
+        "--selected-report",
+        "/report.json",
+        "--report-index",
+        "/index.json",
+        "--business-verification-receipt",
+        "/receipt.json",
+        "--verification-output",
+        "/verification.json",
+    ]
+
+
+@pytest.mark.parametrize("option", ["--repo-root", "--matrix", "--evidence-root"])
+def test_baseline_cli_rejects_relative_public_paths(
+    option: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = _baseline_cli_args()
+    args[args.index(option) + 1] = "relative"
+    with pytest.raises(SystemExit) as error:
+        verifier.main(args)
+    assert error.value.code == 2
+    assert "must be absolute" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        "--repo-root",
+        "--matrix",
+        "--evidence-root",
+        "--selected-report",
+        "--report-index",
+        "--business-verification-receipt",
+        "--verification-output",
+    ],
+)
+def test_final_cli_rejects_relative_public_paths(
+    option: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = _final_cli_args()
+    args[args.index(option) + 1] = "relative"
+    with pytest.raises(SystemExit) as error:
+        verifier.main(args)
+    assert error.value.code == 2
+    assert "must be absolute" in capsys.readouterr().err
+
+
+def test_final_cli_has_no_public_foundation_defaults(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    args = _final_cli_args()[6:]
+    with pytest.raises(SystemExit) as error:
+        verifier.main(args)
+    assert error.value.code == 2
+    assert "public foundation arguments" in capsys.readouterr().err
+
+
+def test_final_cli_resolves_exact_sibling_paired_post_roots(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    requests: list[verifier.FinalVerificationRequest] = []
+    monkeypatch.setattr(
+        verifier,
+        "verify_frozen_final",
+        lambda request: requests.append(request) or {},
+    )
+    assert verifier.main(_final_cli_args()) == 0
+    assert requests[0].mac_post_root == Path("/evidence/macos-x86_64/post")
+    assert requests[0].windows_post_root == Path("/evidence/windows-11-x64/post")
+
+
+@pytest.mark.parametrize(
+    "baseline_only",
+    [
+        ["--platform", "macos-x86_64"],
+        ["--mode", "post"],
+        ["--summary-output", "/summary.json"],
+    ],
+)
+def test_final_cli_rejects_baseline_only_arguments(
+    baseline_only: list[str], capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as error:
+        verifier.main(_final_cli_args() + baseline_only)
+    assert error.value.code == 2
+    assert "baseline-only" in capsys.readouterr().err
+
+
+def test_baseline_cli_rejects_final_only_arguments(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as error:
+        verifier.main(_baseline_cli_args() + _final_cli_args()[6:])
+    assert error.value.code == 2
+    assert "final-only" in capsys.readouterr().err
+
+
+def test_absolute_directory_rejects_windows_reparse_component(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    parent = tmp_path / "junction"
+    child = parent / "child"
+    child.mkdir(parents=True)
+    lstat = Path.lstat
+
+    def reparse_lstat(path: Path) -> object:
+        metadata = lstat(path)
+        if path == parent:
+            return SimpleNamespace(
+                st_mode=metadata.st_mode,
+                st_file_attributes=0x400,
+            )
+        return metadata
+
+    monkeypatch.setattr(Path, "lstat", reparse_lstat)
+    with pytest.raises(verifier.EvidenceError, match="reparse"):
+        verifier._absolute_directory(child, "directory")
+
+
+@pytest.mark.parametrize("failure", [FileExistsError("race"), OSError("filesystem")])
+def test_summary_temp_reservation_errors_are_normalized(
+    failure: OSError, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "evidence"
+    root.mkdir()
+    monkeypatch.setattr(
+        verifier.capture,
+        "_write_temp_bytes",
+        lambda path, payload: (_ for _ in ()).throw(failure),
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier._write_summary(
+            root / "baseline-summary.json", b"{}\n", root, "baseline"
+        )
+
+
+def test_summary_publish_oserror_is_normalized_and_temp_is_removed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "evidence"
+    root.mkdir()
+    monkeypatch.setattr(
+        verifier.capture,
+        "_publish_create_new",
+        lambda temp, final: (_ for _ in ()).throw(OSError("race")),
+    )
+    with pytest.raises(verifier.EvidenceError):
+        verifier._write_summary(
+            root / "baseline-summary.json", b"{}\n", root, "baseline"
+        )
+    assert not list(root.glob("*.tmp-*"))

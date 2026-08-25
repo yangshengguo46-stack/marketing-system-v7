@@ -19,6 +19,9 @@ EvidenceError = capture.EvidenceError
 CHUNK_SIZE = 1024 * 1024
 SHA_256_PATTERN = re.compile(r"[0-9a-f]{64}")
 SHA_1_PATTERN = re.compile(r"[0-9a-f]{40}")
+RFC3339_UTC_PATTERN = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z"
+)
 SAFE_BASENAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}")
 FORBIDDEN_BYTE_RULES = {
     "unix-user-home": rb"/(?:Users|home)/[^/\x00-\x20]+/",
@@ -226,6 +229,31 @@ FINAL_OUTPUT_KEYS = {
     "verifiedAt",
     "verifiedBeforeRetentionDeadline",
 }
+PRIVATE_PUBLIC_KEYS = {
+    "thread",
+    "threadid",
+    "response",
+    "responseid",
+    "responsebody",
+    "reviewer",
+    "reviewerid",
+    "reviewermapping",
+    "private",
+    "privateroot",
+    "privatecase",
+    "casebody",
+    "prompt",
+    "promptbody",
+    "output",
+    "outputbody",
+}
+PRIVATE_PUBLIC_VALUE_PATTERN = re.compile(
+    r"(?i)(?:\b(?:thread|response|reviewer)[-_ ]?id\b|"
+    r"\b(?:thread|reviewer)[-_ ][A-Za-z0-9]{3,}\b|"
+    r"\bresponse[-_ ](?!status\b)[A-Za-z0-9]{3,}\b|"
+    r"\bprivate[-_ ]*(?:root|material|case)\b|"
+    r"\b(?:prompt|output)[-_ ]*body\b)"
+)
 HARDENED_GIT_ENV = {
     "GIT_CONFIG_COUNT": "1",
     "GIT_CONFIG_GLOBAL": os.devnull,
@@ -296,6 +324,7 @@ class _GitBindings:
     matrix_raw_sha256: str
     matrix_semantic_sha256: str
     locks: Mapping[str, str]
+    matrix_snapshot: "_FileSnapshot"
 
 
 def canonical_json_bytes(value: object) -> bytes:
@@ -324,9 +353,10 @@ def _reject_json_constant(value: str) -> object:
     raise EvidenceError(f"non-finite JSON number: {value}")
 
 
-def _load_json(path: Path, label: str, *, canonical: bool = True) -> dict[str, object]:
+def _load_json_bytes(
+    payload: bytes, label: str, *, canonical: bool = True
+) -> dict[str, object]:
     try:
-        payload = _stable_file_bytes(path)
         parsed = json.loads(
             payload,
             object_pairs_hook=_reject_duplicate_keys,
@@ -406,7 +436,7 @@ def _safe_relative_path(value: object, label: str) -> str:
 
 def _rfc3339_utc(value: object, label: str) -> datetime:
     text = _string(value, label)
-    if not text.endswith("Z"):
+    if RFC3339_UTC_PATTERN.fullmatch(text) is None:
         raise EvidenceError(f"{label} must be RFC3339 UTC")
     try:
         parsed = datetime.fromisoformat(text[:-1] + "+00:00")
@@ -417,19 +447,30 @@ def _rfc3339_utc(value: object, label: str) -> datetime:
     return parsed
 
 
-def _path_has_symlink_component(path: Path) -> bool:
+def _unsafe_path_component(path: Path) -> str | None:
     current = Path(path.anchor)
     for part in path.parts[1:]:
         current /= part
-        if current.is_symlink():
-            return True
-    return False
+        try:
+            metadata = current.lstat()
+        except OSError as error:
+            raise EvidenceError(
+                f"unable to inspect path component: {current.name}"
+            ) from error
+        if stat.S_ISLNK(metadata.st_mode):
+            return "symlink"
+        if getattr(metadata, "st_file_attributes", 0) & 0x400:
+            return "reparse"
+    return None
 
 
 def _absolute_directory(path: Path, label: str) -> Path:
     lexical = Path(path)
-    if not lexical.is_absolute() or _path_has_symlink_component(lexical):
+    if not lexical.is_absolute():
         raise EvidenceError(f"{label} must be an absolute non-symlink directory")
+    unsafe = _unsafe_path_component(lexical)
+    if unsafe is not None:
+        raise EvidenceError(f"{label} contains a {unsafe} component")
     try:
         resolved = lexical.resolve(strict=True)
     except OSError as error:
@@ -441,8 +482,11 @@ def _absolute_directory(path: Path, label: str) -> Path:
 
 def _absolute_file(path: Path, label: str) -> Path:
     lexical = Path(path)
-    if not lexical.is_absolute() or _path_has_symlink_component(lexical):
+    if not lexical.is_absolute():
         raise EvidenceError(f"{label} must be an absolute non-symlink file")
+    unsafe = _unsafe_path_component(lexical)
+    if unsafe is not None:
+        raise EvidenceError(f"{label} contains a {unsafe} component")
     try:
         resolved = lexical.resolve(strict=True)
     except OSError as error:
@@ -559,10 +603,202 @@ def _scan_one(path: Path, display_path: str) -> tuple[ForbiddenMatch, ...]:
     return tuple(sorted(found))
 
 
+@dataclass(frozen=True)
+class _FileSnapshot:
+    path: Path
+    display: str
+    state: os.stat_result
+    size: int
+    sha256: str
+    payload: bytes | None
+    matches: tuple[ForbiddenMatch, ...]
+
+    @classmethod
+    def capture(
+        cls, path: Path, display: str, *, keep_payload: bool
+    ) -> "_FileSnapshot":
+        descriptor, before = _open_stable_regular(path)
+        digest = hashlib.sha256()
+        payload_chunks: list[bytes] | None = [] if keep_payload else None
+        matches: set[ForbiddenMatch] = set()
+        overlap = b""
+        total = 0
+        try:
+            while True:
+                chunk = os.read(descriptor, CHUNK_SIZE)
+                if not chunk:
+                    break
+                total += len(chunk)
+                digest.update(chunk)
+                if payload_chunks is not None:
+                    payload_chunks.append(chunk)
+                window = overlap + chunk
+                for rule_id, pattern in FORBIDDEN_BYTE_RULES.items():
+                    if re.search(pattern, window) is not None:
+                        matches.add(ForbiddenMatch(display, rule_id))
+                overlap = window[-CHUNK_SIZE:]
+            after = os.fstat(descriptor)
+        finally:
+            os.close(descriptor)
+        try:
+            final = path.stat(follow_symlinks=False)
+        except OSError as error:
+            raise EvidenceError(
+                f"public evidence file changed after read: {display}"
+            ) from error
+        if (
+            total != before.st_size
+            or not _same_file_state(before, after)
+            or not _same_file_state(before, final)
+        ):
+            raise EvidenceError(f"public evidence file changed while read: {display}")
+        payload = b"".join(payload_chunks) if payload_chunks is not None else None
+        return cls(
+            path,
+            display,
+            before,
+            total,
+            digest.hexdigest(),
+            payload,
+            tuple(sorted(matches)),
+        )
+
+    def validate_final_state(self) -> None:
+        try:
+            final = self.path.stat(follow_symlinks=False)
+        except OSError as error:
+            raise EvidenceError(
+                f"public evidence file changed after consumption: {self.display}"
+            ) from error
+        if not _same_file_state(self.state, final):
+            raise EvidenceError(
+                f"public evidence file changed after consumption: {self.display}"
+            )
+
+
+class _EvidenceSnapshot:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.files: dict[str, _FileSnapshot] = {}
+        self.directories: list[tuple[Path, os.stat_result]] = []
+        self._capture_tree()
+
+    def _capture_tree(self) -> None:
+        pending = [self.root]
+        while pending:
+            directory = pending.pop()
+            try:
+                before = directory.stat(follow_symlinks=False)
+                entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
+                after = directory.stat(follow_symlinks=False)
+            except OSError as error:
+                raise EvidenceError("unable to enumerate public evidence") from error
+            if not stat.S_ISDIR(before.st_mode) or not _same_file_state(before, after):
+                raise EvidenceError(
+                    "public evidence directory changed while enumerated"
+                )
+            self.directories.append((directory, before))
+            for entry in entries:
+                path = Path(entry.path)
+                relative = path.relative_to(self.root)
+                display = relative.as_posix()
+                for part in relative.parts:
+                    _safe_basename(part, "public evidence path component")
+                try:
+                    metadata = entry.stat(follow_symlinks=False)
+                except OSError as error:
+                    raise EvidenceError(
+                        f"unable to inspect public evidence: {display}"
+                    ) from error
+                if (
+                    stat.S_ISLNK(metadata.st_mode)
+                    or getattr(metadata, "st_file_attributes", 0) & 0x400
+                ):
+                    raise EvidenceError(f"unsafe public evidence entry: {display}")
+                if stat.S_ISDIR(metadata.st_mode):
+                    pending.append(path)
+                elif stat.S_ISREG(metadata.st_mode):
+                    if metadata.st_nlink != 1:
+                        raise EvidenceError(
+                            f"hardlinked public evidence file: {display}"
+                        )
+                    snapshot = _FileSnapshot.capture(
+                        path, display, keep_payload=path.suffix != ".log"
+                    )
+                    self.files[display] = snapshot
+                else:
+                    raise EvidenceError(f"special public evidence file: {display}")
+
+    def validate_final_state(self) -> None:
+        final_files: set[str] = set()
+        final_directories: set[Path] = set()
+        pending = [self.root]
+        while pending:
+            directory = pending.pop()
+            final_directories.add(directory)
+            try:
+                entries = list(os.scandir(directory))
+            except OSError as error:
+                raise EvidenceError("public evidence directory changed") from error
+            for entry in entries:
+                path = Path(entry.path)
+                display = path.relative_to(self.root).as_posix()
+                try:
+                    metadata = entry.stat(follow_symlinks=False)
+                except OSError as error:
+                    raise EvidenceError(
+                        f"public evidence entry changed: {display}"
+                    ) from error
+                if getattr(metadata, "st_file_attributes", 0) & 0x400:
+                    raise EvidenceError(
+                        f"public evidence entry became reparse: {display}"
+                    )
+                if stat.S_ISDIR(metadata.st_mode):
+                    pending.append(path)
+                elif stat.S_ISREG(metadata.st_mode):
+                    final_files.add(display)
+                else:
+                    raise EvidenceError(
+                        f"public evidence entry changed type: {display}"
+                    )
+        if final_files != set(self.files) or final_directories != {
+            path for path, _ in self.directories
+        }:
+            raise EvidenceError("public evidence tree changed after enumeration")
+        for snapshot in self.files.values():
+            snapshot.validate_final_state()
+        for directory, before in self.directories:
+            try:
+                final = directory.stat(follow_symlinks=False)
+            except OSError as error:
+                raise EvidenceError("public evidence directory changed") from error
+            if not _same_file_state(before, final):
+                raise EvidenceError(
+                    "public evidence directory changed after enumeration"
+                )
+
+    def json(self, name: str, label: str) -> dict[str, object]:
+        try:
+            payload = self.files[name].payload
+        except KeyError as error:
+            raise EvidenceError(f"missing public evidence file: {name}") from error
+        if payload is None:
+            raise EvidenceError(f"JSON evidence cannot be a log: {name}")
+        return _load_json_bytes(payload, label)
+
+    def matches(self) -> tuple[ForbiddenMatch, ...]:
+        return tuple(
+            sorted(
+                match for snapshot in self.files.values() for match in snapshot.matches
+            )
+        )
+
+
 def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
     canonical = _absolute_directory(Path(root), "evidence root")
     matches: set[ForbiddenMatch] = set()
     pending = [canonical]
+    observed: list[tuple[Path, os.stat_result, str]] = []
     while pending:
         directory = pending.pop()
         try:
@@ -593,13 +829,39 @@ def scan_forbidden_evidence(root: Path) -> tuple[ForbiddenMatch, ...]:
                 matches.update(_scan_one(Path(entry.path), display))
             else:
                 raise EvidenceError(f"special public evidence file: {display}")
+            observed.append((Path(entry.path), metadata, display))
+    for path, before, display in observed:
+        try:
+            final = path.stat(follow_symlinks=False)
+        except OSError as error:
+            raise EvidenceError(
+                f"public evidence entry changed after scan: {display}"
+            ) from error
+        if not _same_file_state(before, final):
+            raise EvidenceError(f"public evidence entry changed after scan: {display}")
+    final_entries: set[str] = set()
+    pending = [canonical]
+    while pending:
+        directory = pending.pop()
+        try:
+            entries = list(os.scandir(directory))
+        except OSError as error:
+            raise EvidenceError("public evidence tree changed after scan") from error
+        for entry in entries:
+            path = Path(entry.path)
+            display = path.relative_to(canonical).as_posix()
+            final_entries.add(display)
+            try:
+                metadata = entry.stat(follow_symlinks=False)
+            except OSError as error:
+                raise EvidenceError(
+                    f"public evidence entry changed after scan: {display}"
+                ) from error
+            if stat.S_ISDIR(metadata.st_mode):
+                pending.append(path)
+    if final_entries != {display for _, _, display in observed}:
+        raise EvidenceError("public evidence tree changed after scan")
     return tuple(sorted(matches))
-
-
-def _scan_consumed_file(path: Path, display: str) -> None:
-    matches = _scan_one(path, display)
-    if matches:
-        raise ForbiddenEvidenceError(matches)
 
 
 def _git_environment() -> dict[str, str]:
@@ -697,6 +959,57 @@ def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _matrix_from_value(parsed: object) -> capture.Matrix:
+    root = _exact_object(parsed, {"schemaVersion", "commands"}, "matrix")
+    if _integer(root["schemaVersion"], "matrix schemaVersion") != 1:
+        raise EvidenceError("matrix schemaVersion differs")
+    entries = root["commands"]
+    if not isinstance(entries, list):
+        raise EvidenceError("matrix commands must be an array")
+    commands: list[capture.CommandSpec] = []
+    ids: set[str] = set()
+    for raw in entries:
+        command = _exact_object(
+            raw, {"id", "platforms", "phase", "argv", "expectedExit"}, "matrix command"
+        )
+        command_id = _string(command["id"], "matrix command id")
+        if capture.COMMAND_ID_PATTERN.fullmatch(command_id) is None:
+            raise EvidenceError("matrix command id is unsafe")
+        if command_id in ids:
+            raise EvidenceError("duplicate matrix command id")
+        platforms = command["platforms"]
+        if (
+            not isinstance(platforms, list)
+            or not platforms
+            or any(
+                not isinstance(item, str) or item not in PLATFORM_ARCHITECTURES
+                for item in platforms
+            )
+            or len(set(platforms)) != len(platforms)
+        ):
+            raise EvidenceError("matrix command platforms are invalid")
+        phase = command["phase"]
+        if not isinstance(phase, str) or phase not in {"baselineAndPost", "postOnly"}:
+            raise EvidenceError("matrix command phase is invalid")
+        argv = command["argv"]
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or any(not isinstance(item, str) or not item for item in argv)
+        ):
+            raise EvidenceError("matrix command argv is invalid")
+        expected_exit = _integer(command["expectedExit"], "matrix expectedExit")
+        if expected_exit != 0:
+            raise EvidenceError("matrix expectedExit must be zero")
+        ids.add(command_id)
+        commands.append(
+            capture.CommandSpec(
+                command_id, tuple(platforms), phase, tuple(argv), expected_exit
+            )
+        )
+    return capture.Matrix(1, tuple(commands))
+
+
 def _bindings(
     repo_root: Path,
     matrix_path: Path,
@@ -718,42 +1031,57 @@ def _bindings(
         matrix_relative = matrix.relative_to(tools_repo).as_posix()
     except ValueError as error:
         raise EvidenceError("matrix is outside its tools repository") from error
-    matrix_blob = _commit_blob(tools_repo, tools_sha, matrix_relative, "matrix")
-    current_matrix = _stable_file_bytes(matrix)
-    if current_matrix != matrix_blob:
-        raise EvidenceError("matrix differs from the tools commit")
-    recorder_blob = _commit_blob(
-        tools_repo,
-        tools_sha,
-        "scripts/ai_ip/foundation/capture_command.py",
-        "recorder",
+    matrix_snapshot = _FileSnapshot.capture(
+        matrix, "required-command-matrix.json", keep_payload=True
     )
-    loaded_matrix = capture.load_matrix(matrix)
-    parsed = json.loads(
-        matrix_blob,
-        object_pairs_hook=_reject_duplicate_keys,
-        parse_constant=_reject_json_constant,
-    )
-    semantic_sha = _sha256(canonical_json_bytes(parsed))
-    locks = {
-        key: _sha256(_commit_blob(tested_repo, tested_sha, relative, relative))
-        for key, relative in LOCK_PATHS.items()
-    }
-    return (
-        _GitBindings(
-            tested_sha,
+    try:
+        if matrix_snapshot.matches:
+            raise ForbiddenEvidenceError(matrix_snapshot.matches)
+        current_matrix = matrix_snapshot.payload
+        if current_matrix is None:
+            raise EvidenceError("internal matrix snapshot differs")
+        matrix_blob = _commit_blob(tools_repo, tools_sha, matrix_relative, "matrix")
+        if current_matrix != matrix_blob:
+            raise EvidenceError("matrix differs from the tools commit")
+        recorder_blob = _commit_blob(
+            tools_repo,
             tools_sha,
-            _sha256(recorder_blob),
-            _sha256(matrix_blob),
-            semantic_sha,
-            locks,
-        ),
-        loaded_matrix,
-    )
+            "scripts/ai_ip/foundation/capture_command.py",
+            "recorder",
+        )
+        try:
+            parsed = json.loads(
+                current_matrix,
+                object_pairs_hook=_reject_duplicate_keys,
+                parse_constant=_reject_json_constant,
+            )
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise EvidenceError("invalid matrix JSON") from error
+        loaded_matrix = _matrix_from_value(parsed)
+        semantic_sha = _sha256(canonical_json_bytes(parsed))
+        locks = {
+            key: _sha256(_commit_blob(tested_repo, tested_sha, relative, relative))
+            for key, relative in LOCK_PATHS.items()
+        }
+        return (
+            _GitBindings(
+                tested_sha,
+                tools_sha,
+                _sha256(recorder_blob),
+                _sha256(matrix_blob),
+                semantic_sha,
+                locks,
+                matrix_snapshot,
+            ),
+            loaded_matrix,
+        )
+    except BaseException:
+        matrix_snapshot.validate_final_state()
+        raise
 
 
 def _validate_stream(
-    root: Path,
+    evidence: _EvidenceSnapshot,
     value: object,
     expected_name: str,
     expected_files: set[str],
@@ -765,9 +1093,11 @@ def _validate_stream(
         raise EvidenceError(f"{label} path differs")
     digest = _digest(stream["sha256"], f"{label} sha256")
     byte_count = _integer(stream["bytes"], f"{label} bytes", minimum=0)
-    path = root / name
-    payload = _stable_file_bytes(path)
-    if len(payload) != byte_count or _sha256(payload) != digest:
+    try:
+        snapshot = evidence.files[name]
+    except KeyError as error:
+        raise EvidenceError(f"missing public evidence log: {name}") from error
+    if snapshot.size != byte_count or snapshot.sha256 != digest:
         raise EvidenceError(f"{label} receipt differs from log")
     expected_files.add(name)
 
@@ -793,14 +1123,14 @@ def _validate_context(
 
 
 def _validate_bootstrap(
-    root: Path,
+    evidence: _EvidenceSnapshot,
     value: dict[str, object],
     bindings: _GitBindings,
     platform_id: str,
     expected_files: set[str],
 ) -> None:
     bootstrap = _exact_object(value, BOOTSTRAP_KEYS, "bootstrap manifest")
-    if bootstrap["schemaVersion"] != 1:
+    if _integer(bootstrap["schemaVersion"], "bootstrap schemaVersion") != 1:
         raise EvidenceError("bootstrap schemaVersion differs")
     _validate_context(bootstrap, bindings, platform_id, "bootstrap")
     _string(bootstrap["osVersion"], "bootstrap osVersion")
@@ -825,19 +1155,19 @@ def _validate_bootstrap(
             or any(not isinstance(item, str) or not item for item in argv)
         ):
             raise EvidenceError(f"{tool_name} versionArgv is invalid")
-        if tool["versionExitCode"] != 0:
+        if _integer(tool["versionExitCode"], f"{tool_name} versionExitCode") != 0:
             raise EvidenceError(f"{tool_name} version probe did not pass")
         _digest(tool["executableSha256"], f"{tool_name} executableSha256")
         _integer(tool["executableBytes"], f"{tool_name} executableBytes", minimum=1)
         _validate_stream(
-            root,
+            evidence,
             tool["versionStdout"],
             f"{tool_name}.version.stdout.log",
             expected_files,
             f"{tool_name} version stdout",
         )
         _validate_stream(
-            root,
+            evidence,
             tool["versionStderr"],
             f"{tool_name}.version.stderr.log",
             expected_files,
@@ -848,21 +1178,21 @@ def _validate_bootstrap(
     )
     if dependency["argv"] != ["pnpm", "install", "--frozen-lockfile"]:
         raise EvidenceError("dependency install argv differs")
-    if dependency["exitCode"] != 0:
+    if _integer(dependency["exitCode"], "dependency exitCode") != 0:
         raise EvidenceError("dependency install did not pass")
     started = _rfc3339_utc(dependency["startedAt"], "dependency startedAt")
     ended = _rfc3339_utc(dependency["endedAt"], "dependency endedAt")
     if started > ended:
         raise EvidenceError("dependency timestamps are inverted")
     _validate_stream(
-        root,
+        evidence,
         dependency["stdout"],
         "dependency-install.stdout.log",
         expected_files,
         "dependency stdout",
     )
     _validate_stream(
-        root,
+        evidence,
         dependency["stderr"],
         "dependency-install.stderr.log",
         expected_files,
@@ -871,7 +1201,7 @@ def _validate_bootstrap(
 
 
 def _validate_command(
-    root: Path,
+    evidence: _EvidenceSnapshot,
     manifest: dict[str, object],
     command: capture.CommandSpec,
     bindings: _GitBindings,
@@ -879,7 +1209,7 @@ def _validate_command(
     expected_files: set[str],
 ) -> bool:
     value = _exact_object(manifest, COMMAND_KEYS, f"{command.id} manifest")
-    if value["schemaVersion"] != 1:
+    if _integer(value["schemaVersion"], f"{command.id} schemaVersion") != 1:
         raise EvidenceError(f"{command.id} schemaVersion differs")
     if value["commandId"] != command.id or value["phase"] != command.phase:
         raise EvidenceError(f"{command.id} matrix identity differs")
@@ -895,14 +1225,14 @@ def _validate_command(
         raise EvidenceError(f"{command.id} timestamps are inverted")
     exit_code = _integer(value["exitCode"], f"{command.id} exitCode")
     _validate_stream(
-        root,
+        evidence,
         value["stdout"],
         f"{command.id}.stdout.log",
         expected_files,
         f"{command.id} stdout",
     )
     _validate_stream(
-        root,
+        evidence,
         value["stderr"],
         f"{command.id}.stderr.log",
         expected_files,
@@ -927,14 +1257,14 @@ def _validate_command(
             _integer(test_count, f"{command.id} selection testCount", minimum=0)
         selection_valid = selection_exit == 0 and test_count == 1
         _validate_stream(
-            root,
+            evidence,
             selection["stdout"],
             f"{command.id}.selection.stdout.log",
             expected_files,
             f"{command.id} selection stdout",
         )
         _validate_stream(
-            root,
+            evidence,
             selection["stderr"],
             f"{command.id}.selection.stderr.log",
             expected_files,
@@ -970,123 +1300,118 @@ def disposition_dict(disposition: EvidenceDisposition) -> dict[str, object]:
     }
 
 
-def _load_baseline_disposition(
-    request: VerificationRequest, disposition: EvidenceDisposition
-) -> set[str]:
-    candidates = [
-        request.evidence_root / "baseline-summary.json",
-        request.evidence_root.parent / "baseline/baseline-summary.json",
-        request.repo_root
-        / "docs/evidence/foundation"
-        / request.platform
-        / "baseline-summary.json",
-    ]
-    existing: list[Path] = []
-    for candidate in candidates:
-        try:
-            resolved = candidate.resolve(strict=True)
-        except OSError:
-            continue
-        if resolved not in existing:
-            existing.append(resolved)
-    if not existing:
-        return set()
-    values = [_load_json(path, "baseline summary") for path in existing]
-    first = values[0]
-    if any(value != first for value in values[1:]):
-        raise EvidenceError("multiple baseline summaries differ")
-    summary = _exact_object(first, SUMMARY_KEYS, "baseline summary")
-    if (
-        summary["schemaVersion"] != 1
-        or summary["platform"] != disposition.platform
-        or summary["mode"] != "baseline"
-        or summary["testedGitSha"] != disposition.tested_git_sha
-        or summary["toolsGitSha"] != disposition.tools_git_sha
-        or summary["matrixSha256"] != disposition.matrix_sha256
-    ):
-        raise EvidenceError("baseline summary binding differs")
-    command_ids = summary["commandIds"]
-    blocked_ids = summary["blockedIds"]
-    if not isinstance(command_ids, list) or not isinstance(blocked_ids, list):
-        raise EvidenceError("baseline summary IDs must be arrays")
-    if any(not isinstance(item, str) for item in command_ids + blocked_ids):
-        raise EvidenceError("baseline summary IDs must be strings")
-    if len(set(command_ids)) != len(command_ids) or len(set(blocked_ids)) != len(
-        blocked_ids
-    ):
-        raise EvidenceError("baseline summary IDs must be unique")
-    if not set(blocked_ids).issubset(set(command_ids)):
-        raise EvidenceError("baseline blocked IDs are unknown")
-    expected_status = "PASS" if not blocked_ids else "BLOCKED_BASELINE"
-    if summary["status"] != expected_status:
-        raise EvidenceError("baseline summary status differs")
-    return set(blocked_ids)
-
-
 def verify_evidence(request: VerificationRequest) -> EvidenceDisposition:
+    return _verify_evidence(request, require_summary=False)
+
+
+def _verify_evidence(
+    request: VerificationRequest, *, require_summary: bool
+) -> EvidenceDisposition:
     if request.platform not in PLATFORM_ARCHITECTURES:
         raise EvidenceError("unknown platform")
     if request.mode not in {"baseline", "post"}:
         raise EvidenceError("unknown evidence mode")
     root = _absolute_directory(request.evidence_root, "evidence root")
     try:
-        matches = scan_forbidden_evidence(root)
-    except ForbiddenEvidenceError:
-        raise
+        evidence = _EvidenceSnapshot(root)
     except EvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
-    if matches:
-        raise ForbiddenEvidenceError(matches)
-    bootstrap_path = root / "host-bootstrap.manifest.json"
-    bootstrap = _load_json(bootstrap_path, "bootstrap manifest")
-    tested_sha = bootstrap.get("testedGitSha")
-    tools_sha = bootstrap.get("toolsGitSha")
-    bindings, matrix = _bindings(
-        request.repo_root, request.matrix_path, tested_sha, tools_sha
-    )
-    commands = matrix.required_for(request.platform, request.mode)
-    if not commands:
-        raise EvidenceError("matrix has no required commands")
-    expected_files = {"host-bootstrap.manifest.json"}
-    _validate_bootstrap(root, bootstrap, bindings, request.platform, expected_files)
-    blocked: list[str] = []
-    for command in commands:
-        name = f"{command.id}.manifest.json"
-        expected_files.add(name)
-        manifest = _load_json(root / name, f"{command.id} manifest")
-        if _validate_command(
-            root, manifest, command, bindings, request.platform, expected_files
-        ):
-            blocked.append(command.id)
-    disposition = EvidenceDisposition(
-        request.platform,
-        request.mode,
-        bindings.tested_sha,
-        bindings.tools_sha,
-        bindings.matrix_semantic_sha256,
-        tuple(command.id for command in commands),
-        tuple(blocked),
-    )
-    if request.mode == "post" and blocked:
-        baseline_blocked = _load_baseline_disposition(request, disposition)
-        if any(command_id not in baseline_blocked for command_id in blocked):
-            raise EvidenceError("post evidence contains an unpaired failure")
-    allowed_summaries = {f"{request.mode}-summary.json"}
-    if request.mode == "post":
-        allowed_summaries.add("baseline-summary.json")
-    actual_files = {
-        path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()
-    }
-    unexpected = actual_files - expected_files - allowed_summaries
-    missing = expected_files - actual_files
-    if missing or unexpected:
-        raise EvidenceError("evidence completeness differs from the matrix")
-    summary_path = root / f"{request.mode}-summary.json"
-    if summary_path.exists():
+    bindings: _GitBindings | None = None
+    try:
+        try:
+            compatibility_matches = scan_forbidden_evidence(root)
+        except ForbiddenEvidenceError:
+            raise
+        except EvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
+        matches = tuple(sorted(set(compatibility_matches) | set(evidence.matches())))
+        if matches:
+            raise ForbiddenEvidenceError(matches)
+        bootstrap = evidence.json("host-bootstrap.manifest.json", "bootstrap manifest")
+        bindings, matrix = _bindings(
+            request.repo_root,
+            request.matrix_path,
+            bootstrap.get("testedGitSha"),
+            bootstrap.get("toolsGitSha"),
+        )
+        commands = matrix.required_for(request.platform, request.mode)
+        if not commands:
+            raise EvidenceError("matrix has no required commands")
+        expected_files = {"host-bootstrap.manifest.json"}
+        _validate_bootstrap(
+            evidence, bootstrap, bindings, request.platform, expected_files
+        )
+        blocked: list[str] = []
+        for command in commands:
+            name = f"{command.id}.manifest.json"
+            expected_files.add(name)
+            manifest = evidence.json(name, f"{command.id} manifest")
+            if _validate_command(
+                evidence,
+                manifest,
+                command,
+                bindings,
+                request.platform,
+                expected_files,
+            ):
+                blocked.append(command.id)
+        disposition = EvidenceDisposition(
+            request.platform,
+            request.mode,
+            bindings.tested_sha,
+            bindings.tools_sha,
+            bindings.matrix_semantic_sha256,
+            tuple(command.id for command in commands),
+            tuple(blocked),
+        )
+        summary_name = f"{request.mode}-summary.json"
+        actual_files = set(evidence.files)
+        unexpected = actual_files - expected_files - {summary_name}
+        missing = expected_files - actual_files
+        if missing or unexpected:
+            raise EvidenceError("evidence completeness differs from the matrix")
         expected_summary = canonical_json_bytes(disposition_dict(disposition)) + b"\n"
-        if _stable_file_bytes(summary_path) != expected_summary:
-            raise EvidenceError("existing summary differs from recomputed disposition")
-    return disposition
+        if summary_name in evidence.files:
+            if evidence.files[summary_name].payload != expected_summary:
+                raise EvidenceError(
+                    "existing summary differs from recomputed disposition"
+                )
+        elif require_summary:
+            raise EvidenceError("required recomputed baseline summary is missing")
+        if request.mode == "post":
+            baseline = _verify_evidence(
+                VerificationRequest(
+                    request.repo_root,
+                    request.matrix_path,
+                    root.parent / "baseline",
+                    request.platform,
+                    "baseline",
+                ),
+                require_summary=True,
+            )
+            expected_baseline_ids = tuple(
+                command.id
+                for command in matrix.required_for(request.platform, "baseline")
+            )
+            if (
+                baseline.platform != disposition.platform
+                or baseline.tested_git_sha != disposition.tested_git_sha
+                or baseline.tools_git_sha != disposition.tools_git_sha
+                or baseline.matrix_sha256 != disposition.matrix_sha256
+                or baseline.command_ids != expected_baseline_ids
+            ):
+                raise EvidenceError("sibling baseline evidence binding differs")
+            baseline_blocked = set(baseline.blocked_ids)
+            if any(command_id not in baseline_blocked for command_id in blocked):
+                raise EvidenceError("post evidence contains an unpaired failure")
+        return disposition
+    finally:
+        if bindings is not None:
+            bindings.matrix_snapshot.validate_final_state()
+        try:
+            evidence.validate_final_state()
+        except EvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
 
 
 def _safe_public_value(value: object, label: str) -> None:
@@ -1094,6 +1419,9 @@ def _safe_public_value(value: object, label: str) -> None:
         for key, item in value.items():
             if not isinstance(key, str):
                 raise EvidenceError(f"{label} contains a non-string key")
+            if key.casefold() in PRIVATE_PUBLIC_KEYS:
+                raise EvidenceError(f"{label} contains a private-material key")
+            _safe_public_value(key, f"{label} key")
             _safe_public_value(item, f"{label}.{key}")
         return
     if isinstance(value, list):
@@ -1110,6 +1438,8 @@ def _safe_public_value(value: object, label: str) -> None:
             raise EvidenceError(f"{label} contains forbidden content")
     if value.startswith("/") or re.match(r"(?i)^[A-Z]:[\\/]", value):
         raise EvidenceError(f"{label} contains an absolute path")
+    if PRIVATE_PUBLIC_VALUE_PATTERN.search(value) is not None:
+        raise EvidenceError(f"{label} contains private material")
 
 
 def _validate_capability_status(value: object) -> dict[str, object]:
@@ -1124,12 +1454,17 @@ def _validate_capability_status(value: object) -> dict[str, object]:
     return capability
 
 
-def _validate_report(path: Path, repo: Path, candidate_sha: str) -> dict[str, object]:
+def _validate_report(
+    path: Path, repo: Path, candidate_sha: str, payload: bytes
+) -> dict[str, object]:
     report = _exact_object(
-        _load_json(path, "selected report"), REPORT_KEYS, "selected report"
+        _load_json_bytes(payload, "selected report"), REPORT_KEYS, "selected report"
     )
     _safe_public_value(report, "selected report")
-    if report["schemaVersion"] != 1 or report["forkSha"] != candidate_sha:
+    if (
+        _integer(report["schemaVersion"], "selected report schemaVersion") != 1
+        or report["forkSha"] != candidate_sha
+    ):
         raise EvidenceError("selected report candidate binding differs")
     if report["decision"] != "BUSINESS_SIGNAL_PASS_PENDING_FOUNDATION":
         raise EvidenceError("selected report is not foundation-pending PASS")
@@ -1191,10 +1526,12 @@ def _validate_report(path: Path, repo: Path, candidate_sha: str) -> dict[str, ob
 
 
 def _validate_index(
-    path: Path, report: Mapping[str, object], candidate_sha: str, report_sha: str
+    payload: bytes, report: Mapping[str, object], candidate_sha: str, report_sha: str
 ) -> tuple[dict[str, object], dict[str, object]]:
-    index = _exact_object(_load_json(path, "report index"), INDEX_KEYS, "report index")
-    if index["schemaVersion"] != 1:
+    index = _exact_object(
+        _load_json_bytes(payload, "report index"), INDEX_KEYS, "report index"
+    )
+    if _integer(index["schemaVersion"], "report index schemaVersion") != 1:
         raise EvidenceError("report index schemaVersion differs")
     attempts = index["attempts"]
     if not isinstance(attempts, list) or not attempts or len(attempts) > 3:
@@ -1206,7 +1543,7 @@ def _validate_index(
     for ordinal, raw_attempt in enumerate(attempts, 1):
         attempt = _exact_object(raw_attempt, ATTEMPT_KEYS, "report index attempt")
         _safe_public_value(attempt, "report index attempt")
-        if attempt["attemptOrdinal"] != ordinal:
+        if _integer(attempt["attemptOrdinal"], "attemptOrdinal", minimum=1) != ordinal:
             raise EvidenceError("report index ordinal is not append-only")
         public_id = _safe_basename(attempt["publicRunId"], "attempt publicRunId")
         report_path = _safe_relative_path(attempt["reportPath"], "attempt reportPath")
@@ -1251,7 +1588,7 @@ def _validate_index(
 
 
 def _validate_receipt(
-    path: Path,
+    payload: bytes,
     report: Mapping[str, object],
     chosen: Mapping[str, object],
     candidate_sha: str,
@@ -1259,12 +1596,12 @@ def _validate_receipt(
     index_sha: str,
 ) -> dict[str, object]:
     receipt = _exact_object(
-        _load_json(path, "business verification receipt"),
+        _load_json_bytes(payload, "business verification receipt"),
         BUSINESS_RECEIPT_KEYS,
         "business verification receipt",
     )
     _safe_public_value(receipt, "business verification receipt")
-    if receipt["schemaVersion"] != 1:
+    if _integer(receipt["schemaVersion"], "business receipt schemaVersion") != 1:
         raise EvidenceError("business receipt schemaVersion differs")
     expected = {
         "publicRunId": report["publicRunId"],
@@ -1299,10 +1636,15 @@ def _validate_receipt(
         raise EvidenceError("business receipt G2 did not pass")
     _validate_capability_status(receipt["capabilityStatus"])
     verified = _rfc3339_utc(receipt["verifiedAt"], "business receipt verifiedAt")
+    generated = _rfc3339_utc(report["generatedAt"], "report generatedAt")
     deadline = _rfc3339_utc(
         report["privateEvidenceRetentionDeadline"], "retention deadline"
     )
-    if verified >= deadline or receipt["verifiedBeforeRetentionDeadline"] is not True:
+    if (
+        generated > verified
+        or verified >= deadline
+        or receipt["verifiedBeforeRetentionDeadline"] is not True
+    ):
         raise EvidenceError(
             "business receipt was not verified before retention deadline"
         )
@@ -1374,56 +1716,79 @@ def verify_frozen_final(request: FinalVerificationRequest) -> dict[str, object]:
         request.business_verification_receipt, "business verification receipt"
     )
     try:
-        _scan_consumed_file(report_path, "selected-report.json")
-        _scan_consumed_file(index_path, "report-index.json")
-        _scan_consumed_file(receipt_path, "business-verification-receipt.json")
-    except ForbiddenEvidenceError:
-        raise
+        consumed = (
+            _FileSnapshot.capture(
+                report_path, "selected-report.json", keep_payload=True
+            ),
+            _FileSnapshot.capture(index_path, "report-index.json", keep_payload=True),
+            _FileSnapshot.capture(
+                receipt_path, "business-verification-receipt.json", keep_payload=True
+            ),
+        )
     except EvidenceError as error:
         raise ForbiddenEvidenceError(()) from error
-    report_payload = _stable_file_bytes(report_path)
-    index_payload = _stable_file_bytes(index_path)
-    receipt_payload = _stable_file_bytes(receipt_path)
-    report = _validate_report(report_path, repo, candidate_sha)
-    report_sha = _sha256(report_payload)
-    index, chosen = _validate_index(index_path, report, candidate_sha, report_sha)
-    del index
-    index_sha = _sha256(index_payload)
-    receipt = _validate_receipt(
-        receipt_path, report, chosen, candidate_sha, report_sha, index_sha
-    )
-    disposition_payload = lambda item: (
-        canonical_json_bytes(disposition_dict(item)) + b"\n"
-    )
-    output = {
-        key: receipt[key]
-        for key in BUSINESS_RECEIPT_KEYS
-        if key
-        not in {
-            "candidateAllowedDiffSha256",
-            "schemaVersion",
+    try:
+        matches = tuple(sorted(match for item in consumed for match in item.matches))
+        if matches:
+            raise ForbiddenEvidenceError(matches)
+        report_payload, index_payload, receipt_payload = (
+            item.payload for item in consumed
+        )
+        if report_payload is None or index_payload is None or receipt_payload is None:
+            raise EvidenceError("internal public evidence snapshot differs")
+        report = _validate_report(report_path, repo, candidate_sha, report_payload)
+        report_sha = consumed[0].sha256
+        index, chosen = _validate_index(
+            index_payload, report, candidate_sha, report_sha
+        )
+        del index
+        index_sha = consumed[1].sha256
+        receipt = _validate_receipt(
+            receipt_payload, report, chosen, candidate_sha, report_sha, index_sha
+        )
+        disposition_payload = lambda item: (
+            canonical_json_bytes(disposition_dict(item)) + b"\n"
+        )
+        output = {
+            key: receipt[key]
+            for key in BUSINESS_RECEIPT_KEYS
+            if key
+            not in {
+                "candidateAllowedDiffSha256",
+                "schemaVersion",
+            }
         }
-    }
-    output.update(
-        {
-            "schemaVersion": 1,
-            "requiredMatrixSha256": mac.matrix_sha256,
-            "macPostEvidenceCommitment": _sha256(disposition_payload(mac)),
-            "windowsPostEvidenceCommitment": _sha256(disposition_payload(windows)),
-            "candidateAllowedDiffSha256": receipt["candidateAllowedDiffSha256"],
-            "liveProofVerificationSha256": _sha256(receipt_payload),
-            "G0": "PASS",
-            "G1": "PASS",
-            "foundationDecision": "PASS_TO_PHASE_0B",
-            "verifierSha256": _sha256(_stable_file_bytes(Path(__file__).resolve())),
-        }
-    )
-    if set(output) != FINAL_OUTPUT_KEYS:
-        raise EvidenceError("internal final output allowlist differs")
-    _safe_public_value(output, "final verification output")
-    payload = canonical_json_bytes(output) + b"\n"
-    _publish_create_new(request.verification_output, payload, repo)
-    return output
+        output.update(
+            {
+                "schemaVersion": 1,
+                "requiredMatrixSha256": mac.matrix_sha256,
+                "macPostEvidenceCommitment": _sha256(disposition_payload(mac)),
+                "windowsPostEvidenceCommitment": _sha256(disposition_payload(windows)),
+                "candidateAllowedDiffSha256": receipt["candidateAllowedDiffSha256"],
+                "liveProofVerificationSha256": consumed[2].sha256,
+                "G0": "PASS",
+                "G1": "PASS",
+                "foundationDecision": "PASS_TO_PHASE_0B",
+                "verifierSha256": _sha256(_stable_file_bytes(Path(__file__).resolve())),
+            }
+        )
+        if set(output) != FINAL_OUTPUT_KEYS:
+            raise EvidenceError("internal final output allowlist differs")
+        _safe_public_value(output, "final verification output")
+        payload = canonical_json_bytes(output) + b"\n"
+        try:
+            for item in consumed:
+                item.validate_final_state()
+        except EvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
+        _publish_create_new(request.verification_output, payload, repo)
+        return output
+    finally:
+        try:
+            for item in consumed:
+                item.validate_final_state()
+        except EvidenceError as error:
+            raise ForbiddenEvidenceError(()) from error
 
 
 def _forbidden_output(error: ForbiddenEvidenceError) -> bytes:
@@ -1448,36 +1813,59 @@ def _write_summary(path: Path, payload: bytes, root: Path, mode: str) -> None:
         raise EvidenceError("summary output path differs from evidence mode")
     if os.path.lexists(path):
         raise EvidenceError("summary output already exists")
-    temp = capture._write_temp_bytes(path, payload)
+    try:
+        temp = capture._write_temp_bytes(path, payload)
+    except OSError as error:
+        raise EvidenceError("unable to reserve summary temporary file") from error
     try:
         capture._publish_create_new(temp, path)
-    except BaseException:
+    except BaseException as error:
         try:
             temp.unlink()
         except FileNotFoundError:
             pass
+        if isinstance(error, EvidenceError):
+            raise
+        if isinstance(error, OSError):
+            raise EvidenceError("unable to publish summary output") from error
         raise
+
+
+class _UniqueOption(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: object,
+        option_string: str | None = None,
+    ) -> None:
+        if getattr(namespace, self.dest, None) is not None:
+            parser.error(f"{option_string} may not be repeated")
+        setattr(namespace, self.dest, values)
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo-root")
-    parser.add_argument("--matrix")
-    parser.add_argument("--evidence-root")
-    parser.add_argument("--platform", choices=sorted(PLATFORM_ARCHITECTURES))
-    parser.add_argument("--mode", choices=["baseline", "post"])
-    parser.add_argument("--summary-output")
-    parser.add_argument("--candidate-sha")
-    parser.add_argument("--selected-report")
-    parser.add_argument("--report-index")
-    parser.add_argument("--business-verification-receipt")
-    parser.add_argument("--verification-output")
+    parser.add_argument("--repo-root", action=_UniqueOption)
+    parser.add_argument("--matrix", action=_UniqueOption)
+    parser.add_argument("--evidence-root", action=_UniqueOption)
+    parser.add_argument(
+        "--platform", choices=sorted(PLATFORM_ARCHITECTURES), action=_UniqueOption
+    )
+    parser.add_argument("--mode", choices=["baseline", "post"], action=_UniqueOption)
+    parser.add_argument("--summary-output", action=_UniqueOption)
+    parser.add_argument("--candidate-sha", action=_UniqueOption)
+    parser.add_argument("--selected-report", action=_UniqueOption)
+    parser.add_argument("--report-index", action=_UniqueOption)
+    parser.add_argument("--business-verification-receipt", action=_UniqueOption)
+    parser.add_argument("--verification-output", action=_UniqueOption)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
-    arguments = parser.parse_args(argv)
+    raw_arguments = list(sys.argv[1:] if argv is None else argv)
+    arguments = parser.parse_args(raw_arguments)
     final_names = (
         "candidate_sha",
         "selected_report",
@@ -1486,31 +1874,65 @@ def main(argv: list[str] | None = None) -> int:
         "verification_output",
     )
     final_values = [getattr(arguments, name) for name in final_names]
-    if any(final_values) and not all(final_values):
-        parser.error("the five frozen-final arguments are required together")
+    foundation_names = ("repo_root", "matrix", "evidence_root")
+    foundation_values = [getattr(arguments, name) for name in foundation_names]
+    baseline_options = {"--platform", "--mode", "--summary-output"}
+    final_options = {
+        "--candidate-sha",
+        "--selected-report",
+        "--report-index",
+        "--business-verification-receipt",
+        "--verification-output",
+    }
+    first_baseline = min(
+        (
+            raw_arguments.index(item)
+            for item in baseline_options
+            if item in raw_arguments
+        ),
+        default=len(raw_arguments) + 1,
+    )
+    first_final = min(
+        (raw_arguments.index(item) for item in final_options if item in raw_arguments),
+        default=len(raw_arguments) + 1,
+    )
+    if any(final_values) and first_baseline < first_final:
+        parser.error("final-only arguments are invalid in baseline/post mode")
+    if any(final_values):
+        if any(
+            value is not None
+            for value in (arguments.platform, arguments.mode, arguments.summary_output)
+        ):
+            parser.error("baseline-only arguments are invalid in frozen-final mode")
+        if not all(final_values):
+            parser.error("the five frozen-final arguments are required together")
+        if not all(foundation_values):
+            parser.error("the three public foundation arguments are required")
+    path_names = [
+        "repo_root",
+        "matrix",
+        "evidence_root",
+        "summary_output",
+        "selected_report",
+        "report_index",
+        "business_verification_receipt",
+        "verification_output",
+    ]
+    for name in path_names:
+        value = getattr(arguments, name)
+        if value is not None and not Path(value).is_absolute():
+            parser.error(f"--{name.replace('_', '-')} must be absolute")
     try:
         if all(final_values):
-            repo = (
-                Path(arguments.repo_root).resolve()
-                if arguments.repo_root
-                else Path.cwd().resolve()
-            )
-            matrix = (
-                Path(arguments.matrix).resolve()
-                if arguments.matrix
-                else repo / "scripts/ai_ip/foundation/required_command_matrix.json"
-            )
-            foundation = (
-                Path(arguments.evidence_root).resolve()
-                if arguments.evidence_root
-                else repo / "docs/evidence/foundation"
-            )
+            repo = Path(arguments.repo_root)
+            matrix = Path(arguments.matrix)
+            foundation = Path(arguments.evidence_root)
             verify_frozen_final(
                 FinalVerificationRequest(
                     repo,
                     matrix,
-                    foundation / "macos-x86_64",
-                    foundation / "windows-11-x64",
+                    foundation / "macos-x86_64/post",
+                    foundation / "windows-11-x64/post",
                     arguments.candidate_sha,
                     Path(arguments.selected_report),
                     Path(arguments.report_index),
