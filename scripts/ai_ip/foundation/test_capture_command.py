@@ -1,6 +1,8 @@
 import hashlib
 import json
+import subprocess
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -99,6 +101,10 @@ def test_required_matrix_is_exact_and_frozen() -> None:
             "unknown phase",
         ),
         (
+            '{"schemaVersion":1,"commands":[{"id":"one","platforms":["macos-x86_64"],"phase":[],"argv":["just"],"expectedExit":0}]}',
+            "unknown phase",
+        ),
+        (
             '{"schemaVersion":1,"commands":[{"id":"one","platforms":["macos-x86_64"],"phase":"baselineAndPost","argv":"just test","expectedExit":0}]}',
             "argv must be a non-empty array",
         ),
@@ -117,6 +123,14 @@ def test_required_matrix_is_exact_and_frozen() -> None:
         (
             '{"schemaVersion":1,"commands":[{"id":"one","platforms":["macos-x86_64"],"phase":"baselineAndPost","argv":["just"],"expectedExit":0,"missing":null}]}',
             "unknown command keys",
+        ),
+        (
+            '{"schemaVersion":1,"commands":[{"id":"one","platforms":["macos-x86_64"],"phase":"baselineAndPost","argv":["just"]}]}',
+            "invalid command keys",
+        ),
+        (
+            '{"schemaVersion":1,"commands":[],"unknown":true}',
+            "unknown matrix keys",
         ),
     ],
 )
@@ -158,3 +172,79 @@ def test_required_for_rejects_unknown_mode() -> None:
     matrix = capture.Matrix(1, ())
     with pytest.raises(capture.EvidenceError, match="unknown evidence mode: invalid"):
         matrix.required_for("macos-x86_64", "invalid")
+
+
+def test_host_id_accepts_native_darwin_with_exact_zero(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    run = Mock(return_value=subprocess.CompletedProcess([], 0, "0\n", ""))
+    monkeypatch.setattr(capture.subprocess, "run", run)
+    assert capture.host_id() == "macos-x86_64"
+    run.assert_called_once_with(
+        ["sysctl", "-n", "sysctl.proc_translated"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_host_id_accepts_genuine_absent_darwin_oid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(
+        capture.subprocess,
+        "run",
+        Mock(
+            return_value=subprocess.CompletedProcess(
+                [], 1, "", "sysctl: unknown oid 'sysctl.proc_translated'\n"
+            )
+        ),
+    )
+    assert capture.host_id() == "macos-x86_64"
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        subprocess.CompletedProcess([], 0, "1\n", ""),
+        subprocess.CompletedProcess([], 0, "2\n", ""),
+        subprocess.CompletedProcess([], 1, "", "permission denied\n"),
+    ],
+)
+def test_host_id_rejects_non_native_darwin_results(
+    monkeypatch: pytest.MonkeyPatch, result: subprocess.CompletedProcess[str]
+) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(capture.subprocess, "run", Mock(return_value=result))
+    with pytest.raises(capture.EvidenceError):
+        capture.host_id()
+
+
+def test_host_id_rejects_missing_sysctl(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(capture.subprocess, "run", Mock(side_effect=FileNotFoundError))
+    with pytest.raises(capture.EvidenceError):
+        capture.host_id()
+
+
+def test_host_id_accepts_windows_11_x64(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "AMD64")
+    monkeypatch.setattr(capture.platform, "release", lambda: "10")
+    monkeypatch.setattr(capture.platform, "version", lambda: "10.0.22631")
+    assert capture.host_id() == "windows-11-x64"
+
+
+def test_host_id_rejects_unsupported_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    with pytest.raises(
+        capture.EvidenceError, match="unsupported evidence host: Linux/x86_64"
+    ):
+        capture.host_id()

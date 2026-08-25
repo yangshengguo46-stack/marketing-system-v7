@@ -116,7 +116,7 @@ def load_matrix(path: Path) -> Matrix:
         if len(set(platforms)) != len(platforms):
             raise EvidenceError("duplicate platform")
         phase = command["phase"]
-        if phase not in valid_phases:
+        if not isinstance(phase, str) or phase not in valid_phases:
             raise EvidenceError("unknown phase")
         argv = command["argv"]
         if not isinstance(argv, list) or not argv:
@@ -138,15 +138,28 @@ def load_matrix(path: Path) -> Matrix:
 def host_id() -> str:
     system, machine = platform.system(), platform.machine()
     if (system, machine) == ("Darwin", "x86_64"):
-        translated = subprocess.run(
-            ["sysctl", "-n", "sysctl.proc_translated"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if translated.returncode == 0 and translated.stdout.strip() == "1":
-            raise EvidenceError("Rosetta is not a supported evidence host")
-        return "macos-x86_64"
+        try:
+            translated = subprocess.run(
+                ["sysctl", "-n", "sysctl.proc_translated"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as error:
+            raise EvidenceError("unable to characterize macOS host") from error
+        if (
+            translated.returncode == 0
+            and translated.stdout == "0\n"
+            and not translated.stderr
+        ):
+            return "macos-x86_64"
+        if (
+            translated.returncode == 1
+            and not translated.stdout
+            and translated.stderr == "sysctl: unknown oid 'sysctl.proc_translated'\n"
+        ):
+            return "macos-x86_64"
+        raise EvidenceError("unsupported macOS translation state")
     if system == "Windows" and machine in {"AMD64", "x86_64"}:
         version = platform.version()
         if platform.release() == "11" or (
