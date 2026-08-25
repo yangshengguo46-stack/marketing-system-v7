@@ -204,6 +204,8 @@ def test_all_git_subprocesses_disable_lazy_fetch_and_optional_locks(
     repo.mkdir()
     _git(repo, "init", "-q")
     monkeypatch.setenv("AI_IP_TEST_SENTINEL", "preserved")
+    monkeypatch.setenv("GIT_OBJECT_DIRECTORY", str(tmp_path / "ambient-objects"))
+    monkeypatch.setenv("git_namespace", "ambient-lowercase-namespace")
     captured_environments: list[dict[str, str] | None] = []
     run = subprocess.run
 
@@ -222,8 +224,37 @@ def test_all_git_subprocesses_disable_lazy_fetch_and_optional_locks(
     environment = captured_environments[0]
     assert environment is not None
     assert environment["AI_IP_TEST_SENTINEL"] == "preserved"
-    assert environment["GIT_NO_LAZY_FETCH"] == "1"
-    assert environment["GIT_OPTIONAL_LOCKS"] == "0"
+    assert {
+        key: value
+        for key, value in environment.items()
+        if key.upper().startswith("GIT_")
+    } == {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_KEY_0": "core.fsmonitor",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_VALUE_0": "false",
+        "GIT_NO_LAZY_FETCH": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_TERMINAL_PROMPT": "0",
+    }
+
+
+def test_git_subprocess_ignores_ambient_repository_redirection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    repo_a.mkdir()
+    repo_b.mkdir()
+    _git(repo_a, "init", "-q")
+    _git(repo_b, "init", "-q")
+    monkeypatch.setenv("GIT_DIR", str(repo_b / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(repo_b))
+
+    top_level = verifier._git_text(repo_a, "rev-parse", "--show-toplevel")
+
+    assert Path(top_level).resolve() == repo_a.resolve()
 
 
 def test_decision_tip_required_input_rejects_git_symlink_mode(
@@ -253,6 +284,35 @@ def test_dirty_tree_is_rejected(
         verifier.verify_repository(repo)
 
 
+def test_required_path_rejects_redirecting_parent_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _, _, _ = _valid_repository(tmp_path, monkeypatch)
+    ai_ip_directory = repo / ".ai-ip"
+    external_directory = tmp_path / "external-ai-ip"
+    _git(
+        repo,
+        "update-index",
+        "--skip-worktree",
+        ".ai-ip/AGENTS.override.md",
+        ".ai-ip/upstream.lock.toml",
+    )
+    _write(repo / ".git/info/exclude", ".ai-ip\n")
+    ai_ip_directory.rename(external_directory)
+    try:
+        ai_ip_directory.symlink_to(external_directory, target_is_directory=True)
+    except OSError as error:
+        external_directory.rename(ai_ip_directory)
+        pytest.skip(f"directory symlink unavailable on this platform: {error}")
+    assert _git(repo, "status", "--porcelain=v1", "--untracked-files=all") == ""
+
+    with pytest.raises(
+        verifier.VerificationError,
+        match="required path parent must not be a symlink or redirection",
+    ):
+        verifier.verify_repository(repo)
+
+
 def test_required_path_rejects_git_symlink_mode(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -271,6 +331,28 @@ def test_required_path_rejects_git_symlink_mode(
     with pytest.raises(
         verifier.VerificationError,
         match="required path must use regular Git mode 100644",
+    ):
+        verifier.verify_repository(repo, require_clean=False)
+
+
+def test_allow_dirty_required_path_rejects_nonzero_index_stage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _, _, _ = _valid_repository(tmp_path, monkeypatch)
+    license_blob = _git(repo, "rev-parse", "HEAD:LICENSE")
+    _git(repo, "rm", "--cached", "--", "LICENSE")
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "update-index", "-z", "--index-info"],
+        check=False,
+        capture_output=True,
+        input=f"100644 {license_blob} 1\tLICENSE\0".encode(),
+        env={**os.environ, **GIT_ENV},
+    )
+    assert completed.returncode == 0, completed.stderr.decode("utf-8", errors="replace")
+
+    with pytest.raises(
+        verifier.VerificationError,
+        match="required path must be a single stage-0 100644 blob",
     ):
         verifier.verify_repository(repo, require_clean=False)
 
@@ -303,6 +385,23 @@ def test_wrong_locked_upstream_sha_is_rejected(
     _replace_once(repo / ".ai-ip/upstream.lock.toml", upstream_sha, "0" * 40)
 
     with pytest.raises(verifier.VerificationError, match="openai_codex.sha"):
+        verifier.verify_repository(repo, require_clean=False)
+
+
+def test_deerflow_dependency_rejects_integer_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _, _, _ = _valid_repository(tmp_path, monkeypatch)
+    _replace_once(
+        repo / ".ai-ip/upstream.lock.toml",
+        "deerflow_dependency = false",
+        "deerflow_dependency = 0",
+    )
+
+    with pytest.raises(
+        verifier.VerificationError,
+        match="product.deerflow_dependency must be boolean false",
+    ):
         verifier.verify_repository(repo, require_clean=False)
 
 

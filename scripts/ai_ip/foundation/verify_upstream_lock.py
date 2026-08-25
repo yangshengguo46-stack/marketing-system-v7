@@ -99,15 +99,28 @@ def ledger_required_markers() -> tuple[str, ...]:
 
 
 def _run_git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.upper().startswith("GIT_")
+    }
+    environment.update(
+        {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_KEY_0": "core.fsmonitor",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_VALUE_0": "false",
+            "GIT_NO_LAZY_FETCH": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
     return subprocess.run(
         ["git", "-C", str(repo), *args],
         check=False,
         capture_output=True,
-        env={
-            **os.environ,
-            "GIT_NO_LAZY_FETCH": "1",
-            "GIT_OPTIONAL_LOCKS": "0",
-        },
+        env=environment,
     )
 
 
@@ -210,22 +223,81 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         _require(not status, f"working tree is not clean:\n{status}")
 
     for relative_path in REQUIRED_PATHS:
+        relative = Path(relative_path)
+        parent = repo
+        for component in relative.parts[:-1]:
+            parent /= component
+            try:
+                resolved_parent = parent.resolve(strict=True)
+            except OSError as exc:
+                raise VerificationError(
+                    f"cannot resolve required path parent: {relative_path}: {exc}"
+                ) from exc
+            lexical_parent = Path(os.path.abspath(parent))
+            _require(
+                not parent.is_symlink()
+                and os.path.normcase(str(resolved_parent))
+                == os.path.normcase(str(lexical_parent)),
+                "required path parent must not be a symlink or redirection: "
+                f"{relative_path}",
+            )
         required_path = repo / relative_path
         _require(required_path.is_file(), f"missing required file: {relative_path}")
+        try:
+            resolved_path = required_path.resolve(strict=True)
+        except OSError as exc:
+            raise VerificationError(
+                f"cannot resolve required path: {relative_path}: {exc}"
+            ) from exc
+        lexical_path = Path(os.path.abspath(required_path))
         _require(
-            not required_path.is_symlink(),
-            f"required path must not be a symlink: {relative_path}",
+            not required_path.is_symlink()
+            and os.path.normcase(str(resolved_path))
+            == os.path.normcase(str(lexical_path)),
+            f"required path must not be a symlink or redirection: {relative_path}",
         )
-        index_entry = _git_text(repo, "ls-files", "--stage", "--", relative_path)
-        if index_entry:
-            index_lines = index_entry.splitlines()
+        index_entries = [
+            entry
+            for entry in _git_bytes(
+                repo, "ls-files", "--stage", "-z", "--", relative_path
+            ).split(b"\0")
+            if entry
+        ]
+        if index_entries:
             _require(
-                len(index_lines) == 1, f"ambiguous Git index entry: {relative_path}"
+                len(index_entries) == 1,
+                f"required path must be a single stage-0 100644 blob: {relative_path}",
             )
-            mode = index_lines[0].split(maxsplit=1)[0]
+            metadata, separator, index_path = index_entries[0].partition(b"\t")
+            metadata_fields = metadata.split(b" ")
             _require(
-                mode == "100644",
+                separator == b"\t"
+                and len(metadata_fields) == 3
+                and index_path == relative_path.encode("utf-8"),
+                f"required path must be a single stage-0 100644 blob: {relative_path}",
+            )
+            mode, object_id_bytes, stage = metadata_fields
+            _require(
+                mode == b"100644",
                 f"required path must use regular Git mode 100644: {relative_path}",
+            )
+            try:
+                object_id = object_id_bytes.decode("ascii")
+            except UnicodeDecodeError as exc:
+                raise VerificationError(
+                    "required path must be a single stage-0 100644 blob: "
+                    f"{relative_path}"
+                ) from exc
+            _require(
+                stage == b"0"
+                and SHA_PATTERN.fullmatch(object_id) is not None
+                and _git_text(repo, "cat-file", "-t", object_id) == "blob",
+                f"required path must be a single stage-0 100644 blob: {relative_path}",
+            )
+        else:
+            _require(
+                not require_clean,
+                f"required path must be a single stage-0 100644 blob: {relative_path}",
             )
     root_override = repo / "AGENTS.override.md"
     tracked_root_override = _git_text(
@@ -275,7 +347,11 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
     )
     _require_equal(product["name"], "AI IP 1.1", "product.name")
     _require_equal(product["runtime"], "codex-app-server", "product.runtime")
-    _require_equal(product["deerflow_dependency"], False, "product.deerflow_dependency")
+    deerflow_dependency = product["deerflow_dependency"]
+    _require(
+        type(deerflow_dependency) is bool and deerflow_dependency is False,
+        "product.deerflow_dependency must be boolean false",
+    )
     _require_equal(product["origin_status"], "unconfigured", "product.origin_status")
 
     upstream_sha = openai["sha"]
