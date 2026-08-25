@@ -134,14 +134,14 @@ Expected: installation is confined to `AI_IP_TOOL_ROOT`. The Bazel 9.0.0 Darwin 
 set -euo pipefail
 AI_IP_DEV_PATH="$AI_IP_UV_ROOT/bin:$AI_IP_CARGO_ROOT/bin:$AI_IP_DIRECT_BIN:$AI_IP_NPM_ROOT/node_modules/.bin:$AI_IP_RUST_BIN:/usr/local/bin:/usr/bin:/bin"
 test "$(PATH="$AI_IP_DEV_PATH" python --version)" = "Python 3.11.15"
-test "$(PATH="$AI_IP_DEV_PATH" uv --version)" = "uv 0.11.3"
+test "$(PATH="$AI_IP_DEV_PATH" uv --version | awk 'NF {print $1, $2; exit}')" = "uv 0.11.3"
 test "$(PATH="$AI_IP_DEV_PATH" cargo --version | awk '{print $2}')" = 1.95.0
-test "$(PATH="$AI_IP_DEV_PATH" cargo nextest --version | awk '{print $2}')" = 0.9.103
+test "$(PATH="$AI_IP_DEV_PATH" cargo nextest --version | awk 'NF {print $1, $2; exit}')" = "cargo-nextest 0.9.103"
 test "$(PATH="$AI_IP_DEV_PATH" cargo deny --version | awk '{print $2}')" = 0.20.2
 test "$(PATH="$AI_IP_DEV_PATH" pnpm --version)" = 10.34.5
 test "$(PATH="$AI_IP_DEV_PATH" dotslash --version | awk '{print $2}')" = 0.5.8
 test "$(PATH="$AI_IP_DEV_PATH" bazel --version | awk '{print $2}')" = 9.0.0
-test "$(node -p 'require(process.argv[1]).version' "$AI_IP_NPM_ROOT/node_modules/@bazel/bazelisk/package.json")" = 1.28.1
+test "$(node -p 'require(process.argv[1]).version' "$AI_IP_NPM_ROOT/node_modules/@bazel/bazelisk/package.json")" = v1.28.1
 ```
 
 Expected: every isolated version is exact. Record all seven absolute variables in the coordinator's execution state and inject them into Tasks 1–8. Do not commit the root or its paths.
@@ -915,17 +915,17 @@ Bootstrap mode resolves and records this exact table. “Exact output” compare
 | Tool ID | Version argv/probe | Validation |
 |---|---|---|
 | `python` | `python --version` | exact output `Python 3.11.15` |
-| `uv` | `uv --version` | exact output `uv 0.11.3` |
+| `uv` | `uv --version` | first nonempty line prefix `uv`, exact version token `0.11.3`, record remaining metadata |
 | `git` | `git --version` | exact output `git version 2.54.0` |
 | `just` | `just --version` | exact output `just 1.58.0` |
 | `dotslash` | `dotslash --version` | exact output `DotSlash 0.5.8` |
 | `rustc` | `rustc --version` | prefix `rustc`, version token `1.95.0` |
 | `cargo` | `cargo --version` | prefix `cargo`, version token `1.95.0` |
-| `cargo-nextest` | `cargo nextest --version` | output contains exactly one standalone version token `0.9.103` and starts with `cargo-nextest` |
+| `cargo-nextest` | `cargo nextest --version` | first nonempty line prefix `cargo-nextest`, exact version token `0.9.103`, record all remaining metadata/lines |
 | `cargo-deny` | `cargo deny --version` | prefix `cargo-deny`, version token `0.20.2` |
 | `node` | `node --version` | exact output `v26.4.0` |
 | `pnpm` | `pnpm --version` | exact output `10.34.5` |
-| `bazelisk` | `node -p require(resolved-package-json).version` | exact output `1.28.1` |
+| `bazelisk` | `node -p require(resolved-package-json).version` | raw exact package JSON output `v1.28.1` (semantic package version remains 1.28.1) |
 | `bazel` | `bazel --version` | exact output `bazel 9.0.0` |
 
 - [ ] **Step 1: Revalidate the coordinator-provided tool root and immutable prerequisites**
