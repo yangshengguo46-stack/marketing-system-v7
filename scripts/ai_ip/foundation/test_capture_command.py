@@ -270,6 +270,17 @@ def _rewrite_matrix_platform(harness: RecorderHarness, platform_name: str) -> No
     _commit(harness.matrix.parents[3], "change fixture platform")
 
 
+def _rewrite_matrix_command_id(harness: RecorderHarness, command_id: str) -> None:
+    matrix = load_strict_json(harness.matrix)
+    commands = matrix["commands"]
+    assert isinstance(commands, list)
+    command = commands[0]
+    assert isinstance(command, dict)
+    command["id"] = command_id
+    harness.matrix.write_text(json.dumps(matrix), encoding="utf-8", newline="\n")
+    _commit(harness.matrix.parents[3], "change fixture command id")
+
+
 def apply_invalid_boundary(harness: RecorderHarness, invalid_input: str) -> None:
     if invalid_input == "relative_repo":
         harness.repo = Path("tested")
@@ -324,6 +335,25 @@ def install_dirtying_fixture(repo: Path) -> None:
         "#!/bin/sh\nprintf changed > seed.txt\n",
     )
     _commit(repo, "install dirtying command")
+
+
+def install_committing_fixture(repo: Path, mutation: str) -> None:
+    if mutation == "head":
+        body = """#!/bin/sh
+printf drift > drift.txt
+/usr/local/bin/git add drift.txt
+/usr/local/bin/git commit -q -m drift
+"""
+    elif mutation == "lock":
+        body = """#!/bin/sh
+printf changed > codex-rs/Cargo.lock
+/usr/local/bin/git add codex-rs/Cargo.lock
+/usr/local/bin/git commit -q -m lock-drift
+"""
+    else:
+        raise AssertionError(f"unknown committing mutation: {mutation}")
+    _write_executable(repo / "fixture-command", body)
+    _commit(repo, "install committing command")
 
 
 def install_barrier_fixture(repo: Path) -> None:
@@ -561,6 +591,75 @@ def test_load_matrix_rejects_invalid_entries(
         capture.load_matrix(path)
 
 
+@pytest.mark.parametrize(
+    "command_id",
+    [
+        ".",
+        "..",
+        "../escape",
+        "..\\escape",
+        "bad/name",
+        "bad\\name",
+        "C:escape",
+        "under_score",
+        "Upper",
+        "-leading",
+        "trailing-",
+        "two--hyphens",
+    ],
+)
+def test_load_matrix_rejects_unsafe_command_ids(
+    command_id: str, tmp_path: Path
+) -> None:
+    path = tmp_path / "matrix.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schemaVersion": 1,
+                "commands": [
+                    {
+                        "id": command_id,
+                        "platforms": ["macos-x86_64"],
+                        "phase": "baselineAndPost",
+                        "argv": ["just"],
+                        "expectedExit": 0,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(capture.EvidenceError, match="unsafe command id"):
+        capture.load_matrix(path)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "",
+        ".",
+        "..",
+        "../escape",
+        "..\\escape",
+        "bad/name",
+        "bad\\name",
+        "C:x",
+        "bad name",
+    ],
+)
+def test_safe_basename_validation_rejects_platform_independent_escapes(
+    name: str,
+) -> None:
+    with pytest.raises(capture.EvidenceError, match="unsafe evidence basename"):
+        capture._require_safe_basename(name)
+
+
+def test_stream_receipt_rejects_unsafe_path() -> None:
+    receipt = capture.StreamReceipt("../escape.log", hashlib.sha256(b"").hexdigest(), 0)
+    with pytest.raises(capture.EvidenceError, match="unsafe evidence basename"):
+        capture._stream_dict(receipt)
+
+
 def test_selection_argv_only_converts_nextest_filters() -> None:
     command = capture.CommandSpec(
         "selected",
@@ -599,12 +698,14 @@ def test_host_id_accepts_native_darwin_with_exact_zero(
     monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
     run = Mock(return_value=subprocess.CompletedProcess([], 0, "0\n", ""))
     monkeypatch.setattr(capture.subprocess, "run", run)
-    assert capture.host_id() == "macos-x86_64"
+    environment = {"PATH": "/safe/bin", "HOME": "/safe/home"}
+    assert capture.host_id(environment=environment) == "macos-x86_64"
     run.assert_called_once_with(
         ["sysctl", "-n", "sysctl.proc_translated"],
         capture_output=True,
         text=True,
         check=False,
+        env=capture._sanitized_child_environment(environment, platform_name="posix"),
     )
 
 
@@ -649,6 +750,34 @@ def test_host_id_rejects_missing_sysctl(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(capture.subprocess, "run", Mock(side_effect=FileNotFoundError))
     with pytest.raises(capture.EvidenceError):
         capture.host_id()
+
+
+def test_host_id_passes_only_sanitized_environment_to_sysctl(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(capture.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(capture.platform, "machine", lambda: "x86_64")
+    monkeypatch.setenv("PATH", "/safe/bin")
+    monkeypatch.setenv("HOME", "/safe/home")
+    hostile = {
+        "GIT_DIR": "/hostile/git",
+        "OPENAI_API_KEY": "secret",
+        "DYLD_INSERT_LIBRARIES": "/hostile/library",
+        "PYTHONPATH": "/hostile/python",
+        "npm_config_auth": "secret",
+    }
+    for key, value in hostile.items():
+        monkeypatch.setenv(key, value)
+    run = Mock(return_value=subprocess.CompletedProcess([], 0, "0\n", ""))
+    monkeypatch.setattr(capture.subprocess, "run", run)
+
+    assert capture.host_id() == "macos-x86_64"
+
+    environment = run.call_args.kwargs["env"]
+    assert environment["PATH"] == "/safe/bin"
+    assert environment["HOME"] == "/safe/home"
+    assert environment["GIT_NO_LAZY_FETCH"] == "1"
+    assert all(key not in environment for key in hostile)
 
 
 def test_host_id_accepts_windows_11_x64(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -696,6 +825,20 @@ def test_capture_rejects_invalid_boundaries(invalid_input: str, tmp_path: Path) 
     assert not list(harness.evidence.glob("*.tmp-*"))
 
 
+@pytest.mark.parametrize("command_id", ["../escape", "..\\escape", "C:escape"])
+def test_capture_unsafe_command_id_cannot_escape_evidence_directory(
+    command_id: str, tmp_path: Path
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    _rewrite_matrix_command_id(harness, command_id)
+    before = {path.relative_to(tmp_path) for path in tmp_path.rglob("*")}
+    completed = harness.run("--name", command_id)
+    after = {path.relative_to(tmp_path) for path in tmp_path.rglob("*")}
+    assert completed.returncode == 1
+    assert after == before
+    assert not list(harness.evidence.iterdir())
+
+
 def test_capture_streams_binary_stdout_and_stderr_and_preserves_exit_code(
     tmp_path: Path,
 ) -> None:
@@ -739,6 +882,43 @@ def test_stream_reader_never_requests_more_than_one_mib(tmp_path: Path) -> None:
     assert all(0 < request <= 1024 * 1024 for request in reader.requests)
     assert temp.read_bytes() == payload
     assert (digest, count) == (hashlib.sha256(payload).hexdigest(), len(payload))
+
+
+def test_bounded_post_capture_reader_uses_chunks_and_rejects_oversize() -> None:
+    class RecordingReader(io.BytesIO):
+        def __init__(self, payload: bytes) -> None:
+            super().__init__(payload)
+            self.requests: list[int] = []
+
+        def read(self, size: int = -1) -> bytes:
+            self.requests.append(size)
+            return super().read(size)
+
+    reader = RecordingReader(b"x" * (capture.CHUNK_SIZE + 1))
+    with pytest.raises(capture.EvidenceError, match="exceeds maximum"):
+        capture._read_bounded_stream(reader, capture.CHUNK_SIZE)
+    assert reader.requests
+    assert all(0 < request <= capture.CHUNK_SIZE for request in reader.requests)
+
+
+def test_filtered_command_rejects_oversized_selection_output(tmp_path: Path) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    marker = install_filtered_fixture(harness.repo, test_count=1)
+    _write_executable(
+        harness.repo / "tool-bin/cargo",
+        "#!/usr/bin/python3\n"
+        "import os\n"
+        'payload = b\'{"rust-build-meta":{},"test-count":1,"rust-suites":{}}\'\n'
+        f"os.write(1, payload + b' ' * {64 * 1024 * 1024})\n",
+    )
+    _commit(harness.repo, "install oversized selection fixture")
+    completed = harness.run("--name", "filtered-fixture")
+    assert completed.returncode == 1
+    assert not marker.exists()
+    manifest = load_strict_json(harness.evidence / "filtered-fixture.manifest.json")
+    assert manifest["status"] == "BLOCKED_SELECTION"
+    assert manifest["selection"]["testCount"] is None
+    assert not list(harness.evidence.glob("*.tmp-*"))
 
 
 @pytest.mark.parametrize("test_count", [0, 2])
@@ -818,6 +998,56 @@ def test_capture_rejects_dirty_tree_after_command(tmp_path: Path) -> None:
     assert not list(harness.evidence.glob("*.tmp-*"))
 
 
+@pytest.mark.parametrize("mutation", ["head", "lock"])
+def test_capture_rejects_clean_committed_tested_tree_drift(
+    mutation: str, tmp_path: Path
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    install_committing_fixture(harness.repo, mutation)
+    completed = harness.run("--name", "fixture-command")
+    assert completed.returncode == 1
+    assert b"tested tree identity changed" in completed.stderr
+    assert not list(harness.evidence.glob("fixture-command.*"))
+    assert not list(harness.evidence.glob("*.tmp-*"))
+
+
+def test_capture_rejects_clean_committed_tools_tree_drift(tmp_path: Path) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    tools = harness.matrix.parents[3]
+    script = f"""#!/bin/sh
+printf '\n' >> {str(harness.matrix)!r}
+/usr/local/bin/git -C {str(tools)!r} add {str(harness.matrix)!r}
+/usr/local/bin/git -C {str(tools)!r} commit -q -m tools-drift
+"""
+    _write_executable(harness.repo / "fixture-command", script)
+    _commit(harness.repo, "install tools drift command")
+    completed = harness.run("--name", "fixture-command")
+    assert completed.returncode == 1
+    assert b"tools tree identity changed" in completed.stderr
+    assert not list(harness.evidence.glob("fixture-command.*"))
+
+
+def test_blocked_selection_revalidates_before_manifest_publication(
+    tmp_path: Path,
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    install_filtered_fixture(harness.repo, test_count=0)
+    _write_executable(
+        harness.repo / "tool-bin/cargo",
+        """#!/bin/sh
+printf drift > selection-drift.txt
+/usr/local/bin/git add selection-drift.txt
+/usr/local/bin/git commit -q -m selection-drift
+printf '{"rust-build-meta":{},"test-count":0,"rust-suites":{}}\n'
+""",
+    )
+    _commit(harness.repo, "install selection drift command")
+    completed = harness.run("--name", "filtered-fixture")
+    assert completed.returncode == 1
+    assert b"tested tree identity changed" in completed.stderr
+    assert not list(harness.evidence.glob("filtered-fixture.*"))
+
+
 def test_capture_never_overwrites_or_leaves_final_partial_files(
     tmp_path: Path,
 ) -> None:
@@ -875,6 +1105,51 @@ def test_posix_publish_adapter_is_create_new_and_fsyncs_directory(
     with pytest.raises(capture.EvidenceError, match="already exists"):
         capture._publish_create_new(replacement, final, platform_name="posix")
     assert final.read_bytes() == b"first"
+
+
+@pytest.mark.parametrize("final_name", ["fixture.stdout.log", "fixture.manifest.json"])
+def test_posix_temp_unlink_failure_rolls_back_new_final(
+    final_name: str, tmp_path: Path
+) -> None:
+    temp = tmp_path / f"{final_name}.tmp-invocation"
+    final = tmp_path / final_name
+    temp.write_bytes(b"invocation")
+
+    def fail_only_temp_unlink(path: Path) -> None:
+        if Path(path) == temp:
+            raise OSError("injected temp unlink failure")
+        os.unlink(path)
+
+    with pytest.raises(OSError, match="injected temp unlink failure"):
+        capture._publish_create_new(
+            temp,
+            final,
+            platform_name="posix",
+            unlink=fail_only_temp_unlink,
+        )
+    assert temp.read_bytes() == b"invocation"
+    assert not final.exists()
+
+
+@pytest.mark.parametrize("final_name", ["fixture.stdout.log", "fixture.manifest.json"])
+def test_posix_unlink_failure_path_never_deletes_preexisting_final(
+    final_name: str, tmp_path: Path
+) -> None:
+    temp = tmp_path / f"{final_name}.tmp-invocation"
+    final = tmp_path / final_name
+    temp.write_bytes(b"invocation")
+    final.write_bytes(b"prior")
+    unlink = Mock(side_effect=AssertionError("unlink must not run"))
+    with pytest.raises(capture.EvidenceError, match="already exists"):
+        capture._publish_create_new(
+            temp,
+            final,
+            platform_name="posix",
+            unlink=unlink,
+        )
+    assert final.read_bytes() == b"prior"
+    assert temp.read_bytes() == b"invocation"
+    unlink.assert_not_called()
 
 
 @pytest.mark.parametrize("error_code", [80, 183])
@@ -1122,6 +1397,44 @@ def test_bootstrap_rejects_duplicate_canonical_tool_resolution(
     completed = harness.run("--bootstrap")
     assert completed.returncode == 1
     assert not (harness.evidence / "host-bootstrap.manifest.json").exists()
+
+
+def test_bootstrap_rejects_oversized_version_output(tmp_path: Path) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    tool_bin = tmp_path / "tool-bin"
+    install_exact_fake_tool_path(harness, tool_bin)
+    _write_executable(
+        tool_bin / "uv",
+        f"#!/usr/bin/python3\nimport os\nos.write(1, b'x' * {1024 * 1024 + 1})\n",
+    )
+    completed = harness.run("--bootstrap")
+    assert completed.returncode == 1
+    assert b"version output exceeds maximum" in completed.stderr
+    assert not (harness.evidence / "host-bootstrap.manifest.json").exists()
+    assert not list(harness.evidence.glob("*.tmp-*"))
+
+
+def test_bootstrap_rejects_clean_committed_lock_drift(tmp_path: Path) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    tool_bin = tmp_path / "tool-bin"
+    install_exact_fake_tool_path(harness, tool_bin)
+    _write_executable(
+        tool_bin / "pnpm",
+        """#!/bin/sh
+if test "$1" = install; then
+  printf changed > codex-rs/Cargo.lock
+  /usr/local/bin/git add codex-rs/Cargo.lock
+  /usr/local/bin/git commit -q -m bootstrap-lock-drift
+else
+  printf '10.34.5\n'
+fi
+""",
+    )
+    completed = harness.run("--bootstrap")
+    assert completed.returncode == 1
+    assert b"tested tree identity changed" in completed.stderr
+    assert not (harness.evidence / "host-bootstrap.manifest.json").exists()
+    assert not list(harness.evidence.glob("*.tmp-*"))
 
 
 @pytest.mark.parametrize("failure", ["version", "dependency", "dirty"])

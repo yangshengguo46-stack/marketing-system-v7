@@ -23,7 +23,11 @@ class EvidenceError(ValueError):
 
 
 CHUNK_SIZE = 1024 * 1024
+SELECTION_MAX_BYTES = 64 * 1024 * 1024
+VERSION_OUTPUT_MAX_BYTES = 1024 * 1024
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
+COMMAND_ID_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+SAFE_BASENAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}")
 CHILD_ENV_ALLOWLIST = {
     "PATH",
     "HOME",
@@ -147,6 +151,24 @@ class _PendingProcess:
     stderr_temp: Path
 
 
+@dataclass(frozen=True)
+class _CaptureContext:
+    repo_root: Path
+    evidence_dir: Path
+    matrix_path: Path
+    recorder_path: Path
+    tools_root: Path
+    env: Mapping[str, str]
+    tested_sha: str
+    tools_sha: str
+    platform_id: str
+    locks: Mapping[str, str]
+    recorder_sha256: str
+    matrix_sha256: str
+    recorder_relative: str
+    matrix_relative: str
+
+
 def canonical_json_bytes(value: object) -> bytes:
     return json.dumps(
         value,
@@ -211,6 +233,8 @@ def load_matrix(path: Path) -> Matrix:
         command_id = command["id"]
         if not isinstance(command_id, str) or not command_id:
             raise EvidenceError("id must be a non-empty string")
+        if COMMAND_ID_PATTERN.fullmatch(command_id) is None:
+            raise EvidenceError(f"unsafe command id: {command_id!r}")
         if command_id in ids:
             raise EvidenceError(f"duplicate command id: {command_id}")
         platforms = command["platforms"]
@@ -244,15 +268,22 @@ def load_matrix(path: Path) -> Matrix:
     return Matrix(schema_version, tuple(commands))
 
 
-def host_id(sysctl_command: str = "sysctl") -> str:
+def host_id(
+    sysctl_command: str = "sysctl", environment: Mapping[str, str] | None = None
+) -> str:
     system, machine = platform.system(), platform.machine()
     if (system, machine) == ("Darwin", "x86_64"):
+        child_env = _sanitized_child_environment(
+            os.environ if environment is None else environment,
+            platform_name="posix",
+        )
         try:
             translated = subprocess.run(
                 [sysctl_command, "-n", "sysctl.proc_translated"],
                 capture_output=True,
                 text=True,
                 check=False,
+                env=child_env,
             )
         except OSError as error:
             raise EvidenceError("unable to characterize macOS host") from error
@@ -329,6 +360,18 @@ def _path_has_symlink_component(path: Path) -> bool:
 
 def paths_are_disjoint(left: Path, right: Path) -> bool:
     return left != right and left not in right.parents and right not in left.parents
+
+
+def _require_safe_basename(name: str) -> str:
+    if (
+        SAFE_BASENAME_PATTERN.fullmatch(name) is None
+        or name in {".", ".."}
+        or Path(name).name != name
+        or "\\" in name
+        or ":" in name
+    ):
+        raise EvidenceError(f"unsafe evidence basename: {name!r}")
+    return name
 
 
 def _sanitized_child_environment(
@@ -488,12 +531,6 @@ def _require_safe_git_repository(
     return head
 
 
-def _require_clean_after(repo: Path, env: Mapping[str, str], label: str) -> None:
-    status = _git_text(repo, env, "status", "--porcelain=v1", "--untracked-files=all")
-    if status:
-        raise EvidenceError(f"{label} became dirty")
-
-
 def _sha256_file(path: Path) -> tuple[str, int]:
     digest = hashlib.sha256()
     count = 0
@@ -505,6 +542,29 @@ def _sha256_file(path: Path) -> tuple[str, int]:
             digest.update(chunk)
             count += len(chunk)
     return digest.hexdigest(), count
+
+
+def _read_bounded_stream(
+    reader: BinaryIO, maximum_bytes: int, *, label: str = "payload"
+) -> bytes:
+    if maximum_bytes < 0:
+        raise EvidenceError("maximum payload size must be nonnegative")
+    chunks: list[bytes] = []
+    count = 0
+    while True:
+        request_size = min(CHUNK_SIZE, maximum_bytes - count + 1)
+        chunk = reader.read(request_size)
+        if not chunk:
+            return b"".join(chunks)
+        count += len(chunk)
+        if count > maximum_bytes:
+            raise EvidenceError(f"{label} exceeds maximum size")
+        chunks.append(chunk)
+
+
+def _read_bounded(path: Path, maximum_bytes: int, *, label: str) -> bytes:
+    with path.open("rb") as source:
+        return _read_bounded_stream(source, maximum_bytes, label=label)
 
 
 def _stream_reader(reader: BinaryIO, temp_path: Path) -> tuple[str, int]:
@@ -525,7 +585,9 @@ def _stream_reader(reader: BinaryIO, temp_path: Path) -> tuple[str, int]:
 
 
 def _temporary_path(final_path: Path) -> Path:
-    return final_path.with_name(f"{final_path.name}.tmp-{uuid.uuid4().hex}")
+    final_name = _require_safe_basename(final_path.name)
+    temp_name = _require_safe_basename(f"{final_name}.tmp-{uuid.uuid4().hex}")
+    return final_path.with_name(temp_name)
 
 
 def _run_process(
@@ -536,6 +598,8 @@ def _run_process(
     stdout_name: str,
     stderr_name: str,
 ) -> _PendingProcess:
+    stdout_name = _require_safe_basename(stdout_name)
+    stderr_name = _require_safe_basename(stderr_name)
     stdout_final = evidence_dir / stdout_name
     stderr_final = evidence_dir / stderr_name
     stdout_temp = _temporary_path(stdout_final)
@@ -628,6 +692,10 @@ def _publish_create_new(
     move_file: Callable[[str, str, int], int] | None = None,
     get_last_error: Callable[[], int] | None = None,
 ) -> None:
+    _require_safe_basename(temp_path.name)
+    _require_safe_basename(final_path.name)
+    if temp_path.parent != final_path.parent:
+        raise EvidenceError("temporary and final evidence paths must share a directory")
     target = os.name if platform_name is None else platform_name
     if target == "nt":
         if move_file is None:
@@ -655,7 +723,9 @@ def _publish_create_new(
         raise EvidenceError(
             f"evidence output already exists: {final_path.name}"
         ) from error
-    try:
+    linked_stat = final_path.stat(follow_symlinks=False)
+
+    def sync_directory() -> None:
         descriptor = open_directory(
             final_path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
         )
@@ -663,16 +733,35 @@ def _publish_create_new(
             fsync(descriptor)
         finally:
             close(descriptor)
+
+    try:
+        sync_directory()
     except BaseException:
         try:
             unlink(final_path)
+            sync_directory()
         except OSError:
             pass
         raise
-    unlink(temp_path)
+    try:
+        unlink(temp_path)
+    except BaseException as error:
+        try:
+            current_stat = final_path.stat(follow_symlinks=False)
+            if os.path.samestat(linked_stat, current_stat):
+                unlink(final_path)
+                sync_directory()
+        except FileNotFoundError:
+            pass
+        except OSError as rollback_error:
+            raise EvidenceError(
+                f"unable to roll back publication for {final_path.name}"
+            ) from rollback_error
+        raise error
 
 
 def _stream_dict(receipt: StreamReceipt) -> dict[str, object]:
+    _require_safe_basename(receipt.path)
     return {
         "path": receipt.path,
         "sha256": receipt.sha256,
@@ -681,6 +770,7 @@ def _stream_dict(receipt: StreamReceipt) -> dict[str, object]:
 
 
 def _write_temp_bytes(final_path: Path, payload: bytes) -> Path:
+    _require_safe_basename(final_path.name)
     temp_path = _temporary_path(final_path)
     descriptor = os.open(temp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "wb") as output:
@@ -732,6 +822,7 @@ def _remove_published(path: Path) -> None:
 def _publish_transaction(
     pending: list[_PendingProcess], manifest_path: Path, manifest: dict[str, object]
 ) -> None:
+    _require_safe_basename(manifest_path.name)
     manifest_temp = _write_temp_bytes(
         manifest_path, canonical_json_bytes(manifest) + b"\n"
     )
@@ -774,6 +865,7 @@ def _publish_transaction(
 
 def _reject_preexisting(evidence_dir: Path, names: list[str]) -> None:
     for name in names:
+        _require_safe_basename(name)
         path = evidence_dir / name
         if os.path.lexists(path):
             raise EvidenceError(f"evidence output already exists: {name}")
@@ -786,28 +878,65 @@ def _hash_locks(repo_root: Path) -> dict[str, str]:
     }
 
 
-def _common_manifest_context(
-    repo_root: Path,
-    matrix_path: Path,
-    recorder_path: Path,
-    tested_sha: str,
-    tools_sha: str,
-    platform_id: str,
-) -> dict[str, object]:
+def _common_manifest_context(context: _CaptureContext) -> dict[str, object]:
     return {
-        "platform": platform_id,
+        "platform": context.platform_id,
         "architecture": platform.machine(),
-        "testedGitSha": tested_sha,
-        "toolsGitSha": tools_sha,
-        "recorderSha256": _sha256_file(recorder_path)[0],
-        "matrixSha256": _sha256_file(matrix_path)[0],
-        "locks": _hash_locks(repo_root),
+        "testedGitSha": context.tested_sha,
+        "toolsGitSha": context.tools_sha,
+        "recorderSha256": context.recorder_sha256,
+        "matrixSha256": context.matrix_sha256,
+        "locks": dict(context.locks),
     }
+
+
+def _revalidate_capture_state(context: _CaptureContext) -> None:
+    try:
+        tested_sha = _require_safe_git_repository(
+            context.repo_root,
+            context.env,
+            require_locks=True,
+            label="tested tree",
+        )
+    except EvidenceError as error:
+        if str(error) == "tested tree is not clean":
+            raise EvidenceError("tested tree became dirty") from error
+        raise
+    if tested_sha != context.tested_sha or _hash_locks(context.repo_root) != dict(
+        context.locks
+    ):
+        raise EvidenceError("tested tree identity changed")
+    tools_sha = _require_safe_git_repository(
+        context.tools_root,
+        context.env,
+        require_locks=False,
+        label="tools tree",
+    )
+    if tools_sha != context.tools_sha:
+        raise EvidenceError("tools tree identity changed")
+    _require_tracked_blob(
+        context.tools_root,
+        context.matrix_relative,
+        context.env,
+        "matrix",
+    )
+    _require_tracked_blob(
+        context.tools_root,
+        context.recorder_relative,
+        context.env,
+        "recorder",
+    )
+    if (
+        _sha256_file(context.matrix_path)[0] != context.matrix_sha256
+        or _sha256_file(context.recorder_path)[0] != context.recorder_sha256
+    ):
+        raise EvidenceError("tools tree file identity changed")
 
 
 def _load_selection_count(path: Path) -> int:
     try:
-        parsed = json.loads(path.read_bytes(), object_pairs_hook=_reject_duplicate_keys)
+        payload = _read_bounded(path, SELECTION_MAX_BYTES, label="selection output")
+        parsed = json.loads(payload, object_pairs_hook=_reject_duplicate_keys)
     except (json.JSONDecodeError, UnicodeDecodeError) as error:
         raise EvidenceError("invalid selection JSON") from error
     root = _require_exact_keys(parsed, SELECTION_ROOT_KEYS, "selection result")
@@ -840,17 +969,7 @@ def _empty_pending(
     )
 
 
-def _capture_command(
-    command: CommandSpec,
-    repo_root: Path,
-    evidence_dir: Path,
-    matrix_path: Path,
-    recorder_path: Path,
-    env: Mapping[str, str],
-    tested_sha: str,
-    tools_sha: str,
-    platform_id: str,
-) -> int:
+def _capture_command(command: CommandSpec, context: _CaptureContext) -> int:
     selection_command = selection_argv(command)
     names = [
         f"{command.id}.stdout.log",
@@ -864,16 +983,16 @@ def _capture_command(
                 f"{command.id}.selection.stderr.log",
             ]
         )
-    _reject_preexisting(evidence_dir, names)
+    _reject_preexisting(context.evidence_dir, names)
     pending: list[_PendingProcess] = []
     selection_value: dict[str, object] | None = None
     try:
         if selection_command is not None:
             selected = _run_process(
                 selection_command,
-                repo_root,
-                evidence_dir,
-                env,
+                context.repo_root,
+                context.evidence_dir,
+                context.env,
                 f"{command.id}.selection.stdout.log",
                 f"{command.id}.selection.stderr.log",
             )
@@ -895,11 +1014,12 @@ def _capture_command(
             if not selection_valid or test_count != 1:
                 empty = _empty_pending(
                     command.argv,
-                    evidence_dir,
+                    context.evidence_dir,
                     f"{command.id}.stdout.log",
                     f"{command.id}.stderr.log",
                 )
                 pending.append(empty)
+                _revalidate_capture_state(context)
                 manifest = {
                     "schemaVersion": 1,
                     "commandId": command.id,
@@ -910,34 +1030,28 @@ def _capture_command(
                     "status": "BLOCKED_SELECTION",
                     "startedAt": selected.receipt.started_at,
                     "endedAt": selected.receipt.ended_at,
-                    **_common_manifest_context(
-                        repo_root,
-                        matrix_path,
-                        recorder_path,
-                        tested_sha,
-                        tools_sha,
-                        platform_id,
-                    ),
+                    **_common_manifest_context(context),
                     "stdout": _stream_dict(empty.receipt.stdout),
                     "stderr": _stream_dict(empty.receipt.stderr),
                     "selection": selection_value,
                 }
                 _publish_transaction(
                     pending,
-                    evidence_dir / f"{command.id}.manifest.json",
+                    context.evidence_dir / f"{command.id}.manifest.json",
                     manifest,
                 )
                 return 1
+            _revalidate_capture_state(context)
         result = _run_process(
             command.argv,
-            repo_root,
-            evidence_dir,
-            env,
+            context.repo_root,
+            context.evidence_dir,
+            context.env,
             f"{command.id}.stdout.log",
             f"{command.id}.stderr.log",
         )
         pending.append(result)
-        _require_clean_after(repo_root, env, "tested tree")
+        _revalidate_capture_state(context)
         manifest = {
             "schemaVersion": 1,
             "commandId": command.id,
@@ -952,14 +1066,7 @@ def _capture_command(
             ),
             "startedAt": result.receipt.started_at,
             "endedAt": result.receipt.ended_at,
-            **_common_manifest_context(
-                repo_root,
-                matrix_path,
-                recorder_path,
-                tested_sha,
-                tools_sha,
-                platform_id,
-            ),
+            **_common_manifest_context(context),
             "stdout": _stream_dict(result.receipt.stdout),
             "stderr": _stream_dict(result.receipt.stderr),
             "selection": selection_value,
@@ -967,7 +1074,7 @@ def _capture_command(
         if set(manifest) != COMMAND_MANIFEST_KEYS:
             raise EvidenceError("internal command manifest key mismatch")
         _publish_transaction(
-            pending, evidence_dir / f"{command.id}.manifest.json", manifest
+            pending, context.evidence_dir / f"{command.id}.manifest.json", manifest
         )
         return result.receipt.exit_code
     except BaseException:
@@ -1041,7 +1148,11 @@ def _one_nonempty_output(pending: _PendingProcess) -> str:
     values: list[str] = []
     for path in (pending.stdout_temp, pending.stderr_temp):
         try:
-            value = path.read_bytes().decode("ascii").strip()
+            value = (
+                _read_bounded(path, VERSION_OUTPUT_MAX_BYTES, label="version output")
+                .decode("ascii")
+                .strip()
+            )
         except UnicodeDecodeError as error:
             raise EvidenceError("tool version output must be ASCII") from error
         if value:
@@ -1095,16 +1206,7 @@ def _resolve_exact_tools(env: Mapping[str, str]) -> dict[str, Path]:
     return resolved
 
 
-def _bootstrap(
-    repo_root: Path,
-    evidence_dir: Path,
-    matrix_path: Path,
-    recorder_path: Path,
-    env: Mapping[str, str],
-    tested_sha: str,
-    tools_sha: str,
-    platform_id: str,
-) -> int:
+def _bootstrap(context: _CaptureContext) -> int:
     log_names = [
         f"{tool}.version.{stream}.log"
         for tool in REQUIRED_TOOL_NAMES
@@ -1114,8 +1216,8 @@ def _bootstrap(
         "dependency-install.stderr.log",
         "host-bootstrap.manifest.json",
     ]
-    _reject_preexisting(evidence_dir, log_names)
-    resolved = _resolve_exact_tools(env)
+    _reject_preexisting(context.evidence_dir, log_names)
+    resolved = _resolve_exact_tools(context.env)
     probes = _tool_probes(resolved)
     pending: list[_PendingProcess] = []
     tools: dict[str, object] = {}
@@ -1124,9 +1226,9 @@ def _bootstrap(
             probe = probes[tool_id]
             result = _run_process(
                 probe.argv,
-                repo_root,
-                evidence_dir,
-                env,
+                context.repo_root,
+                context.evidence_dir,
+                context.env,
                 f"{tool_id}.version.stdout.log",
                 f"{tool_id}.version.stderr.log",
             )
@@ -1143,29 +1245,22 @@ def _bootstrap(
             }
         dependency = _run_process(
             ("pnpm", "install", "--frozen-lockfile"),
-            repo_root,
-            evidence_dir,
-            env,
+            context.repo_root,
+            context.evidence_dir,
+            context.env,
             "dependency-install.stdout.log",
             "dependency-install.stderr.log",
         )
         pending.append(dependency)
         if dependency.receipt.exit_code != 0:
             raise EvidenceError("dependency install failed")
-        _require_clean_after(repo_root, env, "tested tree")
+        _revalidate_capture_state(context)
         administrator_token: bool | None = None
         if os.name == "nt":
             administrator_token = bool(ctypes.windll.shell32.IsUserAnAdmin())
         manifest = {
             "schemaVersion": 1,
-            **_common_manifest_context(
-                repo_root,
-                matrix_path,
-                recorder_path,
-                tested_sha,
-                tools_sha,
-                platform_id,
-            ),
+            **_common_manifest_context(context),
             "osVersion": platform.mac_ver()[0] or platform.version(),
             "osBuild": platform.version(),
             "tools": tools,
@@ -1181,7 +1276,7 @@ def _bootstrap(
             "administratorToken": administrator_token,
         }
         _publish_transaction(
-            pending, evidence_dir / "host-bootstrap.manifest.json", manifest
+            pending, context.evidence_dir / "host-bootstrap.manifest.json", manifest
         )
         return 0
     except BaseException:
@@ -1193,7 +1288,7 @@ def _bootstrap(
 
 def _resolve_request(
     repo_raw: str, evidence_raw: str, matrix_raw: str
-) -> tuple[Path, Path, Path, Path, dict[str, str], str, str, str]:
+) -> _CaptureContext:
     env = _sanitized_child_environment(os.environ)
     repo_root = require_absolute_directory(repo_raw, "repo-root")
     evidence_dir = require_absolute_directory(evidence_raw, "evidence-dir")
@@ -1221,8 +1316,11 @@ def _resolve_request(
             raise EvidenceError("tested, tools, and evidence trees must be disjoint")
     try:
         matrix_relative = matrix_path.relative_to(tools_root).as_posix()
+        recorder_relative = recorder_path.relative_to(tools_root).as_posix()
     except ValueError as error:
-        raise EvidenceError("matrix must be inside the tools repository") from error
+        raise EvidenceError(
+            "matrix and recorder must be inside the tools repository"
+        ) from error
     tested_sha = _require_safe_git_repository(
         repo_root, env, require_locks=True, label="tested tree"
     )
@@ -1230,18 +1328,29 @@ def _resolve_request(
         tools_root, env, require_locks=False, label="tools tree"
     )
     _require_tracked_blob(tools_root, matrix_relative, env, "matrix")
+    _require_tracked_blob(tools_root, recorder_relative, env, "recorder")
+    locks = _hash_locks(repo_root)
+    recorder_sha256 = _sha256_file(recorder_path)[0]
+    matrix_sha256 = _sha256_file(matrix_path)[0]
     platform_id = host_id(
-        "/usr/sbin/sysctl" if platform.system() == "Darwin" else "sysctl"
-    )
-    return (
-        repo_root,
-        evidence_dir,
-        matrix_path,
-        recorder_path,
+        "/usr/sbin/sysctl" if platform.system() == "Darwin" else "sysctl",
         env,
-        tested_sha,
-        tools_sha,
-        platform_id,
+    )
+    return _CaptureContext(
+        repo_root=repo_root,
+        evidence_dir=evidence_dir,
+        matrix_path=matrix_path,
+        recorder_path=recorder_path,
+        tools_root=tools_root,
+        env=env,
+        tested_sha=tested_sha,
+        tools_sha=tools_sha,
+        platform_id=platform_id,
+        locks=locks,
+        recorder_sha256=recorder_sha256,
+        matrix_sha256=matrix_sha256,
+        recorder_relative=recorder_relative,
+        matrix_relative=matrix_relative,
     )
 
 
@@ -1255,49 +1364,23 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--bootstrap", action="store_true")
     arguments = parser.parse_args(argv)
     try:
-        (
-            repo_root,
-            evidence_dir,
-            matrix_path,
-            recorder_path,
-            env,
-            tested_sha,
-            tools_sha,
-            platform_id,
-        ) = _resolve_request(
+        context = _resolve_request(
             arguments.repo_root, arguments.evidence_dir, arguments.matrix
         )
-        matrix = load_matrix(matrix_path)
+        matrix = load_matrix(context.matrix_path)
         if arguments.bootstrap:
-            return _bootstrap(
-                repo_root,
-                evidence_dir,
-                matrix_path,
-                recorder_path,
-                env,
-                tested_sha,
-                tools_sha,
-                platform_id,
-            )
+            return _bootstrap(context)
         matching = [
             command for command in matrix.commands if command.id == arguments.name
         ]
         if len(matching) != 1:
             raise EvidenceError(f"unknown command: {arguments.name}")
         command = matching[0]
-        if platform_id not in command.platforms:
-            raise EvidenceError(f"command is not valid for {platform_id}: {command.id}")
-        return _capture_command(
-            command,
-            repo_root,
-            evidence_dir,
-            matrix_path,
-            recorder_path,
-            env,
-            tested_sha,
-            tools_sha,
-            platform_id,
-        )
+        if context.platform_id not in command.platforms:
+            raise EvidenceError(
+                f"command is not valid for {context.platform_id}: {command.id}"
+            )
+        return _capture_command(command, context)
     except EvidenceError as error:
         print(f"capture_command: {error}", file=sys.stderr)
         return 1
