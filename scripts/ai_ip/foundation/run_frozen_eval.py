@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-import argparse
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
 import re
 import stat
@@ -27,6 +27,7 @@ FROZEN_EVALUATOR_KEYS = {
     "windows11X64BinarySha256",
 }
 FORBIDDEN_CHILD_FLAGS = {
+    "--context",
     "--frozen-run-context",
     "--model",
     "--model-id",
@@ -63,6 +64,21 @@ HARDENED_GIT_ENV = {
     "GIT_TERMINAL_PROMPT": "0",
 }
 CHILD_ENVIRONMENT = {"PATH": os.defpath}
+TRUSTED_GIT_EXECUTABLE = (
+    Path("/usr/bin/git")
+    if sys.platform == "darwin"
+    else Path(r"C:\Program Files\Git\cmd\git.exe")
+)
+
+
+@dataclass(frozen=True)
+class VerifiedExecutable:
+    canonical_path: Path
+    descriptor: int
+    device: int
+    inode: int
+    size: int
+    mtime_ns: int
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -122,9 +138,20 @@ def _canonical_existing_path(raw: object, label: str, *, directory: bool) -> Pat
     return resolved
 
 
-def _absolute_frozen_string(raw: object, label: str) -> str:
+def _absolute_posix_frozen_string(raw: object, label: str) -> str:
     text = _require_string(raw, label)
-    _require(Path(text).is_absolute(), f"{label} must be an absolute frozen path")
+    _require(
+        PurePosixPath(text).is_absolute(), f"{label} must be an absolute frozen path"
+    )
+    return text
+
+
+def _absolute_windows_frozen_string(raw: object, label: str) -> str:
+    text = _require_string(raw, label)
+    _require(
+        PureWindowsPath(text).is_absolute(),
+        f"{label} must be an absolute frozen path",
+    )
     return text
 
 
@@ -140,24 +167,37 @@ def _host_platform() -> str:
     machine = platform.machine().lower()
     if sys.platform == "darwin" and machine == "x86_64":
         return "macos-x86_64"
-    if sys.platform == "win32" and machine in {"amd64", "x86_64"}:
+    if sys.platform == "win32":
+        _require(
+            machine in {"amd64", "x86_64"},
+            f"unsupported evaluator host: {sys.platform}/{machine}",
+        )
+        windows_version = sys.getwindowsversion()
+        _require(
+            windows_version.major == 10
+            and windows_version.build >= 22000
+            and windows_version.product_type == 1,
+            "frozen evaluator requires Windows 11 x64 workstation",
+        )
         return "windows-11-x64"
     raise FrozenEvalError(f"unsupported evaluator host: {sys.platform}/{machine}")
 
 
 def _git_environment() -> dict[str, str]:
-    environment = {
-        key: value
-        for key, value in os.environ.items()
-        if not key.upper().startswith("GIT_")
-    }
-    environment.update(HARDENED_GIT_ENV)
-    return environment
+    return dict(HARDENED_GIT_ENV)
+
+
+def _trusted_git_path() -> Path:
+    path = _canonical_existing_path(
+        str(TRUSTED_GIT_EXECUTABLE), "trusted Git executable", directory=False
+    )
+    _require(os.access(path, os.X_OK), "trusted Git executable is not executable")
+    return path
 
 
 def _run_git(worktree: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(
-        ["git", "-C", str(worktree), *arguments],
+        [str(_trusted_git_path()), "-C", str(worktree), *arguments],
         check=False,
         capture_output=True,
         env=_git_environment(),
@@ -226,17 +266,44 @@ def _verify_git_worktree(worktree: Path, candidate_sha: str) -> None:
     _require(not forbidden_grafts, "Git info/grafts entries are forbidden")
 
 
-def _sha256_file(path: Path) -> str:
+def _open_verified_executable(path: Path, expected_digest: str) -> VerifiedExecutable:
+    flags = os.O_RDONLY
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as error:
+        raise FrozenEvalError(
+            f"cannot open frozen evaluator binary: {error}"
+        ) from error
     digest = hashlib.sha256()
     try:
-        with path.open("rb") as handle:
-            while chunk := handle.read(1024 * 1024):
-                digest.update(chunk)
+        file_stat = os.fstat(descriptor)
+        _require(
+            stat.S_ISREG(file_stat.st_mode),
+            "frozen evaluator binary must be a regular file",
+        )
+        while chunk := os.read(descriptor, 1024 * 1024):
+            digest.update(chunk)
+    except FrozenEvalError:
+        os.close(descriptor)
+        raise
     except OSError as error:
+        os.close(descriptor)
         raise FrozenEvalError(
             f"cannot hash frozen evaluator binary: {error}"
         ) from error
-    return digest.hexdigest()
+    if digest.hexdigest() != expected_digest:
+        os.close(descriptor)
+        raise FrozenEvalError("frozen evaluator binary SHA-256 differs from context")
+    return VerifiedExecutable(
+        canonical_path=path,
+        descriptor=descriptor,
+        device=file_stat.st_dev,
+        inode=file_stat.st_ino,
+        size=file_stat.st_size,
+        mtime_ns=file_stat.st_mtime_ns,
+    )
 
 
 def _require_rfc3339(value: object, label: str) -> str:
@@ -272,7 +339,7 @@ def _load_context(context: Path) -> dict[str, object]:
     return value
 
 
-def _validate_context(context: Path) -> tuple[Path, tuple[str, ...]]:
+def _validate_context(context: Path) -> VerifiedExecutable:
     root = _load_context(context)
     for required_key in {
         "schemaVersion",
@@ -353,13 +420,13 @@ def _validate_context(context: Path) -> tuple[Path, tuple[str, ...]]:
     )
     _verify_git_worktree(worktree, candidate_sha)
 
-    macos_binary = _absolute_frozen_string(
+    macos_binary = _absolute_posix_frozen_string(
         evaluator["macosX8664Binary"], "frozenEvaluator.macosX8664Binary"
     )
     macos_digest = _require_sha256(
         evaluator["macosX8664BinarySha256"], "frozenEvaluator.macosX8664BinarySha256"
     )
-    windows_binary = _absolute_frozen_string(
+    windows_binary = _absolute_windows_frozen_string(
         evaluator["windows11X64Binary"], "frozenEvaluator.windows11X64Binary"
     )
     windows_digest = _require_sha256(
@@ -387,11 +454,7 @@ def _validate_context(context: Path) -> tuple[Path, tuple[str, ...]]:
             os.access(selected_binary, os.X_OK),
             "frozen evaluator binary is not executable",
         )
-    _require(
-        _sha256_file(selected_binary) == selected_digest,
-        "frozen evaluator binary SHA-256 differs from context",
-    )
-    return selected_binary, (execution_mode,)
+    return _open_verified_executable(selected_binary, selected_digest)
 
 
 def _parse_invocation(argv: Sequence[str]) -> tuple[Path, tuple[str, ...]]:
@@ -401,12 +464,11 @@ def _parse_invocation(argv: Sequence[str]) -> tuple[Path, tuple[str, ...]]:
         raise FrozenEvalError(
             "expected -- before frozen evaluator arguments"
         ) from error
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--context", required=True)
-    try:
-        namespace = parser.parse_args(argv[:separator_index])
-    except SystemExit as error:
-        raise FrozenEvalError("invalid wrapper arguments") from error
+    prefix = tuple(argv[:separator_index])
+    _require(
+        len(prefix) == 2 and prefix[0] == "--context",
+        "expected exactly --context ABS before --",
+    )
     child_argv = tuple(argv[separator_index + 1 :])
     _require(child_argv, "frozen evaluator subcommand is required")
     subcommand = child_argv[0]
@@ -421,19 +483,66 @@ def _parse_invocation(argv: Sequence[str]) -> tuple[Path, tuple[str, ...]]:
     )
     _require(subcommand not in {".", ".."}, "frozen evaluator subcommand is unsafe")
     reject_authority_overrides(child_argv)
-    return _canonical_existing_path(
-        namespace.context, "context", directory=False
-    ), child_argv
+    return _canonical_existing_path(prefix[1], "context", directory=False), child_argv
 
 
 def _exec(
-    frozen_executable: Path, child_argv: tuple[str, ...], context: Path
+    frozen_executable: VerifiedExecutable,
+    child_argv: tuple[str, ...],
+    context: Path,
 ) -> NoReturn:
-    os.execve(
-        frozen_executable,
-        [str(frozen_executable), *child_argv, "--frozen-run-context", str(context)],
-        CHILD_ENVIRONMENT,
+    try:
+        descriptor_stat = os.fstat(frozen_executable.descriptor)
+        path_stat = frozen_executable.canonical_path.lstat()
+    except OSError as error:
+        os.close(frozen_executable.descriptor)
+        raise FrozenEvalError(
+            f"frozen evaluator changed after verification: {error}"
+        ) from error
+    expected_identity = (
+        frozen_executable.device,
+        frozen_executable.inode,
+        frozen_executable.size,
+        frozen_executable.mtime_ns,
     )
+    descriptor_identity = (
+        descriptor_stat.st_dev,
+        descriptor_stat.st_ino,
+        descriptor_stat.st_size,
+        descriptor_stat.st_mtime_ns,
+    )
+    path_identity = (
+        path_stat.st_dev,
+        path_stat.st_ino,
+        path_stat.st_size,
+        path_stat.st_mtime_ns,
+    )
+    if (
+        not stat.S_ISREG(path_stat.st_mode)
+        or descriptor_identity != expected_identity
+        or path_identity != expected_identity
+    ):
+        os.close(frozen_executable.descriptor)
+        raise FrozenEvalError("frozen evaluator changed after verification")
+    executable = (
+        frozen_executable.descriptor
+        if os.execve in os.supports_fd
+        else frozen_executable.canonical_path
+    )
+    try:
+        os.execve(
+            executable,
+            [
+                str(frozen_executable.canonical_path),
+                *child_argv,
+                "--frozen-run-context",
+                str(context),
+            ],
+            CHILD_ENVIRONMENT,
+        )
+    except OSError:
+        os.close(frozen_executable.descriptor)
+        raise
     raise AssertionError("os.execve unexpectedly returned")
 
 
@@ -441,7 +550,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = tuple(sys.argv[1:] if argv is None else argv)
     try:
         context, child_argv = _parse_invocation(arguments)
-        frozen_executable, _ = _validate_context(context)
+        frozen_executable = _validate_context(context)
         _exec(frozen_executable, child_argv, context)
     except FrozenEvalError as error:
         print(f"run_frozen_eval: {error}", file=sys.stderr)

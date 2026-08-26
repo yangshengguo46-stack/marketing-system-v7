@@ -24,7 +24,7 @@ The matrix command, expected exit code, platform, architecture, tested SHA, tool
 
 Verification requires the fixed matrix and recalculates manifest and log digests. For each required baseline command it distinguishes a verified `PASS` from `BLOCKED_BASELINE`; a post result cannot erase a baseline block or mismatch. The public verifier does not accept private run roots, keys, attestations, provider tokens, ignored-failure lists, or provider parameters.
 
-The frozen evaluator wrapper is only a dispatch guard. It validates replay versus live context fields, selected platform, clean detached evaluator worktree, and frozen binary hash, then appends one frozen-context argument to the child. It produces no business manifest, business result, provider request, or cost record.
+The frozen evaluator wrapper is only a dispatch guard. It validates replay versus live context fields, selected platform, clean detached evaluator worktree, and frozen binary hash, then appends one frozen-context argument to the child. It holds the verified descriptor, immediately rechecks descriptor and pathname identity before dispatch, and uses fd execution where the host standard library supports it; other hosts use direct pathname exec after that recheck. This narrows but cannot eliminate the final instruction-level pathname TOCTOU on platforms without fd execution. It produces no business manifest, business result, provider request, or cost record.
 
 ## Windows transfer and return
 
