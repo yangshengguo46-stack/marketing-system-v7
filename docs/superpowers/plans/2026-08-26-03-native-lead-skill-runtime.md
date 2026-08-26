@@ -158,6 +158,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 - Read referenced materials and use available tools or subagents only when they improve the result.
 - Before drafting, build an internal evidence ledger keyed by source ID. Record each supported fact as subject, relation, object, and modifiers; preserve which action or entity every role, quantity, date, duration, sequence, and ordinal modifies, and never transfer a modifier to a neighboring action or entity.
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
+- Treat source entailment as the release gate. Review the premise, draft, and claims sentence by sentence; every unlabeled factual phrase must have one source span that entails the same relation and modifier attachments. If none does, remove or relabel the phrase. Facts from separate materials may appear together, but their co-occurrence does not establish a relationship between their entities or events.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -404,6 +405,14 @@ Cycle 3 is not GREEN. Sample 03 changed a March 2024 start of recording the wood
 For cycle 4, replace only the first cycle 3 evidence-ledger bullet with the reviewed subject–relation–object-and-modifiers wording in the canonical Skill above. This makes attachment fidelity explicit: a date, duration, quantity, sequence, ordinal, or role may not migrate from its source action or entity to a neighboring one. Keep every other Skill line, the packet, schema, and runtime API unchanged.
 
 Extend the cycle 4 rubric with one sixth boolean per case: every factual phrase across the premise, publishable draft, and claims preserves the source's subject, relation, object, and modifier attachments, or is explicitly labeled as inference/creative hypothesis or an allowed draft/open-question placeholder. The original five booleans remain unchanged. A cycle 4 sample passes only at 18/18. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all earlier outputs, and run five fresh-context samples into `skill-treatment-cycle-04-01.md` through `skill-treatment-cycle-04-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
+
+### Task 3 behavior cycle 5 amendment
+
+Cycle 4 is RED. Samples 01, 02, and 03 introduced unsupported start-learning relations in the person draft; sample 05 asserted in the brand premise that the twelve packages contained the product-card water cups. The latter also failed the original evidence-rooted-premise item. Preserve the 18-boolean matrices and exact rationales.
+
+For cycle 5, add only the reviewed source-entailment release-gate bullet from the canonical Skill above. It operationalizes the OpenAI Cookbook's hallucination-guardrail guidance to use concrete accuracy criteria and evaluate individual sentences as well as the whole response: <https://developers.openai.com/cookbook/examples/developing_hallucination_guardrails>. The internal check must find a source span that entails each unlabeled factual phrase's relation and modifier attachments; merely placing facts from two materials in one mission does not create a relation between them. Do not expose internal analysis. Keep every other Skill line, the packet, schema, runtime API, and the cycle 4 18-boolean rubric unchanged.
+
+Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all prior outputs, and run five fresh-context samples into `skill-treatment-cycle-05-01.md` through `skill-treatment-cycle-05-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
