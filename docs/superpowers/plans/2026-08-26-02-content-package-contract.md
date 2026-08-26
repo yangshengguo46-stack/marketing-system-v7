@@ -68,7 +68,7 @@ pub struct HeldOutMissionCase {
 ```
 - Centralize these exact input bounds in `mission.rs`: `MAX_CASE_ID_BYTES = 128`, `MAX_MATERIAL_ID_BYTES = 128`, `MAX_MATERIALS = 128`, `MAX_CONSTRAINTS = 64`, `MAX_OBJECTIVE_BYTES = 8 * 1024`, `MAX_CONSTRAINT_BYTES = 2 * 1024`, and `MAX_MATERIAL_PATH_BYTES = 1024`.
 - IDs use the internal grammar `[A-Za-z0-9][A-Za-z0-9._-]*`, must fit their byte limit, and may not start with the neutral reserved namespace `__ai_ip_dev__`. This namespace never contains or derives from a frozen case name, industry, answer, or fixture body.
-- Reject empty/oversized strings, duplicate material IDs, SHA-256 values other than exactly 64 lowercase hexadecimal bytes, absolute paths, platform prefixes/root components, `.`/`..`, and reserved development IDs. Validation is pure and never reads files.
+- Paths use `/` as the only separator. Reject empty/oversized strings, duplicate material IDs, SHA-256 values other than exactly 64 lowercase hexadecimal bytes, a leading `/`, any `\\`, empty segments, and `.`/`..` segments. This also rejects Windows drive/UNC spellings consistently on every host. Validation is pure and never reads files.
 
 ### Output
 
@@ -131,6 +131,25 @@ pub struct ContentPackage {
 - Readiness has only these minimal semantic checks: `ReadyForHumanReview` is invalid while `open_questions` is nonempty or any claim is `Unknown`; `BlockedByMissingEvidence` is invalid unless at least one open question or `Unknown` claim exists; `Draft` permits either state. This is not a workflow gate and does not require a fixed funnel, evidence count, CTA, or provider.
 - Both `HeldOutMissionCase::validate()` and `ContentPackage::validate()` return `Result<(), ValidationErrors>`. `ContentPackage::validate_against(&HeldOutMissionCase)` first performs both intrinsic validations, then the same-case kind/ref checks. `ValidationErrors` owns `Vec<String>`, exposes `errors(&self) -> &[String]`, implements `Display`/`Error`, and appends messages in field/declaration order so multiple failures are deterministic. Keep API surface small and modules below the upstream size guidance.
 
+The error carrier is exactly:
+
+```rust
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ValidationErrors {
+    errors: Vec<String>,
+}
+
+impl ValidationErrors {
+    pub fn errors(&self) -> &[String] { &self.errors }
+}
+```
+
+`Display` joins messages with `"; "`. Validators build one local `Vec<String>` and return `Ok(())` when empty or `Err(ValidationErrors { errors })` otherwise; no fail-fast `?` is used inside one intrinsic validation pass. Error text and order are frozen by this catalog:
+
+1. Mission: `caseId: invalid internal id`, `caseId: reserved development namespace`, `objective: must not be empty`, `objective: exceeds 8192 bytes`, `constraints: exceeds 64 items`, then for each index `constraints[{i}]: must not be empty|exceeds 2048 bytes`, `materials: exceeds 128 items`, then for each material in input order `materials[{i}].materialId: invalid internal id|duplicate`, `.relativePath: must not be empty|exceeds 1024 bytes|must be a normalized relative path`, `.sha256: must be 64 lowercase hexadecimal characters`.
+2. Package intrinsic: empty-field messages, in declaration order, are `missionSummary: must not be empty`, `influenceRelation.subject: must not be empty`, `.audience: must not be empty`, `.desiredAction: must not be empty`, `actionFunnel: must contain at least one step`, then `actionFunnel[{i}].audienceState|intendedChange|nextAction: must not be empty`, `strategicJudgment: must not be empty`, `publishableContent.format: must not be empty`, `publishableContent.title: must not be empty when present`, `publishableContent.body: must not be empty`, `publishableContent.productionNotes[{i}]: must not be empty`, `claims[{i}].text: must not be empty`, `claims[{i}].sourceRefs[{j}]: must not be empty`, `openQuestions[{i}]: must not be empty`, and `measurementPlan.successSignal|collectionMethod|observationWindow: must not be empty`. Claim semantic messages then append as `claims[{i}].sourceRefs: <status> requires at least one source`, `claims[{i}].resultReceiptRef: actualResult requires a nonempty receipt`, or `claims[{i}].resultReceiptRef: only actualResult may set a receipt`; readiness messages append last as `readiness: readyForHumanReview cannot contain missing-evidence markers` and `readiness: blockedByMissingEvidence requires a missing-evidence marker`.
+3. Against-case messages append only after intrinsic case/package errors are absent: `influenceRelation.subjectKind: does not match mission case`, `claims[{i}].sourceRefs[{j}]: unknown material id`, `...: userFact requires userInput material`, `...: externalEvidence requires evidence material`, `claims[{i}].resultReceiptRef: unknown material id`, or `...: requires actualResultReceipt material`.
+
 ### Complete crate/build skeleton
 
 `codex-rs/ai-ip-domain/Cargo.toml`:
@@ -175,17 +194,61 @@ codex_rust_crate(
 ## Task 1 — RED tests and crate skeleton
 
 1. Read the five source authorities and root `AGENTS.md`; write `.superpowers/sdd/2026-08-26-02-content-package-contract/progress.md` with a short reuse/prohibition note. Preserve one Lead, six evidence states, direct action relation, bounded artifacts, and provider neutrality; prohibit fixed agent rosters, giant semantic maps, named-case answers, fixed funnels, and provider/model branches.
-2. Add the complete Cargo/Bazel skeleton above, add `"ai-ip-domain"` to `codex-rs/Cargo.toml` workspace members, create empty implementation modules, and add `lib.rs` module/test declarations. Do not update locks yet.
-3. In `domain_tests.rs`, add `valid_case()` and `valid_package(SubjectKind)` fixtures containing only neutral synthetic values such as `case-1`, `material-1`, `evidence/a.txt`, and `报名参加志愿活动`; do not use any frozen evaluation case or expected answer.
-4. Add the six exact build-spec tests: `organization_subject_can_target_a_membership_action`, `external_evidence_without_source_is_rejected`, `actual_result_without_receipt_is_rejected`, `claim_reference_must_resolve_inside_the_same_case`, `actual_result_receipt_must_have_the_declared_receipt_kind`, and `held_out_material_paths_cannot_escape_case_root`.
-5. Add table-driven tests named `subject_and_evidence_enums_use_camel_case_wire_names`, `unknown_dto_fields_are_rejected`, `mission_bounds_accept_limit_and_reject_one_byte_over`, `ids_and_material_digests_are_strict`, `material_paths_are_relative_normal_paths`, and `duplicate_material_ids_are_rejected`. The boundary table covers every exact constant above at limit and one byte over; path cases cover Unix absolute, Windows prefix, root, `.`, and `..` components.
-6. Add tests named `content_package_requires_every_business_section`, `user_fact_requires_user_input_source`, `external_evidence_requires_evidence_source`, `actual_result_requires_declared_source_and_receipt`, `non_actual_claim_rejects_result_receipt`, `subject_kind_must_match_case`, `unknown_and_cross_case_refs_are_rejected`, `ready_for_review_rejects_missing_evidence_markers`, `blocked_readiness_requires_a_missing_evidence_marker`, and `validation_aggregates_errors_in_field_order`. Assert the complete `ValidationErrors.errors()` vector where practical.
-7. Run from `codex-rs`: `just test -p codex-ai-ip-domain`. Expected RED is a compile failure for the deliberately unimplemented public domain symbols/methods used by these tests. Record command, exit, and representative missing symbol; do not accept a missing tool/workspace member/dependency failure as RED.
+2. Add the complete Cargo/Bazel skeleton above, add `"ai-ip-domain"` to `codex-rs/Cargo.toml` workspace members, create `mission.rs`, and make `lib.rs` expose only the mission API plus `domain_tests.rs`. Do not declare the content module or reference content symbols yet. Do not update locks yet.
+3. In `domain_tests.rs`, add `valid_case()` with only neutral synthetic values `case-1`, `material-1`, and `evidence/a.txt`. Add mission-only tests: all SubjectKind/MaterialKind camelCase wire values; HeldOutMissionCase unknown-field rejection through `serde_json`; every constant at limit and one byte over; empty objective/constraint/path; ID grammar and `__ai_ip_dev__` namespace; material count/duplicate IDs; exact lowercase digest; Unix absolute, Windows-prefix-like (`C:\\secret`), root, `.`, and `..` path components; and a multi-error assertion equal to the catalog order.
+4. Leave the mission public types/constants/method bodies absent but keep the crate, member, and direct dependencies valid. Run from `codex-rs`: `just test -p codex-ai-ip-domain`. Expected RED is unresolved mission imports/methods in `domain_tests.rs`; missing tool/member/dependency is not an acceptable RED.
+5. Implement the exact mission public API and mission validation. Run the entire currently declared crate test target `just test -p codex-ai-ip-domain`; all mission tests must GREEN before adding any content symbol/test.
+6. Only after mission GREEN, declare `content_package`, export its exact API, add `valid_package(SubjectKind)`, and add the six exact build-spec tests: `organization_subject_can_target_a_membership_action`, `external_evidence_without_source_is_rejected`, `actual_result_without_receipt_is_rejected`, `claim_reference_must_resolve_inside_the_same_case`, `actual_result_receipt_must_have_the_declared_receipt_kind`, and `held_out_material_paths_cannot_escape_case_root` (the last reuses the already-GREEN mission API).
+7. Add content tests: all ClaimStatus/Readiness camelCase wire values; ContentPackage unknown-field rejection; each required section/string empty in a table; empty funnel; `UserFact`/`ExternalEvidence`/`ActualResult` empty source requirements; wrong material kinds; missing/wrong receipt; receipt on non-actual claim; subject-kind mismatch; unknown refs including colon-bearing cross-case-looking refs; both readiness boundary directions; and the exact aggregate-error vector from the catalog.
+8. Keep all content public types/methods absent for this run, then run `just test -p codex-ai-ip-domain`. Expected second RED is unresolved content imports/methods while all mission symbols compile; record a representative content symbol failure.
+
+Reference test shapes (expand table rows mechanically, do not weaken assertions):
+
+```rust
+#[test]
+fn organization_subject_can_target_a_membership_action() {
+    let package = valid_package(SubjectKind::Organization);
+    assert_eq!(
+        package.influence_relation.desired_action,
+        "报名参加志愿活动"
+    );
+    package.validate().unwrap();
+}
+
+#[test]
+fn user_fact_requires_user_input_source() {
+    let case = valid_case();
+    let mut package = valid_package(SubjectKind::Brand);
+    package.claims[0].status = ClaimStatus::UserFact;
+    package.claims[0].source_refs.clear();
+    assert_eq!(
+        package.validate_against(&case).unwrap_err().errors(),
+        &["claims[0].sourceRefs: userFact requires at least one source"]
+    );
+}
+
+#[test]
+fn readiness_boundaries_are_explicit() {
+    let mut package = valid_package(SubjectKind::Brand);
+    package.readiness = Readiness::ReadyForHumanReview;
+    package.open_questions = vec!["还缺少哪项证明？".into()];
+    assert_eq!(
+        package.validate().unwrap_err().errors(),
+        &["readiness: readyForHumanReview cannot contain missing-evidence markers"]
+    );
+    package.open_questions.clear();
+    package.readiness = Readiness::BlockedByMissingEvidence;
+    assert_eq!(
+        package.validate().unwrap_err().errors(),
+        &["readiness: blockedByMissingEvidence requires a missing-evidence marker"]
+    );
+}
+```
 
 ## Task 2 — Minimum implementation and GREEN
 
-1. Implement the exact mission DTOs/constants/validators first. Run `just test -p codex-ai-ip-domain mission -- --nocapture` and make only mission tests GREEN.
-2. Implement the exact output DTOs, `ValidationErrors`, intrinsic validation, readiness rules, and `validate_against`. Run `just test -p codex-ai-ip-domain` to GREEN. No I/O, async, database, Codex runtime, provider, model, prompt, hidden case answer, or workflow engine.
+1. Starting from the second RED, implement `content_package.rs` exactly: DTO derives/serde attributes, error carrier, field-order aggregation, claim/readiness semantics, then `validate_against`. Reuse small private validation helpers from `mission.rs` only if they have at least two call sites; do not create public helpers.
+2. Run the entire `just test -p codex-ai-ip-domain` target to GREEN. No I/O, async, database, Codex runtime, provider, model, prompt, hidden case answer, or workflow engine.
 3. From the repository root run `just bazel-lock-update` and review that only `MODULE.bazel.lock` changes beyond Cargo files. Then run `bazel test //codex-rs/ai-ip-domain:ai-ip-domain-unit-tests`, followed by `just bazel-lock-check`, in that order.
 4. From `codex-rs` run `just fmt`, review its diff, then `just fix -p codex-ai-ip-domain` as required by upstream. Do not rerun the same passing tests after mechanical fmt/fix unless fix changes semantics.
 5. Run `git diff --check`; verify touched paths are exactly the nine authorized paths; confirm the failed-baseline quarantine digest/path, transfer refs, old/new bundles, and provider disposition are unchanged.
