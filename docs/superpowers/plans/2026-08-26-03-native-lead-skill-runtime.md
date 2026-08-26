@@ -159,7 +159,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 - Before drafting, build an internal evidence ledger keyed by source ID. Record each supported fact as subject, relation, object, and modifiers; preserve which action or entity every role, quantity, date, duration, sequence, and ordinal modifies, and never transfer a modifier to a neighboring action or entity.
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Treat source entailment as the release gate. Review the premise, draft, and claims sentence by sentence; every unlabeled factual phrase must have one source span that entails the same relation and modifier attachments. If none does, remove or relabel the phrase. Facts from separate materials may appear together, but their co-occurrence does not establish a relationship between their entities or events.
-- Apply these non-entailment checks literally unless a source states the missing relation: starting to record activity X neither means starting X nor permits moving the recording start to another date such as "now"; separate materials do not connect their entities; a group completing a counted set does not identify who completed its first or last item.
+- For factual language presented as supported, preserve predicate scope and attachment: do not substitute a neighboring action, participant, object, time, or ordinal, and do not infer a relation from co-occurrence or collective completion. This does not bar clearly labeled inference, creative hypothesis, prospective staging, bracketed draft placeholders, or open questions.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -419,9 +419,39 @@ Commit the amended Skill before evaluation, verify the original packet digest be
 
 Cycle 5 is RED. Sample 01 transferred March 2024 to starting woodworking learning; sample 02 invented that the founder sealed the final package; sample 03 moved the recording start to now; sample 04 put an unsupported post-departure learning start in the premise; and sample 05 again moved the recording start to now. Preserve the exact 18-boolean matrices and rationales.
 
-For cycle 6, add only the reviewed non-entailment-checks bullet from the canonical Skill above. These three compact negative examples implement the OpenAI Cookbook guidance that few-shot prompting can improve hallucination-guardrail accuracy, while remaining general across subject kinds and business domains. They distinguish recording from the recorded activity and from a different date, prohibit cross-material entity links, and prohibit inferring a distinguished first/last actor from group completion. Keep all other Skill lines, packet, schema, runtime API, and the 18-boolean rubric unchanged.
+For cycle 6, add only the reviewed predicate-scope-and-attachment bullet from the canonical Skill above. It is a relation-level principle, not a packet-derived answer, and is explicitly scoped to factual language presented as supported; clearly labeled inference, creative hypothesis, prospective staging, bracketed draft placeholders, and open questions remain available. Keep all other Skill lines, the original packet, schema, runtime API, and the 18-boolean rubric unchanged.
 
-Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all prior outputs, and run five fresh-context samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
+Before editing the Skill, also freeze the following previously unseen generalization packet as exact bytes in `skill-generalization-packet.md`, ending with one newline, and record its SHA-256 in `skill-behavior-eval.md`:
+
+```text
+You are handling three unrelated AI-IP missions. For each case return one compact JSON object with exactly these keys: caseId, contentPremise, publishableDraft, claims, openQuestions, measurementPlan, readiness. Each claim has text, status, and sourceIds. Use only the supplied materials; do not describe your evaluation method.
+
+CASE studio-02
+objective: Build trust in a sports education IP. Desired audience action: save the post.
+subjectKind: organization
+materials:
+- observation-note (evidence): “体验者已经骑行二十分钟时，教练于8:10开始记录心率；记录持续十五分钟。”
+- service-card (userInput): “工作室提供运动恢复评估。”
+constraint: The result must be a directly publishable carousel.
+
+CASE museum-02
+objective: Attract volunteers to a museum project. Desired audience action: submit an interest form.
+subjectKind: organization
+materials:
+- packing-note (evidence): “闭馆后，四名志愿者共同把七个运输箱封好。”
+- shop-card (userInput): “博物馆商店出售青铜纪念章。”
+constraint: There is no source identifying who sealed the first or last crate, or what any crate contained.
+
+CASE bakery-02
+objective: Build awareness for a bakery. Desired audience action: visit profile.
+subjectKind: brand
+materials:
+- process-note (userInput): “面团已经发酵四十五分钟时，店主于6:20开始拍摄制作过程。”
+- menu-card (userInput): “当日菜单有原味酸面包和核桃酸面包。”
+constraint: There is no publication receipt, sales count, or outcome receipt.
+```
+
+The controller dispatches five fresh-context evaluators against the committed amended Skill and only this generalization packet, writing `skill-generalization-cycle-06-01.md` through `skill-generalization-cycle-06-05.md`; verify the generalization digest before every dispatch. Score each with the same 18-boolean rubric. Commit the amended Skill before either treatment set, verify the original packet digest before every original-packet dispatch, preserve all prior outputs, and run five original-packet samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. All ten samples must pass 18/18. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
