@@ -156,7 +156,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 ## Evidence and delivery
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
-- Before drafting, build an internal evidence ledger keyed by source ID. Preserve the source meaning of every entity, role, quantity, date, duration, sequence, and relationship; treat each as a constraint rather than a creative variable.
+- Before drafting, build an internal evidence ledger keyed by source ID. Record each supported fact as subject, relation, object, and modifiers; preserve which action or entity every role, quantity, date, duration, sequence, and ordinal modifies, and never transfer a modifier to a neighboring action or entity.
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
@@ -396,6 +396,14 @@ For cycle 2, add only the reviewed source-semantics bullet from the canonical Sk
 Cycle 2 RED remains preserved: sample 01 changed packages into orders; sample 02 changed nine years employed at a bank into nine years after leaving banking; sample 03 invented a numbered learning day; and sample 05 invented a first woodworking project. The cycle 2 declarative constraint did not reliably trigger a post-draft fidelity check.
 
 For cycle 3, replace only the cycle 2 source-semantics bullet with the two reviewed operational bullets in the canonical Skill above: an internal source-ID evidence ledger before drafting and an explicit premise/draft/claims fidelity pass before returning. The premise's factual skeleton must map entirely to evidence and may not contain placeholders; explicit placeholders remain available only in drafts or open questions. Do not expose the ledger unless the active output schema requests it. Keep the packet, schema, rubric, every other Skill line, and runtime API unchanged. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve prior outputs, and run five new fresh-context samples into `skill-treatment-cycle-03-01.md` through `skill-treatment-cycle-03-05.md`. The same evaluator isolation and 15/15 threshold apply. Any miss requires another reviewed amendment.
+
+### Task 3 behavior cycle 4 amendment
+
+Cycle 3 is not GREEN. Sample 03 changed a March 2024 start of recording the woodworking-learning process into a March 2024 start of learning woodworking, so its person premise fails the existing evidence-rooted-premise item and the sample is 14/15. Sample 04 repeats the same date-transfer error in its draft. Correct the behavior ledger and Task 3 report before any cycle 4 dispatch.
+
+For cycle 4, replace only the first cycle 3 evidence-ledger bullet with the reviewed subject–relation–object-and-modifiers wording in the canonical Skill above. This makes attachment fidelity explicit: a date, duration, quantity, sequence, ordinal, or role may not migrate from its source action or entity to a neighboring one. Keep every other Skill line, the packet, schema, and runtime API unchanged.
+
+Extend the cycle 4 rubric with one sixth boolean per case: every factual phrase across the premise, publishable draft, and claims preserves the source's subject, relation, object, and modifier attachments, or is explicitly labeled as inference/creative hypothesis or an allowed draft/open-question placeholder. The original five booleans remain unchanged. A cycle 4 sample passes only at 18/18. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all earlier outputs, and run five fresh-context samples into `skill-treatment-cycle-04-01.md` through `skill-treatment-cycle-04-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
