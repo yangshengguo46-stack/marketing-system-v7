@@ -311,10 +311,13 @@ fn normalization_descends_into_unsupported_compositions_before_validation() {
         Some(&json!("#/$defs/Leaf")));
     assert_eq!(schema.pointer("/properties/combined/allOf/0/properties/leaf/$ref"),
         Some(&json!("#/$defs/Leaf")));
-    assert_eq!(strict_error(schema), StrictSchemaError::Invalid {
-        path: "$.properties.choice".into(),
-        message: "unsupported keyword oneOf".into(),
-    });
+    let StrictSchemaError::Invalid { path, message } = strict_error(schema) else {
+        panic!("expected invalid strict schema");
+    };
+    assert_eq!(
+        (path, message),
+        ("$.properties.choice".into(), "unsupported keyword oneOf".into()),
+    );
 }
 ```
 
@@ -337,7 +340,7 @@ Use table-driven invalid fixtures with literal expected `(path, message)` pairs.
 | `#/$defs/Missing` | `$.properties.x` | `dangling local ref` |
 | `#/$defs/a~2b` | `$.properties.x` | `invalid JSON Pointer escape` |
 
-Every fixture is a complete closed root object so it fails only for the named mutation. Assert the complete `StrictSchemaError::Invalid { path, message }`, not string containment.
+Every fixture is a complete closed root object so it fails only for the named mutation. Destructure `StrictSchemaError::Invalid { path, message }` and assert the exact tuple, not string containment; do not add `PartialEq` to the public error solely for tests.
 2. Run the scoped test. Acceptable RED is unresolved Schema API while prompt tests compile and remain GREEN.
 3. Implement the converter and validator exactly above, without depending on `codex-tools` or copying its permissive sanitizer. Rerun the scoped test to GREEN.
 
