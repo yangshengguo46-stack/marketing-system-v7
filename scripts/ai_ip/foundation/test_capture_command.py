@@ -159,6 +159,9 @@ def initialize_clean_fixture_repo(path: Path) -> Path:
         lock = path / relative
         lock.parent.mkdir(parents=True, exist_ok=True)
         lock.write_text(f"fixture {relative}\n", encoding="utf-8", newline="\n")
+    (path / "codex-rs/Cargo.toml").write_text(
+        "[workspace]\nmembers = []\n", encoding="utf-8", newline="\n"
+    )
     (path / "seed.txt").write_text("clean\n", encoding="utf-8", newline="\n")
     _commit(path, "initialize tested tree")
     _git(path, "switch", "--detach", "-q")
@@ -364,18 +367,50 @@ def install_barrier_fixture(repo: Path) -> None:
     _commit(repo, "install barrier command")
 
 
-def install_filtered_fixture(repo: Path, test_count: int) -> Path:
+def selection_payload(
+    *,
+    test_count: int = 3,
+    suites: dict[str, object] | None = None,
+) -> bytes:
+    if suites is None:
+        suites = {
+            "fixture-suite": {
+                "testcases": {
+                    "fixture": {
+                        "ignored": False,
+                        "filter-match": {"status": "matches"},
+                    },
+                    "unselected": {
+                        "ignored": False,
+                        "filter-match": {"status": "mismatch"},
+                    },
+                }
+            }
+        }
+    return json.dumps(
+        {
+            "rust-build-meta": {},
+            "test-count": test_count,
+            "rust-suites": suites,
+        }
+    ).encode("utf-8")
+
+
+def install_filtered_fixture(
+    repo: Path, test_count: int = 3, selection_output: bytes | None = None
+) -> Path:
     tool_bin = repo / "tool-bin"
     marker = repo / ".git/executed"
+    payload = (
+        selection_payload(test_count=test_count)
+        if selection_output is None
+        else selection_output
+    )
     _write_executable(
         tool_bin / "cargo",
-        "#!/bin/sh\nprintf '%s\\n' "
-        + repr(
-            json.dumps(
-                {"rust-build-meta": {}, "test-count": test_count, "rust-suites": {}}
-            )
-        )
-        + "\n",
+        "#!/usr/bin/env python3\nimport os\nos.write(1, bytes.fromhex("
+        + repr(payload.hex())
+        + "))\n",
     )
     _write_executable(
         tool_bin / "just",
@@ -903,7 +938,7 @@ def test_bounded_post_capture_reader_uses_chunks_and_rejects_oversize() -> None:
 
 def test_filtered_command_rejects_oversized_selection_output(tmp_path: Path) -> None:
     harness = RecorderHarness.create(tmp_path)
-    marker = install_filtered_fixture(harness.repo, test_count=1)
+    marker = install_filtered_fixture(harness.repo)
     _write_executable(
         harness.repo / "tool-bin/cargo",
         "#!/usr/bin/python3\n"
@@ -921,18 +956,17 @@ def test_filtered_command_rejects_oversized_selection_output(tmp_path: Path) -> 
     assert not list(harness.evidence.glob("*.tmp-*"))
 
 
-@pytest.mark.parametrize("test_count", [0, 2])
-def test_filtered_command_requires_exactly_one_listed_test(
-    test_count: int, tmp_path: Path
+def test_filtered_command_uses_exact_runnable_leaf_not_root_population(
+    tmp_path: Path,
 ) -> None:
     harness = RecorderHarness.create(tmp_path)
-    marker = install_filtered_fixture(harness.repo, test_count=test_count)
+    marker = install_filtered_fixture(harness.repo, test_count=3)
     completed = harness.run("--name", "filtered-fixture")
-    assert completed.returncode == 1
-    assert not marker.exists()
+    assert completed.returncode == 0
+    assert marker.read_text(encoding="utf-8") == "executed\n"
     manifest = load_strict_json(harness.evidence / "filtered-fixture.manifest.json")
-    assert manifest["status"] == "BLOCKED_SELECTION"
-    assert manifest["selection"]["testCount"] == test_count
+    assert manifest["status"] == "PASS"
+    assert manifest["selection"]["testCount"] == 1
 
 
 @pytest.mark.parametrize(
@@ -949,7 +983,7 @@ def test_filtered_command_rejects_malformed_selection_json(
     selection_output: bytes, tmp_path: Path
 ) -> None:
     harness = RecorderHarness.create(tmp_path)
-    marker = install_filtered_fixture(harness.repo, test_count=1)
+    marker = install_filtered_fixture(harness.repo)
     cargo = harness.repo / "tool-bin/cargo"
     encoded = selection_output.hex()
     _write_executable(
@@ -964,7 +998,7 @@ def test_filtered_command_rejects_malformed_selection_json(
 
 def test_filtered_command_records_selection_before_execution(tmp_path: Path) -> None:
     harness = RecorderHarness.create(tmp_path)
-    marker = install_filtered_fixture(harness.repo, test_count=1)
+    marker = install_filtered_fixture(harness.repo)
     completed = harness.run("--name", "filtered-fixture")
     manifest = load_strict_json(harness.evidence / "filtered-fixture.manifest.json")
     assert completed.returncode == 0
@@ -986,6 +1020,171 @@ def test_filtered_command_records_selection_before_execution(tmp_path: Path) -> 
         "-E",
         "test(=fixture)",
     ]
+
+
+def test_selection_preflight_uses_canonical_workspace_but_real_command_stays_root(
+    tmp_path: Path,
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    marker = harness.repo / ".git/executed"
+    payload = selection_payload()
+    _write_executable(
+        harness.repo / "tool-bin/cargo",
+        f"""#!/bin/sh
+if test "$PWD" != {str(harness.repo / "codex-rs")!r}; then exit 41; fi
+test -f Cargo.toml || exit 42
+printf '%s' {payload.decode("utf-8")!r}
+""",
+    )
+    _write_executable(
+        harness.repo / "tool-bin/just",
+        f"""#!/bin/sh
+if test "$PWD" != {str(harness.repo)!r}; then exit 43; fi
+printf 'executed\\n' > {str(marker)!r}
+""",
+    )
+    _commit(harness.repo, "install cwd-sensitive filtered command")
+    (harness.repo / ".git/recorder-test-path").write_text(
+        f"{harness.repo / 'tool-bin'}:/usr/local/bin:/usr/bin:/bin\n",
+        encoding="utf-8",
+    )
+
+    completed = harness.run("--name", "filtered-fixture")
+
+    assert completed.returncode == 0
+    assert marker.read_text(encoding="utf-8") == "executed\n"
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ("just", "test", "-E", "test(=fixture) | all()"),
+        ("just", "test", "-E", "not test(=fixture)"),
+        ("just", "test", "-E", "all()"),
+        ("just", "test", "-E", "test(=fixture*)"),
+        ("just", "test", "-E", "test(=fixture)suffix"),
+        ("just", "test", "-E", "test(=fixture))"),
+        ("just", "test", "-E", "test(=fixture)", "-E", "test(=other)"),
+        ("just", "test", "--filter-expr", "test(=fixture)"),
+        ("just", "test", "--filter-expr=test(=fixture)"),
+        ("just", "test", "-E"),
+    ],
+)
+def test_selection_argv_rejects_non_exact_filter_forms(argv: tuple[str, ...]) -> None:
+    command = capture.CommandSpec(
+        "selected", ("macos-x86_64",), "baselineAndPost", argv, 0
+    )
+    with pytest.raises(capture.EvidenceError):
+        capture.selection_argv(command)
+
+
+@pytest.mark.parametrize(
+    "suites",
+    [
+        {
+            "suite": {
+                "testcases": {
+                    "fixture": {"ignored": True, "filter-match": {"status": "matches"}}
+                }
+            }
+        },
+        {
+            "suite": {
+                "testcases": {
+                    "fixture": {
+                        "ignored": False,
+                        "filter-match": {"status": "mismatch"},
+                    }
+                }
+            }
+        },
+        {
+            "suite": {
+                "testcases": {
+                    "other": {"ignored": False, "filter-match": {"status": "matches"}}
+                }
+            }
+        },
+        {
+            "first": {
+                "testcases": {
+                    "fixture": {"ignored": False, "filter-match": {"status": "matches"}}
+                }
+            },
+            "second": {
+                "testcases": {
+                    "fixture": {"ignored": False, "filter-match": {"status": "matches"}}
+                }
+            },
+        },
+    ],
+    ids=["ignored", "mismatch", "zero", "duplicate-across-suites"],
+)
+def test_filtered_command_blocks_nonrunnable_or_nonunique_exact_leaf(
+    suites: dict[str, object], tmp_path: Path
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    marker = install_filtered_fixture(
+        harness.repo, selection_output=selection_payload(suites=suites)
+    )
+
+    completed = harness.run("--name", "filtered-fixture")
+
+    assert completed.returncode == 1
+    assert not marker.exists()
+    manifest = load_strict_json(harness.evidence / "filtered-fixture.manifest.json")
+    assert manifest["status"] == "BLOCKED_SELECTION"
+    assert manifest["selection"]["testCount"] is None
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":false,"filter-match":{"status":"matches"}}},"testcases":{}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":false,"filter-match":{"status":"matches"},"ignored":false}}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":false,"filter-match":{"status":"matches","status":"matches"}}}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{}},"suite":{"testcases":{}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":false,"filter-match":{"status":"matches"}},"fixture":{"ignored":false,"filter-match":{"status":"matches"}}}}}}',
+    ],
+    ids=["suite", "leaf", "filter-match", "rust-suite", "testcase"],
+)
+def test_selection_parser_rejects_duplicate_keys_at_every_depth(
+    payload: bytes, tmp_path: Path
+) -> None:
+    output = tmp_path / "selection.json"
+    output.write_bytes(payload)
+    with pytest.raises(capture.EvidenceError, match="duplicate JSON key"):
+        capture._load_selection_count(output, "fixture")
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":[]}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":[]}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":[]}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{}}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":0,"filter-match":{"status":"matches"}}}}}}',
+        b'{"rust-build-meta":{},"test-count":1,"rust-suites":{"suite":{"testcases":{"fixture":{"ignored":false,"filter-match":"matches"}}}}}',
+        b'{"rust-build-meta":{},"test-count":-1,"rust-suites":{}}',
+    ],
+    ids=[
+        "suites",
+        "suite",
+        "testcases",
+        "leaf",
+        "ignored",
+        "filter-match",
+        "negative-count",
+    ],
+)
+def test_selection_parser_rejects_malformed_locked_shapes(
+    payload: bytes, tmp_path: Path
+) -> None:
+    output = tmp_path / "selection.json"
+    output.write_bytes(payload)
+    with pytest.raises(capture.EvidenceError):
+        capture._load_selection_count(output, "fixture")
 
 
 def test_capture_rejects_dirty_tree_after_command(tmp_path: Path) -> None:
@@ -1226,7 +1425,38 @@ def test_sanitized_child_environment_has_exact_allowlist_and_hardened_git() -> N
         "GIT_NO_REPLACE_OBJECTS": "1",
         "GIT_OPTIONAL_LOCKS": "0",
         "GIT_TERMINAL_PROMPT": "0",
+        "NO_PROXY": "127.0.0.1,localhost,::1",
+        "no_proxy": "127.0.0.1,localhost,::1",
     }
+
+
+@pytest.mark.parametrize(
+    "ambient_proxy",
+    [
+        {"NO_PROXY": "attacker", "no_proxy": "attacker"},
+        {
+            "HTTP_PROXY": "http://attacker",
+            "http_proxy": "http://attacker",
+            "HTTPS_PROXY": "http://attacker",
+            "https_proxy": "http://attacker",
+            "SOCKS_PROXY": "socks://attacker",
+            "socks_proxy": "socks://attacker",
+        },
+    ],
+    ids=["bypass", "all-proxy-cases"],
+)
+def test_sanitized_child_environment_fixes_loopback_bypass_after_allowlist(
+    ambient_proxy: dict[str, str],
+) -> None:
+    child = capture._sanitized_child_environment(
+        {"PATH": "/safe/bin", "HOME": "/safe/home", **ambient_proxy},
+        platform_name="posix",
+    )
+    assert child["NO_PROXY"] == "127.0.0.1,localhost,::1"
+    assert child["no_proxy"] == "127.0.0.1,localhost,::1"
+    assert all(
+        key not in child for key in ambient_proxy if key not in {"NO_PROXY", "no_proxy"}
+    )
 
 
 @pytest.mark.parametrize(

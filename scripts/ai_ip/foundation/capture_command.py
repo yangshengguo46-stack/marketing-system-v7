@@ -28,6 +28,8 @@ VERSION_OUTPUT_MAX_BYTES = 1024 * 1024
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 COMMAND_ID_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 SAFE_BASENAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}")
+EXACT_TEST_FILTER_PATTERN = re.compile(r"test\(=([A-Za-z0-9_]+(?:::[A-Za-z0-9_]+)*)\)")
+LOOPBACK_PROXY_BYPASS = "127.0.0.1,localhost,::1"
 CHILD_ENV_ALLOWLIST = {
     "PATH",
     "HOME",
@@ -310,9 +312,38 @@ def host_id(
 
 
 def selection_argv(command: CommandSpec) -> tuple[str, ...] | None:
-    if command.argv[:2] != ("just", "test") or "-E" not in command.argv:
+    selected_name = _selection_test_name(command)
+    if selected_name is None:
         return None
     return ("cargo", "nextest", "list", "--message-format", "json", *command.argv[2:])
+
+
+def _selection_test_name(command: CommandSpec) -> str | None:
+    if command.argv[:2] != ("just", "test"):
+        return None
+    arguments = command.argv[2:]
+    if any(
+        argument == "--filter-expr" or argument.startswith("--filter-expr=")
+        for argument in arguments
+    ):
+        raise EvidenceError("selection must not use --filter-expr")
+    filter_indexes = [
+        index for index, argument in enumerate(arguments) if argument == "-E"
+    ]
+    if any(argument.startswith("-E") and argument != "-E" for argument in arguments):
+        raise EvidenceError("selection must use a separate -E argument pair")
+    if not filter_indexes:
+        return None
+    if len(filter_indexes) != 1:
+        raise EvidenceError("selection must have exactly one -E argument pair")
+    filter_index = filter_indexes[0]
+    if filter_index + 1 >= len(arguments):
+        raise EvidenceError("selection -E must have a value")
+    expression = arguments[filter_index + 1]
+    match = EXACT_TEST_FILTER_PATTERN.fullmatch(expression)
+    if match is None:
+        raise EvidenceError("selection must use an exact test(=<name>) expression")
+    return match.group(1)
 
 
 def canonical_rfc3339_utc_now() -> str:
@@ -400,6 +431,8 @@ def _sanitized_child_environment(
             raise EvidenceError(f"environment variable {key} contains NUL")
         child[key] = value
     child.update(HARDENED_GIT_ENV)
+    child["NO_PROXY"] = LOOPBACK_PROXY_BYPASS
+    child["no_proxy"] = LOOPBACK_PROXY_BYPASS
     return child
 
 
@@ -933,7 +966,27 @@ def _revalidate_capture_state(context: _CaptureContext) -> None:
         raise EvidenceError("tools tree file identity changed")
 
 
-def _load_selection_count(path: Path) -> int:
+def _selection_working_directory(context: _CaptureContext) -> Path:
+    selection_root = context.repo_root / "codex-rs"
+    cargo_manifest = selection_root / "Cargo.toml"
+    if (
+        selection_root.parent != context.repo_root
+        or selection_root.is_symlink()
+        or not selection_root.is_dir()
+        or cargo_manifest.is_symlink()
+        or not cargo_manifest.is_file()
+    ):
+        raise EvidenceError("selection workspace must be codex-rs beneath tested root")
+    _require_tracked_blob(
+        context.repo_root,
+        "codex-rs/Cargo.toml",
+        context.env,
+        "selection workspace Cargo.toml",
+    )
+    return selection_root
+
+
+def _load_selection_count(path: Path, selected_name: str) -> int:
     try:
         payload = _read_bounded(path, SELECTION_MAX_BYTES, label="selection output")
         parsed = json.loads(payload, object_pairs_hook=_reject_duplicate_keys)
@@ -941,9 +994,44 @@ def _load_selection_count(path: Path) -> int:
         raise EvidenceError("invalid selection JSON") from error
     root = _require_exact_keys(parsed, SELECTION_ROOT_KEYS, "selection result")
     test_count = root["test-count"]
-    if type(test_count) is not int:
-        raise EvidenceError("selection test-count must be an integer")
-    return test_count
+    if type(test_count) is not int or test_count < 0:
+        raise EvidenceError("selection test-count must be a nonnegative integer")
+    if not isinstance(root["rust-build-meta"], dict):
+        raise EvidenceError("selection rust-build-meta must be an object")
+    suites = root["rust-suites"]
+    if not isinstance(suites, dict):
+        raise EvidenceError("selection rust-suites must be an object")
+    exact_leaf: dict[str, object] | None = None
+    exact_count = 0
+    for suite in suites.values():
+        if not isinstance(suite, dict):
+            raise EvidenceError("selection suite must be an object")
+        testcases = suite.get("testcases")
+        if not isinstance(testcases, dict):
+            raise EvidenceError("selection suite testcases must be an object")
+        for testcase_name, leaf in testcases.items():
+            testcase = _require_exact_keys(
+                leaf, {"ignored", "filter-match"}, "selection testcase"
+            )
+            if not isinstance(testcase["ignored"], bool):
+                raise EvidenceError("selection testcase ignored must be boolean")
+            filter_match = _require_exact_keys(
+                testcase["filter-match"], {"status"}, "selection testcase filter-match"
+            )
+            if not isinstance(filter_match["status"], str):
+                raise EvidenceError(
+                    "selection testcase filter-match status must be string"
+                )
+            if testcase_name == selected_name:
+                exact_count += 1
+                exact_leaf = testcase
+    if exact_count != 1 or exact_leaf is None:
+        raise EvidenceError("selection must contain exactly one exact testcase")
+    if exact_leaf["ignored"] is not False or exact_leaf["filter-match"] != {
+        "status": "matches"
+    }:
+        raise EvidenceError("selection exact testcase must be runnable")
+    return 1
 
 
 def _empty_pending(
@@ -971,6 +1059,7 @@ def _empty_pending(
 
 def _capture_command(command: CommandSpec, context: _CaptureContext) -> int:
     selection_command = selection_argv(command)
+    selected_name = _selection_test_name(command)
     names = [
         f"{command.id}.stdout.log",
         f"{command.id}.stderr.log",
@@ -988,9 +1077,10 @@ def _capture_command(command: CommandSpec, context: _CaptureContext) -> int:
     selection_value: dict[str, object] | None = None
     try:
         if selection_command is not None:
+            selection_root = _selection_working_directory(context)
             selected = _run_process(
                 selection_command,
-                context.repo_root,
+                selection_root,
                 context.evidence_dir,
                 context.env,
                 f"{command.id}.selection.stdout.log",
@@ -1001,7 +1091,10 @@ def _capture_command(command: CommandSpec, context: _CaptureContext) -> int:
             selection_valid = selected.receipt.exit_code == 0
             if selection_valid:
                 try:
-                    test_count = _load_selection_count(selected.stdout_temp)
+                    assert selected_name is not None
+                    test_count = _load_selection_count(
+                        selected.stdout_temp, selected_name
+                    )
                 except EvidenceError:
                     selection_valid = False
             selection_value = {
