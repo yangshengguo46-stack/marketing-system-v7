@@ -465,42 +465,42 @@ For cycle 7, add only the reviewed final atomic-proposition-audit bullet from th
 Before any cycle 7 Skill edit, freeze `skill-generalization-cycle-07-packet.md` with the exact bytes below, one terminal newline, and its separately recorded digest:
 
 ```text
-0bb8db981ddc0bc456a602d4ebf53eaccc39599b78b2a703a9c0f09b47d30abd  skill-generalization-cycle-07-packet.md
+7f28e1aa4ed5ecfd60de85b83f00c83fb9ff6ed5b46ed01062f1d421044c3a41  skill-generalization-cycle-07-packet.md
 ```
 
-The packet is exactly 1,630 bytes and contains only the following evaluator prompt, not the controller-only scoring boundaries:
+The packet is exactly 1,625 bytes and contains only the following evaluator prompt, not the controller-only scoring boundaries:
 
 ```text
 You are handling three unrelated AI-IP missions. For each case return one compact JSON object with exactly these keys: caseId, contentPremise, publishableDraft, claims, openQuestions, measurementPlan, readiness. Each claim has text, status, and sourceIds. Use only the supplied materials; do not describe your evaluation method.
 
-CASE pottery-07
-objective: Build trust in an independent ceramic artist's process. Desired audience action: save the process notes.
-subjectKind: person
-materials:
-- studio-note (evidence): “创作者于2023年搬入现在的工作室；搬入后开始整理每周的陶艺失败笔记。”
-- weekly-card (userInput): “本周计划发布一张修复前后的对比照片。”
-constraint: The result must be a directly publishable process post.
-
-CASE fieldkit-07
-objective: Build awareness for a new product line. Desired audience action: join the mailing list.
-subjectKind: brand
-materials:
-- lab-note (evidence): “工程组的防震原型已经通过三次跌落测试；下周计划进行密封性测试。”
-- catalog-card (userInput): “本季新品是一款儿童午餐盒。”
-constraint: The result must be a concise email-signup post.
-
-CASE workshop-07
-objective: Find helpers for a neighborhood exhibition install. Desired audience action: email availability.
+CASE plant-07
+objective: Explain a facility reliability update. Desired audience action: subscribe to maintenance updates.
 subjectKind: organization
 materials:
-- shift-note (evidence): “周五收工时，陈岚和孙杰一起完成了九套展架的拆除；陈岚随后独自归还了仓库钥匙。”
-- helper-card (userInput): “该空间正在征集展览安装协助者。”
-constraint: The result must be a concise recruitment post.
+- timeline-note (evidence): “周二上午，压片机停止运行；十分钟后，通风系统启动；又过二十分钟，车间温度回到设定范围。”
+- visit-card (userInput): “工厂下月开放一次设备参观日。”
+constraint: The result must be a directly publishable operational update.
+
+CASE storefront-07
+objective: Build awareness for a storefront renewal. Desired audience action: request project updates.
+subjectKind: brand
+materials:
+- contractor-note (evidence): “承包商在周例会上预计外立面会在周五完成。”
+- receipt-note (evidence): “本周收据仅列出底漆已送达。”
+constraint: The result must be a directly publishable customer update.
+
+CASE readingclub-07
+objective: Promote a neighborhood reading club. Desired audience action: reserve a seat.
+subjectKind: organization
+materials:
+- attendance-note (evidence): “本月前两场读书会合计记录了九次签到；第二场中有三次签到来自回访成员。”
+- program-card (userInput): “下周将讨论一部短篇小说集。”
+constraint: The result must be a directly publishable event notice.
 ```
 
-Controller-only scoring boundaries, never included in evaluator prompts: `pottery-07` must keep the 2023 move attached to the move and the post-move start attached to organizing weekly ceramic-failure notes; no source makes either start happen now or makes it the start of ceramics. The comparison photo remains planned for this week, not published. `fieldkit-07` must keep three completed drop tests attached to the shockproof prototype and the sealing test prospective for next week; neither source establishes that the prototype is the children's lunchbox or that its test result applies to the lunchbox. `workshop-07` must keep the removal of nine display-frame sets attached jointly to Chen Lan and Sun Jie, while Chen Lan alone later returns the warehouse key; do not attribute the aggregate count, group action, or an invented ordinal to either individual. The recruitment fact establishes neither prior helper response, selection, nor hire.
+Controller-only scoring boundaries, never included in evaluator prompts: `plant-07` establishes only a sequence: the tablet press stopped, ventilation started ten minutes later, and the workshop temperature returned to range twenty minutes after that. No source supplies a causal, repair, or result attribution between those events. The visit day is planned for next month. `storefront-07` preserves the contractor's reported expectation of Friday facade completion as an expectation, not a completed fact; the receipt establishes only delivery of primer this week, not facade completion or contractor performance. `readingclub-07` establishes nine check-ins across two sessions, not nine unique people, and three returning-member check-ins in the second session, not three distinct returning people or six newcomers. The short-story discussion is planned for next week.
 
-After the reviewed amendment is committed, the controller dispatches three isolated five-sample arms. Each evaluator receives only the committed Skill path and one packet path, reads the Skill completely, inherits no plan or conversation, remains read-only except for its unique result file, and makes no provider/API-key call. Before every dispatch the controller recomputes and requires equality with that arm's recorded digest. Score all cases using the same 18 booleans. Preserve all existing outputs. The original arm uses `skill-eval-packet.md` (`e93d7a97e0bfb5aa8807cc94b104499f11b015fe95a34c7331d05a0edf724baf`) and writes `skill-treatment-cycle-07-01.md` through `skill-treatment-cycle-07-05.md`. The cycle 6 regression arm uses `skill-generalization-packet.md` (`2544f1c9d02bcf0949c4b8d519e31ca42da83660f487ce34015fc1a0c6325076`) and writes `skill-generalization-regression-cycle-07-01.md` through `skill-generalization-regression-cycle-07-05.md`. The new held-out arm uses `skill-generalization-cycle-07-packet.md` (`0bb8db981ddc0bc456a602d4ebf53eaccc39599b78b2a703a9c0f09b47d30abd`) and writes `skill-generalization-cycle-07-01.md` through `skill-generalization-cycle-07-05.md`. All fifteen samples must score 18/18. Any miss requires another reviewed amendment; do not change the immutable Skill ad hoc or run final verification.
+After the reviewed amendment is committed, the controller dispatches three isolated five-sample arms. Each evaluator receives only the committed Skill path and one packet path, reads the Skill completely, inherits no plan or conversation, remains read-only except for its unique result file, and makes no provider/API-key call. Before every dispatch the controller recomputes and requires equality with that arm's recorded digest. Score all cases using the same 18 booleans. Preserve all existing outputs. The original arm uses `skill-eval-packet.md` (`e93d7a97e0bfb5aa8807cc94b104499f11b015fe95a34c7331d05a0edf724baf`) and writes `skill-treatment-cycle-07-01.md` through `skill-treatment-cycle-07-05.md`. The cycle 6 regression arm uses `skill-generalization-packet.md` (`2544f1c9d02bcf0949c4b8d519e31ca42da83660f487ce34015fc1a0c6325076`) and writes `skill-generalization-regression-cycle-07-01.md` through `skill-generalization-regression-cycle-07-05.md`. The new held-out arm uses `skill-generalization-cycle-07-packet.md` (`7f28e1aa4ed5ecfd60de85b83f00c83fb9ff6ed5b46ed01062f1d421044c3a41`) and writes `skill-generalization-cycle-07-01.md` through `skill-generalization-cycle-07-05.md`. All fifteen samples must score 18/18. Any miss requires another reviewed amendment; do not change the immutable Skill ad hoc or run final verification.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
