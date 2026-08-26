@@ -34,7 +34,7 @@ Modify mechanically: `codex-rs/Cargo.toml`, `codex-rs/Cargo.lock`, and `MODULE.b
 
 ## Public API
 
-`lib.rs` privately declares `prompt` and `schema`, declares `#[cfg(test)] #[path = "runtime_tests.rs"] mod tests;`, and re-exports only:
+The final `lib.rs` privately declares `prompt` and `schema`, declares `#[cfg(test)] #[path = "runtime_tests.rs"] mod tests;`, and re-exports only:
 
 ```rust
 pub use prompt::{ADDITIONAL_CONTEXT_KEY, EVALUATION_CONTEXT_MAX_TOKENS, LEAD_SKILL_NAME};
@@ -42,6 +42,22 @@ pub use prompt::{ROOT_PROMPT_MAX_TOKENS, RuntimePromptError};
 pub use prompt::{approx_token_count, evaluation_context, root_prompt};
 pub use schema::{StrictSchemaError, content_package_schema, validate_responses_strict_subset};
 ```
+
+Task 1 uses this exact compilable intermediate `lib.rs`; Schema is not declared or exported yet:
+
+```rust
+mod prompt;
+
+pub use prompt::{ADDITIONAL_CONTEXT_KEY, EVALUATION_CONTEXT_MAX_TOKENS, LEAD_SKILL_NAME};
+pub use prompt::{ROOT_PROMPT_MAX_TOKENS, RuntimePromptError};
+pub use prompt::{approx_token_count, evaluation_context, root_prompt};
+
+#[cfg(test)]
+#[path = "runtime_tests.rs"]
+mod tests;
+```
+
+Only after Task 1 is GREEN does Task 2 add `mod schema;` plus the three final Schema re-exports. Task 1 RED must be attributable to unresolved prompt symbols in `prompt.rs`; Task 2 RED must be attributable to unresolved Schema symbols after the Schema module/export lines are added.
 
 ### Prompt contract
 
@@ -96,18 +112,18 @@ Normalize deterministically:
 
 1. Require an object root and remove its `$schema`.
 2. Remove root `definitions` into a temporary value, reject a pre-existing root `$defs`, recursively process each definition, then insert the table as root `$defs` (atomic rename).
-3. Traverse `properties`, `items`, `anyOf`, `oneOf`, and `$defs`. Rewrite `#/definitions/<token>` to `#/$defs/<token>` without changing the escaped token.
+3. Traverse `properties`, `items`, `anyOf`, `oneOf`, `allOf`, and `$defs` so unsupported compositions cannot hide nested metadata. Rewrite `#/definitions/<token>` to `#/$defs/<token>` without changing the escaped token.
 4. Every node typed `object` or declaring `properties` gets `additionalProperties:false` and `required` exactly equal to its property keys in map order. Schemars `Option<T>` therefore becomes required while its generated nullable `anyOf` remains intact.
 5. Do not inline or erase refs and do not introduce `allOf`.
 
 `validate_responses_strict_subset(&Value)` is read-only and verifies:
 
 - root is object and not root `anyOf`;
-- no `$schema`, `definitions`, `allOf`, `not`, `dependentRequired`, `dependentSchemas`, `if`, `then`, `else`, or `patternProperties`;
-- keywords are limited to `$defs`, `$ref`, `type`, `properties`, `required`, `additionalProperties`, `items`, `anyOf`, `oneOf`, `enum`, `const`, `description`, `title`, `pattern`, `format`, `multipleOf`, `maximum`, `exclusiveMaximum`, `minimum`, `exclusiveMinimum`, `minItems`, and `maxItems`;
+- no `$schema`, `definitions`, `oneOf`, `allOf`, `not`, `dependentRequired`, `dependentSchemas`, `if`, `then`, `else`, or `patternProperties`;
+- keywords are limited to `$defs`, `$ref`, `type`, `properties`, `required`, `additionalProperties`, `items`, `anyOf`, `enum`, `const`, `description`, `title`, `pattern`, `format`, `multipleOf`, `maximum`, `exclusiveMaximum`, `minimum`, `exclusiveMinimum`, `minItems`, and `maxItems`;
 - every object has a properties object, `additionalProperties:false`, and a duplicate-free `required` array equal to all property keys;
 - refs are `#` or `#/$defs/<token>`; definition tokens decode JSON Pointer `~1`/`~0` and resolve at the root;
-- child containers have the correct JSON type and `anyOf`/`oneOf` are nonempty arrays of schema objects;
+- child containers have the correct JSON type and `anyOf` is a nonempty array of schema objects;
 - `type` is one supported primitive string or a nonempty duplicate-free array of supported primitive strings.
 
 The allowlist follows the official normal-model Structured Outputs subset and deliberately rejects unsupported composition. It makes no fine-tuned-model claim.
@@ -149,6 +165,12 @@ Return only the output requested by the active task and its output schema.
 ```
 
 Do not add reference files, scripts, examples, UI metadata, or `agents/openai.yaml`; this repository-owned runtime asset is intentionally one file and one Bazel target.
+
+`skill-creator`'s frontmatter/scaffold validator is still required; lack of generated UI metadata does not supersede it:
+
+```bash
+python3 /Users/yangyucheng/.codex/skills/.system/skill-creator/scripts/quick_validate.py ai-ip-assets/skills/deliver-ai-ip-content-package
+```
 
 `BUILD.bazel` is exactly:
 
@@ -211,38 +233,93 @@ codex_rust_crate(
 ## Task 1 — RED/GREEN bounded prompt
 
 1. Start this plan's SDD workspace/ledger and record the preflight file/interface table. Verify the existing feature branch and clean start.
-2. Add the crate/build skeleton, workspace entries, empty modules, and tests before production bodies.
-3. Tests use only neutral `case-1`, `material-1`, `evidence/a.txt`, and a lowercase digest. Cover: both token caps and both envelope keys; exact task/wire shape and context key; invalid Mission before serialization; a valid Mission crossing the inner 640 limit; independent outer-limit behavior (test a private renderer/limit helper if the fixed task makes the boundary unreachable); and byte-count rounding for lengths 0/1/4/5.
+2. Add the crate/build skeleton, workspace entries, the exact intermediate `lib.rs`, empty `prompt.rs`, and tests before production bodies. Do not create or declare `schema.rs` yet.
+3. Tests use only neutral `case-1`, `material-1`, `evidence/a.txt`, and a lowercase digest. Define `fn valid_case() -> HeldOutMissionCase`, `fn mission_over_inner_limit() -> HeldOutMissionCase`, and the private production seam `fn render_evaluation_context(mission: Value, mission_tokens: usize) -> Result<String, RuntimePromptError>`. `evaluation_context` alone performs domain validation/serialization and then calls that seam. Add compilable tests equivalent to:
+
+```rust
+#[test]
+fn root_and_both_context_layers_are_bounded_before_submission() {
+    assert!(approx_token_count(root_prompt()) <= ROOT_PROMPT_MAX_TOKENS);
+    let rendered = evaluation_context(&valid_case()).unwrap();
+    assert!(approx_token_count(&rendered) <= EVALUATION_CONTEXT_MAX_TOKENS);
+    let envelope: Value = serde_json::from_str(&rendered).unwrap();
+    let keys = envelope.as_object().unwrap().keys().map(String::as_str).collect::<BTreeSet<_>>();
+    assert_eq!(keys, BTreeSet::from(["missionCase", "task"]));
+}
+
+#[test]
+fn oversized_mission_is_rejected_before_envelope_serialization() {
+    assert!(matches!(evaluation_context(&mission_over_inner_limit()),
+        Err(RuntimePromptError::MissionTooLarge { max_tokens: 640, .. })));
+}
+
+#[test]
+fn outer_envelope_has_an_independent_limit() {
+    let mission = json!({"objective": "x".repeat(3_600)});
+    assert!(matches!(render_evaluation_context(mission, 640),
+        Err(RuntimePromptError::EvaluationContextTooLarge { max_tokens: 900, .. })));
+}
+
+#[test]
+fn approximate_token_count_rounds_bytes_up() {
+    assert_eq!([0, 1, 1, 2], ["", "x", "xxxx", "xxxxx"].map(approx_token_count));
+}
+```
+
+Also assert the exact canonical task literal, camelCase `missionCase` fields, `ADDITIONAL_CONTEXT_KEY`, and `InvalidMission` for an empty objective. Expected values are literals, not production helper output. The crate-private outer renderer is imported by the sibling test module with `use super::prompt::render_evaluation_context`; it is `pub(crate)`, not part of the public re-export surface.
 4. Run `just test -p codex-ai-ip-runtime`. Acceptable RED is unresolved runtime symbols, not member/dependency failures. Record the failure.
 5. Implement only the prompt contract and rerun the scoped test to GREEN before adding Schema or Skill tests.
 
 ## Task 2 — RED/GREEN strict Schema
 
-1. Add failing tests for: recursive closure/no `$schema`; `required == properties` and nullable required `publishableContent.title` plus `Claim.resultReceiptRef`; `$defs` plus rewritten/resolving refs; rejection of root `anyOf`, nested `$schema`, and `allOf`; rejection of open objects and missing/extra/duplicate required keys; rejection of old/dangling refs; acceptance of a required nullable property.
+1. Create `schema.rs`, add the final Schema declarations/exports, then add failing tests. Test helpers are `fn assert_closed_objects(&Value)`, `fn assert_required_equals_properties_recursively(&Value)`, `fn collect_refs(&Value, &mut Vec<String>)`, and `fn strict_error(Value) -> StrictSchemaError`. The first three recurse only through schema-bearing keys (`properties`, `$defs`, `items`, `anyOf`, `oneOf`), never through arbitrary strings. Required positive tests cover recursive closure/no `$schema`; `required == properties`; nullable required `publishableContent.title` and `$defs/Claim/properties/resultReceiptRef`; root `$defs`; at least one rewritten and resolving `#/$defs/` ref; acceptance of a required nullable property; and acceptance/resolution of an escaped definition token such as `a~1b~0c`.
+
+Use table-driven invalid fixtures with literal expected `(path, message)` pairs. At minimum include:
+
+| Invalid fixture | Expected path | Expected message |
+|---|---|---|
+| root `anyOf` | `$` | `root must be an object schema without anyOf` |
+| nested `$schema` | `$.properties.x` | `unsupported keyword $schema` |
+| nested `oneOf`/`allOf`/`not`/`if` | `$.properties.x` | `unsupported keyword <keyword>` |
+| unknown keyword `default` | `$.properties.x` | `unsupported keyword default` |
+| `properties: []` | `$` | `properties must be an object` |
+| `$defs: []` | `$` | `$defs must be an object` |
+| `items: []` | `$.properties.x` | `items must be an object schema` |
+| empty/non-array `anyOf` | `$.properties.x` | `anyOf must be a nonempty array of object schemas` |
+| missing/true `additionalProperties` | `$` | `object must set additionalProperties to false` |
+| missing/extra/duplicate/non-array `required` | `$` | `required must contain every property exactly once` |
+| unsupported/duplicate/empty/non-string `type` | `$` | `type must contain unique supported primitive names` |
+| `#/definitions/X` | `$.properties.x` | `local ref must use #/$defs/` |
+| `#/$defs/Missing` | `$.properties.x` | `dangling local ref` |
+| `#/$defs/a~2b` | `$.properties.x` | `invalid JSON Pointer escape` |
+
+Every fixture is a complete closed root object so it fails only for the named mutation. Assert the complete `StrictSchemaError::Invalid { path, message }`, not string containment.
 2. Run the scoped test. Acceptable RED is unresolved Schema API while prompt tests compile and remain GREEN.
 3. Implement the converter and validator exactly above, without depending on `codex-tools` or copying its permissive sanitizer. Rerun the scoped test to GREEN.
 
 ## Task 3 — Skill RED/GREEN, native parser, build, commit
 
-1. Before creating the Skill, define three neutral pressure scenarios in the SDD report: a brand-awareness mission where an action tempts a sales CTA despite a stronger real founder event; a personal-IP mission with one verified user fact and one unsupported named external fact; and an organization-recruitment mission lacking proof for an outcome but containing enough material for a useful draft.
-2. Run each in fresh context without the Skill. Score whether the response roots content in evidence rather than CTA, separates unsupported facts, preserves a useful draft, avoids claiming publication/results, and avoids inventing a fixed team/workflow. At least one miss or material inconsistency is the required Skill RED. If all pass, add one neutral scenario targeting the remaining highest-risk boundary; do not author redundant guidance without a demonstrated gap.
+1. Before creating the Skill, write `skill-behavior-eval.md` in this plan's ignored SDD workspace. It contains one combined evaluation packet with three complete neutral cases: (a) a brand-awareness mission with desired action `visit profile`, a verified founder-event paragraph, and a generic product paragraph; (b) a personal-IP mission with a verified career-change paragraph and the unsupported claim `industry retention rose 37%`; (c) an organization-recruitment mission with a verified behind-the-scenes event, no result receipt, and desired action `submit an application`. Each case asks for the same compact `ContentPackage` fields: content premise, publishable draft, claims with status/source, open questions, measurement plan, and readiness. No packet names a frozen historical case or includes an intended answer.
+2. The rubric scores five booleans per case: evidence-rooted premise rather than forced CTA; unsupported named fact not presented as verified; usable draft preserved; no claimed publication/result; no fixed team/workflow invented. A sample passes only at 15/15. Run five fresh-context control samples of the combined packet without the Skill and preserve verbatim outputs plus manual scores. Each evaluator gets only the packet path, inherits no conversation/plan, is read-only, and writes one uniquely named result file. At least one failing control or disagreement across samples establishes RED. If all five controls score 15/15 consistently, record `SKILL_RED_NOT_ESTABLISHED` and stop before creating the Skill; this is the only non-destructive execution stop introduced by `superpowers:writing-skills`.
 3. Create the canonical Skill and Bazel target. Add a parser test using `codex_utils_cargo_bin::find_resource!("../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md")`, `codex_skills::parse_skill_frontmatter_metadata`, exact name/description assertions, and a nonempty body assertion. Never rely on cwd.
-4. Run the same scenarios in fresh context with the Skill. Refine only wording tied to an observed failure and rerun the affected case.
-5. Run `just test -p codex-ai-ip-runtime`, then the exact prohibited-content gate from the authoritative spec.
-6. Run `just bazel-lock-update`, inspect the diff, then run `bazel test //codex-rs/ai-ip-runtime:ai-ip-runtime-unit-tests`, `bazel build //ai-ip-assets/skills/deliver-ai-ip-content-package:skill`, `just bazel-lock-check`, `just fmt`, and `just fix -p codex-ai-ip-runtime`. Per upstream rules, do not rerun the same test after `just fix`; inspect its diff.
+4. Run five fresh-context treatment samples of the same combined packet. Each evaluator receives only the packet path and committed Skill path, is instructed to read the Skill completely, remains read-only, and writes a unique result. All five must score 15/15. The reviewed Skill body is immutable during execution; a treatment miss requires a reviewed plan amendment and a new RED/GREEN cycle, never ad hoc wording drift. These collaboration-agent evaluations are not the paid Work Package 5 provider run: no API key is read, `providerMode=not-run`, and paid-provider cost remains zero.
+5. Run `just test -p codex-ai-ip-runtime`, then:
+
+```bash
+python3 /Users/yangyucheng/.codex/skills/.system/skill-creator/scripts/quick_validate.py ai-ip-assets/skills/deliver-ai-ip-content-package
+if rg -n '(黄金礼品|直播公会|宝妈|creator sees|passes review|first live|map-marketing-content-world|ContentRootLab|固定内容根)' ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md codex-rs/ai-ip-runtime/src codex-rs/ai-ip-runtime/Cargo.toml codex-rs/ai-ip-runtime/BUILD.bazel; then exit 1; fi
+```
+
+6. Run `just bazel-lock-update`, inspect the diff, then run `bazel test //codex-rs/ai-ip-runtime:ai-ip-runtime-unit-tests`, `bazel build //ai-ip-assets/skills/deliver-ai-ip-content-package:skill`, `just bazel-lock-check`, `just fmt`, and `just fix -p codex-ai-ip-runtime`. This is the final ordered verification sequence. Per upstream rules, do not rerun tests after `fmt`/`fix`; inspect their diff. If either changes semantics, return to an appropriate failing test and repeat the full final sequence.
 7. Inspect `git diff --check`, status, and the full task diff. Commit only declared files and changed locks as `feat: add removable AI IP Lead skill`.
 
-## Review and final verification
+## Review and final handoff
 
 - Use a fresh implementer per Task, task-scoped spec/quality review, and the SDD fix loop. Pressure-test agents are evaluators and never edit the worktree.
 - Final review covers the entire Work Package 4 range, especially business flexibility, parser compatibility, strict closure/refs, Cargo/Bazel parity, and absence of App Server/provider scope.
-- Before any completion claim, freshly run:
+- Before the final `fmt`/`fix`, the final ordered verification sequence above must have fresh zero-exit evidence for Cargo, the Skill validator/gate, Bazel test/build, and lock check. After `fmt`/`fix`, perform only:
 
 ```bash
-just test -p codex-ai-ip-runtime
-bazel test //codex-rs/ai-ip-runtime:ai-ip-runtime-unit-tests
-bazel build //ai-ip-assets/skills/deliver-ai-ip-content-package:skill
-just bazel-lock-check
 git diff --check 54538fa3884d11fe13a55828ce5c035a170890a0..HEAD
 git status --short
 ```
