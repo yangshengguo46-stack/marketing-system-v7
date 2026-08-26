@@ -452,6 +452,17 @@ fn validator_rejects_invalid_strict_schema_fixtures() {
             ),
         ),
         (
+            "anyOf non-array",
+            json!({
+                "type": "object", "properties": {"x": {"anyOf": {}}},
+                "required": ["x"], "additionalProperties": false
+            }),
+            (
+                "$.properties.x",
+                "anyOf must be a nonempty array of object schemas",
+            ),
+        ),
+        (
             "missing additional properties",
             json!({"type": "object", "properties": {"x": {"type": "string"}}, "required": ["x"]}),
             ("$", "object must set additionalProperties to false"),
@@ -497,6 +508,19 @@ fn validator_rejects_invalid_strict_schema_fixtures() {
             ("$", "required must contain every property exactly once"),
         ),
         (
+            "nested required non-array",
+            json!({
+                "type": "object",
+                "properties": {"x": {"type": "string", "required": "x"}},
+                "required": ["x"],
+                "additionalProperties": false
+            }),
+            (
+                "$.properties.x",
+                "required must contain every property exactly once",
+            ),
+        ),
+        (
             "unsupported type",
             json!({"type": "date", "properties": {}, "required": [], "additionalProperties": false}),
             ("$", "type must contain unique supported primitive names"),
@@ -531,6 +555,24 @@ fn validator_rejects_invalid_strict_schema_fixtures() {
                 "required": ["x"], "additionalProperties": false
             }),
             ("$.properties.x", "dangling local ref"),
+        ),
+        (
+            "local reference with raw pointer separator",
+            json!({
+                "type": "object",
+                "properties": {"x": {"$ref": "#/$defs/a/b"}},
+                "required": ["x"],
+                "additionalProperties": false,
+                "$defs": {
+                    "a/b": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false
+                    }
+                }
+            }),
+            ("$.properties.x", "local ref must use #/$defs/"),
         ),
         (
             "invalid pointer escape",

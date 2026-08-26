@@ -178,6 +178,15 @@ fn validate_schema_node(
     if let Some(reference) = object.get("$ref") {
         validate_reference(reference, definitions, path)?;
     }
+    if object
+        .get("required")
+        .is_some_and(|required| !required.is_array())
+    {
+        return Err(invalid(
+            path,
+            "required must contain every property exactly once",
+        ));
+    }
 
     let is_object = object.contains_key("properties") || type_includes_object(object.get("type"));
     if is_object {
@@ -313,6 +322,9 @@ fn validate_reference(
     }
 
     let token = &reference["#/$defs/".len()..];
+    if token.contains('/') {
+        return Err(invalid(path, "local ref must use #/$defs/"));
+    }
     let token =
         decode_pointer_token(token).ok_or_else(|| invalid(path, "invalid JSON Pointer escape"))?;
     if definitions.is_some_and(|definitions| definitions.contains_key(&token)) {
