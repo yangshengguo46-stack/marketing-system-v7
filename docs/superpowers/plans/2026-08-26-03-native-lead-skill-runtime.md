@@ -316,7 +316,10 @@ fn normalization_descends_into_unsupported_compositions_before_validation() {
     };
     assert_eq!(
         (path, message),
-        ("$.properties.choice".into(), "unsupported keyword oneOf".into()),
+        (
+            "$.properties.choice".to_string(),
+            "unsupported keyword oneOf".to_string(),
+        ),
     );
 }
 ```
