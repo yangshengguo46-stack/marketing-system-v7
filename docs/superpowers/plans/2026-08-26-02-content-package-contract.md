@@ -45,35 +45,152 @@ Do not modify App Server, Codex core, provider code, prompts, Skills, the comman
 - `MaterialKind`: `UserInput`, `Evidence`, `ActualResultReceipt`, `Other`.
 - `MissionMaterial`: stable `material_id`, relative `relative_path`, lowercase SHA-256, and `material_kind`.
 - `HeldOutMissionCase`: stable `case_id`, nonempty `objective`, `subject_kind`, bounded `constraints`, and bounded `materials`.
-- Centralize input bounds in `mission.rs`: `MAX_MATERIALS = 128`, objective 8 KiB, one constraint 2 KiB, one path 1 KiB, plus explicit finite bounds for IDs and list counts.
-- Reject empty/oversized strings, duplicate material IDs, invalid SHA-256, absolute paths, path prefixes/root components, `..`, and reserved development-fixture IDs. Validation is pure and never reads files.
+- The exact public input shape is:
+
+```rust
+pub enum SubjectKind { Person, Brand, Product, Organization, Hybrid }
+pub enum MaterialKind { UserInput, Evidence, ActualResultReceipt, Other }
+
+pub struct MissionMaterial {
+    pub material_id: String,
+    pub relative_path: String,
+    pub sha256: String,
+    pub material_kind: MaterialKind,
+}
+
+pub struct HeldOutMissionCase {
+    pub case_id: String,
+    pub objective: String,
+    pub subject_kind: SubjectKind,
+    pub constraints: Vec<String>,
+    pub materials: Vec<MissionMaterial>,
+}
+```
+- Centralize these exact input bounds in `mission.rs`: `MAX_CASE_ID_BYTES = 128`, `MAX_MATERIAL_ID_BYTES = 128`, `MAX_MATERIALS = 128`, `MAX_CONSTRAINTS = 64`, `MAX_OBJECTIVE_BYTES = 8 * 1024`, `MAX_CONSTRAINT_BYTES = 2 * 1024`, and `MAX_MATERIAL_PATH_BYTES = 1024`.
+- IDs use the internal grammar `[A-Za-z0-9][A-Za-z0-9._-]*`, must fit their byte limit, and may not start with the neutral reserved namespace `__ai_ip_dev__`. This namespace never contains or derives from a frozen case name, industry, answer, or fixture body.
+- Reject empty/oversized strings, duplicate material IDs, SHA-256 values other than exactly 64 lowercase hexadecimal bytes, absolute paths, platform prefixes/root components, `.`/`..`, and reserved development IDs. Validation is pure and never reads files.
 
 ### Output
 
-- `ContentPackage` contains nonempty `mission_summary`, `influence_relation`, one or more `action_funnel` steps, `strategic_judgment`, directly usable `publishable_content`, `claims`, `open_questions`, `measurement_plan`, and `readiness`.
-- `InfluenceRelation` explicitly represents subject, `SubjectKind`, audience, and desired action. Purchase is not a default or required action.
+- The exact public structs are:
+
+```rust
+pub struct InfluenceRelation {
+    pub subject: String,
+    pub subject_kind: SubjectKind,
+    pub audience: String,
+    pub desired_action: String,
+}
+
+pub struct ActionFunnelStep {
+    pub audience_state: String,
+    pub intended_change: String,
+    pub next_action: String,
+}
+
+pub struct PublishableContent {
+    pub format: String,
+    pub title: Option<String>,
+    pub body: String,
+    pub production_notes: Vec<String>,
+}
+
+pub struct Claim {
+    pub text: String,
+    pub status: ClaimStatus,
+    pub source_refs: Vec<String>,
+    pub result_receipt_ref: Option<String>,
+}
+
+pub struct MeasurementPlan {
+    pub success_signal: String,
+    pub collection_method: String,
+    pub observation_window: String,
+}
+
+pub struct ContentPackage {
+    pub mission_summary: String,
+    pub influence_relation: InfluenceRelation,
+    pub action_funnel: Vec<ActionFunnelStep>,
+    pub strategic_judgment: String,
+    pub publishable_content: PublishableContent,
+    pub claims: Vec<Claim>,
+    pub open_questions: Vec<String>,
+    pub measurement_plan: MeasurementPlan,
+    pub readiness: Readiness,
+}
+```
+
+- `ContentPackage` validates every required string as nonempty, requires one or more action-funnel steps, and requires a nonempty publishable body. `InfluenceRelation` explicitly represents subject, `SubjectKind`, audience, and desired action. Purchase is not a default or required action.
 - `Readiness` has exactly `Draft`, `ReadyForHumanReview`, and `BlockedByMissingEvidence`; there is no `Published` variant or field that claims this turn performed publication.
 - `ClaimStatus` has exactly `UserFact`, `ExternalEvidence`, `ModelInterpretation`, `CreativeHypothesis`, `Unknown`, and `ActualResult`.
-- `Claim` has text, `source_refs`, and nullable `result_receipt_ref`. `ExternalEvidence` requires a source; `ActualResult` requires a source and nonempty receipt ref. Model interpretation and creative hypothesis may be unsourced but never become evidence by readiness alone.
+- The exact enums are `pub enum Readiness { Draft, ReadyForHumanReview, BlockedByMissingEvidence }` and `pub enum ClaimStatus { UserFact, ExternalEvidence, ModelInterpretation, CreativeHypothesis, Unknown, ActualResult }`.
+- `Claim` has text, `source_refs`, and nullable `result_receipt_ref`. `UserFact`, `ExternalEvidence`, and `ActualResult` each require at least one nonempty source ref; `ActualResult` additionally requires a nonempty receipt ref. `result_receipt_ref` must be absent for every other status. Model interpretation, creative hypothesis, and unknown may be unsourced but never become evidence by readiness alone.
 - `validate_against(&HeldOutMissionCase)` requires matching subject kind and same-case material IDs. `UserFact` refs resolve only to `UserInput`; `ExternalEvidence` refs resolve only to `Evidence`; `ActualResult.result_receipt_ref` resolves to `ActualResultReceipt`; cross-case-looking or unknown refs fail. File existence/digest recomputation belongs to the later runner, not this crate.
 - Every DTO uses `#[serde(deny_unknown_fields, rename_all = "camelCase")]`; every enum serializes camelCase; public DTOs derive `Serialize`, `Deserialize`, `JsonSchema`, `Clone`, `Debug`, `PartialEq`, and `Eq` where valid.
-- `validate()` aggregates deterministic field errors instead of returning only the first error. Keep API surface small and modules below the upstream size guidance.
+- Readiness has only these minimal semantic checks: `ReadyForHumanReview` is invalid while `open_questions` is nonempty or any claim is `Unknown`; `BlockedByMissingEvidence` is invalid unless at least one open question or `Unknown` claim exists; `Draft` permits either state. This is not a workflow gate and does not require a fixed funnel, evidence count, CTA, or provider.
+- Both `HeldOutMissionCase::validate()` and `ContentPackage::validate()` return `Result<(), ValidationErrors>`. `ContentPackage::validate_against(&HeldOutMissionCase)` first performs both intrinsic validations, then the same-case kind/ref checks. `ValidationErrors` owns `Vec<String>`, exposes `errors(&self) -> &[String]`, implements `Display`/`Error`, and appends messages in field/declaration order so multiple failures are deterministic. Keep API surface small and modules below the upstream size guidance.
+
+### Complete crate/build skeleton
+
+`codex-rs/ai-ip-domain/Cargo.toml`:
+
+```toml
+[package]
+edition.workspace = true
+license.workspace = true
+name = "codex-ai-ip-domain"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "codex_ai_ip_domain"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+schemars = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serde_json = { workspace = true }
+```
+
+`codex-rs/ai-ip-domain/BUILD.bazel`:
+
+```starlark
+load("//:defs.bzl", "codex_rust_crate")
+
+codex_rust_crate(
+    name = "ai-ip-domain",
+    crate_name = "codex_ai_ip_domain",
+)
+```
+
+`lib.rs` privately declares `mission` and `content_package`, explicitly re-exports only the DTOs, enums, constants, and `ValidationErrors`, and declares `#[cfg(test)] #[path = "domain_tests.rs"] mod tests;`.
 
 ## Task 1 — RED tests and crate skeleton
 
-1. Read the five source authorities and root `AGENTS.md`; record a concise reuse/prohibition note in the ignored SDD report. In particular: preserve one Lead, evidence states, direct action relation, bounded artifacts, and provider neutrality; prohibit fixed agent rosters, giant semantic maps, named-case answers, fixed funnels, and provider/model branches.
-2. Create the crate/test skeleton with tests that reference the required API before implementation. Add the workspace member and only `serde`, `schemars`, and test-only `pretty_assertions` dependencies.
-3. Tests cover all enum wire names, unknown-field rejection, the six key examples from the build spec, every input bound/path/digest/duplicate rule, nonempty ContentPackage sections, no empty funnel, all claim source-kind rules, subject-kind mismatch, cross-case/unknown refs, and aggregation of multiple errors.
-4. Run `just test -p codex-ai-ip-domain` through the repository's required entry point and record the expected compile/test failure. Do not manufacture an unrelated failure.
+1. Read the five source authorities and root `AGENTS.md`; write `.superpowers/sdd/2026-08-26-02-content-package-contract/progress.md` with a short reuse/prohibition note. Preserve one Lead, six evidence states, direct action relation, bounded artifacts, and provider neutrality; prohibit fixed agent rosters, giant semantic maps, named-case answers, fixed funnels, and provider/model branches.
+2. Add the complete Cargo/Bazel skeleton above, add `"ai-ip-domain"` to `codex-rs/Cargo.toml` workspace members, create empty implementation modules, and add `lib.rs` module/test declarations. Do not update locks yet.
+3. In `domain_tests.rs`, add `valid_case()` and `valid_package(SubjectKind)` fixtures containing only neutral synthetic values such as `case-1`, `material-1`, `evidence/a.txt`, and `报名参加志愿活动`; do not use any frozen evaluation case or expected answer.
+4. Add the six exact build-spec tests: `organization_subject_can_target_a_membership_action`, `external_evidence_without_source_is_rejected`, `actual_result_without_receipt_is_rejected`, `claim_reference_must_resolve_inside_the_same_case`, `actual_result_receipt_must_have_the_declared_receipt_kind`, and `held_out_material_paths_cannot_escape_case_root`.
+5. Add table-driven tests named `subject_and_evidence_enums_use_camel_case_wire_names`, `unknown_dto_fields_are_rejected`, `mission_bounds_accept_limit_and_reject_one_byte_over`, `ids_and_material_digests_are_strict`, `material_paths_are_relative_normal_paths`, and `duplicate_material_ids_are_rejected`. The boundary table covers every exact constant above at limit and one byte over; path cases cover Unix absolute, Windows prefix, root, `.`, and `..` components.
+6. Add tests named `content_package_requires_every_business_section`, `user_fact_requires_user_input_source`, `external_evidence_requires_evidence_source`, `actual_result_requires_declared_source_and_receipt`, `non_actual_claim_rejects_result_receipt`, `subject_kind_must_match_case`, `unknown_and_cross_case_refs_are_rejected`, `ready_for_review_rejects_missing_evidence_markers`, `blocked_readiness_requires_a_missing_evidence_marker`, and `validation_aggregates_errors_in_field_order`. Assert the complete `ValidationErrors.errors()` vector where practical.
+7. Run from `codex-rs`: `just test -p codex-ai-ip-domain`. Expected RED is a compile failure for the deliberately unimplemented public domain symbols/methods used by these tests. Record command, exit, and representative missing symbol; do not accept a missing tool/workspace member/dependency failure as RED.
 
 ## Task 2 — Minimum implementation and GREEN
 
-1. Implement only the pure DTOs and validation needed by Task 1. No I/O, async, database, Codex runtime, provider, model, prompt, hidden case answer, or workflow engine.
-2. Run focused `just test -p codex-ai-ip-domain` to GREEN.
-3. Update Cargo/Bazel locks with the repository commands; run the Bazel unit target and lock check.
-4. Run `just fmt`, review its diff, then `just fix -p codex-ai-ip-domain` as required by upstream. Do not rerun the same passing tests after mechanical fmt/fix unless fix changes semantics.
-5. Run `git diff --check`, verify touched paths are exactly the authorized set, and confirm no evidence/ref/bundle/quarantine/provider mutation.
-6. Commit `feat: add AI IP content package contracts`.
+1. Implement the exact mission DTOs/constants/validators first. Run `just test -p codex-ai-ip-domain mission -- --nocapture` and make only mission tests GREEN.
+2. Implement the exact output DTOs, `ValidationErrors`, intrinsic validation, readiness rules, and `validate_against`. Run `just test -p codex-ai-ip-domain` to GREEN. No I/O, async, database, Codex runtime, provider, model, prompt, hidden case answer, or workflow engine.
+3. From the repository root run `just bazel-lock-update` and review that only `MODULE.bazel.lock` changes beyond Cargo files. Then run `bazel test //codex-rs/ai-ip-domain:ai-ip-domain-unit-tests`, followed by `just bazel-lock-check`, in that order.
+4. From `codex-rs` run `just fmt`, review its diff, then `just fix -p codex-ai-ip-domain` as required by upstream. Do not rerun the same passing tests after mechanical fmt/fix unless fix changes semantics.
+5. Run `git diff --check`; verify touched paths are exactly the nine authorized paths; confirm the failed-baseline quarantine digest/path, transfer refs, old/new bundles, and provider disposition are unchanged.
+6. Write `.superpowers/sdd/2026-08-26-02-content-package-contract/task-1-report.md` with RED/GREEN commands, counts, locks, fmt/fix, exact touched paths, reuse/prohibition note, and zero-provider claims.
+7. Commit exactly the authorized paths with `git commit -m "feat: add AI IP content package contracts"`.
 
 ## Task 3 — Independent review
 
