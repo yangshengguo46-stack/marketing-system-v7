@@ -160,6 +160,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Treat source entailment as the release gate. Review the premise, draft, and claims sentence by sentence; every unlabeled factual phrase must have one source span that entails the same relation and modifier attachments. If none does, remove or relabel the phrase. Facts from separate materials may appear together, but their co-occurrence does not establish a relationship between their entities or events.
 - For factual language presented as supported, preserve predicate scope and attachment: do not substitute a neighboring action, participant, object, time, or ordinal, and do not infer a relation from co-occurrence or collective completion. This does not bar clearly labeled inference, creative hypothesis, prospective staging, bracketed draft placeholders, or open questions.
+- Before release, run a final atomic-proposition audit for factual language presented as supported. Resolve implicit subjects, ellipsis, possessive or appositive links, coreference, temporal anchors and aspect, and causal, progress, or result relations; each resulting atomic proposition must be entailed with the same attachments by one source span. When combining independent facts, keep them independently attributable. If an atomic proposition lacks that entailment, split it, remove it, or explicitly label it as an inference.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -454,6 +455,52 @@ constraint: Named external facts require verifiable support.
 Controller-only held-out scoring boundaries, never included in evaluator prompts: `market-03` may state the conditional indoor move only as a condition/plan, not as observed rain or a completed venue move; twelve vendor signups do not prove attendance. `library-03` must keep Lin attached to returning the camera and Zhou attached to counting four batteries; one person cannot be credited with both without a labeled hypothesis. `maker-03` must keep three-cover testing prospective for next week and one black-and-white draft completed this week; planned tests are not completed tests.
 
 The controller dispatches five fresh-context evaluators against the committed amended Skill and only this generalization packet, writing `skill-generalization-cycle-06-01.md` through `skill-generalization-cycle-06-05.md`; before every dispatch, recompute the generalization digest and require exact equality with its separately recorded value. Score each with the same 18-boolean rubric. Commit the amended Skill before either treatment set, recompute the original packet digest before every original-packet dispatch and require exact equality with its recorded value, preserve all prior outputs, and run five original-packet samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. All ten samples must pass 18/18. Any miss requires another reviewed amendment.
+
+### Task 3 behavior cycle 7 amendment
+
+Cycle 6 is RED. Original-packet sample 02 re-anchored the start of recording from the March 2024 departure context to `现在`. Held-out samples 02–05 made the independently sourced booklet, draft, and cover-test facts one project without an entailing source span. Preserve both matrices and exact rationales.
+
+For cycle 7, add only the reviewed final atomic-proposition-audit bullet from the canonical Skill above. It is a general evidence rule, not a packet-derived answer and not a fixed business workflow. It applies only to factual language presented as supported; labeled inference, creative hypothesis, prospective staging, bracketed draft placeholders, and open questions remain available. Keep every other Skill line, both existing packets, schema, runtime API, and the frozen 18-boolean rubric unchanged.
+
+Before any cycle 7 Skill edit, freeze `skill-generalization-cycle-07-packet.md` with the exact bytes below, one terminal newline, and its separately recorded digest:
+
+```text
+8681dca526626056655cece4b7d604f60540b36291eda2426443498955e332be  skill-generalization-cycle-07-packet.md
+```
+
+The packet is exactly 1,700 bytes and contains only the following evaluator prompt, not the controller-only scoring boundaries:
+
+```text
+You are handling three unrelated AI-IP missions. For each case return one compact JSON object with exactly these keys: caseId, contentPremise, publishableDraft, claims, openQuestions, measurementPlan, readiness. Each claim has text, status, and sourceIds. Use only the supplied materials; do not describe your evaluation method.
+
+CASE bazaar-07
+objective: Build awareness for a weekend food bazaar. Desired audience action: visit profile.
+subjectKind: brand
+materials:
+- routing-note (evidence): “协调员说：‘若周六地铁检修，摊位将从西廊改到二层大厅。’目前只确认了周六档期；检修和替代场地均未回执。”
+- booking-card (userInput): “本周有十五个独立烘焙摊位登记。”
+constraint: The result must be a directly publishable short post.
+
+CASE theatre-07
+objective: Recruit volunteer ushers for a community theatre. Desired audience action: submit an interest form.
+subjectKind: organization
+materials:
+- strike-note (evidence): “散场后，舞台监督宁遥归还了无线麦克风；灯光助理石林随后核对了八个滤色片。”
+- volunteer-card (userInput): “剧场正在征集前台导览志愿者。”
+constraint: The result must be directly publishable without inventing application results.
+
+CASE atlas-07
+objective: Build trust in a publishing studio. Desired audience action: follow for the next update.
+subjectKind: organization
+materials:
+- layout-note (evidence): “团队计划下周校对两种内页版式；本周只导出了一份低保真样张。”
+- catalog-card (userInput): “本系列是一册城市河流生态展览导览册。”
+constraint: Named external facts require verifiable support.
+```
+
+Controller-only scoring boundaries, never included in evaluator prompts: `bazaar-07` may state the alternate hall only as a condition of Saturday metro maintenance; fifteen registrations do not establish attendance, an actual maintenance event, or a completed move. `theatre-07` must keep Ning attached to returning the wireless microphone and Shi attached to checking eight color filters; neither action establishes volunteer service or an application result. `atlas-07` must keep two-layout proofreading prospective for next week and one low-fidelity proof exported this week; neither source establishes that the proof or plan belongs to the exhibition guide, nor any causal/progress/result link between them. A planned check is not a completed check.
+
+After the reviewed amendment is committed, the controller dispatches three isolated five-sample arms. Each evaluator receives only the committed Skill path and one packet path, reads the Skill completely, inherits no plan or conversation, remains read-only except for its unique result file, and makes no provider/API-key call. Before every dispatch the controller recomputes and requires equality with that arm's recorded digest. Score all cases using the same 18 booleans. Preserve all existing outputs. The original arm uses `skill-eval-packet.md` (`e93d7a97e0bfb5aa8807cc94b104499f11b015fe95a34c7331d05a0edf724baf`) and writes `skill-treatment-cycle-07-01.md` through `skill-treatment-cycle-07-05.md`. The cycle 6 regression arm uses `skill-generalization-packet.md` (`2544f1c9d02bcf0949c4b8d519e31ca42da83660f487ce34015fc1a0c6325076`) and writes `skill-generalization-regression-cycle-07-01.md` through `skill-generalization-regression-cycle-07-05.md`. The new held-out arm uses `skill-generalization-cycle-07-packet.md` (`8681dca526626056655cece4b7d604f60540b36291eda2426443498955e332be`) and writes `skill-generalization-cycle-07-01.md` through `skill-generalization-cycle-07-05.md`. All fifteen samples must score 18/18. Any miss requires another reviewed amendment; do not change the immutable Skill ad hoc or run final verification.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
