@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "executionMode": "replay",
+  "case": "replay-case.json",
+  "transcript": "replay-transcript.jsonl",
+  "attestation": "replay-attestation.json",
+  "reviews": [
+    "replay-review-1.json",
+    "replay-review-2.json",
+    "replay-review-3.json"
+  ]
+}

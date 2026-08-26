@@ -1939,6 +1939,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "codex-ai-ip-eval"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "codex-ai-ip-domain",
+ "codex-ai-ip-runtime",
+ "codex-app-server-protocol",
+ "codex-process-hardening",
+ "codex-responses-api-proxy",
+ "codex-skills",
+ "codex-utils-cargo-bin",
+ "ctor 0.6.3",
+ "hmac 0.12.1",
+ "pretty_assertions",
+ "rand 0.9.3",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "toml 0.9.11+spec-1.1.0",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "codex-ai-ip-runtime"
 version = "0.0.0"
 dependencies = [

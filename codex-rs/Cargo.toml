@@ -5,6 +5,7 @@ members = [
     "agent-graph-store",
     "agent-identity",
     "ai-ip-domain",
+    "ai-ip-eval",
     "ai-ip-runtime",
     "agent-roles",
     "backend-client",
@@ -160,6 +161,7 @@ codex-agent-roles = { path = "agent-roles" }
 codex-ansi-escape = { path = "ansi-escape" }
 codex-api = { path = "codex-api" }
 codex-ai-ip-domain = { path = "ai-ip-domain" }
+codex-ai-ip-eval = { path = "ai-ip-eval" }
 codex-ai-ip-runtime = { path = "ai-ip-runtime" }
 codex-aws-auth = { path = "aws-auth" }
 codex-app-server = { path = "app-server" }
@@ -500,6 +502,7 @@ which = "8"
 whoami = "1.6.1"
 wildmatch = "2.6.1"
 winapi-util = "0.1.11"
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Storage_FileSystem", "Win32_System_Threading"] }
 zip = "2.4.2"
 zstd = "0.13"
 
