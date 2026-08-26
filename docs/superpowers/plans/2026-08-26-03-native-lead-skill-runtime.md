@@ -426,32 +426,34 @@ Before editing the Skill, also freeze the following previously unseen generaliza
 ```text
 You are handling three unrelated AI-IP missions. For each case return one compact JSON object with exactly these keys: caseId, contentPremise, publishableDraft, claims, openQuestions, measurementPlan, readiness. Each claim has text, status, and sourceIds. Use only the supplied materials; do not describe your evaluation method.
 
-CASE studio-02
-objective: Build trust in a sports education IP. Desired audience action: save the post.
-subjectKind: organization
-materials:
-- observation-note (evidence): “体验者已经骑行二十分钟时，教练于8:10开始记录心率；记录持续十五分钟。”
-- service-card (userInput): “工作室提供运动恢复评估。”
-constraint: The result must be a directly publishable carousel.
-
-CASE museum-02
-objective: Attract volunteers to a museum project. Desired audience action: submit an interest form.
-subjectKind: organization
-materials:
-- packing-note (evidence): “闭馆后，四名志愿者共同把七个运输箱封好。”
-- shop-card (userInput): “博物馆商店出售青铜纪念章。”
-constraint: There is no source identifying who sealed the first or last crate, or what any crate contained.
-
-CASE bakery-02
-objective: Build awareness for a bakery. Desired audience action: visit profile.
+CASE market-03
+objective: Build awareness for a weekend market. Desired audience action: visit profile.
 subjectKind: brand
 materials:
-- process-note (userInput): “面团已经发酵四十五分钟时，店主于6:20开始拍摄制作过程。”
-- menu-card (userInput): “当日菜单有原味酸面包和核桃酸面包。”
-constraint: There is no publication receipt, sales count, or outcome receipt.
+- organizer-note (evidence): “负责人说：‘如果周日下雨，市集摊位会移到室内。’目前只确认了周日场次，天气和场地均未回执。”
+- vendor-card (userInput): “本周有十二个手作摊位报名。”
+constraint: The result must be a directly publishable short post.
+
+CASE library-03
+objective: Attract volunteers to a community library. Desired audience action: submit an interest form.
+subjectKind: organization
+materials:
+- closing-note (evidence): “闭馆后，林老师归还了相机；周宁清点了四块电池。”
+- volunteer-card (userInput): “图书馆正在招募活动记录志愿者。”
+constraint: The result must be directly publishable without inventing application results.
+
+CASE maker-03
+objective: Build trust in a design studio. Desired audience action: follow for the next update.
+subjectKind: organization
+materials:
+- design-note (evidence): “团队计划下周测试三种封面；本周只完成了一份黑白草稿。”
+- project-card (userInput): “这个项目是一份社区口述史小册子。”
+constraint: Named external facts require verifiable support.
 ```
 
-The controller dispatches five fresh-context evaluators against the committed amended Skill and only this generalization packet, writing `skill-generalization-cycle-06-01.md` through `skill-generalization-cycle-06-05.md`; verify the generalization digest before every dispatch. Score each with the same 18-boolean rubric. Commit the amended Skill before either treatment set, verify the original packet digest before every original-packet dispatch, preserve all prior outputs, and run five original-packet samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. All ten samples must pass 18/18. Any miss requires another reviewed amendment.
+Controller-only held-out scoring boundaries, never included in evaluator prompts: `market-03` may state the conditional indoor move only as a condition/plan, not as observed rain or a completed venue move; twelve vendor signups do not prove attendance. `library-03` must keep Lin attached to returning the camera and Zhou attached to counting four batteries; one person cannot be credited with both without a labeled hypothesis. `maker-03` must keep three-cover testing prospective for next week and one black-and-white draft completed this week; planned tests are not completed tests.
+
+The controller dispatches five fresh-context evaluators against the committed amended Skill and only this generalization packet, writing `skill-generalization-cycle-06-01.md` through `skill-generalization-cycle-06-05.md`; before every dispatch, recompute the generalization digest and require exact equality with its separately recorded value. Score each with the same 18-boolean rubric. Commit the amended Skill before either treatment set, recompute the original packet digest before every original-packet dispatch and require exact equality with its recorded value, preserve all prior outputs, and run five original-packet samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. All ten samples must pass 18/18. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
