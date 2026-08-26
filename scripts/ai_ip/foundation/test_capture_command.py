@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -1053,6 +1053,48 @@ printf 'executed\\n' > {str(marker)!r}
 
     assert completed.returncode == 0
     assert marker.read_text(encoding="utf-8") == "executed\n"
+
+
+def test_selection_preflight_rejects_escaped_workspace_and_returns_canonical_cwd(
+    tmp_path: Path,
+) -> None:
+    harness = RecorderHarness.create(tmp_path)
+    marker = install_filtered_fixture(harness.repo)
+    canonical_context = capture._CaptureContext(
+        repo_root=harness.repo,
+        evidence_dir=harness.evidence,
+        matrix_path=harness.matrix,
+        recorder_path=harness.capture_script,
+        tools_root=harness.matrix.parents[3],
+        env={"PATH": os.environ["PATH"], "HOME": os.environ["HOME"]},
+        tested_sha="fixture",
+        tools_sha="fixture",
+        platform_id="macos-x86_64",
+        locks={},
+        recorder_sha256="fixture",
+        matrix_sha256="fixture",
+        recorder_relative="capture_command.py",
+        matrix_relative="matrix.json",
+    )
+    linked_root = tmp_path / "linked-tested-root"
+    linked_root.symlink_to(harness.repo, target_is_directory=True)
+    linked_context = replace(canonical_context, repo_root=linked_root)
+    assert capture._selection_working_directory(linked_context) == (
+        harness.repo / "codex-rs"
+    )
+
+    escaped_workspace = tmp_path / "outside" / "codex-rs"
+    escaped_workspace.mkdir(parents=True)
+    (escaped_workspace / "Cargo.toml").write_text(
+        "[workspace]\nmembers = []\n", encoding="utf-8", newline="\n"
+    )
+    shutil.rmtree(harness.repo / "codex-rs")
+    (harness.repo / "codex-rs").symlink_to(escaped_workspace, target_is_directory=True)
+
+    completed = harness.run("--name", "filtered-fixture")
+
+    assert completed.returncode == 1
+    assert not marker.exists()
 
 
 @pytest.mark.parametrize(

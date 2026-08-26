@@ -969,21 +969,38 @@ def _revalidate_capture_state(context: _CaptureContext) -> None:
 def _selection_working_directory(context: _CaptureContext) -> Path:
     selection_root = context.repo_root / "codex-rs"
     cargo_manifest = selection_root / "Cargo.toml"
+    is_junction = getattr(Path, "is_junction", None)
+    has_junction = callable(is_junction) and (
+        bool(is_junction(selection_root)) or bool(is_junction(cargo_manifest))
+    )
+    if selection_root.is_symlink() or cargo_manifest.is_symlink() or has_junction:
+        raise EvidenceError(
+            "selection workspace must be a non-linked codex-rs directory"
+        )
+    try:
+        canonical_repo = context.repo_root.resolve(strict=True)
+        canonical_workspace = selection_root.resolve(strict=True)
+        canonical_manifest = cargo_manifest.resolve(strict=True)
+    except OSError as error:
+        raise EvidenceError(
+            "selection workspace must be a real codex-rs directory"
+        ) from error
     if (
-        selection_root.parent != context.repo_root
-        or selection_root.is_symlink()
-        or not selection_root.is_dir()
+        not canonical_repo.is_dir()
+        or not canonical_workspace.is_dir()
+        or not canonical_manifest.is_file()
+        or canonical_workspace.parent != canonical_repo
+        or canonical_manifest.parent != canonical_workspace
         or cargo_manifest.is_symlink()
-        or not cargo_manifest.is_file()
     ):
         raise EvidenceError("selection workspace must be codex-rs beneath tested root")
     _require_tracked_blob(
-        context.repo_root,
+        canonical_repo,
         "codex-rs/Cargo.toml",
         context.env,
         "selection workspace Cargo.toml",
     )
-    return selection_root
+    return canonical_workspace
 
 
 def _load_selection_count(path: Path, selected_name: str) -> int:
