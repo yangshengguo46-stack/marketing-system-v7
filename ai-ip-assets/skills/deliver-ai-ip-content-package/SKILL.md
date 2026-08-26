@@ -17,6 +17,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 ## Evidence and delivery
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
+- Preserve source semantics before drafting: do not change entities, roles, quantities, dates, durations, sequences, or relationships; label any extrapolation as an inference or creative hypothesis.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
