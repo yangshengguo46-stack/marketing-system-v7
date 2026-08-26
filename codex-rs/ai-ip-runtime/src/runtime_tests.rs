@@ -595,3 +595,26 @@ fn validator_rejects_invalid_strict_schema_fixtures() {
         );
     }
 }
+
+#[test]
+fn lead_skill_asset_has_valid_native_frontmatter_and_body() {
+    let path = codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md"
+    )
+    .expect("resolve lead skill asset");
+    let contents = std::fs::read_to_string(path).expect("read lead skill asset");
+    let metadata = codex_skills::parse_skill_frontmatter_metadata(&contents, || {
+        "deliver-ai-ip-content-package".to_string()
+    })
+    .expect("parse lead skill frontmatter");
+
+    assert_eq!(metadata.name, "deliver-ai-ip-content-package");
+    assert_eq!(
+        metadata.description,
+        "Use when the user needs an evidence-aware, publishable AI IP content package tied to a real audience action."
+    );
+    let (_, body) = contents
+        .split_once("\n---\n")
+        .expect("lead skill frontmatter terminator");
+    assert!(!body.trim().is_empty());
+}
