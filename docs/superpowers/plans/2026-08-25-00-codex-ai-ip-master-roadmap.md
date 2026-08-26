@@ -239,7 +239,15 @@ Approved domestic-model decision input:
 
 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md`
 
-Completed preceding executable children, at their recorded scoped implementation/review boundaries, are `2026-08-25-01a-codex-fork-provenance.md`, `2026-08-25-01b-codex-native-evidence-macos-baseline.md`, `2026-08-26-01c-evidence-filesystem-race-hardening.md`, `2026-08-26-01d-nextest-selection-loopback-recapture.md`, and `2026-08-26-02-content-package-contract.md`. These records do not close G0–G2, authorize provider calls, or authorize product Plan 02.
+Preceding executable children have these individual dispositions:
+
+- `2026-08-25-01a-codex-fork-provenance.md`: complete at the provenance boundary.
+- `2026-08-25-01b-codex-native-evidence-macos-baseline.md`: partially executed; its final macOS baseline handoff remains unresolved.
+- `2026-08-26-01c-evidence-filesystem-race-hardening.md`: complete at its filesystem-race repair boundary.
+- `2026-08-26-01d-nextest-selection-loopback-recapture.md`: stopped and closed as an invalid capture attempt at Task 3 (`exit 1` / `INVALID_FORBIDDEN_CONTENT`); it produced no baseline PASS/BLOCKED summary and no Task 4 or F-0003 handoff.
+- `2026-08-26-02-content-package-contract.md`: complete as a pure-domain contract under its documented business-priority exception; it does not cure or close the baseline gap.
+
+None of these dispositions closes G0–G2, authorizes provider calls, or authorizes product Plan 02.
 
 The current child, `2026-08-26-03-native-lead-skill-runtime.md`, is limited to Work Package 4's final mechanical closure: its full ordered verification and fresh scoped review. Its seven wording cycles are diagnostic RED evidence, including Cycle 7's 16/18 regression sample; they are neither factual-fidelity business acceptance nor a live-model quality result. Work Package 5 is not executable until a separate child plan is authored and reviewed. `PASS_TO_PHASE_0B` and product Plan 02 remain blocked.
 
