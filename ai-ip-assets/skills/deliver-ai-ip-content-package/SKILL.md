@@ -17,7 +17,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 ## Evidence and delivery
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
-- Before drafting, build an internal evidence ledger keyed by source ID. Preserve the source meaning of every entity, role, quantity, date, duration, sequence, and relationship; treat each as a constraint rather than a creative variable.
+- Before drafting, build an internal evidence ledger keyed by source ID. Record each supported fact as subject, relation, object, and modifiers; preserve which action or entity every role, quantity, date, duration, sequence, and ordinal modifies, and never transfer a modifier to a neighboring action or entity.
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
