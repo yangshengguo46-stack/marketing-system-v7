@@ -1939,6 +1939,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "codex-ai-ip-runtime"
+version = "0.0.0"
+dependencies = [
+ "codex-ai-ip-domain",
+ "codex-skills",
+ "codex-utils-cargo-bin",
+ "pretty_assertions",
+ "schemars 0.8.22",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "codex-analytics"
 version = "0.0.0"
 dependencies = [

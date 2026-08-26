@@ -5,6 +5,7 @@ members = [
     "agent-graph-store",
     "agent-identity",
     "ai-ip-domain",
+    "ai-ip-runtime",
     "agent-roles",
     "backend-client",
     "bwrap",
@@ -158,6 +159,8 @@ codex-agent-identity = { path = "agent-identity" }
 codex-agent-roles = { path = "agent-roles" }
 codex-ansi-escape = { path = "ansi-escape" }
 codex-api = { path = "codex-api" }
+codex-ai-ip-domain = { path = "ai-ip-domain" }
+codex-ai-ip-runtime = { path = "ai-ip-runtime" }
 codex-aws-auth = { path = "aws-auth" }
 codex-app-server = { path = "app-server" }
 codex-app-server-transport = { path = "app-server-transport" }

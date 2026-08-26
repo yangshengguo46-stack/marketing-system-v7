@@ -1,0 +1,24 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "codex-ai-ip-runtime"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "codex_ai_ip_runtime"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+codex-ai-ip-domain = { workspace = true }
+schemars = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+codex-skills = { workspace = true }
+codex-utils-cargo-bin = { workspace = true }
+pretty_assertions = { workspace = true }
