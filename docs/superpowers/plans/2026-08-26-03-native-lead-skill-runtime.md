@@ -156,6 +156,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 ## Evidence and delivery
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
+- Preserve source semantics before drafting: do not change entities, roles, quantities, dates, durations, sequences, or relationships; label any extrapolation as an inference or creative hypothesis.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -382,6 +383,12 @@ Write these exact bytes between the fence markers only, end with one newline, an
 2. The rubric scores five booleans per case: evidence-rooted premise rather than forced CTA; unsupported named fact not presented as verified; usable draft preserved; no claimed publication/result; no fixed team/workflow invented. A sample passes only at 15/15. Run five fresh-context control samples of the combined packet without the Skill and preserve verbatim outputs plus manual scores. Each evaluator gets only the packet path, inherits no conversation/plan, is read-only, and writes one uniquely named result file. At least one failing control or disagreement across samples establishes RED. If all five controls score 15/15 consistently, record `SKILL_RED_NOT_ESTABLISHED` and stop before creating the Skill; this is the only non-destructive execution stop introduced by `superpowers:writing-skills`.
 3. Create the canonical Skill and Bazel target. Add a parser test using `codex_utils_cargo_bin::find_resource!("../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md")`, `codex_skills::parse_skill_frontmatter_metadata`, exact name/description assertions, and a nonempty body assertion. Never rely on cwd.
 4. Run five fresh-context treatment samples of the same combined packet. Each evaluator receives only the packet path and committed Skill path, is instructed to read the Skill completely, remains read-only, and writes a unique result. All five must score 15/15. The reviewed Skill body is immutable during execution; a treatment miss requires a reviewed plan amendment and a new RED/GREEN cycle, never ad hoc wording drift. These collaboration-agent evaluations are not the paid Work Package 5 provider run: no API key is read, `providerMode=not-run`, and paid-provider cost remains zero.
+
+### Task 3 behavior cycle 2 amendment
+
+Cycle 1 RED remains the preserved treatment evidence: treatment 03 changed twelve packages into twelve cups, and treatment 05 changed nine years employed at a bank into leaving banking nine years ago while inventing an apprentice role. Both are failures of the existing evidence-rooted-premise rubric item.
+
+For cycle 2, add only the reviewed source-semantics bullet from the canonical Skill above. Do not change the packet, schema, rubric, other Skill wording, or runtime API. Commit the amended Skill before evaluation, recompute the same packet digest before every dispatch, and run five fresh-context treatment samples into `skill-treatment-cycle-02-01.md` through `skill-treatment-cycle-02-05.md`. Preserve cycle 1 outputs. Each cycle 2 evaluator receives only the immutable packet path and the committed amended Skill path, reads the Skill completely, and remains read-only except for its unique result file. The same 15/15 rubric applies; all five samples must pass. Any miss requires another reviewed amendment rather than ad hoc wording drift.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
