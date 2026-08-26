@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -1055,18 +1055,39 @@ printf 'executed\\n' > {str(marker)!r}
     assert marker.read_text(encoding="utf-8") == "executed\n"
 
 
-def test_selection_preflight_rejects_escaped_workspace_and_returns_canonical_cwd(
-    tmp_path: Path,
+def test_selection_preflight_blocks_clean_canonical_workspace_escape_before_children(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     harness = RecorderHarness.create(tmp_path)
-    marker = install_filtered_fixture(harness.repo)
-    canonical_context = capture._CaptureContext(
+    install_filtered_fixture(harness.repo)
+    selection_marker = harness.repo / ".git/selection-started"
+    real_marker = harness.repo / ".git/real-started"
+    escaped_workspace = tmp_path / "outside" / "codex-rs"
+    escaped_workspace.mkdir(parents=True)
+    (escaped_workspace / "Cargo.toml").write_text(
+        "[workspace]\nmembers = []\n", encoding="utf-8", newline="\n"
+    )
+    shutil.rmtree(harness.repo / "codex-rs")
+    (harness.repo / "codex-rs").symlink_to(escaped_workspace, target_is_directory=True)
+    _write_executable(
+        harness.repo / "tool-bin/cargo",
+        f"#!/bin/sh\nprintf selection > {str(selection_marker)!r}\n",
+    )
+    _write_executable(
+        harness.repo / "tool-bin/just",
+        f"#!/bin/sh\nprintf real > {str(real_marker)!r}\n",
+    )
+    _commit(harness.repo, "install clean escaped selection workspace")
+    context = capture._CaptureContext(
         repo_root=harness.repo,
         evidence_dir=harness.evidence,
         matrix_path=harness.matrix,
         recorder_path=harness.capture_script,
         tools_root=harness.matrix.parents[3],
-        env={"PATH": os.environ["PATH"], "HOME": os.environ["HOME"]},
+        env={
+            "PATH": f"{harness.repo / 'tool-bin'}:/usr/local/bin:/usr/bin:/bin",
+            "HOME": os.environ["HOME"],
+        },
         tested_sha="fixture",
         tools_sha="fixture",
         platform_id="macos-x86_64",
@@ -1076,25 +1097,30 @@ def test_selection_preflight_rejects_escaped_workspace_and_returns_canonical_cwd
         recorder_relative="capture_command.py",
         matrix_relative="matrix.json",
     )
-    linked_root = tmp_path / "linked-tested-root"
-    linked_root.symlink_to(harness.repo, target_is_directory=True)
-    linked_context = replace(canonical_context, repo_root=linked_root)
-    assert capture._selection_working_directory(linked_context) == (
-        harness.repo / "codex-rs"
+    candidate = harness.repo / "codex-rs"
+    original_is_symlink = Path.is_symlink
+    monkeypatch.setattr(
+        Path,
+        "is_symlink",
+        lambda path: False if path == candidate else original_is_symlink(path),
+    )
+    tracked_blob = Mock(side_effect=AssertionError("tracked blob must not be checked"))
+    monkeypatch.setattr(capture, "_require_tracked_blob", tracked_blob)
+    command = capture.CommandSpec(
+        "filtered-fixture",
+        ("macos-x86_64",),
+        "baselineAndPost",
+        ("just", "test", "-E", "test(=fixture)"),
+        0,
     )
 
-    escaped_workspace = tmp_path / "outside" / "codex-rs"
-    escaped_workspace.mkdir(parents=True)
-    (escaped_workspace / "Cargo.toml").write_text(
-        "[workspace]\nmembers = []\n", encoding="utf-8", newline="\n"
-    )
-    shutil.rmtree(harness.repo / "codex-rs")
-    (harness.repo / "codex-rs").symlink_to(escaped_workspace, target_is_directory=True)
+    with pytest.raises(capture.EvidenceError, match="codex-rs beneath tested root"):
+        capture._capture_command(command, context)
 
-    completed = harness.run("--name", "filtered-fixture")
-
-    assert completed.returncode == 1
-    assert not marker.exists()
+    tracked_blob.assert_not_called()
+    assert not selection_marker.exists()
+    assert not real_marker.exists()
+    assert not list(harness.evidence.iterdir())
 
 
 @pytest.mark.parametrize(
