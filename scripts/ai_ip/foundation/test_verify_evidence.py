@@ -2088,6 +2088,76 @@ def test_baseline_cli_rejects_parent_substitution_between_inspection_and_canonic
     )
 
 
+def test_frozen_final_rejects_dotted_output_parent_inside_repo(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    final_fixture_template: FinalFixture,
+) -> None:
+    fixture = final_fixture_template.clone(tmp_path)
+    _stub_final_native_evidence(monkeypatch, fixture)
+    sibling = fixture.evidence.repo.parent / "containment-sibling"
+    sibling.mkdir()
+    inside_output = fixture.evidence.repo / "verification.next.json"
+    dotted_output = sibling / ".." / fixture.evidence.repo.name / inside_output.name
+    assert dotted_output != inside_output
+    assert dotted_output.parent != fixture.evidence.repo
+    assert fixture.evidence.repo not in dotted_output.parent.parents
+    args = _final_fixture_cli_args(fixture)
+    args[args.index("--verification-output") + 1] = str(dotted_output)
+    assert verifier.main(args) == 1
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "must not contain '..'" in output.err
+    assert not inside_output.exists()
+
+
+def test_open_stable_directory_anchor_fstat_failure_closes_owned_descriptor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    anchor = Path(Path.cwd().anchor)
+    safe_fstat = verifier._safe_fstat
+    real_open = os.open
+    real_fstat = os.fstat
+    descriptors: list[int] = []
+    fstat_calls = 0
+
+    def record_anchor_open(
+        path_value: object, flags: int, *args: object, **kwargs: object
+    ) -> int:
+        descriptor = real_open(path_value, flags, *args, **kwargs)
+        if Path(path_value) == anchor:
+            descriptors.append(descriptor)
+        return descriptor
+
+    def fail_second_fstat(descriptor: int, label: str) -> os.stat_result:
+        nonlocal fstat_calls
+        fstat_calls += 1
+        if fstat_calls == 2:
+            raise verifier.UnsafeEvidenceError("injected anchor fstat failure")
+        return safe_fstat(descriptor, label)
+
+    monkeypatch.setattr(
+        verifier, "_descriptor_relative_traversal_available", lambda: True
+    )
+    monkeypatch.setattr(verifier.os, "open", record_anchor_open)
+    monkeypatch.setattr(verifier, "_safe_fstat", fail_second_fstat)
+    try:
+        with pytest.raises(verifier.UnsafeEvidenceError):
+            verifier._open_stable_directory(anchor)
+        assert len(descriptors) == 1
+        with pytest.raises(OSError) as error:
+            real_fstat(descriptors[0])
+        assert error.value.errno == errno.EBADF
+    finally:
+        for descriptor in descriptors:
+            try:
+                real_fstat(descriptor)
+            except OSError:
+                continue
+            os.close(descriptor)
+
+
 def test_fallback_component_failure_after_leaf_open_closes_descriptor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

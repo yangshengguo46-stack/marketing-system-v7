@@ -478,6 +478,8 @@ def _absolute_directory(path: Path, label: str) -> Path:
     lexical = Path(path)
     if not lexical.is_absolute():
         raise EvidenceError(f"{label} must be an absolute non-symlink directory")
+    if ".." in lexical.parts:
+        raise EvidenceError(f"{label} must not contain '..' components")
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
         raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
@@ -491,6 +493,8 @@ def _absolute_file(path: Path, label: str) -> Path:
     lexical = Path(path)
     if not lexical.is_absolute():
         raise EvidenceError(f"{label} must be an absolute non-symlink file")
+    if ".." in lexical.parts:
+        raise EvidenceError(f"{label} must not contain '..' components")
     unsafe = _unsafe_path_component(lexical)
     if unsafe is not None:
         raise UnsafeEvidenceError(f"{label} contains a {unsafe} component")
@@ -697,6 +701,10 @@ def _open_stable_directory(
         raise UnsafeEvidenceError(
             f"unable to inspect public evidence directory: {path.name}"
         ) from error
+    except BaseException:
+        if anchored_parent_fd is not None:
+            os.close(anchored_parent_fd)
+        raise
     if expected_state is not None and not _same_file_state(expected_state, before):
         if anchored_parent_fd is not None:
             os.close(anchored_parent_fd)
