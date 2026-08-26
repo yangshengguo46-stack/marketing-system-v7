@@ -562,11 +562,11 @@ git add codex-rs/Cargo.toml codex-rs/Cargo.lock codex-rs/ai-ip-runtime ai-ip-ass
 git commit -m "feat: add removable AI IP Lead skill"
 ```
 
-#### Contract 5：七轮 prompt-only ceiling 与 Work Package 4 完成边界
+#### Contract 5：七轮 programmatic prompt-optimization stop decision 与 Work Package 4 完成边界
 
-七轮经审阅的 Skill wording cycle 已经达到 prompt-only ceiling，不能再以改写 `SKILL.md` 追求 factual-fidelity acceptance。Cycle 7 在三份冻结 packet 均已核对 digest 后只完成第一份样本：original 与新 held-out 各为 18/18；cycle-6 regression 的 maker-03 为 16/18。其 `contentPremise` 把 `project-card` 中的小册子和 `design-note` 中独立的黑白草稿/下周三种封面测试写成同一项目的 `实际进度`，没有单一 source span 蕴含该跨来源连接，因此 `E` 与 `F` 均失败。控制器在这个 RED 后立即取消其余十二个 dispatch，不为未执行的输出补推结论。
+七轮经审阅的 Skill wording cycle 支持一个工程上的 programmatic prompt-optimization stop decision：不再以改写 `SKILL.md` 追求 factual-fidelity acceptance。它不是“任何 prompt 都不可能通过”的理论证明，也不是 live-model 或泛化估计；Cycle 1–7 是 `providerMode=not-run` 的 fresh-context 诊断。Cycle 7 在三份冻结 packet 均已核对 digest 后只完成第一份样本：original 与新 held-out 各为 18/18；cycle-6 regression 的 maker-03 为 16/18。其 `contentPremise` 把 `project-card` 中的小册子和 `design-note` 中独立的黑白草稿/下周三种封面测试写成同一项目的 `实际进度`，没有单一 source span 蕴含该跨来源连接，因此 `E` 与 `F` 均失败。控制器在这个 RED 后立即取消其余十二个 dispatch，不为未执行的输出补推结论。
 
-此结果是诚实的 diagnostic RED，而不是对 Skill 的继续改词授权：raw Skill 可帮助发现事实保真风险，却不能作为事实保真的业务验收 guard。Work Package 4 可以在完整有序的 Cargo、validator/gate、Bazel、lock、fmt/fix 验证与新 scoped review 后，完成其机械范围（可删除原生 Skill、pinned parser/resource、bounded payload、strict Schema 和构建闭环）。该完成不得声称 all-sample factual fidelity、business acceptance、G2、Phase 0B readiness 或 live-model quality。所有 factual-fidelity acceptance 移至下述 Work Package 5 guarded-generation seam；production/persistent Evidence Store 不属于 Work Package 4，需另立后续 architecture decision。
+此结果是诚实的 diagnostic RED，而不是对 Skill 的继续改词授权：raw Skill 是有用的生成指令，而 isolated evaluation of its outputs 继续暴露事实保真 RED，不能作为事实保真的业务验收 guard。Work Package 4 可以在完整有序的 Cargo、validator/gate、Bazel、lock、fmt/fix 验证与新 scoped review 后，只完成其机械范围（可删除原生 Skill、pinned parser/resource、bounded payload、strict Schema 和构建闭环）。该完成不得声称 all-sample factual fidelity、business acceptance、G2、Phase 0B readiness 或 live-model quality。Phase 0A factual acceptance 仍是 Work Package 6 的 source-visible factual severe-failure human blind-review gate：它不是 all-sample acceptance，也不声称自动发布安全。production/persistent Evidence Store 不属于 Work Package 4；Plan 03 先定义和评测任何将来的 automatic guard，Plan 05 才拥有 durable encrypted local persistence。
 
 ---
 
@@ -587,21 +587,9 @@ git commit -m "feat: add removable AI IP Lead skill"
 - 条件修改：`codex-rs/app-server/src/request_processors/thread_processor.rs`（仅 pinned 集成测试证明 listener attach race 时）
 - 新建：`codex-rs/ai-ip-eval/Cargo.toml`
 - 新建：`codex-rs/ai-ip-eval/BUILD.bazel`
-- 新建：`codex-rs/ai-ip-eval/src/{lib.rs,main.rs,model.rs,app_server.rs,catalog.rs,broker_gate.rs,runner.rs,evidence.rs,source_fidelity_guard.rs,eval_tests.rs}`
+- 新建：`codex-rs/ai-ip-eval/src/{lib.rs,main.rs,model.rs,app_server.rs,catalog.rs,broker_gate.rs,runner.rs,evidence.rs,eval_tests.rs}`
 - 新建：`codex-rs/ai-ip-eval/tests/fixtures/{replay-fixture-set.json,replay-case.json,replay-transcript.jsonl,replay-attestation.json,replay-review-1.json,replay-review-2.json,replay-review-3.json}`
 - 修改：`codex-rs/Cargo.toml`
-
-### 5.0 Guarded generation seam：source-fidelity output guard
-
-#### Contract 0：先写 source-fidelity guard 失败测试，再接入 release boundary
-
-Work Package 5 owns factual-fidelity acceptance. After a candidate `ContentPackage` parses against the Work Package 4 strict Schema but before the package can be released as supported content, a separate `source_fidelity_guard.rs` seam must inspect it against a run-scoped source-span ledger. The ledger is constructed only from that frozen mission's supplied materials and carries stable source IDs plus exact spans; it is not a production or persistent Evidence Store. Any durable evidence/provenance store, retention policy, or cross-run retrieval design is a separate follow-on architecture decision.
-
-The guard decomposes every unlabeled factual proposition in `contentPremise`, `publishableDraft`, and `claims` and requires one source span to entail the same subject, relation, object, modifiers, attribution, temporal anchor/aspect, causal/progress/result relation, and count/set scope. Clearly labeled inference or creative hypothesis, prospective creative staging, bracketed draft placeholders, and `openQuestions` remain usable output rather than false supported facts. The guard must not require a topic, CTA, team, production stage, or other fixed business workflow.
-
-The seam returns only a bounded closed verdict: `Pass`, `Repair { violations }`, or `Block { violations }`; each violation identifies the unsupported atomic proposition, source IDs considered, and the missing attachment. Cap the feedback at 32 violations and permit exactly one generator retry, bound to the identical frozen source bytes and a concise repair payload. The retried package must be parsed and guarded again. A remaining violation or an exhausted retry returns `Block`; the package may remain available as a non-released useful draft with labeled inference/open questions, but it must not be released or reported as a supported factual package. This separates source-fidelity enforcement from the generator prompt, following the OpenAI Cookbook's recommendation for concrete accuracy criteria and sentence-level as well as whole-response evaluation: <https://developers.openai.com/cookbook/examples/developing_hallucination_guardrails>.
-
-Write the guard tests first. They must prove that: a source-supported proposition passes; a cross-source booklet/draft/cover-plan bridge, a sequence-as-cause/result claim, a forecast-as-completed claim, and event-count-to-unique-person arithmetic all return repair/block; clearly labeled inference, creative staging, and open questions survive; exactly one bounded retry receives only the identified violations and identical source-byte commitment; and a second failing verdict blocks release. Tests must also prove no guard path creates or reads a persistent Evidence Store. Only after those RED tests exist may `runner.rs` call the guard at the release boundary and record a bounded no-body verdict commitment in the private run evidence. This is the all-sample factual-fidelity acceptance that Work Package 4 cannot establish; it is still not a G2 or live-quality claim.
 
 ### 5.1 先冻结证据模型和失败测试
 
@@ -1296,6 +1284,8 @@ just test -p codex-ai-ip-eval
 
 reviewer 还必须提交：`preferred = A|B|tie`、`readyForHumanReview.A/B`、每臂最多三条具体理由，以及四个 severe flags：`fabricatedFactualClaim`、`wrongSubjectOrDesiredAction`、`notActuallyUsable`、`rightsOrPrivacyViolation`。
 
+`fabricatedFactualClaim=true` 的定义是：任何未标注的、没有来源支持的 subject/relation/object/modifier 附着，跨来源 entity/event bridge，actor 或 ordinal substitution，time/aspect drift，sequence 被提升为 cause/result，forecast 被提升为 completion，或 event/check-in count 被提升为 unique-person/set count。reviewer 从冻结 case/materials 对两臂评估事实完整性和业务可用性，但不得重写 package；完整理由仅留在私有 review submission，公开 report 不含正文。
+
 自动决策规则冻结为：
 
 ```text
@@ -1305,10 +1295,13 @@ PASS：
   - candidate 相对 generic 的 reviewer 总分差中位数 >= 3（满分 24）；且
   - candidate 总分中位数 >= 18；且
   - 至少 2/3 reviewer 标记 candidate readyForHumanReview=true；且
-  - candidate 四类 severe flag 全部为 false。
+  - candidate 四类 severe flag 全部为 false，且三份 submission 的 `fabricatedFactualClaim` 均为 false。
+任一 candidate `fabricatedFactualClaim=true`：ITERATE_SMALLEST_LEAD_CHANGE，属于有效业务失败而非 INVALID_PROOF。
 其他有效结果：ITERATE_SMALLEST_LEAD_CHANGE。
 任一证据/预算/隔离/成本绑定无效：INVALID_PROOF，不参与业务判断。
 ```
+
+这就是 Phase 0A 的 **source-visible factual severe-failure gate**，不是 all-sample factual-fidelity acceptance。Lead/generator 负责选择题材、形式、业务连接和有用草稿，并标注 claims、hypotheses、unknowns 与 open questions；人类 reviewer 只基于冻结来源判断事实和业务质量，不重写 package。若将来证据支持 automatic guard，它只检查 factual support、只发出 violations，绝不选择 topic、CTA、team、production stage 或 workflow，创意输出仅由 Lead 修复。确定性代码负责 hashes、source identity、byte ranges、caps、retry count、release state 与 receipts；没有测量过的 guard evidence 时，semantic-model verdict 不得表述为确定性真相。
 
 成本与 token/时延比率必须展示，但在批准硬上限内不得抵消内容业务 PASS；业务优先。若 candidate 更贵，进入后续优化项，而不是自动否决更好的业务能力。
 

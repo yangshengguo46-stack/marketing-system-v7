@@ -229,6 +229,12 @@ AI IP 1.1 保留这套根 Thread/Turn/tool loop，并把“对代码任务负责
 - 本地更新采用 side-by-side：先暂停写入并保存“旧二进制＋预迁移数据库快照”配对恢复点，在副本上迁移和健康检查后才切换活动版本。切换前失败可以整对回滚；切换并产生新写入后禁止自动退回旧 schema，只能由新版本修复或进入只读导出，不能用恢复旧快照丢弃新数据。
 - 用户主动开启备份后，本地先分块加密再上传。首版备份用于灾难恢复，不做静默双向同步；在另一设备恢复同一项目时创建明确分支。
 
+#### 6.5.1 Evidence/provenance 与未来 factual guard 边界
+
+Plan 03 owns the local project Evidence Store/Retrieval Adapter semantics and any future automatic factual-guard business evaluation; Plan 05 owns its durable encrypted local persistence. The substrate is business-led: typed assertions, source identities and spans, provenance, corrections, and artifact bindings. It is not a required document-library, vector-database, or knowledge-base UI; it is not cloud project truth; and it must not impose a fixed user workflow. A UI may later project business artifacts only when a user task justifies it.
+
+An automatic guard is not implied by this data model. Before a Plan 03 child proposes one, it must freeze its factual surface over the real `ContentPackage`, the handling of labeled inference outside `Claim`, the relation to `Readiness`, a guard evaluation set (faithful paraphrase positives and unseen negatives), false-negative/false-positive thresholds, quality/token/latency/cost measurements, deletion, live commitments, and byte-replay semantics. A semantic model verdict is not deterministic truth merely because deterministic code records it; replay verifies recorded bytes and does not re-query a model. The current [OpenAI Guardrails documentation](https://guardrails.openai.com/) is rationale for layering checks and human oversight, not this product's implementation contract.
+
 ### 6.6 业务与执行状态的边界
 
 - Mission 和 Artifact 图决定业务进展；Thread、Turn、Item、durable rollout、BusinessTaskStepReceipt 和 RuntimeAttempt 只提供重建执行所需的历史与副作用凭证，不等于业务完成，也不承诺从任意工具指令中点续跑。

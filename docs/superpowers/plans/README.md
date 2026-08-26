@@ -5,8 +5,8 @@
 - `2026-08-25-00-codex-ai-ip-master-roadmap.md`：总导航、依赖与门禁；不可直接执行。
 - `../specs/2026-08-25-domestic-model-adaptation-design.md`：已获用户批准的国产模型 provider-neutral 能力合同、火山托管 GLM 路线与非阻塞第二供应商 onboarding。
 - `../specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md`：Phase 0A 构建与验收合同；不可直接执行。
-- `2026-08-25-01a-codex-fork-provenance.md`：已完成的来源导入与 fork provenance child plan。
-- `2026-08-25-01b-codex-native-evidence-macos-baseline.md`：唯一达到 execution depth、当前可执行的证据工具与原生 macOS x86_64 baseline child plan。
+- `2026-08-25-01a-codex-fork-provenance.md`、`2026-08-25-01b-codex-native-evidence-macos-baseline.md`、`2026-08-26-01c-evidence-filesystem-race-hardening.md`、`2026-08-26-01d-nextest-selection-loopback-recapture.md` 与 `2026-08-26-02-content-package-contract.md`：已在各自记录的 scoped implementation/review boundary 完成的前序 executable children；不因此关闭 G0–G2 或授权产品 Plan 02。
+- `2026-08-26-03-native-lead-skill-runtime.md`：当前 child；只允许完成 Work Package 4 的最终机械验证与新的 scoped review。Cycle 1–7 为 `providerMode=not-run` 的 diagnostic RED，不能充当事实保真业务验收、live-model 质量或 `PASS_TO_PHASE_0B`。
 
 实施人员必须先读取：
 
@@ -15,9 +15,9 @@
 3. `../../architecture/2026-08-25-legacy-six-version-decision-memory.md`
 4. `2026-08-25-00-codex-ai-ip-master-roadmap.md`
 5. `../specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md`
-6. 已完成 child plan `2026-08-25-01a-codex-fork-provenance.md` 的来源锁、台账与验收记录
-7. 当前达到 execution depth、可从干净 Phase 0A.1 tip 执行的 child plan `2026-08-25-01b-codex-native-evidence-macos-baseline.md`
+6. 已完成 children 的来源锁、台账与验收记录（`2026-08-25-01a` 至 `2026-08-26-02`）
+7. 当前 child `2026-08-26-03-native-lead-skill-runtime.md` 及其 Cycle 1–7 diagnostic RED 证据
 
-只有第 7 项可以交给 `superpowers:subagent-driven-development` 或 `superpowers:executing-plans`。它不改 Codex runtime、不调用 provider、不读取 API key；Windows 11 x64 baseline 由后续独立 child 使用同一 tools SHA 完成。构建规格中的 Work Package 不能直接执行。
+第 7 项仅可在其既有 plan 的限制内完成 Work Package 4 最终机械闭环与 fresh scoped review；不得把 diagnostic RED 解释成事实保真业务 PASS，也不得运行 provider 或读取 API key。Work Package 5 在单独 executable child 经过撰写与审阅前不可执行；`PASS_TO_PHASE_0B` 与产品 Plan 02 保持 blocked。构建规格中的其他 Work Package 不能直接执行。
 
 `archive/2026-08-24-cloud-saas-v1.3/` 中的文件基于已废止架构，只能作为历史证据，禁止执行。
