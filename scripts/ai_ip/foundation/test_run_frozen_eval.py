@@ -367,27 +367,22 @@ def test_wrapper_requires_exact_single_context_prefix(
     assert not fixture.child_receipt.exists()
 
 
-def test_wrapper_rejects_late_context_authority(tmp_path: Path) -> None:
+def test_wrapper_preserves_evaluator_context_argument(tmp_path: Path) -> None:
     fixture = FrozenEvalFixture.create(tmp_path, execution_mode="replay")
-    completed = subprocess.run(
-        [
-            sys.executable,
-            str(WRAPPER),
-            "--context",
-            str(fixture.context),
-            "--",
-            "replay-pair",
-            "--context",
-            str(fixture.context),
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-        cwd=fixture.root,
-    )
+    fixture.child_argv = ("replay-pair", "--context", "evaluator-owned-context")
 
-    assert completed.returncode == 1
-    assert not fixture.child_receipt.exists()
+    completed = fixture.run_wrapper()
+
+    assert completed.returncode == 0, completed.stderr
+    receipt = json.loads(fixture.child_receipt.read_text(encoding="utf-8"))
+    assert receipt["argv"] == [
+        str(fixture.binary),
+        "replay-pair",
+        "--context",
+        "evaluator-owned-context",
+        "--frozen-run-context",
+        str(fixture.context),
+    ]
 
 
 def test_context_accepts_genuine_foreign_windows_path(tmp_path: Path) -> None:

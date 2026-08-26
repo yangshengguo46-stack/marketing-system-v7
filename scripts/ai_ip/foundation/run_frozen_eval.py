@@ -27,7 +27,6 @@ FROZEN_EVALUATOR_KEYS = {
     "windows11X64BinarySha256",
 }
 FORBIDDEN_CHILD_FLAGS = {
-    "--context",
     "--frozen-run-context",
     "--model",
     "--model-id",
