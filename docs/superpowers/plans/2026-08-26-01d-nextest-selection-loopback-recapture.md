@@ -8,6 +8,8 @@
 
 **Provider boundary:** `providerMode=not-run`; `paidProviderCost=0`; do not locate or read an API key.
 
+**Audit authorities:** The ignored SDD root is `.superpowers/sdd/2026-08-26-01d-nextest-selection-loopback-recapture/`. Its authoritative files are `progress.md`, `task-0-report.md`, `task-0-review.md`, `task-1-report.md`, `task-1-review.md`, `task-2-report.md`, `task-2-review.md`, `task-3-report.md`, `task-3-review.md`, and `task-4-report.md`. Every report records command, exit, relevant SHA/path, and disposition before its task is marked complete.
+
 ## Reproduced facts
 
 1. Nine exact-name nextest selections ran from the repository top level. Cargo therefore could not find `Cargo.toml`, because the pinned workspace root is `<repo>/codex-rs`. Each selection became `BLOCKED_SELECTION` before its real test ran.
@@ -29,16 +31,23 @@ These facts identify recorder/capture-environment defects. They do not authorize
 ### Exact-name count on nextest 0.9.103 JSON
 
 - Keep the generated argv as `cargo nextest list --message-format json` followed by the original `just test` arguments after the first two tokens.
-- Require exactly one `-E` argument pair whose expression is exactly `test(=<nonempty-name>)`; reject any other selection expression before a child command runs.
-- Strictly parse the nextest JSON root and dynamic `rust-suites` objects. Root `test-count` is population metadata and must be a non-boolean nonnegative integer, but it is not the exact-filter count.
-- Count exact key equality with the extracted test name across every suite's `testcases` object. The manifest's existing `selection.testCount` field records that exact-match count and must equal `1` before the real command runs.
-- Duplicate JSON keys, malformed suite/testcase objects, zero matches, and duplicate exact matches remain `BLOCKED_SELECTION`.
+- Require exactly one separate `-E` argument pair, reject `--filter-expr`, a second `-E`, a missing value, or any other selection expression before a child command runs. The sole value must full-match `test(=<name>)`, where `<name>` matches `[A-Za-z0-9_]+(?:::[A-Za-z0-9_]+)*`; compound, negated, wildcard, `all()`, suffix-bearing, and extra-closing syntax is forbidden.
+- Strictly parse the nextest JSON root while rejecting duplicate keys at every depth. `rust-suites` must be an object; every suite must be an object containing a `testcases` object; and every visited testcase leaf must have the locked typed shape needed by this contract. Root `test-count` is population metadata and must be a non-boolean nonnegative integer, but it is not the exact-filter count.
+- Count raw exact key equality with the extracted test name across every suite's `testcases` object. The count must be exactly one, and that sole leaf must have `ignored is false` and exact `filter-match == {"status":"matches"}`. The manifest's existing `selection.testCount` records this runnable exact-match count and must equal `1` before the real command runs.
+- Ignored or mismatched exact leaves, malformed leaves, repeated suite/testcase JSON keys, zero matches, and the same exact name in multiple suites remain `BLOCKED_SELECTION` and must not run the real command.
 
 ### Fixed loopback proxy bypass
 
 - `_sanitized_child_environment` sets both `NO_PROXY` and `no_proxy` to the literal `127.0.0.1,localhost,::1` after reading its fixed allowlist.
 - Ambient proxy/bypass variables are never copied as authority and cannot override the fixed value.
 - No general external-network access is enabled; only loopback names/addresses bypass host proxy discovery.
+
+## Task 0 — Quarantine the invalid capture before implementation
+
+1. The exact source is the complete current `docs/evidence/foundation/macos-x86_64/baseline/` tree. Before moving it or mutating any worktree/ref/bundle, write `task-0-report.md` with the verifier exit/reasons and a deterministic inventory sorted by UTF-8 relative-path bytes. Each inventory row contains relative path, regular-file type, link count, byte count, and SHA-256; the aggregate digest is SHA-256 of the canonical newline-terminated rows.
+2. Create a new destination beneath `/private/var/folders/vm/g05xtp4x72q6c6365sw3d2sm0000gn/T/ai-ip-native-macos.QWBiDf/quarantine/` named `task-7-invalid-<UTC-basic-timestamp>-<aggregate-digest-prefix12>`. The destination and final basename must not already exist.
+3. Move the whole source leaf once. Recompute the same inventory at the destination and require identical relative-path set, regular-file type, link count, byte count, per-file SHA-256, total count, and aggregate digest. On mismatch, stop without recreating the product evidence leaf and without deleting either surviving copy/artifact.
+4. Never edit or delete the quarantine. Independent `task-0-review.md` must pass before Task 1.
 
 ## Task 1 — TDD and implement the recorder repair
 
@@ -48,20 +57,21 @@ These facts identify recorder/capture-environment defects. They do not authorize
 - Modify `scripts/ai_ip/foundation/test_capture_command.py`
 
 1. Add RED integration tests proving a root-level selection fails while a nested `codex-rs` fake workspace is the required selection cwd; the real command remains at repository root.
-2. Add RED parser tests using nextest-0.9.103-shaped JSON where root `test-count` is greater than one but the exact test key occurs once. Add zero/duplicate/malformed cases.
-3. Add RED environment tests proving hostile ambient `NO_PROXY`, `no_proxy`, and proxy values cannot replace the fixed loopback bypass.
+2. Add RED parser tests using nextest-0.9.103-shaped JSON where root `test-count` is greater than one but exactly one runnable leaf has the exact key. Cover exact-but-mismatched, ignored, zero, the same exact name across two suites, duplicate JSON keys at every parsed depth, malformed suite/testcase/leaf shapes, compound/negated/`all()`/wildcard/suffix/extra-closing expressions, a second `-E`, `--filter-expr`, and missing values.
+3. Add RED environment tests proving hostile ambient `NO_PROXY`, `no_proxy`, and uppercase/lowercase HTTP/HTTPS/SOCKS proxy values cannot replace the fixed loopback bypass.
 4. Implement the minimum production changes. Do not change the matrix, manifest schema, verifier, wrapper, or any `codex-rs/**` file.
 5. Run focused `test_capture_command.py`, all Python foundation tests once, `just fmt`, py_compile, upstream lock, `codex-rs` zero diff, and clean tracked diff checks. Commit only the two authorized Python files.
 6. Independent task review must find no Critical or Important issue before resealing.
 
 ## Task 2 — Preserve invalid evidence and reseal without discarding caches
 
-1. Before moving anything, compute an inventory digest for the complete invalid evidence directory and record the verifier exit/reasons in the ignored repair report.
-2. Move the complete directory, without modifying its contents, to a create-new canonical external quarantine directory beneath the existing native root. Prove every relative file, byte count, and SHA-256 is identical after the move. Do not delete the quarantine.
-3. The passing Task 1 commit becomes the new `AI_IP_TOOLS_SHA`. Run the complete Python foundation suite and `just fmt-check` against that exact SHA; no duplicate run is required if Task 1's final complete suite used the same committed tree.
-4. Preserve the old tools worktree and old bundle for audit. Add a new detached `tools-v2` worktree in the existing native root. Reuse the unchanged pinned-Codex worktree and existing external `cargo-target`, `cargo-home`, and pnpm store so the expensive compiled cache is not discarded.
-5. Compare-and-swap only `refs/heads/ai-ip-transfer/foundation-tools` from old tools SHA `d7911f421a33b2f63a81e49ffe04a5de190bb59a` to the new SHA; the pinned ref remains exact. Create and verify a fresh external two-ref bundle/checksum. Do not overwrite or delete the old bundle.
-6. Record canonical paths, old/new tools SHA, refs, old/new bundle digests, cache reuse, quarantine path/digest, and zero-provider claims in the ignored repair report. Independent review must pass before recapture.
+1. The passing Task 1 commit becomes the new `AI_IP_TOOLS_SHA`. Run the complete Python foundation suite and `just fmt-check` against that exact SHA; no duplicate run is required if Task 1's final complete suite used the same committed tree.
+2. Preserve the old tools worktree and old bundle for audit. Add a new detached `tools-v2` worktree in the existing native root. Reuse the unchanged pinned-Codex worktree and existing external `cargo-target`, `cargo-home`, and pnpm store so the expensive compiled cache is not discarded.
+3. Before mutation, revalidate and record `refs/heads/ai-ip-transfer/foundation-tools == d7911f421a33b2f63a81e49ffe04a5de190bb59a` and `refs/heads/ai-ip-transfer/pinned-codex == 4ef1d4b89bd419c976b04fefa0fd36844e898340`.
+4. Treat resealing as a transaction. Compare-and-swap only the foundation-tools ref old-to-new with the old SHA as the expected value; never change the pinned ref. Create a fresh external bundle and checksum, then verify it advertises exactly the pinned ref at the pinned SHA and the foundation-tools ref at the new SHA, with no extra advertised head. Re-hash the old bundle and require its original digest `52ada4aac15d4490e78261414bd936849ae74634f5aa7d2e30dd8c0576008992`; never overwrite or delete it.
+5. If any post-CAS step or `task-2-review.md` acceptance fails, roll back only with expected-new compare-and-swap (`git update-ref <foundation-ref> <old> <new>`), reverify both refs, and retain the quarantine, old artifacts, and every failed new artifact. A rollback race is a hard stop, not permission to force-update.
+6. `task-2-review.md` PASS is the point of no return. Once Task 3 starts creating evidence bound to the new tools SHA, do not silently roll back that ref. A later capture/tool failure preserves the new capture in a new external quarantine and requires an explicit follow-up repair; an honest verifier exit `2/BLOCKED_BASELINE` is not a tooling rollback condition.
+7. Record canonical paths, old/new tools SHA, refs, old/new bundle digests, cache reuse, quarantine path/digest, transaction result, and zero-provider claims in `task-2-report.md`. Independent `task-2-review.md` must pass before recapture.
 
 ## Task 3 — Recapture bootstrap and the 20-command baseline
 
@@ -70,11 +80,12 @@ These facts identify recorder/capture-environment defects. They do not authorize
 3. Run the exact original 20 matrix IDs, in order, only through the new recorder. Do not alter expected exits or retry a nonzero capture in place.
 4. Run the baseline verifier and create `baseline-summary.json`. Accept only exit `0/PASS` or exit `2/BLOCKED_BASELINE`; exit `1` remains a capture/tool blocker.
 5. If the verifier reaches exit 0 or 2, ask the user once whether to run the optional complete workspace `just test`; do not infer approval. Then run the forbidden-content rescan.
-6. Independent evidence review must verify new SHA bindings, exact inventory, all manifests/log hashes, summary disposition, no forbidden content, and clean detached worktrees.
+6. Independent `task-3-review.md` must verify new SHA bindings, exact inventory, all manifests/log hashes, summary disposition, no forbidden content, and clean detached worktrees. A Task 3 failure follows Task 2's point-of-no-return rule and is documented in `task-3-report.md`.
 
 ## Task 4 — Resume original Task 8 boundary
 
-- On macOS focused `PASS`, resume original Task 8 with the new tools SHA, new bundle digest, new summary digest, and the user's optional-suite disposition.
+- The original plan's root `test-count == 1` clauses (contract line 21 and Task 2 line 531 in `2026-08-25-01b-codex-native-evidence-macos-baseline.md`) are explicitly superseded by this repair plan beginning at commit `f75ab66be064a7bc41c41e9d102568dc3de73793`; the locked nextest runnable-leaf contract above is authoritative.
+- On macOS focused `PASS`, resume original Task 8 with the new tools SHA, old/new bundle digests, new summary digest, retained invalid-quarantine path/digest, and the user's optional-suite disposition. F-0003 must cite both plans, this supersession, and all those bindings.
 - On honest `BLOCKED_BASELINE`, follow original Task 8 Step 1 and stop; do not authorize Work Package 3.
 - In either case retain the invalid quarantine, old tools worktree, and old bundle outside Git until the Phase 0A.2 handoff is accepted.
 
