@@ -85,8 +85,8 @@ These facts identify recorder/capture-environment defects. They do not authorize
 ## Task 4 — Resume original Task 8 boundary
 
 - The original plan's root `test-count == 1` clauses (contract line 21 and Task 2 line 531 in `2026-08-25-01b-codex-native-evidence-macos-baseline.md`) are explicitly superseded by this repair plan beginning at commit `f75ab66be064a7bc41c41e9d102568dc3de73793`; the locked nextest runnable-leaf contract above is authoritative.
-- On macOS focused `PASS`, resume original Task 8 with the new tools SHA, old/new bundle digests, new summary digest, retained invalid-quarantine path/digest, and the user's optional-suite disposition. F-0003 must cite both plans, this supersession, and all those bindings.
-- On honest `BLOCKED_BASELINE`, follow original Task 8 Step 1 and stop; do not authorize Work Package 3.
+- For both `PASS` and `BLOCKED_BASELINE`, F-0003 must cite both plans, this supersession, the new tools SHA, old/new bundle digests, new summary digest, retained invalid-quarantine path/digest, and the user's optional-suite disposition.
+- On macOS focused `PASS`, resume original Task 8 with those bindings. On honest `BLOCKED_BASELINE`, follow original Task 8 Step 1 with the same bindings and stop; do not authorize Work Package 3.
 - In either case retain the invalid quarantine, old tools worktree, and old bundle outside Git until the Phase 0A.2 handoff is accepted.
 
 ## Verification boundary
