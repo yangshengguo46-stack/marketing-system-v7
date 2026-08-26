@@ -249,7 +249,9 @@ Preceding executable children have these individual dispositions:
 
 None of these dispositions closes G0–G2, authorizes provider calls, or authorizes product Plan 02.
 
-The current child, `2026-08-26-03-native-lead-skill-runtime.md`, is limited to Work Package 4's final mechanical closure: its full ordered verification and fresh scoped review. Its seven wording cycles are diagnostic RED evidence, including Cycle 7's 16/18 regression sample; they are neither factual-fidelity business acceptance nor a live-model quality result. Work Package 5 is not executable until a separate child plan is authored and reviewed. `PASS_TO_PHASE_0B` and product Plan 02 remain blocked.
+`2026-08-26-03-native-lead-skill-runtime.md` completed Work Package 4's mechanical closure: its full ordered verification and fresh scoped review passed. Its seven wording cycles remain diagnostic RED evidence, including Cycle 7's 16/18 regression sample; they are neither factual-fidelity business acceptance nor a live-model quality result.
+
+The current executable child is `2026-08-27-04-native-atomic-paired-evaluator.md`. It implements Work Package 5 in four independently reviewable boundaries: gateable Responses proxy, typed evaluator/config/catalog/tree collector, pinned App Server descendant/strict-output characterization, and atomic paired runner. This child permits replay and local mock-upstream verification only; it does not run a provider, read an API key, perform the Work Package 6 human review, execute the Work Package 8 approved live pair, or close G0–G2. `PASS_TO_PHASE_0B` and product Plan 02 remain blocked.
 
 ### 9.1 Approved evidence/provenance follow-on boundary
 
