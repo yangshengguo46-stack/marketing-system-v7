@@ -159,6 +159,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 - Before drafting, build an internal evidence ledger keyed by source ID. Record each supported fact as subject, relation, object, and modifiers; preserve which action or entity every role, quantity, date, duration, sequence, and ordinal modifies, and never transfer a modifier to a neighboring action or entity.
 - Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Treat source entailment as the release gate. Review the premise, draft, and claims sentence by sentence; every unlabeled factual phrase must have one source span that entails the same relation and modifier attachments. If none does, remove or relabel the phrase. Facts from separate materials may appear together, but their co-occurrence does not establish a relationship between their entities or events.
+- Apply these non-entailment checks literally unless a source states the missing relation: starting to record activity X neither means starting X nor permits moving the recording start to another date such as "now"; separate materials do not connect their entities; a group completing a counted set does not identify who completed its first or last item.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -413,6 +414,14 @@ Cycle 4 is RED. Samples 01, 02, and 03 introduced unsupported start-learning rel
 For cycle 5, add only the reviewed source-entailment release-gate bullet from the canonical Skill above. It operationalizes the OpenAI Cookbook's hallucination-guardrail guidance to use concrete accuracy criteria and evaluate individual sentences as well as the whole response: <https://developers.openai.com/cookbook/examples/developing_hallucination_guardrails>. The internal check must find a source span that entails each unlabeled factual phrase's relation and modifier attachments; merely placing facts from two materials in one mission does not create a relation between them. Do not expose internal analysis. Keep every other Skill line, the packet, schema, runtime API, and the cycle 4 18-boolean rubric unchanged.
 
 Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all prior outputs, and run five fresh-context samples into `skill-treatment-cycle-05-01.md` through `skill-treatment-cycle-05-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
+
+### Task 3 behavior cycle 6 amendment
+
+Cycle 5 is RED. Sample 01 transferred March 2024 to starting woodworking learning; sample 02 invented that the founder sealed the final package; sample 03 moved the recording start to now; sample 04 put an unsupported post-departure learning start in the premise; and sample 05 again moved the recording start to now. Preserve the exact 18-boolean matrices and rationales.
+
+For cycle 6, add only the reviewed non-entailment-checks bullet from the canonical Skill above. These three compact negative examples implement the OpenAI Cookbook guidance that few-shot prompting can improve hallucination-guardrail accuracy, while remaining general across subject kinds and business domains. They distinguish recording from the recorded activity and from a different date, prohibit cross-material entity links, and prohibit inferring a distinguished first/last actor from group completion. Keep all other Skill lines, packet, schema, runtime API, and the 18-boolean rubric unchanged.
+
+Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve all prior outputs, and run five fresh-context samples into `skill-treatment-cycle-06-01.md` through `skill-treatment-cycle-06-05.md`. Every sample must pass 18/18. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
