@@ -1,8 +1,17 @@
 mod prompt;
+mod schema;
 
-pub use prompt::{ADDITIONAL_CONTEXT_KEY, EVALUATION_CONTEXT_MAX_TOKENS, LEAD_SKILL_NAME};
-pub use prompt::{ROOT_PROMPT_MAX_TOKENS, RuntimePromptError};
-pub use prompt::{approx_token_count, evaluation_context, root_prompt};
+pub use prompt::ADDITIONAL_CONTEXT_KEY;
+pub use prompt::EVALUATION_CONTEXT_MAX_TOKENS;
+pub use prompt::LEAD_SKILL_NAME;
+pub use prompt::ROOT_PROMPT_MAX_TOKENS;
+pub use prompt::RuntimePromptError;
+pub use prompt::approx_token_count;
+pub use prompt::evaluation_context;
+pub use prompt::root_prompt;
+pub use schema::StrictSchemaError;
+pub use schema::content_package_schema;
+pub use schema::validate_responses_strict_subset;
 
 #[cfg(test)]
 #[path = "runtime_tests.rs"]
