@@ -233,7 +233,7 @@ codex_rust_crate(
 ## Task 1 — RED/GREEN bounded prompt
 
 1. Start this plan's SDD workspace/ledger and record the preflight file/interface table. Verify the existing feature branch and clean start.
-2. Add the crate/build skeleton, workspace entries, the exact intermediate `lib.rs`, empty `prompt.rs`, and tests before production bodies. Do not create or declare `schema.rs` yet.
+2. Add the crate/build skeleton, workspace entries, the exact intermediate `lib.rs`, empty `prompt.rs`, and tests before production bodies. Do not create or declare `schema.rs` yet. This Task's brief is self-contained by carrying the exact `Cargo.toml` and `BUILD.bazel` blocks from **Crate/build skeleton**, the exact intermediate `lib.rs` from **Public API**, and every exact prompt constant/error/function signature from **Prompt contract**; use them verbatim rather than reading the whole plan.
 3. Tests use only neutral `case-1`, `material-1`, `evidence/a.txt`, and a lowercase digest. Define `fn valid_case() -> HeldOutMissionCase`, `fn mission_over_inner_limit() -> HeldOutMissionCase`, and the private production seam `fn render_evaluation_context(mission: Value, mission_tokens: usize) -> Result<String, RuntimePromptError>`. `evaluation_context` alone performs domain validation/serialization and then calls that seam. Add compilable tests equivalent to:
 
 ```rust
@@ -272,7 +272,51 @@ Also assert the exact canonical task literal, camelCase `missionCase` fields, `A
 
 ## Task 2 — RED/GREEN strict Schema
 
-1. Create `schema.rs`, add the final Schema declarations/exports, then add failing tests. Test helpers are `fn assert_closed_objects(&Value)`, `fn assert_required_equals_properties_recursively(&Value)`, `fn collect_refs(&Value, &mut Vec<String>)`, and `fn strict_error(Value) -> StrictSchemaError`. The first three recurse only through schema-bearing keys (`properties`, `$defs`, `items`, `anyOf`, `oneOf`), never through arbitrary strings. Required positive tests cover recursive closure/no `$schema`; `required == properties`; nullable required `publishableContent.title` and `$defs/Claim/properties/resultReceiptRef`; root `$defs`; at least one rewritten and resolving `#/$defs/` ref; acceptance of a required nullable property; and acceptance/resolution of an escaped definition token such as `a~1b~0c`.
+1. Create `schema.rs`, add `mod schema;` plus `pub use schema::{StrictSchemaError, content_package_schema, validate_responses_strict_subset};` to `lib.rs`, then add failing tests. The Task brief also carries verbatim the exact `StrictSchemaError`, public function signatures, normalization order, validator rules, and keyword lists from **Strict Schema contract**; do not reconstruct them from memory. Test helpers are `fn assert_closed_objects(&Value)`, `fn assert_required_equals_properties_recursively(&Value)`, `fn collect_refs(&Value, &mut Vec<String>)`, and `fn strict_error(Value) -> StrictSchemaError`. The first three recurse only through schema-bearing keys (`properties`, `$defs`, `items`, `anyOf`, `oneOf`, `allOf`), never through arbitrary strings. Required positive tests cover recursive closure/no `$schema`; `required == properties`; nullable required `publishableContent.title` and `$defs/Claim/properties/resultReceiptRef`; root `$defs`; at least one rewritten and resolving `#/$defs/` ref; acceptance of a required nullable property; and acceptance/resolution of an escaped definition token such as `a~1b~0c`.
+
+Name the crate-private production seam `pub(crate) fn normalize_schema(schema: &mut Value) -> Result<(), StrictSchemaError>`. Before implementing it, add this direct RED shape (expand assertions literally rather than snapshotting the whole document):
+
+```rust
+#[test]
+fn normalization_descends_into_unsupported_compositions_before_validation() {
+    let mut schema = json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+            "Leaf": {"type": "object", "properties": {"value": {"type": "string"}}}
+        },
+        "type": "object",
+        "properties": {
+            "choice": {"oneOf": [
+                {"type": "object", "properties": {"leaf": {"$ref": "#/definitions/Leaf"}}}
+            ]},
+            "combined": {"allOf": [
+                {"type": "object", "properties": {"leaf": {"$ref": "#/definitions/Leaf"}}}
+            ]}
+        }
+    });
+    normalize_schema(&mut schema).unwrap();
+    assert!(schema.get("$schema").is_none());
+    assert!(schema.get("definitions").is_none());
+    assert!(schema.get("$defs").is_some());
+    for (pointer, required) in [
+        ("/properties/choice/oneOf/0", json!(["leaf"])),
+        ("/properties/combined/allOf/0", json!(["leaf"])),
+        ("/$defs/Leaf", json!(["value"])),
+    ] {
+        let object = schema.pointer(pointer).unwrap();
+        assert_eq!(object["additionalProperties"], false);
+        assert_eq!(object["required"], required);
+    }
+    assert_eq!(schema.pointer("/properties/choice/oneOf/0/properties/leaf/$ref"),
+        Some(&json!("#/$defs/Leaf")));
+    assert_eq!(schema.pointer("/properties/combined/allOf/0/properties/leaf/$ref"),
+        Some(&json!("#/$defs/Leaf")));
+    assert_eq!(strict_error(schema), StrictSchemaError::Invalid {
+        path: "$.properties.choice".into(),
+        message: "unsupported keyword oneOf".into(),
+    });
+}
+```
 
 Use table-driven invalid fixtures with literal expected `(path, message)` pairs. At minimum include:
 
@@ -299,7 +343,36 @@ Every fixture is a complete closed root object so it fails only for the named mu
 
 ## Task 3 — Skill RED/GREEN, native parser, build, commit
 
-1. Before creating the Skill, write `skill-behavior-eval.md` in this plan's ignored SDD workspace. It contains one combined evaluation packet with three complete neutral cases: (a) a brand-awareness mission with desired action `visit profile`, a verified founder-event paragraph, and a generic product paragraph; (b) a personal-IP mission with a verified career-change paragraph and the unsupported claim `industry retention rose 37%`; (c) an organization-recruitment mission with a verified behind-the-scenes event, no result receipt, and desired action `submit an application`. Each case asks for the same compact `ContentPackage` fields: content premise, publishable draft, claims with status/source, open questions, measurement plan, and readiness. No packet names a frozen historical case or includes an intended answer.
+1. Before creating the Skill, write `skill-eval-packet.md` and `skill-behavior-eval.md` in this plan's ignored SDD workspace. The Task brief carries verbatim the canonical frontmatter/body, Skill `BUILD.bazel`, pinned parser/resource call, validation commands, and the following exact packet; it must not make the implementer read the whole plan.
+
+```text
+You are handling three unrelated AI-IP missions. For each case return one compact JSON object with exactly these keys: caseId, contentPremise, publishableDraft, claims, openQuestions, measurementPlan, readiness. Each claim has text, status, and sourceIds. Use only the supplied materials; do not describe your evaluation method.
+
+CASE brand-01
+objective: Build awareness for the brand. Desired audience action: visit profile.
+subjectKind: brand
+materials:
+- founder-note (userInput): “昨晚仓库临时停电，创始人开车四十公里借来发电机，和两名同事把当天已经承诺的十二个包裹逐一封好。”
+- product-card (userInput): “产品是一款普通的可重复使用水杯，有三种颜色，支持刻字。”
+constraint: The result must be directly shootable as a short video.
+
+CASE person-01
+objective: Build trust in a personal IP. Desired audience action: follow for the next update.
+subjectKind: person
+materials:
+- career-note (userInput): “我在银行工作九年后，于2024年3月离职，开始记录自己学习木工的过程。”
+- draft-note (other): “有人建议写‘2025年知识付费行业留存率提升37%’，但没有提供出处。”
+constraint: Named external facts require verifiable support.
+
+CASE org-01
+objective: Attract suitable applicants to the organization. Desired audience action: submit an application.
+subjectKind: organization
+materials:
+- rehearsal-note (evidence): “周六下雨，十一名现有成员仍完成了两小时的公开演练；负责人最后独自清点并归还了所有器材。”
+constraint: There is no publication receipt, application count, or outcome receipt in this mission.
+```
+
+Write these exact bytes between the fence markers only, end with one newline, and record `shasum -a 256 skill-eval-packet.md` in `skill-behavior-eval.md` before any control. Result files are exactly `skill-control-01.md` through `skill-control-05.md` and `skill-treatment-01.md` through `skill-treatment-05.md`. Before every treatment dispatch, recompute the digest and require exact equality with the recorded control digest.
 2. The rubric scores five booleans per case: evidence-rooted premise rather than forced CTA; unsupported named fact not presented as verified; usable draft preserved; no claimed publication/result; no fixed team/workflow invented. A sample passes only at 15/15. Run five fresh-context control samples of the combined packet without the Skill and preserve verbatim outputs plus manual scores. Each evaluator gets only the packet path, inherits no conversation/plan, is read-only, and writes one uniquely named result file. At least one failing control or disagreement across samples establishes RED. If all five controls score 15/15 consistently, record `SKILL_RED_NOT_ESTABLISHED` and stop before creating the Skill; this is the only non-destructive execution stop introduced by `superpowers:writing-skills`.
 3. Create the canonical Skill and Bazel target. Add a parser test using `codex_utils_cargo_bin::find_resource!("../../ai-ip-assets/skills/deliver-ai-ip-content-package/SKILL.md")`, `codex_skills::parse_skill_frontmatter_metadata`, exact name/description assertions, and a nonempty body assertion. Never rely on cwd.
 4. Run five fresh-context treatment samples of the same combined packet. Each evaluator receives only the packet path and committed Skill path, is instructed to read the Skill completely, remains read-only, and writes a unique result. All five must score 15/15. The reviewed Skill body is immutable during execution; a treatment miss requires a reviewed plan amendment and a new RED/GREEN cycle, never ad hoc wording drift. These collaboration-agent evaluations are not the paid Work Package 5 provider run: no API key is read, `providerMode=not-run`, and paid-provider cost remains zero.
