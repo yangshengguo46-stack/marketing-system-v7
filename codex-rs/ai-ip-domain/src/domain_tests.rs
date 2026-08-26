@@ -501,6 +501,60 @@ fn actual_result_receipt_must_have_the_declared_receipt_kind() {
 }
 
 #[test]
+fn content_package_accepts_same_case_evidence_references() {
+    let mut case = valid_case();
+    case.materials = vec![
+        MissionMaterial {
+            material_id: "user-input-1".into(),
+            relative_path: "inputs/a.txt".into(),
+            sha256: "a".repeat(64),
+            material_kind: MaterialKind::UserInput,
+        },
+        MissionMaterial {
+            material_id: "evidence-1".into(),
+            relative_path: "evidence/b.txt".into(),
+            sha256: "b".repeat(64),
+            material_kind: MaterialKind::Evidence,
+        },
+        MissionMaterial {
+            material_id: "result-source-1".into(),
+            relative_path: "results/a.txt".into(),
+            sha256: "c".repeat(64),
+            material_kind: MaterialKind::Other,
+        },
+        MissionMaterial {
+            material_id: "receipt-1".into(),
+            relative_path: "receipts/a.txt".into(),
+            sha256: "d".repeat(64),
+            material_kind: MaterialKind::ActualResultReceipt,
+        },
+    ];
+    let mut package = valid_package(SubjectKind::Brand);
+    package.claims = vec![
+        Claim {
+            text: "neutral user fact".into(),
+            status: ClaimStatus::UserFact,
+            source_refs: vec!["user-input-1".into()],
+            result_receipt_ref: None,
+        },
+        Claim {
+            text: "neutral evidence".into(),
+            status: ClaimStatus::ExternalEvidence,
+            source_refs: vec!["evidence-1".into()],
+            result_receipt_ref: None,
+        },
+        Claim {
+            text: "neutral result".into(),
+            status: ClaimStatus::ActualResult,
+            source_refs: vec!["result-source-1".into()],
+            result_receipt_ref: Some("receipt-1".into()),
+        },
+    ];
+
+    package.validate_against(&case).unwrap();
+}
+
+#[test]
 fn held_out_material_paths_cannot_escape_case_root() {
     let mut case = valid_case();
     case.materials[0].relative_path = "evidence/../a.txt".into();
@@ -567,6 +621,20 @@ fn readiness_boundaries_are_explicit() {
         package.validate().unwrap_err().errors(),
         &["readiness: blockedByMissingEvidence requires a missing-evidence marker"]
     );
+
+    package.claims[0].status = ClaimStatus::Unknown;
+    package.readiness = Readiness::ReadyForHumanReview;
+    assert_eq!(
+        package.validate().unwrap_err().errors(),
+        &["readiness: readyForHumanReview cannot contain missing-evidence markers"]
+    );
+
+    package.readiness = Readiness::BlockedByMissingEvidence;
+    package.validate().unwrap();
+
+    package.readiness = Readiness::Draft;
+    package.open_questions = vec!["neutral open question".into()];
+    package.validate().unwrap();
 }
 
 #[test]
