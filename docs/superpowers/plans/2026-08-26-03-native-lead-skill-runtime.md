@@ -156,7 +156,8 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 ## Evidence and delivery
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
-- Preserve source semantics before drafting: do not change entities, roles, quantities, dates, durations, sequences, or relationships; label any extrapolation as an inference or creative hypothesis.
+- Before drafting, build an internal evidence ledger keyed by source ID. Preserve the source meaning of every entity, role, quantity, date, duration, sequence, and relationship; treat each as a constraint rather than a creative variable.
+- Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. If a phrase does not map exactly to supplied evidence, remove it, label it as an inference or creative hypothesis, or turn it into an unresolved placeholder or question.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -389,6 +390,12 @@ Write these exact bytes between the fence markers only, end with one newline, an
 Cycle 1 RED remains the preserved treatment evidence: treatment 03 changed twelve packages into twelve cups, and treatment 05 changed nine years employed at a bank into leaving banking nine years ago while inventing an apprentice role. Both are failures of the existing evidence-rooted-premise rubric item.
 
 For cycle 2, add only the reviewed source-semantics bullet from the canonical Skill above. Do not change the packet, schema, rubric, other Skill wording, or runtime API. Commit the amended Skill before evaluation, recompute the same packet digest before every dispatch, and run five fresh-context treatment samples into `skill-treatment-cycle-02-01.md` through `skill-treatment-cycle-02-05.md`. Preserve cycle 1 outputs. Each cycle 2 evaluator receives only the immutable packet path and the committed amended Skill path, reads the Skill completely, and remains read-only except for its unique result file. The same 15/15 rubric applies; all five samples must pass. Any miss requires another reviewed amendment rather than ad hoc wording drift.
+
+### Task 3 behavior cycle 3 amendment
+
+Cycle 2 RED remains preserved: sample 01 changed packages into orders; sample 02 changed nine years employed at a bank into nine years after leaving banking; sample 03 invented a numbered learning day; and sample 05 invented a first woodworking project. The cycle 2 declarative constraint did not reliably trigger a post-draft fidelity check.
+
+For cycle 3, replace only the cycle 2 source-semantics bullet with the two reviewed operational bullets in the canonical Skill above: an internal source-ID evidence ledger before drafting and an explicit premise/draft/claims fidelity pass before returning. Do not expose the ledger unless the active output schema requests it. Keep the packet, schema, rubric, every other Skill line, and runtime API unchanged. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve prior outputs, and run five new fresh-context samples into `skill-treatment-cycle-03-01.md` through `skill-treatment-cycle-03-05.md`. The same evaluator isolation and 15/15 threshold apply. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
