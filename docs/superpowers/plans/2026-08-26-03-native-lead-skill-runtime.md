@@ -157,7 +157,7 @@ Turn one mission and its verifiable materials into a directly shootable or publi
 
 - Read referenced materials and use available tools or subagents only when they improve the result.
 - Before drafting, build an internal evidence ledger keyed by source ID. Preserve the source meaning of every entity, role, quantity, date, duration, sequence, and relationship; treat each as a constraint rather than a creative variable.
-- Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. If a phrase does not map exactly to supplied evidence, remove it, label it as an inference or creative hypothesis, or turn it into an unresolved placeholder or question.
+- Before returning, compare every factual phrase in the premise, draft, and claims against that ledger. Every factual element in the premise must map to supplied evidence; never use a placeholder there. If a draft or claim phrase does not map exactly, remove it, label it as an inference or creative hypothesis, or turn it into an explicit bracketed placeholder or open question.
 - Keep facts, inferences, and creative hypotheses visibly distinct.
 - When evidence is missing, preserve the most useful draft possible and state the unresolved questions.
 - Deliver content that can be shot or published, with practical production notes and a measurement plan.
@@ -395,7 +395,7 @@ For cycle 2, add only the reviewed source-semantics bullet from the canonical Sk
 
 Cycle 2 RED remains preserved: sample 01 changed packages into orders; sample 02 changed nine years employed at a bank into nine years after leaving banking; sample 03 invented a numbered learning day; and sample 05 invented a first woodworking project. The cycle 2 declarative constraint did not reliably trigger a post-draft fidelity check.
 
-For cycle 3, replace only the cycle 2 source-semantics bullet with the two reviewed operational bullets in the canonical Skill above: an internal source-ID evidence ledger before drafting and an explicit premise/draft/claims fidelity pass before returning. Do not expose the ledger unless the active output schema requests it. Keep the packet, schema, rubric, every other Skill line, and runtime API unchanged. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve prior outputs, and run five new fresh-context samples into `skill-treatment-cycle-03-01.md` through `skill-treatment-cycle-03-05.md`. The same evaluator isolation and 15/15 threshold apply. Any miss requires another reviewed amendment.
+For cycle 3, replace only the cycle 2 source-semantics bullet with the two reviewed operational bullets in the canonical Skill above: an internal source-ID evidence ledger before drafting and an explicit premise/draft/claims fidelity pass before returning. The premise's factual skeleton must map entirely to evidence and may not contain placeholders; explicit placeholders remain available only in drafts or open questions. Do not expose the ledger unless the active output schema requests it. Keep the packet, schema, rubric, every other Skill line, and runtime API unchanged. Commit the amended Skill before evaluation, verify the original packet digest before every dispatch, preserve prior outputs, and run five new fresh-context samples into `skill-treatment-cycle-03-01.md` through `skill-treatment-cycle-03-05.md`. The same evaluator isolation and 15/15 threshold apply. Any miss requires another reviewed amendment.
 5. Run `just test -p codex-ai-ip-runtime`, then:
 
 ```bash
