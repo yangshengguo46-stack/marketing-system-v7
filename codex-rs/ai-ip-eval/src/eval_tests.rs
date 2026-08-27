@@ -25,8 +25,8 @@ use crate::ExecutionBoundary;
 use crate::ExecutionMode;
 use crate::FrozenExecutionGuard;
 use crate::GitWorktreeCommitment;
-use crate::ModeEvidence;
 use crate::MockProviderMode;
+use crate::ModeEvidence;
 use crate::PairCoordinator;
 use crate::PairPhase;
 use crate::ProofBrokerCompatibilityName;
@@ -558,10 +558,46 @@ struct ReplayPairTestRun {
     manifests: Vec<crate::RunManifest>,
 }
 
-fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
-    let fixture_set =
-        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
-    let fixture_root = fixture_set.parent().unwrap();
+struct PreparedReplayTestContext {
+    _temp: tempfile::TempDir,
+    private_root: std::path::PathBuf,
+    frozen: std::path::PathBuf,
+    frozen_json: serde_json::Value,
+}
+
+fn test_sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+fn test_digest_hex(digest: [u8; 32]) -> String {
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn assert_replay_request_fixture_digests(fixture_root: &std::path::Path) {
+    let fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-fixture-set.json")).unwrap())
+            .unwrap();
+    for (name, path) in [
+        ("genericRequest", "replay-generic-request.json"),
+        ("candidateRequest", "replay-candidate-request.json"),
+    ] {
+        let entry = fixture_set["fixtures"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["name"] == name)
+            .unwrap();
+        assert_eq!(entry["path"], path);
+        assert_eq!(
+            entry["sha256"],
+            test_sha256(&fs::read(fixture_root.join(path)).unwrap())
+        );
+    }
+}
+
+fn prepare_replay_test_context(
+    fixture_root: &std::path::Path,
+) -> anyhow::Result<PreparedReplayTestContext> {
     let temp = tempfile::tempdir()?;
     let private_root = temp.path().join("replay-private");
     fs::create_dir(&private_root)?;
@@ -570,6 +606,7 @@ fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
     }
+    let private_root = private_root.canonicalize()?;
     let codex_binary = private_root.join("synthetic-codex-binary");
     fs::write(&codex_binary, b"synthetic replay binary\n")?;
     #[cfg(unix)]
@@ -578,29 +615,36 @@ fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
         fs::set_permissions(&codex_binary, fs::Permissions::from_mode(0o700))?;
     }
     let frozen = private_root.join("frozen-run-context.json");
-    crate::execute_cli(Cli {
-        command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
-            mode: crate::FreezeRunContextArgs::Replay(crate::model::ReplayFreezeArgs {
-                repo_root: fixture_root.to_path_buf(),
-                fork_sha: "synthetic-replay-fork".to_string(),
-                private_root: private_root.clone(),
-                codex_bin: codex_binary,
-                case: fixture_root.join("replay-case.json"),
-                transcript: fixture_root.join("replay-transcript.jsonl"),
-                fixture_set_manifest: fixture_set,
-                output: frozen.clone(),
-            }),
-        }),
+    crate::freeze_replay_context(crate::model::ReplayFreezeArgs {
+        repo_root: fixture_root.to_path_buf(),
+        fork_sha: "synthetic-replay-fork".to_string(),
+        private_root: private_root.clone(),
+        codex_bin: codex_binary,
+        case: fixture_root.join("replay-case.json"),
+        transcript: fixture_root.join("replay-transcript.jsonl"),
+        fixture_set_manifest: fixture_root.join("replay-fixture-set.json"),
+        output: frozen.clone(),
     })?;
-    let frozen_json: serde_json::Value =
-        serde_json::from_slice(&fs::read(&frozen)?)?;
+    let frozen_json = serde_json::from_slice(&fs::read(&frozen)?)?;
+    Ok(PreparedReplayTestContext {
+        _temp: temp,
+        private_root,
+        frozen,
+        frozen_json,
+    })
+}
+
+fn run_frozen_replay_pair_from(
+    fixture_root: &std::path::Path,
+) -> anyhow::Result<ReplayPairTestRun> {
+    let prepared = prepare_replay_test_context(fixture_root)?;
 
     crate::execute_cli(Cli {
         command: crate::EvalCommand::ReplayPair(crate::ReplayPairArgs {
-            frozen_run_context: frozen,
+            frozen_run_context: prepared.frozen,
         }),
     })?;
-    let coordinator = private_root.join("replay-coordinator");
+    let coordinator = prepared.private_root.join("replay-coordinator");
     for leaf in [
         "run-1-manifest.json",
         "run-2-manifest.json",
@@ -610,17 +654,250 @@ fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
     }
     let mut manifests = Vec::new();
     for ordinal in [1_u8, 2] {
-        let manifest: crate::RunManifest = serde_json::from_slice(
-            &fs::read(coordinator.join(format!("run-{ordinal}-manifest.json")))?,
-        )?;
+        let manifest: crate::RunManifest = serde_json::from_slice(&fs::read(
+            coordinator.join(format!("run-{ordinal}-manifest.json")),
+        )?)?;
         manifests.push(manifest);
     }
     Ok(ReplayPairTestRun {
-        _temp: temp,
-        private_root,
-        frozen_json,
+        _temp: prepared._temp,
+        private_root: prepared.private_root,
+        frozen_json: prepared.frozen_json,
         manifests,
     })
+}
+
+fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
+    run_frozen_replay_pair_from(fixture_set.parent().unwrap())
+}
+
+struct ExpectedReplayRequestEvidence {
+    generic_raw: String,
+    generic_normalized: String,
+    candidate_raw: String,
+    candidate_normalized: String,
+    normalized_base: String,
+    treatment: String,
+}
+
+fn materialize_request_home_token(
+    value: &mut serde_json::Value,
+    token: &str,
+    codex_home: &std::path::Path,
+) {
+    match value {
+        serde_json::Value::Object(object) => {
+            for value in object.values_mut() {
+                materialize_request_home_token(value, token, codex_home);
+            }
+        }
+        serde_json::Value::Array(values) => {
+            for value in values {
+                materialize_request_home_token(value, token, codex_home);
+            }
+        }
+        serde_json::Value::String(value) if value.contains(token) => {
+            *value = value.replace(token, codex_home.to_str().unwrap());
+        }
+        _ => {}
+    }
+}
+
+fn canonicalize_replay_request_fixtures(
+    fixture_root: &std::path::Path,
+    private_root: &std::path::Path,
+) -> ExpectedReplayRequestEvidence {
+    let homes = crate::runner::IsolatedHomes {
+        generic_home: private_root.join("replay-generic-home"),
+        generic_codex_home: private_root.join("replay-generic-home/.codex"),
+        candidate_home: private_root.join("replay-candidate-home"),
+        candidate_codex_home: private_root.join("replay-candidate-home/.codex"),
+    };
+    let mut generic: serde_json::Value = serde_json::from_slice(
+        &fs::read(fixture_root.join("replay-generic-request.json")).unwrap(),
+    )
+    .unwrap();
+    materialize_request_home_token(
+        &mut generic,
+        "$GENERIC_CODEX_HOME",
+        &homes.generic_codex_home,
+    );
+    let mut candidate: serde_json::Value = serde_json::from_slice(
+        &fs::read(fixture_root.join("replay-candidate-request.json")).unwrap(),
+    )
+    .unwrap();
+    materialize_request_home_token(
+        &mut candidate,
+        "$CANDIDATE_CODEX_HOME",
+        &homes.candidate_codex_home,
+    );
+    let generic_threads = HashSet::from(["0198f5aa-0000-7000-8000-000000000002".to_string()]);
+    let candidate_threads = HashSet::from(["0198f5aa-0000-7000-8000-000000000003".to_string()]);
+    let generic_evidence = crate::runner::canonicalize_first_root_request(
+        &generic,
+        &crate::runner::RequestCanonicalizationContext {
+            condition: EvaluationCondition::Generic,
+            known_thread_ids: &generic_threads,
+            generic_codex_home: &homes.generic_codex_home,
+            candidate_codex_home: &homes.candidate_codex_home,
+            deadline_rfc3339: "2026-08-27T12:01:00Z",
+        },
+    )
+    .unwrap();
+    let candidate_evidence = crate::runner::canonicalize_first_root_request(
+        &candidate,
+        &crate::runner::RequestCanonicalizationContext {
+            condition: EvaluationCondition::Candidate,
+            known_thread_ids: &candidate_threads,
+            generic_codex_home: &homes.generic_codex_home,
+            candidate_codex_home: &homes.candidate_codex_home,
+            deadline_rfc3339: "2026-08-27T12:01:00Z",
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        generic_evidence.normalized_base_commitment,
+        candidate_evidence.normalized_base_commitment
+    );
+    ExpectedReplayRequestEvidence {
+        generic_raw: test_digest_hex(generic_evidence.raw_sha256),
+        generic_normalized: test_digest_hex(generic_evidence.normalized_sha256),
+        candidate_raw: test_digest_hex(candidate_evidence.raw_sha256),
+        candidate_normalized: test_digest_hex(candidate_evidence.normalized_sha256),
+        normalized_base: test_digest_hex(generic_evidence.normalized_base_commitment),
+        treatment: test_digest_hex(candidate_evidence.treatment_diff_commitment.unwrap()),
+    }
+}
+
+#[test]
+fn replay_request_evidence_is_derived_from_frozen_request_fixtures() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let fixture_root = fixture_set.parent().unwrap();
+    assert_replay_request_fixture_digests(fixture_root);
+
+    let run = run_frozen_replay_pair_from(fixture_root).unwrap();
+    let generic = run
+        .manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Generic)
+        .unwrap();
+    let candidate = run
+        .manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Candidate)
+        .unwrap();
+    let expected = canonicalize_replay_request_fixtures(fixture_root, &run.private_root);
+    assert_eq!(
+        generic.first_root_provider_request_commitment,
+        expected.generic_raw
+    );
+    assert_eq!(
+        candidate.first_root_provider_request_commitment,
+        expected.candidate_raw
+    );
+    assert_eq!(
+        generic.normalized_first_root_request_commitment,
+        expected.generic_normalized
+    );
+    assert_eq!(
+        candidate.normalized_first_root_request_commitment,
+        expected.candidate_normalized
+    );
+    assert_eq!(
+        generic.normalized_first_root_base_commitment,
+        expected.normalized_base
+    );
+    assert_eq!(
+        candidate.normalized_first_root_base_commitment,
+        expected.normalized_base
+    );
+    assert_eq!(generic.first_root_treatment_diff_commitment, None);
+    assert_eq!(
+        candidate.first_root_treatment_diff_commitment,
+        Some(expected.treatment.clone())
+    );
+    assert_ne!(
+        generic.first_root_provider_request_commitment,
+        generic.app_server_transcript_sha256
+    );
+    assert_ne!(
+        candidate.first_root_treatment_diff_commitment,
+        candidate.skill_use_evidence_sha256
+    );
+
+    let verification: serde_json::Value = serde_json::from_slice(
+        &fs::read(
+            run.private_root
+                .join("replay-coordinator/replay-pair-verification.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        verification["requestParity"],
+        json!({
+            "schemaVersion": 1,
+            "normalizedBaseCommitment": expected.normalized_base,
+            "genericRawCommitment": expected.generic_raw,
+            "genericNormalizedCommitment": expected.generic_normalized,
+            "candidateRawCommitment": expected.candidate_raw,
+            "candidateNormalizedCommitment": expected.candidate_normalized,
+            "candidateTreatmentDiffCommitment": expected.treatment
+        })
+    );
+}
+
+#[test]
+fn replay_request_fixture_drift_fails_before_manifests() {
+    let source_manifest =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let source_root = source_manifest.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let fixture_root = temp.path().join("fixtures");
+    fs::create_dir(&fixture_root).unwrap();
+    let mut fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(&source_manifest).unwrap()).unwrap();
+    for entry in fixture_set["fixtures"].as_array().unwrap() {
+        let path = entry["path"].as_str().unwrap();
+        fs::copy(source_root.join(path), fixture_root.join(path)).unwrap();
+    }
+
+    let request_path = fixture_root.join("replay-generic-request.json");
+    let mut request: serde_json::Value =
+        serde_json::from_slice(&fs::read(&request_path).unwrap()).unwrap();
+    request["model"] = json!("drifted-replay-model");
+    let request_bytes = serde_json::to_vec_pretty(&request).unwrap();
+    fs::write(&request_path, &request_bytes).unwrap();
+    let request_entry = fixture_set["fixtures"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["name"] == "genericRequest")
+        .unwrap();
+    request_entry["sha256"] = json!(test_sha256(&request_bytes));
+    fs::write(
+        fixture_root.join("replay-fixture-set.json"),
+        serde_json::to_vec_pretty(&fixture_set).unwrap(),
+    )
+    .unwrap();
+    assert_replay_request_fixture_digests(&fixture_root);
+
+    let prepared = prepare_replay_test_context(&fixture_root).unwrap();
+    let result = crate::run_replay_pair(crate::ReplayPairArgs {
+        frozen_run_context: prepared.frozen.clone(),
+    });
+    assert!(result.is_err(), "one-arm request drift was accepted");
+    assert!(
+        result.unwrap_err().to_string().contains(
+            "first-root requests differ outside the one canonical target Skill treatment"
+        )
+    );
+    let coordinator = prepared.private_root.join("replay-coordinator");
+    assert!(!coordinator.join("run-1-manifest.json").exists());
+    assert!(!coordinator.join("run-2-manifest.json").exists());
 }
 
 #[test]
@@ -715,6 +992,8 @@ fn replay_pair_reverifies_every_fixture_set_byte_before_creating_evidence() {
     for leaf in [
         "replay-fixture-set.json",
         "replay-case.json",
+        "replay-generic-request.json",
+        "replay-candidate-request.json",
         "replay-transcript.jsonl",
         "replay-candidate-transcript.jsonl",
         "replay-lead-skill.md",
@@ -3172,9 +3451,7 @@ fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestR
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
             mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
                 repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
-                evidence_repo_root: std::path::PathBuf::from(
-                    seed["repoRoot"].as_str().unwrap(),
-                ),
+                evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
                 fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
                 private_root: live_root.clone(),
                 codex_bin: mock_codex,
@@ -3265,10 +3542,8 @@ fn read_native_mock_manifests(live_root: &std::path::Path) -> Vec<crate::RunMani
         .into_iter()
         .map(|ordinal| {
             serde_json::from_slice(
-                &fs::read(
-                    live_root.join(format!("coordinator/run-{ordinal}-manifest.json")),
-                )
-                .unwrap(),
+                &fs::read(live_root.join(format!("coordinator/run-{ordinal}-manifest.json")))
+                    .unwrap(),
             )
             .unwrap()
         })
@@ -3299,10 +3574,9 @@ fn mock_manifest_binds_actual_additional_context_not_turn_request() {
     let run = run_native_mock_pair_with_marker(None);
     assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
     let manifest = read_native_mock_manifests(&run.live_root).remove(0);
-    let mission: HeldOutMissionCase = serde_json::from_slice(
-        &fs::read(run.live_root.join("inputs/case/case.json")).unwrap(),
-    )
-    .unwrap();
+    let mission: HeldOutMissionCase =
+        serde_json::from_slice(&fs::read(run.live_root.join("inputs/case/case.json")).unwrap())
+            .unwrap();
     let expected = format!(
         "{:x}",
         Sha256::digest(
@@ -3619,8 +3893,8 @@ fn native_app_server_fixture() {
                     "id": "final-package",
                     "text": package
                 });
-                let generic_target_skill_read = !candidate
-                    && eval_root.join("generic-target-skill-read").is_file();
+                let generic_target_skill_read =
+                    !candidate && eval_root.join("generic-target-skill-read").is_file();
                 let skill_item = (candidate || generic_target_skill_read).then(|| {
                     let skill_path = codex_home
                         .join("skills")

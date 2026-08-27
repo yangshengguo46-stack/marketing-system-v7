@@ -44,8 +44,8 @@ use crate::build_shared_config;
 use crate::build_thread_start;
 use crate::build_turn_start;
 use crate::model::LiveFreezeArgs;
-use crate::model::ModeEvidence;
 use crate::model::MockProviderMode;
+use crate::model::ModeEvidence;
 use crate::model::ProofBrokerCompatibilityName;
 use crate::model::ReplayFreezeArgs;
 use crate::model::ReplayPairArgs;
@@ -633,6 +633,8 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
     }
     let required = BTreeSet::from([
         "case",
+        "genericRequest",
+        "candidateRequest",
         "genericTranscript",
         "candidateTranscript",
         "leadSkill",
@@ -714,6 +716,10 @@ struct PairOutputCommitments {
     candidate_content_package_sha256: String,
 }
 
+const REPLAY_GENERIC_REQUEST_THREAD_ID: &str = "0198f5aa-0000-7000-8000-000000000002";
+const REPLAY_CANDIDATE_REQUEST_THREAD_ID: &str = "0198f5aa-0000-7000-8000-000000000003";
+const REPLAY_REQUEST_DEADLINE_RFC3339: &str = "2026-08-27T12:01:00Z";
+
 /// Executes a fully frozen replay pair without constructing any provider,
 /// broker, credential, App Server, network, budget, or paid-execution surface.
 pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
@@ -789,9 +795,23 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         bail!("replay Lead Skill fixture has the wrong canonical name");
     }
 
+    let (homes, candidate_skill_path) = prepare_replay_homes(&context.private_root, &skill_bytes)?;
+    let generic_request = canonicalize_replay_request(
+        &context,
+        EvaluationCondition::Generic,
+        &homes,
+        REPLAY_GENERIC_REQUEST_THREAD_ID,
+    )?;
+    let candidate_request = canonicalize_replay_request(
+        &context,
+        EvaluationCondition::Candidate,
+        &homes,
+        REPLAY_CANDIDATE_REQUEST_THREAD_ID,
+    )?;
+    let request_verification =
+        build_pair_request_verification(&generic_request, &candidate_request)?;
     let coordinator = context.private_root.join("replay-coordinator");
     create_owner_only_dir(&coordinator)?;
-    let (homes, candidate_skill_path) = prepare_replay_homes(&context.private_root, &skill_bytes)?;
     let case_dir = context.fixtures["case"]
         .path
         .parent()
@@ -840,7 +860,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         candidate_catalog,
     )?;
     if generic.catalog.normalized_base_catalog_sha256()
-            != catalog_parity.normalized_base_catalog_sha256
+        != catalog_parity.normalized_base_catalog_sha256
         || candidate.catalog.normalized_base_catalog_sha256()
             != catalog_parity.normalized_base_catalog_sha256
         || generic.successful_read_observed
@@ -867,7 +887,10 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     let execution_context_sha256 = sha256(&execution_context);
     let mut generic_manifest_sha256 = None;
     let mut candidate_manifest_sha256 = None;
-    for (ordinal, arm) in [(1_u8, &generic), (2_u8, &candidate)] {
+    for (ordinal, arm, request) in [
+        (1_u8, &generic, &generic_request),
+        (2_u8, &candidate, &candidate_request),
+    ] {
         let package_sha256 = sha256(&serde_json::to_vec(&arm.collected.content_package)?);
         let manifest = build_replay_manifest(
             &context,
@@ -878,6 +901,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             arm,
             &catalog_parity,
             &package_sha256,
+            request,
         )?;
         let bytes = serde_json::to_vec_pretty(&manifest)?;
         write_owner_only_new(
@@ -900,7 +924,8 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         "genericRunManifestSha256": generic_manifest_sha256.context("missing generic replay manifest")?,
         "candidateRunManifestSha256": candidate_manifest_sha256.context("missing candidate replay manifest")?,
         "normalizedBaseCatalogSha256": catalog_parity.normalized_base_catalog_sha256,
-        "candidateSkillSha256": catalog_parity.candidate_skill_sha256
+        "candidateSkillSha256": catalog_parity.candidate_skill_sha256,
+        "requestParity": request_verification
     });
     append_pair_output_commitments(
         &mut verification,
@@ -937,6 +962,87 @@ fn read_replay_fixture(context: &ReplayFrozenContext, name: &str) -> Result<Vec<
         .with_context(|| format!("missing frozen replay fixture {name}"))?;
     verify_replay_reference(reference, name)?;
     read_regular_file_no_follow(&reference.path)
+}
+
+fn canonicalize_replay_request(
+    context: &ReplayFrozenContext,
+    condition: EvaluationCondition,
+    homes: &IsolatedHomes,
+    committed_thread_id: &str,
+) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
+    let (fixture_name, token, codex_home) = match condition {
+        EvaluationCondition::Generic => (
+            "genericRequest",
+            "$GENERIC_CODEX_HOME",
+            &homes.generic_codex_home,
+        ),
+        EvaluationCondition::Candidate => (
+            "candidateRequest",
+            "$CANDIDATE_CODEX_HOME",
+            &homes.candidate_codex_home,
+        ),
+    };
+    let mut body: serde_json::Value =
+        serde_json::from_slice(&read_replay_fixture(context, fixture_name)?)
+            .with_context(|| format!("parse frozen replay request fixture {fixture_name}"))?;
+    materialize_replay_request_home(&mut body, token, codex_home)?;
+    canonicalize_first_root_request(
+        &body,
+        &RequestCanonicalizationContext {
+            condition,
+            known_thread_ids: &HashSet::from([committed_thread_id.to_string()]),
+            generic_codex_home: &homes.generic_codex_home,
+            candidate_codex_home: &homes.candidate_codex_home,
+            deadline_rfc3339: REPLAY_REQUEST_DEADLINE_RFC3339,
+        },
+    )
+}
+
+fn materialize_replay_request_home(
+    value: &mut serde_json::Value,
+    committed_token: &str,
+    codex_home: &Path,
+) -> Result<()> {
+    match value {
+        serde_json::Value::Object(object) => {
+            for value in object.values_mut() {
+                materialize_replay_request_home(value, committed_token, codex_home)?;
+            }
+        }
+        serde_json::Value::Array(values) => {
+            for value in values {
+                materialize_replay_request_home(value, committed_token, codex_home)?;
+            }
+        }
+        serde_json::Value::String(value)
+            if value.contains("$GENERIC_CODEX_HOME") || value.contains("$CANDIDATE_CODEX_HOME") =>
+        {
+            let suffix = value
+                .strip_prefix(committed_token)
+                .context("replay request contains an uncommitted Home token")?;
+            let materialized = if suffix.is_empty() {
+                codex_home.to_path_buf()
+            } else {
+                let relative = suffix
+                    .strip_prefix('/')
+                    .context("replay request Home token is not in a normalized path position")?;
+                if relative.is_empty()
+                    || Path::new(relative)
+                        .components()
+                        .any(|component| !matches!(component, std::path::Component::Normal(_)))
+                {
+                    bail!("replay request Home token path is not normalized");
+                }
+                codex_home.join(relative)
+            };
+            *value = materialized
+                .to_str()
+                .context("replay request CODEX_HOME is not UTF-8")?
+                .to_string();
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 fn prepare_replay_homes(
@@ -1078,6 +1184,7 @@ fn build_replay_manifest(
     arm: &ReplayArmResult,
     catalog_parity: &crate::CatalogParity,
     package_sha256: &str,
+    request: &codex_responses_api_proxy::TransformedRequestEvidence,
 ) -> Result<RunManifest> {
     let prompt_sha256 = sha256(codex_ai_ip_runtime::root_prompt().as_bytes());
     let additional_context_sha256 =
@@ -1101,7 +1208,6 @@ fn build_replay_manifest(
     let replay_config_sha256 = sha256(b"replay:no-live-config");
     let native_skill_sha256 = (arm.condition == EvaluationCondition::Candidate)
         .then(|| context.fixtures["leadSkill"].sha256.clone());
-    let treatment = arm.skill_use_evidence_sha256.clone();
     Ok(RunManifest {
         schema_version: 1,
         pair_id: context.pair_id.clone(),
@@ -1128,10 +1234,10 @@ fn build_replay_manifest(
         codex_binary_sha256: context.codex_binary.sha256.clone(),
         evaluator_binary_sha256: context.evaluator_binary.sha256.clone(),
         broker_component_sha256: sha256(b"replay:no-broker-component"),
-        first_root_provider_request_commitment: arm.transcript_sha256.clone(),
-        normalized_first_root_request_commitment: arm.transcript_sha256.clone(),
-        normalized_first_root_base_commitment: package_sha256.to_string(),
-        first_root_treatment_diff_commitment: treatment,
+        first_root_provider_request_commitment: digest_hex(request.raw_sha256),
+        normalized_first_root_request_commitment: digest_hex(request.normalized_sha256),
+        normalized_first_root_base_commitment: digest_hex(request.normalized_base_commitment),
+        first_root_treatment_diff_commitment: request.treatment_diff_commitment.map(digest_hex),
         app_server_transcript_sha256: arm.transcript_sha256.clone(),
         broker_attempt_ledger_sha256: sha256(b"replay:no-broker-ledger"),
         attempt_index_root_sha256: sha256(b"replay:no-provider-attempts"),
@@ -1342,6 +1448,68 @@ struct PairRequestVerification {
     candidate_treatment_diff_commitment: String,
 }
 
+pub(crate) struct RequestCanonicalizationContext<'a> {
+    pub(crate) condition: EvaluationCondition,
+    pub(crate) known_thread_ids: &'a HashSet<String>,
+    pub(crate) generic_codex_home: &'a Path,
+    pub(crate) candidate_codex_home: &'a Path,
+    pub(crate) deadline_rfc3339: &'a str,
+}
+
+pub(crate) fn canonicalize_first_root_request(
+    body: &serde_json::Value,
+    context: &RequestCanonicalizationContext<'_>,
+) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
+    let codex_home = match context.condition {
+        EvaluationCondition::Generic => context.generic_codex_home,
+        EvaluationCondition::Candidate => context.candidate_codex_home,
+    };
+    let home = codex_home
+        .parent()
+        .context("isolated CODEX_HOME has no Home parent")?;
+    let raw_sha256 = Sha256::digest(serde_json::to_vec(body)?).into();
+    let mut normalized = normalize_committed_request_values(
+        body,
+        context.known_thread_ids,
+        home,
+        codex_home,
+        context.deadline_rfc3339,
+    )?;
+    let normalized_sha256 = Sha256::digest(serde_json::to_vec(&normalized)?).into();
+    let canonical_treatment = canonical_target_skill_treatment(Path::new("$CODEX_HOME"));
+    let input = normalized
+        .get_mut("input")
+        .and_then(serde_json::Value::as_array_mut)
+        .context("Responses request input must be an array")?;
+    let matching = input
+        .iter()
+        .enumerate()
+        .filter_map(|(index, item)| (item == &canonical_treatment).then_some(index))
+        .collect::<Vec<_>>();
+    let treatment_diff_commitment = match context.condition {
+        EvaluationCondition::Generic if matching.is_empty() => None,
+        EvaluationCondition::Generic => {
+            bail!("generic request contains the target Skill treatment fragment")
+        }
+        EvaluationCondition::Candidate if matching.len() == 1 => {
+            input.remove(matching[0]);
+            Some(Sha256::digest(serde_json::to_vec(&canonical_treatment)?).into())
+        }
+        EvaluationCondition::Candidate => {
+            bail!(
+                "candidate request must contain exactly one canonical target Skill treatment fragment"
+            )
+        }
+    };
+    let normalized_base_commitment = Sha256::digest(serde_json::to_vec(&normalized)?).into();
+    Ok(codex_responses_api_proxy::TransformedRequestEvidence {
+        raw_sha256,
+        normalized_sha256,
+        normalized_base_commitment,
+        treatment_diff_commitment,
+    })
+}
+
 impl PairRequestInspector {
     pub(crate) fn new(
         gate: Arc<PairCoordinator>,
@@ -1362,47 +1530,16 @@ impl PairRequestInspector {
     ) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
         let (condition, arm_attempt_count, known_threads) =
             self.gate.active_inspection_context()?;
-        let raw_sha256 = Sha256::digest(serde_json::to_vec(body)?).into();
-        let mut normalized = normalize_committed_request_values(
+        let evidence = canonicalize_first_root_request(
             body,
-            condition,
-            &known_threads,
-            &self.homes,
-            &self.pair_deadline_rfc3339,
+            &RequestCanonicalizationContext {
+                condition,
+                known_thread_ids: &known_threads,
+                generic_codex_home: &self.homes.generic_codex_home,
+                candidate_codex_home: &self.homes.candidate_codex_home,
+                deadline_rfc3339: &self.pair_deadline_rfc3339,
+            },
         )?;
-        let normalized_sha256 = Sha256::digest(serde_json::to_vec(&normalized)?).into();
-        let canonical_treatment = canonical_target_skill_treatment(Path::new("$CODEX_HOME"));
-        let input = normalized
-            .get_mut("input")
-            .and_then(serde_json::Value::as_array_mut)
-            .context("Responses request input must be an array")?;
-        let matching = input
-            .iter()
-            .enumerate()
-            .filter_map(|(index, item)| (item == &canonical_treatment).then_some(index))
-            .collect::<Vec<_>>();
-        let treatment_diff_commitment = match condition {
-            EvaluationCondition::Generic if matching.is_empty() => None,
-            EvaluationCondition::Generic => {
-                bail!("generic request contains the target Skill treatment fragment")
-            }
-            EvaluationCondition::Candidate if matching.len() == 1 => {
-                input.remove(matching[0]);
-                Some(Sha256::digest(serde_json::to_vec(&canonical_treatment)?).into())
-            }
-            EvaluationCondition::Candidate => {
-                bail!(
-                    "candidate request must contain exactly one canonical target Skill treatment fragment"
-                )
-            }
-        };
-        let normalized_base_commitment = Sha256::digest(serde_json::to_vec(&normalized)?).into();
-        let evidence = codex_responses_api_proxy::TransformedRequestEvidence {
-            raw_sha256,
-            normalized_sha256,
-            normalized_base_commitment,
-            treatment_diff_commitment,
-        };
         if arm_attempt_count == 0 {
             let mut state = self
                 .state
@@ -1453,24 +1590,32 @@ impl PairRequestInspector {
             .candidate
             .as_ref()
             .context("candidate first-root request was not inspected")?;
-        if generic.normalized_base_commitment != candidate.normalized_base_commitment
-            || generic.treatment_diff_commitment.is_some()
-        {
-            bail!("pair request inspector does not contain verified parity evidence");
-        }
-        let candidate_treatment = candidate
-            .treatment_diff_commitment
-            .context("candidate treatment commitment is missing")?;
-        Ok(PairRequestVerification {
-            schema_version: 1,
-            normalized_base_commitment: digest_hex(generic.normalized_base_commitment),
-            generic_raw_commitment: digest_hex(generic.raw_sha256),
-            generic_normalized_commitment: digest_hex(generic.normalized_sha256),
-            candidate_raw_commitment: digest_hex(candidate.raw_sha256),
-            candidate_normalized_commitment: digest_hex(candidate.normalized_sha256),
-            candidate_treatment_diff_commitment: digest_hex(candidate_treatment),
-        })
+        build_pair_request_verification(generic, candidate)
     }
+}
+
+fn build_pair_request_verification(
+    generic: &codex_responses_api_proxy::TransformedRequestEvidence,
+    candidate: &codex_responses_api_proxy::TransformedRequestEvidence,
+) -> Result<PairRequestVerification> {
+    if generic.normalized_base_commitment != candidate.normalized_base_commitment {
+        bail!("first-root requests differ outside the one canonical target Skill treatment");
+    }
+    if generic.treatment_diff_commitment.is_some() {
+        bail!("generic request parity evidence contains a treatment commitment");
+    }
+    let candidate_treatment = candidate
+        .treatment_diff_commitment
+        .context("candidate treatment commitment is missing")?;
+    Ok(PairRequestVerification {
+        schema_version: 1,
+        normalized_base_commitment: digest_hex(generic.normalized_base_commitment),
+        generic_raw_commitment: digest_hex(generic.raw_sha256),
+        generic_normalized_commitment: digest_hex(generic.normalized_sha256),
+        candidate_raw_commitment: digest_hex(candidate.raw_sha256),
+        candidate_normalized_commitment: digest_hex(candidate.normalized_sha256),
+        candidate_treatment_diff_commitment: digest_hex(candidate_treatment),
+    })
 }
 
 impl codex_responses_api_proxy::RequestInspector for PairRequestInspector {
@@ -1489,15 +1634,11 @@ impl codex_responses_api_proxy::RequestInspector for PairRequestInspector {
 
 fn normalize_committed_request_values(
     body: &serde_json::Value,
-    condition: EvaluationCondition,
     known_threads: &HashSet<String>,
-    homes: &IsolatedHomes,
+    home: &Path,
+    codex_home: &Path,
     pair_deadline_rfc3339: &str,
 ) -> Result<serde_json::Value> {
-    let (home, codex_home) = match condition {
-        EvaluationCondition::Generic => (&homes.generic_home, &homes.generic_codex_home),
-        EvaluationCondition::Candidate => (&homes.candidate_home, &homes.candidate_codex_home),
-    };
     fn normalize(
         value: &serde_json::Value,
         key: Option<&str>,
