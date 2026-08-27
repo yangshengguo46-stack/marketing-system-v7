@@ -382,7 +382,7 @@ fn execution_mode_evidence_and_provider_role_are_disjoint() {
     };
     let mock_json = serde_json::to_value(&mock).unwrap();
     assert_eq!(mock_json["executionMode"], json!("mock"));
-    assert_eq!(mock_json["providerMode"], json!("notRun"));
+    assert_eq!(mock_json["providerMode"], json!("not-run"));
     assert!(mock_json.get("providerRole").is_none());
 
     let live = ModeEvidence::Live {
@@ -3239,6 +3239,27 @@ fn generic_target_skill_read_poisons_without_pair_receipt() {
     );
 }
 
+#[test]
+fn generic_target_skill_read_during_quiet_window_poisons_without_pair_receipt() {
+    let run = run_native_mock_pair_with_marker(Some("generic-target-skill-read-quiet-window"));
+    assert!(
+        run.result
+            .unwrap_err()
+            .to_string()
+            .contains("generic arm read")
+    );
+    assert!(
+        run.live_root
+            .join("coordinator/receipts/poison.json")
+            .is_file()
+    );
+    assert!(
+        !run.live_root
+            .join("coordinator/receipts/pair-receipt.json")
+            .exists()
+    );
+}
+
 fn read_native_mock_manifests(live_root: &std::path::Path) -> Vec<crate::RunManifest> {
     [1_u8, 2]
         .into_iter()
@@ -3489,6 +3510,11 @@ fn native_app_server_fixture() {
         "0198f5aa-0000-7000-8000-000000000201"
     };
     let eval_root = home.parent().unwrap().to_path_buf();
+    let late_generic_target_skill_read = !candidate
+        && eval_root
+            .join("generic-target-skill-read-quiet-window")
+            .is_file();
+    let mut late_generic_target_skill_read_scheduled = false;
     let mut root = thread(thread_id, None, None, candidate, &eval_root);
     let mut child = thread(
         child_id,
@@ -3722,9 +3748,58 @@ fn native_app_server_fixture() {
             Some("thread/loaded/list") => {
                 json!({"data": [thread_id, child_id], "nextCursor": null})
             }
-            Some("thread/read") => json!({
-                "thread": if message["params"]["threadId"] == thread_id { &root } else { &child }
-            }),
+            Some("thread/read") => {
+                let requested_thread_id = message["params"]["threadId"].as_str().unwrap();
+                if late_generic_target_skill_read
+                    && !late_generic_target_skill_read_scheduled
+                    && requested_thread_id == child_id
+                {
+                    late_generic_target_skill_read_scheduled = true;
+                    let mut late_output = output.try_clone().unwrap();
+                    let skill_path = codex_home
+                        .join("skills")
+                        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                        .join("SKILL.md");
+                    let skill_bytes_path = eval_root
+                        .join("candidate-home/.codex/skills")
+                        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                        .join("SKILL.md");
+                    let skill_bytes = fs::read_to_string(skill_bytes_path).unwrap();
+                    let root_thread_id = thread_id.to_string();
+                    let late_cwd = eval_root.clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(Duration::from_millis(250));
+                        send(
+                            &mut late_output,
+                            &json!({
+                                "method": "item/completed",
+                                "params": {
+                                    "threadId": root_thread_id,
+                                    "turnId": "turn-generic",
+                                    "completedAtMs": 1787616000002_i64,
+                                    "item": {
+                                        "type": "commandExecution",
+                                        "id": "late-lead-skill-read",
+                                        "pluginId": null,
+                                        "scriptPath": null,
+                                        "command": format!("cat {}", skill_path.display()),
+                                        "cwd": late_cwd,
+                                        "processId": null,
+                                        "status": "completed",
+                                        "commandActions": [],
+                                        "aggregatedOutput": skill_bytes,
+                                        "exitCode": 0,
+                                        "durationMs": 1
+                                    }
+                                }
+                            }),
+                        );
+                    });
+                }
+                json!({
+                    "thread": if requested_thread_id == thread_id { &root } else { &child }
+                })
+            }
             _ => {
                 send(
                     &mut output,

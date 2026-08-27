@@ -2437,7 +2437,14 @@ async fn run_app_server_arm(
         &started.thread,
         pair_deadline,
         |notification| {
-            observe_tree_notification(gate, &started.thread.id, &mut tree, notification).map(drop)
+            observe_post_completion_notification(
+                gate,
+                &started.thread.id,
+                &mut tree,
+                &mut skill_use,
+                notification,
+            )
+            .map(drop)
         },
     )
     .await
@@ -2445,7 +2452,13 @@ async fn run_app_server_arm(
     app_server
         .protocol_mut()?
         .observe_until_quiet(Duration::from_secs(2), pair_deadline, |notification| {
-            observe_tree_notification(gate, &started.thread.id, &mut tree, notification)
+            observe_post_completion_notification(
+                gate,
+                &started.thread.id,
+                &mut tree,
+                &mut skill_use,
+                notification,
+            )
         })
         .await
         .context("observe full App Server quiet window")?;
@@ -2454,7 +2467,13 @@ async fn run_app_server_arm(
         &started.thread,
         pair_deadline,
         |notification| {
-            if observe_tree_notification(gate, &started.thread.id, &mut tree, notification)? {
+            if observe_post_completion_notification(
+                gate,
+                &started.thread.id,
+                &mut tree,
+                &mut skill_use,
+                notification,
+            )? {
                 bail!("late relevant App Server event arrived during the final tree scan");
             }
             Ok(())
@@ -2469,7 +2488,13 @@ async fn run_app_server_arm(
     let status = run_before_deadline(
         pair_deadline,
         app_server.close_observing(pair_deadline, |notification| {
-            if observe_tree_notification(gate, &started.thread.id, &mut tree, notification)? {
+            if observe_post_completion_notification(
+                gate,
+                &started.thread.id,
+                &mut tree,
+                &mut skill_use,
+                notification,
+            )? {
                 bail!("late relevant App Server event arrived after the final tree scan");
             }
             Ok(())
@@ -2643,6 +2668,17 @@ fn observe_tree_notification(
     observe_app_server_lifecycle(gate, root_thread_id, notification)?;
     tree.ingest(notification.clone())?;
     Ok(is_relevant_tree_notification(notification))
+}
+
+fn observe_post_completion_notification(
+    gate: &PairCoordinator,
+    root_thread_id: &str,
+    tree: &mut crate::TreeEventCollector,
+    skill_use: &mut SkillUseTracker,
+    notification: &codex_app_server_protocol::ServerNotification,
+) -> Result<bool> {
+    skill_use.ingest(notification)?;
+    observe_tree_notification(gate, root_thread_id, tree, notification)
 }
 
 fn is_relevant_tree_notification(

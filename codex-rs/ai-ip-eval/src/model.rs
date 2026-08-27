@@ -25,6 +25,7 @@ pub enum ExecutionMode {
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum MockProviderMode {
+    #[serde(rename = "not-run")]
     NotRun,
 }
 
