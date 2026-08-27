@@ -1,6 +1,11 @@
 use anyhow::bail;
+use clap::Args;
+use clap::Parser;
+use clap::Subcommand;
+use clap::ValueEnum;
 use serde::Deserialize;
 use serde::Serialize;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,11 +21,134 @@ pub enum ExecutionMode {
     Live,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize, ValueEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum ProviderRole {
+    #[value(name = "targetVolcengine")]
     TargetVolcengine,
+    #[value(name = "approvedReference")]
     ApprovedReference,
+}
+
+/// Typed evaluator command line. There is intentionally no single-arm live
+/// command: the only provider-capable surface is `live-pair`.
+#[derive(Debug, Parser)]
+#[command(name = "codex-ai-ip-eval")]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: EvalCommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum EvalCommand {
+    ReplayPair,
+    FreezeRunContext(FreezeRunContextCommand),
+    LivePair(LivePairArgs),
+    BlindPack(PathInputArgs),
+    Score(PathInputArgs),
+    MakeCostReceipt(PathInputArgs),
+    AnnotateCost(PathInputArgs),
+    Summarize(PathInputArgs),
+    VerifyReport(PathInputArgs),
+    PublishReport(PathInputArgs),
+    VerifyLiveProof(PathInputArgs),
+    FinalizeCheckpoint(PathInputArgs),
+    RetentionCloseout(PathInputArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct FreezeRunContextCommand {
+    #[command(subcommand)]
+    pub mode: FreezeRunContextArgs,
+}
+
+/// Replay and live freezing are disjoint at the parser and Rust type levels.
+#[derive(Debug, Subcommand)]
+pub enum FreezeRunContextArgs {
+    Replay(ReplayFreezeArgs),
+    Live(LiveFreezeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ReplayFreezeArgs {
+    #[arg(long)]
+    pub repo_root: PathBuf,
+    #[arg(long)]
+    pub fork_sha: String,
+    #[arg(long)]
+    pub private_root: PathBuf,
+    #[arg(long)]
+    pub codex_bin: PathBuf,
+    #[arg(long)]
+    pub case: PathBuf,
+    #[arg(long)]
+    pub transcript: PathBuf,
+    #[arg(long)]
+    pub fixture_set_manifest: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct LiveFreezeArgs {
+    #[arg(long)]
+    pub repo_root: PathBuf,
+    #[arg(long)]
+    pub evidence_repo_root: PathBuf,
+    #[arg(long)]
+    pub fork_sha: String,
+    #[arg(long)]
+    pub private_root: PathBuf,
+    #[arg(long)]
+    pub codex_bin: PathBuf,
+    #[arg(long)]
+    pub case: PathBuf,
+    #[arg(long)]
+    pub attestation: PathBuf,
+    #[arg(long)]
+    pub provider_budget_evidence: PathBuf,
+    #[arg(long)]
+    pub rate_card: PathBuf,
+    #[arg(long)]
+    pub billing_policy: PathBuf,
+    #[arg(long)]
+    pub fx_policy: PathBuf,
+    #[arg(long)]
+    pub lead_skill: PathBuf,
+    #[arg(long)]
+    pub model_label: String,
+    #[arg(long)]
+    pub provider_label: String,
+    #[arg(long, value_enum)]
+    pub provider_role: ProviderRole,
+    #[arg(long)]
+    pub provider_upstream_url: String,
+    #[arg(long)]
+    pub authorized_total_cost_fen: u64,
+    #[arg(long)]
+    pub authorized_per_run_cost_fen: u64,
+    #[arg(long)]
+    pub max_provider_request_attempts_per_run: u64,
+    #[arg(long)]
+    pub max_total_tokens_per_run: u64,
+    #[arg(long)]
+    pub max_elapsed_seconds_per_run: u64,
+    #[arg(long)]
+    pub max_output_tokens_per_request: u64,
+    #[arg(long)]
+    pub output: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct LivePairArgs {
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct PathInputArgs {
+    #[arg(long)]
+    pub input: PathBuf,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]

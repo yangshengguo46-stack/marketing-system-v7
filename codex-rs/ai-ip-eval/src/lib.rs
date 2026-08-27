@@ -1,9 +1,11 @@
 #![recursion_limit = "256"]
 
 mod app_server;
+mod broker_gate;
 mod catalog;
 mod evidence;
 mod model;
+mod runner;
 
 pub use app_server::AppServerClient;
 pub use app_server::AppServerHandshake;
@@ -17,6 +19,13 @@ pub use app_server::build_thread_start;
 pub use app_server::build_turn_start;
 pub use app_server::config_read_params;
 pub use app_server::initialize_params;
+pub use broker_gate::ArmActivation;
+pub use broker_gate::ArmReceipt;
+pub use broker_gate::BrokerGateConfig;
+pub use broker_gate::PairCoordinator;
+pub use broker_gate::PairPhase;
+pub use broker_gate::PairReceipt;
+pub use broker_gate::ThreadLifecycle;
 pub use catalog::CatalogParity;
 pub use catalog::CatalogRoots;
 pub use catalog::CatalogSnapshot;
@@ -30,16 +39,36 @@ pub use evidence::TreeEventCollector;
 pub use evidence::TreeEvidence;
 pub use evidence::TreeScan;
 pub use evidence::validate_case_boundary;
+pub use model::Cli;
+pub use model::EvalCommand;
 pub use model::EvaluationCondition;
 pub use model::ExecutionMode;
+pub use model::FreezeRunContextArgs;
 pub use model::ModeEvidence;
 pub use model::ProofBrokerCompatibilityName;
 pub use model::ProviderRole;
 pub use model::RunManifest;
 pub use model::Usage;
+pub use runner::ArtifactCommitments;
+pub use runner::ChildEnvironment;
+pub use runner::CommittedArmOrder;
+pub use runner::GitWorktreeCommitment;
+pub use runner::IsolatedHomes;
+pub use runner::VerifiedFrozenContext;
+pub use runner::commit_arm_order;
+pub use runner::prepare_isolated_homes;
+pub use runner::verify_frozen_context;
 
 pub fn run_main() -> anyhow::Result<()> {
-    anyhow::bail!("no evaluator command selected")
+    use clap::Parser;
+
+    let cli = Cli::parse();
+    match cli.command {
+        EvalCommand::LivePair(_) => {
+            anyhow::bail!("live-pair execution is disabled in the mock-testable Phase 0A boundary")
+        }
+        _ => anyhow::bail!("selected evaluator workflow is not implemented in this work package"),
+    }
 }
 
 #[cfg(test)]

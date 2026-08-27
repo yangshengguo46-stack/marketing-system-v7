@@ -621,9 +621,10 @@ impl SkillUseTracker {
             }
             ThreadItem::AgentMessage { text, .. }
                 if serde_json::from_str::<ContentPackage>(text).is_ok()
-                && self.final_sequence.replace(self.sequence).is_some() => {
-                    bail!("multiple final ContentPackage items");
-                }
+                    && self.final_sequence.replace(self.sequence).is_some() =>
+            {
+                bail!("multiple final ContentPackage items");
+            }
             _ => {}
         }
         Ok(())
