@@ -666,6 +666,121 @@ fn complete(gate: &PairCoordinator, permit: codex_responses_api_proxy::RequestPe
     gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
 }
 
+fn second_sealed_pair(temp: &tempfile::TempDir) -> PairCoordinator {
+    let gate = coordinator(temp, 1);
+    activate_first(&gate, "root-1", Duration::from_secs(5));
+    let first = gate
+        .before_forward(&root_request("root-1"), &transformed())
+        .unwrap();
+    complete(&gate, first);
+    gate.seal_arm().unwrap();
+    gate.activate_arm(ArmActivation {
+        run_ordinal: 2,
+        condition: EvaluationCondition::Candidate,
+        root_thread_id: test_thread_id("root-2").to_string(),
+        deadline: Instant::now() + Duration::from_secs(5),
+        deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
+    })
+    .unwrap();
+    let second = gate
+        .before_forward(&root_request("root-2"), &transformed())
+        .unwrap();
+    complete(&gate, second);
+    gate.seal_arm().unwrap();
+    gate
+}
+
+#[test]
+fn pair_finish_rejects_teardown_failure_before_persisting_success() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = second_sealed_pair(&temp);
+
+    let result = crate::runner::finish_pair_after_teardown(
+        &gate,
+        Instant::now() + Duration::from_secs(5),
+        |_| Err(anyhow::anyhow!("injected broker teardown failure")),
+        || Ok(()),
+    );
+
+    assert!(result.is_err());
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    assert!(!temp.path().join("receipts/pair-receipt.json").exists());
+}
+
+#[test]
+fn pair_finish_rejects_deadline_or_final_rehash_before_persisting_success() {
+    for failure in ["deadline", "rehash"] {
+        let temp = tempfile::tempdir().unwrap();
+        let gate = second_sealed_pair(&temp);
+        let deadline = if failure == "deadline" {
+            Instant::now()
+        } else {
+            Instant::now() + Duration::from_secs(5)
+        };
+
+        let result = crate::runner::finish_pair_after_teardown(
+            &gate,
+            deadline,
+            |_| Ok(()),
+            || match failure {
+                "rehash" => Err(anyhow::anyhow!("injected final rehash failure")),
+                "deadline" => Ok(()),
+                _ => unreachable!(),
+            },
+        );
+
+        assert!(result.is_err());
+        assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+        assert!(!temp.path().join("receipts/pair-receipt.json").exists());
+    }
+}
+
+#[test]
+fn synchronous_pair_setup_is_deadline_checked_before_and_after_the_boundary() {
+    let expired_before =
+        crate::runner::run_sync_before_deadline(Instant::now(), || Ok::<_, anyhow::Error>(()));
+    assert!(expired_before.is_err());
+
+    let expired_after =
+        crate::runner::run_sync_before_deadline(Instant::now() + Duration::from_millis(20), || {
+            std::thread::sleep(Duration::from_millis(40));
+            Ok::<_, anyhow::Error>(())
+        });
+    assert!(expired_after.is_err());
+}
+
+#[test]
+fn absolute_pair_deadline_is_committed_before_full_context_verification() {
+    let temp = tempfile::tempdir().unwrap();
+    let context = temp.path().join("frozen-run-context.json");
+    let mut value = json!({
+        "schemaVersion": 1,
+        "executionMode": "live",
+        "providerMode": "not-run",
+        "pairId": "a".repeat(64),
+        "publicRunId": "b".repeat(64),
+        "candidateSha": "candidate",
+        "privateRoot": temp.path(),
+        "repoRoot": temp.path(),
+        "repoHead": "candidate",
+        "providerUpstreamUrl": "http://127.0.0.1:1/v1/responses",
+        "modelLabel": "mock",
+        "maxOutputTokens": 1,
+        "maxAttemptsPerArm": 1,
+        "maxTotalTokens": 1,
+        "maxElapsedSeconds": 1,
+        "artifacts": {}
+    });
+    fs::write(&context, serde_json::to_vec(&value).unwrap()).unwrap();
+    let started = Instant::now();
+    let deadline = crate::runner::establish_pair_deadline(&context, started).unwrap();
+    assert_eq!(deadline.duration_since(started), Duration::from_secs(1));
+
+    value["maxElapsedSeconds"] = json!(60);
+    fs::write(&context, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert_eq!(deadline.duration_since(started), Duration::from_secs(1));
+}
+
 #[test]
 fn frozen_pair_total_token_ceiling_fails_the_terminal_and_poisons() {
     let temp = tempfile::tempdir().unwrap();
@@ -806,16 +921,19 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         .to_string();
     let artifacts_dir = temp.path().join("context-artifacts");
     let frozen_inputs = temp.path().join("frozen-inputs");
+    let imported_inputs = temp.path().join("inputs");
+    let case_root = imported_inputs.join("case");
     fs::create_dir(&artifacts_dir).unwrap();
     fs::create_dir(&frozen_inputs).unwrap();
+    fs::create_dir_all(&case_root).unwrap();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&frozen_inputs, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&imported_inputs, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&case_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let private_leaf = |name: &str| match name {
-        "source" => Some("source.json"),
-        "materials" => Some("materials.json"),
         "providerBudgetReceipt" => Some("provider-budget-receipt.json"),
         "rateCard" => Some("rate-card.json"),
         "billingPolicy" => Some("billing-policy.json"),
@@ -827,6 +945,13 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         "turnStartRequest" => Some("turn-start-request.json"),
         _ => None,
     };
+    let case_bytes = serde_json::to_vec_pretty(&mission_case()).unwrap();
+    let materials_bytes = serde_json::to_vec(&mission_case().materials).unwrap();
+    let attestation_bytes = serde_json::to_vec_pretty(&json!({
+        "caseSha256": format!("{:x}", Sha256::digest(&case_bytes)),
+        "sourceMaterialsSha256": format!("{:x}", Sha256::digest(&materials_bytes)),
+    }))
+    .unwrap();
     let artifacts: BTreeMap<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
         .iter()
         .map(|name| {
@@ -844,9 +969,14 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
                     let bytes = fs::read(&path).unwrap();
                     (path, bytes)
                 }
-                "source" => (
-                    frozen_inputs.join(private_leaf(name).unwrap()),
-                    serde_json::to_vec_pretty(&mission_case()).unwrap(),
+                "source" => (case_root.join("case.json"), case_bytes.clone()),
+                "attestation" => (
+                    imported_inputs.join("held-out-attestation.json"),
+                    attestation_bytes.clone(),
+                ),
+                "materials" => (
+                    imported_inputs.join("materials-manifest.json"),
+                    materials_bytes.clone(),
                 ),
                 _ => (
                     private_leaf(name)
@@ -1452,6 +1582,8 @@ fn cli_freeze_modes_are_disjoint_and_live_pair_has_no_override_or_single_arm() {
             "abc",
             "--case",
             "/private/inputs/case.json",
+            "--material-root",
+            "/private/materials",
             "--attestation",
             "/private/inputs/attestation.json",
             "--provider-budget-evidence",
@@ -1515,6 +1647,163 @@ fn cli_freeze_modes_are_disjoint_and_live_pair_has_no_override_or_single_arm() {
         .is_err()
     );
     assert!(Cli::try_parse_from(["codex-ai-ip-eval", "run"]).is_err());
+}
+
+fn write_nonempty_source_fixture(
+    root: &std::path::Path,
+    relative_path: &str,
+    declared_digest: Option<&str>,
+    attested_case_digest: Option<&str>,
+) -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
+    let material_root = root.join("source-materials");
+    fs::create_dir(&material_root).unwrap();
+    let material_path = material_root.join(relative_path);
+    if let Some(parent) = material_path.parent() {
+        fs::create_dir_all(parent).unwrap();
+    }
+    fs::write(&material_path, b"source-visible evidence\n").unwrap();
+    let actual_digest = format!("{:x}", Sha256::digest(b"source-visible evidence\n"));
+    let digest = declared_digest.unwrap_or(&actual_digest);
+    let case_value = json!({
+        "caseId": "held-out-material-case",
+        "objective": "Use the declared evidence without changing it",
+        "subjectKind": "brand",
+        "constraints": [],
+        "materials": [{
+            "materialId": "evidence-1",
+            "relativePath": relative_path,
+            "sha256": digest,
+            "materialKind": "evidence"
+        }]
+    });
+    let case_bytes = serde_json::to_vec_pretty(&case_value).unwrap();
+    let case_path = root.join("external-case.json");
+    fs::write(&case_path, &case_bytes).unwrap();
+    let materials_bytes = format!(
+        "[{{\"materialId\":\"evidence-1\",\"relativePath\":{},\"sha256\":\"{}\",\"materialKind\":\"evidence\"}}]",
+        serde_json::to_string(relative_path).unwrap(),
+        digest,
+    );
+    let attestation = json!({
+        "caseSha256": attested_case_digest
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("{:x}", Sha256::digest(&case_bytes))),
+        "sourceMaterialsSha256": format!("{:x}", Sha256::digest(materials_bytes.as_bytes()))
+    });
+    let attestation_path = root.join("external-attestation.json");
+    fs::write(
+        &attestation_path,
+        serde_json::to_vec_pretty(&attestation).unwrap(),
+    )
+    .unwrap();
+    (case_path, material_root, attestation_path)
+}
+
+#[test]
+fn live_freeze_imports_nonempty_case_attestation_and_declared_materials() {
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+
+    let imported =
+        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
+            .unwrap();
+
+    assert_eq!(
+        imported.case_path,
+        private_root
+            .join("inputs/case/case.json")
+            .canonicalize()
+            .unwrap()
+    );
+    assert_eq!(
+        imported.attestation_path,
+        private_root
+            .join("inputs/held-out-attestation.json")
+            .canonicalize()
+            .unwrap()
+    );
+    assert_eq!(
+        imported.material_paths,
+        BTreeMap::from([(
+            "evidence-1".to_string(),
+            private_root
+                .join("inputs/case/notes/evidence.txt")
+                .canonicalize()
+                .unwrap(),
+        )])
+    );
+    assert_eq!(
+        fs::read(imported.material_paths["evidence-1"].clone()).unwrap(),
+        b"source-visible evidence\n"
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        for path in imported
+            .material_paths
+            .values()
+            .chain([&imported.case_path, &imported.attestation_path])
+        {
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+    }
+}
+
+#[test]
+fn live_freeze_rejects_material_digest_path_type_and_attestation_drift() {
+    for mutation in ["digest", "path", "type", "attestation"] {
+        let temp = tempfile::tempdir().unwrap();
+        let private_root = temp.path().join("private-proof");
+        fs::create_dir(&private_root).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        let relative = if mutation == "path" {
+            "../escape.txt"
+        } else {
+            "notes/evidence.txt"
+        };
+        let declared_digest = (mutation == "digest")
+            .then_some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        let attested_case_digest = (mutation == "attestation")
+            .then_some("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        let (case, material_root, attestation) = write_nonempty_source_fixture(
+            temp.path(),
+            relative,
+            declared_digest,
+            attested_case_digest,
+        );
+        if mutation == "type" {
+            let material = material_root.join(relative);
+            fs::remove_file(&material).unwrap();
+            fs::create_dir(&material).unwrap();
+        }
+
+        assert!(
+            crate::runner::import_live_source_proof(
+                &case,
+                &material_root,
+                &attestation,
+                &private_root,
+            )
+            .is_err(),
+            "mutation {mutation}"
+        );
+        assert!(!private_root.join("inputs/case/case.json").exists());
+    }
 }
 
 #[test]
@@ -2315,6 +2604,9 @@ for line in sys.stdin:
     elif method == "configRequirements/read":
         result = {"requirements":None}
     elif method == "thread/start":
+        eval_root = message["params"]["cwd"]
+        root["cwd"] = eval_root
+        child["cwd"] = eval_root
         result = {"thread":root,"model":"local-mock","modelProvider":"ai-ip-proof-broker","serviceTier":None,"cwd":eval_root,"runtimeWorkspaceRoots":[],"instructionSources":[],"approvalPolicy":"never","approvalsReviewer":"user","sandbox":{"type":"dangerFullAccess"},"activePermissionProfile":{"id":"ai-ip-eval","extends":None},"reasoningEffort":None,"multiAgentMode":"explicitRequestOnly"}
     elif method == "turn/start":
         turn_id = "turn-candidate" if candidate else "turn-generic"
@@ -2332,6 +2624,8 @@ for line in sys.stdin:
         root["turns"] = [turn(turn_id,"completed")]
         continue
     elif method == "thread/list":
+        with open(os.path.join(home, "thread-list-times.log"), "a") as f:
+            f.write(str(time.monotonic()) + "\n")
         result = {"data":[child],"nextCursor":None,"backwardsCursor":None}
     elif method == "thread/loaded/list":
         result = {"data":[thread_id,child_id],"nextCursor":None}
@@ -2349,6 +2643,8 @@ for line in sys.stdin:
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
     }
+    let (live_case, live_material_root, live_attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
     let live_root = temp.path().join("live-private");
     fs::create_dir(&live_root).unwrap();
     #[cfg(unix)]
@@ -2365,8 +2661,9 @@ for line in sys.stdin:
                 fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
                 private_root: live_root.clone(),
                 codex_bin: mock_codex,
-                case: artifact("source"),
-                attestation: artifact("materials"),
+                case: live_case,
+                material_root: live_material_root,
+                attestation: live_attestation,
                 provider_budget_evidence: artifact("providerBudgetReceipt"),
                 rate_card: artifact("rateCard"),
                 billing_policy: artifact("billingPolicy"),
@@ -2390,9 +2687,11 @@ for line in sys.stdin:
     let frozen_json: serde_json::Value =
         serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
     assert_eq!(frozen_json["providerMode"], json!("not-run"));
-    for (name, leaf) in [
-        ("source", "source.json"),
-        ("materials", "materials.json"),
+    for (name, relative) in [
+        ("source", "inputs/case/case.json"),
+        ("attestation", "inputs/held-out-attestation.json"),
+        ("materials", "inputs/materials-manifest.json"),
+        ("material:evidence-1", "inputs/case/notes/evidence.txt"),
         ("providerBudgetReceipt", "provider-budget-receipt.json"),
         ("rateCard", "rate-card.json"),
         ("billingPolicy", "billing-policy.json"),
@@ -2403,8 +2702,11 @@ for line in sys.stdin:
             frozen_json["artifacts"][name]["path"],
             json!(
                 live_root
-                    .join("frozen-inputs")
-                    .join(leaf)
+                    .join(if relative.starts_with("inputs/") {
+                        relative.to_string()
+                    } else {
+                        format!("frozen-inputs/{relative}")
+                    })
                     .canonicalize()
                     .unwrap()
             )
@@ -2431,7 +2733,15 @@ for line in sys.stdin:
     if let Err(error) = pair_result {
         let stderr = fs::read_to_string(live_root.join("coordinator/app-server-1.stderr"))
             .unwrap_or_else(|read_error| format!("unavailable: {read_error}"));
-        panic!("pair failed: {error:#}; app server stderr: {stderr}");
+        let generic_methods =
+            fs::read_to_string(live_root.join("generic-home/app-server-methods.log"))
+                .unwrap_or_else(|read_error| format!("unavailable: {read_error}"));
+        let candidate_methods =
+            fs::read_to_string(live_root.join("candidate-home/app-server-methods.log"))
+                .unwrap_or_else(|read_error| format!("unavailable: {read_error}"));
+        panic!(
+            "pair failed: {error:#}; app server stderr: {stderr}; generic methods: {generic_methods}; candidate methods: {candidate_methods}"
+        );
     }
     worker.join().unwrap();
     for home in ["generic-home", "candidate-home"] {
@@ -2460,6 +2770,13 @@ for line in sys.stdin:
                 "{required}"
             );
         }
+        let list_times = fs::read_to_string(live_root.join(home).join("thread-list-times.log"))
+            .unwrap()
+            .lines()
+            .map(|value| value.parse::<f64>().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(list_times.len(), 2);
+        assert!(list_times[1] - list_times[0] >= 1.9);
     }
     let execution: serde_json::Value = serde_json::from_slice(
         &fs::read(live_root.join("coordinator/execution-context.json")).unwrap(),

@@ -345,25 +345,35 @@ impl TreeScan {
             }
         }
 
-        let reads = loaded_reads
-            .iter()
-            .map(|read| (read.thread.id.as_str(), &read.thread))
-            .collect::<HashMap<_, _>>();
         let mut loaded_ids = HashSet::new();
         for id in loaded_pages.iter().flat_map(|page| &page.data) {
-            if !loaded_ids.insert(id) {
+            if !loaded_ids.insert(id.clone()) {
                 bail!("thread/loaded/list returned a duplicate thread");
             }
+        }
+        let mut reads = HashMap::new();
+        for read in loaded_reads {
+            if reads
+                .insert(read.thread.id.as_str(), &read.thread)
+                .is_some()
+            {
+                bail!("duplicate typed thread/read response");
+            }
+        }
+        let expected_read_ids = records
+            .keys()
+            .chain(loaded_ids.iter())
+            .map(String::as_str)
+            .collect::<HashSet<_>>();
+        if reads.keys().copied().collect::<HashSet<_>>() != expected_read_ids {
+            bail!("thread/read did not cover the complete ancestor and loaded union");
+        }
+        for (id, record) in &records {
             let thread = reads
                 .get(id.as_str())
-                .with_context(|| format!("missing typed thread/read for loaded thread {id}"))?;
+                .with_context(|| format!("missing typed thread/read for tree thread {id}"))?;
             ensure_not_guardian(thread)?;
-            if thread.session_id == root.session_id && !records.contains_key(id) {
-                bail!("same-session loaded thread is missing from ancestor thread/list");
-            }
-            if let Some(record) = records.get(id)
-                && *record != thread_record(thread)?
-            {
+            if record != &thread_record(thread)? {
                 bail!("thread/read disagrees with the paginated tree scan");
             }
             if id != &root.id
@@ -376,9 +386,12 @@ impl TreeScan {
                 bail!("descendant thread/read lacks complete terminal turn history");
             }
         }
-        for read in loaded_reads {
-            if !loaded_ids.contains(&read.thread.id) {
-                bail!("thread/read was not requested by the loaded-thread scan");
+        for id in &loaded_ids {
+            let thread = reads
+                .get(id.as_str())
+                .with_context(|| format!("missing typed thread/read for loaded thread {id}"))?;
+            if thread.session_id == root.session_id && !records.contains_key(id) {
+                bail!("same-session loaded thread is missing from ancestor thread/list");
             }
         }
         Ok(Self {

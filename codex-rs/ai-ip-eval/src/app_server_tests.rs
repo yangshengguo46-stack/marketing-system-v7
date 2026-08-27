@@ -1,5 +1,6 @@
 use std::fs;
 use std::time::Duration;
+use std::time::Instant;
 
 use codex_app_server_protocol::AdditionalContextKind;
 use codex_app_server_protocol::AskForApproval;
@@ -7,9 +8,14 @@ use codex_app_server_protocol::ConfigReadResponse;
 use codex_app_server_protocol::ConfigRequirementsReadResponse;
 use pretty_assertions::assert_eq;
 use serde_json::json;
+use sha2::Digest;
+use sha2::Sha256;
 
+use crate::AppServerClient;
+use crate::ChildEnvironment;
 use crate::ConfigAuditExpectation;
 use crate::JsonLineClient;
+use crate::app_server::VerifiedExecutable;
 use crate::audit_config;
 use crate::build_shared_config;
 use crate::build_thread_start;
@@ -17,6 +23,114 @@ use crate::build_turn_start;
 use crate::config_read_params;
 use crate::initialize_params;
 use crate::tests::mission_case;
+
+#[cfg(target_os = "macos")]
+#[test]
+fn verified_launch_executes_retained_descriptor_after_pathname_replacement() {
+    use std::collections::BTreeMap;
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let executable = temp.path().join("codex-under-test");
+    fs::write(
+        &executable,
+        b"#!/bin/sh\nprintf retained > \"$HOME/executed-image\"\n",
+    )
+    .unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    let retained = VerifiedExecutable::from_retained(
+        fs::File::open(&executable).unwrap(),
+        &executable,
+        format!("{:x}", Sha256::digest(fs::read(&executable).unwrap())),
+    )
+    .unwrap();
+    fs::rename(&executable, temp.path().join("verified-image")).unwrap();
+    fs::write(
+        &executable,
+        b"#!/bin/sh\nprintf replacement > \"$HOME/executed-image\"\n",
+    )
+    .unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    let home = temp.path().to_str().unwrap();
+    let environment = ChildEnvironment::from_environment(
+        &BTreeMap::from([("PATH".to_string(), "/usr/bin:/bin".to_string())]),
+        home,
+        home,
+        home,
+    )
+    .unwrap();
+
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let client = AppServerClient::spawn_verified(
+            &executable,
+            retained,
+            &temp.path().join("stderr.log"),
+            &environment,
+        )
+        .await
+        .unwrap();
+        assert!(
+            client
+                .close(Duration::from_secs(2))
+                .await
+                .unwrap()
+                .success()
+        );
+    });
+    assert_eq!(
+        fs::read(temp.path().join("executed-image")).unwrap(),
+        b"retained"
+    );
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn verified_native_launch_uses_a_private_immutable_descriptor_copy() {
+    use std::collections::BTreeMap;
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let executable = temp.path().join("native-under-test");
+    fs::copy("/usr/bin/true", &executable).unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    let retained = VerifiedExecutable::from_retained(
+        fs::File::open(&executable).unwrap(),
+        &executable,
+        format!("{:x}", Sha256::digest(fs::read(&executable).unwrap())),
+    )
+    .unwrap();
+    fs::rename(&executable, temp.path().join("verified-native-image")).unwrap();
+    fs::copy("/usr/bin/false", &executable).unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    let home = temp.path().to_str().unwrap();
+    let environment = ChildEnvironment::from_environment(
+        &BTreeMap::from([("PATH".to_string(), "/usr/bin:/bin".to_string())]),
+        home,
+        home,
+        home,
+    )
+    .unwrap();
+
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let client = AppServerClient::spawn_verified(
+            &executable,
+            retained,
+            &temp.path().join("native-stderr.log"),
+            &environment,
+        )
+        .await
+        .unwrap();
+        assert!(
+            client
+                .close(Duration::from_secs(2))
+                .await
+                .unwrap()
+                .success()
+        );
+    });
+}
 
 #[test]
 fn typed_requests_are_byte_identical_across_arms_and_strictly_project_the_mission() {
@@ -290,6 +404,107 @@ fn json_line_client_routes_typed_notifications_and_response_ids() {
         assert_eq!(response, json!({"ok": true}));
         assert_eq!(client.take_notifications().len(), 1);
         assert!(!client.is_poisoned());
+        server.await.unwrap();
+    });
+}
+
+#[test]
+fn json_line_client_drains_queued_notifications_and_restarts_the_quiet_window() {
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+        use tokio::io::AsyncBufReadExt;
+        use tokio::io::AsyncWriteExt;
+        use tokio::io::BufReader;
+
+        let (client_io, server_io) = tokio::io::duplex(16 * 1024);
+        let (client_read, client_write) = tokio::io::split(client_io);
+        let (server_read, mut server_write) = tokio::io::split(server_io);
+        let server = tokio::spawn(async move {
+            let mut reader = BufReader::new(server_read);
+            let mut request = String::new();
+            reader.read_line(&mut request).await.unwrap();
+            server_write
+                .write_all(b"{\"method\":\"thread/status/changed\",\"params\":{\"threadId\":\"root-thread\",\"status\":{\"type\":\"idle\"}}}\n")
+                .await
+                .unwrap();
+            server_write
+                .write_all(b"{\"id\":1,\"result\":{\"ok\":true}}\n")
+                .await
+                .unwrap();
+            tokio::time::sleep(Duration::from_millis(40)).await;
+            server_write
+                .write_all(b"{\"method\":\"thread/status/changed\",\"params\":{\"threadId\":\"root-thread\",\"status\":{\"type\":\"idle\"}}}\n")
+                .await
+                .unwrap();
+            tokio::time::sleep(Duration::from_millis(150)).await;
+        });
+        let mut client = JsonLineClient::new(client_read, client_write);
+        let _: serde_json::Value = client
+            .request(
+                "synthetic/request",
+                Some(&json!({})),
+                Duration::from_secs(1),
+            )
+            .await
+            .unwrap();
+        let started = Instant::now();
+        let mut observed = 0_u8;
+        client
+            .observe_until_quiet(
+                Duration::from_millis(80),
+                Instant::now() + Duration::from_secs(1),
+                |notification| {
+                    assert!(matches!(
+                        notification,
+                        codex_app_server_protocol::ServerNotification::ThreadStatusChanged(_)
+                    ));
+                    observed += 1;
+                    Ok(true)
+                },
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(observed, 2);
+        assert!(started.elapsed() >= Duration::from_millis(110));
+        assert!(!client.is_poisoned());
+        server.await.unwrap();
+    });
+}
+
+#[test]
+fn json_line_client_observes_notifications_emitted_after_stdin_shutdown() {
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+        use tokio::io::AsyncReadExt;
+        use tokio::io::AsyncWriteExt;
+
+        let (client_io, server_io) = tokio::io::duplex(16 * 1024);
+        let (client_read, client_write) = tokio::io::split(client_io);
+        let (mut server_read, mut server_write) = tokio::io::split(server_io);
+        let server = tokio::spawn(async move {
+            let mut discarded = Vec::new();
+            server_read.read_to_end(&mut discarded).await.unwrap();
+            server_write
+                .write_all(b"{\"method\":\"thread/status/changed\",\"params\":{\"threadId\":\"root-thread\",\"status\":{\"type\":\"idle\"}}}\n")
+                .await
+                .unwrap();
+        });
+        let client = JsonLineClient::new(client_read, client_write);
+        let mut observed = 0_u8;
+        client
+            .shutdown_and_observe_until_eof(
+                Instant::now() + Duration::from_secs(1),
+                |notification| {
+                    assert!(matches!(
+                        notification,
+                        codex_app_server_protocol::ServerNotification::ThreadStatusChanged(_)
+                    ));
+                    observed += 1;
+                    Ok(())
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(observed, 1);
         server.await.unwrap();
     });
 }

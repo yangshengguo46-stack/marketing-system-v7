@@ -1,9 +1,12 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::ExitStatus;
 use std::time::Duration;
+use std::time::Instant;
 
 use anyhow::Context;
 use anyhow::bail;
@@ -34,6 +37,8 @@ use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ThreadStartParams;
 use codex_app_server_protocol::TurnStartParams;
 use codex_app_server_protocol::UserInput;
+use rand::TryRngCore;
+use rand::rngs::OsRng;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -222,6 +227,171 @@ where
         std::mem::take(&mut self.notifications)
     }
 
+    pub fn observe_queued_notifications(
+        &mut self,
+        mut observe: impl FnMut(&ServerNotification) -> anyhow::Result<bool>,
+    ) -> anyhow::Result<bool> {
+        self.ensure_usable()?;
+        let mut saw_relevant = false;
+        for notification in std::mem::take(&mut self.notifications) {
+            match observe(&notification) {
+                Ok(relevant) => saw_relevant |= relevant,
+                Err(error) => {
+                    self.poison(format!("queued notification observer failed: {error:#}"));
+                    return Err(error);
+                }
+            }
+        }
+        Ok(saw_relevant)
+    }
+
+    pub async fn observe_until_quiet(
+        &mut self,
+        quiet_window: Duration,
+        absolute_deadline: Instant,
+        mut observe: impl FnMut(&ServerNotification) -> anyhow::Result<bool>,
+    ) -> anyhow::Result<()> {
+        self.ensure_usable()?;
+        if quiet_window.is_zero() {
+            bail!("App Server quiet window must be positive");
+        }
+        self.observe_queued_notifications(&mut observe)?;
+        let mut quiet_deadline = Instant::now()
+            .checked_add(quiet_window)
+            .context("App Server quiet-window deadline overflow")?;
+        loop {
+            let now = Instant::now();
+            let absolute_remaining = absolute_deadline
+                .checked_duration_since(now)
+                .filter(|remaining| !remaining.is_zero())
+                .context("absolute pair deadline expired during quiet observation")?;
+            let quiet_remaining = quiet_deadline
+                .checked_duration_since(now)
+                .unwrap_or(Duration::ZERO);
+            if quiet_remaining.is_zero() {
+                return Ok(());
+            }
+            let wait = quiet_remaining.min(absolute_remaining);
+            match tokio::time::timeout(wait, self.read_message()).await {
+                Err(_) if quiet_remaining <= absolute_remaining => return Ok(()),
+                Err(_) => {
+                    self.poison("absolute pair deadline expired during quiet observation".into());
+                    bail!("absolute pair deadline expired during quiet observation")
+                }
+                Ok(Err(error)) => return Err(error),
+                Ok(Ok(JSONRPCMessage::Notification(notification))) => {
+                    let typed = ServerNotification::try_from(notification)
+                        .context("deserialize typed App Server notification")?;
+                    match observe(&typed) {
+                        Ok(true) => {
+                            quiet_deadline = Instant::now()
+                                .checked_add(quiet_window)
+                                .context("App Server quiet-window deadline overflow")?;
+                        }
+                        Ok(false) => {}
+                        Err(error) => {
+                            self.poison(format!("quiet notification observer failed: {error:#}"));
+                            return Err(error);
+                        }
+                    }
+                }
+                Ok(Ok(JSONRPCMessage::Request(request))) => {
+                    let error = JSONRPCError {
+                        id: request.id,
+                        error: JSONRPCErrorError {
+                            code: -32601,
+                            data: None,
+                            message: "evaluation client does not implement server requests"
+                                .to_string(),
+                        },
+                    };
+                    self.write_message(&error).await?;
+                    self.poison(format!("unknown server request {}", request.method));
+                    bail!("unknown App Server request {}", request.method)
+                }
+                Ok(Ok(JSONRPCMessage::Response(response))) => {
+                    self.poison(format!(
+                        "unexpected response {} during quiet observation",
+                        response.id
+                    ));
+                    bail!("unexpected App Server response {}", response.id)
+                }
+                Ok(Ok(JSONRPCMessage::Error(error))) => {
+                    self.poison(format!(
+                        "unexpected error {} during quiet observation",
+                        error.id
+                    ));
+                    bail!("unexpected App Server error {}", error.id)
+                }
+            }
+        }
+    }
+
+    pub async fn shutdown_and_observe_until_eof(
+        mut self,
+        absolute_deadline: Instant,
+        mut observe: impl FnMut(&ServerNotification) -> anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
+        self.ensure_usable()?;
+        for notification in std::mem::take(&mut self.notifications) {
+            if let Err(error) = observe(&notification) {
+                self.poison(format!("shutdown notification observer failed: {error:#}"));
+                return Err(error);
+            }
+        }
+        self.writer
+            .shutdown()
+            .await
+            .context("shutdown App Server stdin")?;
+        drop(self.writer);
+        loop {
+            let remaining = absolute_deadline
+                .checked_duration_since(Instant::now())
+                .filter(|remaining| !remaining.is_zero())
+                .context("absolute pair deadline expired during App Server shutdown")?;
+            let mut line = Vec::new();
+            let read = match tokio::time::timeout(
+                remaining,
+                (&mut self.reader)
+                    .take((MAX_JSON_LINE_BYTES + 1) as u64)
+                    .read_until(b'\n', &mut line),
+            )
+            .await
+            {
+                Ok(read) => read.context("read App Server stdout during shutdown")?,
+                Err(_) => {
+                    bail!("absolute pair deadline expired during App Server shutdown")
+                }
+            };
+            if read == 0 {
+                return Ok(());
+            }
+            if line.len() > MAX_JSON_LINE_BYTES || line.last() != Some(&b'\n') {
+                bail!("invalid App Server message framing during shutdown");
+            }
+            let message: JSONRPCMessage = match serde_json::from_slice(&line) {
+                Ok(message) => message,
+                Err(error) => return Err(error).context("parse App Server JSON during shutdown"),
+            };
+            match message {
+                JSONRPCMessage::Notification(notification) => {
+                    let typed = ServerNotification::try_from(notification)
+                        .context("deserialize typed App Server shutdown notification")?;
+                    observe(&typed)?;
+                }
+                JSONRPCMessage::Request(request) => {
+                    bail!("server request {} arrived during shutdown", request.method)
+                }
+                JSONRPCMessage::Response(response) => {
+                    bail!("response {} arrived during shutdown", response.id)
+                }
+                JSONRPCMessage::Error(error) => {
+                    bail!("error {} arrived during shutdown", error.id)
+                }
+            }
+        }
+    }
+
     pub async fn notify<P>(&mut self, method: &str, params: Option<&P>) -> anyhow::Result<()>
     where
         P: Serialize + ?Sized,
@@ -280,7 +450,6 @@ where
                 return Ok(completed.clone());
             }
             observe(&typed)?;
-            self.notifications.push(typed);
         }
         let result = tokio::time::timeout(request_timeout, async {
             loop {
@@ -295,7 +464,6 @@ where
                             return Ok(completed.clone());
                         }
                         observe(&typed)?;
-                        self.notifications.push(typed);
                     }
                     JSONRPCMessage::Request(request) => {
                         let error = JSONRPCError {
@@ -447,14 +615,193 @@ pub struct AppServerHandshake {
 pub struct AppServerClient {
     child: Child,
     protocol: Option<JsonLineClient<ChildStdout, ChildStdin>>,
+    private_executable: Option<PrivateExecutableImage>,
+}
+
+pub(crate) struct VerifiedExecutable {
+    read_descriptor: File,
+    expected_sha256: String,
+}
+
+impl VerifiedExecutable {
+    #[cfg(unix)]
+    pub(crate) fn from_retained(
+        read_descriptor: File,
+        executable_path: &Path,
+        expected_sha256: String,
+    ) -> anyhow::Result<Self> {
+        use std::os::unix::fs::MetadataExt;
+
+        let current_descriptor = File::open(executable_path).with_context(|| {
+            format!("open {} for retained execution", executable_path.display())
+        })?;
+        let read_metadata = read_descriptor.metadata()?;
+        let current_metadata = current_descriptor.metadata()?;
+        if read_metadata.dev() != current_metadata.dev()
+            || read_metadata.ino() != current_metadata.ino()
+            || read_metadata.len() != current_metadata.len()
+        {
+            bail!("verified executable descriptors do not identify the same file");
+        }
+        Ok(Self {
+            read_descriptor,
+            expected_sha256,
+        })
+    }
+
+    #[cfg(not(unix))]
+    pub(crate) fn from_retained(
+        _read_descriptor: File,
+        _executable_path: &Path,
+        _expected_sha256: String,
+    ) -> anyhow::Result<Self> {
+        bail!("descriptor-backed executable launch requires Unix semantics")
+    }
+}
+
+struct PrivateExecutableImage {
+    path: PathBuf,
+    directory: PathBuf,
+    file: File,
+    directory_handle: File,
+    active: bool,
+}
+
+impl PrivateExecutableImage {
+    #[cfg(target_os = "macos")]
+    fn create(verified: &VerifiedExecutable, coordinator_dir: &Path) -> anyhow::Result<Self> {
+        use std::os::unix::fs::FileExt;
+        use std::os::unix::fs::OpenOptionsExt;
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = coordinator_dir.join("private-executable-images");
+        match std::fs::create_dir(&root) {
+            Ok(()) => std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700))?,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                let metadata = std::fs::symlink_metadata(&root)?;
+                if !metadata.file_type().is_dir()
+                    || metadata.file_type().is_symlink()
+                    || metadata.permissions().mode() & 0o077 != 0
+                {
+                    bail!("private executable image root is not an owner-only directory");
+                }
+            }
+            Err(error) => return Err(error).context("create private executable image root"),
+        }
+        let directory = loop {
+            let mut random = [0_u8; 16];
+            OsRng
+                .try_fill_bytes(&mut random)
+                .context("generate private executable image name")?;
+            let name = random
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
+            let candidate = root.join(name);
+            match std::fs::create_dir(&candidate) {
+                Ok(()) => break candidate,
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => {
+                    return Err(error).context("create private executable image directory");
+                }
+            }
+        };
+        std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700))?;
+        let path = directory.join("codex-app-server");
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .mode(0o700)
+            .open(&path)
+            .context("create private executable image")?;
+        let before = verified.read_descriptor.metadata()?;
+        let mut digest = Sha256::new();
+        let mut offset = 0_u64;
+        loop {
+            let mut chunk = [0_u8; 8192];
+            let read = verified.read_descriptor.read_at(&mut chunk, offset)?;
+            if read == 0 {
+                break;
+            }
+            file.write_all(&chunk[..read])?;
+            digest.update(&chunk[..read]);
+            offset = offset
+                .checked_add(u64::try_from(read)?)
+                .context("private executable image length overflow")?;
+        }
+        let after = verified.read_descriptor.metadata()?;
+        if before.len() != offset
+            || before.len() != after.len()
+            || format!("{:x}", digest.finalize()) != verified.expected_sha256
+        {
+            bail!("retained executable changed while materializing private image");
+        }
+        file.flush()?;
+        file.sync_all()?;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o500))?;
+        std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o500))?;
+        let directory_handle = File::open(&directory)?;
+        unsafe {
+            use std::os::fd::AsRawFd;
+            if libc::fchflags(file.as_raw_fd(), libc::UF_IMMUTABLE) != 0
+                || libc::fchflags(directory_handle.as_raw_fd(), libc::UF_IMMUTABLE) != 0
+            {
+                return Err(std::io::Error::last_os_error())
+                    .context("make private executable image immutable");
+            }
+        }
+        Ok(Self {
+            path,
+            directory,
+            file,
+            directory_handle,
+            active: true,
+        })
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    fn create(_verified: &VerifiedExecutable, _coordinator_dir: &Path) -> anyhow::Result<Self> {
+        bail!("atomic private executable image launch is unsupported on this platform")
+    }
+
+    fn cleanup(&mut self) -> anyhow::Result<()> {
+        if !self.active {
+            return Ok(());
+        }
+        #[cfg(target_os = "macos")]
+        unsafe {
+            use std::os::fd::AsRawFd;
+            if libc::fchflags(self.directory_handle.as_raw_fd(), 0) != 0
+                || libc::fchflags(self.file.as_raw_fd(), 0) != 0
+            {
+                return Err(std::io::Error::last_os_error())
+                    .context("clear private executable image immutability");
+            }
+        }
+        #[cfg(target_os = "macos")]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&self.directory, std::fs::Permissions::from_mode(0o700))?;
+        }
+        std::fs::remove_file(&self.path)?;
+        std::fs::remove_dir(&self.directory)?;
+        self.active = false;
+        Ok(())
+    }
+}
+
+impl Drop for PrivateExecutableImage {
+    fn drop(&mut self) {
+        let _ = self.cleanup();
+    }
 }
 
 impl AppServerClient {
-    /// Spawns the pinned executable after a final child-side identity check
-    /// against the retained descriptor immediately before `exec`.
-    pub async fn spawn_verified(
+    /// Spawns the pinned executable through the retained verified descriptor.
+    pub(crate) async fn spawn_verified(
         codex_binary: &Path,
-        verified_descriptor: std::fs::File,
+        verified_executable: VerifiedExecutable,
         stderr_path: &Path,
         environment: &ChildEnvironment,
     ) -> anyhow::Result<Self> {
@@ -463,50 +810,13 @@ impl AppServerClient {
             .create_new(true)
             .open(stderr_path)
             .with_context(|| format!("create {}", stderr_path.display()))?;
-        let mut command = Command::new(codex_binary);
+        let private_root = stderr_path
+            .parent()
+            .context("App Server stderr path has no coordinator directory")?;
+        let private_executable =
+            PrivateExecutableImage::create(&verified_executable, private_root)?;
+        let mut command = Command::new(&private_executable.path);
         environment.apply_tokio(&mut command);
-        #[cfg(unix)]
-        {
-            use std::ffi::CString;
-            use std::os::fd::AsRawFd;
-
-            let descriptor = verified_descriptor.as_raw_fd();
-            let executable = CString::new(codex_binary.as_os_str().as_encoded_bytes())?;
-            // SAFETY: the callback uses only async-signal-safe libc metadata
-            // syscalls and returns an io::Error. The owned descriptor and path
-            // bytes are retained by the closure until the child exec boundary.
-            unsafe {
-                command.pre_exec(move || {
-                    let mut retained: libc::stat = std::mem::zeroed();
-                    let mut current: libc::stat = std::mem::zeroed();
-                    let mut link: libc::stat = std::mem::zeroed();
-                    if libc::fstat(descriptor, &mut retained) != 0
-                        || libc::stat(executable.as_ptr(), &mut current) != 0
-                        || libc::lstat(executable.as_ptr(), &mut link) != 0
-                    {
-                        return Err(std::io::Error::last_os_error());
-                    }
-                    if retained.st_dev != current.st_dev
-                        || retained.st_ino != current.st_ino
-                        || retained.st_size != current.st_size
-                        || current.st_dev != link.st_dev
-                        || current.st_ino != link.st_ino
-                        || current.st_size != link.st_size
-                    {
-                        return Err(std::io::Error::new(
-                            std::io::ErrorKind::PermissionDenied,
-                            "verified App Server executable identity changed at exec",
-                        ));
-                    }
-                    Ok(())
-                });
-            }
-        }
-        #[cfg(not(unix))]
-        {
-            let _ = verified_descriptor;
-            bail!("verified App Server launch requires Unix descriptor semantics");
-        }
         let mut child = command
             .arg("app-server")
             .arg("--listen")
@@ -529,6 +839,7 @@ impl AppServerClient {
         Ok(Self {
             child,
             protocol: Some(JsonLineClient::new(stdout, stdin)),
+            private_executable: Some(private_executable),
         })
     }
 
@@ -576,7 +887,7 @@ impl AppServerClient {
 
     pub async fn close(mut self, wait_timeout: Duration) -> anyhow::Result<ExitStatus> {
         self.protocol.take();
-        match tokio::time::timeout(wait_timeout, self.child.wait()).await {
+        let status = match tokio::time::timeout(wait_timeout, self.child.wait()).await {
             Ok(status) => status.context("wait for App Server exit"),
             Err(_) => {
                 self.child
@@ -585,7 +896,45 @@ impl AppServerClient {
                 let _ = self.child.wait().await;
                 bail!("App Server did not exit after stdin EOF and was killed");
             }
-        }
+        }?;
+        self.private_executable
+            .as_mut()
+            .context("private App Server executable image is unavailable")?
+            .cleanup()?;
+        Ok(status)
+    }
+
+    pub(crate) async fn close_observing(
+        mut self,
+        absolute_deadline: Instant,
+        observe: impl FnMut(&ServerNotification) -> anyhow::Result<()>,
+    ) -> anyhow::Result<ExitStatus> {
+        let protocol = self
+            .protocol
+            .take()
+            .context("App Server client is closed")?;
+        protocol
+            .shutdown_and_observe_until_eof(absolute_deadline, observe)
+            .await?;
+        let remaining = absolute_deadline
+            .checked_duration_since(Instant::now())
+            .filter(|remaining| !remaining.is_zero())
+            .context("absolute pair deadline expired waiting for App Server exit")?;
+        let status = match tokio::time::timeout(remaining, self.child.wait()).await {
+            Ok(status) => status.context("wait for App Server exit"),
+            Err(_) => {
+                self.child
+                    .start_kill()
+                    .context("kill timed-out App Server")?;
+                let _ = self.child.wait().await;
+                bail!("App Server did not exit before the absolute pair deadline");
+            }
+        }?;
+        self.private_executable
+            .as_mut()
+            .context("private App Server executable image is unavailable")?
+            .cleanup()?;
+        Ok(status)
     }
 }
 

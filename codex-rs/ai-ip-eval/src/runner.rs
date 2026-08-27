@@ -1,4 +1,6 @@
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
@@ -124,6 +126,144 @@ struct ReplayFrozenContext {
     fixture_set_manifest_sha256: String,
 }
 
+pub(crate) struct ImportedSourceProof {
+    pub(crate) mission_case: codex_ai_ip_domain::HeldOutMissionCase,
+    pub(crate) case_path: PathBuf,
+    pub(crate) attestation_path: PathBuf,
+    pub(crate) materials_manifest_path: PathBuf,
+    pub(crate) material_paths: BTreeMap<String, PathBuf>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceProofAttestation {
+    case_sha256: String,
+    source_materials_sha256: String,
+}
+
+pub(crate) fn import_live_source_proof(
+    case_path: &Path,
+    material_root: &Path,
+    attestation_path: &Path,
+    private_root: &Path,
+) -> Result<ImportedSourceProof> {
+    let case_bytes = read_supplied_regular(case_path).context("read held-out case")?;
+    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
+        serde_json::from_slice(&case_bytes).context("parse held-out case")?;
+    mission_case.validate().context("validate held-out case")?;
+    let material_root = material_root
+        .canonicalize()
+        .context("canonicalize source material root")?;
+    let root_metadata = fs::symlink_metadata(&material_root)?;
+    if !root_metadata.file_type().is_dir() || root_metadata.file_type().is_symlink() {
+        bail!("source material root must be a non-symlink directory");
+    }
+    let mut relative_paths = HashSet::new();
+    let mut validated_materials = Vec::new();
+    for material in &mission_case.materials {
+        if material.relative_path == "case.json"
+            || !relative_paths.insert(material.relative_path.as_str())
+        {
+            bail!("declared material path is duplicated or reserved");
+        }
+        let supplied = material_root.join(&material.relative_path);
+        let metadata = fs::symlink_metadata(&supplied)
+            .with_context(|| format!("stat declared material {}", material.relative_path))?;
+        if !metadata.file_type().is_file()
+            || metadata.file_type().is_symlink()
+            || has_multiple_links(&metadata)
+        {
+            bail!("declared material is not a single-link regular file");
+        }
+        let canonical = supplied
+            .canonicalize()
+            .with_context(|| format!("canonicalize material {}", material.relative_path))?;
+        if canonical != supplied || !canonical.starts_with(&material_root) {
+            bail!("declared material path traverses a link or escapes its root");
+        }
+        let bytes = read_handle(&open_anchored_regular(&canonical)?)?;
+        if sha256(&bytes) != material.sha256 {
+            bail!(
+                "declared material digest mismatch for {}",
+                material.material_id
+            );
+        }
+        validated_materials.push((material, bytes));
+    }
+    let materials_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
+    let attestation_bytes =
+        read_supplied_regular(attestation_path).context("read held-out attestation")?;
+    let attestation: SourceProofAttestation =
+        serde_json::from_slice(&attestation_bytes).context("parse held-out attestation")?;
+    if attestation.case_sha256 != sha256(&case_bytes)
+        || attestation.source_materials_sha256 != sha256(&materials_manifest_bytes)
+    {
+        bail!("held-out attestation does not bind the case and declared materials");
+    }
+
+    let inputs = private_root.join("inputs");
+    let imported_case_root = inputs.join("case");
+    create_owner_only_dir(&inputs)?;
+    create_owner_only_dir(&imported_case_root)?;
+    let imported_case = imported_case_root.join("case.json");
+    let imported_attestation = inputs.join("held-out-attestation.json");
+    let imported_manifest = inputs.join("materials-manifest.json");
+    write_owner_only_new(&imported_case, &case_bytes)?;
+    write_owner_only_new(&imported_attestation, &attestation_bytes)?;
+    write_owner_only_new(&imported_manifest, &materials_manifest_bytes)?;
+    let mut material_paths = BTreeMap::new();
+    for (material, bytes) in validated_materials {
+        let destination = imported_case_root.join(&material.relative_path);
+        create_owner_only_relative_parents(&imported_case_root, &destination)?;
+        write_owner_only_new(&destination, &bytes)?;
+        material_paths.insert(
+            material.material_id.clone(),
+            destination
+                .canonicalize()
+                .context("canonicalize imported material")?,
+        );
+    }
+    Ok(ImportedSourceProof {
+        mission_case,
+        case_path: imported_case.canonicalize()?,
+        attestation_path: imported_attestation.canonicalize()?,
+        materials_manifest_path: imported_manifest.canonicalize()?,
+        material_paths,
+    })
+}
+
+fn create_owner_only_relative_parents(root: &Path, destination: &Path) -> Result<()> {
+    let relative_parent = destination
+        .parent()
+        .context("imported material has no parent")?
+        .strip_prefix(root)
+        .context("imported material escaped its proof-copy root")?;
+    let mut current = root.to_path_buf();
+    for component in relative_parent.components() {
+        let std::path::Component::Normal(component) = component else {
+            bail!("imported material parent is not normalized");
+        };
+        current.push(component);
+        create_owner_only_dir(&current)?;
+    }
+    Ok(())
+}
+
+fn read_supplied_regular(path: &Path) -> Result<Vec<u8>> {
+    let metadata = fs::symlink_metadata(path)
+        .with_context(|| format!("stat supplied regular file {}", path.display()))?;
+    if !metadata.file_type().is_file()
+        || metadata.file_type().is_symlink()
+        || has_multiple_links(&metadata)
+    {
+        bail!("supplied path is not a single-link regular file");
+    }
+    let canonical = path
+        .canonicalize()
+        .with_context(|| format!("canonicalize supplied file {}", path.display()))?;
+    read_handle(&open_anchored_regular(&canonical)?)
+}
+
 /// Writes a typed replay freeze record with no provider-capable fields.
 pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
     let record = ReplayFrozenContext {
@@ -176,9 +316,13 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     }
     let generated_dir = canonical_private_root.join("frozen-inputs");
     create_owner_only_dir(&generated_dir)?;
+    let source_proof = import_live_source_proof(
+        &args.case,
+        &args.material_root,
+        &args.attestation,
+        &canonical_private_root,
+    )?;
     let imported = BTreeMap::from([
-        ("source", (args.case.as_path(), "source.json")),
-        ("materials", (args.attestation.as_path(), "materials.json")),
         (
             "providerBudgetReceipt",
             (
@@ -200,9 +344,7 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         write_owner_only_new(&destination, &read_regular_file_no_follow(source)?)?;
         imported_paths.insert(name.to_string(), destination);
     }
-    let case_bytes = read_regular_file_no_follow(&imported_paths["source"])?;
-    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
-        serde_json::from_slice(&case_bytes).context("parse held-out live case")?;
+    let mission_case = source_proof.mission_case;
     let schema_path = generated_dir.join("content-package-schema.json");
     write_owner_only_new(
         &schema_path,
@@ -210,7 +352,11 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     )?;
     let prompt_path = generated_dir.join("root-prompt.txt");
     write_owner_only_new(&prompt_path, codex_ai_ip_runtime::root_prompt().as_bytes())?;
-    let canonical_eval_tree = canonical_private_root.clone();
+    let canonical_eval_tree = source_proof
+        .case_path
+        .parent()
+        .context("imported case has no proof-copy root")?
+        .to_path_buf();
     let thread_projection = build_thread_start(
         &args.model_label,
         "ai-ip-proof-broker",
@@ -226,9 +372,13 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     write_owner_only_new(&turn_path, &serde_json::to_vec_pretty(&turn_projection)?)?;
     let evaluator_binary = evaluator_binary_for_freeze(&generated_dir)?;
     let broker_source = repo_root.join("codex-rs/responses-api-proxy/src/broker.rs");
-    let named = BTreeMap::from([
-        ("source".to_string(), imported_paths["source"].clone()),
-        ("materials".to_string(), imported_paths["materials"].clone()),
+    let mut named = BTreeMap::from([
+        ("source".to_string(), source_proof.case_path),
+        ("attestation".to_string(), source_proof.attestation_path),
+        (
+            "materials".to_string(),
+            source_proof.materials_manifest_path,
+        ),
         ("codexBinary".to_string(), args.codex_bin),
         ("evaluatorBinary".to_string(), evaluator_binary),
         ("brokerSource".to_string(), broker_source),
@@ -248,6 +398,9 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         ),
         ("fxPolicy".to_string(), imported_paths["fxPolicy"].clone()),
     ]);
+    for (material_id, path) in source_proof.material_paths {
+        named.insert(format!("material:{material_id}"), path);
+    }
     let frozen_artifacts = ArtifactCommitments::freeze(named)?;
     let mut artifacts = BTreeMap::new();
     for (name, artifact) in frozen_artifacts.artifacts {
@@ -312,92 +465,132 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         request_transform: None,
     };
     let bound = codex_responses_api_proxy::bind(&placeholder_config)?;
-    let broker_port = bound.addr().port();
-    let frozen = verify_frozen_context(path)?;
-    validate_local_mock_upstream(&frozen.context.provider_upstream_url)?;
-    let pair_duration = Duration::from_secs(frozen.context.max_elapsed_seconds);
+    let pair_started_at_instant = Instant::now();
     let started_at = chrono::Utc::now();
-    let pair_deadline = Instant::now()
-        .checked_add(pair_duration)
-        .context("pair deadline overflow")?;
-    let frozen_path = std::env::var("PATH").context("pinned App Server PATH is unavailable")?;
-    let mut guard = frozen.execution_guard()?;
+    let pair_deadline = establish_pair_deadline(path, pair_started_at_instant)?;
+    let broker_port = bound.addr().port();
+    let frozen = run_sync_before_deadline(pair_deadline, || verify_frozen_context(path))?;
+    run_sync_before_deadline(pair_deadline, || {
+        validate_local_mock_upstream(&frozen.context.provider_upstream_url)?;
+        let verified_deadline = pair_started_at_instant
+            .checked_add(Duration::from_secs(frozen.context.max_elapsed_seconds))
+            .context("verified pair deadline overflow")?;
+        if verified_deadline != pair_deadline {
+            bail!("frozen pair deadline changed during context verification");
+        }
+        Ok(())
+    })?;
+    let frozen_path = run_sync_before_deadline(pair_deadline, || {
+        std::env::var("PATH").context("pinned App Server PATH is unavailable")
+    })?;
+    let mut guard = run_sync_before_deadline(pair_deadline, || frozen.execution_guard())?;
     let coordinator_dir = frozen.context.private_root.join("coordinator");
-    let skill_bytes = frozen.artifact_bytes("skill")?;
-    let runtime = Arc::new(BrokerRuntimeConfig::with_run_limits(
-        frozen.max_attempts_per_arm(),
-        frozen.max_output_tokens(),
-        1024 * 1024,
-        frozen.context.max_total_tokens,
-    )?);
-    let proxy_config = codex_responses_api_proxy::ProxyConfig {
-        listen_port: None,
-        upstream_url: reqwest::Url::parse(frozen.provider_upstream_url())?,
-        dump_dir: None,
-        http_shutdown: false,
-        default_request_timeout: None,
-        request_transform: Some(runtime.request_transform(Arc::new(RuntimeInspector))),
-    };
-    let shared_config = build_shared_config(&frozen.context.model_label, broker_port)?;
-    let homes = prepare_isolated_homes(
-        &frozen.context.private_root,
-        &shared_config.bytes,
-        "candidate-skill",
-        &skill_bytes,
-    )?;
-    verify_isolated_home_parity(&homes, "candidate-skill", &skill_bytes)?;
-    let mut generated = GeneratedExecutionArtifacts::new(&homes)?;
-    guard.advance(ExecutionBoundary::ContextFrozen)?;
-    generated.advance(ExecutionBoundary::ContextFrozen, &coordinator_dir)?;
+    let skill_bytes = run_sync_before_deadline(pair_deadline, || frozen.artifact_bytes("skill"))?;
+    let runtime = run_sync_before_deadline(pair_deadline, || {
+        Ok(Arc::new(BrokerRuntimeConfig::with_run_limits(
+            frozen.max_attempts_per_arm(),
+            frozen.max_output_tokens(),
+            1024 * 1024,
+            frozen.context.max_total_tokens,
+        )?))
+    })?;
+    let proxy_config = run_sync_before_deadline(pair_deadline, || {
+        Ok(codex_responses_api_proxy::ProxyConfig {
+            listen_port: None,
+            upstream_url: reqwest::Url::parse(frozen.provider_upstream_url())?,
+            dump_dir: None,
+            http_shutdown: false,
+            default_request_timeout: None,
+            request_transform: Some(runtime.request_transform(Arc::new(RuntimeInspector))),
+        })
+    })?;
+    let shared_config = run_sync_before_deadline(pair_deadline, || {
+        build_shared_config(&frozen.context.model_label, broker_port)
+    })?;
+    let homes = run_sync_before_deadline(pair_deadline, || {
+        prepare_isolated_homes(
+            &frozen.context.private_root,
+            &shared_config.bytes,
+            "candidate-skill",
+            &skill_bytes,
+        )
+    })?;
+    run_sync_before_deadline(pair_deadline, || {
+        verify_isolated_home_parity(&homes, "candidate-skill", &skill_bytes)
+    })?;
+    let mut generated =
+        run_sync_before_deadline(pair_deadline, || GeneratedExecutionArtifacts::new(&homes))?;
+    run_sync_before_deadline(pair_deadline, || {
+        guard.advance(ExecutionBoundary::ContextFrozen)
+    })?;
+    run_sync_before_deadline(pair_deadline, || {
+        generated.advance(ExecutionBoundary::ContextFrozen, &coordinator_dir)
+    })?;
 
-    let order = commit_arm_order(&frozen, &coordinator_dir)?;
+    let order = run_sync_before_deadline(pair_deadline, || {
+        commit_arm_order(&frozen, &coordinator_dir)
+    })?;
     let first = order.first();
     let second = order.second();
-    let deadline = started_at
-        .checked_add_signed(chrono::Duration::seconds(i64::try_from(
-            frozen.context.max_elapsed_seconds,
-        )?))
-        .context("pair deadline is out of range")?;
-    let execution_bytes = serde_json::to_vec_pretty(&serde_json::json!({
-        "schemaVersion": 1,
-        "providerMode": "not-run",
-        "frozenRunContextSha256": frozen.sha256(),
-        "armOrderCommitment": order.seed_commitment(),
-        "firstCondition": first,
-        "secondCondition": second,
-        "startedAt": started_at.to_rfc3339(),
-        "deadline": deadline.to_rfc3339(),
-        "broker": {"host": "127.0.0.1", "port": broker_port, "path": "/v1/responses"},
-        "modelLabel": frozen.context.model_label,
-        "maxOutputTokensPerRequest": frozen.context.max_output_tokens,
-        "maxProviderRequestAttemptsPerRun": frozen.context.max_attempts_per_arm,
-        "maxTotalTokensPerRun": frozen.context.max_total_tokens,
-        "maxElapsedSecondsPerRun": frozen.context.max_elapsed_seconds,
-        "genericHome": homes.generic_home,
-        "genericCodexHome": homes.generic_codex_home,
-        "candidateHome": homes.candidate_home,
-        "candidateCodexHome": homes.candidate_codex_home,
-        "sharedConfigSha256": sha256(&shared_config.bytes),
-        "pathSha256": sha256(frozen_path.as_bytes()),
-    }))?;
-    let execution_context_sha256 = sha256(&execution_bytes);
-    write_owner_only_new(
-        &coordinator_dir.join("execution-context.json"),
-        &execution_bytes,
-    )?;
-    let gate = Arc::new(PairCoordinator::create(BrokerGateConfig {
-        ledger_path: coordinator_dir.join("attempt-index.jsonl"),
-        receipt_dir: coordinator_dir.join("receipts"),
-        pair_id: frozen.pair_id().to_string(),
-        frozen_run_context_sha256: frozen.sha256().to_string(),
-        execution_context_sha256,
-        arm_order_commitment: order.seed_commitment().to_string(),
-        runtime,
-    })?);
-    poison_on_error(&gate, "commit arm order", gate.commit_order(order))?;
-    let order_guard = guard.advance(ExecutionBoundary::OrderCommitted);
+    let deadline = run_sync_before_deadline(pair_deadline, || {
+        started_at
+            .checked_add_signed(chrono::Duration::seconds(i64::try_from(
+                frozen.context.max_elapsed_seconds,
+            )?))
+            .context("pair deadline is out of range")
+    })?;
+    let execution_bytes = run_sync_before_deadline(pair_deadline, || {
+        Ok(serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": 1,
+            "providerMode": "not-run",
+            "frozenRunContextSha256": frozen.sha256(),
+            "armOrderCommitment": order.seed_commitment(),
+            "firstCondition": first,
+            "secondCondition": second,
+            "startedAt": started_at.to_rfc3339(),
+            "deadline": deadline.to_rfc3339(),
+            "broker": {"host": "127.0.0.1", "port": broker_port, "path": "/v1/responses"},
+            "modelLabel": frozen.context.model_label,
+            "maxOutputTokensPerRequest": frozen.context.max_output_tokens,
+            "maxProviderRequestAttemptsPerRun": frozen.context.max_attempts_per_arm,
+            "maxTotalTokensPerRun": frozen.context.max_total_tokens,
+            "maxElapsedSecondsPerRun": frozen.context.max_elapsed_seconds,
+            "genericHome": homes.generic_home,
+            "genericCodexHome": homes.generic_codex_home,
+            "candidateHome": homes.candidate_home,
+            "candidateCodexHome": homes.candidate_codex_home,
+            "sharedConfigSha256": sha256(&shared_config.bytes),
+            "pathSha256": sha256(frozen_path.as_bytes()),
+        }))?)
+    })?;
+    let execution_context_sha256 =
+        run_sync_before_deadline(pair_deadline, || Ok(sha256(&execution_bytes)))?;
+    run_sync_before_deadline(pair_deadline, || {
+        write_owner_only_new(
+            &coordinator_dir.join("execution-context.json"),
+            &execution_bytes,
+        )
+    })?;
+    let gate = run_sync_before_deadline(pair_deadline, || {
+        Ok(Arc::new(PairCoordinator::create(BrokerGateConfig {
+            ledger_path: coordinator_dir.join("attempt-index.jsonl"),
+            receipt_dir: coordinator_dir.join("receipts"),
+            pair_id: frozen.pair_id().to_string(),
+            frozen_run_context_sha256: frozen.sha256().to_string(),
+            execution_context_sha256,
+            arm_order_commitment: order.seed_commitment().to_string(),
+            runtime,
+        })?))
+    })?;
+    let order_commit = run_sync_before_deadline(pair_deadline, || gate.commit_order(order));
+    poison_on_error(&gate, "commit arm order", order_commit)?;
+    let order_guard = run_sync_before_deadline(pair_deadline, || {
+        guard.advance(ExecutionBoundary::OrderCommitted)
+    });
     poison_on_error(&gate, "rehash after arm-order commitment", order_guard)?;
-    let generated_order = generated.advance(ExecutionBoundary::OrderCommitted, &coordinator_dir);
+    let generated_order = run_sync_before_deadline(pair_deadline, || {
+        generated.advance(ExecutionBoundary::OrderCommitted, &coordinator_dir)
+    });
     poison_on_error(
         &gate,
         "verify generated execution context after arm order",
@@ -409,25 +602,30 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         "check deadline before broker activation",
         deadline_check,
     )?;
-    let proxy_result = codex_responses_api_proxy::activate(
-        bound,
-        proxy_config,
-        codex_responses_api_proxy::local_mock_auth_header(),
-        gate.clone(),
-        gate.clone(),
-    );
+    let proxy_result = run_sync_before_deadline(pair_deadline, || {
+        codex_responses_api_proxy::activate(
+            bound,
+            proxy_config,
+            codex_responses_api_proxy::local_mock_auth_header(),
+            gate.clone(),
+            gate.clone(),
+        )
+    });
     let proxy = poison_on_error(&gate, "activate bound proof broker", proxy_result)?;
     let run_result = (|| -> Result<()> {
-        let tokio_runtime = tokio::runtime::Runtime::new()?;
+        let tokio_runtime =
+            run_sync_before_deadline(pair_deadline, || Ok(tokio::runtime::Runtime::new()?))?;
         for (index, condition) in [(1_u8, first), (2_u8, second)] {
             let pre = if index == 1 {
                 ExecutionBoundary::Arm1Pre
             } else {
                 ExecutionBoundary::Arm2Pre
             };
-            guard.advance(pre)?;
-            generated.advance(pre, &coordinator_dir)?;
-            let verified_config_bytes = generated.config_bytes(condition)?;
+            run_sync_before_deadline(pair_deadline, || guard.advance(pre))?;
+            run_sync_before_deadline(pair_deadline, || generated.advance(pre, &coordinator_dir))?;
+            let verified_config_bytes =
+                run_sync_before_deadline(pair_deadline, || generated.config_bytes(condition))?;
+            remaining_pair_duration(pair_deadline)?;
             tokio_runtime.block_on(run_app_server_arm(
                 &frozen,
                 &homes,
@@ -441,31 +639,76 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 pair_deadline,
                 &deadline.to_rfc3339(),
             ))?;
+            remaining_pair_duration(pair_deadline)?;
             let post = if index == 1 {
                 ExecutionBoundary::Arm1Post
             } else {
                 ExecutionBoundary::Arm2Post
             };
-            guard.advance(post)?;
-            generated.advance(post, &coordinator_dir)?;
-            gate.seal_arm()?;
+            run_sync_before_deadline(pair_deadline, || guard.advance(post))?;
+            run_sync_before_deadline(pair_deadline, || generated.advance(post, &coordinator_dir))?;
+            run_sync_before_deadline(pair_deadline, || gate.seal_arm())?;
         }
-        guard.advance(ExecutionBoundary::Finished)?;
-        generated.advance(ExecutionBoundary::Finished, &coordinator_dir)?;
-        gate.finish()?;
         Ok(())
     })();
-    if let Err(error) = &run_result {
-        let _ = gate.poison_permanently(&format!("paired evaluator failed: {error:#}"));
+    match run_result {
+        Err(error) => {
+            let _ = gate.poison_permanently(&format!("paired evaluator failed: {error:#}"));
+            let shutdown_result = proxy.shutdown_with_timeout(
+                remaining_pair_duration(pair_deadline).unwrap_or(Duration::from_millis(1)),
+            );
+            if let Err(shutdown_error) = shutdown_result {
+                let _ =
+                    gate.poison_permanently(&format!("broker teardown failed: {shutdown_error:#}"));
+            }
+            Err(error)
+        }
+        Ok(()) => finish_pair_after_teardown(
+            &gate,
+            pair_deadline,
+            |timeout| proxy.shutdown_with_timeout(timeout),
+            || {
+                run_sync_before_deadline(pair_deadline, || {
+                    guard.advance(ExecutionBoundary::Finished)
+                })?;
+                run_sync_before_deadline(pair_deadline, || {
+                    generated.advance(ExecutionBoundary::Finished, &coordinator_dir)
+                })
+            },
+        )
+        .map(drop),
     }
-    let shutdown_result = proxy.shutdown_with_timeout(
-        remaining_pair_duration(pair_deadline).unwrap_or(Duration::from_millis(1)),
-    );
-    if let Err(error) = &shutdown_result {
-        let _ = gate.poison_permanently(&format!("broker teardown failed: {error:#}"));
-    }
-    run_result?;
-    shutdown_result
+}
+
+pub(crate) fn finish_pair_after_teardown(
+    gate: &PairCoordinator,
+    pair_deadline: Instant,
+    teardown: impl FnOnce(Duration) -> Result<()>,
+    final_rehash: impl FnOnce() -> Result<()>,
+) -> Result<crate::PairReceipt> {
+    let timeout = poison_on_error(
+        gate,
+        "check deadline before broker teardown",
+        remaining_pair_duration(pair_deadline),
+    )?;
+    poison_on_error(gate, "broker teardown", teardown(timeout))?;
+    poison_on_error(
+        gate,
+        "check deadline after broker teardown",
+        remaining_pair_duration(pair_deadline),
+    )?;
+    poison_on_error(
+        gate,
+        "check deadline before final rehash",
+        remaining_pair_duration(pair_deadline),
+    )?;
+    poison_on_error(gate, "final rehash", final_rehash())?;
+    poison_on_error(
+        gate,
+        "check deadline after final rehash",
+        remaining_pair_duration(pair_deadline),
+    )?;
+    gate.finish()
 }
 
 fn poison_on_error<T>(gate: &PairCoordinator, step: &str, result: Result<T>) -> Result<T> {
@@ -502,133 +745,216 @@ async fn run_app_server_arm(
         EvaluationCondition::Candidate => (&homes.candidate_home, &homes.candidate_codex_home),
     };
     let temporary = home.join("tmp");
-    let environment = ChildEnvironment::from_environment(
-        &BTreeMap::from([("PATH".to_string(), frozen_path.to_string())]),
-        home.to_str().context("non-UTF-8 isolated Home")?,
-        codex_home
-            .to_str()
-            .context("non-UTF-8 isolated CODEX_HOME")?,
-        temporary.to_str().context("non-UTF-8 isolated temp")?,
-    )?;
-    let codex_binary = frozen
-        .artifacts
-        .artifacts
-        .get("codexBinary")
-        .context("missing codex binary commitment")?;
-    let retained_executable_descriptor = codex_binary.verified_exec_descriptor()?;
-    let mut app_server = AppServerClient::spawn_verified(
-        &codex_binary.canonical_path,
-        retained_executable_descriptor,
-        &coordinator_dir.join(format!("app-server-{run_ordinal}.stderr")),
-        &environment,
+    let environment = run_sync_before_deadline(pair_deadline, || {
+        ChildEnvironment::from_environment(
+            &BTreeMap::from([("PATH".to_string(), frozen_path.to_string())]),
+            home.to_str().context("non-UTF-8 isolated Home")?,
+            codex_home
+                .to_str()
+                .context("non-UTF-8 isolated CODEX_HOME")?,
+            temporary.to_str().context("non-UTF-8 isolated temp")?,
+        )
+    })?;
+    let codex_binary = run_sync_before_deadline(pair_deadline, || {
+        frozen
+            .artifacts
+            .artifacts
+            .get("codexBinary")
+            .context("missing codex binary commitment")
+    })?;
+    let retained_executable_descriptor =
+        run_sync_before_deadline(pair_deadline, || codex_binary.verified_exec_descriptor())?;
+    let mut app_server = run_before_deadline(
+        pair_deadline,
+        AppServerClient::spawn_verified(
+            &codex_binary.canonical_path,
+            retained_executable_descriptor,
+            &coordinator_dir.join(format!("app-server-{run_ordinal}.stderr")),
+            &environment,
+        ),
     )
-    .await?;
+    .await
+    .context("spawn pinned App Server before the pair deadline")?;
+    let canonical_eval_tree = run_sync_before_deadline(pair_deadline, || {
+        frozen.artifacts.artifacts["source"]
+            .canonical_path
+            .parent()
+            .context("managed held-out case has no proof-copy root")
+    })?;
     let handshake_timeout = remaining_pair_duration(pair_deadline)?;
     let handshake = run_before_deadline(
         pair_deadline,
-        app_server.handshake(codex_home, &frozen.context.private_root, handshake_timeout),
+        app_server.handshake(codex_home, canonical_eval_tree, handshake_timeout),
     )
     .await?;
-    audit_config(
-        &handshake.config,
-        &handshake.requirements,
-        &ConfigAuditExpectation {
-            canonical_config_path: codex_home.join("config.toml").canonicalize()?,
-            expected_config_bytes: verified_config_bytes.to_vec(),
-            expected_layer_config: shared_config.layer_json.clone(),
-            expected_effective_config: serde_json::to_value(&handshake.config.config)?,
-        },
-    )?;
-    let thread_params = build_thread_start(
-        &frozen.context.model_label,
-        "ai-ip-proof-broker",
-        &frozen.context.private_root,
-    )?;
-    if serde_json::to_vec_pretty(&thread_params)? != frozen.artifact_bytes("threadStartRequest")? {
-        bail!("runtime thread/start request differs from frozen projection");
-    }
-    let started: ThreadStartResponse = app_server
-        .protocol_mut()?
-        .request(
-            "thread/start",
-            Some(&thread_params),
-            remaining_pair_duration(pair_deadline)?,
-        )
-        .await?;
-    if started.model != frozen.context.model_label
-        || started.model_provider != "ai-ip-proof-broker"
-        || started.cwd.as_path() != frozen.context.private_root
-        || started.approval_policy != AskForApproval::Never
-        || started.approvals_reviewer != ApprovalsReviewer::User
-        || started.service_tier.is_some()
-        || started
-            .active_permission_profile
-            .as_ref()
-            .is_none_or(|profile| profile.id != crate::app_server::EVALUATION_PERMISSION_PROFILE)
-    {
-        bail!("thread/start response differs from the frozen execution controls");
-    }
-    let mut tree = crate::TreeEventCollector::new(&started.thread)?;
-    gate.activate_arm(ArmActivation {
-        run_ordinal,
-        condition,
-        root_thread_id: started.thread.id.clone(),
-        deadline: pair_deadline,
-        deadline_rfc3339: pair_deadline_rfc3339.to_string(),
-    })?;
-    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
-        serde_json::from_slice(&frozen.artifact_bytes("source")?)?;
-    let turn_params = build_turn_start(&started.thread.id, &mission_case)?;
-    let mut normalized_turn = turn_params.clone();
-    normalized_turn.thread_id = "00000000-0000-7000-8000-000000000000".to_string();
-    if serde_json::to_vec_pretty(&normalized_turn)? != frozen.artifact_bytes("turnStartRequest")? {
-        bail!("runtime turn/start request differs from frozen projection");
-    }
-    let started_turn: TurnStartResponse = app_server
-        .protocol_mut()?
-        .request(
-            "turn/start",
-            Some(&turn_params),
-            remaining_pair_duration(pair_deadline)?,
-        )
-        .await?;
-    if started_turn.turn.status != TurnStatus::InProgress || !started_turn.turn.items.is_empty() {
-        bail!("turn/start response is not a fresh in-progress turn");
-    }
-    let completed = app_server
-        .protocol_mut()?
-        .wait_for_turn_completion(
-            &started.thread.id,
-            &started_turn.turn.id,
-            remaining_pair_duration(pair_deadline)?,
-            |notification| {
-                observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
-                tree.ingest(notification.clone())
+    run_sync_before_deadline(pair_deadline, || {
+        audit_config(
+            &handshake.config,
+            &handshake.requirements,
+            &ConfigAuditExpectation {
+                canonical_config_path: codex_home.join("config.toml").canonicalize()?,
+                expected_config_bytes: verified_config_bytes.to_vec(),
+                expected_layer_config: shared_config.layer_json.clone(),
+                expected_effective_config: serde_json::to_value(&handshake.config.config)?,
             },
         )
-        .await?;
-    if completed.turn.status != TurnStatus::Completed {
-        bail!("App Server turn did not complete successfully");
-    }
-    tree.ingest(codex_app_server_protocol::ServerNotification::TurnCompleted(completed))?;
-    let first_scan =
-        complete_quiet_tree_scan(app_server.protocol_mut()?, &started.thread, pair_deadline)
-            .await?;
-    let second_scan =
-        complete_quiet_tree_scan(app_server.protocol_mut()?, &started.thread, pair_deadline)
-            .await?;
-    first_scan.verify_broker_thread_ids(&gate.active_thread_ids()?)?;
-    tree.close(
-        &first_scan,
-        &second_scan,
-        &gate.active_completions()?,
-        gate.in_flight_count(),
-    )?;
-    let close_timeout = remaining_pair_duration(pair_deadline)?;
-    let status = run_before_deadline(pair_deadline, app_server.close(close_timeout)).await?;
+        .map(drop)
+    })?;
+    let thread_params = run_sync_before_deadline(pair_deadline, || {
+        let params = build_thread_start(
+            &frozen.context.model_label,
+            "ai-ip-proof-broker",
+            canonical_eval_tree,
+        )?;
+        if serde_json::to_vec_pretty(&params)? != frozen.artifact_bytes("threadStartRequest")? {
+            bail!("runtime thread/start request differs from frozen projection");
+        }
+        Ok(params)
+    })?;
+    let request_timeout = remaining_pair_duration(pair_deadline)?;
+    let started: ThreadStartResponse = {
+        remaining_pair_duration(pair_deadline)?;
+        let protocol = app_server.protocol_mut()?;
+        run_before_deadline(
+            pair_deadline,
+            protocol.request("thread/start", Some(&thread_params), request_timeout),
+        )
+        .await?
+    };
+    let mut tree = run_sync_before_deadline(pair_deadline, || {
+        if started.model != frozen.context.model_label
+            || started.model_provider != "ai-ip-proof-broker"
+            || started.cwd.as_path() != canonical_eval_tree
+            || started.approval_policy != AskForApproval::Never
+            || started.approvals_reviewer != ApprovalsReviewer::User
+            || started.service_tier.is_some()
+            || started
+                .active_permission_profile
+                .as_ref()
+                .is_none_or(|profile| {
+                    profile.id != crate::app_server::EVALUATION_PERMISSION_PROFILE
+                })
+        {
+            bail!("thread/start response differs from the frozen execution controls");
+        }
+        crate::TreeEventCollector::new(&started.thread)
+    })?;
+    run_sync_before_deadline(pair_deadline, || {
+        gate.activate_arm(ArmActivation {
+            run_ordinal,
+            condition,
+            root_thread_id: started.thread.id.clone(),
+            deadline: pair_deadline,
+            deadline_rfc3339: pair_deadline_rfc3339.to_string(),
+        })
+    })?;
+    let turn_params = run_sync_before_deadline(pair_deadline, || {
+        let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
+            serde_json::from_slice(&frozen.artifact_bytes("source")?)?;
+        let params = build_turn_start(&started.thread.id, &mission_case)?;
+        let mut normalized = params.clone();
+        normalized.thread_id = "00000000-0000-7000-8000-000000000000".to_string();
+        if serde_json::to_vec_pretty(&normalized)? != frozen.artifact_bytes("turnStartRequest")? {
+            bail!("runtime turn/start request differs from frozen projection");
+        }
+        Ok(params)
+    })?;
+    let request_timeout = remaining_pair_duration(pair_deadline)?;
+    let started_turn: TurnStartResponse = {
+        remaining_pair_duration(pair_deadline)?;
+        let protocol = app_server.protocol_mut()?;
+        run_before_deadline(
+            pair_deadline,
+            protocol.request("turn/start", Some(&turn_params), request_timeout),
+        )
+        .await?
+    };
+    run_sync_before_deadline(pair_deadline, || {
+        if started_turn.turn.status != TurnStatus::InProgress || !started_turn.turn.items.is_empty()
+        {
+            bail!("turn/start response is not a fresh in-progress turn");
+        }
+        Ok(())
+    })?;
+    let completion_timeout = remaining_pair_duration(pair_deadline)?;
+    let completed = {
+        let protocol = app_server.protocol_mut()?;
+        run_before_deadline(
+            pair_deadline,
+            protocol.wait_for_turn_completion(
+                &started.thread.id,
+                &started_turn.turn.id,
+                completion_timeout,
+                |notification| {
+                    observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
+                    tree.ingest(notification.clone())
+                },
+            ),
+        )
+        .await
+        .context("wait for App Server turn completion")?
+    };
+    run_sync_before_deadline(pair_deadline, || {
+        if completed.turn.status != TurnStatus::Completed {
+            bail!("App Server turn did not complete successfully");
+        }
+        tree.ingest(codex_app_server_protocol::ServerNotification::TurnCompleted(completed))
+    })?;
+    let first_scan = complete_quiet_tree_scan(
+        app_server.protocol_mut()?,
+        &started.thread,
+        pair_deadline,
+        |notification| {
+            observe_tree_notification(gate, &started.thread.id, &mut tree, notification).map(drop)
+        },
+    )
+    .await
+    .context("collect first complete tree scan")?;
+    app_server
+        .protocol_mut()?
+        .observe_until_quiet(Duration::from_secs(2), pair_deadline, |notification| {
+            observe_tree_notification(gate, &started.thread.id, &mut tree, notification)
+        })
+        .await
+        .context("observe full App Server quiet window")?;
+    let second_scan = complete_quiet_tree_scan(
+        app_server.protocol_mut()?,
+        &started.thread,
+        pair_deadline,
+        |notification| {
+            if observe_tree_notification(gate, &started.thread.id, &mut tree, notification)? {
+                bail!("late relevant App Server event arrived during the final tree scan");
+            }
+            Ok(())
+        },
+    )
+    .await
+    .context("collect final complete tree scan")?;
+    let status = run_before_deadline(
+        pair_deadline,
+        app_server.close_observing(pair_deadline, |notification| {
+            if observe_tree_notification(gate, &started.thread.id, &mut tree, notification)? {
+                bail!("late relevant App Server event arrived after the final tree scan");
+            }
+            Ok(())
+        }),
+    )
+    .await
+    .context("close App Server while observing late notifications")?;
     if !status.success() {
         bail!("pinned App Server exited unsuccessfully");
     }
+    run_sync_before_deadline(pair_deadline, || {
+        first_scan.verify_broker_thread_ids(&gate.active_thread_ids()?)
+    })?;
+    run_sync_before_deadline(pair_deadline, || {
+        tree.close(
+            &first_scan,
+            &second_scan,
+            &gate.active_completions()?,
+            gate.in_flight_count(),
+        )
+    })?;
     Ok(())
 }
 
@@ -636,6 +962,7 @@ async fn complete_quiet_tree_scan<R, W>(
     client: &mut crate::JsonLineClient<R, W>,
     root: &codex_app_server_protocol::Thread,
     deadline: Instant,
+    mut observe: impl FnMut(&codex_app_server_protocol::ServerNotification) -> Result<()>,
 ) -> Result<crate::TreeScan>
 where
     R: tokio::io::AsyncRead + Unpin,
@@ -682,6 +1009,10 @@ where
                 remaining_pair_duration(deadline)?,
             )
             .await?;
+        client.observe_queued_notifications(|notification| {
+            observe(notification)?;
+            Ok(is_relevant_tree_notification(notification))
+        })?;
         cursor = page.next_cursor.clone();
         ancestor_pages.push(page);
         if cursor.is_none() {
@@ -706,6 +1037,10 @@ where
                 remaining_pair_duration(deadline)?,
             )
             .await?;
+        client.observe_queued_notifications(|notification| {
+            observe(notification)?;
+            Ok(is_relevant_tree_notification(notification))
+        })?;
         cursor = page.next_cursor.clone();
         loaded_pages.push(page);
         if cursor.is_none() {
@@ -713,21 +1048,66 @@ where
         }
     }
 
+    let mut read_ids = BTreeSet::from([root.id.clone()]);
+    read_ids.extend(
+        ancestor_pages
+            .iter()
+            .flat_map(|page| &page.data)
+            .map(|thread| thread.id.clone()),
+    );
+    read_ids.extend(loaded_pages.iter().flat_map(|page| page.data.clone()));
     let mut loaded_reads = Vec::new();
-    for thread_id in loaded_pages.iter().flat_map(|page| &page.data) {
+    for thread_id in read_ids {
         let response: ThreadReadResponse = client
             .request(
                 "thread/read",
                 Some(&ThreadReadParams {
-                    thread_id: thread_id.clone(),
+                    thread_id,
                     include_turns: true,
                 }),
                 remaining_pair_duration(deadline)?,
             )
             .await?;
         loaded_reads.push(response);
+        client.observe_queued_notifications(|notification| {
+            observe(notification)?;
+            Ok(is_relevant_tree_notification(notification))
+        })?;
     }
-    crate::TreeScan::from_typed_pages(root, &ancestor_pages, &loaded_pages, &loaded_reads)
+    remaining_pair_duration(deadline)?;
+    let scan =
+        crate::TreeScan::from_typed_pages(root, &ancestor_pages, &loaded_pages, &loaded_reads)?;
+    remaining_pair_duration(deadline)?;
+    Ok(scan)
+}
+
+fn observe_tree_notification(
+    gate: &PairCoordinator,
+    root_thread_id: &str,
+    tree: &mut crate::TreeEventCollector,
+    notification: &codex_app_server_protocol::ServerNotification,
+) -> Result<bool> {
+    observe_app_server_lifecycle(gate, root_thread_id, notification)?;
+    tree.ingest(notification.clone())?;
+    Ok(is_relevant_tree_notification(notification))
+}
+
+fn is_relevant_tree_notification(
+    notification: &codex_app_server_protocol::ServerNotification,
+) -> bool {
+    use codex_app_server_protocol::ServerNotification;
+
+    matches!(
+        notification,
+        ServerNotification::ThreadStarted(_)
+            | ServerNotification::TurnStarted(_)
+            | ServerNotification::TurnCompleted(_)
+            | ServerNotification::ThreadStatusChanged(_)
+            | ServerNotification::RawResponseCompleted(_)
+            | ServerNotification::ItemGuardianApprovalReviewStarted(_)
+            | ServerNotification::ItemGuardianApprovalReviewCompleted(_)
+            | ServerNotification::GuardianWarning(_)
+    )
 }
 
 fn remaining_pair_duration(deadline: Instant) -> Result<Duration> {
@@ -737,6 +1117,26 @@ fn remaining_pair_duration(deadline: Instant) -> Result<Duration> {
         .context("frozen absolute pair deadline expired")
 }
 
+pub(crate) fn establish_pair_deadline(path: &Path, started_at: Instant) -> Result<Instant> {
+    let supplied_metadata = fs::symlink_metadata(path)
+        .with_context(|| format!("stat frozen context for pair deadline {}", path.display()))?;
+    if !supplied_metadata.file_type().is_file()
+        || supplied_metadata.file_type().is_symlink()
+        || has_multiple_links(&supplied_metadata)
+    {
+        bail!("pair deadline requires a single-link regular frozen context");
+    }
+    let bytes = read_regular_file_no_follow(path)?;
+    let context: FrozenRunContext =
+        serde_json::from_slice(&bytes).context("parse frozen context for pair deadline")?;
+    if context.max_elapsed_seconds == 0 {
+        bail!("frozen pair duration must be positive");
+    }
+    started_at
+        .checked_add(Duration::from_secs(context.max_elapsed_seconds))
+        .context("pair deadline overflow")
+}
+
 pub(crate) async fn run_before_deadline<T>(
     deadline: Instant,
     future: impl std::future::Future<Output = Result<T>>,
@@ -744,6 +1144,16 @@ pub(crate) async fn run_before_deadline<T>(
     tokio::time::timeout(remaining_pair_duration(deadline)?, future)
         .await
         .context("frozen absolute pair deadline expired")?
+}
+
+pub(crate) fn run_sync_before_deadline<T>(
+    deadline: Instant,
+    operation: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    remaining_pair_duration(deadline)?;
+    let result = operation();
+    remaining_pair_duration(deadline)?;
+    result
 }
 
 fn observe_app_server_lifecycle(
@@ -1072,6 +1482,7 @@ pub struct ArtifactCommitments {
 
 pub const REQUIRED_EXECUTION_ARTIFACTS: &[&str] = &[
     "source",
+    "attestation",
     "materials",
     "codexBinary",
     "evaluatorBinary",
@@ -1346,15 +1757,23 @@ impl ArtifactCommitment {
     }
 
     #[cfg(unix)]
-    fn verified_exec_descriptor(&self) -> Result<File> {
+    fn verified_exec_descriptor(&self) -> Result<crate::app_server::VerifiedExecutable> {
         self.read_verified()?;
-        self.handle
-            .try_clone()
-            .context("duplicate verified executable descriptor")
+        let read_descriptor = open_anchored_regular(&self.canonical_path)?;
+        if !same_file(&self.handle.metadata()?, &read_descriptor.metadata()?) {
+            bail!("verified executable path identity changed before launch");
+        }
+        let executable = crate::app_server::VerifiedExecutable::from_retained(
+            read_descriptor,
+            &self.canonical_path,
+            self.sha256.clone(),
+        )?;
+        self.read_verified()?;
+        Ok(executable)
     }
 
     #[cfg(not(unix))]
-    fn verified_exec_descriptor(&self) -> Result<File> {
+    fn verified_exec_descriptor(&self) -> Result<crate::app_server::VerifiedExecutable> {
         bail!("descriptor-backed executable launch requires Unix fexec semantics")
     }
 }
@@ -1419,10 +1838,12 @@ fn validate_leaf_name(name: &str) -> Result<()> {
 
 fn require_artifact_names<'a>(names: impl Iterator<Item = &'a str>) -> Result<()> {
     let names: std::collections::HashSet<&str> = names.collect();
-    if names.len() != REQUIRED_EXECUTION_ARTIFACTS.len()
-        || REQUIRED_EXECUTION_ARTIFACTS
-            .iter()
-            .any(|required| !names.contains(required))
+    if REQUIRED_EXECUTION_ARTIFACTS
+        .iter()
+        .any(|required| !names.contains(required))
+        || names.iter().any(|name| {
+            !REQUIRED_EXECUTION_ARTIFACTS.contains(name) && !name.starts_with("material:")
+        })
     {
         bail!("frozen execution artifact set is incomplete or has extras");
     }
@@ -1504,8 +1925,6 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     let frozen_inputs = context.private_root.join("frozen-inputs");
     require_owner_only_directory(&frozen_inputs)?;
     let expected_private_inputs = [
-        ("source", "source.json"),
-        ("materials", "materials.json"),
         ("providerBudgetReceipt", "provider-budget-receipt.json"),
         ("rateCard", "rate-card.json"),
         ("billingPolicy", "billing-policy.json"),
@@ -1523,6 +1942,73 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
             .with_context(|| format!("canonicalize private frozen input {name}"))?;
         if context.artifacts[name].path != expected {
             bail!("frozen {name} reference is outside its canonical private input slot");
+        }
+        require_owner_only_file(&expected)?;
+    }
+    let imported_inputs = context.private_root.join("inputs");
+    let case_root = imported_inputs.join("case");
+    require_owner_only_directory(&imported_inputs)?;
+    require_owner_only_directory(&case_root)?;
+    for (name, path) in [
+        ("source", case_root.join("case.json")),
+        (
+            "attestation",
+            imported_inputs.join("held-out-attestation.json"),
+        ),
+        ("materials", imported_inputs.join("materials-manifest.json")),
+    ] {
+        let expected = path
+            .canonicalize()
+            .with_context(|| format!("canonicalize imported proof input {name}"))?;
+        if context.artifacts[name].path != expected {
+            bail!("frozen {name} reference is outside its canonical proof-copy slot");
+        }
+        require_owner_only_file(&expected)?;
+    }
+    let case_bytes = read_regular_file_no_follow(&context.artifacts["source"].path)?;
+    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
+        serde_json::from_slice(&case_bytes).context("parse frozen held-out case")?;
+    mission_case
+        .validate()
+        .context("validate frozen held-out case")?;
+    let material_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
+    if read_regular_file_no_follow(&context.artifacts["materials"].path)? != material_manifest_bytes
+    {
+        bail!("frozen material manifest differs from the held-out case declaration");
+    }
+    let attestation_bytes = read_regular_file_no_follow(&context.artifacts["attestation"].path)?;
+    let attestation: SourceProofAttestation =
+        serde_json::from_slice(&attestation_bytes).context("parse frozen attestation")?;
+    if attestation.case_sha256 != sha256(&case_bytes)
+        || attestation.source_materials_sha256 != sha256(&material_manifest_bytes)
+    {
+        bail!("frozen attestation does not bind the managed case and materials");
+    }
+    let declared_material_names: HashSet<String> = mission_case
+        .materials
+        .iter()
+        .map(|material| format!("material:{}", material.material_id))
+        .collect();
+    let frozen_material_names: HashSet<String> = context
+        .artifacts
+        .keys()
+        .filter(|name| name.starts_with("material:"))
+        .cloned()
+        .collect();
+    if frozen_material_names != declared_material_names {
+        bail!("frozen material artifact set differs from the held-out case declaration");
+    }
+    for material in &mission_case.materials {
+        let name = format!("material:{}", material.material_id);
+        let expected = case_root
+            .join(&material.relative_path)
+            .canonicalize()
+            .with_context(|| format!("canonicalize managed material {name}"))?;
+        if !expected.starts_with(&case_root)
+            || context.artifacts[&name].path != expected
+            || context.artifacts[&name].sha256 != material.sha256
+        {
+            bail!("frozen material commitment differs from the managed proof copy");
         }
         require_owner_only_file(&expected)?;
     }

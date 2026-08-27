@@ -104,6 +104,8 @@ pub struct LiveFreezeArgs {
     #[arg(long)]
     pub case: PathBuf,
     #[arg(long)]
+    pub material_root: PathBuf,
+    #[arg(long)]
     pub attestation: PathBuf,
     #[arg(long)]
     pub provider_budget_evidence: PathBuf,

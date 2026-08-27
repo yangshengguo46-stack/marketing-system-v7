@@ -271,6 +271,30 @@ fn typed_quiet_scan_rejects_descendant_without_terminal_turn_history() {
 }
 
 #[test]
+fn typed_quiet_scan_rejects_unloaded_descendant_without_terminal_turn_history() {
+    let root = thread("root", None);
+    let mut child = thread("child", Some("root"));
+    child.turns.clear();
+    let scan = TreeScan::from_typed_pages(
+        &root,
+        &[ThreadListResponse {
+            data: vec![child],
+            next_cursor: None,
+            backwards_cursor: None,
+        }],
+        &[ThreadLoadedListResponse {
+            data: vec![root.id.clone()],
+            next_cursor: None,
+        }],
+        &[ThreadReadResponse {
+            thread: root.clone(),
+        }],
+    );
+
+    assert!(scan.is_err());
+}
+
+#[test]
 fn tree_collector_rejects_unknown_parent_unfinished_turn_scan_drift_and_usage_drift() {
     let root = thread("root", None);
     let orphan = thread("orphan", Some("missing"));
