@@ -34,6 +34,7 @@ pub use broker::TransformedRequestMetadata;
 pub use broker::activate;
 pub use broker::bind;
 pub use read_api_key::LockedAuthHeader;
+pub use read_api_key::local_mock_auth_header;
 pub use read_api_key::read_auth_header_from_stdin;
 
 #[cfg(test)]

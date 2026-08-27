@@ -13,12 +13,15 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use chrono::Utc;
+use codex_protocol::ThreadId;
 use codex_responses_api_proxy::ExchangeObserver;
 use codex_responses_api_proxy::ForwardErrorClass;
 use codex_responses_api_proxy::ForwardResult;
 use codex_responses_api_proxy::RequestGate;
+use codex_responses_api_proxy::RequestInspector;
 use codex_responses_api_proxy::RequestMetadata;
 use codex_responses_api_proxy::RequestPermit;
+use codex_responses_api_proxy::RequestTransformConfig;
 use codex_responses_api_proxy::ResponseCompletedMetadata;
 use codex_responses_api_proxy::TransformedRequestMetadata;
 use serde::Deserialize;
@@ -45,8 +48,43 @@ pub struct BrokerGateConfig {
     pub frozen_run_context_sha256: String,
     pub execution_context_sha256: String,
     pub arm_order_commitment: String,
-    pub max_attempts_per_arm: u64,
-    pub max_output_tokens: u64,
+    pub runtime: Arc<BrokerRuntimeConfig>,
+}
+
+/// One immutable source for gate caps and the proxy's request transform.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct BrokerRuntimeConfig {
+    max_attempts_per_arm: u64,
+    max_output_tokens: u64,
+    max_body_bytes: usize,
+}
+
+impl BrokerRuntimeConfig {
+    pub fn new(
+        max_attempts_per_arm: u64,
+        max_output_tokens: u64,
+        max_body_bytes: usize,
+    ) -> Result<Self> {
+        if max_attempts_per_arm == 0 || max_output_tokens == 0 || max_body_bytes == 0 {
+            return Err(anyhow!("broker runtime limits must be positive"));
+        }
+        Ok(Self {
+            max_attempts_per_arm,
+            max_output_tokens,
+            max_body_bytes,
+        })
+    }
+
+    pub fn request_transform(
+        &self,
+        inspector: Arc<dyn RequestInspector>,
+    ) -> RequestTransformConfig {
+        RequestTransformConfig {
+            max_output_tokens: self.max_output_tokens,
+            max_body_bytes: self.max_body_bytes,
+            inspector,
+        }
+    }
 }
 
 /// The externally observable state of one atomic pair.
@@ -177,7 +215,7 @@ struct ActiveArm {
     run_ordinal: u8,
     condition: EvaluationCondition,
     root_thread_id: String,
-    known_threads: HashSet<String>,
+    known_threads: HashMap<String, Option<String>>,
     deadline: Instant,
     deadline_rfc3339: String,
     global_start: u64,
@@ -192,7 +230,7 @@ struct InFlight {
     request_record_sha256: String,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct TerminalMetadata {
     response_id_commitment: Option<String>,
     actual_model_revision: Option<String>,
@@ -211,14 +249,18 @@ struct CoordinatorState {
     order: Option<(EvaluationCondition, EvaluationCondition)>,
     active: Option<ActiveArm>,
     ledger: File,
+    receipt_directory: File,
     ledger_bytes: Vec<u8>,
     record_hashes: Vec<[u8; 32]>,
     in_flight: HashMap<u64, InFlight>,
     terminal_metadata: HashMap<u64, TerminalMetadata>,
+    invalid_completions: HashSet<u64>,
     completed_attempts: HashSet<u64>,
     counts: Counts,
     first_receipt: Option<ArmReceipt>,
     second_receipt: Option<ArmReceipt>,
+    #[cfg(test)]
+    fail_next_terminal_append: bool,
 }
 
 /// Thread-safe two-arm state machine used concurrently by the proxy workers.
@@ -234,9 +276,6 @@ pub struct PairCoordinator {
 
 impl PairCoordinator {
     pub fn create(config: BrokerGateConfig) -> Result<Self> {
-        if config.max_attempts_per_arm == 0 || config.max_output_tokens == 0 {
-            return Err(anyhow!("broker limits must be non-zero"));
-        }
         if let Some(parent) = config.ledger_path.parent() {
             fs::create_dir_all(parent)
                 .with_context(|| format!("create ledger parent {}", parent.display()))?;
@@ -254,6 +293,19 @@ impl PairCoordinator {
             })?;
         }
         set_owner_only_directory(&config.receipt_dir)?;
+        let mut receipt_options = OpenOptions::new();
+        receipt_options.read(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            receipt_options.custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW);
+        }
+        let receipt_directory = receipt_options.open(&config.receipt_dir).with_context(|| {
+            format!(
+                "open anchored receipt directory {}",
+                config.receipt_dir.display()
+            )
+        })?;
         let mut ledger_options = OpenOptions::new();
         ledger_options.write(true).create_new(true);
         #[cfg(unix)]
@@ -272,10 +324,12 @@ impl PairCoordinator {
                 order: None,
                 active: None,
                 ledger,
+                receipt_directory,
                 ledger_bytes: Vec::new(),
                 record_hashes: Vec::new(),
                 in_flight: HashMap::new(),
                 terminal_metadata: HashMap::new(),
+                invalid_completions: HashSet::new(),
                 completed_attempts: HashSet::new(),
                 counts: Counts {
                     completed: 0,
@@ -284,6 +338,8 @@ impl PairCoordinator {
                 },
                 first_receipt: None,
                 second_receipt: None,
+                #[cfg(test)]
+                fail_next_terminal_append: false,
             })),
         })
     }
@@ -354,19 +410,20 @@ impl PairCoordinator {
         if !valid {
             return poison(&self.config, &mut state, "illegal arm activation");
         }
-        if activation.root_thread_id.is_empty() {
-            return poison(&self.config, &mut state, "empty root thread ID");
-        }
+        let canonical_root = match parse_canonical_thread_id(&activation.root_thread_id) {
+            Ok(root) => root,
+            Err(error) => return poison(&self.config, &mut state, &error.to_string()),
+        };
         let run_ordinal = activation.run_ordinal;
         let condition = activation.condition;
-        let root_thread_id = activation.root_thread_id.clone();
+        let root_thread_id = canonical_root;
         let global_start = u64::try_from(state.record_hashes.len() / 2)
             .context("attempt index does not fit u64")?;
         state.active = Some(ActiveArm {
             run_ordinal,
             condition,
             root_thread_id: root_thread_id.clone(),
-            known_threads: HashSet::from([root_thread_id]),
+            known_threads: HashMap::from([(root_thread_id, None)]),
             deadline: activation.deadline,
             deadline_rfc3339: activation.deadline_rfc3339,
             global_start,
@@ -386,9 +443,22 @@ impl PairCoordinator {
 
     pub fn observe_lifecycle(&self, lifecycle: ThreadLifecycle) -> Result<()> {
         let mut state = self.lock_state()?;
+        if !matches!(
+            state.phase,
+            PairPhase::Active1 { .. } | PairPhase::Active2 { .. }
+        ) {
+            return poison(
+                &self.config,
+                &mut state,
+                "lifecycle outside exact active phase",
+            );
+        }
         let Some(active) = state.active.as_mut() else {
             return poison(&self.config, &mut state, "lifecycle outside active arm");
         };
+        if !active.accepting {
+            return poison(&self.config, &mut state, "lifecycle after arm seal");
+        }
         match lifecycle {
             ThreadLifecycle::GuardianReview | ThreadLifecycle::Guardian => {
                 poison(&self.config, &mut state, "Guardian lifecycle is forbidden")
@@ -397,10 +467,27 @@ impl PairCoordinator {
                 thread_id,
                 parent_thread_id,
             } => {
-                if thread_id.is_empty() || !active.known_threads.contains(&parent_thread_id) {
+                let thread_id = match parse_canonical_thread_id(&thread_id) {
+                    Ok(thread_id) => thread_id,
+                    Err(error) => return poison(&self.config, &mut state, &error.to_string()),
+                };
+                let parent_thread_id = match parse_canonical_thread_id(&parent_thread_id) {
+                    Ok(parent_thread_id) => parent_thread_id,
+                    Err(error) => return poison(&self.config, &mut state, &error.to_string()),
+                };
+                if !active.known_threads.contains_key(&parent_thread_id) {
                     return poison(&self.config, &mut state, "unknown descendant parent");
                 }
-                active.known_threads.insert(thread_id);
+                if active.known_threads.contains_key(&thread_id) {
+                    return poison(
+                        &self.config,
+                        &mut state,
+                        "duplicate or conflicting descendant registration",
+                    );
+                }
+                active
+                    .known_threads
+                    .insert(thread_id, Some(parent_thread_id));
                 Ok(())
             }
         }
@@ -414,7 +501,7 @@ impl PairCoordinator {
                 state
                     .active
                     .as_ref()
-                    .map(|active| active.known_threads.clone())
+                    .map(|active| active.known_threads.keys().cloned().collect())
             })
             .unwrap_or_default()
     }
@@ -433,6 +520,13 @@ impl PairCoordinator {
             .ok()
             .and_then(|state| u64::try_from(state.in_flight.len()).ok())
             .unwrap_or(u64::MAX)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn fail_next_terminal_append_for_test(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.fail_next_terminal_append = true;
+        }
     }
 
     pub fn seal_arm(&self) -> Result<ArmReceipt> {
@@ -460,9 +554,6 @@ impl PairCoordinator {
         let completion_start = active.completion_start;
         let failure_start = active.failure_start;
         let timeout_start = active.timeout_start;
-        if let Some(active) = state.active.as_mut() {
-            active.accepting = false;
-        }
         let (first_condition, second_condition) = state
             .order
             .ok_or_else(|| anyhow!("missing committed order"))?;
@@ -498,13 +589,21 @@ impl PairCoordinator {
         let mut file_bytes = bytes.clone();
         file_bytes.push(b'\n');
         receipt.receipt_sha256 = sha256_hex(&file_bytes);
-        write_new_synced(
-            &self
-                .config
-                .receipt_dir
-                .join(format!("arm-{run_ordinal}-receipt.json")),
+        if let Err(error) = write_receipt_new_synced(
+            &self.config,
+            &state,
+            &format!("arm-{run_ordinal}-receipt.json"),
             &bytes,
-        )?;
+        ) {
+            return poison(
+                &self.config,
+                &mut state,
+                &format!("arm receipt persistence failed: {error:#}"),
+            );
+        }
+        if let Some(active) = state.active.as_mut() {
+            active.accepting = false;
+        }
         if run_ordinal == 1 {
             state.first_receipt = Some(receipt.clone());
             state.phase = PairPhase::Sealed1;
@@ -548,7 +647,15 @@ impl PairCoordinator {
             finished_at: now(),
         };
         let bytes = serde_json::to_vec(&receipt).context("serialize pair receipt")?;
-        write_new_synced(&self.config.receipt_dir.join("pair-receipt.json"), &bytes)?;
+        if let Err(error) =
+            write_receipt_new_synced(&self.config, &state, "pair-receipt.json", &bytes)
+        {
+            return poison(
+                &self.config,
+                &mut state,
+                &format!("pair receipt persistence failed: {error:#}"),
+            );
+        }
         state.phase = PairPhase::Finished;
         state.active = None;
         Ok(receipt)
@@ -583,14 +690,18 @@ impl RequestGate for PairCoordinator {
         let Ok(mut state) = self.state.lock() else {
             return;
         };
-        if let Err(error) = append_terminal(&mut state, permit.attempt_id(), result) {
-            let _ = poison::<()>(&self.config, &mut state, &error.to_string());
-        } else if matches!(result, ForwardResult::Failed { .. }) {
-            let _ = poison::<()>(
-                &self.config,
-                &mut state,
-                "provider attempt failed; retries are disabled",
-            );
+        match append_terminal(&mut state, permit.attempt_id(), result) {
+            Err(error) => {
+                let _ = poison::<()>(&self.config, &mut state, &error.to_string());
+            }
+            Ok(true) => {
+                let _ = poison::<()>(
+                    &self.config,
+                    &mut state,
+                    "provider attempt failed; retries are disabled",
+                );
+            }
+            Ok(false) => {}
         }
     }
 }
@@ -603,6 +714,7 @@ impl ExchangeObserver for PairCoordinator {
         if !state.in_flight.contains_key(&permit.attempt_id())
             || state.terminal_metadata.contains_key(&permit.attempt_id())
         {
+            state.invalid_completions.insert(permit.attempt_id());
             let _ = poison::<()>(
                 &self.config,
                 &mut state,
@@ -664,7 +776,7 @@ fn authorize_and_record(
         if Instant::now() >= active.deadline {
             return Err(anyhow!("arm deadline expired"));
         }
-        if active.arm_attempt_count >= config.max_attempts_per_arm {
+        if active.arm_attempt_count >= config.runtime.max_attempts_per_arm {
             return Err(anyhow!("per-arm attempt cap exceeded"));
         }
         let window = request
@@ -673,14 +785,17 @@ fn authorize_and_record(
             .ok_or_else(|| anyhow!("missing x-codex-window-id"))?;
         let thread_id = parse_window_thread(window)?;
         if request.is_subagent {
-            let parent = request
-                .parent_thread_id
-                .as_deref()
-                .ok_or_else(|| anyhow!("parentless descendant"))?;
-            if !active.known_threads.contains(parent) {
-                return Err(anyhow!("descendant parent is unknown"));
+            let parent = parse_canonical_thread_id(
+                request
+                    .parent_thread_id
+                    .as_deref()
+                    .ok_or_else(|| anyhow!("parentless descendant"))?,
+            )?;
+            match active.known_threads.get(&thread_id) {
+                Some(Some(committed_parent)) if committed_parent == &parent => {}
+                Some(_) => return Err(anyhow!("descendant lifecycle parent mismatch")),
+                None => return Err(anyhow!("descendant lifecycle was not committed")),
             }
-            active.known_threads.insert(thread_id.to_string());
         } else if thread_id != active.root_thread_id || request.parent_thread_id.is_some() {
             return Err(anyhow!("root thread does not match active root"));
         }
@@ -718,7 +833,7 @@ fn authorize_and_record(
             .as_ref()
             .map(|parent| sha256_hex(parent.as_bytes())),
         deadline: deadline_rfc3339,
-        max_output_tokens: config.max_output_tokens,
+        max_output_tokens: config.runtime.max_output_tokens,
     };
     let bytes = serde_json::to_vec(&record).context("serialize request record")?;
     let record_hash: [u8; 32] = Sha256::digest(&bytes).into();
@@ -740,39 +855,37 @@ fn append_terminal(
     state: &mut CoordinatorState,
     attempt_id: u64,
     result: &ForwardResult,
-) -> Result<()> {
+) -> Result<bool> {
     if state.completed_attempts.contains(&attempt_id) {
         return Err(anyhow!("attempt already has a terminal record"));
     }
     let in_flight = state
         .in_flight
-        .remove(&attempt_id)
+        .get(&attempt_id)
         .ok_or_else(|| anyhow!("terminal record has no request"))?;
-    let metadata = state
-        .terminal_metadata
-        .remove(&attempt_id)
-        .unwrap_or_default();
-    let (status, failure_class) = match result {
-        ForwardResult::Completed { .. } => {
-            state.counts.completed += 1;
-            ("completed", None)
+    let metadata = state.terminal_metadata.get(&attempt_id).cloned();
+    let invalid_completion = state.invalid_completions.contains(&attempt_id);
+    let (status, failure_class, count_kind) = match result {
+        ForwardResult::Completed { .. } if invalid_completion => (
+            "failed",
+            Some("duplicateResponseCompleted".to_string()),
+            1_u8,
+        ),
+        ForwardResult::Completed { .. } if metadata.is_none() => {
+            ("failed", Some("missingResponseCompleted".to_string()), 1_u8)
         }
+        ForwardResult::Completed { .. } => ("completed", None, 0_u8),
         ForwardResult::Failed {
             class: ForwardErrorClass::DeadlineExceeded,
-        } => {
-            state.counts.timeout += 1;
-            ("timeout", Some("deadlineExceeded".to_string()))
-        }
-        ForwardResult::Failed { class } => {
-            state.counts.failed += 1;
-            ("failed", Some(format!("{class:?}")))
-        }
+        } => ("timeout", Some("deadlineExceeded".to_string()), 2_u8),
+        ForwardResult::Failed { class } => ("failed", Some(format!("{class:?}")), 1_u8),
     };
+    let metadata = metadata.unwrap_or_default();
     let record = TerminalRecord {
         schema_version: SCHEMA_VERSION,
         record_type: "terminal",
         global_attempt_index: attempt_id,
-        request_record_sha256: in_flight.request_record_sha256,
+        request_record_sha256: in_flight.request_record_sha256.clone(),
         ended_at: now(),
         status,
         response_id_commitment: metadata.response_id_commitment,
@@ -782,10 +895,23 @@ fn append_terminal(
         failure_class,
     };
     let bytes = serde_json::to_vec(&record).context("serialize terminal record")?;
+    #[cfg(test)]
+    if state.fail_next_terminal_append {
+        state.fail_next_terminal_append = false;
+        return Err(anyhow!("injected terminal append failure"));
+    }
     append_synced(state, &bytes)?;
+    state.in_flight.remove(&attempt_id);
+    state.terminal_metadata.remove(&attempt_id);
+    state.invalid_completions.remove(&attempt_id);
+    match count_kind {
+        0 => state.counts.completed += 1,
+        1 => state.counts.failed += 1,
+        _ => state.counts.timeout += 1,
+    }
     state.record_hashes.push(Sha256::digest(&bytes).into());
     state.completed_attempts.insert(attempt_id);
-    Ok(())
+    Ok(count_kind != 0)
 }
 
 fn append_synced(state: &mut CoordinatorState, bytes: &[u8]) -> Result<()> {
@@ -814,31 +940,42 @@ fn poison<T>(config: &BrokerGateConfig, state: &mut CoordinatorState, reason: &s
             "poisonedAt": now(),
             "reason": reason,
         }))?;
-        let path = config.receipt_dir.join("poison.json");
-        if !path.exists() {
-            write_new_synced(&path, &bytes)?;
-        }
+        write_receipt_new_synced(config, state, "poison.json", &bytes)?;
     }
     Err(anyhow!(reason.to_string()))
 }
 
-fn parse_window_thread(window: &str) -> Result<&str> {
+fn parse_window_thread(window: &str) -> Result<String> {
     let (thread, sequence) = window
         .rsplit_once(':')
         .ok_or_else(|| anyhow!("malformed x-codex-window-id"))?;
-    if thread.is_empty() || sequence.parse::<u64>().is_err() {
+    let parsed_sequence = sequence
+        .parse::<u64>()
+        .map_err(|_| anyhow!("malformed x-codex-window-id"))?;
+    if parsed_sequence.to_string() != sequence {
         return Err(anyhow!("malformed x-codex-window-id"));
     }
-    Ok(thread)
+    parse_canonical_thread_id(thread)
 }
 
+fn parse_canonical_thread_id(value: &str) -> Result<String> {
+    let parsed = ThreadId::from_string(value)
+        .map_err(|error| anyhow!("invalid protocol thread id: {error}"))?;
+    let canonical = parsed.to_string();
+    if canonical != value {
+        return Err(anyhow!("non-canonical protocol thread id"));
+    }
+    Ok(canonical)
+}
+
+#[cfg(not(unix))]
 fn write_new_synced(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o600);
+        options.mode(0o600).custom_flags(libc::O_NOFOLLOW);
     }
     let mut file = options
         .open(path)
@@ -849,6 +986,49 @@ fn write_new_synced(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
         .with_context(|| format!("terminate {}", path.display()))?;
     file.sync_all()
         .with_context(|| format!("fsync {}", path.display()))
+}
+
+#[cfg(unix)]
+fn write_receipt_new_synced(
+    _config: &BrokerGateConfig,
+    state: &CoordinatorState,
+    leaf: &str,
+    bytes: &[u8],
+) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+
+    if leaf.contains('/') || leaf.contains('\\') {
+        return Err(anyhow!("receipt name is not a leaf"));
+    }
+    let leaf = CString::new(leaf).context("receipt name contains NUL")?;
+    let descriptor = unsafe {
+        libc::openat(
+            state.receipt_directory.as_raw_fd(),
+            leaf.as_ptr(),
+            libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+            0o600,
+        )
+    };
+    if descriptor < 0 {
+        return Err(std::io::Error::last_os_error()).context("create anchored receipt");
+    }
+    let mut file = unsafe { File::from_raw_fd(descriptor) };
+    file.write_all(bytes).context("write anchored receipt")?;
+    file.write_all(b"\n")
+        .context("terminate anchored receipt")?;
+    file.sync_all().context("fsync anchored receipt")
+}
+
+#[cfg(not(unix))]
+fn write_receipt_new_synced(
+    config: &BrokerGateConfig,
+    _state: &CoordinatorState,
+    leaf: &str,
+    bytes: &[u8],
+) -> Result<()> {
+    write_new_synced(&config.receipt_dir.join(leaf), bytes)
 }
 
 fn set_owner_only_directory(path: &std::path::Path) -> Result<()> {

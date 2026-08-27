@@ -22,6 +22,7 @@ pub use app_server::initialize_params;
 pub use broker_gate::ArmActivation;
 pub use broker_gate::ArmReceipt;
 pub use broker_gate::BrokerGateConfig;
+pub use broker_gate::BrokerRuntimeConfig;
 pub use broker_gate::PairCoordinator;
 pub use broker_gate::PairPhase;
 pub use broker_gate::PairReceipt;
@@ -52,23 +53,35 @@ pub use model::Usage;
 pub use runner::ArtifactCommitments;
 pub use runner::ChildEnvironment;
 pub use runner::CommittedArmOrder;
+pub use runner::ExecutionBoundary;
+pub use runner::FrozenExecutionGuard;
 pub use runner::GitWorktreeCommitment;
 pub use runner::IsolatedHomes;
+pub use runner::REQUIRED_EXECUTION_ARTIFACTS;
 pub use runner::VerifiedFrozenContext;
 pub use runner::commit_arm_order;
+pub use runner::freeze_live_context;
+pub use runner::freeze_replay_context;
 pub use runner::prepare_isolated_homes;
+pub use runner::run_local_mock_pair;
 pub use runner::verify_frozen_context;
+pub use runner::verify_isolated_home_parity;
+
+pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
+    match cli.command {
+        EvalCommand::FreezeRunContext(command) => match command.mode {
+            FreezeRunContextArgs::Replay(args) => freeze_replay_context(args),
+            FreezeRunContextArgs::Live(args) => freeze_live_context(args),
+        },
+        EvalCommand::LivePair(args) => run_local_mock_pair(&args.frozen_run_context),
+        _ => anyhow::bail!("selected evaluator workflow is not implemented in this work package"),
+    }
+}
 
 pub fn run_main() -> anyhow::Result<()> {
     use clap::Parser;
 
-    let cli = Cli::parse();
-    match cli.command {
-        EvalCommand::LivePair(_) => {
-            anyhow::bail!("live-pair execution is disabled in the mock-testable Phase 0A boundary")
-        }
-        _ => anyhow::bail!("selected evaluator workflow is not implemented in this work package"),
-    }
+    execute_cli(Cli::parse())
 }
 
 #[cfg(test)]

@@ -28,6 +28,15 @@ impl LockedAuthHeader {
     }
 }
 
+/// Constructs a fixed, non-secret authorization header for loopback mock upstreams.
+///
+/// This cannot accept caller data and must never be used for a provider endpoint.
+pub fn local_mock_auth_header() -> LockedAuthHeader {
+    LockedAuthHeader {
+        value: "Bearer local-mock-not-a-secret",
+    }
+}
+
 /// Reads the auth token from stdin into a locked `Authorization` header.
 ///
 /// The returned wrapper keeps the `Bearer` header bytes in process-lifetime

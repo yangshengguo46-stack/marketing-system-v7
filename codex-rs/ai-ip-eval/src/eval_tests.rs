@@ -18,9 +18,12 @@ use serde_json::json;
 use crate::ArmActivation;
 use crate::ArtifactCommitments;
 use crate::BrokerGateConfig;
+use crate::BrokerRuntimeConfig;
 use crate::Cli;
 use crate::EvaluationCondition;
+use crate::ExecutionBoundary;
 use crate::ExecutionMode;
+use crate::FrozenExecutionGuard;
 use crate::GitWorktreeCommitment;
 use crate::ModeEvidence;
 use crate::PairCoordinator;
@@ -35,9 +38,12 @@ use crate::prepare_isolated_homes;
 use crate::validate_case_boundary;
 use crate::verify_frozen_context;
 use clap::Parser;
+use codex_responses_api_proxy::ExchangeObserver;
 use codex_responses_api_proxy::ForwardResult;
+use codex_responses_api_proxy::ObservedUsage;
 use codex_responses_api_proxy::RequestGate;
 use codex_responses_api_proxy::RequestMetadata;
+use codex_responses_api_proxy::ResponseCompletedMetadata;
 use codex_responses_api_proxy::TransformedRequestEvidence;
 use codex_responses_api_proxy::TransformedRequestMetadata;
 use sha2::Digest;
@@ -586,12 +592,27 @@ fn transformed() -> TransformedRequestMetadata {
 }
 
 fn root_request(root: &str) -> RequestMetadata {
+    let root = test_thread_id(root);
     RequestMetadata {
         method: "POST".to_string(),
         path: "/v1/responses".to_string(),
         window_id: Some(format!("{root}:0")),
         parent_thread_id: None,
         is_subagent: false,
+    }
+}
+
+fn test_thread_id(label: &str) -> &'static str {
+    match label {
+        "root" => "0198f5aa-0000-7000-8000-000000000001",
+        "root-1" => "0198f5aa-0000-7000-8000-000000000002",
+        "root-2" => "0198f5aa-0000-7000-8000-000000000003",
+        "child" => "0198f5aa-0000-7000-8000-000000000004",
+        "grandchild" => "0198f5aa-0000-7000-8000-000000000005",
+        "other" => "0198f5aa-0000-7000-8000-000000000006",
+        "orphan" => "0198f5aa-0000-7000-8000-000000000007",
+        "missing" => "0198f5aa-0000-7000-8000-000000000008",
+        _ => panic!("unknown synthetic thread label"),
     }
 }
 
@@ -603,8 +624,7 @@ fn coordinator(temp: &tempfile::TempDir, cap: u64) -> PairCoordinator {
         frozen_run_context_sha256: "a".repeat(64),
         execution_context_sha256: "b".repeat(64),
         arm_order_commitment: "c".repeat(64),
-        max_attempts_per_arm: cap,
-        max_output_tokens: 321,
+        runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(cap, 321, 1024 * 1024).unwrap()),
     })
     .unwrap()
 }
@@ -615,11 +635,107 @@ fn activate_first(gate: &PairCoordinator, root: &str, cap_window: Duration) {
     gate.activate_arm(ArmActivation {
         run_ordinal: 1,
         condition: EvaluationCondition::Generic,
-        root_thread_id: root.to_string(),
+        root_thread_id: test_thread_id(root).to_string(),
         deadline: Instant::now() + cap_window,
         deadline_rfc3339: "2026-08-27T12:00:00Z".to_string(),
     })
     .unwrap();
+}
+
+fn observe_completion(gate: &PairCoordinator, permit: &codex_responses_api_proxy::RequestPermit) {
+    gate.response_completed(
+        permit,
+        &ResponseCompletedMetadata {
+            response_id: "response-1".to_string(),
+            usage: Some(ObservedUsage {
+                total_tokens: 3,
+                input_tokens: 2,
+                cached_input_tokens: 0,
+                cache_write_input_tokens: 0,
+                output_tokens: 1,
+                reasoning_output_tokens: 0,
+            }),
+            actual_model: Some("mock-revision".to_string()),
+            deployment_or_fingerprint: Some("mock-deployment".to_string()),
+        },
+    );
+}
+
+fn complete(gate: &PairCoordinator, permit: codex_responses_api_proxy::RequestPermit) {
+    observe_completion(gate, &permit);
+    gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+}
+
+fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
+    let repository = temp.path().join("context-repo");
+    fs::create_dir(&repository).unwrap();
+    fs::write(repository.join("source"), b"committed source\n").unwrap();
+    let run_git = |args: &[&str]| {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repository)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        output.stdout
+    };
+    run_git(&["init", "--quiet"]);
+    run_git(&["add", "source"]);
+    run_git(&[
+        "-c",
+        "user.name=Synthetic",
+        "-c",
+        "user.email=synthetic@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "freeze",
+    ]);
+    let head = String::from_utf8(run_git(&["rev-parse", "HEAD"]))
+        .unwrap()
+        .trim()
+        .to_string();
+    let artifacts_dir = temp.path().join("context-artifacts");
+    fs::create_dir(&artifacts_dir).unwrap();
+    let artifacts: serde_json::Map<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
+        .iter()
+        .map(|name| {
+            let path = artifacts_dir.join(name);
+            let bytes = format!("{name}\n").into_bytes();
+            fs::write(&path, &bytes).unwrap();
+            (
+                name.to_string(),
+                json!({"path": path, "sha256": format!("{:x}", Sha256::digest(&bytes))}),
+            )
+        })
+        .collect();
+    let path = temp.path().join("frozen-run-context.json");
+    fs::write(
+        &path,
+        serde_json::to_vec_pretty(&json!({
+            "schemaVersion": 1,
+            "executionMode": "live",
+            "providerMode": "not-run",
+            "pairId": "pair-context",
+            "publicRunId": "run-context",
+            "candidateSha": "candidate-sha",
+            "privateRoot": temp.path(),
+            "repoRoot": repository.canonicalize().unwrap(),
+            "repoHead": head,
+            "providerUpstreamUrl": "http://127.0.0.1:1/v1/responses",
+            "maxOutputTokens": 321,
+            "maxAttemptsPerArm": 2,
+            "artifacts": artifacts,
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    path
 }
 
 #[test]
@@ -653,14 +769,14 @@ fn atomic_pair_state_machine_poisoning_is_permanent() {
     let first = happy
         .before_forward(&root_request("root-1"), &transformed())
         .unwrap();
-    happy.after_forward(first, &ForwardResult::Completed { status: 200 });
+    complete(&happy, first);
     let receipt1 = happy.seal_arm().unwrap();
     assert_eq!(happy.phase(), PairPhase::Sealed1);
     happy
         .activate_arm(ArmActivation {
             run_ordinal: 2,
             condition: EvaluationCondition::Candidate,
-            root_thread_id: "root-2".to_string(),
+            root_thread_id: test_thread_id("root-2").to_string(),
             deadline: Instant::now() + Duration::from_secs(5),
             deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
         })
@@ -668,7 +784,7 @@ fn atomic_pair_state_machine_poisoning_is_permanent() {
     let second = happy
         .before_forward(&root_request("root-2"), &transformed())
         .unwrap();
-    happy.after_forward(second, &ForwardResult::Completed { status: 200 });
+    complete(&happy, second);
     let receipt2 = happy.seal_arm().unwrap();
     assert_eq!(
         receipt2.previous_arm_receipt_sha256,
@@ -693,18 +809,24 @@ fn gate_accepts_only_root_or_known_descendants_and_enforces_caps_deadlines_and_l
     let root = gate
         .before_forward(&root_request("root"), &transformed())
         .unwrap();
-    gate.after_forward(root, &ForwardResult::Completed { status: 200 });
+    complete(&gate, root);
+
+    gate.observe_lifecycle(ThreadLifecycle::Subagent {
+        thread_id: test_thread_id("child").to_string(),
+        parent_thread_id: test_thread_id("root").to_string(),
+    })
+    .unwrap();
 
     let child = RequestMetadata {
         method: "POST".to_string(),
         path: "/v1/responses".to_string(),
-        window_id: Some("child:0".to_string()),
-        parent_thread_id: Some("root".to_string()),
+        window_id: Some(format!("{}:0", test_thread_id("child"))),
+        parent_thread_id: Some(test_thread_id("root").to_string()),
         is_subagent: true,
     };
     let child_permit = gate.before_forward(&child, &transformed()).unwrap();
-    gate.after_forward(child_permit, &ForwardResult::Completed { status: 200 });
-    assert!(gate.known_threads().contains("child"));
+    complete(&gate, child_permit);
+    assert!(gate.known_threads().contains(test_thread_id("child")));
 
     assert!(gate.before_forward(&child, &transformed()).is_err());
     assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
@@ -719,12 +841,12 @@ fn gate_accepts_only_root_or_known_descendants_and_enforces_caps_deadlines_and_l
             ..root_request("root")
         },
         RequestMetadata {
-            window_id: Some("other:0".into()),
+            window_id: Some(format!("{}:0", test_thread_id("other"))),
             ..root_request("root")
         },
         RequestMetadata {
-            window_id: Some("orphan:0".into()),
-            parent_thread_id: Some("missing".into()),
+            window_id: Some(format!("{}:0", test_thread_id("orphan"))),
+            parent_thread_id: Some(test_thread_id("missing").to_string()),
             is_subagent: true,
             ..root_request("root")
         },
@@ -760,14 +882,11 @@ fn attempt_index_is_gap_free_append_only_and_each_request_has_one_terminal() {
     let temp = tempfile::tempdir().unwrap();
     let gate = coordinator(&temp, 3);
     activate_first(&gate, "root", Duration::from_secs(5));
-    for status in [
-        ForwardResult::Completed { status: 200 },
-        ForwardResult::Completed { status: 200 },
-    ] {
+    for _ in 0..2 {
         let permit = gate
             .before_forward(&root_request("root"), &transformed())
             .unwrap();
-        gate.after_forward(permit, &status);
+        complete(&gate, permit);
     }
     gate.seal_arm().unwrap();
 
@@ -853,12 +972,12 @@ fn second_arm_receipt_chains_the_actual_first_receipt_file_bytes() {
     let permit = gate
         .before_forward(&root_request("root-1"), &transformed())
         .unwrap();
-    gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+    complete(&gate, permit);
     gate.seal_arm().unwrap();
     gate.activate_arm(ArmActivation {
         run_ordinal: 2,
         condition: EvaluationCondition::Candidate,
-        root_thread_id: "root-2".to_string(),
+        root_thread_id: test_thread_id("root-2").to_string(),
         deadline: Instant::now() + Duration::from_secs(5),
         deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
     })
@@ -866,7 +985,7 @@ fn second_arm_receipt_chains_the_actual_first_receipt_file_bytes() {
     let permit = gate
         .before_forward(&root_request("root-2"), &transformed())
         .unwrap();
-    gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+    complete(&gate, permit);
     let second = gate.seal_arm().unwrap();
     let first_bytes = fs::read(temp.path().join("receipts/arm-1-receipt.json")).unwrap();
     assert_eq!(
@@ -878,24 +997,24 @@ fn second_arm_receipt_chains_the_actual_first_receipt_file_bytes() {
 #[test]
 fn arm_order_uses_an_owner_only_os_seed_after_context_verification() {
     let temp = tempfile::tempdir().unwrap();
-    let frozen_path = temp.path().join("frozen-run-context.json");
-    fs::write(&frozen_path, b"{\"executionMode\":\"live\"}\n").unwrap();
+    let frozen_path = strict_live_context(&temp);
     let frozen = verify_frozen_context(&frozen_path).unwrap();
-    let order = commit_arm_order(&frozen, temp.path()).unwrap();
+    let order_dir = temp.path().join("order");
+    let order = commit_arm_order(&frozen, &order_dir).unwrap();
     assert_ne!(order.first(), order.second());
     assert_eq!(
-        fs::read(temp.path().join("arm-order-seed.bin"))
+        fs::read(order_dir.join("arm-order-seed.bin"))
             .unwrap()
             .len(),
         32
     );
     assert_eq!(order.seed_commitment().len(), 64);
-    assert!(commit_arm_order(&frozen, temp.path()).is_err());
+    assert!(commit_arm_order(&frozen, &order_dir).is_err());
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         assert_eq!(
-            fs::metadata(temp.path().join("arm-order-seed.bin"))
+            fs::metadata(order_dir.join("arm-order-seed.bin"))
                 .unwrap()
                 .permissions()
                 .mode()
@@ -908,8 +1027,7 @@ fn arm_order_uses_an_owner_only_os_seed_after_context_verification() {
 #[test]
 fn production_coordinator_accepts_only_the_opaque_os_committed_order() {
     let temp = tempfile::tempdir().unwrap();
-    let frozen_path = temp.path().join("frozen-run-context.json");
-    fs::write(&frozen_path, b"{\"executionMode\":\"live\"}\n").unwrap();
+    let frozen_path = strict_live_context(&temp);
     let frozen = verify_frozen_context(&frozen_path).unwrap();
     let order_dir = temp.path().join("order");
     let order = commit_arm_order(&frozen, &order_dir).unwrap();
@@ -921,11 +1039,10 @@ fn production_coordinator_accepts_only_the_opaque_os_committed_order() {
         ledger_path: temp.path().join("attempt-index.jsonl"),
         receipt_dir: temp.path().join("receipts"),
         pair_id: "pair-live".to_string(),
-        frozen_run_context_sha256: frozen.sha256,
+        frozen_run_context_sha256: frozen.sha256().to_string(),
         execution_context_sha256: "b".repeat(64),
         arm_order_commitment: order.seed_commitment().to_string(),
-        max_attempts_per_arm: 1,
-        max_output_tokens: 1,
+        runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(1, 1, 1024).unwrap()),
     })
     .unwrap();
 
@@ -1302,9 +1419,602 @@ fn live_context_and_receipt_directory_reject_initial_symlink_aliases() {
             frozen_run_context_sha256: "a".repeat(64),
             execution_context_sha256: "b".repeat(64),
             arm_order_commitment: "c".repeat(64),
-            max_attempts_per_arm: 1,
-            max_output_tokens: 1,
+            runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(1, 1, 1024).unwrap()),
         })
         .is_err()
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn receipt_writes_remain_anchored_if_the_parent_path_is_replaced() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = coordinator(&temp, 1);
+    activate_first(&gate, "root", Duration::from_secs(5));
+    let permit = gate
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    complete(&gate, permit);
+    let anchored = temp.path().join("anchored-receipts");
+    fs::rename(temp.path().join("receipts"), &anchored).unwrap();
+    let external = temp.path().join("external-receipts-after-create");
+    fs::create_dir(&external).unwrap();
+    std::os::unix::fs::symlink(&external, temp.path().join("receipts")).unwrap();
+
+    gate.seal_arm().unwrap();
+    assert!(anchored.join("arm-1-receipt.json").is_file());
+    assert!(fs::read_dir(external).unwrap().next().is_none());
+}
+
+#[test]
+fn descendant_forward_requires_a_prior_immutable_lifecycle_edge() {
+    let child_request = RequestMetadata {
+        method: "POST".to_string(),
+        path: "/v1/responses".to_string(),
+        window_id: Some(format!("{}:0", test_thread_id("child"))),
+        parent_thread_id: Some(test_thread_id("root").to_string()),
+        is_subagent: true,
+    };
+
+    let rejected_temp = tempfile::tempdir().unwrap();
+    let rejected = coordinator(&rejected_temp, 2);
+    activate_first(&rejected, "root", Duration::from_secs(5));
+    assert!(
+        rejected
+            .before_forward(&child_request, &transformed())
+            .is_err()
+    );
+    assert!(matches!(rejected.phase(), PairPhase::Poisoned { .. }));
+
+    let accepted_temp = tempfile::tempdir().unwrap();
+    let accepted = coordinator(&accepted_temp, 2);
+    activate_first(&accepted, "root", Duration::from_secs(5));
+    accepted
+        .observe_lifecycle(ThreadLifecycle::Subagent {
+            thread_id: test_thread_id("child").to_string(),
+            parent_thread_id: test_thread_id("root").to_string(),
+        })
+        .unwrap();
+    let permit = accepted
+        .before_forward(&child_request, &transformed())
+        .unwrap();
+    complete(&accepted, permit);
+
+    assert!(
+        accepted
+            .observe_lifecycle(ThreadLifecycle::Subagent {
+                thread_id: test_thread_id("child").to_string(),
+                parent_thread_id: test_thread_id("root").to_string(),
+            })
+            .is_err()
+    );
+    assert!(matches!(accepted.phase(), PairPhase::Poisoned { .. }));
+}
+
+#[test]
+fn canonical_protocol_thread_and_window_ids_are_required() {
+    for malformed in [
+        "0198F5AA-0000-7000-8000-000000000001:0",
+        "0198f5aa000070008000000000000001:0",
+        "0198f5aa-0000-7000-8000-000000000001:00",
+        "not-a-thread:0",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let gate = coordinator(&temp, 1);
+        activate_first(&gate, "root", Duration::from_secs(5));
+        let request = RequestMetadata {
+            window_id: Some(malformed.to_string()),
+            ..root_request("root")
+        };
+        assert!(gate.before_forward(&request, &transformed()).is_err());
+        assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    }
+}
+
+#[test]
+fn completed_forward_requires_exactly_one_response_completed() {
+    let missing_temp = tempfile::tempdir().unwrap();
+    let missing = coordinator(&missing_temp, 1);
+    activate_first(&missing, "root", Duration::from_secs(5));
+    let permit = missing
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    missing.after_forward(permit, &ForwardResult::Completed { status: 200 });
+    assert!(matches!(missing.phase(), PairPhase::Poisoned { .. }));
+    let records: Vec<serde_json::Value> =
+        fs::read_to_string(missing_temp.path().join("attempt-index.jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+    assert_eq!(records[1]["status"], json!("failed"));
+    assert_eq!(
+        records[1]["failureClass"],
+        json!("missingResponseCompleted")
+    );
+
+    let duplicate_temp = tempfile::tempdir().unwrap();
+    let duplicate = coordinator(&duplicate_temp, 1);
+    activate_first(&duplicate, "root", Duration::from_secs(5));
+    let permit = duplicate
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    observe_completion(&duplicate, &permit);
+    duplicate.response_completed(
+        &permit,
+        &ResponseCompletedMetadata {
+            response_id: "response-duplicate".to_string(),
+            usage: None,
+            actual_model: None,
+            deployment_or_fingerprint: None,
+        },
+    );
+    duplicate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+    assert!(matches!(duplicate.phase(), PairPhase::Poisoned { .. }));
+    let ledger = fs::read_to_string(duplicate_temp.path().join("attempt-index.jsonl")).unwrap();
+    assert!(ledger.contains("duplicateResponseCompleted"));
+}
+
+#[test]
+fn terminal_state_commits_only_after_terminal_fsync() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = coordinator(&temp, 1);
+    activate_first(&gate, "root", Duration::from_secs(5));
+    let permit = gate
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    observe_completion(&gate, &permit);
+    gate.fail_next_terminal_append_for_test();
+    gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+
+    assert_eq!(gate.in_flight_count(), 1);
+    assert_eq!(gate.attempt_count(), 0);
+    let ledger = fs::read_to_string(temp.path().join("attempt-index.jsonl")).unwrap();
+    assert_eq!(ledger.lines().count(), 1);
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+}
+
+#[test]
+fn receipt_persistence_failures_immediately_poison_and_are_not_retryable() {
+    let arm_temp = tempfile::tempdir().unwrap();
+    let arm = coordinator(&arm_temp, 1);
+    activate_first(&arm, "root", Duration::from_secs(5));
+    let permit = arm
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    complete(&arm, permit);
+    fs::write(
+        arm_temp.path().join("receipts/arm-1-receipt.json"),
+        b"collision",
+    )
+    .unwrap();
+    assert!(arm.seal_arm().is_err());
+    assert!(matches!(arm.phase(), PairPhase::Poisoned { .. }));
+    assert!(arm_temp.path().join("receipts/poison.json").is_file());
+    assert!(arm.seal_arm().is_err());
+
+    let pair_temp = tempfile::tempdir().unwrap();
+    let pair = coordinator(&pair_temp, 1);
+    activate_first(&pair, "root-1", Duration::from_secs(5));
+    let permit = pair
+        .before_forward(&root_request("root-1"), &transformed())
+        .unwrap();
+    complete(&pair, permit);
+    pair.seal_arm().unwrap();
+    pair.activate_arm(ArmActivation {
+        run_ordinal: 2,
+        condition: EvaluationCondition::Candidate,
+        root_thread_id: test_thread_id("root-2").to_string(),
+        deadline: Instant::now() + Duration::from_secs(5),
+        deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
+    })
+    .unwrap();
+    let permit = pair
+        .before_forward(&root_request("root-2"), &transformed())
+        .unwrap();
+    complete(&pair, permit);
+    pair.seal_arm().unwrap();
+    fs::write(
+        pair_temp.path().join("receipts/pair-receipt.json"),
+        b"collision",
+    )
+    .unwrap();
+    assert!(pair.finish().is_err());
+    assert!(matches!(pair.phase(), PairPhase::Poisoned { .. }));
+    assert!(pair.finish().is_err());
+}
+
+#[test]
+fn isolated_homes_require_fresh_empty_roots_and_complete_tree_parity() {
+    let stale = tempfile::tempdir().unwrap();
+    fs::create_dir(stale.path().join("generic-home")).unwrap();
+    fs::write(stale.path().join("generic-home/auth.json"), b"stale").unwrap();
+    assert!(
+        prepare_isolated_homes(
+            stale.path(),
+            b"model = \"mock\"\n",
+            "target-skill",
+            b"skill\n",
+        )
+        .is_err()
+    );
+
+    let fresh = tempfile::tempdir().unwrap();
+    let homes = prepare_isolated_homes(
+        fresh.path(),
+        b"model = \"mock\"\n",
+        "target-skill",
+        b"skill\n",
+    )
+    .unwrap();
+    crate::verify_isolated_home_parity(&homes, "target-skill", b"skill\n").unwrap();
+    fs::write(homes.generic_codex_home.join("unexpected"), b"drift").unwrap();
+    assert!(crate::verify_isolated_home_parity(&homes, "target-skill", b"skill\n").is_err());
+}
+
+#[test]
+fn minimal_live_context_and_skipped_rehash_boundaries_are_rejected() {
+    let temp = tempfile::tempdir().unwrap();
+    let minimal = temp.path().join("minimal.json");
+    fs::write(&minimal, b"{\"executionMode\":\"live\"}\n").unwrap();
+    assert!(verify_frozen_context(&minimal).is_err());
+
+    let mut paths = BTreeMap::new();
+    for name in crate::REQUIRED_EXECUTION_ARTIFACTS {
+        let path = temp.path().join(name);
+        fs::write(&path, format!("{name}\n")).unwrap();
+        paths.insert(name.to_string(), path);
+    }
+    let repository = temp.path().join("repo");
+    fs::create_dir(&repository).unwrap();
+    fs::write(repository.join("source"), b"source\n").unwrap();
+    let run_git = |args: &[&str]| {
+        let status = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repository)
+            .args(args)
+            .status()
+            .unwrap();
+        assert!(status.success());
+    };
+    run_git(&["init", "--quiet"]);
+    run_git(&["add", "source"]);
+    run_git(&[
+        "-c",
+        "user.name=Synthetic",
+        "-c",
+        "user.email=synthetic@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "freeze",
+    ]);
+    let mut guard = FrozenExecutionGuard::create(paths, &repository).unwrap();
+    guard.advance(ExecutionBoundary::ContextFrozen).unwrap();
+    assert!(guard.advance(ExecutionBoundary::Arm1Pre).is_err());
+}
+
+struct IntegrationInspector;
+
+impl codex_responses_api_proxy::RequestInspector for IntegrationInspector {
+    fn inspect(&self, body: &serde_json::Value) -> anyhow::Result<TransformedRequestEvidence> {
+        let digest: [u8; 32] = Sha256::digest(serde_json::to_vec(body)?).into();
+        Ok(TransformedRequestEvidence {
+            raw_sha256: digest,
+            normalized_sha256: digest,
+            normalized_base_commitment: digest,
+            treatment_diff_commitment: None,
+        })
+    }
+}
+
+#[test]
+fn shared_runtime_drives_exact_proxy_transform_and_rejections_never_reach_upstream() {
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicUsize;
+    use std::sync::atomic::Ordering;
+    use std::thread;
+
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let count = Arc::new(AtomicUsize::new(0));
+    let observed = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let count_worker = count.clone();
+    let observed_worker = observed.clone();
+    let upstream_worker = thread::spawn(move || {
+        while let Some(mut request) = upstream.recv_timeout(Duration::from_secs(2)).unwrap() {
+            count_worker.fetch_add(1, Ordering::SeqCst);
+            let mut body = Vec::new();
+            request.as_reader().read_to_end(&mut body).unwrap();
+            observed_worker.lock().unwrap().push(body);
+            let response = tiny_http::Response::from_string(concat!(
+                "data: {\"type\":\"response.completed\",\"response\":{",
+                "\"id\":\"mock-response\",\"model\":\"mock-revision\",",
+                "\"system_fingerprint\":\"mock-deployment\",",
+                "\"usage\":{\"input_tokens\":2,\"output_tokens\":1,\"total_tokens\":3}}}\n\n"
+            ))
+            .with_header(
+                tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap(),
+            );
+            request.respond(response).unwrap();
+        }
+    });
+
+    let temp = tempfile::tempdir().unwrap();
+    let runtime = Arc::new(BrokerRuntimeConfig::new(1, 77, 4096).unwrap());
+    let gate = Arc::new(
+        PairCoordinator::create(BrokerGateConfig {
+            ledger_path: temp.path().join("attempt-index.jsonl"),
+            receipt_dir: temp.path().join("receipts"),
+            pair_id: "pair-loopback".to_string(),
+            frozen_run_context_sha256: "a".repeat(64),
+            execution_context_sha256: "b".repeat(64),
+            arm_order_commitment: "c".repeat(64),
+            runtime: runtime.clone(),
+        })
+        .unwrap(),
+    );
+    activate_first(&gate, "root", Duration::from_secs(5));
+    let config = codex_responses_api_proxy::ProxyConfig {
+        listen_port: None,
+        upstream_url: reqwest::Url::parse(&format!("http://{upstream_addr}/v1/responses")).unwrap(),
+        dump_dir: None,
+        http_shutdown: false,
+        default_request_timeout: None,
+        request_transform: Some(runtime.request_transform(Arc::new(IntegrationInspector))),
+    };
+    let bound = codex_responses_api_proxy::bind(&config).unwrap();
+    let proxy = codex_responses_api_proxy::activate(
+        bound,
+        config,
+        codex_responses_api_proxy::local_mock_auth_header(),
+        gate.clone(),
+        gate,
+    )
+    .unwrap();
+    let client = reqwest::blocking::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap();
+    let url = format!("http://{}/v1/responses", proxy.addr());
+    let response = client
+        .post(&url)
+        .header("x-codex-window-id", format!("{}:0", test_thread_id("root")))
+        .json(&json!({"model":"mock","input":[]}))
+        .send()
+        .unwrap();
+    assert!(response.status().is_success());
+    let _ = response.text().unwrap();
+    assert_eq!(count.load(Ordering::SeqCst), 1);
+    let bodies = observed.lock().unwrap();
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&bodies[0]).unwrap(),
+        json!({"model":"mock","input":[],"max_output_tokens":77})
+    );
+    drop(bodies);
+
+    for rejected in [
+        client
+            .post(&url)
+            .header("x-codex-window-id", format!("{}:1", test_thread_id("root"))),
+        client
+            .post(&url)
+            .header("x-codex-window-id", "not-canonical:0"),
+        client
+            .post(format!("http://{}/v1/chat/completions", proxy.addr()))
+            .header("x-codex-window-id", format!("{}:0", test_thread_id("root"))),
+        client
+            .post(&url)
+            .header(
+                "x-codex-window-id",
+                format!("{}:0", test_thread_id("child")),
+            )
+            .header("x-codex-parent-thread-id", test_thread_id("root"))
+            .header("x-openai-subagent", "collab_spawn"),
+    ] {
+        let response = rejected
+            .json(&json!({"model":"mock","input":[]}))
+            .send()
+            .unwrap();
+        assert!(!response.status().is_success());
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+    }
+    proxy.shutdown_with_timeout(Duration::from_secs(2)).unwrap();
+    upstream_worker.join().unwrap();
+
+    for rejection in [
+        LoopbackRejection::WrongPath,
+        LoopbackRejection::MalformedWindow,
+        LoopbackRejection::UnknownDescendant,
+        LoopbackRejection::ExpiredDeadline,
+        LoopbackRejection::AttemptCap,
+    ] {
+        assert_loopback_rejection_never_forwards(rejection);
+    }
+}
+
+#[derive(Clone, Copy)]
+enum LoopbackRejection {
+    WrongPath,
+    MalformedWindow,
+    UnknownDescendant,
+    ExpiredDeadline,
+    AttemptCap,
+}
+
+fn assert_loopback_rejection_never_forwards(rejection: LoopbackRejection) {
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicUsize;
+    use std::sync::atomic::Ordering;
+
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let count = Arc::new(AtomicUsize::new(0));
+    let worker_count = count.clone();
+    let worker = std::thread::spawn(move || {
+        if let Some(request) = upstream.recv_timeout(Duration::from_millis(500)).unwrap() {
+            worker_count.fetch_add(1, Ordering::SeqCst);
+            request
+                .respond(tiny_http::Response::from_string("unexpected"))
+                .unwrap();
+        }
+    });
+    let temp = tempfile::tempdir().unwrap();
+    let runtime = Arc::new(BrokerRuntimeConfig::new(1, 55, 4096).unwrap());
+    let gate = Arc::new(
+        PairCoordinator::create(BrokerGateConfig {
+            ledger_path: temp.path().join("attempt-index.jsonl"),
+            receipt_dir: temp.path().join("receipts"),
+            pair_id: "pair-rejection".to_string(),
+            frozen_run_context_sha256: "a".repeat(64),
+            execution_context_sha256: "b".repeat(64),
+            arm_order_commitment: "c".repeat(64),
+            runtime: runtime.clone(),
+        })
+        .unwrap(),
+    );
+    activate_first(
+        &gate,
+        "root",
+        if matches!(rejection, LoopbackRejection::ExpiredDeadline) {
+            Duration::ZERO
+        } else {
+            Duration::from_secs(5)
+        },
+    );
+    if matches!(rejection, LoopbackRejection::AttemptCap) {
+        let permit = gate
+            .before_forward(&root_request("root"), &transformed())
+            .unwrap();
+        complete(&gate, permit);
+    }
+    let config = codex_responses_api_proxy::ProxyConfig {
+        listen_port: None,
+        upstream_url: reqwest::Url::parse(&format!("http://{upstream_addr}/v1/responses")).unwrap(),
+        dump_dir: None,
+        http_shutdown: false,
+        default_request_timeout: None,
+        request_transform: Some(runtime.request_transform(Arc::new(IntegrationInspector))),
+    };
+    let bound = codex_responses_api_proxy::bind(&config).unwrap();
+    let proxy = codex_responses_api_proxy::activate(
+        bound,
+        config,
+        codex_responses_api_proxy::local_mock_auth_header(),
+        gate.clone(),
+        gate,
+    )
+    .unwrap();
+    let client = reqwest::blocking::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap();
+    let path = if matches!(rejection, LoopbackRejection::WrongPath) {
+        "/v1/chat/completions"
+    } else {
+        "/v1/responses"
+    };
+    let mut request = client
+        .post(format!("http://{}{path}", proxy.addr()))
+        .header(
+            "x-codex-window-id",
+            if matches!(rejection, LoopbackRejection::MalformedWindow) {
+                "not-canonical:0".to_string()
+            } else if matches!(rejection, LoopbackRejection::UnknownDescendant) {
+                format!("{}:0", test_thread_id("child"))
+            } else {
+                format!("{}:0", test_thread_id("root"))
+            },
+        );
+    if matches!(rejection, LoopbackRejection::UnknownDescendant) {
+        request = request
+            .header("x-codex-parent-thread-id", test_thread_id("root"))
+            .header("x-openai-subagent", "collab_spawn");
+    }
+    let response = request
+        .json(&json!({"model":"mock","input":[]}))
+        .send()
+        .unwrap();
+    assert!(!response.status().is_success());
+    proxy.shutdown_with_timeout(Duration::from_secs(2)).unwrap();
+    worker.join().unwrap();
+    assert_eq!(count.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let worker = std::thread::spawn(move || {
+        for _ in 0..2 {
+            let request = upstream
+                .recv_timeout(Duration::from_secs(5))
+                .unwrap()
+                .unwrap();
+            request.respond(tiny_http::Response::from_string(concat!(
+                "data: {\"type\":\"response.completed\",\"response\":{",
+                "\"id\":\"mock-response\",\"model\":\"mock-revision\",",
+                "\"usage\":{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}\n\n"
+            )).with_header(tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap())).unwrap();
+        }
+    });
+    let temp = tempfile::tempdir().unwrap();
+    let seed_context = strict_live_context(&temp);
+    let seed: serde_json::Value = serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
+    let artifacts = seed["artifacts"].as_object().unwrap();
+    let artifact = |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
+    let output = temp.path().join("typed-frozen.json");
+    crate::execute_cli(Cli {
+        command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
+            mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
+                repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+                evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+                fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+                private_root: temp.path().to_path_buf(),
+                codex_bin: artifact("codexBinary"),
+                case: artifact("source"),
+                attestation: artifact("materials"),
+                provider_budget_evidence: artifact("receipt"),
+                rate_card: artifact("config"),
+                billing_policy: artifact("schema"),
+                fx_policy: artifact("prompt"),
+                lead_skill: artifact("skill"),
+                model_label: "local-mock".to_string(),
+                provider_label: "local-mock".to_string(),
+                provider_role: ProviderRole::ApprovedReference,
+                provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
+                authorized_total_cost_fen: 0,
+                authorized_per_run_cost_fen: 0,
+                max_provider_request_attempts_per_run: 1,
+                max_total_tokens_per_run: 10,
+                max_elapsed_seconds_per_run: 5,
+                max_output_tokens_per_request: 17,
+                output: output.clone(),
+            }),
+        }),
+    })
+    .unwrap();
+    let frozen_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
+    assert_eq!(frozen_json["providerMode"], json!("not-run"));
+    verify_frozen_context(&output).unwrap();
+    crate::execute_cli(Cli {
+        command: crate::EvalCommand::LivePair(crate::model::LivePairArgs {
+            frozen_run_context: output,
+        }),
+    })
+    .unwrap();
+    worker.join().unwrap();
+    assert!(
+        temp.path()
+            .join("coordinator/receipts/pair-receipt.json")
+            .is_file()
+    );
+    assert_eq!(
+        fs::read_to_string(temp.path().join("coordinator/attempt-index.jsonl"))
+            .unwrap()
+            .lines()
+            .count(),
+        4
     );
 }
