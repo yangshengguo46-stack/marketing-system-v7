@@ -45,8 +45,8 @@ use crate::build_thread_start;
 use crate::build_turn_start;
 use crate::model::LiveFreezeArgs;
 use crate::model::ModeEvidence;
+use crate::model::MockProviderMode;
 use crate::model::ProofBrokerCompatibilityName;
-use crate::model::ProviderRole;
 use crate::model::ReplayFreezeArgs;
 use crate::model::ReplayPairArgs;
 use crate::model::RunManifest;
@@ -702,8 +702,16 @@ struct ReplayArmResult {
     condition: EvaluationCondition,
     catalog: CatalogSnapshot,
     collected: CollectedReplay,
+    successful_read_observed: bool,
     skill_use_evidence_sha256: Option<String>,
     transcript_sha256: String,
+}
+
+#[derive(Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct PairOutputCommitments {
+    generic_content_package_sha256: String,
+    candidate_content_package_sha256: String,
 }
 
 /// Executes a fully frozen replay pair without constructing any provider,
@@ -818,7 +826,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &read_replay_fixture(&context, "genericTranscript")?,
         &mission,
         &homes.generic_codex_home,
-        None,
+        &skill_bytes,
         context.fixtures["genericTranscript"].sha256.clone(),
         generic_catalog,
     )?;
@@ -827,16 +835,17 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &read_replay_fixture(&context, "candidateTranscript")?,
         &mission,
         &homes.candidate_codex_home,
-        Some((&candidate_skill_path, skill_bytes.as_slice())),
+        &skill_bytes,
         context.fixtures["candidateTranscript"].sha256.clone(),
         candidate_catalog,
     )?;
-    if generic.collected.content_package != candidate.collected.content_package
-        || generic.catalog.normalized_base_catalog_sha256()
+    if generic.catalog.normalized_base_catalog_sha256()
             != catalog_parity.normalized_base_catalog_sha256
         || candidate.catalog.normalized_base_catalog_sha256()
             != catalog_parity.normalized_base_catalog_sha256
+        || generic.successful_read_observed
         || generic.skill_use_evidence_sha256.is_some()
+        || !candidate.successful_read_observed
         || candidate.skill_use_evidence_sha256.is_none()
     {
         bail!("typed replay pair differs outside the canonical Lead Skill treatment");
@@ -856,10 +865,10 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &execution_context,
     )?;
     let execution_context_sha256 = sha256(&execution_context);
-    let package_sha256 = sha256(&serde_json::to_vec(&generic.collected.content_package)?);
     let mut generic_manifest_sha256 = None;
     let mut candidate_manifest_sha256 = None;
     for (ordinal, arm) in [(1_u8, &generic), (2_u8, &candidate)] {
+        let package_sha256 = sha256(&serde_json::to_vec(&arm.collected.content_package)?);
         let manifest = build_replay_manifest(
             &context,
             &context_bytes,
@@ -880,7 +889,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             EvaluationCondition::Candidate => candidate_manifest_sha256 = Some(sha256(&bytes)),
         }
     }
-    let verification = serde_json::to_vec_pretty(&serde_json::json!({
+    let mut verification = serde_json::json!({
         "schemaVersion": 1,
         "executionMode": "replay",
         "providerMode": "not-run",
@@ -891,9 +900,14 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         "genericRunManifestSha256": generic_manifest_sha256.context("missing generic replay manifest")?,
         "candidateRunManifestSha256": candidate_manifest_sha256.context("missing candidate replay manifest")?,
         "normalizedBaseCatalogSha256": catalog_parity.normalized_base_catalog_sha256,
-        "candidateSkillSha256": catalog_parity.candidate_skill_sha256,
-        "contentPackageSha256": package_sha256
-    }))?;
+        "candidateSkillSha256": catalog_parity.candidate_skill_sha256
+    });
+    append_pair_output_commitments(
+        &mut verification,
+        &sha256(&serde_json::to_vec(&generic.collected.content_package)?),
+        &sha256(&serde_json::to_vec(&candidate.collected.content_package)?),
+    )?;
+    let verification = serde_json::to_vec_pretty(&verification)?;
     write_owner_only_new(
         &coordinator.join("replay-pair-verification.json"),
         &verification,
@@ -987,7 +1001,7 @@ fn collect_replay_arm(
     transcript_bytes: &[u8],
     mission: &codex_ai_ip_domain::HeldOutMissionCase,
     codex_home: &Path,
-    candidate_skill: Option<(&Path, &[u8])>,
+    skill_bytes: &[u8],
     transcript_sha256: String,
     catalog: CatalogSnapshot,
 ) -> Result<ReplayArmResult> {
@@ -996,9 +1010,18 @@ fn collect_replay_arm(
         "root-turn",
         HashSet::from(["root-thread".to_string()]),
     );
-    let mut skill_use = candidate_skill
-        .map(|(path, bytes)| SkillUseTracker::new(path, bytes))
-        .transpose()?;
+    let target_skill_path = codex_home
+        .join("skills")
+        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+        .join("SKILL.md");
+    let mut skill_use = match condition {
+        EvaluationCondition::Generic => {
+            SkillUseTracker::new_forbidden(&target_skill_path, skill_bytes)?
+        }
+        EvaluationCondition::Candidate => {
+            SkillUseTracker::new_required(&target_skill_path, skill_bytes)?
+        }
+    };
     let text = std::str::from_utf8(transcript_bytes).context("replay transcript is not UTF-8")?;
     if text.is_empty() || !text.ends_with('\n') {
         bail!("replay transcript must be non-empty LF-terminated JSONL");
@@ -1008,31 +1031,17 @@ fn collect_replay_arm(
         materialize_replay_codex_home(&mut value, codex_home)?;
         let notification: codex_app_server_protocol::ServerNotification =
             serde_json::from_value(value)?;
-        if condition == EvaluationCondition::Generic
-            && matches!(
-                &notification,
-                codex_app_server_protocol::ServerNotification::ItemCompleted(completed)
-                    if matches!(
-                        &completed.item,
-                        codex_app_server_protocol::ThreadItem::CommandExecution { command, .. }
-                            if command.contains(codex_ai_ip_runtime::LEAD_SKILL_NAME)
-                    )
-            )
-        {
-            bail!("generic replay transcript reads the target Skill");
-        }
-        if let Some(skill_use) = skill_use.as_mut() {
-            skill_use.ingest(&notification)?;
-        }
+        skill_use.ingest(&notification)?;
         collector.ingest(notification)?;
     }
     let collected = collector.finish(mission)?;
-    let skill_use_evidence_sha256 = skill_use.map(SkillUseTracker::finish).transpose()?;
+    let skill_use = skill_use.finish()?;
     Ok(ReplayArmResult {
         condition,
         catalog,
         collected,
-        skill_use_evidence_sha256,
+        successful_read_observed: skill_use.successful_read_observed,
+        skill_use_evidence_sha256: skill_use.evidence_sha256,
         transcript_sha256,
     })
 }
@@ -1219,6 +1228,11 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     )?;
     let prompt_path = generated_dir.join("root-prompt.txt");
     write_owner_only_new(&prompt_path, codex_ai_ip_runtime::root_prompt().as_bytes())?;
+    let additional_context_path = generated_dir.join("additional-context.txt");
+    write_owner_only_new(
+        &additional_context_path,
+        codex_ai_ip_runtime::evaluation_context(&mission_case)?.as_bytes(),
+    )?;
     let canonical_eval_tree = source_proof
         .case_path
         .parent()
@@ -1251,6 +1265,7 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         ("brokerSource".to_string(), broker_source),
         ("schema".to_string(), schema_path),
         ("prompt".to_string(), prompt_path),
+        ("additionalContext".to_string(), additional_context_path),
         ("skill".to_string(), imported_paths["skill"].clone()),
         ("threadStartRequest".to_string(), thread_path),
         ("turnStartRequest".to_string(), turn_path),
@@ -1794,7 +1809,6 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 &shared_config,
                 &execution_context_sha256,
                 &order,
-                &deadline.to_rfc3339(),
             )?;
             let manifest_bytes = serde_json::to_vec_pretty(&manifest)?;
             write_owner_only_new(
@@ -1906,6 +1920,7 @@ struct ArmRunEvidence {
     pre_catalog: CatalogSnapshot,
     post_catalog: CatalogSnapshot,
     collected: CollectedReplay,
+    successful_read_observed: bool,
     skill_use_evidence_sha256: Option<String>,
     tree: TreeEvidence,
     app_server_transcript_sha256: String,
@@ -1920,7 +1935,6 @@ fn build_live_run_manifest(
     shared_config: &crate::FrozenSharedConfig,
     execution_context_sha256: &str,
     order: &CommittedArmOrder,
-    retention_deadline: &str,
 ) -> Result<RunManifest> {
     if proof.run_ordinal != outcome.run_ordinal
         || proof.condition != outcome.condition
@@ -1985,7 +1999,7 @@ fn build_live_run_manifest(
         case_sha256: artifact_sha("source")?,
         source_materials_sha256: artifact_sha("materials")?,
         prompt_sha256: artifact_sha("prompt")?,
-        additional_context_sha256: artifact_sha("turnStartRequest")?,
+        additional_context_sha256: artifact_sha("additionalContext")?,
         output_schema_sha256: artifact_sha("schema")?,
         thread_start_request_sha256: artifact_sha("threadStartRequest")?,
         turn_start_request_sha256: artifact_sha("turnStartRequest")?,
@@ -2036,19 +2050,11 @@ fn build_live_run_manifest(
         max_elapsed_seconds: frozen.context.max_elapsed_seconds,
         elapsed_ms: outcome.elapsed_ms,
         tree_closed: true,
-        execution_mode: crate::ExecutionMode::Live,
-        mode_evidence: ModeEvidence::Live {
-            attestation_sha256: artifact_sha("attestation")?,
-            provider_budget_evidence_sha256: artifact_sha("providerBudgetReceipt")?,
-            approval_commitment: sha256(b"synthetic-loopback-no-approval"),
-            provider_endpoint_commitment: sha256(frozen.context.provider_upstream_url.as_bytes()),
-            provider_role: ProviderRole::ApprovedReference,
+        execution_mode: crate::ExecutionMode::Mock,
+        mode_evidence: ModeEvidence::Mock {
+            provider_mode: MockProviderMode::NotRun,
+            synthetic_fixture_sha256: artifact_sha("attestation")?,
             arm_order_commitment: order.seed_commitment().to_string(),
-            rate_card_sha256: artifact_sha("rateCard")?,
-            billing_policy_sha256: artifact_sha("billingPolicy")?,
-            fx_policy_sha256: Some(artifact_sha("fxPolicy")?),
-            authorized_pair_cost_fen: 0,
-            retention_deadline: retention_deadline.to_string(),
         },
     })
 }
@@ -2067,7 +2073,9 @@ fn verify_live_arm_business_parity(
         .find(|outcome| outcome.condition == EvaluationCondition::Candidate)
         .context("paired result is missing the candidate arm")?;
     if outcomes.len() != 2
+        || generic.successful_read_observed
         || generic.skill_use_evidence_sha256.is_some()
+        || !candidate.successful_read_observed
         || candidate.skill_use_evidence_sha256.is_none()
     {
         bail!("paired Skill-use evidence differs from the assigned treatment");
@@ -2099,9 +2107,6 @@ fn verify_live_arm_business_parity(
             generic.config,
             candidate.config
         );
-    }
-    if generic.collected.content_package != candidate.collected.content_package {
-        bail!("validated ContentPackage differs across arms");
     }
     Ok(())
 }
@@ -2136,14 +2141,13 @@ fn write_live_pair_verification(
         || candidate.0.normalized_first_root_base_commitment != request.normalized_base_commitment
         || candidate.0.first_root_treatment_diff_commitment.as_deref()
             != Some(request.candidate_treatment_diff_commitment.as_str())
-        || generic.0.content_package_sha256 != candidate.0.content_package_sha256
         || generic.0.normalized_base_catalog_sha256 != candidate.0.normalized_base_catalog_sha256
         || generic.0.effective_config_sha256 != candidate.0.effective_config_sha256
         || generic.0.config_layers_sha256 != candidate.0.config_layers_sha256
     {
         bail!("run manifests do not bind the verified pair evidence");
     }
-    let bytes = serde_json::to_vec_pretty(&serde_json::json!({
+    let mut verification = serde_json::json!({
         "schemaVersion": 1,
         "pairId": frozen.context.pair_id,
         "frozenRunContextSha256": frozen.sha256,
@@ -2153,10 +2157,36 @@ fn write_live_pair_verification(
         "normalizedBaseCatalogSha256": generic.0.normalized_base_catalog_sha256,
         "effectiveConfigSha256": generic.0.effective_config_sha256,
         "configLayersSha256": generic.0.config_layers_sha256,
-        "contentPackageSha256": generic.0.content_package_sha256,
         "requestParity": request
-    }))?;
+    });
+    append_pair_output_commitments(
+        &mut verification,
+        &generic.0.content_package_sha256,
+        &candidate.0.content_package_sha256,
+    )?;
+    let bytes = serde_json::to_vec_pretty(&verification)?;
     write_owner_only_new(&coordinator_dir.join("pair-verification.json"), &bytes)
+}
+
+fn append_pair_output_commitments(
+    verification: &mut serde_json::Value,
+    generic_content_package_sha256: &str,
+    candidate_content_package_sha256: &str,
+) -> Result<()> {
+    let fields = serde_json::to_value(PairOutputCommitments {
+        generic_content_package_sha256: generic_content_package_sha256.to_string(),
+        candidate_content_package_sha256: candidate_content_package_sha256.to_string(),
+    })?;
+    verification
+        .as_object_mut()
+        .context("pair verification is not an object")?
+        .extend(
+            fields
+                .as_object()
+                .context("pair output commitments are not an object")?
+                .clone(),
+        );
+    Ok(())
 }
 
 async fn read_skill_catalog(
@@ -2350,13 +2380,14 @@ async fn run_app_server_arm(
         .join("skills")
         .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
         .join("SKILL.md");
-    let mut skill_use = if condition == EvaluationCondition::Candidate {
-        Some(run_sync_before_deadline(pair_deadline, || {
-            SkillUseTracker::new(&candidate_skill_path, &frozen.artifact_bytes("skill")?)
-        })?)
-    } else {
-        None
-    };
+    let mut skill_use = run_sync_before_deadline(pair_deadline, || match condition {
+        EvaluationCondition::Generic => {
+            SkillUseTracker::new_forbidden(&candidate_skill_path, &frozen.artifact_bytes("skill")?)
+        }
+        EvaluationCondition::Candidate => {
+            SkillUseTracker::new_required(&candidate_skill_path, &frozen.artifact_bytes("skill")?)
+        }
+    })?;
     let mut transcript = Sha256::new();
     let completion_timeout = remaining_pair_duration(pair_deadline)?;
     let completed = {
@@ -2371,9 +2402,7 @@ async fn run_app_server_arm(
                     observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
                     tree.ingest(notification.clone())?;
                     replay.ingest(notification.clone())?;
-                    if let Some(skill_use) = skill_use.as_mut() {
-                        skill_use.ingest(notification)?;
-                    }
+                    skill_use.ingest(notification)?;
                     let bytes = serde_json::to_vec(notification)?;
                     transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
                     transcript.update(bytes);
@@ -2397,9 +2426,7 @@ async fn run_app_server_arm(
         }
         tree.ingest(completed_notification.clone())?;
         replay.ingest(completed_notification.clone())?;
-        if let Some(skill_use) = skill_use.as_mut() {
-            skill_use.ingest(&completed_notification)?;
-        }
+        skill_use.ingest(&completed_notification)?;
         let bytes = serde_json::to_vec(&completed_notification)?;
         transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
         transcript.update(bytes);
@@ -2465,9 +2492,7 @@ async fn run_app_server_arm(
         )
     })?;
     let collected = run_sync_before_deadline(pair_deadline, || replay.finish(&mission_case))?;
-    let skill_use_evidence_sha256 = run_sync_before_deadline(pair_deadline, || {
-        skill_use.map(SkillUseTracker::finish).transpose()
-    })?;
+    let skill_use = run_sync_before_deadline(pair_deadline, || skill_use.finish())?;
     Ok(ArmRunEvidence {
         run_ordinal,
         condition,
@@ -2478,7 +2503,8 @@ async fn run_app_server_arm(
         pre_catalog,
         post_catalog,
         collected,
-        skill_use_evidence_sha256,
+        successful_read_observed: skill_use.successful_read_observed,
+        skill_use_evidence_sha256: skill_use.evidence_sha256,
         tree: tree_evidence,
         app_server_transcript_sha256: format!("{:x}", transcript.finalize()),
         elapsed_ms: arm_started.elapsed().as_millis(),
@@ -3016,6 +3042,7 @@ pub const REQUIRED_EXECUTION_ARTIFACTS: &[&str] = &[
     "brokerSource",
     "schema",
     "prompt",
+    "additionalContext",
     "skill",
     "threadStartRequest",
     "turnStartRequest",
@@ -3459,6 +3486,7 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
         ("skill", "lead-skill.md"),
         ("schema", "content-package-schema.json"),
         ("prompt", "root-prompt.txt"),
+        ("additionalContext", "additional-context.txt"),
         ("threadStartRequest", "thread-start-request.json"),
         ("turnStartRequest", "turn-start-request.json"),
     ];
@@ -3498,6 +3526,12 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     mission_case
         .validate()
         .context("validate frozen held-out case")?;
+    let expected_additional_context = codex_ai_ip_runtime::evaluation_context(&mission_case)?;
+    if read_regular_file_no_follow(&context.artifacts["additionalContext"].path)?
+        != expected_additional_context.as_bytes()
+    {
+        bail!("frozen additional context differs from the mission evaluation context");
+    }
     let material_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
     if read_regular_file_no_follow(&context.artifacts["materials"].path)? != material_manifest_bytes
     {

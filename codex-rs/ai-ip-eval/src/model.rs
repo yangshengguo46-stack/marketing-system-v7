@@ -18,7 +18,14 @@ pub enum EvaluationCondition {
 #[serde(rename_all = "camelCase")]
 pub enum ExecutionMode {
     Replay,
+    Mock,
     Live,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MockProviderMode {
+    NotRun,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize, ValueEnum)]
@@ -176,6 +183,11 @@ pub enum ModeEvidence {
     Replay {
         fixture_set_sha256: String,
     },
+    Mock {
+        provider_mode: MockProviderMode,
+        synthetic_fixture_sha256: String,
+        arm_order_commitment: String,
+    },
     Live {
         attestation_sha256: String,
         provider_budget_evidence_sha256: String,
@@ -266,6 +278,7 @@ impl RunManifest {
         let matches = matches!(
             (self.execution_mode, &self.mode_evidence),
             (ExecutionMode::Replay, ModeEvidence::Replay { .. })
+                | (ExecutionMode::Mock, ModeEvidence::Mock { .. })
                 | (ExecutionMode::Live, ModeEvidence::Live { .. })
         );
         if !matches {

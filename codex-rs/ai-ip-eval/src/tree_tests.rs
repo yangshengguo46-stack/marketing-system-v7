@@ -9,6 +9,7 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use crate::SkillUseTracker;
+use crate::SkillUseOutcome;
 use crate::TreeEventCollector;
 use crate::TreeScan;
 use crate::tests::package_json;
@@ -406,7 +407,7 @@ fn tree_scan_rejects_repeated_cursors_and_guardian_threads() {
 }
 
 #[test]
-fn skill_use_requires_a_successful_complete_canonical_read_before_the_final_package() {
+fn candidate_skill_use_requires_the_exact_complete_skill_before_final_package() {
     let temp = tempfile::tempdir().unwrap();
     let skill = temp.path().join("SKILL.md");
     std::fs::write(&skill, "synthetic complete skill\n").unwrap();
@@ -443,12 +444,22 @@ fn skill_use_requires_a_successful_complete_canonical_read_before_the_final_pack
             "item": {"type": "agentMessage", "id": "final", "text": package_json()}
         }
     }));
-    let mut tracker = SkillUseTracker::new(&skill, b"synthetic complete skill\n").unwrap();
+    let mut tracker =
+        SkillUseTracker::new_required(&skill, b"synthetic complete skill\n").unwrap();
     tracker.ingest(&command_item).unwrap();
     tracker.ingest(&final_item).unwrap();
-    assert_eq!(tracker.finish().unwrap().len(), 64);
+    let outcome = tracker.finish().unwrap();
+    assert_eq!(
+        outcome,
+        SkillUseOutcome {
+            successful_read_observed: true,
+            evidence_sha256: outcome.evidence_sha256.clone(),
+        }
+    );
+    assert_eq!(outcome.evidence_sha256.unwrap().len(), 64);
 
-    let mut incomplete = SkillUseTracker::new(&skill, b"synthetic complete skill\n").unwrap();
+    let mut incomplete =
+        SkillUseTracker::new_required(&skill, b"synthetic complete skill\n").unwrap();
     incomplete.ingest(&final_item).unwrap();
     assert!(
         incomplete
@@ -456,5 +467,60 @@ fn skill_use_requires_a_successful_complete_canonical_read_before_the_final_pack
             .unwrap_err()
             .to_string()
             .contains("did not successfully read")
+    );
+}
+
+#[test]
+fn skill_use_observers_accept_required_existing_and_forbidden_nonexistent_paths() {
+    let temp = tempfile::tempdir().unwrap();
+    let installed_skill = temp.path().join("candidate/SKILL.md");
+    std::fs::create_dir(installed_skill.parent().unwrap()).unwrap();
+    std::fs::write(&installed_skill, "synthetic complete skill\n").unwrap();
+    let absent_generic_skill = temp.path().join("generic/SKILL.md");
+
+    SkillUseTracker::new_required(&installed_skill, b"synthetic complete skill\n").unwrap();
+    SkillUseTracker::new_forbidden(&absent_generic_skill, b"synthetic complete skill\n").unwrap();
+    assert!(!absent_generic_skill.exists());
+}
+
+#[test]
+fn generic_successful_target_skill_read_is_observed_and_rejected() {
+    let temp = tempfile::tempdir().unwrap();
+    let skill = temp.path().join("generic/SKILL.md");
+    std::fs::create_dir(skill.parent().unwrap()).unwrap();
+    let command_item = notification(json!({
+        "method": "item/completed",
+        "params": {
+            "threadId": "root",
+            "turnId": "turn",
+            "completedAtMs": 1,
+            "item": {
+                "type": "commandExecution",
+                "id": "forbidden-skill-read",
+                "pluginId": null,
+                "scriptPath": null,
+                "command": format!("cat {}", skill.display()),
+                "cwd": temp.path(),
+                "processId": null,
+                "source": "unifiedExecStartup",
+                "status": "completed",
+                "commandActions": [],
+                "aggregatedOutput": "synthetic complete skill\n",
+                "exitCode": 0,
+                "durationMs": 1
+            }
+        }
+    }));
+    let mut tracker =
+        SkillUseTracker::new_forbidden(&skill, b"synthetic complete skill\n").unwrap();
+
+    tracker.ingest(&command_item).unwrap();
+
+    assert!(
+        tracker
+            .finish()
+            .unwrap_err()
+            .to_string()
+            .contains("generic arm read")
     );
 }

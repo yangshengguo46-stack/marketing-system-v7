@@ -58,10 +58,10 @@ pub fn validate_case_boundary(
         ExecutionMode::Replay if !tracked => {
             bail!("replay case must be a committed fixture in the frozen repository")
         }
-        ExecutionMode::Live if tracked || relative.is_some() => {
+        ExecutionMode::Mock | ExecutionMode::Live if tracked || relative.is_some() => {
             bail!("live private source case must remain outside the frozen repository")
         }
-        ExecutionMode::Replay | ExecutionMode::Live => Ok(()),
+        ExecutionMode::Replay | ExecutionMode::Mock | ExecutionMode::Live => Ok(()),
     }
 }
 
@@ -605,9 +605,22 @@ impl TreeEventCollector {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum SkillUseExpectation {
+    RequiredBeforeFinal,
+    Forbidden,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct SkillUseOutcome {
+    pub successful_read_observed: bool,
+    pub evidence_sha256: Option<String>,
+}
+
 pub struct SkillUseTracker {
     canonical_skill_path: std::path::PathBuf,
     expected_skill_bytes: Vec<u8>,
+    expectation: SkillUseExpectation,
     sequence: u64,
     successful_read_sequence: Option<u64>,
     final_sequence: Option<u64>,
@@ -615,12 +628,37 @@ pub struct SkillUseTracker {
 
 impl SkillUseTracker {
     pub fn new(canonical_skill_path: &Path, expected_skill_bytes: &[u8]) -> anyhow::Result<Self> {
+        Self::new_required(canonical_skill_path, expected_skill_bytes)
+    }
+
+    pub fn new_required(
+        canonical_skill_path: &Path,
+        expected_skill_bytes: &[u8],
+    ) -> anyhow::Result<Self> {
         let canonical = canonical_skill_path
             .canonicalize()
             .context("canonicalize target SKILL.md")?;
         Ok(Self {
             canonical_skill_path: canonical,
             expected_skill_bytes: expected_skill_bytes.to_vec(),
+            expectation: SkillUseExpectation::RequiredBeforeFinal,
+            sequence: 0,
+            successful_read_sequence: None,
+            final_sequence: None,
+        })
+    }
+
+    pub fn new_forbidden(
+        canonical_skill_path: &Path,
+        expected_skill_bytes: &[u8],
+    ) -> anyhow::Result<Self> {
+        if !canonical_skill_path.is_absolute() {
+            bail!("forbidden target SKILL.md path must be absolute");
+        }
+        Ok(Self {
+            canonical_skill_path: canonical_skill_path.to_path_buf(),
+            expected_skill_bytes: expected_skill_bytes.to_vec(),
+            expectation: SkillUseExpectation::Forbidden,
             sequence: 0,
             successful_read_sequence: None,
             final_sequence: None,
@@ -655,9 +693,16 @@ impl SkillUseTracker {
                         codex_skills::ImplicitSkillAccess::Document(path) => path
                             .to_abs_path()
                             .ok()
-                            .and_then(|path| path.canonicalize().ok())
-                            .is_some_and(|path| {
-                                path.as_path() == self.canonical_skill_path.as_path()
+                            .is_some_and(|path| match self.expectation {
+                                SkillUseExpectation::RequiredBeforeFinal => path
+                                    .canonicalize()
+                                    .ok()
+                                    .is_some_and(|path| {
+                                        path.as_path() == self.canonical_skill_path.as_path()
+                                    }),
+                                SkillUseExpectation::Forbidden => {
+                                    path.as_path() == self.canonical_skill_path.as_path()
+                                }
                             }),
                         codex_skills::ImplicitSkillAccess::Script(_) => false,
                     });
@@ -679,22 +724,36 @@ impl SkillUseTracker {
         Ok(())
     }
 
-    pub fn finish(self) -> anyhow::Result<String> {
-        let read = self
-            .successful_read_sequence
-            .context("candidate did not successfully read the canonical complete SKILL.md")?;
-        let final_sequence = self
-            .final_sequence
-            .context("candidate final package was not observed")?;
-        if read >= final_sequence {
-            bail!("candidate Skill read did not complete before the final package");
+    pub fn finish(self) -> anyhow::Result<SkillUseOutcome> {
+        match self.expectation {
+            SkillUseExpectation::RequiredBeforeFinal => {
+                let read = self.successful_read_sequence.context(
+                    "candidate did not successfully read the canonical complete SKILL.md",
+                )?;
+                let final_sequence = self
+                    .final_sequence
+                    .context("candidate final package was not observed")?;
+                if read >= final_sequence {
+                    bail!("candidate Skill read did not complete before the final package");
+                }
+                let evidence = serde_json::json!({
+                    "schemaVersion": 1,
+                    "skillSha256": sha256_bytes(&self.expected_skill_bytes),
+                    "readBeforeFinal": true
+                });
+                Ok(SkillUseOutcome {
+                    successful_read_observed: true,
+                    evidence_sha256: Some(sha256_bytes(&serde_json::to_vec(&evidence)?)),
+                })
+            }
+            SkillUseExpectation::Forbidden if self.successful_read_sequence.is_some() => {
+                bail!("generic arm read the forbidden target Skill")
+            }
+            SkillUseExpectation::Forbidden => Ok(SkillUseOutcome {
+                successful_read_observed: false,
+                evidence_sha256: None,
+            }),
         }
-        let evidence = serde_json::json!({
-            "schemaVersion": 1,
-            "skillSha256": sha256_bytes(&self.expected_skill_bytes),
-            "readBeforeFinal": true
-        });
-        Ok(sha256_bytes(&serde_json::to_vec(&evidence)?))
     }
 }
 

@@ -26,6 +26,7 @@ use crate::ExecutionMode;
 use crate::FrozenExecutionGuard;
 use crate::GitWorktreeCommitment;
 use crate::ModeEvidence;
+use crate::MockProviderMode;
 use crate::PairCoordinator;
 use crate::PairPhase;
 use crate::ProofBrokerCompatibilityName;
@@ -374,6 +375,16 @@ fn execution_mode_evidence_and_provider_role_are_disjoint() {
     assert_eq!(replay_json["executionMode"], json!("replay"));
     assert!(replay_json.get("providerRole").is_none());
 
+    let mock = ModeEvidence::Mock {
+        provider_mode: MockProviderMode::NotRun,
+        synthetic_fixture_sha256: "fixture".to_string(),
+        arm_order_commitment: "order".to_string(),
+    };
+    let mock_json = serde_json::to_value(&mock).unwrap();
+    assert_eq!(mock_json["executionMode"], json!("mock"));
+    assert_eq!(mock_json["providerMode"], json!("notRun"));
+    assert!(mock_json.get("providerRole").is_none());
+
     let live = ModeEvidence::Live {
         attestation_sha256: "a".repeat(64),
         provider_budget_evidence_sha256: "b".repeat(64),
@@ -540,25 +551,31 @@ fn committed_replay_transcript_is_typed_and_contains_the_validated_final_package
     }
 }
 
-#[test]
-fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
+struct ReplayPairTestRun {
+    _temp: tempfile::TempDir,
+    private_root: std::path::PathBuf,
+    frozen_json: serde_json::Value,
+    manifests: Vec<crate::RunManifest>,
+}
+
+fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
     let fixture_set =
-        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
     let fixture_root = fixture_set.parent().unwrap();
-    let temp = tempfile::tempdir().unwrap();
+    let temp = tempfile::tempdir()?;
     let private_root = temp.path().join("replay-private");
-    fs::create_dir(&private_root).unwrap();
+    fs::create_dir(&private_root)?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
     }
     let codex_binary = private_root.join("synthetic-codex-binary");
-    fs::write(&codex_binary, b"synthetic replay binary\n").unwrap();
+    fs::write(&codex_binary, b"synthetic replay binary\n")?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&codex_binary, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&codex_binary, fs::Permissions::from_mode(0o700))?;
     }
     let frozen = private_root.join("frozen-run-context.json");
     crate::execute_cli(Cli {
@@ -574,28 +591,15 @@ fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
                 output: frozen.clone(),
             }),
         }),
-    })
-    .unwrap();
+    })?;
     let frozen_json: serde_json::Value =
-        serde_json::from_slice(&fs::read(&frozen).unwrap()).unwrap();
-    assert_eq!(frozen_json["executionMode"], json!("replay"));
-    assert_eq!(frozen_json["providerMode"], json!("not-run"));
-    for forbidden in [
-        "providerUpstreamUrl",
-        "providerRole",
-        "approvalCommitment",
-        "authorizedTotalCostFen",
-        "bearer",
-    ] {
-        assert!(frozen_json.get(forbidden).is_none());
-    }
+        serde_json::from_slice(&fs::read(&frozen)?)?;
 
     crate::execute_cli(Cli {
         command: crate::EvalCommand::ReplayPair(crate::ReplayPairArgs {
             frozen_run_context: frozen,
         }),
-    })
-    .unwrap();
+    })?;
     let coordinator = private_root.join("replay-coordinator");
     for leaf in [
         "run-1-manifest.json",
@@ -607,15 +611,72 @@ fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
     let mut manifests = Vec::new();
     for ordinal in [1_u8, 2] {
         let manifest: crate::RunManifest = serde_json::from_slice(
-            &fs::read(coordinator.join(format!("run-{ordinal}-manifest.json"))).unwrap(),
-        )
+            &fs::read(coordinator.join(format!("run-{ordinal}-manifest.json")))?,
+        )?;
+        manifests.push(manifest);
+    }
+    Ok(ReplayPairTestRun {
+        _temp: temp,
+        private_root,
+        frozen_json,
+        manifests,
+    })
+}
+
+#[test]
+fn paired_outputs_are_independently_valid_and_may_differ() {
+    let run = run_native_mock_pair_with_marker(None);
+    assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
+    let manifests = read_native_mock_manifests(&run.live_root);
+    let generic = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Generic)
         .unwrap();
+    let candidate = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Candidate)
+        .unwrap();
+    assert_ne!(
+        generic.content_package_sha256,
+        candidate.content_package_sha256
+    );
+    let verification_path = run.live_root.join("coordinator/pair-verification.json");
+    let verification_text = fs::read_to_string(verification_path).unwrap();
+    let verification: serde_json::Value = serde_json::from_str(&verification_text).unwrap();
+    assert_eq!(
+        verification["genericContentPackageSha256"],
+        generic.content_package_sha256
+    );
+    assert_eq!(
+        verification["candidateContentPackageSha256"],
+        candidate.content_package_sha256
+    );
+    assert!(verification.get("contentPackageSha256").is_none());
+    assert!(!verification_text.contains("Synthetic body"));
+    assert!(!verification_text.contains("Candidate synthetic body"));
+}
+
+#[test]
+fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
+    let run = run_frozen_replay_pair().unwrap();
+    assert_eq!(run.frozen_json["executionMode"], json!("replay"));
+    assert_eq!(run.frozen_json["providerMode"], json!("not-run"));
+    for forbidden in [
+        "providerUpstreamUrl",
+        "providerRole",
+        "approvalCommitment",
+        "authorizedTotalCostFen",
+        "bearer",
+    ] {
+        assert!(run.frozen_json.get(forbidden).is_none());
+    }
+    for manifest in &run.manifests {
         manifest.validate_execution_mode().unwrap();
         assert_eq!(manifest.execution_mode, ExecutionMode::Replay);
         assert_eq!(manifest.authorized_evaluation_run_cost_fen, 0);
         assert_eq!(manifest.provider_request_attempt_count, 0);
-        manifests.push(manifest);
     }
+    let manifests = &run.manifests;
     let generic = manifests
         .iter()
         .find(|manifest| manifest.condition == EvaluationCondition::Generic)
@@ -634,10 +695,11 @@ fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
         generic.normalized_base_catalog_sha256,
         candidate.normalized_base_catalog_sha256
     );
-    assert_eq!(
+    assert_ne!(
         generic.content_package_sha256,
         candidate.content_package_sha256
     );
+    let coordinator = run.private_root.join("replay-coordinator");
     assert!(!coordinator.join("attempt-index.jsonl").exists());
     assert!(!coordinator.join("receipts").exists());
 }
@@ -1102,6 +1164,7 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         "skill" => Some("lead-skill.md"),
         "schema" => Some("content-package-schema.json"),
         "prompt" => Some("root-prompt.txt"),
+        "additionalContext" => Some("additional-context.txt"),
         "threadStartRequest" => Some("thread-start-request.json"),
         "turnStartRequest" => Some("turn-start-request.json"),
         _ => None,
@@ -1138,6 +1201,12 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
                 "materials" => (
                     imported_inputs.join("materials-manifest.json"),
                     materials_bytes.clone(),
+                ),
+                "additionalContext" => (
+                    frozen_inputs.join("additional-context.txt"),
+                    codex_ai_ip_runtime::evaluation_context(&mission_case())
+                        .unwrap()
+                        .into_bytes(),
                 ),
                 _ => (
                     private_leaf(name)
@@ -3045,6 +3114,190 @@ fn assert_loopback_rejection_never_forwards(rejection: LoopbackRejection) {
     assert_eq!(count.load(Ordering::SeqCst), 0);
 }
 
+struct NativeMockPairTestRun {
+    _temp: tempfile::TempDir,
+    live_root: std::path::PathBuf,
+    result: anyhow::Result<()>,
+}
+
+fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestRun {
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::Ordering;
+
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let stop = Arc::new(AtomicBool::new(false));
+    let worker_stop = stop.clone();
+    let worker = std::thread::spawn(move || {
+        let mut index = 0_u64;
+        while !worker_stop.load(Ordering::SeqCst) {
+            let Some(request) = upstream.recv_timeout(Duration::from_millis(100)).unwrap() else {
+                continue;
+            };
+            let body = format!(
+                "data: {{\"type\":\"response.completed\",\"response\":{{\"id\":\"mock-response-{index}\",\"model\":\"mock-revision\",\"usage\":{{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}}}}\n\n"
+            );
+            request
+                .respond(tiny_http::Response::from_string(body).with_header(
+                    tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap(),
+                ))
+                .unwrap();
+            index += 1;
+        }
+    });
+    let temp = tempfile::tempdir().unwrap();
+    let seed_context = strict_live_context(&temp);
+    let seed: serde_json::Value = serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
+    let artifacts = seed["artifacts"].as_object().unwrap();
+    let artifact = |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
+    let mock_codex = temp.path().join("native-mock-app-server-test-harness");
+    fs::copy(std::env::current_exe().unwrap(), &mock_codex).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let (live_case, live_material_root, live_attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+    let live_root = temp.path().join("native-private");
+    fs::create_dir(&live_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let output = live_root.join("frozen-run-context.json");
+    crate::execute_cli(Cli {
+        command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
+            mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
+                repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+                evidence_repo_root: std::path::PathBuf::from(
+                    seed["repoRoot"].as_str().unwrap(),
+                ),
+                fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+                private_root: live_root.clone(),
+                codex_bin: mock_codex,
+                case: live_case,
+                material_root: live_material_root,
+                attestation: live_attestation,
+                provider_budget_evidence: artifact("providerBudgetReceipt"),
+                rate_card: artifact("rateCard"),
+                billing_policy: artifact("billingPolicy"),
+                fx_policy: artifact("fxPolicy"),
+                lead_skill: artifact("skill"),
+                model_label: "local-mock".to_string(),
+                provider_label: "local-mock".to_string(),
+                provider_role: ProviderRole::ApprovedReference,
+                provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
+                authorized_total_cost_fen: 0,
+                authorized_per_run_cost_fen: 0,
+                max_provider_request_attempts_per_run: 2,
+                max_total_tokens_per_run: 10,
+                max_elapsed_seconds_per_run: 180,
+                max_output_tokens_per_request: 17,
+                output: output.clone(),
+            }),
+        }),
+    })
+    .unwrap();
+    if let Some(marker) = marker {
+        fs::write(live_root.join(marker), b"test behavior marker\n").unwrap();
+    }
+    let result = crate::execute_cli(Cli {
+        command: crate::EvalCommand::LivePair(crate::model::LivePairArgs {
+            frozen_run_context: output,
+        }),
+    });
+    stop.store(true, Ordering::SeqCst);
+    worker.join().unwrap();
+    NativeMockPairTestRun {
+        _temp: temp,
+        live_root,
+        result,
+    }
+}
+
+#[test]
+fn generic_target_skill_read_poisons_without_pair_receipt() {
+    let run = run_native_mock_pair_with_marker(Some("generic-target-skill-read"));
+    assert!(
+        run.result
+            .unwrap_err()
+            .to_string()
+            .contains("generic arm read")
+    );
+    assert!(
+        run.live_root
+            .join("coordinator/receipts/poison.json")
+            .is_file()
+    );
+    assert!(
+        !run.live_root
+            .join("coordinator/receipts/pair-receipt.json")
+            .exists()
+    );
+}
+
+fn read_native_mock_manifests(live_root: &std::path::Path) -> Vec<crate::RunManifest> {
+    [1_u8, 2]
+        .into_iter()
+        .map(|ordinal| {
+            serde_json::from_slice(
+                &fs::read(
+                    live_root.join(format!("coordinator/run-{ordinal}-manifest.json")),
+                )
+                .unwrap(),
+            )
+            .unwrap()
+        })
+        .collect()
+}
+
+#[test]
+fn local_mock_manifests_are_typed_mock_and_never_g2_eligible() {
+    let run = run_native_mock_pair_with_marker(None);
+    assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
+    let manifests = read_native_mock_manifests(&run.live_root);
+
+    assert!(
+        manifests
+            .iter()
+            .all(|manifest| manifest.execution_mode == ExecutionMode::Mock)
+    );
+    assert!(
+        manifests
+            .iter()
+            .all(|manifest| matches!(manifest.mode_evidence, ModeEvidence::Mock { .. }))
+    );
+    assert!(manifests.iter().all(|manifest| !manifest.is_g2_eligible()));
+}
+
+#[test]
+fn mock_manifest_binds_actual_additional_context_not_turn_request() {
+    let run = run_native_mock_pair_with_marker(None);
+    assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
+    let manifest = read_native_mock_manifests(&run.live_root).remove(0);
+    let mission: HeldOutMissionCase = serde_json::from_slice(
+        &fs::read(run.live_root.join("inputs/case/case.json")).unwrap(),
+    )
+    .unwrap();
+    let expected = format!(
+        "{:x}",
+        Sha256::digest(
+            codex_ai_ip_runtime::evaluation_context(&mission)
+                .unwrap()
+                .as_bytes()
+        )
+    );
+
+    assert_eq!(manifest.additional_context_sha256, expected);
+    assert_ne!(
+        manifest.additional_context_sha256,
+        manifest.turn_start_request_sha256
+    );
+}
+
 #[test]
 fn native_app_server_fixture() {
     use std::fs::OpenOptions;
@@ -3326,17 +3579,35 @@ fn native_app_server_fixture() {
                     "turn-generic"
                 };
                 let child_turn_id = format!("child-{turn_id}");
-                let package = package_json();
+                let package = if candidate {
+                    let mut package: serde_json::Value =
+                        serde_json::from_str(&package_json()).unwrap();
+                    package["publishableContent"]["title"] = json!("Candidate synthetic title");
+                    package["publishableContent"]["body"] = json!("Candidate synthetic body");
+                    package.to_string()
+                } else {
+                    package_json()
+                };
                 let final_item = json!({
                     "type": "agentMessage",
                     "id": "final-package",
                     "text": package
                 });
-                let skill_item = candidate.then(|| {
+                let generic_target_skill_read = !candidate
+                    && eval_root.join("generic-target-skill-read").is_file();
+                let skill_item = (candidate || generic_target_skill_read).then(|| {
                     let skill_path = codex_home
                         .join("skills")
                         .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
                         .join("SKILL.md");
+                    let skill_bytes_path = if candidate {
+                        skill_path.clone()
+                    } else {
+                        eval_root
+                            .join("candidate-home/.codex/skills")
+                            .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                            .join("SKILL.md")
+                    };
                     json!({
                         "type": "commandExecution",
                         "id": "lead-skill-read",
@@ -3347,7 +3618,7 @@ fn native_app_server_fixture() {
                         "processId": null,
                         "status": "completed",
                         "commandActions": [],
-                        "aggregatedOutput": fs::read_to_string(&skill_path).unwrap(),
+                        "aggregatedOutput": fs::read_to_string(&skill_bytes_path).unwrap(),
                         "exitCode": 0,
                         "durationMs": 1
                     })
@@ -3700,7 +3971,9 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
             serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         manifest.validate_execution_mode().unwrap();
         assert_eq!(manifest.run_ordinal, run_ordinal);
-        assert_eq!(manifest.execution_mode, ExecutionMode::Live);
+        assert_eq!(manifest.execution_mode, ExecutionMode::Mock);
+        assert!(matches!(manifest.mode_evidence, ModeEvidence::Mock { .. }));
+        assert!(!manifest.is_g2_eligible());
         assert_eq!(manifest.authorized_evaluation_run_cost_fen, 0);
         assert_eq!(
             manifest.pre_skill_catalog_sha256,
@@ -3737,7 +4010,7 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         generic_manifest.normalized_first_root_base_commitment,
         candidate_manifest.normalized_first_root_base_commitment
     );
-    assert_eq!(
+    assert_ne!(
         generic_manifest.content_package_sha256,
         candidate_manifest.content_package_sha256
     );
@@ -3757,6 +4030,15 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         pair_verification_json["requestParity"]["normalizedBaseCommitment"],
         json!(generic_manifest.normalized_first_root_base_commitment)
     );
+    assert_eq!(
+        pair_verification_json["genericContentPackageSha256"],
+        generic_manifest.content_package_sha256
+    );
+    assert_eq!(
+        pair_verification_json["candidateContentPackageSha256"],
+        candidate_manifest.content_package_sha256
+    );
+    assert!(pair_verification_json.get("contentPackageSha256").is_none());
     assert!(!pair_verification.contains("frozen mission"));
     assert!(!pair_verification.contains("Synthetic replay summary"));
     assert!(
