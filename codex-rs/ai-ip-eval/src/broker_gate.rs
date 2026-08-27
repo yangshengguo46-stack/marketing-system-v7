@@ -49,6 +49,7 @@ pub struct BrokerGateConfig {
     pub frozen_run_context_sha256: String,
     pub execution_context_sha256: String,
     pub arm_order_commitment: String,
+    pub require_proof_bindings: bool,
     pub runtime: Arc<BrokerRuntimeConfig>,
 }
 
@@ -176,6 +177,7 @@ pub struct ArmReceipt {
     pub in_flight: u64,
     pub sealed_at: String,
     pub previous_arm_receipt_sha256: Option<String>,
+    pub run_manifest_sha256: Option<String>,
     #[serde(skip)]
     pub receipt_sha256: String,
 }
@@ -189,6 +191,8 @@ pub struct PairReceipt {
     pub execution_context_sha256: String,
     pub first_arm_receipt_sha256: String,
     pub second_arm_receipt_sha256: String,
+    pub first_run_manifest_sha256: Option<String>,
+    pub second_run_manifest_sha256: Option<String>,
     pub total_attempt_count: u64,
     pub total_completion_count: u64,
     pub total_failure_count: u64,
@@ -213,6 +217,9 @@ struct RequestRecord {
     arm_attempt_index: u64,
     request_started_at: String,
     request_commitment: String,
+    normalized_request_commitment: String,
+    normalized_base_commitment: String,
+    treatment_diff_commitment: Option<String>,
     thread_commitment: String,
     window_commitment: String,
     parent_thread_commitment: Option<String>,
@@ -250,6 +257,27 @@ struct ActiveArm {
     timeout_start: u64,
     accepting: bool,
     completions: Vec<ResponseCompletedMetadata>,
+    first_root_request: Option<FirstRootRequestEvidence>,
+    run_manifest_sha256: Option<String>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct FirstRootRequestEvidence {
+    pub raw_commitment: String,
+    pub normalized_commitment: String,
+    pub normalized_base_commitment: String,
+    pub treatment_diff_commitment: Option<String>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ActiveArmProofSnapshot {
+    pub run_ordinal: u8,
+    pub condition: EvaluationCondition,
+    pub first_root_request: FirstRootRequestEvidence,
+    pub attempt_index_file_sha256: String,
+    pub attempt_index_merkle_root: String,
+    pub arm_attempt_count: u64,
+    pub completion_count: u64,
 }
 
 struct InFlight {
@@ -465,6 +493,8 @@ impl PairCoordinator {
             timeout_start: state.counts.timeout,
             accepting: true,
             completions: Vec::new(),
+            first_root_request: None,
+            run_manifest_sha256: None,
         });
         state.phase = if run_ordinal == 1 {
             PairPhase::Active1 { condition }
@@ -578,6 +608,64 @@ impl PairCoordinator {
             .context("thread snapshot requested outside an active arm")
     }
 
+    pub(crate) fn active_inspection_context(
+        &self,
+    ) -> Result<(EvaluationCondition, u64, HashSet<String>)> {
+        let state = self.lock_state()?;
+        state
+            .active
+            .as_ref()
+            .map(|active| {
+                (
+                    active.condition,
+                    active.arm_attempt_count,
+                    active.known_threads.keys().cloned().collect(),
+                )
+            })
+            .context("inspection context requested outside an active arm")
+    }
+
+    pub(crate) fn active_arm_proof_snapshot(&self) -> Result<ActiveArmProofSnapshot> {
+        let state = self.lock_state()?;
+        let active = state
+            .active
+            .as_ref()
+            .context("proof snapshot requested outside an active arm")?;
+        Ok(ActiveArmProofSnapshot {
+            run_ordinal: active.run_ordinal,
+            condition: active.condition,
+            first_root_request: active
+                .first_root_request
+                .clone()
+                .context("active arm has no first-root request evidence")?,
+            attempt_index_file_sha256: sha256_hex(&state.ledger_bytes),
+            attempt_index_merkle_root: merkle_root(&state.record_hashes),
+            arm_attempt_count: active.arm_attempt_count,
+            completion_count: u64::try_from(active.completions.len())?,
+        })
+    }
+
+    pub(crate) fn bind_active_run_manifest(&self, sha256: String) -> Result<()> {
+        if sha256.len() != 64 || !sha256.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err(anyhow!(
+                "run manifest commitment must be lowercase SHA-256 hex"
+            ));
+        }
+        let mut state = self.lock_state()?;
+        let active = state
+            .active
+            .as_mut()
+            .context("run manifest bound outside an active arm")?;
+        if active.run_manifest_sha256.replace(sha256).is_some() {
+            return poison(
+                &self.config,
+                &mut state,
+                "run manifest was bound more than once",
+            );
+        }
+        Ok(())
+    }
+
     #[cfg(test)]
     pub(crate) fn fail_next_terminal_append_for_test(&self) {
         if let Ok(mut state) = self.state.lock() {
@@ -617,6 +705,14 @@ impl PairCoordinator {
         let completion_start = active.completion_start;
         let failure_start = active.failure_start;
         let timeout_start = active.timeout_start;
+        let run_manifest_sha256 = active.run_manifest_sha256.clone();
+        if self.config.require_proof_bindings && run_manifest_sha256.is_none() {
+            return poison(
+                &self.config,
+                &mut state,
+                "cannot seal arm without a bound run manifest",
+            );
+        }
         let (first_condition, second_condition) = state
             .order
             .ok_or_else(|| anyhow!("missing committed order"))?;
@@ -657,6 +753,7 @@ impl PairCoordinator {
             in_flight: 0,
             sealed_at: now(),
             previous_arm_receipt_sha256,
+            run_manifest_sha256,
             receipt_sha256: String::new(),
         };
         let bytes = serde_json::to_vec(&receipt).context("serialize arm receipt")?;
@@ -733,6 +830,8 @@ impl PairCoordinator {
             execution_context_sha256: self.config.execution_context_sha256.clone(),
             first_arm_receipt_sha256: first.receipt_sha256,
             second_arm_receipt_sha256: second.receipt_sha256,
+            first_run_manifest_sha256: first.run_manifest_sha256,
+            second_run_manifest_sha256: second.run_manifest_sha256,
             total_attempt_count,
             total_completion_count: state.counts.completed,
             total_failure_count: state.counts.failed,
@@ -851,6 +950,11 @@ fn authorize_and_record(
     request: &RequestMetadata,
     transformed: &TransformedRequestMetadata,
 ) -> Result<RequestPermit> {
+    if transformed.sha256 != transformed.evidence.raw_sha256 {
+        return Err(anyhow!(
+            "request inspector raw commitment differs from the forwarded body"
+        ));
+    }
     if !matches!(
         state.phase,
         PairPhase::Active1 { .. } | PairPhase::Active2 { .. }
@@ -914,6 +1018,13 @@ fn authorize_and_record(
         .as_deref()
         .ok_or_else(|| anyhow!("missing window"))?;
     let thread_id = parse_window_thread(window)?;
+    let first_root_request =
+        (arm_attempt_index == 0 && !request.is_subagent).then(|| FirstRootRequestEvidence {
+            raw_commitment: hex(transformed.evidence.raw_sha256),
+            normalized_commitment: hex(transformed.evidence.normalized_sha256),
+            normalized_base_commitment: hex(transformed.evidence.normalized_base_commitment),
+            treatment_diff_commitment: transformed.evidence.treatment_diff_commitment.map(hex),
+        });
     let record = RequestRecord {
         schema_version: SCHEMA_VERSION,
         record_type: "request",
@@ -926,7 +1037,10 @@ fn authorize_and_record(
         condition,
         arm_attempt_index,
         request_started_at: now(),
-        request_commitment: hex(transformed.sha256),
+        request_commitment: hex(transformed.evidence.raw_sha256),
+        normalized_request_commitment: hex(transformed.evidence.normalized_sha256),
+        normalized_base_commitment: hex(transformed.evidence.normalized_base_commitment),
+        treatment_diff_commitment: transformed.evidence.treatment_diff_commitment.map(hex),
         thread_commitment: sha256_hex(thread_id.as_bytes()),
         window_commitment: sha256_hex(window.as_bytes()),
         parent_thread_commitment: request
@@ -940,6 +1054,16 @@ fn authorize_and_record(
     let record_hash: [u8; 32] = Sha256::digest(&bytes).into();
     append_synced(state, &bytes)?;
     if let Some(active) = state.active.as_mut() {
+        if let Some(first_root_request) = first_root_request
+            && active
+                .first_root_request
+                .replace(first_root_request)
+                .is_some()
+            {
+                return Err(anyhow!(
+                    "first-root request evidence was recorded more than once"
+                ));
+            }
         active.arm_attempt_count += 1;
     }
     state.record_hashes.push(record_hash);

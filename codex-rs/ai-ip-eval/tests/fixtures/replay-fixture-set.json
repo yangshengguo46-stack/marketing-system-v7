@@ -1,12 +1,14 @@
 {
   "schemaVersion": 1,
   "executionMode": "replay",
-  "case": "replay-case.json",
-  "transcript": "replay-transcript.jsonl",
-  "attestation": "replay-attestation.json",
-  "reviews": [
-    "replay-review-1.json",
-    "replay-review-2.json",
-    "replay-review-3.json"
+  "fixtures": [
+    {"name": "case", "path": "replay-case.json", "sha256": "fa6d7c8dbb69cc4a2be01700f78f5483c721df8f126408fd3f6adba096e4ed81"},
+    {"name": "genericTranscript", "path": "replay-transcript.jsonl", "sha256": "c54de31e1ab6d631c648f69b0b3437e0d7ea56d70ce2704a89b34cfeefae3659"},
+    {"name": "candidateTranscript", "path": "replay-candidate-transcript.jsonl", "sha256": "e9d9550734fb0ae92321b71a6f00f7ecbc3bdec3d5cd25b9e05c41ad600787c8"},
+    {"name": "leadSkill", "path": "replay-lead-skill.md", "sha256": "f3dc58adf321823c984060a9170813ab8395323d1249fa61386e2d0b0570fbd3"},
+    {"name": "attestation", "path": "replay-attestation.json", "sha256": "7a1f2d56b34098154ff8d55f2ef40395adb22cfc83a866d8455993e84efbc860"},
+    {"name": "review1", "path": "replay-review-1.json", "sha256": "4b44d8372c165d9ec7141c344790f8697972d6a164446d21696fd5c6957eb5fa"},
+    {"name": "review2", "path": "replay-review-2.json", "sha256": "b4c303b22384e52247364a3b1f8baafee963f30bbd87455521c505c3f5073409"},
+    {"name": "review3", "path": "replay-review-3.json", "sha256": "4b8ef5f73e9d527b1658df50afb742a7767073694722dd62a0ebf36fd3b2c1c5"}
   ]
 }

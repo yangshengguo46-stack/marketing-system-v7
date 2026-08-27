@@ -99,6 +99,22 @@ impl ReplayCollector {
 
     pub fn ingest(&mut self, notification: ServerNotification) -> anyhow::Result<()> {
         match notification {
+            ServerNotification::ThreadStarted(notification) => {
+                let thread = notification.thread;
+                if thread.id == self.root_thread_id {
+                    self.known_threads.insert(thread.id);
+                } else {
+                    let parent = thread
+                        .parent_thread_id
+                        .context("discovered replay thread is missing its parent")?;
+                    if !self.known_threads.contains(&parent) {
+                        bail!("discovered replay thread has an unknown parent");
+                    }
+                    if !self.known_threads.insert(thread.id) {
+                        bail!("duplicate discovered replay thread");
+                    }
+                }
+            }
             ServerNotification::RawResponseCompleted(notification) => {
                 self.ensure_known_thread(&notification.thread_id)?;
                 let usage = notification.usage.context("missing usage")?;

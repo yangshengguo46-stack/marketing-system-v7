@@ -47,6 +47,12 @@ pub struct CatalogParity {
     pub candidate_skill_sha256: String,
 }
 
+impl CatalogSnapshot {
+    pub fn normalized_base_catalog_sha256(&self) -> String {
+        sha256(&self.without_target_json)
+    }
+}
+
 pub fn normalize_catalog(
     response: &SkillsListResponse,
     roots: &CatalogRoots,

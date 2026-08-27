@@ -20,6 +20,7 @@ use codex_app_server_protocol::AdditionalContextEntry;
 use codex_app_server_protocol::AdditionalContextKind;
 use codex_app_server_protocol::AskForApproval;
 use codex_app_server_protocol::ClientInfo;
+use codex_app_server_protocol::Config;
 use codex_app_server_protocol::ConfigLayerSource;
 use codex_app_server_protocol::ConfigReadParams;
 use codex_app_server_protocol::ConfigReadResponse;
@@ -56,6 +57,7 @@ use tokio::io::BufReader;
 use crate::runner::ChildEnvironment;
 
 pub const EVALUATION_PERMISSION_PROFILE: &str = "ai-ip-eval";
+pub const PINNED_EFFECTIVE_CONFIG_BUILT_INS: &[(&str, bool)] = &[("allow_login_shell", true)];
 const MAX_JSON_LINE_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1340,15 +1342,16 @@ impl AppServerClient {
         }
         let mut attributes = PosixSpawnAttributes::suspended()?;
         if let Some(hook) = hook.as_mut()
-            && let Err(error) = hook(&private_executable.path, &private_executable.directory) {
-                let cleanup = private_executable.cleanup();
-                if let Err(cleanup_error) = cleanup {
-                    return Err(error).context(format!(
-                        "private image hook failed; cleanup also failed: {cleanup_error:#}"
-                    ));
-                }
-                return Err(error).context("private image hook failed");
+            && let Err(error) = hook(&private_executable.path, &private_executable.directory)
+        {
+            let cleanup = private_executable.cleanup();
+            if let Err(cleanup_error) = cleanup {
+                return Err(error).context(format!(
+                    "private image hook failed; cleanup also failed: {cleanup_error:#}"
+                ));
             }
+            return Err(error).context("private image hook failed");
+        }
         let mut pid = 0;
         let spawn_result = unsafe {
             libc::posix_spawn(
@@ -1689,11 +1692,93 @@ pub fn audit_config(
     if effective != expectation.expected_effective_config {
         bail!("effective config differs from the frozen expected config");
     }
-    let layers_json = serde_json::to_value(layers)?;
+    let mut layers_json = serde_json::to_value(layers)?;
+    let mut origins_json = serde_json::to_value(&response.origins)?;
+    let canonical_path = expectation
+        .canonical_config_path
+        .to_str()
+        .context("config.toml path is not UTF-8")?;
+    normalize_config_evidence_path(&mut layers_json, canonical_path);
+    normalize_config_evidence_path(&mut origins_json, canonical_path);
+    let normalized_sources = serde_json::json!({
+        "layers": layers_json,
+        "origins": origins_json
+    });
+    let canonical_effective = canonicalize_config_evidence(&effective);
+    let canonical_sources = canonicalize_config_evidence(&normalized_sources);
     Ok(ConfigAuditEvidence {
-        effective_config_sha256: sha256(&serde_json::to_vec(&effective)?),
-        config_layers_sha256: sha256(&serde_json::to_vec(&layers_json)?),
+        effective_config_sha256: sha256(&serde_json::to_vec(&canonical_effective)?),
+        config_layers_sha256: sha256(&serde_json::to_vec(&canonical_sources)?),
     })
+}
+
+fn canonicalize_config_evidence(value: &Value) -> Value {
+    match value {
+        Value::Object(object) => Value::Object(
+            object
+                .iter()
+                .map(|(key, value)| (key.clone(), canonicalize_config_evidence(value)))
+                .collect::<BTreeMap<_, _>>()
+                .into_iter()
+                .collect(),
+        ),
+        Value::Array(values) => {
+            Value::Array(values.iter().map(canonicalize_config_evidence).collect())
+        }
+        value => value.clone(),
+    }
+}
+
+fn normalize_config_evidence_path(value: &mut Value, canonical_path: &str) {
+    match value {
+        Value::Object(object) => {
+            for value in object.values_mut() {
+                normalize_config_evidence_path(value, canonical_path);
+            }
+        }
+        Value::Array(values) => {
+            for value in values {
+                normalize_config_evidence_path(value, canonical_path);
+            }
+        }
+        Value::String(value) if value == canonical_path => {
+            *value = "$CODEX_HOME/config.toml".to_string();
+        }
+        _ => {}
+    }
+}
+
+pub fn audit_frozen_config(
+    response: &ConfigReadResponse,
+    requirements: &ConfigRequirementsReadResponse,
+    canonical_config_path: PathBuf,
+    expected_config_bytes: Vec<u8>,
+    expected_layer_config: Value,
+) -> anyhow::Result<ConfigAuditEvidence> {
+    let mut expected_effective_config = expected_layer_config.clone();
+    let expected = expected_effective_config
+        .as_object_mut()
+        .context("frozen shared config layer must be an object")?;
+    for (name, value) in PINNED_EFFECTIVE_CONFIG_BUILT_INS {
+        if expected
+            .insert((*name).to_string(), Value::Bool(*value))
+            .is_some()
+        {
+            bail!("pinned built-in {name} must not be supplied by the User layer");
+        }
+    }
+    let typed: Config = serde_json::from_value(expected_effective_config)
+        .context("construct typed effective config expectation")?;
+    audit_config(
+        response,
+        requirements,
+        &ConfigAuditExpectation {
+            canonical_config_path,
+            expected_config_bytes,
+            expected_layer_config,
+            expected_effective_config: serde_json::to_value(typed)?,
+        },
+    )
 }
 
 fn reject_forbidden_config_text(bytes: &[u8]) -> anyhow::Result<()> {

@@ -41,7 +41,7 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum EvalCommand {
-    ReplayPair,
+    ReplayPair(ReplayPairArgs),
     FreezeRunContext(FreezeRunContextCommand),
     LivePair(LivePairArgs),
     BlindPack(PathInputArgs),
@@ -54,6 +54,12 @@ pub enum EvalCommand {
     VerifyLiveProof(PathInputArgs),
     FinalizeCheckpoint(PathInputArgs),
     RetentionCloseout(PathInputArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ReplayPairArgs {
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
 }
 
 #[derive(Debug, Args)]
@@ -225,6 +231,7 @@ pub struct RunManifest {
     pub evaluator_binary_sha256: String,
     pub broker_component_sha256: String,
     pub first_root_provider_request_commitment: String,
+    pub normalized_first_root_request_commitment: String,
     pub normalized_first_root_base_commitment: String,
     pub first_root_treatment_diff_commitment: Option<String>,
     pub app_server_transcript_sha256: String,

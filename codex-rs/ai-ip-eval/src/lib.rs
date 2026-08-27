@@ -14,6 +14,7 @@ pub use app_server::ConfigAuditExpectation;
 pub use app_server::FrozenSharedConfig;
 pub use app_server::JsonLineClient;
 pub use app_server::audit_config;
+pub use app_server::audit_frozen_config;
 pub use app_server::build_shared_config;
 pub use app_server::build_thread_start;
 pub use app_server::build_turn_start;
@@ -48,6 +49,7 @@ pub use model::FreezeRunContextArgs;
 pub use model::ModeEvidence;
 pub use model::ProofBrokerCompatibilityName;
 pub use model::ProviderRole;
+pub use model::ReplayPairArgs;
 pub use model::RunManifest;
 pub use model::Usage;
 pub use runner::ArtifactCommitments;
@@ -64,6 +66,7 @@ pub use runner::freeze_live_context;
 pub use runner::freeze_replay_context;
 pub use runner::prepare_isolated_homes;
 pub use runner::run_local_mock_pair;
+pub use runner::run_replay_pair;
 pub use runner::verify_frozen_context;
 pub use runner::verify_isolated_home_parity;
 
@@ -73,6 +76,7 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
             FreezeRunContextArgs::Replay(args) => freeze_replay_context(args),
             FreezeRunContextArgs::Live(args) => freeze_live_context(args),
         },
+        EvalCommand::ReplayPair(args) => run_replay_pair(args),
         EvalCommand::LivePair(args) => run_local_mock_pair(&args.frozen_run_context),
         _ => anyhow::bail!("selected evaluator workflow is not implemented in this work package"),
     }

@@ -452,6 +452,7 @@ fn run_manifest_rejects_cross_mode_and_replay_is_never_g2_eligible() {
         "evaluatorBinarySha256": "r",
         "brokerComponentSha256": "s",
         "firstRootProviderRequestCommitment": "t",
+        "normalizedFirstRootRequestCommitment": "t-normalized",
         "normalizedFirstRootBaseCommitment": "u",
         "firstRootTreatmentDiffCommitment": null,
         "appServerTranscriptSha256": "v",
@@ -540,6 +541,164 @@ fn committed_replay_transcript_is_typed_and_contains_the_validated_final_package
 }
 
 #[test]
+fn replay_pair_executes_frozen_typed_pair_without_live_or_provider_surfaces() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let fixture_root = fixture_set.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("replay-private");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let codex_binary = private_root.join("synthetic-codex-binary");
+    fs::write(&codex_binary, b"synthetic replay binary\n").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&codex_binary, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let frozen = private_root.join("frozen-run-context.json");
+    crate::execute_cli(Cli {
+        command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
+            mode: crate::FreezeRunContextArgs::Replay(crate::model::ReplayFreezeArgs {
+                repo_root: fixture_root.to_path_buf(),
+                fork_sha: "synthetic-replay-fork".to_string(),
+                private_root: private_root.clone(),
+                codex_bin: codex_binary,
+                case: fixture_root.join("replay-case.json"),
+                transcript: fixture_root.join("replay-transcript.jsonl"),
+                fixture_set_manifest: fixture_set,
+                output: frozen.clone(),
+            }),
+        }),
+    })
+    .unwrap();
+    let frozen_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&frozen).unwrap()).unwrap();
+    assert_eq!(frozen_json["executionMode"], json!("replay"));
+    assert_eq!(frozen_json["providerMode"], json!("not-run"));
+    for forbidden in [
+        "providerUpstreamUrl",
+        "providerRole",
+        "approvalCommitment",
+        "authorizedTotalCostFen",
+        "bearer",
+    ] {
+        assert!(frozen_json.get(forbidden).is_none());
+    }
+
+    crate::execute_cli(Cli {
+        command: crate::EvalCommand::ReplayPair(crate::ReplayPairArgs {
+            frozen_run_context: frozen,
+        }),
+    })
+    .unwrap();
+    let coordinator = private_root.join("replay-coordinator");
+    for leaf in [
+        "run-1-manifest.json",
+        "run-2-manifest.json",
+        "replay-pair-verification.json",
+    ] {
+        assert!(coordinator.join(leaf).is_file(), "missing {leaf}");
+    }
+    let mut manifests = Vec::new();
+    for ordinal in [1_u8, 2] {
+        let manifest: crate::RunManifest = serde_json::from_slice(
+            &fs::read(coordinator.join(format!("run-{ordinal}-manifest.json"))).unwrap(),
+        )
+        .unwrap();
+        manifest.validate_execution_mode().unwrap();
+        assert_eq!(manifest.execution_mode, ExecutionMode::Replay);
+        assert_eq!(manifest.authorized_evaluation_run_cost_fen, 0);
+        assert_eq!(manifest.provider_request_attempt_count, 0);
+        manifests.push(manifest);
+    }
+    let generic = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Generic)
+        .unwrap();
+    let candidate = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Candidate)
+        .unwrap();
+    assert_eq!(generic.native_skill_sha256, None);
+    assert_eq!(generic.skill_use_evidence_sha256, None);
+    assert_eq!(generic.first_root_treatment_diff_commitment, None);
+    assert!(candidate.native_skill_sha256.is_some());
+    assert!(candidate.skill_use_evidence_sha256.is_some());
+    assert!(candidate.first_root_treatment_diff_commitment.is_some());
+    assert_eq!(
+        generic.normalized_base_catalog_sha256,
+        candidate.normalized_base_catalog_sha256
+    );
+    assert_eq!(
+        generic.content_package_sha256,
+        candidate.content_package_sha256
+    );
+    assert!(!coordinator.join("attempt-index.jsonl").exists());
+    assert!(!coordinator.join("receipts").exists());
+}
+
+#[test]
+fn replay_pair_reverifies_every_fixture_set_byte_before_creating_evidence() {
+    let source_manifest =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let source_root = source_manifest.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let fixture_root = temp.path().join("fixtures");
+    fs::create_dir(&fixture_root).unwrap();
+    for leaf in [
+        "replay-fixture-set.json",
+        "replay-case.json",
+        "replay-transcript.jsonl",
+        "replay-candidate-transcript.jsonl",
+        "replay-lead-skill.md",
+        "replay-attestation.json",
+        "replay-review-1.json",
+        "replay-review-2.json",
+        "replay-review-3.json",
+    ] {
+        fs::copy(source_root.join(leaf), fixture_root.join(leaf)).unwrap();
+    }
+    let private_root = temp.path().join("private");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let codex_binary = private_root.join("synthetic-codex");
+    fs::write(&codex_binary, b"synthetic\n").unwrap();
+    let frozen = private_root.join("frozen-run-context.json");
+    crate::freeze_replay_context(crate::model::ReplayFreezeArgs {
+        repo_root: fixture_root.clone(),
+        fork_sha: "synthetic-replay-fork".to_string(),
+        private_root: private_root.clone(),
+        codex_bin: codex_binary,
+        case: fixture_root.join("replay-case.json"),
+        transcript: fixture_root.join("replay-transcript.jsonl"),
+        fixture_set_manifest: fixture_root.join("replay-fixture-set.json"),
+        output: frozen.clone(),
+    })
+    .unwrap();
+    fs::write(
+        fixture_root.join("replay-review-3.json"),
+        b"{\"tampered\":true}\n",
+    )
+    .unwrap();
+
+    let error = crate::run_replay_pair(crate::ReplayPairArgs {
+        frozen_run_context: frozen,
+    })
+    .unwrap_err();
+    assert!(error.to_string().contains("bytes or identity changed"));
+    assert!(!private_root.join("replay-coordinator").exists());
+}
+
+#[test]
 fn replay_and_live_case_boundaries_use_an_isolated_temporary_git_repository() {
     let temp = tempfile::tempdir().unwrap();
     let repository = temp.path().join("repo");
@@ -581,7 +740,7 @@ fn replay_and_live_case_boundaries_use_an_isolated_temporary_git_repository() {
 fn transformed() -> TransformedRequestMetadata {
     TransformedRequestMetadata {
         content_length: 23,
-        sha256: [7; 32],
+        sha256: [1; 32],
         evidence: TransformedRequestEvidence {
             raw_sha256: [1; 32],
             normalized_sha256: [2; 32],
@@ -624,6 +783,7 @@ fn coordinator(temp: &tempfile::TempDir, cap: u64) -> PairCoordinator {
         frozen_run_context_sha256: "a".repeat(64),
         execution_context_sha256: "b".repeat(64),
         arm_order_commitment: "c".repeat(64),
+        require_proof_bindings: false,
         runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(cap, 321, 1024 * 1024).unwrap()),
     })
     .unwrap()
@@ -791,6 +951,7 @@ fn frozen_pair_total_token_ceiling_fails_the_terminal_and_poisons() {
         frozen_run_context_sha256: "a".repeat(64),
         execution_context_sha256: "b".repeat(64),
         arm_order_commitment: "c".repeat(64),
+        require_proof_bindings: false,
         runtime: std::sync::Arc::new(
             BrokerRuntimeConfig::with_run_limits(1, 321, 1024 * 1024, 2).unwrap(),
         ),
@@ -1390,6 +1551,7 @@ fn production_coordinator_accepts_only_the_opaque_os_committed_order() {
         frozen_run_context_sha256: frozen.sha256().to_string(),
         execution_context_sha256: "b".repeat(64),
         arm_order_commitment: order.seed_commitment().to_string(),
+        require_proof_bindings: false,
         runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(1, 1, 1024).unwrap()),
     })
     .unwrap();
@@ -1634,7 +1796,16 @@ fn cli_freeze_modes_are_disjoint_and_live_pair_has_no_override_or_single_arm() {
         ])
         .is_ok()
     );
-    assert!(Cli::try_parse_from(["codex-ai-ip-eval", "replay-pair"]).is_ok());
+    assert!(Cli::try_parse_from(["codex-ai-ip-eval", "replay-pair"]).is_err());
+    assert!(
+        Cli::try_parse_from([
+            "codex-ai-ip-eval",
+            "replay-pair",
+            "--frozen-run-context",
+            "/private/replay-frozen.json"
+        ])
+        .is_ok()
+    );
     assert!(
         Cli::try_parse_from([
             "codex-ai-ip-eval",
@@ -2112,6 +2283,7 @@ fn live_context_and_receipt_directory_reject_initial_symlink_aliases() {
             frozen_run_context_sha256: "a".repeat(64),
             execution_context_sha256: "b".repeat(64),
             arm_order_commitment: "c".repeat(64),
+            require_proof_bindings: false,
             runtime: std::sync::Arc::new(BrokerRuntimeConfig::new(1, 1, 1024).unwrap()),
         })
         .is_err()
@@ -2503,6 +2675,7 @@ fn shared_runtime_drives_exact_proxy_transform_and_rejections_never_reach_upstre
             frozen_run_context_sha256: "a".repeat(64),
             execution_context_sha256: "b".repeat(64),
             arm_order_commitment: "c".repeat(64),
+            require_proof_bindings: false,
             runtime: runtime.clone(),
         })
         .unwrap(),
@@ -2586,6 +2759,183 @@ fn shared_runtime_drives_exact_proxy_transform_and_rejections_never_reach_upstre
     }
 }
 
+#[test]
+fn pair_inspector_candidate_first_model_drift_poisons_without_pair_receipt_or_later_upstream() {
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicUsize;
+    use std::sync::atomic::Ordering;
+
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let upstream_count = Arc::new(AtomicUsize::new(0));
+    let worker_count = upstream_count.clone();
+    let worker = std::thread::spawn(move || {
+        while let Some(request) = upstream.recv_timeout(Duration::from_secs(2)).unwrap() {
+            worker_count.fetch_add(1, Ordering::SeqCst);
+            request
+                .respond(
+                    tiny_http::Response::from_string(concat!(
+                        "data: {\"type\":\"response.completed\",\"response\":{",
+                        "\"id\":\"mock-response\",\"model\":\"mock-revision\",",
+                        "\"usage\":{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}\n\n"
+                    ))
+                    .with_header(
+                        tiny_http::Header::from_bytes("content-type", "text/event-stream")
+                            .unwrap(),
+                    ),
+                )
+                .unwrap();
+        }
+    });
+
+    let temp = tempfile::tempdir().unwrap();
+    let homes = crate::IsolatedHomes {
+        generic_home: temp.path().join("generic-home"),
+        generic_codex_home: temp.path().join("generic-home/.codex"),
+        candidate_home: temp.path().join("candidate-home"),
+        candidate_codex_home: temp.path().join("candidate-home/.codex"),
+    };
+    let runtime = Arc::new(BrokerRuntimeConfig::new(1, 77, 16 * 1024).unwrap());
+    let gate = Arc::new(
+        PairCoordinator::create(BrokerGateConfig {
+            ledger_path: temp.path().join("attempt-index.jsonl"),
+            receipt_dir: temp.path().join("receipts"),
+            pair_id: "pair-parity".to_string(),
+            frozen_run_context_sha256: "a".repeat(64),
+            execution_context_sha256: "b".repeat(64),
+            arm_order_commitment: "c".repeat(64),
+            require_proof_bindings: false,
+            runtime: runtime.clone(),
+        })
+        .unwrap(),
+    );
+    gate.commit_order_for_test(EvaluationCondition::Candidate, EvaluationCondition::Generic)
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let deadline_rfc3339 = (chrono::Utc::now() + chrono::Duration::seconds(10)).to_rfc3339();
+    gate.activate_arm(ArmActivation {
+        run_ordinal: 1,
+        condition: EvaluationCondition::Candidate,
+        root_thread_id: test_thread_id("root-1").to_string(),
+        deadline,
+        deadline_rfc3339: deadline_rfc3339.clone(),
+    })
+    .unwrap();
+    let inspector = Arc::new(crate::runner::PairRequestInspector::new(
+        gate.clone(),
+        homes.clone(),
+        deadline_rfc3339.clone(),
+    ));
+    let config = codex_responses_api_proxy::ProxyConfig {
+        listen_port: None,
+        upstream_url: reqwest::Url::parse(&format!("http://{upstream_addr}/v1/responses")).unwrap(),
+        dump_dir: None,
+        http_shutdown: false,
+        default_request_timeout: None,
+        request_transform: Some(runtime.request_transform(inspector)),
+    };
+    let bound = codex_responses_api_proxy::bind(&config).unwrap();
+    let proxy = codex_responses_api_proxy::activate(
+        bound,
+        config,
+        codex_responses_api_proxy::local_mock_auth_header(),
+        gate.clone(),
+        gate.clone(),
+    )
+    .unwrap();
+    let client = reqwest::blocking::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap();
+    let url = format!("http://{}/v1/responses", proxy.addr());
+    let base_body = |model: &str,
+                     root: &str,
+                     home: &std::path::Path,
+                     codex_home: &std::path::Path| {
+        json!({
+            "model": model,
+            "instructions": "Return the frozen synthetic package.",
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": "frozen mission"}]}],
+            "tools": [{"type": "function", "name": "read_file", "description": "Read one file", "parameters": {"type": "object"}}],
+            "metadata": {
+                "aiIpThreadId": root,
+                "aiIpHome": home,
+                "aiIpCodexHome": codex_home
+            }
+        })
+    };
+    let mut candidate_body = base_body(
+        "unauthorized-model-drift",
+        test_thread_id("root-1"),
+        &homes.candidate_home,
+        &homes.candidate_codex_home,
+    );
+    candidate_body["input"].as_array_mut().unwrap().push(
+        crate::runner::canonical_target_skill_treatment(&homes.candidate_codex_home),
+    );
+    let first = client
+        .post(&url)
+        .header(
+            "x-codex-window-id",
+            format!("{}:0", test_thread_id("root-1")),
+        )
+        .json(&candidate_body)
+        .send()
+        .unwrap();
+    let first_status = first.status();
+    let first_text = first.text().unwrap();
+    assert!(
+        first_status.is_success(),
+        "{first_status}: {first_text}; phase={:?}",
+        gate.phase()
+    );
+    gate.seal_arm().unwrap();
+    gate.activate_arm(ArmActivation {
+        run_ordinal: 2,
+        condition: EvaluationCondition::Generic,
+        root_thread_id: test_thread_id("root-2").to_string(),
+        deadline,
+        deadline_rfc3339,
+    })
+    .unwrap();
+    let generic_body = base_body(
+        "local-mock",
+        test_thread_id("root-2"),
+        &homes.generic_home,
+        &homes.generic_codex_home,
+    );
+    let second = client
+        .post(&url)
+        .header(
+            "x-codex-window-id",
+            format!("{}:0", test_thread_id("root-2")),
+        )
+        .json(&generic_body)
+        .send()
+        .unwrap();
+    let second_was_rejected = !second.status().is_success();
+    let _ = second.text().unwrap();
+    let later = client
+        .post(&url)
+        .header(
+            "x-codex-window-id",
+            format!("{}:1", test_thread_id("root-2")),
+        )
+        .json(&generic_body)
+        .send()
+        .unwrap();
+    let later_was_rejected = !later.status().is_success();
+    let _ = later.text().unwrap();
+    proxy.shutdown_with_timeout(Duration::from_secs(2)).unwrap();
+    worker.join().unwrap();
+
+    assert!(second_was_rejected);
+    assert!(later_was_rejected);
+    assert_eq!(upstream_count.load(Ordering::SeqCst), 1);
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    assert!(!temp.path().join("receipts/pair-receipt.json").exists());
+}
+
 #[derive(Clone, Copy)]
 enum LoopbackRejection {
     WrongPath,
@@ -2622,6 +2972,7 @@ fn assert_loopback_rejection_never_forwards(rejection: LoopbackRejection) {
             frozen_run_context_sha256: "a".repeat(64),
             execution_context_sha256: "b".repeat(64),
             arm_order_commitment: "c".repeat(64),
+            require_proof_bindings: false,
             runtime: runtime.clone(),
         })
         .unwrap(),
@@ -2765,12 +3116,21 @@ fn native_app_server_fixture() {
         })
     }
 
+    fn completed_turn(id: &str, items: Vec<serde_json::Value>) -> serde_json::Value {
+        let mut value = turn(id, "completed");
+        value["items"] = json!(items);
+        value
+    }
+
     fn call_broker(
         output: &mut fs::File,
         config: &serde_json::Value,
         thread_id: &str,
         turn_id: &str,
         parent_id: Option<&str>,
+        candidate: bool,
+        home: &std::path::Path,
+        codex_home: &std::path::Path,
     ) {
         let base_url = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
             .as_str()
@@ -2788,8 +3148,25 @@ fn native_app_server_fixture() {
                 .header("x-codex-parent-thread-id", parent_id)
                 .header("x-openai-subagent", "collab_spawn");
         }
+        let mut body = json!({
+            "model": "local-mock",
+            "instructions": "Return the frozen synthetic package.",
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": "frozen mission"}]}],
+            "tools": [{"type": "function", "name": "read_file", "description": "Read one file", "parameters": {"type": "object"}}],
+            "metadata": {
+                "aiIpThreadId": thread_id,
+                "aiIpHome": home,
+                "aiIpCodexHome": codex_home
+            }
+        });
+        if candidate {
+            body["input"]
+                .as_array_mut()
+                .unwrap()
+                .push(crate::runner::canonical_target_skill_treatment(codex_home));
+        }
         let body = request
-            .body(r#"{"model":"local-mock","input":[]}"#)
+            .body(serde_json::to_vec(&body).unwrap())
             .send()
             .unwrap()
             .error_for_status()
@@ -2845,6 +3222,8 @@ fn native_app_server_fixture() {
     let config_toml = fs::read_to_string(codex_home.join("config.toml")).unwrap();
     let config: serde_json::Value =
         serde_json::to_value(toml::from_str::<toml::Value>(&config_toml).unwrap()).unwrap();
+    let mut effective_config = config.clone();
+    effective_config["allow_login_shell"] = json!(true);
     let candidate = home.to_string_lossy().contains("candidate-home");
     let thread_id = if candidate {
         "0198f5aa-0000-7000-8000-000000000102"
@@ -2892,7 +3271,7 @@ fn native_app_server_fixture() {
                 "platformOs": "mock"
             }),
             Some("config/read") => json!({
-                "config": config,
+                "config": effective_config,
                 "origins": {},
                 "layers": [{
                     "name": {"type": "user", "file": codex_home.join("config.toml"), "profile": null},
@@ -2901,6 +3280,25 @@ fn native_app_server_fixture() {
                 }]
             }),
             Some("configRequirements/read") => json!({"requirements": null}),
+            Some("skills/list") => {
+                assert_eq!(message["params"]["forceReload"], json!(true));
+                let cwd = std::path::PathBuf::from(message["params"]["cwds"][0].as_str().unwrap());
+                let skills = if candidate {
+                    vec![json!({
+                        "name": codex_ai_ip_runtime::LEAD_SKILL_NAME,
+                        "description": "Synthetic native Lead Skill",
+                        "path": codex_home
+                            .join("skills")
+                            .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                            .join("SKILL.md"),
+                        "scope": "user",
+                        "enabled": true
+                    })]
+                } else {
+                    Vec::new()
+                };
+                json!({"data": [{"cwd": cwd, "skills": skills, "errors": []}]})
+            }
             Some("thread/start") => {
                 let cwd = std::path::PathBuf::from(message["params"]["cwd"].as_str().unwrap());
                 root["cwd"] = json!(cwd);
@@ -2928,6 +3326,32 @@ fn native_app_server_fixture() {
                     "turn-generic"
                 };
                 let child_turn_id = format!("child-{turn_id}");
+                let package = package_json();
+                let final_item = json!({
+                    "type": "agentMessage",
+                    "id": "final-package",
+                    "text": package
+                });
+                let skill_item = candidate.then(|| {
+                    let skill_path = codex_home
+                        .join("skills")
+                        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                        .join("SKILL.md");
+                    json!({
+                        "type": "commandExecution",
+                        "id": "lead-skill-read",
+                        "pluginId": null,
+                        "scriptPath": null,
+                        "command": format!("cat {}", skill_path.display()),
+                        "cwd": eval_root,
+                        "processId": null,
+                        "status": "completed",
+                        "commandActions": [],
+                        "aggregatedOutput": fs::read_to_string(&skill_path).unwrap(),
+                        "exitCode": 0,
+                        "durationMs": 1
+                    })
+                });
                 send(
                     &mut output,
                     &json!({"id": request_id, "result": {"turn": turn(turn_id, "inProgress")}}),
@@ -2945,13 +3369,39 @@ fn native_app_server_fixture() {
                     &json!({"method": "turn/started", "params": {"threadId": child_id, "turn": turn(&child_turn_id, "inProgress")}}),
                 );
                 std::thread::sleep(Duration::from_millis(200));
-                call_broker(&mut output, &config, thread_id, turn_id, None);
+                if let Some(skill_item) = skill_item.as_ref() {
+                    send(
+                        &mut output,
+                        &json!({
+                            "method": "item/completed",
+                            "params": {
+                                "threadId": thread_id,
+                                "turnId": turn_id,
+                                "completedAtMs": 1787616000000_i64,
+                                "item": skill_item
+                            }
+                        }),
+                    );
+                }
+                call_broker(
+                    &mut output,
+                    &config,
+                    thread_id,
+                    turn_id,
+                    None,
+                    candidate,
+                    &home,
+                    &codex_home,
+                );
                 call_broker(
                     &mut output,
                     &config,
                     child_id,
                     &child_turn_id,
                     Some(thread_id),
+                    candidate,
+                    &home,
+                    &codex_home,
                 );
                 send(
                     &mut output,
@@ -2959,10 +3409,27 @@ fn native_app_server_fixture() {
                 );
                 send(
                     &mut output,
-                    &json!({"method": "turn/completed", "params": {"threadId": thread_id, "turn": turn(turn_id, "completed")}}),
+                    &json!({
+                        "method": "item/completed",
+                        "params": {
+                            "threadId": thread_id,
+                            "turnId": turn_id,
+                            "completedAtMs": 1787616000001_i64,
+                            "item": final_item.clone()
+                        }
+                    }),
+                );
+                let mut root_items = Vec::new();
+                if let Some(skill_item) = skill_item {
+                    root_items.push(skill_item);
+                }
+                root_items.push(final_item);
+                send(
+                    &mut output,
+                    &json!({"method": "turn/completed", "params": {"threadId": thread_id, "turn": completed_turn(turn_id, root_items.clone())}}),
                 );
                 child["turns"] = json!([turn(&child_turn_id, "completed")]);
-                root["turns"] = json!([turn(turn_id, "completed")]);
+                root["turns"] = json!([completed_turn(turn_id, root_items)]);
                 continue;
             }
             Some("thread/list") => {
@@ -3132,6 +3599,23 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         );
     }
     worker.join().unwrap();
+    let lead_skill_name = codex_ai_ip_runtime::LEAD_SKILL_NAME;
+    assert!(
+        live_root
+            .join(format!(
+                "candidate-home/.codex/skills/{lead_skill_name}/SKILL.md"
+            ))
+            .is_file(),
+        "candidate must install the exact runtime Lead Skill name"
+    );
+    assert!(
+        !live_root
+            .join(format!(
+                "generic-home/.codex/skills/{lead_skill_name}/SKILL.md"
+            ))
+            .exists(),
+        "generic must not install the target Skill"
+    );
     for home in ["generic-home", "candidate-home"] {
         let launch: serde_json::Value = serde_json::from_slice(
             &fs::read(live_root.join(home).join("app-server-launch.json")).unwrap(),
@@ -3152,12 +3636,25 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         }
         let methods =
             fs::read_to_string(live_root.join(home).join("app-server-methods.log")).unwrap();
-        for required in ["thread/list", "thread/loaded/list", "thread/read"] {
+        for required in [
+            "skills/list",
+            "thread/list",
+            "thread/loaded/list",
+            "thread/read",
+        ] {
             assert!(
                 methods.lines().any(|method| method == required),
                 "{required}"
             );
         }
+        assert_eq!(
+            methods
+                .lines()
+                .filter(|method| *method == "skills/list")
+                .count(),
+            2,
+            "each arm must collect typed pre/post Skill catalogs"
+        );
         let list_times = fs::read_to_string(live_root.join(home).join("thread-list-times.log"))
             .unwrap()
             .lines()
@@ -3194,16 +3691,87 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     );
     assert_eq!(execution["maxTotalTokensPerRun"], json!(10));
     assert_eq!(execution["maxElapsedSecondsPerRun"], json!(180));
+    let mut manifests = Vec::new();
+    for run_ordinal in [1_u8, 2_u8] {
+        let path = live_root
+            .join("coordinator")
+            .join(format!("run-{run_ordinal}-manifest.json"));
+        let manifest: crate::RunManifest =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        manifest.validate_execution_mode().unwrap();
+        assert_eq!(manifest.run_ordinal, run_ordinal);
+        assert_eq!(manifest.execution_mode, ExecutionMode::Live);
+        assert_eq!(manifest.authorized_evaluation_run_cost_fen, 0);
+        assert_eq!(
+            manifest.pre_skill_catalog_sha256,
+            manifest.post_skill_catalog_sha256
+        );
+        assert!(!manifest.content_package_sha256.is_empty());
+        assert!(!manifest.first_root_provider_request_commitment.is_empty());
+        assert!(!manifest.normalized_first_root_base_commitment.is_empty());
+        manifests.push(manifest);
+    }
+    let generic_manifest = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Generic)
+        .unwrap();
+    let candidate_manifest = manifests
+        .iter()
+        .find(|manifest| manifest.condition == EvaluationCondition::Candidate)
+        .unwrap();
+    assert_eq!(generic_manifest.native_skill_sha256, None);
+    assert_eq!(generic_manifest.skill_use_evidence_sha256, None);
+    assert_eq!(generic_manifest.first_root_treatment_diff_commitment, None);
+    assert!(candidate_manifest.native_skill_sha256.is_some());
+    assert!(candidate_manifest.skill_use_evidence_sha256.is_some());
+    assert!(
+        candidate_manifest
+            .first_root_treatment_diff_commitment
+            .is_some()
+    );
+    assert_eq!(
+        generic_manifest.normalized_base_catalog_sha256,
+        candidate_manifest.normalized_base_catalog_sha256
+    );
+    assert_eq!(
+        generic_manifest.normalized_first_root_base_commitment,
+        candidate_manifest.normalized_first_root_base_commitment
+    );
+    assert_eq!(
+        generic_manifest.content_package_sha256,
+        candidate_manifest.content_package_sha256
+    );
+    assert_eq!(
+        generic_manifest.effective_config_sha256,
+        candidate_manifest.effective_config_sha256
+    );
+    assert_eq!(
+        generic_manifest.config_layers_sha256,
+        candidate_manifest.config_layers_sha256
+    );
+    let pair_verification =
+        fs::read_to_string(live_root.join("coordinator/pair-verification.json")).unwrap();
+    let pair_verification_json: serde_json::Value =
+        serde_json::from_str(&pair_verification).unwrap();
+    assert_eq!(
+        pair_verification_json["requestParity"]["normalizedBaseCommitment"],
+        json!(generic_manifest.normalized_first_root_base_commitment)
+    );
+    assert!(!pair_verification.contains("frozen mission"));
+    assert!(!pair_verification.contains("Synthetic replay summary"));
     assert!(
         live_root
             .join("coordinator/receipts/pair-receipt.json")
             .is_file()
     );
-    assert_eq!(
-        fs::read_to_string(live_root.join("coordinator/attempt-index.jsonl"))
-            .unwrap()
-            .lines()
-            .count(),
-        8
-    );
+    let pair_receipt: crate::PairReceipt = serde_json::from_slice(
+        &fs::read(live_root.join("coordinator/receipts/pair-receipt.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(pair_receipt.first_run_manifest_sha256.is_some());
+    assert!(pair_receipt.second_run_manifest_sha256.is_some());
+    let ledger = fs::read_to_string(live_root.join("coordinator/attempt-index.jsonl")).unwrap();
+    assert!(!ledger.contains("frozen mission"));
+    assert!(!ledger.contains("Return the frozen synthetic package"));
+    assert_eq!(ledger.lines().count(), 8);
 }

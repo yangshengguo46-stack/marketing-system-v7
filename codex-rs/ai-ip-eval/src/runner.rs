@@ -10,6 +10,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -28,16 +29,27 @@ use crate::AppServerClient;
 use crate::ArmActivation;
 use crate::BrokerGateConfig;
 use crate::BrokerRuntimeConfig;
-use crate::ConfigAuditExpectation;
+use crate::CatalogRoots;
+use crate::CatalogSnapshot;
+use crate::CollectedReplay;
+use crate::ConfigAuditEvidence;
 use crate::EvaluationCondition;
 use crate::PairCoordinator;
+use crate::ReplayCollector;
+use crate::SkillUseTracker;
 use crate::ThreadLifecycle;
-use crate::audit_config;
+use crate::TreeEvidence;
+use crate::audit_frozen_config;
 use crate::build_shared_config;
 use crate::build_thread_start;
 use crate::build_turn_start;
 use crate::model::LiveFreezeArgs;
+use crate::model::ModeEvidence;
+use crate::model::ProofBrokerCompatibilityName;
+use crate::model::ProviderRole;
 use crate::model::ReplayFreezeArgs;
+use crate::model::ReplayPairArgs;
+use crate::model::RunManifest;
 
 /// A frozen context whose current bytes were re-read and hashed successfully.
 #[derive(Debug, Clone)]
@@ -111,19 +123,36 @@ impl VerifiedFrozenContext {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct ReplayFrozenContext {
     schema_version: u32,
-    execution_mode: &'static str,
-    provider_mode: &'static str,
+    execution_mode: String,
+    provider_mode: String,
+    pair_id: String,
     repo_root: PathBuf,
     fork_sha: String,
     private_root: PathBuf,
-    codex_binary_sha256: String,
-    case_sha256: String,
-    transcript_sha256: String,
-    fixture_set_manifest_sha256: String,
+    codex_binary: FrozenArtifactReference,
+    evaluator_binary: FrozenArtifactReference,
+    fixture_set_manifest: FrozenArtifactReference,
+    fixtures: BTreeMap<String, FrozenArtifactReference>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct ReplayFixtureSet {
+    schema_version: u32,
+    execution_mode: String,
+    fixtures: Vec<ReplayFixtureEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct ReplayFixtureEntry {
+    name: String,
+    path: PathBuf,
+    sha256: String,
 }
 
 pub(crate) struct ImportedSourceProof {
@@ -531,24 +560,597 @@ fn validate_exact_relative_tree(
 
 /// Writes a typed replay freeze record with no provider-capable fields.
 pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
+    let repo_root = args
+        .repo_root
+        .canonicalize()
+        .context("canonicalize replay repository root")?;
+    let private_root = args
+        .private_root
+        .canonicalize()
+        .context("canonicalize replay private root")?;
+    require_owner_only_directory(&private_root)?;
+    if args.output.file_name() != Some(OsStr::new("frozen-run-context.json"))
+        || args
+            .output
+            .parent()
+            .context("replay frozen context output has no parent")?
+            .canonicalize()?
+            != private_root
+    {
+        bail!("replay frozen context must use the canonical private-root filename");
+    }
+    let fixture_set_path = args
+        .fixture_set_manifest
+        .canonicalize()
+        .context("canonicalize replay fixture-set manifest")?;
+    let fixture_set_bytes = read_regular_file_no_follow(&fixture_set_path)?;
+    let fixture_set: ReplayFixtureSet =
+        serde_json::from_slice(&fixture_set_bytes).context("parse replay fixture-set manifest")?;
+    if fixture_set.schema_version != 1 || fixture_set.execution_mode != "replay" {
+        bail!("fixture-set manifest is not the pinned replay schema");
+    }
+    let fixture_root = fixture_set_path
+        .parent()
+        .context("fixture-set manifest has no parent")?;
+    let mut fixtures = BTreeMap::new();
+    for entry in fixture_set.fixtures {
+        validate_leaf_name(&entry.name)?;
+        if entry.path.components().count() != 1
+            || !matches!(
+                entry.path.components().next(),
+                Some(std::path::Component::Normal(_))
+            )
+            || !is_lower_hex(&entry.sha256, 64)
+        {
+            bail!("fixture-set contains an invalid path or SHA-256");
+        }
+        let path = fixture_root
+            .join(&entry.path)
+            .canonicalize()
+            .with_context(|| format!("canonicalize replay fixture {}", entry.name))?;
+        if path.parent() != Some(fixture_root) {
+            bail!("replay fixture escapes the fixture-set directory");
+        }
+        let bytes = read_regular_file_no_follow(&path)?;
+        if sha256(&bytes) != entry.sha256 {
+            bail!(
+                "replay fixture {} differs from its listed bytes",
+                entry.name
+            );
+        }
+        if fixtures
+            .insert(
+                entry.name,
+                FrozenArtifactReference {
+                    path,
+                    sha256: entry.sha256,
+                },
+            )
+            .is_some()
+        {
+            bail!("fixture-set contains a duplicate semantic fixture name");
+        }
+    }
+    let required = BTreeSet::from([
+        "case",
+        "genericTranscript",
+        "candidateTranscript",
+        "leadSkill",
+        "attestation",
+        "review1",
+        "review2",
+        "review3",
+    ]);
+    if fixtures.keys().map(String::as_str).collect::<BTreeSet<_>>() != required {
+        bail!("fixture-set does not contain the exact replay fixture roles");
+    }
+    if args.case.canonicalize()? != fixtures["case"].path
+        || args.transcript.canonicalize()? != fixtures["genericTranscript"].path
+    {
+        bail!("explicit replay case/transcript differ from the fixture-set roles");
+    }
+    let codex_path = args
+        .codex_bin
+        .canonicalize()
+        .context("canonicalize frozen replay Codex binary")?;
+    let evaluator_path = std::env::current_exe()?
+        .canonicalize()
+        .context("canonicalize replay evaluator binary")?;
+    let codex_binary = FrozenArtifactReference {
+        sha256: sha256(&read_regular_file_no_follow(&codex_path)?),
+        path: codex_path,
+    };
+    let evaluator_binary = FrozenArtifactReference {
+        sha256: sha256(&read_regular_file_no_follow(&evaluator_path)?),
+        path: evaluator_path,
+    };
+    let pair_id = sha256(
+        [fixture_set_bytes.as_slice(), args.fork_sha.as_bytes()]
+            .concat()
+            .as_slice(),
+    );
     let record = ReplayFrozenContext {
         schema_version: 1,
-        execution_mode: "replay",
-        provider_mode: "not-run",
-        repo_root: args
-            .repo_root
-            .canonicalize()
-            .context("canonicalize replay repo")?,
+        execution_mode: "replay".to_string(),
+        provider_mode: "not-run".to_string(),
+        pair_id,
+        repo_root,
         fork_sha: args.fork_sha,
-        private_root: args.private_root,
-        codex_binary_sha256: sha256(&read_regular_file_no_follow(&args.codex_bin)?),
-        case_sha256: sha256(&read_regular_file_no_follow(&args.case)?),
-        transcript_sha256: sha256(&read_regular_file_no_follow(&args.transcript)?),
-        fixture_set_manifest_sha256: sha256(&read_regular_file_no_follow(
-            &args.fixture_set_manifest,
-        )?),
+        private_root,
+        codex_binary,
+        evaluator_binary,
+        fixture_set_manifest: FrozenArtifactReference {
+            path: fixture_set_path,
+            sha256: sha256(&fixture_set_bytes),
+        },
+        fixtures,
     };
     write_owner_only_new(&args.output, &serde_json::to_vec_pretty(&record)?)
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct ReplayAttestation {
+    schema_version: u32,
+    execution_mode: String,
+    provider_mode: String,
+    paid_provider_cost_fen: u64,
+    synthetic_only: bool,
+}
+
+struct ReplayArmResult {
+    condition: EvaluationCondition,
+    catalog: CatalogSnapshot,
+    collected: CollectedReplay,
+    skill_use_evidence_sha256: Option<String>,
+    transcript_sha256: String,
+}
+
+/// Executes a fully frozen replay pair without constructing any provider,
+/// broker, credential, App Server, network, budget, or paid-execution surface.
+pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
+    let canonical_context = args
+        .frozen_run_context
+        .canonicalize()
+        .context("canonicalize replay frozen context")?;
+    let context_bytes = read_regular_file_no_follow(&canonical_context)?;
+    let context: ReplayFrozenContext =
+        serde_json::from_slice(&context_bytes).context("parse replay frozen context")?;
+    if context.schema_version != 1
+        || context.execution_mode != "replay"
+        || context.provider_mode != "not-run"
+        || !is_lower_hex(&context.pair_id, 64)
+        || canonical_context != context.private_root.join("frozen-run-context.json")
+    {
+        bail!("frozen replay context violates replay/live disjointness");
+    }
+    require_owner_only_directory(&context.private_root)?;
+    verify_replay_reference(&context.codex_binary, "Codex binary")?;
+    verify_replay_reference(&context.evaluator_binary, "evaluator binary")?;
+    let current_exe = std::env::current_exe()?.canonicalize()?;
+    if current_exe != context.evaluator_binary.path {
+        bail!("replay evaluator executable differs from the frozen binary");
+    }
+    verify_replay_reference(&context.fixture_set_manifest, "fixture-set manifest")?;
+    let fixture_set_bytes = read_regular_file_no_follow(&context.fixture_set_manifest.path)?;
+    let fixture_set: ReplayFixtureSet = serde_json::from_slice(&fixture_set_bytes)?;
+    if fixture_set.schema_version != 1 || fixture_set.execution_mode != "replay" {
+        bail!("frozen fixture-set mode changed before replay");
+    }
+    let fixture_root = context
+        .fixture_set_manifest
+        .path
+        .parent()
+        .context("fixture-set manifest has no parent")?;
+    let listed = fixture_set
+        .fixtures
+        .into_iter()
+        .map(|entry| (entry.name, (entry.path, entry.sha256)))
+        .collect::<BTreeMap<_, _>>();
+    if listed.len() != context.fixtures.len() {
+        bail!("frozen fixture-set roles changed before replay");
+    }
+    for (name, reference) in &context.fixtures {
+        let (relative, listed_sha256) = listed
+            .get(name)
+            .with_context(|| format!("fixture-set no longer lists {name}"))?;
+        if relative.components().count() != 1
+            || fixture_root.join(relative).canonicalize()? != reference.path
+            || listed_sha256 != &reference.sha256
+        {
+            bail!("fixture-set reference changed for {name}");
+        }
+        verify_replay_reference(reference, name)?;
+    }
+    let attestation: ReplayAttestation =
+        serde_json::from_slice(&read_replay_fixture(&context, "attestation")?)?;
+    if attestation.schema_version != 1
+        || attestation.execution_mode != "replay"
+        || attestation.provider_mode != "not-run"
+        || attestation.paid_provider_cost_fen != 0
+        || !attestation.synthetic_only
+    {
+        bail!("replay attestation permits a live, provider, or paid surface");
+    }
+    let mission: codex_ai_ip_domain::HeldOutMissionCase =
+        serde_json::from_slice(&read_replay_fixture(&context, "case")?)?;
+    let skill_bytes = read_replay_fixture(&context, "leadSkill")?;
+    if !std::str::from_utf8(&skill_bytes)?
+        .contains(&format!("name: {}", codex_ai_ip_runtime::LEAD_SKILL_NAME))
+    {
+        bail!("replay Lead Skill fixture has the wrong canonical name");
+    }
+
+    let coordinator = context.private_root.join("replay-coordinator");
+    create_owner_only_dir(&coordinator)?;
+    let (homes, candidate_skill_path) = prepare_replay_homes(&context.private_root, &skill_bytes)?;
+    let case_dir = context.fixtures["case"]
+        .path
+        .parent()
+        .context("replay case has no fixture directory")?
+        .to_path_buf();
+    let generic_catalog = replay_catalog(
+        &CatalogRoots {
+            codex_home: homes.generic_codex_home.clone(),
+            host_home: homes.generic_home.clone(),
+            case_dir: case_dir.clone(),
+        },
+        None,
+    )?;
+    let candidate_catalog = replay_catalog(
+        &CatalogRoots {
+            codex_home: homes.candidate_codex_home.clone(),
+            host_home: homes.candidate_home.clone(),
+            case_dir,
+        },
+        Some(&candidate_skill_path),
+    )?;
+    let catalog_parity = crate::compare_catalogs(
+        &generic_catalog,
+        &candidate_catalog,
+        &candidate_skill_path,
+        &skill_bytes,
+    )?;
+    crate::validate_stable_catalog(&generic_catalog, &generic_catalog)?;
+    crate::validate_stable_catalog(&candidate_catalog, &candidate_catalog)?;
+    let generic = collect_replay_arm(
+        EvaluationCondition::Generic,
+        &read_replay_fixture(&context, "genericTranscript")?,
+        &mission,
+        &homes.generic_codex_home,
+        None,
+        context.fixtures["genericTranscript"].sha256.clone(),
+        generic_catalog,
+    )?;
+    let candidate = collect_replay_arm(
+        EvaluationCondition::Candidate,
+        &read_replay_fixture(&context, "candidateTranscript")?,
+        &mission,
+        &homes.candidate_codex_home,
+        Some((&candidate_skill_path, skill_bytes.as_slice())),
+        context.fixtures["candidateTranscript"].sha256.clone(),
+        candidate_catalog,
+    )?;
+    if generic.collected.content_package != candidate.collected.content_package
+        || generic.catalog.normalized_base_catalog_sha256()
+            != catalog_parity.normalized_base_catalog_sha256
+        || candidate.catalog.normalized_base_catalog_sha256()
+            != catalog_parity.normalized_base_catalog_sha256
+        || generic.skill_use_evidence_sha256.is_some()
+        || candidate.skill_use_evidence_sha256.is_none()
+    {
+        bail!("typed replay pair differs outside the canonical Lead Skill treatment");
+    }
+    let execution_context = serde_json::to_vec_pretty(&serde_json::json!({
+        "schemaVersion": 1,
+        "executionMode": "replay",
+        "providerMode": "not-run",
+        "paidProviderCostFen": 0,
+        "pairId": context.pair_id,
+        "frozenRunContextSha256": sha256(&context_bytes),
+        "fixtureSetSha256": context.fixture_set_manifest.sha256,
+        "arms": ["generic", "candidate"]
+    }))?;
+    write_owner_only_new(
+        &coordinator.join("execution-context.json"),
+        &execution_context,
+    )?;
+    let execution_context_sha256 = sha256(&execution_context);
+    let package_sha256 = sha256(&serde_json::to_vec(&generic.collected.content_package)?);
+    let mut generic_manifest_sha256 = None;
+    let mut candidate_manifest_sha256 = None;
+    for (ordinal, arm) in [(1_u8, &generic), (2_u8, &candidate)] {
+        let manifest = build_replay_manifest(
+            &context,
+            &context_bytes,
+            &mission,
+            &execution_context_sha256,
+            ordinal,
+            arm,
+            &catalog_parity,
+            &package_sha256,
+        )?;
+        let bytes = serde_json::to_vec_pretty(&manifest)?;
+        write_owner_only_new(
+            &coordinator.join(format!("run-{ordinal}-manifest.json")),
+            &bytes,
+        )?;
+        match arm.condition {
+            EvaluationCondition::Generic => generic_manifest_sha256 = Some(sha256(&bytes)),
+            EvaluationCondition::Candidate => candidate_manifest_sha256 = Some(sha256(&bytes)),
+        }
+    }
+    let verification = serde_json::to_vec_pretty(&serde_json::json!({
+        "schemaVersion": 1,
+        "executionMode": "replay",
+        "providerMode": "not-run",
+        "paidProviderCostFen": 0,
+        "pairId": context.pair_id,
+        "frozenRunContextSha256": sha256(&context_bytes),
+        "fixtureSetSha256": context.fixture_set_manifest.sha256,
+        "genericRunManifestSha256": generic_manifest_sha256.context("missing generic replay manifest")?,
+        "candidateRunManifestSha256": candidate_manifest_sha256.context("missing candidate replay manifest")?,
+        "normalizedBaseCatalogSha256": catalog_parity.normalized_base_catalog_sha256,
+        "candidateSkillSha256": catalog_parity.candidate_skill_sha256,
+        "contentPackageSha256": package_sha256
+    }))?;
+    write_owner_only_new(
+        &coordinator.join("replay-pair-verification.json"),
+        &verification,
+    )
+}
+
+fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<()> {
+    if !reference.path.is_absolute() || !is_lower_hex(&reference.sha256, 64) {
+        bail!("frozen replay {label} reference is not canonical");
+    }
+    let canonical = reference
+        .path
+        .canonicalize()
+        .with_context(|| format!("canonicalize frozen replay {label}"))?;
+    if canonical != reference.path
+        || sha256(&read_regular_file_no_follow(&canonical)?) != reference.sha256
+    {
+        bail!("frozen replay {label} bytes or identity changed");
+    }
+    Ok(())
+}
+
+fn read_replay_fixture(context: &ReplayFrozenContext, name: &str) -> Result<Vec<u8>> {
+    let reference = context
+        .fixtures
+        .get(name)
+        .with_context(|| format!("missing frozen replay fixture {name}"))?;
+    verify_replay_reference(reference, name)?;
+    read_regular_file_no_follow(&reference.path)
+}
+
+fn prepare_replay_homes(
+    private_root: &Path,
+    skill_bytes: &[u8],
+) -> Result<(IsolatedHomes, PathBuf)> {
+    let generic_home = private_root.join("replay-generic-home");
+    let generic_codex_home = generic_home.join(".codex");
+    let candidate_home = private_root.join("replay-candidate-home");
+    let candidate_codex_home = candidate_home.join(".codex");
+    for path in [
+        &generic_home,
+        &generic_codex_home,
+        &generic_codex_home.join("skills"),
+        &candidate_home,
+        &candidate_codex_home,
+        &candidate_codex_home.join("skills"),
+    ] {
+        create_owner_only_dir(path)?;
+    }
+    let candidate_skill_dir = candidate_codex_home
+        .join("skills")
+        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME);
+    create_owner_only_dir(&candidate_skill_dir)?;
+    let candidate_skill_path = candidate_skill_dir.join("SKILL.md");
+    write_owner_only_new(&candidate_skill_path, skill_bytes)?;
+    Ok((
+        IsolatedHomes {
+            generic_home,
+            generic_codex_home,
+            candidate_home,
+            candidate_codex_home,
+        },
+        candidate_skill_path,
+    ))
+}
+
+fn replay_catalog(roots: &CatalogRoots, target: Option<&Path>) -> Result<CatalogSnapshot> {
+    let skills = target
+        .map(|path| {
+            vec![serde_json::json!({
+                "name": codex_ai_ip_runtime::LEAD_SKILL_NAME,
+                "description": "Synthetic replay fixture for the canonical AI IP delivery Skill.",
+                "shortDescription": "Synthetic replay Lead Skill",
+                "interface": null,
+                "dependencies": {"tools": []},
+                "path": path,
+                "scope": "user",
+                "enabled": true
+            })]
+        })
+        .unwrap_or_default();
+    let response: codex_app_server_protocol::SkillsListResponse =
+        serde_json::from_value(serde_json::json!({
+            "data": [{"cwd": roots.case_dir, "skills": skills, "errors": []}]
+        }))?;
+    crate::normalize_catalog(&response, roots)
+}
+
+fn collect_replay_arm(
+    condition: EvaluationCondition,
+    transcript_bytes: &[u8],
+    mission: &codex_ai_ip_domain::HeldOutMissionCase,
+    codex_home: &Path,
+    candidate_skill: Option<(&Path, &[u8])>,
+    transcript_sha256: String,
+    catalog: CatalogSnapshot,
+) -> Result<ReplayArmResult> {
+    let mut collector = ReplayCollector::new(
+        "root-thread",
+        "root-turn",
+        HashSet::from(["root-thread".to_string()]),
+    );
+    let mut skill_use = candidate_skill
+        .map(|(path, bytes)| SkillUseTracker::new(path, bytes))
+        .transpose()?;
+    let text = std::str::from_utf8(transcript_bytes).context("replay transcript is not UTF-8")?;
+    if text.is_empty() || !text.ends_with('\n') {
+        bail!("replay transcript must be non-empty LF-terminated JSONL");
+    }
+    for line in text.lines() {
+        let mut value: serde_json::Value = serde_json::from_str(line)?;
+        materialize_replay_codex_home(&mut value, codex_home)?;
+        let notification: codex_app_server_protocol::ServerNotification =
+            serde_json::from_value(value)?;
+        if condition == EvaluationCondition::Generic
+            && matches!(
+                &notification,
+                codex_app_server_protocol::ServerNotification::ItemCompleted(completed)
+                    if matches!(
+                        &completed.item,
+                        codex_app_server_protocol::ThreadItem::CommandExecution { command, .. }
+                            if command.contains(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                    )
+            )
+        {
+            bail!("generic replay transcript reads the target Skill");
+        }
+        if let Some(skill_use) = skill_use.as_mut() {
+            skill_use.ingest(&notification)?;
+        }
+        collector.ingest(notification)?;
+    }
+    let collected = collector.finish(mission)?;
+    let skill_use_evidence_sha256 = skill_use.map(SkillUseTracker::finish).transpose()?;
+    Ok(ReplayArmResult {
+        condition,
+        catalog,
+        collected,
+        skill_use_evidence_sha256,
+        transcript_sha256,
+    })
+}
+
+fn materialize_replay_codex_home(value: &mut serde_json::Value, codex_home: &Path) -> Result<()> {
+    match value {
+        serde_json::Value::Object(object) => {
+            for value in object.values_mut() {
+                materialize_replay_codex_home(value, codex_home)?;
+            }
+        }
+        serde_json::Value::Array(values) => {
+            for value in values {
+                materialize_replay_codex_home(value, codex_home)?;
+            }
+        }
+        serde_json::Value::String(value) if value.contains("$CODEX_HOME") => {
+            let codex_home = codex_home
+                .to_str()
+                .context("replay CODEX_HOME is not UTF-8")?;
+            *value = value.replace("$CODEX_HOME", codex_home);
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn build_replay_manifest(
+    context: &ReplayFrozenContext,
+    context_bytes: &[u8],
+    mission: &codex_ai_ip_domain::HeldOutMissionCase,
+    execution_context_sha256: &str,
+    run_ordinal: u8,
+    arm: &ReplayArmResult,
+    catalog_parity: &crate::CatalogParity,
+    package_sha256: &str,
+) -> Result<RunManifest> {
+    let prompt_sha256 = sha256(codex_ai_ip_runtime::root_prompt().as_bytes());
+    let additional_context_sha256 =
+        sha256(codex_ai_ip_runtime::evaluation_context(mission)?.as_bytes());
+    let schema_sha256 = sha256(&serde_json::to_vec(
+        &codex_ai_ip_runtime::content_package_schema()?,
+    )?);
+    let case_dir = context.fixtures["case"]
+        .path
+        .parent()
+        .context("replay case has no parent")?;
+    let thread_start_sha256 = sha256(&serde_json::to_vec(&build_thread_start(
+        "replay-fixture",
+        "replay-not-run",
+        case_dir,
+    )?)?);
+    let turn_start_sha256 = sha256(&serde_json::to_vec(&build_turn_start(
+        "root-thread",
+        mission,
+    )?)?);
+    let replay_config_sha256 = sha256(b"replay:no-live-config");
+    let native_skill_sha256 = (arm.condition == EvaluationCondition::Candidate)
+        .then(|| context.fixtures["leadSkill"].sha256.clone());
+    let treatment = arm.skill_use_evidence_sha256.clone();
+    Ok(RunManifest {
+        schema_version: 1,
+        pair_id: context.pair_id.clone(),
+        frozen_run_context_sha256: sha256(context_bytes),
+        execution_context_sha256: execution_context_sha256.to_string(),
+        run_ordinal,
+        condition: arm.condition,
+        fork_sha: context.fork_sha.clone(),
+        case_sha256: context.fixtures["case"].sha256.clone(),
+        source_materials_sha256: context.fixture_set_manifest.sha256.clone(),
+        prompt_sha256,
+        additional_context_sha256,
+        output_schema_sha256: schema_sha256,
+        thread_start_request_sha256: thread_start_sha256,
+        turn_start_request_sha256: turn_start_sha256,
+        shared_config_sha256: replay_config_sha256.clone(),
+        effective_config_sha256: replay_config_sha256.clone(),
+        config_layers_sha256: replay_config_sha256,
+        native_skill_sha256,
+        pre_skill_catalog_sha256: arm.catalog.sha256.clone(),
+        post_skill_catalog_sha256: arm.catalog.sha256.clone(),
+        normalized_base_catalog_sha256: catalog_parity.normalized_base_catalog_sha256.clone(),
+        skill_use_evidence_sha256: arm.skill_use_evidence_sha256.clone(),
+        codex_binary_sha256: context.codex_binary.sha256.clone(),
+        evaluator_binary_sha256: context.evaluator_binary.sha256.clone(),
+        broker_component_sha256: sha256(b"replay:no-broker-component"),
+        first_root_provider_request_commitment: arm.transcript_sha256.clone(),
+        normalized_first_root_request_commitment: arm.transcript_sha256.clone(),
+        normalized_first_root_base_commitment: package_sha256.to_string(),
+        first_root_treatment_diff_commitment: treatment,
+        app_server_transcript_sha256: arm.transcript_sha256.clone(),
+        broker_attempt_ledger_sha256: sha256(b"replay:no-broker-ledger"),
+        attempt_index_root_sha256: sha256(b"replay:no-provider-attempts"),
+        content_package_sha256: package_sha256.to_string(),
+        root_thread_id: "root-thread".to_string(),
+        root_turn_id: "root-turn".to_string(),
+        session_id: "replay-fixture-session".to_string(),
+        provider_request_attempt_count: 0,
+        provider_completed_response_count: 0,
+        raw_response_count: arm.collected.raw_response_count,
+        usage_scope: "completeTypedReplayTranscript".to_string(),
+        usage: arm.collected.usage.clone(),
+        model_label: "replay-fixture".to_string(),
+        actual_model_revision: "replay-fixture-recording".to_string(),
+        deployment_or_fingerprint_commitment: None,
+        provider_label: "not-run".to_string(),
+        provider_compatibility_name: ProofBrokerCompatibilityName::OpenAi,
+        authorized_evaluation_run_cost_fen: 0,
+        max_provider_request_attempts: 0,
+        max_total_tokens: 0,
+        max_elapsed_seconds: 0,
+        elapsed_ms: 0,
+        tree_closed: true,
+        execution_mode: crate::ExecutionMode::Replay,
+        mode_evidence: ModeEvidence::Replay {
+            fixture_set_sha256: context.fixture_set_manifest.sha256.clone(),
+        },
+    })
 }
 
 /// Freezes the strict local-mock live context consumed by [`run_local_mock_pair`].
@@ -700,21 +1302,290 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     write_owner_only_new(&args.output, &serde_json::to_vec_pretty(&context)?)
 }
 
-struct RuntimeInspector;
+pub(crate) struct PairRequestInspector {
+    gate: Arc<PairCoordinator>,
+    homes: IsolatedHomes,
+    pair_deadline_rfc3339: String,
+    state: Mutex<PairRequestInspectorState>,
+}
 
-impl codex_responses_api_proxy::RequestInspector for RuntimeInspector {
+#[derive(Default)]
+struct PairRequestInspectorState {
+    generic: Option<codex_responses_api_proxy::TransformedRequestEvidence>,
+    candidate: Option<codex_responses_api_proxy::TransformedRequestEvidence>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PairRequestVerification {
+    schema_version: u32,
+    normalized_base_commitment: String,
+    generic_raw_commitment: String,
+    generic_normalized_commitment: String,
+    candidate_raw_commitment: String,
+    candidate_normalized_commitment: String,
+    candidate_treatment_diff_commitment: String,
+}
+
+impl PairRequestInspector {
+    pub(crate) fn new(
+        gate: Arc<PairCoordinator>,
+        homes: IsolatedHomes,
+        pair_deadline_rfc3339: String,
+    ) -> Self {
+        Self {
+            gate,
+            homes,
+            pair_deadline_rfc3339,
+            state: Mutex::new(PairRequestInspectorState::default()),
+        }
+    }
+
+    fn inspect_inner(
+        &self,
+        body: &serde_json::Value,
+    ) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
+        let (condition, arm_attempt_count, known_threads) =
+            self.gate.active_inspection_context()?;
+        let raw_sha256 = Sha256::digest(serde_json::to_vec(body)?).into();
+        let mut normalized = normalize_committed_request_values(
+            body,
+            condition,
+            &known_threads,
+            &self.homes,
+            &self.pair_deadline_rfc3339,
+        )?;
+        let normalized_sha256 = Sha256::digest(serde_json::to_vec(&normalized)?).into();
+        let canonical_treatment = canonical_target_skill_treatment(Path::new("$CODEX_HOME"));
+        let input = normalized
+            .get_mut("input")
+            .and_then(serde_json::Value::as_array_mut)
+            .context("Responses request input must be an array")?;
+        let matching = input
+            .iter()
+            .enumerate()
+            .filter_map(|(index, item)| (item == &canonical_treatment).then_some(index))
+            .collect::<Vec<_>>();
+        let treatment_diff_commitment = match condition {
+            EvaluationCondition::Generic if matching.is_empty() => None,
+            EvaluationCondition::Generic => {
+                bail!("generic request contains the target Skill treatment fragment")
+            }
+            EvaluationCondition::Candidate if matching.len() == 1 => {
+                input.remove(matching[0]);
+                Some(Sha256::digest(serde_json::to_vec(&canonical_treatment)?).into())
+            }
+            EvaluationCondition::Candidate => {
+                bail!(
+                    "candidate request must contain exactly one canonical target Skill treatment fragment"
+                )
+            }
+        };
+        let normalized_base_commitment = Sha256::digest(serde_json::to_vec(&normalized)?).into();
+        let evidence = codex_responses_api_proxy::TransformedRequestEvidence {
+            raw_sha256,
+            normalized_sha256,
+            normalized_base_commitment,
+            treatment_diff_commitment,
+        };
+        if arm_attempt_count == 0 {
+            let mut state = self
+                .state
+                .lock()
+                .map_err(|_| anyhow!("pair request inspector state lock poisoned"))?;
+            let (slot_occupied, other_base) = match condition {
+                EvaluationCondition::Generic => (
+                    state.generic.is_some(),
+                    state
+                        .candidate
+                        .as_ref()
+                        .map(|other| other.normalized_base_commitment),
+                ),
+                EvaluationCondition::Candidate => (
+                    state.candidate.is_some(),
+                    state
+                        .generic
+                        .as_ref()
+                        .map(|other| other.normalized_base_commitment),
+                ),
+            };
+            if slot_occupied {
+                bail!("first-root request was inspected more than once before authorization");
+            }
+            if other_base.is_some_and(|other| other != evidence.normalized_base_commitment) {
+                bail!(
+                    "first-root requests differ outside the one canonical target Skill treatment"
+                );
+            }
+            match condition {
+                EvaluationCondition::Generic => state.generic = Some(evidence.clone()),
+                EvaluationCondition::Candidate => state.candidate = Some(evidence.clone()),
+            }
+        }
+        Ok(evidence)
+    }
+
+    fn verified_pair(&self) -> Result<PairRequestVerification> {
+        let state = self
+            .state
+            .lock()
+            .map_err(|_| anyhow!("pair request inspector state lock poisoned"))?;
+        let generic = state
+            .generic
+            .as_ref()
+            .context("generic first-root request was not inspected")?;
+        let candidate = state
+            .candidate
+            .as_ref()
+            .context("candidate first-root request was not inspected")?;
+        if generic.normalized_base_commitment != candidate.normalized_base_commitment
+            || generic.treatment_diff_commitment.is_some()
+        {
+            bail!("pair request inspector does not contain verified parity evidence");
+        }
+        let candidate_treatment = candidate
+            .treatment_diff_commitment
+            .context("candidate treatment commitment is missing")?;
+        Ok(PairRequestVerification {
+            schema_version: 1,
+            normalized_base_commitment: digest_hex(generic.normalized_base_commitment),
+            generic_raw_commitment: digest_hex(generic.raw_sha256),
+            generic_normalized_commitment: digest_hex(generic.normalized_sha256),
+            candidate_raw_commitment: digest_hex(candidate.raw_sha256),
+            candidate_normalized_commitment: digest_hex(candidate.normalized_sha256),
+            candidate_treatment_diff_commitment: digest_hex(candidate_treatment),
+        })
+    }
+}
+
+impl codex_responses_api_proxy::RequestInspector for PairRequestInspector {
     fn inspect(
         &self,
         body: &serde_json::Value,
     ) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
-        let digest: [u8; 32] = Sha256::digest(serde_json::to_vec(body)?).into();
-        Ok(codex_responses_api_proxy::TransformedRequestEvidence {
-            raw_sha256: digest,
-            normalized_sha256: digest,
-            normalized_base_commitment: digest,
-            treatment_diff_commitment: None,
+        self.inspect_inner(body).map_err(|error| {
+            let _ = self
+                .gate
+                .poison_permanently(&format!("request parity inspection failed: {error:#}"));
+            error
         })
     }
+}
+
+fn normalize_committed_request_values(
+    body: &serde_json::Value,
+    condition: EvaluationCondition,
+    known_threads: &HashSet<String>,
+    homes: &IsolatedHomes,
+    pair_deadline_rfc3339: &str,
+) -> Result<serde_json::Value> {
+    let (home, codex_home) = match condition {
+        EvaluationCondition::Generic => (&homes.generic_home, &homes.generic_codex_home),
+        EvaluationCondition::Candidate => (&homes.candidate_home, &homes.candidate_codex_home),
+    };
+    fn normalize(
+        value: &serde_json::Value,
+        key: Option<&str>,
+        known_threads: &HashSet<String>,
+        home: &Path,
+        codex_home: &Path,
+        pair_deadline_rfc3339: &str,
+    ) -> Result<serde_json::Value> {
+        match value {
+            serde_json::Value::Object(object) => Ok(serde_json::Value::Object(
+                object
+                    .iter()
+                    .map(|(key, value)| {
+                        Ok((
+                            key.clone(),
+                            normalize(
+                                value,
+                                Some(key),
+                                known_threads,
+                                home,
+                                codex_home,
+                                pair_deadline_rfc3339,
+                            )?,
+                        ))
+                    })
+                    .collect::<Result<serde_json::Map<_, _>>>()?,
+            )),
+            serde_json::Value::Array(values) => Ok(serde_json::Value::Array(
+                values
+                    .iter()
+                    .map(|value| {
+                        normalize(
+                            value,
+                            None,
+                            known_threads,
+                            home,
+                            codex_home,
+                            pair_deadline_rfc3339,
+                        )
+                    })
+                    .collect::<Result<Vec<_>>>()?,
+            )),
+            serde_json::Value::String(value) if key == Some("aiIpThreadId") => {
+                if !known_threads.contains(value) {
+                    bail!("request contains an uncommitted dynamic thread ID");
+                }
+                Ok(serde_json::Value::String("$THREAD_ID".to_string()))
+            }
+            serde_json::Value::String(value) if key == Some("aiIpGeneratedAt") => {
+                if value != pair_deadline_rfc3339 {
+                    bail!("request contains an uncommitted dynamic time value");
+                }
+                Ok(serde_json::Value::String("$PAIR_DEADLINE".to_string()))
+            }
+            serde_json::Value::String(value) => Ok(serde_json::Value::String(
+                normalize_home_prefix(value, codex_home, "$CODEX_HOME")
+                    .or_else(|| normalize_home_prefix(value, home, "$HOME"))
+                    .unwrap_or_else(|| value.clone()),
+            )),
+            value => Ok(value.clone()),
+        }
+    }
+    normalize(
+        body,
+        None,
+        known_threads,
+        home,
+        codex_home,
+        pair_deadline_rfc3339,
+    )
+}
+
+fn normalize_home_prefix(value: &str, prefix: &Path, replacement: &str) -> Option<String> {
+    let prefix = prefix.to_str()?;
+    if value == prefix {
+        return Some(replacement.to_string());
+    }
+    value
+        .strip_prefix(prefix)
+        .filter(|suffix| suffix.starts_with(std::path::MAIN_SEPARATOR))
+        .map(|suffix| format!("{replacement}{suffix}"))
+}
+
+fn digest_hex(digest: [u8; 32]) -> String {
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+pub(crate) fn canonical_target_skill_treatment(codex_home: &Path) -> serde_json::Value {
+    serde_json::json!({
+        "role": "developer",
+        "content": [{
+            "type": "input_text",
+            "text": "Use the exact native Skill named in treatment metadata."
+        }],
+        "metadata": {
+            "treatmentKind": "nativeSkill",
+            "skillName": codex_ai_ip_runtime::LEAD_SKILL_NAME,
+            "skillPath": codex_home
+                .join("skills")
+                .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+                .join("SKILL.md")
+        }
+    })
 }
 
 /// Executes exactly two arms against the frozen loopback mock upstream.
@@ -759,16 +1630,6 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             frozen.context.max_total_tokens,
         )?))
     })?;
-    let proxy_config = run_sync_before_deadline(pair_deadline, || {
-        Ok(codex_responses_api_proxy::ProxyConfig {
-            listen_port: None,
-            upstream_url: reqwest::Url::parse(frozen.provider_upstream_url())?,
-            dump_dir: None,
-            http_shutdown: false,
-            default_request_timeout: None,
-            request_transform: Some(runtime.request_transform(Arc::new(RuntimeInspector))),
-        })
-    })?;
     let shared_config = run_sync_before_deadline(pair_deadline, || {
         build_shared_config(&frozen.context.model_label, broker_port)
     })?;
@@ -776,12 +1637,12 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         prepare_isolated_homes(
             &frozen.context.private_root,
             &shared_config.bytes,
-            "candidate-skill",
+            codex_ai_ip_runtime::LEAD_SKILL_NAME,
             &skill_bytes,
         )
     })?;
     run_sync_before_deadline(pair_deadline, || {
-        verify_isolated_home_parity(&homes, "candidate-skill", &skill_bytes)
+        verify_isolated_home_parity(&homes, codex_ai_ip_runtime::LEAD_SKILL_NAME, &skill_bytes)
     })?;
     let mut generated =
         run_sync_before_deadline(pair_deadline, || GeneratedExecutionArtifacts::new(&homes))?;
@@ -842,12 +1703,28 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             receipt_dir: coordinator_dir.join("receipts"),
             pair_id: frozen.pair_id().to_string(),
             frozen_run_context_sha256: frozen.sha256().to_string(),
-            execution_context_sha256,
+            execution_context_sha256: execution_context_sha256.clone(),
             arm_order_commitment: order.seed_commitment().to_string(),
-            runtime,
+            require_proof_bindings: true,
+            runtime: runtime.clone(),
         })?))
     })?;
-    let order_commit = run_sync_before_deadline(pair_deadline, || gate.commit_order(order));
+    let request_inspector = Arc::new(PairRequestInspector::new(
+        gate.clone(),
+        homes.clone(),
+        deadline.to_rfc3339(),
+    ));
+    let proxy_config = run_sync_before_deadline(pair_deadline, || {
+        Ok(codex_responses_api_proxy::ProxyConfig {
+            listen_port: None,
+            upstream_url: reqwest::Url::parse(frozen.provider_upstream_url())?,
+            dump_dir: None,
+            http_shutdown: false,
+            default_request_timeout: None,
+            request_transform: Some(runtime.request_transform(request_inspector.clone())),
+        })
+    })?;
+    let order_commit = run_sync_before_deadline(pair_deadline, || gate.commit_order(order.clone()));
     poison_on_error(&gate, "commit arm order", order_commit)?;
     let order_guard = run_sync_before_deadline(pair_deadline, || {
         guard.advance(ExecutionBoundary::OrderCommitted)
@@ -880,6 +1757,8 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
     let run_result = (|| -> Result<()> {
         let tokio_runtime =
             run_sync_before_deadline(pair_deadline, || Ok(tokio::runtime::Runtime::new()?))?;
+        let mut outcomes = Vec::with_capacity(2);
+        let mut manifests = Vec::with_capacity(2);
         for (index, condition) in [(1_u8, first), (2_u8, second)] {
             let pre = if index == 1 {
                 ExecutionBoundary::Arm1Pre
@@ -891,7 +1770,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             let verified_config_bytes =
                 run_sync_before_deadline(pair_deadline, || generated.config_bytes(condition))?;
             remaining_pair_duration(pair_deadline)?;
-            tokio_runtime.block_on(run_app_server_arm(
+            let outcome = tokio_runtime.block_on(run_app_server_arm(
                 &frozen,
                 &homes,
                 &shared_config,
@@ -905,6 +1784,37 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 &deadline.to_rfc3339(),
             ))?;
             remaining_pair_duration(pair_deadline)?;
+            let proof = gate.active_arm_proof_snapshot()?;
+            let completions = gate.active_completions()?;
+            let manifest = build_live_run_manifest(
+                &frozen,
+                &outcome,
+                &proof,
+                &completions,
+                &shared_config,
+                &execution_context_sha256,
+                &order,
+                &deadline.to_rfc3339(),
+            )?;
+            let manifest_bytes = serde_json::to_vec_pretty(&manifest)?;
+            write_owner_only_new(
+                &coordinator_dir.join(format!("run-{index}-manifest.json")),
+                &manifest_bytes,
+            )?;
+            let manifest_sha256 = sha256(&manifest_bytes);
+            gate.bind_active_run_manifest(manifest_sha256.clone())?;
+            outcomes.push(outcome);
+            manifests.push((manifest, manifest_sha256));
+            if outcomes.len() == 2 {
+                verify_live_arm_business_parity(&frozen, &homes, &outcomes)?;
+                write_live_pair_verification(
+                    &frozen,
+                    &execution_context_sha256,
+                    &request_inspector,
+                    &manifests,
+                    &coordinator_dir,
+                )?;
+            }
             let post = if index == 1 {
                 ExecutionBoundary::Arm1Post
             } else {
@@ -986,6 +1896,290 @@ fn poison_on_error<T>(gate: &PairCoordinator, step: &str, result: Result<T>) -> 
     }
 }
 
+struct ArmRunEvidence {
+    run_ordinal: u8,
+    condition: EvaluationCondition,
+    root_thread_id: String,
+    root_turn_id: String,
+    session_id: String,
+    config: ConfigAuditEvidence,
+    pre_catalog: CatalogSnapshot,
+    post_catalog: CatalogSnapshot,
+    collected: CollectedReplay,
+    skill_use_evidence_sha256: Option<String>,
+    tree: TreeEvidence,
+    app_server_transcript_sha256: String,
+    elapsed_ms: u128,
+}
+
+fn build_live_run_manifest(
+    frozen: &VerifiedFrozenContext,
+    outcome: &ArmRunEvidence,
+    proof: &crate::broker_gate::ActiveArmProofSnapshot,
+    completions: &[codex_responses_api_proxy::ResponseCompletedMetadata],
+    shared_config: &crate::FrozenSharedConfig,
+    execution_context_sha256: &str,
+    order: &CommittedArmOrder,
+    retention_deadline: &str,
+) -> Result<RunManifest> {
+    if proof.run_ordinal != outcome.run_ordinal
+        || proof.condition != outcome.condition
+        || proof.completion_count != u64::try_from(completions.len())?
+        || outcome.tree.usage != outcome.collected.usage
+        || outcome.tree.raw_response_count != outcome.collected.raw_response_count
+        || !outcome.tree.tree_closed
+    {
+        bail!("native arm evidence is internally inconsistent");
+    }
+    let actual_models = completions
+        .iter()
+        .map(|completion| {
+            completion
+                .actual_model
+                .clone()
+                .context("completed response is missing actual model revision")
+        })
+        .collect::<Result<BTreeSet<_>>>()?;
+    if actual_models.len() != 1 {
+        bail!("completed responses do not share one actual model revision");
+    }
+    let actual_model_revision = actual_models
+        .into_iter()
+        .next()
+        .context("native arm has no completed provider response")?;
+    let deployments = completions
+        .iter()
+        .filter_map(|completion| completion.deployment_or_fingerprint.as_ref())
+        .collect::<BTreeSet<_>>();
+    if deployments.len() > 1
+        || (!deployments.is_empty()
+            && completions
+                .iter()
+                .any(|completion| completion.deployment_or_fingerprint.is_none()))
+    {
+        bail!("completed responses do not share one deployment commitment");
+    }
+    let deployment_or_fingerprint_commitment = deployments
+        .into_iter()
+        .next()
+        .map(|deployment| sha256(deployment.as_bytes()));
+    let artifact_sha = |name: &str| {
+        frozen
+            .artifacts
+            .sha256(name)
+            .map(str::to_string)
+            .with_context(|| format!("missing frozen artifact {name}"))
+    };
+    let content_package_sha256 = sha256(&serde_json::to_vec(&outcome.collected.content_package)?);
+    let native_skill_sha256 = (outcome.condition == EvaluationCondition::Candidate)
+        .then(|| artifact_sha("skill"))
+        .transpose()?;
+    Ok(RunManifest {
+        schema_version: 1,
+        pair_id: frozen.context.pair_id.clone(),
+        frozen_run_context_sha256: frozen.sha256.clone(),
+        execution_context_sha256: execution_context_sha256.to_string(),
+        run_ordinal: outcome.run_ordinal,
+        condition: outcome.condition,
+        fork_sha: frozen.context.candidate_sha.clone(),
+        case_sha256: artifact_sha("source")?,
+        source_materials_sha256: artifact_sha("materials")?,
+        prompt_sha256: artifact_sha("prompt")?,
+        additional_context_sha256: artifact_sha("turnStartRequest")?,
+        output_schema_sha256: artifact_sha("schema")?,
+        thread_start_request_sha256: artifact_sha("threadStartRequest")?,
+        turn_start_request_sha256: artifact_sha("turnStartRequest")?,
+        shared_config_sha256: sha256(&shared_config.bytes),
+        effective_config_sha256: outcome.config.effective_config_sha256.clone(),
+        config_layers_sha256: outcome.config.config_layers_sha256.clone(),
+        native_skill_sha256,
+        pre_skill_catalog_sha256: outcome.pre_catalog.sha256.clone(),
+        post_skill_catalog_sha256: outcome.post_catalog.sha256.clone(),
+        normalized_base_catalog_sha256: outcome.pre_catalog.normalized_base_catalog_sha256(),
+        skill_use_evidence_sha256: outcome.skill_use_evidence_sha256.clone(),
+        codex_binary_sha256: artifact_sha("codexBinary")?,
+        evaluator_binary_sha256: artifact_sha("evaluatorBinary")?,
+        broker_component_sha256: artifact_sha("brokerSource")?,
+        first_root_provider_request_commitment: proof.first_root_request.raw_commitment.clone(),
+        normalized_first_root_request_commitment: proof
+            .first_root_request
+            .normalized_commitment
+            .clone(),
+        normalized_first_root_base_commitment: proof
+            .first_root_request
+            .normalized_base_commitment
+            .clone(),
+        first_root_treatment_diff_commitment: proof
+            .first_root_request
+            .treatment_diff_commitment
+            .clone(),
+        app_server_transcript_sha256: outcome.app_server_transcript_sha256.clone(),
+        broker_attempt_ledger_sha256: proof.attempt_index_file_sha256.clone(),
+        attempt_index_root_sha256: proof.attempt_index_merkle_root.clone(),
+        content_package_sha256,
+        root_thread_id: outcome.root_thread_id.clone(),
+        root_turn_id: outcome.root_turn_id.clone(),
+        session_id: outcome.session_id.clone(),
+        provider_request_attempt_count: proof.arm_attempt_count,
+        provider_completed_response_count: proof.completion_count,
+        raw_response_count: outcome.tree.raw_response_count,
+        usage_scope: "completeNativeThreadTree".to_string(),
+        usage: outcome.tree.usage.clone(),
+        model_label: frozen.context.model_label.clone(),
+        actual_model_revision,
+        deployment_or_fingerprint_commitment,
+        provider_label: "synthetic-loopback-mock".to_string(),
+        provider_compatibility_name: ProofBrokerCompatibilityName::OpenAi,
+        authorized_evaluation_run_cost_fen: 0,
+        max_provider_request_attempts: frozen.context.max_attempts_per_arm,
+        max_total_tokens: i64::try_from(frozen.context.max_total_tokens)?,
+        max_elapsed_seconds: frozen.context.max_elapsed_seconds,
+        elapsed_ms: outcome.elapsed_ms,
+        tree_closed: true,
+        execution_mode: crate::ExecutionMode::Live,
+        mode_evidence: ModeEvidence::Live {
+            attestation_sha256: artifact_sha("attestation")?,
+            provider_budget_evidence_sha256: artifact_sha("providerBudgetReceipt")?,
+            approval_commitment: sha256(b"synthetic-loopback-no-approval"),
+            provider_endpoint_commitment: sha256(frozen.context.provider_upstream_url.as_bytes()),
+            provider_role: ProviderRole::ApprovedReference,
+            arm_order_commitment: order.seed_commitment().to_string(),
+            rate_card_sha256: artifact_sha("rateCard")?,
+            billing_policy_sha256: artifact_sha("billingPolicy")?,
+            fx_policy_sha256: Some(artifact_sha("fxPolicy")?),
+            authorized_pair_cost_fen: 0,
+            retention_deadline: retention_deadline.to_string(),
+        },
+    })
+}
+
+fn verify_live_arm_business_parity(
+    frozen: &VerifiedFrozenContext,
+    homes: &IsolatedHomes,
+    outcomes: &[ArmRunEvidence],
+) -> Result<()> {
+    let generic = outcomes
+        .iter()
+        .find(|outcome| outcome.condition == EvaluationCondition::Generic)
+        .context("paired result is missing the generic arm")?;
+    let candidate = outcomes
+        .iter()
+        .find(|outcome| outcome.condition == EvaluationCondition::Candidate)
+        .context("paired result is missing the candidate arm")?;
+    if outcomes.len() != 2
+        || generic.skill_use_evidence_sha256.is_some()
+        || candidate.skill_use_evidence_sha256.is_none()
+    {
+        bail!("paired Skill-use evidence differs from the assigned treatment");
+    }
+    let candidate_skill_path = homes
+        .candidate_codex_home
+        .join("skills")
+        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+        .join("SKILL.md");
+    let skill_bytes = frozen.artifact_bytes("skill")?;
+    let pre = crate::compare_catalogs(
+        &generic.pre_catalog,
+        &candidate.pre_catalog,
+        &candidate_skill_path,
+        &skill_bytes,
+    )?;
+    let post = crate::compare_catalogs(
+        &generic.post_catalog,
+        &candidate.post_catalog,
+        &candidate_skill_path,
+        &skill_bytes,
+    )?;
+    if pre != post {
+        bail!("paired pre/post catalog parity evidence differs");
+    }
+    if generic.config != candidate.config {
+        bail!(
+            "paired config audit evidence differs: generic={:?}, candidate={:?}",
+            generic.config,
+            candidate.config
+        );
+    }
+    if generic.collected.content_package != candidate.collected.content_package {
+        bail!("validated ContentPackage differs across arms");
+    }
+    Ok(())
+}
+
+fn write_live_pair_verification(
+    frozen: &VerifiedFrozenContext,
+    execution_context_sha256: &str,
+    request_inspector: &PairRequestInspector,
+    manifests: &[(RunManifest, String)],
+    coordinator_dir: &Path,
+) -> Result<()> {
+    if manifests.len() != 2 {
+        bail!("final pair verification requires exactly two run manifests");
+    }
+    let generic = manifests
+        .iter()
+        .find(|(manifest, _)| manifest.condition == EvaluationCondition::Generic)
+        .context("final verification is missing the generic manifest")?;
+    let candidate = manifests
+        .iter()
+        .find(|(manifest, _)| manifest.condition == EvaluationCondition::Candidate)
+        .context("final verification is missing the candidate manifest")?;
+    let request = request_inspector.verified_pair()?;
+    if generic.0.first_root_provider_request_commitment != request.generic_raw_commitment
+        || generic.0.normalized_first_root_request_commitment
+            != request.generic_normalized_commitment
+        || generic.0.normalized_first_root_base_commitment != request.normalized_base_commitment
+        || generic.0.first_root_treatment_diff_commitment.is_some()
+        || candidate.0.first_root_provider_request_commitment != request.candidate_raw_commitment
+        || candidate.0.normalized_first_root_request_commitment
+            != request.candidate_normalized_commitment
+        || candidate.0.normalized_first_root_base_commitment != request.normalized_base_commitment
+        || candidate.0.first_root_treatment_diff_commitment.as_deref()
+            != Some(request.candidate_treatment_diff_commitment.as_str())
+        || generic.0.content_package_sha256 != candidate.0.content_package_sha256
+        || generic.0.normalized_base_catalog_sha256 != candidate.0.normalized_base_catalog_sha256
+        || generic.0.effective_config_sha256 != candidate.0.effective_config_sha256
+        || generic.0.config_layers_sha256 != candidate.0.config_layers_sha256
+    {
+        bail!("run manifests do not bind the verified pair evidence");
+    }
+    let bytes = serde_json::to_vec_pretty(&serde_json::json!({
+        "schemaVersion": 1,
+        "pairId": frozen.context.pair_id,
+        "frozenRunContextSha256": frozen.sha256,
+        "executionContextSha256": execution_context_sha256,
+        "genericRunManifestSha256": generic.1,
+        "candidateRunManifestSha256": candidate.1,
+        "normalizedBaseCatalogSha256": generic.0.normalized_base_catalog_sha256,
+        "effectiveConfigSha256": generic.0.effective_config_sha256,
+        "configLayersSha256": generic.0.config_layers_sha256,
+        "contentPackageSha256": generic.0.content_package_sha256,
+        "requestParity": request
+    }))?;
+    write_owner_only_new(&coordinator_dir.join("pair-verification.json"), &bytes)
+}
+
+async fn read_skill_catalog(
+    app_server: &mut AppServerClient,
+    roots: &CatalogRoots,
+    pair_deadline: Instant,
+) -> Result<CatalogSnapshot> {
+    let params = codex_app_server_protocol::SkillsListParams {
+        cwds: vec![roots.case_dir.clone()],
+        force_reload: true,
+    };
+    let timeout = remaining_pair_duration(pair_deadline)?;
+    let response: codex_app_server_protocol::SkillsListResponse = {
+        let protocol = app_server.protocol_mut()?;
+        run_before_deadline(
+            pair_deadline,
+            protocol.request("skills/list", Some(&params), timeout),
+        )
+        .await?
+    };
+    run_sync_before_deadline(pair_deadline, || crate::normalize_catalog(&response, roots))
+}
+
 async fn run_app_server_arm(
     frozen: &VerifiedFrozenContext,
     homes: &IsolatedHomes,
@@ -998,13 +2192,14 @@ async fn run_app_server_arm(
     frozen_path: &str,
     pair_deadline: Instant,
     pair_deadline_rfc3339: &str,
-) -> Result<()> {
+) -> Result<ArmRunEvidence> {
     use codex_app_server_protocol::ApprovalsReviewer;
     use codex_app_server_protocol::AskForApproval;
     use codex_app_server_protocol::ThreadStartResponse;
     use codex_app_server_protocol::TurnStartResponse;
     use codex_app_server_protocol::TurnStatus;
 
+    let arm_started = Instant::now();
     validate_managed_source_before_arm(frozen, gate, pair_deadline)?;
     let (home, codex_home) = match condition {
         EvaluationCondition::Generic => (&homes.generic_home, &homes.generic_codex_home),
@@ -1053,19 +2248,21 @@ async fn run_app_server_arm(
         app_server.handshake(codex_home, canonical_eval_tree, handshake_timeout),
     )
     .await?;
-    run_sync_before_deadline(pair_deadline, || {
-        audit_config(
+    let config_evidence = run_sync_before_deadline(pair_deadline, || {
+        audit_frozen_config(
             &handshake.config,
             &handshake.requirements,
-            &ConfigAuditExpectation {
-                canonical_config_path: codex_home.join("config.toml").canonicalize()?,
-                expected_config_bytes: verified_config_bytes.to_vec(),
-                expected_layer_config: shared_config.layer_json.clone(),
-                expected_effective_config: serde_json::to_value(&handshake.config.config)?,
-            },
+            codex_home.join("config.toml").canonicalize()?,
+            verified_config_bytes.to_vec(),
+            shared_config.layer_json.clone(),
         )
-        .map(drop)
     })?;
+    let catalog_roots = CatalogRoots {
+        codex_home: codex_home.clone(),
+        host_home: home.clone(),
+        case_dir: canonical_eval_tree.to_path_buf(),
+    };
+    let pre_catalog = read_skill_catalog(&mut app_server, &catalog_roots, pair_deadline).await?;
     let thread_params = run_sync_before_deadline(pair_deadline, || {
         let params = build_thread_start(
             &frozen.context.model_label,
@@ -1114,9 +2311,11 @@ async fn run_app_server_arm(
             deadline_rfc3339: pair_deadline_rfc3339.to_string(),
         })
     })?;
+    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
+        run_sync_before_deadline(pair_deadline, || {
+            Ok(serde_json::from_slice(&frozen.artifact_bytes("source")?)?)
+        })?;
     let turn_params = run_sync_before_deadline(pair_deadline, || {
-        let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
-            serde_json::from_slice(&frozen.artifact_bytes("source")?)?;
         let params = build_turn_start(&started.thread.id, &mission_case)?;
         let mut normalized = params.clone();
         normalized.thread_id = "00000000-0000-7000-8000-000000000000".to_string();
@@ -1142,6 +2341,23 @@ async fn run_app_server_arm(
         }
         Ok(())
     })?;
+    let mut replay = ReplayCollector::new(
+        started.thread.id.clone(),
+        started_turn.turn.id.clone(),
+        HashSet::from([started.thread.id.clone()]),
+    );
+    let candidate_skill_path = codex_home
+        .join("skills")
+        .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
+        .join("SKILL.md");
+    let mut skill_use = if condition == EvaluationCondition::Candidate {
+        Some(run_sync_before_deadline(pair_deadline, || {
+            SkillUseTracker::new(&candidate_skill_path, &frozen.artifact_bytes("skill")?)
+        })?)
+    } else {
+        None
+    };
+    let mut transcript = Sha256::new();
     let completion_timeout = remaining_pair_duration(pair_deadline)?;
     let completed = {
         let protocol = app_server.protocol_mut()?;
@@ -1153,18 +2369,41 @@ async fn run_app_server_arm(
                 completion_timeout,
                 |notification| {
                     observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
-                    tree.ingest(notification.clone())
+                    tree.ingest(notification.clone())?;
+                    replay.ingest(notification.clone())?;
+                    if let Some(skill_use) = skill_use.as_mut() {
+                        skill_use.ingest(notification)?;
+                    }
+                    let bytes = serde_json::to_vec(notification)?;
+                    transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
+                    transcript.update(bytes);
+                    Ok(())
                 },
             ),
         )
         .await
         .context("wait for App Server turn completion")?
     };
+    let completed_notification =
+        codex_app_server_protocol::ServerNotification::TurnCompleted(completed);
     run_sync_before_deadline(pair_deadline, || {
+        let codex_app_server_protocol::ServerNotification::TurnCompleted(completed) =
+            &completed_notification
+        else {
+            unreachable!()
+        };
         if completed.turn.status != TurnStatus::Completed {
             bail!("App Server turn did not complete successfully");
         }
-        tree.ingest(codex_app_server_protocol::ServerNotification::TurnCompleted(completed))
+        tree.ingest(completed_notification.clone())?;
+        replay.ingest(completed_notification.clone())?;
+        if let Some(skill_use) = skill_use.as_mut() {
+            skill_use.ingest(&completed_notification)?;
+        }
+        let bytes = serde_json::to_vec(&completed_notification)?;
+        transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
+        transcript.update(bytes);
+        Ok(())
     })?;
     let first_scan = complete_quiet_tree_scan(
         app_server.protocol_mut()?,
@@ -1196,6 +2435,10 @@ async fn run_app_server_arm(
     )
     .await
     .context("collect final complete tree scan")?;
+    let post_catalog = read_skill_catalog(&mut app_server, &catalog_roots, pair_deadline).await?;
+    run_sync_before_deadline(pair_deadline, || {
+        crate::validate_stable_catalog(&pre_catalog, &post_catalog)
+    })?;
     let status = run_before_deadline(
         pair_deadline,
         app_server.close_observing(pair_deadline, |notification| {
@@ -1213,7 +2456,7 @@ async fn run_app_server_arm(
     run_sync_before_deadline(pair_deadline, || {
         first_scan.verify_broker_thread_ids(&gate.active_thread_ids()?)
     })?;
-    run_sync_before_deadline(pair_deadline, || {
+    let tree_evidence = run_sync_before_deadline(pair_deadline, || {
         tree.close(
             &first_scan,
             &second_scan,
@@ -1221,7 +2464,25 @@ async fn run_app_server_arm(
             gate.in_flight_count(),
         )
     })?;
-    Ok(())
+    let collected = run_sync_before_deadline(pair_deadline, || replay.finish(&mission_case))?;
+    let skill_use_evidence_sha256 = run_sync_before_deadline(pair_deadline, || {
+        skill_use.map(SkillUseTracker::finish).transpose()
+    })?;
+    Ok(ArmRunEvidence {
+        run_ordinal,
+        condition,
+        root_thread_id: started.thread.id,
+        root_turn_id: started_turn.turn.id,
+        session_id: started.thread.session_id,
+        config: config_evidence,
+        pre_catalog,
+        post_catalog,
+        collected,
+        skill_use_evidence_sha256,
+        tree: tree_evidence,
+        app_server_transcript_sha256: format!("{:x}", transcript.finalize()),
+        elapsed_ms: arm_started.elapsed().as_millis(),
+    })
 }
 
 async fn complete_quiet_tree_scan<R, W>(

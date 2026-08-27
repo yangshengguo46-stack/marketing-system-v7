@@ -17,6 +17,7 @@ use crate::ConfigAuditExpectation;
 use crate::JsonLineClient;
 use crate::app_server::VerifiedExecutable;
 use crate::audit_config;
+use crate::audit_frozen_config;
 use crate::build_shared_config;
 use crate::build_thread_start;
 use crate::build_turn_start;
@@ -414,6 +415,73 @@ fn config_audit_rejects_requirements_profiles_extra_layers_and_secrets() {
         .to_string()
         .contains("auth.json")
     );
+}
+
+#[test]
+fn production_config_composition_rejects_injected_builtin_effective_drift() {
+    let temp = tempfile::tempdir().unwrap();
+    let config_path = temp.path().join("config.toml");
+    let config_bytes = b"model = \"glm-approved\"\n".to_vec();
+    fs::write(&config_path, &config_bytes).unwrap();
+    let canonical = config_path.canonicalize().unwrap();
+    let layer = json!({"model": "glm-approved"});
+    let response: ConfigReadResponse = serde_json::from_value(json!({
+        "config": {
+            "model": "glm-approved",
+            "allow_login_shell": false
+        },
+        "origins": {},
+        "layers": [{
+            "name": {"type": "user", "file": canonical, "profile": null},
+            "version": "v1",
+            "config": layer
+        }]
+    }))
+    .unwrap();
+
+    let error = audit_frozen_config(
+        &response,
+        &ConfigRequirementsReadResponse { requirements: None },
+        canonical,
+        config_bytes,
+        layer,
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("effective config"));
+}
+
+#[test]
+fn frozen_config_audit_evidence_is_equal_across_isolated_home_prefixes() {
+    let temp = tempfile::tempdir().unwrap();
+    let config_bytes = b"model = \"glm-approved\"\n".to_vec();
+    let layer = json!({"model": "glm-approved"});
+    let audit = |arm: &str| {
+        let home = temp.path().join(arm);
+        fs::create_dir(&home).unwrap();
+        let config_path = home.join("config.toml");
+        fs::write(&config_path, &config_bytes).unwrap();
+        let canonical = config_path.canonicalize().unwrap();
+        let response: ConfigReadResponse = serde_json::from_value(json!({
+            "config": {"model": "glm-approved", "allow_login_shell": true},
+            "origins": {},
+            "layers": [{
+                "name": {"type": "user", "file": canonical, "profile": null},
+                "version": "v1",
+                "config": layer
+            }]
+        }))
+        .unwrap();
+        audit_frozen_config(
+            &response,
+            &ConfigRequirementsReadResponse { requirements: None },
+            canonical,
+            config_bytes.clone(),
+            layer.clone(),
+        )
+        .unwrap()
+    };
+
+    assert_eq!(audit("generic"), audit("candidate"));
 }
 
 #[test]
