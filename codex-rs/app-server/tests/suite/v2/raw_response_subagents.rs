@@ -10,6 +10,7 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::write_models_cache;
 use codex_app_server_protocol::ClientRequest;
+use codex_app_server_protocol::JSONRPCMessage;
 use codex_app_server_protocol::RawResponseCompletedNotification;
 use codex_app_server_protocol::ThreadReadParams;
 use codex_app_server_protocol::ThreadReadResponse;
@@ -221,24 +222,6 @@ async fn raw_events_cover_root_child_grandchild_and_sibling() -> Result<()> {
         })
         .await?;
 
-    let mut started_by_id = HashMap::new();
-    while started_by_id.len() < 4 {
-        let event: ThreadStartedNotification =
-            timeout(READ_TIMEOUT, app_server.read_notification("thread/started"))
-                .await
-                .with_context(|| {
-                    format!(
-                        "timed out waiting for descendant thread/started after routes {:?}",
-                        routes.lock().expect("agent-tree route mutex poisoned")
-                    )
-                })??;
-        assert!(
-            started_by_id
-                .insert(event.thread.id.clone(), event.thread)
-                .is_none()
-        );
-    }
-
     let expected_usage = HashMap::from([
         ("resp-root-1", 11),
         ("resp-root-2", 12),
@@ -247,73 +230,123 @@ async fn raw_events_cover_root_child_grandchild_and_sibling() -> Result<()> {
         ("resp-grandchild", 31),
         ("resp-sibling", 41),
     ]);
+    let mut started_by_id = HashMap::new();
     let mut raw_by_response = HashMap::new();
-    while raw_by_response.len() < expected_usage.len() {
-        let event: RawResponseCompletedNotification = timeout(
-            READ_TIMEOUT,
-            app_server.read_notification("rawResponse/completed"),
-        )
-        .await
-        .with_context(|| {
-            format!(
-                "timed out waiting for raw response after routes {:?}",
-                routes.lock().expect("agent-tree route mutex poisoned")
-            )
-        })??;
-        let expected_total = expected_usage
-            .get(event.response_id.as_str())
-            .with_context(|| format!("unexpected response id {}", event.response_id))?;
-        assert_eq!(
-            event.usage,
-            Some(TokenUsageBreakdown {
-                total_tokens: *expected_total,
-                input_tokens: *expected_total,
-                cached_input_tokens: 0,
-                cache_write_input_tokens: 0,
-                output_tokens: 0,
-                reasoning_output_tokens: 0,
-            })
-        );
-        assert!(
-            raw_by_response
-                .insert(event.response_id.clone(), event)
-                .is_none()
-        );
-    }
+    let mut terminal_order = Vec::new();
+    let mut terminal_turns = HashMap::new();
+    let (child_id, sibling_id, grandchild_id, expected_thread_ids) = loop {
+        let message = timeout(READ_TIMEOUT, app_server.read_next_message())
+            .await
+            .with_context(|| {
+                format!(
+                    "timed out reading the mixed notification stream after routes {:?}",
+                    routes.lock().expect("agent-tree route mutex poisoned")
+                )
+            })??;
+        let JSONRPCMessage::Notification(notification) = message else {
+            continue;
+        };
+        let method = notification.method;
+        let Some(params) = notification.params else {
+            continue;
+        };
+        match method.as_str() {
+            "thread/started" => {
+                let event: ThreadStartedNotification = serde_json::from_value(params)?;
+                assert!(
+                    started_by_id
+                        .insert(event.thread.id.clone(), event.thread)
+                        .is_none()
+                );
+            }
+            "rawResponse/completed" => {
+                let event: RawResponseCompletedNotification = serde_json::from_value(params)?;
+                let expected_total = expected_usage
+                    .get(event.response_id.as_str())
+                    .with_context(|| format!("unexpected response id {}", event.response_id))?;
+                assert_eq!(
+                    event.usage,
+                    Some(TokenUsageBreakdown {
+                        total_tokens: *expected_total,
+                        input_tokens: *expected_total,
+                        cached_input_tokens: 0,
+                        cache_write_input_tokens: 0,
+                        output_tokens: 0,
+                        reasoning_output_tokens: 0,
+                    })
+                );
+                assert!(
+                    raw_by_response
+                        .insert(event.response_id.clone(), event)
+                        .is_none()
+                );
+            }
+            "turn/completed" => {
+                let event: TurnCompletedNotification = serde_json::from_value(params)?;
+                if terminal_turns
+                    .insert(event.thread_id.clone(), event.turn.id.clone())
+                    .is_none()
+                {
+                    terminal_order.push(event.thread_id.clone());
+                }
+                if event.thread_id != root.id || event.turn.id != root_turn.turn.id {
+                    continue;
+                }
+
+                assert_eq!(
+                    raw_by_response
+                        .keys()
+                        .map(String::as_str)
+                        .collect::<HashSet<_>>(),
+                    expected_usage.keys().copied().collect::<HashSet<_>>(),
+                    "all raw completions must already exist when the root terminal arrives"
+                );
+                let child_id = raw_by_response["resp-child-1"].thread_id.clone();
+                let sibling_id = raw_by_response["resp-sibling"].thread_id.clone();
+                let grandchild_id = raw_by_response["resp-grandchild"].thread_id.clone();
+                let expected_thread_ids = HashSet::from([
+                    root.id.clone(),
+                    child_id.clone(),
+                    sibling_id.clone(),
+                    grandchild_id.clone(),
+                ]);
+                assert_eq!(
+                    started_by_id.keys().cloned().collect::<HashSet<_>>(),
+                    expected_thread_ids,
+                    "all parent-edge notifications must already exist when the root terminal arrives"
+                );
+                assert_eq!(
+                    terminal_turns.keys().cloned().collect::<HashSet<_>>(),
+                    expected_thread_ids,
+                    "all descendant terminals must already exist when the root terminal arrives"
+                );
+                assert_eq!(terminal_order.last(), Some(&root.id));
+                assert_eq!(started_by_id[&root.id].parent_thread_id, None);
+                for (id, expected_parent) in [
+                    (child_id.as_str(), Some(root.id.as_str())),
+                    (sibling_id.as_str(), Some(root.id.as_str())),
+                    (grandchild_id.as_str(), Some(child_id.as_str())),
+                ] {
+                    assert_eq!(
+                        started_by_id[id].parent_thread_id.as_deref(),
+                        expected_parent,
+                        "thread/started parent edge must match the spawned agent tree before the root terminal"
+                    );
+                }
+                break (child_id, sibling_id, grandchild_id, expected_thread_ids);
+            }
+            _ => {}
+        }
+    };
 
     assert_eq!(raw_by_response["resp-root-1"].thread_id, root.id);
     assert_eq!(raw_by_response["resp-root-2"].thread_id, root.id);
-    let child_id = raw_by_response
-        .get("resp-child-1")
-        .context("missing child initial response")?
-        .thread_id
-        .clone();
     assert_eq!(raw_by_response["resp-child-2"].thread_id, child_id);
-    let sibling_id = raw_by_response
-        .get("resp-sibling")
-        .context("missing sibling response")?
-        .thread_id
-        .clone();
-    let grandchild_id = raw_by_response
-        .get("resp-grandchild")
-        .context("missing grandchild response")?
-        .thread_id
-        .clone();
-    let expected_thread_ids = HashSet::from([
-        root.id.clone(),
-        child_id.clone(),
-        sibling_id.clone(),
-        grandchild_id.clone(),
-    ]);
     assert_eq!(
         raw_by_response
             .values()
             .map(|event| event.thread_id.clone())
             .collect::<HashSet<_>>(),
-        expected_thread_ids
-    );
-    assert_eq!(
-        started_by_id.keys().cloned().collect::<HashSet<_>>(),
         expected_thread_ids
     );
     for (id, expected_parent) in [
@@ -337,22 +370,6 @@ async fn raw_events_cover_root_child_grandchild_and_sibling() -> Result<()> {
             .await?;
         assert_eq!(read.thread.parent_thread_id.as_deref(), expected_parent);
     }
-    assert_eq!(started_by_id[&root.id].parent_thread_id, None);
-
-    let mut terminal_order = Vec::new();
-    let mut terminal_turns = HashMap::new();
-    while terminal_turns.len() < 4 {
-        let event: TurnCompletedNotification =
-            timeout(READ_TIMEOUT, app_server.read_notification("turn/completed")).await??;
-        if expected_thread_ids.contains(&event.thread_id)
-            && terminal_turns
-                .insert(event.thread_id.clone(), event.turn.id)
-                .is_none()
-        {
-            terminal_order.push(event.thread_id);
-        }
-    }
-    assert_eq!(terminal_order.last(), Some(&root.id));
     assert_eq!(
         terminal_turns.get(&root.id),
         Some(&root_turn.turn.id),

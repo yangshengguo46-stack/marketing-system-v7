@@ -1,3 +1,45 @@
+mod thread_started_notification_target_tests {
+    use super::super::thread_started_notification_targets;
+    use crate::request_processors::thread_lifecycle::EnsureConversationListenerResult;
+    use codex_app_server_protocol::JSONRPCErrorError;
+    use codex_app_server_transport::ConnectionId;
+    use pretty_assertions::assert_eq;
+
+    type AttachResult = Result<EnsureConversationListenerResult, JSONRPCErrorError>;
+
+    #[test]
+    fn empty_attachment_set_produces_no_notification_targets() {
+        let attach_results: Vec<(ConnectionId, AttachResult)> = Vec::new();
+
+        assert!(thread_started_notification_targets(&attach_results).is_empty());
+    }
+
+    #[test]
+    fn only_successful_listener_attachments_receive_thread_started() {
+        let attached = ConnectionId(1);
+        let attach_results = vec![
+            (attached, Ok(EnsureConversationListenerResult::Attached)),
+            (
+                ConnectionId(2),
+                Ok(EnsureConversationListenerResult::ConnectionClosed),
+            ),
+            (
+                ConnectionId(3),
+                Err(JSONRPCErrorError {
+                    code: -32603,
+                    data: None,
+                    message: "synthetic listener failure".to_string(),
+                }),
+            ),
+        ];
+
+        assert_eq!(
+            thread_started_notification_targets(&attach_results),
+            vec![attached]
+        );
+    }
+}
+
 mod thread_list_cwd_filter_tests {
     use super::super::normalize_thread_list_cwd_filters;
     use codex_app_server_protocol::ThreadListCwdFilter;

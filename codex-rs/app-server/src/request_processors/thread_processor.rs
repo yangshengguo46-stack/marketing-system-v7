@@ -3486,21 +3486,23 @@ impl ThreadRequestProcessor {
             }
         }
 
-        for &connection_id in &connection_ids {
-            log_listener_attach_result(
-                self.ensure_conversation_listener(thread_id, connection_id, raw_events_enabled)
-                    .await,
-                thread_id,
-                connection_id,
-                "thread",
-            );
+        let mut attach_results = Vec::with_capacity(connection_ids.len());
+        for connection_id in connection_ids {
+            let result = self
+                .ensure_conversation_listener(thread_id, connection_id, raw_events_enabled)
+                .await;
+            attach_results.push((connection_id, result));
+        }
+        let notification_connection_ids = thread_started_notification_targets(&attach_results);
+        for (connection_id, result) in attach_results {
+            log_listener_attach_result(result, thread_id, connection_id, "thread");
         }
         if let Some(notification) = started_notification
-            && !connection_ids.is_empty()
+            && !notification_connection_ids.is_empty()
         {
             self.outgoing
                 .send_server_notification_to_connections(
-                    &connection_ids,
+                    &notification_connection_ids,
                     ServerNotification::ThreadStarted(notification),
                 )
                 .await;
@@ -6063,6 +6065,21 @@ fn build_thread_from_loaded_snapshot(
         config_snapshot,
         loaded_thread.rollout_path(),
     )
+}
+
+fn thread_started_notification_targets(
+    attach_results: &[(
+        ConnectionId,
+        Result<EnsureConversationListenerResult, JSONRPCErrorError>,
+    )],
+) -> Vec<ConnectionId> {
+    attach_results
+        .iter()
+        .filter_map(|(connection_id, result)| {
+            matches!(result, Ok(EnsureConversationListenerResult::Attached))
+                .then_some(*connection_id)
+        })
+        .collect()
 }
 
 #[cfg(test)]
