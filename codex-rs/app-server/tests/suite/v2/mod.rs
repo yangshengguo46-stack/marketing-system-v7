@@ -1,5 +1,6 @@
 mod account;
 mod account_thread_usage;
+mod ai_ip_strict_output;
 mod analytics;
 mod app_installed;
 mod app_list;
@@ -71,6 +72,7 @@ mod process_exec;
 mod projects;
 mod rate_limit_reset_credits;
 mod rate_limits;
+mod raw_response_subagents;
 mod realtime_conversation;
 mod recommended_plugins;
 mod remote_control;

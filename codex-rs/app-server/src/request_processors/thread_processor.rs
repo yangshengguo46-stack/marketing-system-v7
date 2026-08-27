@@ -3460,6 +3460,7 @@ impl ThreadRequestProcessor {
         connection_ids: Vec<ConnectionId>,
     ) {
         let mut raw_events_enabled = false;
+        let mut started_notification = None;
         if let Ok(thread) = self.thread_manager.get_thread(thread_id).await {
             let config_snapshot = thread.config_snapshot().await;
             self.thread_watch_manager
@@ -3473,10 +3474,19 @@ impl ThreadRequestProcessor {
                     .lock()
                     .await
                     .experimental_raw_events;
+                let mut api_thread =
+                    build_thread_from_loaded_snapshot(thread_id, &config_snapshot, thread.as_ref());
+                api_thread.status = resolve_thread_status(
+                    self.thread_watch_manager
+                        .loaded_status_for_thread(&api_thread.id)
+                        .await,
+                    /*has_in_progress_turn*/ false,
+                );
+                started_notification = Some(thread_started_notification(api_thread));
             }
         }
 
-        for connection_id in connection_ids {
+        for &connection_id in &connection_ids {
             log_listener_attach_result(
                 self.ensure_conversation_listener(thread_id, connection_id, raw_events_enabled)
                     .await,
@@ -3484,6 +3494,16 @@ impl ThreadRequestProcessor {
                 connection_id,
                 "thread",
             );
+        }
+        if let Some(notification) = started_notification
+            && !connection_ids.is_empty()
+        {
+            self.outgoing
+                .send_server_notification_to_connections(
+                    &connection_ids,
+                    ServerNotification::ThreadStarted(notification),
+                )
+                .await;
         }
     }
 

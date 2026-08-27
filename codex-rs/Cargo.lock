@@ -2054,6 +2054,7 @@ dependencies = [
  "chrono",
  "clap",
  "codex-agent-extension",
+ "codex-ai-ip-runtime",
  "codex-analytics",
  "codex-app-server-protocol",
  "codex-app-server-transport",
@@ -2143,6 +2144,7 @@ dependencies = [
  "url",
  "uuid",
  "wiremock",
+ "zstd",
 ]
 
 [[package]]
