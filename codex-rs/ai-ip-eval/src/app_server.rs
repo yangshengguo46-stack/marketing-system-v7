@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -44,16 +45,13 @@ use serde::Serialize;
 use serde_json::Value;
 use sha2::Digest;
 use sha2::Sha256;
+use tokio::fs::File as TokioFile;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWrite;
 use tokio::io::AsyncWriteExt;
 use tokio::io::BufReader;
-use tokio::process::Child;
-use tokio::process::ChildStdin;
-use tokio::process::ChildStdout;
-use tokio::process::Command;
 
 use crate::runner::ChildEnvironment;
 
@@ -613,8 +611,8 @@ pub struct AppServerHandshake {
 }
 
 pub struct AppServerClient {
-    child: Child,
-    protocol: Option<JsonLineClient<ChildStdout, ChildStdin>>,
+    child: DarwinLoadedChild,
+    protocol: Option<JsonLineClient<TokioFile, TokioFile>>,
     private_executable: Option<PrivateExecutableImage>,
 }
 
@@ -664,6 +662,7 @@ struct PrivateExecutableImage {
     directory: PathBuf,
     file: File,
     directory_handle: File,
+    expected_sha256: String,
     active: bool,
 }
 
@@ -756,6 +755,7 @@ impl PrivateExecutableImage {
             directory,
             file,
             directory_handle,
+            expected_sha256: verified.expected_sha256.clone(),
             active: true,
         })
     }
@@ -789,6 +789,72 @@ impl PrivateExecutableImage {
         self.active = false;
         Ok(())
     }
+
+    #[cfg(target_os = "macos")]
+    fn verify_unchanged(&self) -> anyhow::Result<()> {
+        use std::os::fd::AsRawFd;
+        use std::os::unix::fs::FileExt;
+        use std::os::unix::fs::MetadataExt;
+
+        let path_metadata = std::fs::symlink_metadata(&self.path)?;
+        let retained_metadata = self.file.metadata()?;
+        let directory_path_metadata = std::fs::symlink_metadata(&self.directory)?;
+        let retained_directory_metadata = self.directory_handle.metadata()?;
+        if !path_metadata.file_type().is_file()
+            || path_metadata.file_type().is_symlink()
+            || path_metadata.dev() != retained_metadata.dev()
+            || path_metadata.ino() != retained_metadata.ino()
+            || path_metadata.len() != retained_metadata.len()
+        {
+            bail!("private executable image pathname no longer identifies the retained vnode");
+        }
+        if !directory_path_metadata.file_type().is_dir()
+            || directory_path_metadata.file_type().is_symlink()
+            || directory_path_metadata.dev() != retained_directory_metadata.dev()
+            || directory_path_metadata.ino() != retained_directory_metadata.ino()
+        {
+            bail!("private executable directory pathname no longer identifies the retained vnode");
+        }
+        let mut image_stat = std::mem::MaybeUninit::<libc::stat>::uninit();
+        let mut directory_stat = std::mem::MaybeUninit::<libc::stat>::uninit();
+        if unsafe { libc::fstat(self.file.as_raw_fd(), image_stat.as_mut_ptr()) } != 0
+            || unsafe {
+                libc::fstat(
+                    self.directory_handle.as_raw_fd(),
+                    directory_stat.as_mut_ptr(),
+                )
+            } != 0
+        {
+            return Err(std::io::Error::last_os_error())
+                .context("read private executable immutable flags");
+        }
+        let image_flags =
+            unsafe { std::ptr::addr_of!((*image_stat.as_ptr()).st_flags).read_unaligned() };
+        let directory_flags =
+            unsafe { std::ptr::addr_of!((*directory_stat.as_ptr()).st_flags).read_unaligned() };
+        if image_flags & libc::UF_IMMUTABLE == 0 || directory_flags & libc::UF_IMMUTABLE == 0 {
+            bail!("private executable image or directory lost immutable protection");
+        }
+        let mut digest = Sha256::new();
+        let mut offset = 0_u64;
+        loop {
+            let mut chunk = [0_u8; 8192];
+            let read = self.file.read_at(&mut chunk, offset)?;
+            if read == 0 {
+                break;
+            }
+            digest.update(&chunk[..read]);
+            offset = offset
+                .checked_add(u64::try_from(read)?)
+                .context("private executable verification length overflow")?;
+        }
+        if offset != retained_metadata.len()
+            || format!("{:x}", digest.finalize()) != self.expected_sha256
+        {
+            bail!("private executable image bytes differ from the frozen executable");
+        }
+        Ok(())
+    }
 }
 
 impl Drop for PrivateExecutableImage {
@@ -797,14 +863,385 @@ impl Drop for PrivateExecutableImage {
     }
 }
 
+#[cfg(target_os = "macos")]
+struct DarwinVnodeWatcher {
+    queue: File,
+}
+
+#[cfg(target_os = "macos")]
+impl DarwinVnodeWatcher {
+    fn new(image: &PrivateExecutableImage) -> anyhow::Result<Self> {
+        use std::os::fd::AsRawFd;
+        use std::os::fd::FromRawFd;
+
+        let queue_fd = unsafe { libc::kqueue() };
+        if queue_fd < 0 {
+            return Err(std::io::Error::last_os_error()).context("create private-image kqueue");
+        }
+        let queue = unsafe { File::from_raw_fd(queue_fd) };
+        let flags = libc::NOTE_WRITE
+            | libc::NOTE_DELETE
+            | libc::NOTE_EXTEND
+            | libc::NOTE_LINK
+            | libc::NOTE_RENAME
+            | libc::NOTE_REVOKE;
+        let changes = [
+            libc::kevent {
+                ident: image.file.as_raw_fd() as libc::uintptr_t,
+                filter: libc::EVFILT_VNODE,
+                flags: libc::EV_ADD | libc::EV_ENABLE | libc::EV_CLEAR,
+                fflags: flags,
+                data: 0,
+                udata: std::ptr::null_mut(),
+            },
+            libc::kevent {
+                ident: image.directory_handle.as_raw_fd() as libc::uintptr_t,
+                filter: libc::EVFILT_VNODE,
+                flags: libc::EV_ADD | libc::EV_ENABLE | libc::EV_CLEAR,
+                fflags: flags,
+                data: 0,
+                udata: std::ptr::null_mut(),
+            },
+        ];
+        let result = unsafe {
+            libc::kevent(
+                queue.as_raw_fd(),
+                changes.as_ptr(),
+                i32::try_from(changes.len())?,
+                std::ptr::null_mut(),
+                0,
+                std::ptr::null(),
+            )
+        };
+        if result < 0 {
+            return Err(std::io::Error::last_os_error())
+                .context("watch private executable image vnode");
+        }
+        Ok(Self { queue })
+    }
+
+    fn require_no_mutation(&self) -> anyhow::Result<()> {
+        use std::os::fd::AsRawFd;
+
+        let mut event = std::mem::MaybeUninit::<libc::kevent>::uninit();
+        let timeout = libc::timespec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        };
+        let result = unsafe {
+            libc::kevent(
+                self.queue.as_raw_fd(),
+                std::ptr::null(),
+                0,
+                event.as_mut_ptr(),
+                1,
+                &timeout,
+            )
+        };
+        if result < 0 {
+            return Err(std::io::Error::last_os_error())
+                .context("read private executable image mutation watch");
+        }
+        if result != 0 {
+            let event = unsafe { event.assume_init() };
+            let flags = unsafe { std::ptr::addr_of!(event.fflags).read_unaligned() };
+            bail!("private executable image or directory mutated during launch: {flags:#x}");
+        }
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "macos")]
+struct DarwinLoadedChild {
+    pid: libc::pid_t,
+    watcher: DarwinVnodeWatcher,
+    waited: bool,
+}
+
+#[cfg(target_os = "macos")]
+impl DarwinLoadedChild {
+    fn verify_loaded_image(
+        &self,
+        private_executable: &PrivateExecutableImage,
+    ) -> anyhow::Result<()> {
+        use std::os::unix::ffi::OsStringExt;
+        use std::os::unix::fs::MetadataExt;
+
+        private_executable.verify_unchanged()?;
+        self.watcher.require_no_mutation()?;
+        let mut buffer = vec![0_u8; libc::PROC_PIDPATHINFO_MAXSIZE as usize];
+        let length = unsafe {
+            libc::proc_pidpath(
+                self.pid,
+                buffer.as_mut_ptr().cast(),
+                u32::try_from(buffer.len())?,
+            )
+        };
+        if length <= 0 {
+            return Err(std::io::Error::last_os_error())
+                .context("query suspended child loaded executable path");
+        }
+        buffer.truncate(usize::try_from(length)?);
+        if buffer.last() == Some(&0) {
+            buffer.pop();
+        }
+        let loaded_path = PathBuf::from(std::ffi::OsString::from_vec(buffer));
+        let loaded_file = File::open(&loaded_path)
+            .with_context(|| format!("open loaded image {}", loaded_path.display()))?;
+        let loaded_metadata = loaded_file.metadata()?;
+        let retained_metadata = private_executable.file.metadata()?;
+        if loaded_metadata.dev() != retained_metadata.dev()
+            || loaded_metadata.ino() != retained_metadata.ino()
+            || loaded_metadata.len() != retained_metadata.len()
+        {
+            bail!("kernel-loaded executable vnode differs from retained frozen image");
+        }
+        self.watcher.require_no_mutation()
+    }
+
+    fn resume(&self) -> anyhow::Result<()> {
+        if unsafe { libc::kill(self.pid, libc::SIGCONT) } != 0 {
+            return Err(std::io::Error::last_os_error()).context("resume verified suspended child");
+        }
+        Ok(())
+    }
+
+    fn start_kill(&self) -> anyhow::Result<()> {
+        if unsafe { libc::kill(self.pid, libc::SIGKILL) } != 0 {
+            let error = std::io::Error::last_os_error();
+            if error.raw_os_error() != Some(libc::ESRCH) {
+                return Err(error).context("kill App Server child");
+            }
+        }
+        Ok(())
+    }
+
+    async fn wait(&mut self) -> anyhow::Result<ExitStatus> {
+        use std::os::unix::process::ExitStatusExt;
+
+        if self.waited {
+            bail!("App Server child was already waited");
+        }
+        let pid = self.pid;
+        let raw = tokio::task::spawn_blocking(move || {
+            let mut status = 0;
+            let waited = unsafe { libc::waitpid(pid, &mut status, 0) };
+            if waited != pid {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(status)
+        })
+        .await
+        .context("join App Server wait")??;
+        self.waited = true;
+        Ok(ExitStatus::from_raw(raw))
+    }
+
+    fn verify_no_mutation(
+        &self,
+        private_executable: &PrivateExecutableImage,
+    ) -> anyhow::Result<()> {
+        private_executable.verify_unchanged()?;
+        self.watcher.require_no_mutation()
+    }
+}
+
+#[cfg(target_os = "macos")]
+impl Drop for DarwinLoadedChild {
+    fn drop(&mut self) {
+        if !self.waited {
+            let _ = self.start_kill();
+            let mut status = 0;
+            unsafe { libc::waitpid(self.pid, &mut status, 0) };
+            self.waited = true;
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+struct DarwinLoadedChild;
+
+#[cfg(not(target_os = "macos"))]
+impl DarwinLoadedChild {
+    fn start_kill(&self) -> anyhow::Result<()> {
+        bail!("Darwin loaded child is unavailable on this platform")
+    }
+
+    async fn wait(&mut self) -> anyhow::Result<ExitStatus> {
+        bail!("Darwin loaded child is unavailable on this platform")
+    }
+
+    fn verify_no_mutation(
+        &self,
+        _private_executable: &PrivateExecutableImage,
+    ) -> anyhow::Result<()> {
+        bail!("Darwin loaded child is unavailable on this platform")
+    }
+}
+
+#[cfg(target_os = "macos")]
+struct PosixSpawnFileActions {
+    raw: libc::posix_spawn_file_actions_t,
+}
+
+#[cfg(target_os = "macos")]
+impl PosixSpawnFileActions {
+    fn new() -> anyhow::Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        check_posix_spawn(
+            unsafe { libc::posix_spawn_file_actions_init(&mut raw) },
+            "initialize posix_spawn file actions",
+        )?;
+        Ok(Self { raw })
+    }
+
+    fn dup2(&mut self, source: libc::c_int, destination: libc::c_int) -> anyhow::Result<()> {
+        check_posix_spawn(
+            unsafe { libc::posix_spawn_file_actions_adddup2(&mut self.raw, source, destination) },
+            "add posix_spawn dup2 action",
+        )
+    }
+
+    fn close(&mut self, descriptor: libc::c_int) -> anyhow::Result<()> {
+        check_posix_spawn(
+            unsafe { libc::posix_spawn_file_actions_addclose(&mut self.raw, descriptor) },
+            "add posix_spawn close action",
+        )
+    }
+
+    fn as_ptr(&self) -> *const libc::posix_spawn_file_actions_t {
+        &self.raw
+    }
+}
+
+#[cfg(target_os = "macos")]
+impl Drop for PosixSpawnFileActions {
+    fn drop(&mut self) {
+        unsafe { libc::posix_spawn_file_actions_destroy(&mut self.raw) };
+    }
+}
+
+#[cfg(target_os = "macos")]
+struct PosixSpawnAttributes {
+    raw: libc::posix_spawnattr_t,
+}
+
+#[cfg(target_os = "macos")]
+impl PosixSpawnAttributes {
+    fn suspended() -> anyhow::Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        check_posix_spawn(
+            unsafe { libc::posix_spawnattr_init(&mut raw) },
+            "initialize posix_spawn attributes",
+        )?;
+        if let Err(error) = check_posix_spawn(
+            unsafe {
+                libc::posix_spawnattr_setflags(
+                    &mut raw,
+                    libc::POSIX_SPAWN_START_SUSPENDED as libc::c_short,
+                )
+            },
+            "request suspended posix_spawn",
+        ) {
+            unsafe { libc::posix_spawnattr_destroy(&mut raw) };
+            return Err(error);
+        }
+        Ok(Self { raw })
+    }
+
+    fn as_ptr(&mut self) -> *const libc::posix_spawnattr_t {
+        &self.raw
+    }
+}
+
+#[cfg(target_os = "macos")]
+impl Drop for PosixSpawnAttributes {
+    fn drop(&mut self) {
+        unsafe { libc::posix_spawnattr_destroy(&mut self.raw) };
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn check_posix_spawn(code: libc::c_int, operation: &str) -> anyhow::Result<()> {
+    if code != 0 {
+        return Err(std::io::Error::from_raw_os_error(code)).context(operation.to_string());
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn darwin_pipe() -> anyhow::Result<(File, File)> {
+    use std::os::fd::FromRawFd;
+
+    let mut descriptors = [-1, -1];
+    if unsafe { libc::pipe(descriptors.as_mut_ptr()) } != 0 {
+        return Err(std::io::Error::last_os_error()).context("create App Server pipe");
+    }
+    for descriptor in descriptors {
+        if unsafe { libc::fcntl(descriptor, libc::F_SETFD, libc::FD_CLOEXEC) } != 0 {
+            let error = std::io::Error::last_os_error();
+            unsafe {
+                libc::close(descriptors[0]);
+                libc::close(descriptors[1]);
+            }
+            return Err(error).context("make App Server pipe close-on-exec");
+        }
+    }
+    Ok(unsafe {
+        (
+            File::from_raw_fd(descriptors[0]),
+            File::from_raw_fd(descriptors[1]),
+        )
+    })
+}
+
 impl AppServerClient {
-    /// Spawns the pinned executable through the retained verified descriptor.
+    /// Spawns the pinned executable as a suspended Darwin image, verifies the
+    /// kernel-loaded vnode, and only then permits it to execute user code.
     pub(crate) async fn spawn_verified(
         codex_binary: &Path,
         verified_executable: VerifiedExecutable,
         stderr_path: &Path,
         environment: &ChildEnvironment,
     ) -> anyhow::Result<Self> {
+        Self::spawn_verified_inner(
+            codex_binary,
+            verified_executable,
+            stderr_path,
+            environment,
+            None,
+        )
+        .await
+    }
+
+    #[cfg(all(test, target_os = "macos"))]
+    pub(crate) async fn spawn_verified_with_private_image_hook(
+        codex_binary: &Path,
+        verified_executable: VerifiedExecutable,
+        stderr_path: &Path,
+        environment: &ChildEnvironment,
+        mut hook: impl FnMut(&Path, &Path) -> anyhow::Result<()>,
+    ) -> anyhow::Result<Self> {
+        Self::spawn_verified_inner(
+            codex_binary,
+            verified_executable,
+            stderr_path,
+            environment,
+            Some(&mut hook),
+        )
+        .await
+    }
+
+    #[cfg(target_os = "macos")]
+    async fn spawn_verified_inner(
+        _codex_binary: &Path,
+        verified_executable: VerifiedExecutable,
+        stderr_path: &Path,
+        environment: &ChildEnvironment,
+        mut hook: Option<&mut dyn FnMut(&Path, &Path) -> anyhow::Result<()>>,
+    ) -> anyhow::Result<Self> {
+        use std::os::fd::AsRawFd;
+
         let stderr = std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -813,34 +1250,164 @@ impl AppServerClient {
         let private_root = stderr_path
             .parent()
             .context("App Server stderr path has no coordinator directory")?;
-        let private_executable =
+        let mut private_executable =
             PrivateExecutableImage::create(&verified_executable, private_root)?;
-        let mut command = Command::new(&private_executable.path);
-        environment.apply_tokio(&mut command);
-        let mut child = command
-            .arg("app-server")
-            .arg("--listen")
-            .arg("stdio://")
-            .arg("--strict-config")
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .stderr(stderr)
-            .kill_on_drop(true)
-            .spawn()
-            .with_context(|| format!("spawn {} app-server", codex_binary.display()))?;
-        let stdin = child
-            .stdin
-            .take()
-            .context("App Server stdin was not piped")?;
-        let stdout = child
-            .stdout
-            .take()
-            .context("App Server stdout was not piped")?;
+        let watcher = DarwinVnodeWatcher::new(&private_executable)?;
+        let (stdin_read, stdin_write) = darwin_pipe()?;
+        let (stdout_read, stdout_write) = darwin_pipe()?;
+        #[cfg(test)]
+        let test_fixture = _codex_binary.file_name()
+            == Some(std::ffi::OsStr::new("native-mock-app-server-test-harness"));
+        #[cfg(not(test))]
+        let test_fixture = false;
+        let mut environment_values = environment.variables().clone();
+        if test_fixture {
+            environment_values.insert(
+                "AI_IP_NATIVE_APP_SERVER_FIXTURE".to_string(),
+                "1".to_string(),
+            );
+        }
+        let arguments = if test_fixture {
+            vec![
+                private_executable
+                    .path
+                    .as_os_str()
+                    .to_string_lossy()
+                    .into_owned(),
+                "--exact".to_string(),
+                "tests::native_app_server_fixture".to_string(),
+                "--nocapture".to_string(),
+                "--test-threads=1".to_string(),
+            ]
+        } else {
+            vec![
+                private_executable
+                    .path
+                    .as_os_str()
+                    .to_string_lossy()
+                    .into_owned(),
+                "app-server".to_string(),
+                "--listen".to_string(),
+                "stdio://".to_string(),
+                "--strict-config".to_string(),
+            ]
+        };
+        let path = CString::new(private_executable.path.as_os_str().as_encoded_bytes())?;
+        let argument_storage = arguments
+            .iter()
+            .map(|argument| CString::new(argument.as_bytes()))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut argument_pointers = argument_storage
+            .iter()
+            .map(|argument| argument.as_ptr().cast_mut())
+            .collect::<Vec<_>>();
+        argument_pointers.push(std::ptr::null_mut());
+        let environment_storage = environment_values
+            .iter()
+            .map(|(name, value)| CString::new(format!("{name}={value}")))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut environment_pointers = environment_storage
+            .iter()
+            .map(|value| value.as_ptr().cast_mut())
+            .collect::<Vec<_>>();
+        environment_pointers.push(std::ptr::null_mut());
+
+        let mut actions = PosixSpawnFileActions::new()?;
+        actions.dup2(stdin_read.as_raw_fd(), libc::STDIN_FILENO)?;
+        let protocol_fd = if test_fixture { 3 } else { libc::STDOUT_FILENO };
+        actions.dup2(stdout_write.as_raw_fd(), protocol_fd)?;
+        actions.dup2(stderr.as_raw_fd(), libc::STDERR_FILENO)?;
+        if test_fixture {
+            actions.dup2(stderr.as_raw_fd(), libc::STDOUT_FILENO)?;
+        }
+        for fd in [
+            stdin_read.as_raw_fd(),
+            stdin_write.as_raw_fd(),
+            stdout_read.as_raw_fd(),
+            stdout_write.as_raw_fd(),
+            stderr.as_raw_fd(),
+        ] {
+            if ![
+                libc::STDIN_FILENO,
+                libc::STDOUT_FILENO,
+                libc::STDERR_FILENO,
+                protocol_fd,
+            ]
+            .contains(&fd)
+            {
+                actions.close(fd)?;
+            }
+        }
+        let mut attributes = PosixSpawnAttributes::suspended()?;
+        if let Some(hook) = hook.as_mut()
+            && let Err(error) = hook(&private_executable.path, &private_executable.directory) {
+                let cleanup = private_executable.cleanup();
+                if let Err(cleanup_error) = cleanup {
+                    return Err(error).context(format!(
+                        "private image hook failed; cleanup also failed: {cleanup_error:#}"
+                    ));
+                }
+                return Err(error).context("private image hook failed");
+            }
+        let mut pid = 0;
+        let spawn_result = unsafe {
+            libc::posix_spawn(
+                &mut pid,
+                path.as_ptr(),
+                actions.as_ptr(),
+                attributes.as_ptr(),
+                argument_pointers.as_ptr(),
+                environment_pointers.as_ptr(),
+            )
+        };
+        check_posix_spawn(spawn_result, "spawn suspended App Server image")?;
+        let mut child = DarwinLoadedChild {
+            pid,
+            watcher,
+            waited: false,
+        };
+        if let Err(error) = child.verify_loaded_image(&private_executable) {
+            let _ = child.start_kill();
+            let _ = child.wait().await;
+            let cleanup = private_executable.cleanup();
+            if let Err(cleanup_error) = cleanup {
+                return Err(error).context(format!(
+                    "loaded image verification failed; cleanup also failed: {cleanup_error:#}"
+                ));
+            }
+            return Err(error).context("verify kernel-loaded suspended App Server image");
+        }
+        if let Err(error) = child.resume() {
+            let _ = child.start_kill();
+            let _ = child.wait().await;
+            let cleanup = private_executable.cleanup();
+            if let Err(cleanup_error) = cleanup {
+                return Err(error).context(format!(
+                    "resume failed; cleanup also failed: {cleanup_error:#}"
+                ));
+            }
+            return Err(error);
+        }
+        drop(stdin_read);
+        drop(stdout_write);
+        let stdin = TokioFile::from_std(stdin_write);
+        let stdout = TokioFile::from_std(stdout_read);
         Ok(Self {
             child,
             protocol: Some(JsonLineClient::new(stdout, stdin)),
             private_executable: Some(private_executable),
         })
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    async fn spawn_verified_inner(
+        _codex_binary: &Path,
+        _verified_executable: VerifiedExecutable,
+        _stderr_path: &Path,
+        _environment: &ChildEnvironment,
+        _hook: Option<&mut dyn FnMut(&Path, &Path) -> anyhow::Result<()>>,
+    ) -> anyhow::Result<Self> {
+        bail!("kernel-loaded executable verification is unsupported on this platform")
     }
 
     pub async fn handshake(
@@ -879,7 +1446,7 @@ impl AppServerClient {
         })
     }
 
-    pub fn protocol_mut(&mut self) -> anyhow::Result<&mut JsonLineClient<ChildStdout, ChildStdin>> {
+    pub fn protocol_mut(&mut self) -> anyhow::Result<&mut JsonLineClient<TokioFile, TokioFile>> {
         self.protocol
             .as_mut()
             .context("App Server client is closed")
@@ -890,17 +1457,26 @@ impl AppServerClient {
         let status = match tokio::time::timeout(wait_timeout, self.child.wait()).await {
             Ok(status) => status.context("wait for App Server exit"),
             Err(_) => {
-                self.child
-                    .start_kill()
-                    .context("kill timed-out App Server")?;
+                let kill = self.child.start_kill().context("kill timed-out App Server");
                 let _ = self.child.wait().await;
+                let cleanup = self
+                    .private_executable
+                    .as_mut()
+                    .context("private App Server executable image is unavailable")?
+                    .cleanup();
+                kill?;
+                cleanup?;
                 bail!("App Server did not exit after stdin EOF and was killed");
             }
         }?;
-        self.private_executable
+        let private_executable = self
+            .private_executable
             .as_mut()
-            .context("private App Server executable image is unavailable")?
-            .cleanup()?;
+            .context("private App Server executable image is unavailable")?;
+        let verification = self.child.verify_no_mutation(private_executable);
+        let cleanup = private_executable.cleanup();
+        verification?;
+        cleanup?;
         Ok(status)
     }
 
@@ -913,9 +1489,24 @@ impl AppServerClient {
             .protocol
             .take()
             .context("App Server client is closed")?;
-        protocol
+        let observation = protocol
             .shutdown_and_observe_until_eof(absolute_deadline, observe)
-            .await?;
+            .await;
+        if let Err(error) = observation {
+            let _ = self.child.start_kill();
+            let _ = self.child.wait().await;
+            let cleanup = self
+                .private_executable
+                .as_mut()
+                .context("private App Server executable image is unavailable")?
+                .cleanup();
+            if let Err(cleanup_error) = cleanup {
+                return Err(error).context(format!(
+                    "App Server shutdown observation failed; cleanup also failed: {cleanup_error:#}"
+                ));
+            }
+            return Err(error);
+        }
         let remaining = absolute_deadline
             .checked_duration_since(Instant::now())
             .filter(|remaining| !remaining.is_zero())
@@ -923,17 +1514,26 @@ impl AppServerClient {
         let status = match tokio::time::timeout(remaining, self.child.wait()).await {
             Ok(status) => status.context("wait for App Server exit"),
             Err(_) => {
-                self.child
-                    .start_kill()
-                    .context("kill timed-out App Server")?;
+                let kill = self.child.start_kill().context("kill timed-out App Server");
                 let _ = self.child.wait().await;
+                let cleanup = self
+                    .private_executable
+                    .as_mut()
+                    .context("private App Server executable image is unavailable")?
+                    .cleanup();
+                kill?;
+                cleanup?;
                 bail!("App Server did not exit before the absolute pair deadline");
             }
         }?;
-        self.private_executable
+        let private_executable = self
+            .private_executable
             .as_mut()
-            .context("private App Server executable image is unavailable")?
-            .cleanup()?;
+            .context("private App Server executable image is unavailable")?;
+        let verification = self.child.verify_no_mutation(private_executable);
+        let cleanup = private_executable.cleanup();
+        verification?;
+        cleanup?;
         Ok(status)
     }
 }

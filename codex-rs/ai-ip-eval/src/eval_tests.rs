@@ -1807,6 +1807,173 @@ fn live_freeze_rejects_material_digest_path_type_and_attestation_drift() {
 }
 
 #[test]
+fn live_freeze_rejects_a_prepopulated_managed_case_tree() {
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir_all(private_root.join("inputs/case")).unwrap();
+    fs::write(
+        private_root.join("inputs/case/extra-file"),
+        b"attacker bytes\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        for path in [
+            private_root.as_path(),
+            &private_root.join("inputs"),
+            &private_root.join("inputs/case"),
+        ] {
+            fs::set_permissions(path, fs::Permissions::from_mode(0o700)).unwrap();
+        }
+    }
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+
+    assert!(
+        crate::runner::import_live_source_proof(
+            &case,
+            &material_root,
+            &attestation,
+            &private_root,
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn live_freeze_rejects_unknown_attestation_fields() {
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+    let mut value: serde_json::Value =
+        serde_json::from_slice(&fs::read(&attestation).unwrap()).unwrap();
+    value["unapprovedField"] = json!(true);
+    fs::write(&attestation, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+    assert!(
+        crate::runner::import_live_source_proof(
+            &case,
+            &material_root,
+            &attestation,
+            &private_root,
+        )
+        .is_err()
+    );
+    assert!(!private_root.join("inputs").exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn live_freeze_import_is_anchored_against_parent_directory_substitution() {
+    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::symlink;
+
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir(&private_root).unwrap();
+    fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    let external = temp.path().join("attacker-directory");
+    fs::create_dir(&external).unwrap();
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+
+    let result = crate::runner::import_live_source_proof_with_hook(
+        &case,
+        &material_root,
+        &attestation,
+        &private_root,
+        |case_root| {
+            fs::rename(case_root.join("notes"), case_root.join("retained-notes"))?;
+            symlink(&external, case_root.join("notes"))?;
+            Ok(())
+        },
+    );
+
+    assert!(result.is_err());
+    assert!(!external.join("evidence.txt").exists());
+}
+
+#[test]
+fn managed_source_tree_rejects_every_undeclared_entry() {
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+    let imported =
+        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
+            .unwrap();
+    fs::write(
+        private_root.join("inputs/case/extra-file"),
+        b"attacker bytes\n",
+    )
+    .unwrap();
+
+    assert!(crate::runner::validate_imported_source_proof(&imported).is_err());
+}
+
+#[test]
+fn between_arm_managed_tree_mutation_poisons_without_a_pair_receipt() {
+    let temp = tempfile::tempdir().unwrap();
+    let private_root = temp.path().join("private-proof");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let (case, material_root, attestation) =
+        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+    let imported =
+        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
+            .unwrap();
+    let gate = coordinator(&temp, 1);
+    activate_first(&gate, "root-1", Duration::from_secs(5));
+    let first = gate
+        .before_forward(&root_request("root-1"), &transformed())
+        .unwrap();
+    complete(&gate, first);
+    gate.seal_arm().unwrap();
+    gate.activate_arm(ArmActivation {
+        run_ordinal: 2,
+        condition: EvaluationCondition::Candidate,
+        root_thread_id: test_thread_id("root-2").to_string(),
+        deadline: Instant::now() + Duration::from_secs(5),
+        deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
+    })
+    .unwrap();
+    fs::write(
+        imported.case_path.parent().unwrap().join("extra-file"),
+        b"between-arm mutation\n",
+    )
+    .unwrap();
+
+    assert!(
+        crate::runner::validate_imported_source_before_arm(
+            &imported,
+            &gate,
+            Instant::now() + Duration::from_secs(5),
+        )
+        .is_err()
+    );
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    assert!(!temp.path().join("receipts/pair-receipt.json").exists());
+}
+
+#[test]
 fn frozen_artifacts_rehash_every_named_boundary_and_detect_mutation() {
     let temp = tempfile::tempdir().unwrap();
     let mut paths = BTreeMap::new();
@@ -2528,13 +2695,318 @@ fn assert_loopback_rejection_never_forwards(rejection: LoopbackRejection) {
 }
 
 #[test]
+fn native_app_server_fixture() {
+    use std::fs::OpenOptions;
+    use std::io::BufRead;
+    use std::io::BufReader;
+    use std::io::Write;
+    use std::os::fd::FromRawFd as _;
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
+
+    if std::env::var_os("AI_IP_NATIVE_APP_SERVER_FIXTURE").is_none() {
+        return;
+    }
+
+    fn send(output: &mut fs::File, value: &serde_json::Value) {
+        serde_json::to_writer(&mut *output, value).unwrap();
+        output.write_all(b"\n").unwrap();
+        output.flush().unwrap();
+    }
+
+    fn thread(
+        id: &str,
+        parent: Option<&str>,
+        source: Option<&str>,
+        candidate: bool,
+        cwd: &std::path::Path,
+    ) -> serde_json::Value {
+        json!({
+            "id": id,
+            "extra": null,
+            "sessionId": if candidate { "session-candidate" } else { "session-generic" },
+            "forkedFromId": null,
+            "parentThreadId": parent,
+            "preview": "",
+            "ephemeral": false,
+            "section": null,
+            "sectionEnteredAt": null,
+            "projectId": null,
+            "historyMode": "legacy",
+            "modelProvider": "ai-ip-proof-broker",
+            "createdAt": 0,
+            "updatedAt": 0,
+            "recencyAt": null,
+            "status": {"type": "idle"},
+            "path": null,
+            "cwd": cwd,
+            "cliVersion": "mock",
+            "source": "appServer",
+            "canAcceptDirectInput": true,
+            "threadSource": source,
+            "agentNickname": null,
+            "agentRole": null,
+            "gitInfo": null,
+            "name": null,
+            "turns": []
+        })
+    }
+
+    fn turn(id: &str, status: &str) -> serde_json::Value {
+        json!({
+            "id": id,
+            "items": [],
+            "itemsView": "full",
+            "status": status,
+            "error": null,
+            "startedAt": null,
+            "completedAt": null,
+            "durationMs": 1
+        })
+    }
+
+    fn call_broker(
+        output: &mut fs::File,
+        config: &serde_json::Value,
+        thread_id: &str,
+        turn_id: &str,
+        parent_id: Option<&str>,
+    ) {
+        let base_url = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
+            .as_str()
+            .unwrap();
+        let client = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        let mut request = client
+            .post(format!("{base_url}/responses"))
+            .header("content-type", "application/json")
+            .header("x-codex-window-id", format!("{thread_id}:0"));
+        if let Some(parent_id) = parent_id {
+            request = request
+                .header("x-codex-parent-thread-id", parent_id)
+                .header("x-openai-subagent", "collab_spawn");
+        }
+        let body = request
+            .body(r#"{"model":"local-mock","input":[]}"#)
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .text()
+            .unwrap();
+        let completed: serde_json::Value = body
+            .lines()
+            .find_map(|line| line.strip_prefix("data: "))
+            .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+            .unwrap();
+        let response = &completed["response"];
+        let usage = &response["usage"];
+        send(
+            output,
+            &json!({
+                "method": "rawResponse/completed",
+                "params": {
+                    "threadId": thread_id,
+                    "turnId": turn_id,
+                    "responseId": response["id"],
+                    "usage": {
+                        "totalTokens": usage["total_tokens"],
+                        "inputTokens": usage["input_tokens"],
+                        "cachedInputTokens": 0,
+                        "cacheWriteInputTokens": 0,
+                        "outputTokens": usage["output_tokens"],
+                        "reasoningOutputTokens": 0
+                    }
+                }
+            }),
+        );
+    }
+
+    let home = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
+    let codex_home = std::path::PathBuf::from(std::env::var_os("CODEX_HOME").unwrap());
+    let mut launch_keys = std::env::vars_os()
+        .map(|(key, _)| key.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    launch_keys.sort();
+    fs::write(
+        home.join("app-server-launch.json"),
+        serde_json::to_vec(&json!({
+            "argv": std::env::args().skip(1).collect::<Vec<_>>(),
+            "home": home,
+            "codexHome": codex_home,
+            "path": std::env::var("PATH").unwrap(),
+            "envKeys": launch_keys
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let config_toml = fs::read_to_string(codex_home.join("config.toml")).unwrap();
+    let config: serde_json::Value =
+        serde_json::to_value(toml::from_str::<toml::Value>(&config_toml).unwrap()).unwrap();
+    let candidate = home.to_string_lossy().contains("candidate-home");
+    let thread_id = if candidate {
+        "0198f5aa-0000-7000-8000-000000000102"
+    } else {
+        "0198f5aa-0000-7000-8000-000000000101"
+    };
+    let child_id = if candidate {
+        "0198f5aa-0000-7000-8000-000000000202"
+    } else {
+        "0198f5aa-0000-7000-8000-000000000201"
+    };
+    let eval_root = home.parent().unwrap().to_path_buf();
+    let mut root = thread(thread_id, None, None, candidate, &eval_root);
+    let mut child = thread(
+        child_id,
+        Some(thread_id),
+        Some("subagent"),
+        candidate,
+        &eval_root,
+    );
+    let stdin = BufReader::new(std::io::stdin().lock());
+    let mut output = unsafe { fs::File::from_raw_fd(3) };
+
+    for line in stdin.lines() {
+        let message: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
+        let method = message.get("method").and_then(serde_json::Value::as_str);
+        writeln!(
+            OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(home.join("app-server-methods.log"))
+                .unwrap(),
+            "{}",
+            method.unwrap_or("None")
+        )
+        .unwrap();
+        let Some(request_id) = message.get("id") else {
+            continue;
+        };
+        let result = match method {
+            Some("initialize") => json!({
+                "userAgent": "mock-app-server",
+                "codexHome": codex_home,
+                "platformFamily": "unix",
+                "platformOs": "mock"
+            }),
+            Some("config/read") => json!({
+                "config": config,
+                "origins": {},
+                "layers": [{
+                    "name": {"type": "user", "file": codex_home.join("config.toml"), "profile": null},
+                    "version": "v1",
+                    "config": config
+                }]
+            }),
+            Some("configRequirements/read") => json!({"requirements": null}),
+            Some("thread/start") => {
+                let cwd = std::path::PathBuf::from(message["params"]["cwd"].as_str().unwrap());
+                root["cwd"] = json!(cwd);
+                child["cwd"] = json!(cwd);
+                json!({
+                    "thread": root,
+                    "model": "local-mock",
+                    "modelProvider": "ai-ip-proof-broker",
+                    "serviceTier": null,
+                    "cwd": cwd,
+                    "runtimeWorkspaceRoots": [],
+                    "instructionSources": [],
+                    "approvalPolicy": "never",
+                    "approvalsReviewer": "user",
+                    "sandbox": {"type": "dangerFullAccess"},
+                    "activePermissionProfile": {"id": "ai-ip-eval", "extends": null},
+                    "reasoningEffort": null,
+                    "multiAgentMode": "explicitRequestOnly"
+                })
+            }
+            Some("turn/start") => {
+                let turn_id = if candidate {
+                    "turn-candidate"
+                } else {
+                    "turn-generic"
+                };
+                let child_turn_id = format!("child-{turn_id}");
+                send(
+                    &mut output,
+                    &json!({"id": request_id, "result": {"turn": turn(turn_id, "inProgress")}}),
+                );
+                send(
+                    &mut output,
+                    &json!({"method": "turn/started", "params": {"threadId": thread_id, "turn": turn(turn_id, "inProgress")}}),
+                );
+                send(
+                    &mut output,
+                    &json!({"method": "thread/started", "params": {"thread": child}}),
+                );
+                send(
+                    &mut output,
+                    &json!({"method": "turn/started", "params": {"threadId": child_id, "turn": turn(&child_turn_id, "inProgress")}}),
+                );
+                std::thread::sleep(Duration::from_millis(200));
+                call_broker(&mut output, &config, thread_id, turn_id, None);
+                call_broker(
+                    &mut output,
+                    &config,
+                    child_id,
+                    &child_turn_id,
+                    Some(thread_id),
+                );
+                send(
+                    &mut output,
+                    &json!({"method": "turn/completed", "params": {"threadId": child_id, "turn": turn(&child_turn_id, "completed")}}),
+                );
+                send(
+                    &mut output,
+                    &json!({"method": "turn/completed", "params": {"threadId": thread_id, "turn": turn(turn_id, "completed")}}),
+                );
+                child["turns"] = json!([turn(&child_turn_id, "completed")]);
+                root["turns"] = json!([turn(turn_id, "completed")]);
+                continue;
+            }
+            Some("thread/list") => {
+                let timestamp = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64();
+                writeln!(
+                    OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(home.join("thread-list-times.log"))
+                        .unwrap(),
+                    "{timestamp}"
+                )
+                .unwrap();
+                json!({"data": [child], "nextCursor": null, "backwardsCursor": null})
+            }
+            Some("thread/loaded/list") => {
+                json!({"data": [thread_id, child_id], "nextCursor": null})
+            }
+            Some("thread/read") => json!({
+                "thread": if message["params"]["threadId"] == thread_id { &root } else { &child }
+            }),
+            _ => {
+                send(
+                    &mut output,
+                    &json!({"id": request_id, "error": {"code": -32601, "message": "unsupported"}}),
+                );
+                continue;
+            }
+        };
+        send(&mut output, &json!({"id": request_id, "result": result}));
+    }
+}
+
+#[test]
 fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
     let upstream_addr = upstream.server_addr().to_ip().unwrap();
     let worker = std::thread::spawn(move || {
         for index in 0..4 {
             let request = upstream
-                .recv_timeout(Duration::from_secs(120))
+                .recv_timeout(Duration::from_secs(240))
                 .unwrap()
                 .unwrap();
             let body = format!(
@@ -2552,92 +3024,8 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let seed: serde_json::Value = serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
     let artifacts = seed["artifacts"].as_object().unwrap();
     let artifact = |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
-    let mock_codex = artifact("codexBinary");
-    fs::write(
-        &mock_codex,
-        r#"#!/usr/bin/env python3
-import json, os, sys, time, tomllib, urllib.request
-home = os.environ["HOME"]
-codex_home = os.environ["CODEX_HOME"]
-eval_root = os.path.dirname(home)
-with open(os.path.join(home, "app-server-launch.json"), "w") as f:
-    json.dump({"argv": sys.argv[1:], "home": home, "codexHome": codex_home, "path": os.environ["PATH"], "envKeys": sorted(os.environ.keys())}, f)
-with open(os.path.join(codex_home, "config.toml"), "rb") as f:
-    config = tomllib.load(f)
-candidate = "candidate-home" in home
-thread_id = "0198f5aa-0000-7000-8000-000000000102" if candidate else "0198f5aa-0000-7000-8000-000000000101"
-child_id = "0198f5aa-0000-7000-8000-000000000202" if candidate else "0198f5aa-0000-7000-8000-000000000201"
-def send(value):
-    sys.stdout.write(json.dumps(value, separators=(",", ":")) + "\n")
-    sys.stdout.flush()
-def thread(value, parent=None, source=None):
-    return {"id":value,"extra":None,"sessionId":"session-candidate" if candidate else "session-generic","forkedFromId":None,"parentThreadId":parent,"preview":"","ephemeral":False,"section":None,"sectionEnteredAt":None,"projectId":None,"historyMode":"legacy","modelProvider":"ai-ip-proof-broker","createdAt":0,"updatedAt":0,"recencyAt":None,"status":{"type":"idle"},"path":None,"cwd":eval_root,"cliVersion":"mock","source":"appServer","canAcceptDirectInput":True,"threadSource":source,"agentNickname":None,"agentRole":None,"gitInfo":None,"name":None,"turns":[]}
-root = thread(thread_id)
-child = thread(child_id, thread_id, "subagent")
-def turn(value, status):
-    return {"id":value,"items":[],"itemsView":"full","status":status,"error":None,"startedAt":None,"completedAt":None,"durationMs":1}
-def call_broker(thread_value, turn_value, parent=None):
-    base = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
-    headers = {"content-type":"application/json","x-codex-window-id":thread_value + ":0"}
-    if parent is not None:
-        headers["x-codex-parent-thread-id"] = parent
-        headers["x-openai-subagent"] = "collab_spawn"
-    request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers=headers)
-    with urllib.request.urlopen(request, timeout=5) as response:
-        body = response.read().decode()
-    completed = json.loads(body.split("data: ",1)[1].split("\n",1)[0])["response"]
-    usage = completed["usage"]
-    send({"method":"rawResponse/completed","params":{"threadId":thread_value,"turnId":turn_value,"responseId":completed["id"],"usage":{"totalTokens":usage["total_tokens"],"inputTokens":usage["input_tokens"],"cachedInputTokens":0,"cacheWriteInputTokens":0,"outputTokens":usage["output_tokens"],"reasoningOutputTokens":0}}})
-for line in sys.stdin:
-    message = json.loads(line)
-    method = message.get("method")
-    with open(os.path.join(home, "app-server-methods.log"), "a") as f:
-        f.write(str(method) + "\n")
-    request_id = message.get("id")
-    if request_id is None:
-        continue
-    if method == "initialize":
-        result = {"userAgent":"mock-app-server","codexHome":codex_home,"platformFamily":"unix","platformOs":"mock"}
-    elif method == "config/read":
-        config_path = os.path.join(codex_home, "config.toml")
-        result = {"config":config,"origins":{},"layers":[{"name":{"type":"user","file":config_path,"profile":None},"version":"v1","config":config}]}
-    elif method == "configRequirements/read":
-        result = {"requirements":None}
-    elif method == "thread/start":
-        eval_root = message["params"]["cwd"]
-        root["cwd"] = eval_root
-        child["cwd"] = eval_root
-        result = {"thread":root,"model":"local-mock","modelProvider":"ai-ip-proof-broker","serviceTier":None,"cwd":eval_root,"runtimeWorkspaceRoots":[],"instructionSources":[],"approvalPolicy":"never","approvalsReviewer":"user","sandbox":{"type":"dangerFullAccess"},"activePermissionProfile":{"id":"ai-ip-eval","extends":None},"reasoningEffort":None,"multiAgentMode":"explicitRequestOnly"}
-    elif method == "turn/start":
-        turn_id = "turn-candidate" if candidate else "turn-generic"
-        child_turn_id = "child-" + turn_id
-        send({"id":request_id,"result":{"turn":turn(turn_id,"inProgress")}})
-        send({"method":"turn/started","params":{"threadId":thread_id,"turn":turn(turn_id,"inProgress")}})
-        send({"method":"thread/started","params":{"thread":child}})
-        send({"method":"turn/started","params":{"threadId":child_id,"turn":turn(child_turn_id,"inProgress")}})
-        time.sleep(0.2)
-        call_broker(thread_id, turn_id)
-        call_broker(child_id, child_turn_id, thread_id)
-        send({"method":"turn/completed","params":{"threadId":child_id,"turn":turn(child_turn_id,"completed")}})
-        send({"method":"turn/completed","params":{"threadId":thread_id,"turn":turn(turn_id,"completed")}})
-        child["turns"] = [turn(child_turn_id,"completed")]
-        root["turns"] = [turn(turn_id,"completed")]
-        continue
-    elif method == "thread/list":
-        with open(os.path.join(home, "thread-list-times.log"), "a") as f:
-            f.write(str(time.monotonic()) + "\n")
-        result = {"data":[child],"nextCursor":None,"backwardsCursor":None}
-    elif method == "thread/loaded/list":
-        result = {"data":[thread_id,child_id],"nextCursor":None}
-    elif method == "thread/read":
-        result = {"thread":root if message["params"]["threadId"] == thread_id else child}
-    else:
-        send({"id":request_id,"error":{"code":-32601,"message":"unsupported"}})
-        continue
-    send({"id":request_id,"result":result})
-"#,
-    )
-    .unwrap();
+    let mock_codex = temp.path().join("native-mock-app-server-test-harness");
+    fs::copy(std::env::current_exe().unwrap(), &mock_codex).unwrap();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

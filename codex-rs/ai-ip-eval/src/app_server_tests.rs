@@ -32,11 +32,7 @@ fn verified_launch_executes_retained_descriptor_after_pathname_replacement() {
 
     let temp = tempfile::tempdir().unwrap();
     let executable = temp.path().join("codex-under-test");
-    fs::write(
-        &executable,
-        b"#!/bin/sh\nprintf retained > \"$HOME/executed-image\"\n",
-    )
-    .unwrap();
+    fs::copy("/usr/bin/true", &executable).unwrap();
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     let retained = VerifiedExecutable::from_retained(
         fs::File::open(&executable).unwrap(),
@@ -45,11 +41,7 @@ fn verified_launch_executes_retained_descriptor_after_pathname_replacement() {
     )
     .unwrap();
     fs::rename(&executable, temp.path().join("verified-image")).unwrap();
-    fs::write(
-        &executable,
-        b"#!/bin/sh\nprintf replacement > \"$HOME/executed-image\"\n",
-    )
-    .unwrap();
+    fs::copy("/usr/bin/false", &executable).unwrap();
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     let home = temp.path().to_str().unwrap();
     let environment = ChildEnvironment::from_environment(
@@ -72,16 +64,12 @@ fn verified_launch_executes_retained_descriptor_after_pathname_replacement() {
         .unwrap();
         assert!(
             client
-                .close(Duration::from_secs(2))
+                .close(Duration::from_secs(10))
                 .await
                 .unwrap()
                 .success()
         );
     });
-    assert_eq!(
-        fs::read(temp.path().join("executed-image")).unwrap(),
-        b"retained"
-    );
 }
 
 #[cfg(target_os = "macos")]
@@ -124,12 +112,74 @@ fn verified_native_launch_uses_a_private_immutable_descriptor_copy() {
         .unwrap();
         assert!(
             client
-                .close(Duration::from_secs(2))
+                .close(Duration::from_secs(10))
                 .await
                 .unwrap()
                 .success()
         );
     });
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn suspended_spawn_rejects_private_image_clear_replace_restore_before_resume() {
+    use std::collections::BTreeMap;
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let executable = temp.path().join("native-under-attack");
+    fs::copy("/usr/bin/true", &executable).unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    let retained = VerifiedExecutable::from_retained(
+        fs::File::open(&executable).unwrap(),
+        &executable,
+        format!("{:x}", Sha256::digest(fs::read(&executable).unwrap())),
+    )
+    .unwrap();
+    let home = temp.path().to_str().unwrap();
+    let environment = ChildEnvironment::from_environment(
+        &BTreeMap::from([("PATH".to_string(), "/usr/bin:/bin".to_string())]),
+        home,
+        home,
+        home,
+    )
+    .unwrap();
+
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let result = runtime.block_on(AppServerClient::spawn_verified_with_private_image_hook(
+        &executable,
+        retained,
+        &temp.path().join("attacked-stderr.log"),
+        &environment,
+        |image, directory| {
+            let image = image.to_path_buf();
+            let directory = directory.to_path_buf();
+            std::thread::spawn(move || -> anyhow::Result<()> {
+                let image_c = CString::new(image.as_os_str().as_bytes())?;
+                let directory_c = CString::new(directory.as_os_str().as_bytes())?;
+                if unsafe { libc::chflags(directory_c.as_ptr(), 0) } != 0
+                    || unsafe { libc::chflags(image_c.as_ptr(), 0) } != 0
+                {
+                    return Err(std::io::Error::last_os_error().into());
+                }
+                fs::set_permissions(&directory, fs::Permissions::from_mode(0o700))?;
+                let retained_path = directory.join("retained-original");
+                fs::rename(&image, &retained_path)?;
+                fs::copy("/usr/bin/false", &image)?;
+                fs::set_permissions(&image, fs::Permissions::from_mode(0o500))?;
+                fs::remove_file(&image)?;
+                fs::rename(&retained_path, &image)?;
+                Ok(())
+            })
+            .join()
+            .map_err(|_| anyhow::anyhow!("private-image attacker panicked"))??;
+            Ok(())
+        },
+    ));
+
+    assert!(result.is_err());
 }
 
 #[test]

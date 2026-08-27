@@ -6,4 +6,5 @@ codex_rust_crate(
     test_data_extra = glob(["tests/fixtures/**"]) + [
         "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
     ],
+    unit_test_args = ["--test-threads=4"],
 )

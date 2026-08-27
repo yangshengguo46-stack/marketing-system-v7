@@ -132,10 +132,13 @@ pub(crate) struct ImportedSourceProof {
     pub(crate) attestation_path: PathBuf,
     pub(crate) materials_manifest_path: PathBuf,
     pub(crate) material_paths: BTreeMap<String, PathBuf>,
+    case_bytes: Vec<u8>,
+    attestation_bytes: Vec<u8>,
+    material_bytes: BTreeMap<String, Vec<u8>>,
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct SourceProofAttestation {
     case_sha256: String,
     source_materials_sha256: String,
@@ -146,6 +149,39 @@ pub(crate) fn import_live_source_proof(
     material_root: &Path,
     attestation_path: &Path,
     private_root: &Path,
+) -> Result<ImportedSourceProof> {
+    import_live_source_proof_inner(
+        case_path,
+        material_root,
+        attestation_path,
+        private_root,
+        |_| Ok(()),
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn import_live_source_proof_with_hook(
+    case_path: &Path,
+    material_root: &Path,
+    attestation_path: &Path,
+    private_root: &Path,
+    hook: impl FnOnce(&Path) -> Result<()>,
+) -> Result<ImportedSourceProof> {
+    import_live_source_proof_inner(
+        case_path,
+        material_root,
+        attestation_path,
+        private_root,
+        hook,
+    )
+}
+
+fn import_live_source_proof_inner(
+    case_path: &Path,
+    material_root: &Path,
+    attestation_path: &Path,
+    private_root: &Path,
+    hook: impl FnOnce(&Path) -> Result<()>,
 ) -> Result<ImportedSourceProof> {
     let case_bytes = read_supplied_regular(case_path).context("read held-out case")?;
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
@@ -201,52 +237,103 @@ pub(crate) fn import_live_source_proof(
         bail!("held-out attestation does not bind the case and declared materials");
     }
 
+    let private_root = private_root
+        .canonicalize()
+        .context("canonicalize managed proof private root")?;
+    let private_handle = open_anchored_directory(&private_root)?;
+    let inputs_handle = create_fresh_directory_at(&private_handle, OsStr::new("inputs"))
+        .context("create fresh managed proof input tree")?;
+    let case_handle = create_fresh_directory_at(&inputs_handle, OsStr::new("case"))
+        .context("create fresh managed case tree")?;
     let inputs = private_root.join("inputs");
     let imported_case_root = inputs.join("case");
-    create_owner_only_dir(&inputs)?;
-    create_owner_only_dir(&imported_case_root)?;
     let imported_case = imported_case_root.join("case.json");
     let imported_attestation = inputs.join("held-out-attestation.json");
     let imported_manifest = inputs.join("materials-manifest.json");
-    write_owner_only_new(&imported_case, &case_bytes)?;
-    write_owner_only_new(&imported_attestation, &attestation_bytes)?;
-    write_owner_only_new(&imported_manifest, &materials_manifest_bytes)?;
+    let mut directory_handles = BTreeMap::<PathBuf, Arc<File>>::new();
+    directory_handles.insert(PathBuf::new(), Arc::new(case_handle));
+    for (material, _) in &validated_materials {
+        let relative = Path::new(&material.relative_path);
+        let mut parent = PathBuf::new();
+        let components = relative.components().collect::<Vec<_>>();
+        for component in &components[..components.len().saturating_sub(1)] {
+            let std::path::Component::Normal(name) = component else {
+                bail!("declared material path is not normalized");
+            };
+            let next = parent.join(name);
+            if !directory_handles.contains_key(&next) {
+                let parent_handle = directory_handles
+                    .get(&parent)
+                    .context("missing retained material parent directory")?;
+                let created =
+                    create_fresh_directory_at(parent_handle, name).with_context(|| {
+                        format!("create managed material directory {}", next.display())
+                    })?;
+                directory_handles.insert(next.clone(), Arc::new(created));
+            }
+            parent = next;
+        }
+    }
+    hook(&imported_case_root)?;
+    create_owner_only_file_at(
+        directory_handles[&PathBuf::new()].as_ref(),
+        OsStr::new("case.json"),
+        &case_bytes,
+    )?;
+    create_owner_only_file_at(
+        &inputs_handle,
+        OsStr::new("held-out-attestation.json"),
+        &attestation_bytes,
+    )?;
+    create_owner_only_file_at(
+        &inputs_handle,
+        OsStr::new("materials-manifest.json"),
+        &materials_manifest_bytes,
+    )?;
     let mut material_paths = BTreeMap::new();
+    let mut material_bytes = BTreeMap::new();
     for (material, bytes) in validated_materials {
+        let relative = Path::new(&material.relative_path);
+        let parent = relative.parent().unwrap_or_else(|| Path::new(""));
+        let leaf = relative
+            .file_name()
+            .context("declared material path has no file name")?;
+        create_owner_only_file_at(
+            directory_handles
+                .get(parent)
+                .context("missing retained material destination directory")?,
+            leaf,
+            &bytes,
+        )?;
         let destination = imported_case_root.join(&material.relative_path);
-        create_owner_only_relative_parents(&imported_case_root, &destination)?;
-        write_owner_only_new(&destination, &bytes)?;
-        material_paths.insert(
-            material.material_id.clone(),
-            destination
-                .canonicalize()
-                .context("canonicalize imported material")?,
-        );
+        material_paths.insert(material.material_id.clone(), destination);
+        material_bytes.insert(material.material_id.clone(), bytes);
     }
-    Ok(ImportedSourceProof {
+    let mut directory_paths = directory_handles.keys().collect::<Vec<_>>();
+    directory_paths.sort_by_key(|path| std::cmp::Reverse(path.components().count()));
+    for path in directory_paths {
+        directory_handles[path]
+            .sync_all()
+            .context("fsync managed material directory")?;
+    }
+    inputs_handle
+        .sync_all()
+        .context("fsync managed input directory")?;
+    private_handle
+        .sync_all()
+        .context("fsync managed private root")?;
+    let imported = ImportedSourceProof {
         mission_case,
-        case_path: imported_case.canonicalize()?,
-        attestation_path: imported_attestation.canonicalize()?,
-        materials_manifest_path: imported_manifest.canonicalize()?,
+        case_path: imported_case,
+        attestation_path: imported_attestation,
+        materials_manifest_path: imported_manifest,
         material_paths,
-    })
-}
-
-fn create_owner_only_relative_parents(root: &Path, destination: &Path) -> Result<()> {
-    let relative_parent = destination
-        .parent()
-        .context("imported material has no parent")?
-        .strip_prefix(root)
-        .context("imported material escaped its proof-copy root")?;
-    let mut current = root.to_path_buf();
-    for component in relative_parent.components() {
-        let std::path::Component::Normal(component) = component else {
-            bail!("imported material parent is not normalized");
-        };
-        current.push(component);
-        create_owner_only_dir(&current)?;
-    }
-    Ok(())
+        case_bytes,
+        attestation_bytes,
+        material_bytes,
+    };
+    validate_imported_source_proof(&imported)?;
+    Ok(imported)
 }
 
 fn read_supplied_regular(path: &Path) -> Result<Vec<u8>> {
@@ -262,6 +349,184 @@ fn read_supplied_regular(path: &Path) -> Result<Vec<u8>> {
         .canonicalize()
         .with_context(|| format!("canonicalize supplied file {}", path.display()))?;
     read_handle(&open_anchored_regular(&canonical)?)
+}
+
+pub(crate) fn validate_imported_source_proof(imported: &ImportedSourceProof) -> Result<()> {
+    let private_root = imported
+        .case_path
+        .parent()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .context("managed case path has no private root")?;
+    validate_managed_source_tree(
+        private_root,
+        &imported.case_bytes,
+        &imported.attestation_bytes,
+        &serde_json::to_vec(&imported.mission_case.materials)?,
+        &imported
+            .mission_case
+            .materials
+            .iter()
+            .map(|material| {
+                Ok((
+                    PathBuf::from(&material.relative_path),
+                    imported
+                        .material_bytes
+                        .get(&material.material_id)
+                        .context("missing imported material bytes")?
+                        .clone(),
+                ))
+            })
+            .collect::<Result<BTreeMap<_, _>>>()?,
+    )
+}
+
+fn validate_managed_source_artifacts(frozen: &VerifiedFrozenContext) -> Result<()> {
+    let case_bytes = frozen.artifact_bytes("source")?;
+    let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
+        serde_json::from_slice(&case_bytes).context("parse managed held-out case")?;
+    mission_case
+        .validate()
+        .context("validate managed held-out case")?;
+    let manifest_bytes = frozen.artifact_bytes("materials")?;
+    if manifest_bytes != serde_json::to_vec(&mission_case.materials)? {
+        bail!("managed materials manifest differs from the case declaration");
+    }
+    let attestation_bytes = frozen.artifact_bytes("attestation")?;
+    let material_bytes = mission_case
+        .materials
+        .iter()
+        .map(|material| {
+            Ok((
+                PathBuf::from(&material.relative_path),
+                frozen.artifact_bytes(&format!("material:{}", material.material_id))?,
+            ))
+        })
+        .collect::<Result<BTreeMap<_, _>>>()?;
+    validate_managed_source_tree(
+        &frozen.context.private_root,
+        &case_bytes,
+        &attestation_bytes,
+        &manifest_bytes,
+        &material_bytes,
+    )
+}
+
+pub(crate) fn validate_managed_source_before_arm(
+    frozen: &VerifiedFrozenContext,
+    gate: &PairCoordinator,
+    pair_deadline: Instant,
+) -> Result<()> {
+    let validation =
+        run_sync_before_deadline(pair_deadline, || validate_managed_source_artifacts(frozen));
+    poison_on_error(
+        gate,
+        "validate exact managed source tree before arm",
+        validation,
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn validate_imported_source_before_arm(
+    imported: &ImportedSourceProof,
+    gate: &PairCoordinator,
+    pair_deadline: Instant,
+) -> Result<()> {
+    let validation =
+        run_sync_before_deadline(pair_deadline, || validate_imported_source_proof(imported));
+    poison_on_error(
+        gate,
+        "validate exact managed source tree before arm",
+        validation,
+    )
+}
+
+fn validate_managed_source_tree(
+    private_root: &Path,
+    case_bytes: &[u8],
+    attestation_bytes: &[u8],
+    manifest_bytes: &[u8],
+    material_bytes: &BTreeMap<PathBuf, Vec<u8>>,
+) -> Result<()> {
+    let attestation: SourceProofAttestation =
+        serde_json::from_slice(attestation_bytes).context("parse strict managed attestation")?;
+    if attestation.case_sha256 != sha256(case_bytes)
+        || attestation.source_materials_sha256 != sha256(manifest_bytes)
+    {
+        bail!("managed attestation does not bind the case and materials");
+    }
+    let private = open_anchored_directory(private_root)?;
+    let inputs = open_directory_at(&private, OsStr::new("inputs"))?;
+    require_exact_directory_entries(
+        &inputs,
+        [
+            "case",
+            "held-out-attestation.json",
+            "materials-manifest.json",
+        ],
+    )?;
+    require_exact_file_at(
+        &inputs,
+        OsStr::new("held-out-attestation.json"),
+        attestation_bytes,
+    )?;
+    require_exact_file_at(
+        &inputs,
+        OsStr::new("materials-manifest.json"),
+        manifest_bytes,
+    )?;
+    let case = open_directory_at(&inputs, OsStr::new("case"))?;
+    let mut expected = BTreeMap::from([(PathBuf::from("case.json"), case_bytes.to_vec())]);
+    expected.extend(material_bytes.clone());
+    validate_exact_relative_tree(&case, Path::new(""), &expected)?;
+    Ok(())
+}
+
+fn validate_exact_relative_tree(
+    directory: &File,
+    prefix: &Path,
+    expected_files: &BTreeMap<PathBuf, Vec<u8>>,
+) -> Result<()> {
+    let mut expected_entries = BTreeSet::new();
+    let mut child_directories = BTreeSet::new();
+    for path in expected_files.keys() {
+        if !prefix.as_os_str().is_empty() && !path.starts_with(prefix) {
+            continue;
+        }
+        let relative = path
+            .strip_prefix(prefix)
+            .context("managed source expectation escaped its tree")?;
+        let mut components = relative.components();
+        let Some(std::path::Component::Normal(first)) = components.next() else {
+            bail!("managed source expectation is not normalized");
+        };
+        expected_entries.insert(first.to_os_string());
+        if components.next().is_some() {
+            child_directories.insert(first.to_os_string());
+        }
+    }
+    let actual = list_directory_entries(directory)?;
+    if actual != expected_entries {
+        bail!("managed source tree contains missing or undeclared entries");
+    }
+    for name in child_directories {
+        let child = open_directory_at(directory, &name)?;
+        validate_exact_relative_tree(&child, &prefix.join(&name), expected_files)?;
+    }
+    for (path, bytes) in expected_files {
+        if path.parent().unwrap_or_else(|| Path::new("")) == prefix {
+            require_exact_file_at(
+                directory,
+                path.file_name()
+                    .context("managed source file has no name")?,
+                bytes,
+            )?;
+        }
+    }
+    directory
+        .sync_all()
+        .context("fsync checked managed directory")?;
+    Ok(())
 }
 
 /// Writes a typed replay freeze record with no provider-capable fields.
@@ -740,6 +1005,7 @@ async fn run_app_server_arm(
     use codex_app_server_protocol::TurnStartResponse;
     use codex_app_server_protocol::TurnStatus;
 
+    validate_managed_source_before_arm(frozen, gate, pair_deadline)?;
     let (home, codex_home) = match condition {
         EvaluationCondition::Generic => (&homes.generic_home, &homes.generic_codex_home),
         EvaluationCondition::Candidate => (&homes.candidate_home, &homes.candidate_codex_home),
@@ -2207,6 +2473,259 @@ fn same_file(left: &fs::Metadata, right: &fs::Metadata) -> bool {
 #[cfg(not(unix))]
 fn same_file(_left: &fs::Metadata, _right: &fs::Metadata) -> bool {
     false
+}
+
+#[cfg(target_os = "macos")]
+fn open_anchored_directory(path: &Path) -> Result<File> {
+    use std::ffi::CString;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::path::Component;
+
+    if !path.is_absolute() {
+        bail!("anchored managed directory path must be absolute");
+    }
+    let root = CString::new("/")?;
+    let root_fd = unsafe {
+        libc::open(
+            root.as_ptr(),
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+        )
+    };
+    if root_fd < 0 {
+        return Err(std::io::Error::last_os_error()).context("open filesystem root");
+    }
+    let mut current = unsafe { File::from_raw_fd(root_fd) };
+    for component in path.components() {
+        match component {
+            Component::RootDir => {}
+            Component::Normal(name) => {
+                let name = CString::new(name.as_bytes())?;
+                let fd = unsafe {
+                    libc::openat(
+                        std::os::fd::AsRawFd::as_raw_fd(&current),
+                        name.as_ptr(),
+                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+                    )
+                };
+                if fd < 0 {
+                    return Err(std::io::Error::last_os_error()).with_context(|| {
+                        format!("open retained managed directory {}", path.display())
+                    });
+                }
+                current = unsafe { File::from_raw_fd(fd) };
+            }
+            _ => bail!("managed directory path is not normalized"),
+        }
+    }
+    require_owner_only_directory_handle(&current)?;
+    Ok(current)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn open_anchored_directory(_path: &Path) -> Result<File> {
+    bail!("descriptor-relative managed input trees require Darwin openat semantics")
+}
+
+#[cfg(target_os = "macos")]
+fn create_fresh_directory_at(parent: &File, name: &OsStr) -> Result<File> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+
+    let name = CString::new(name.as_bytes())?;
+    if unsafe { libc::mkdirat(parent.as_raw_fd(), name.as_ptr(), 0o700) } != 0 {
+        return Err(std::io::Error::last_os_error()).context("mkdirat managed directory");
+    }
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error()).context("open fresh managed directory");
+    }
+    let directory = unsafe { File::from_raw_fd(fd) };
+    if unsafe { libc::fchmod(directory.as_raw_fd(), 0o700) } != 0 {
+        return Err(std::io::Error::last_os_error()).context("chmod managed directory");
+    }
+    require_owner_only_directory_handle(&directory)?;
+    Ok(directory)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn create_fresh_directory_at(_parent: &File, _name: &OsStr) -> Result<File> {
+    bail!("descriptor-relative managed input creation is unsupported on this platform")
+}
+
+#[cfg(target_os = "macos")]
+fn open_directory_at(parent: &File, name: &OsStr) -> Result<File> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+
+    let name = CString::new(name.as_bytes())?;
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error()).context("open retained managed subdirectory");
+    }
+    let directory = unsafe { File::from_raw_fd(fd) };
+    require_owner_only_directory_handle(&directory)?;
+    Ok(directory)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn open_directory_at(_parent: &File, _name: &OsStr) -> Result<File> {
+    bail!("descriptor-relative managed input validation is unsupported on this platform")
+}
+
+#[cfg(target_os = "macos")]
+fn create_owner_only_file_at(parent: &File, name: &OsStr, bytes: &[u8]) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+
+    let name = CString::new(name.as_bytes())?;
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_WRONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_CREAT | libc::O_EXCL,
+            0o600,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error()).context("create managed input file");
+    }
+    let mut file = unsafe { File::from_raw_fd(fd) };
+    if unsafe { libc::fchmod(file.as_raw_fd(), 0o600) } != 0 {
+        return Err(std::io::Error::last_os_error()).context("chmod managed input file");
+    }
+    file.write_all(bytes).context("write managed input file")?;
+    file.sync_all().context("fsync managed input file")
+}
+
+#[cfg(not(target_os = "macos"))]
+fn create_owner_only_file_at(_parent: &File, _name: &OsStr, _bytes: &[u8]) -> Result<()> {
+    bail!("descriptor-relative managed input creation is unsupported on this platform")
+}
+
+#[cfg(target_os = "macos")]
+fn require_exact_file_at(parent: &File, name: &OsStr, expected: &[u8]) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::PermissionsExt;
+
+    let name = CString::new(name.as_bytes())?;
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+        )
+    };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error()).context("open retained managed input file");
+    }
+    let file = unsafe { File::from_raw_fd(fd) };
+    let metadata = file.metadata()?;
+    if !metadata.is_file()
+        || has_multiple_links(&metadata)
+        || metadata.permissions().mode() & 0o077 != 0
+        || read_handle(&file)? != expected
+    {
+        bail!("managed input file type, links, mode, or bytes differ");
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn require_exact_file_at(_parent: &File, _name: &OsStr, _expected: &[u8]) -> Result<()> {
+    bail!("descriptor-relative managed input validation is unsupported on this platform")
+}
+
+#[cfg(target_os = "macos")]
+fn require_owner_only_directory_handle(directory: &File) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let metadata = directory.metadata()?;
+    if !metadata.is_dir() || metadata.permissions().mode() & 0o077 != 0 {
+        bail!("managed directory is not an owner-only directory");
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn require_owner_only_directory_handle(_directory: &File) -> Result<()> {
+    bail!("descriptor-relative managed input validation is unsupported on this platform")
+}
+
+#[cfg(target_os = "macos")]
+fn list_directory_entries(directory: &File) -> Result<BTreeSet<std::ffi::OsString>> {
+    use std::ffi::CStr;
+    use std::os::fd::AsRawFd;
+    use std::os::unix::ffi::OsStringExt;
+
+    let duplicate = unsafe { libc::fcntl(directory.as_raw_fd(), libc::F_DUPFD_CLOEXEC, 0) };
+    if duplicate < 0 {
+        return Err(std::io::Error::last_os_error()).context("duplicate managed directory handle");
+    }
+    let stream = unsafe { libc::fdopendir(duplicate) };
+    if stream.is_null() {
+        unsafe { libc::close(duplicate) };
+        return Err(std::io::Error::last_os_error()).context("open managed directory stream");
+    }
+    let mut entries = BTreeSet::new();
+    loop {
+        unsafe { *libc::__error() = 0 };
+        let entry = unsafe { libc::readdir(stream) };
+        if entry.is_null() {
+            let error = std::io::Error::last_os_error();
+            unsafe { libc::closedir(stream) };
+            if error.raw_os_error().unwrap_or(0) != 0 {
+                return Err(error).context("read managed directory entries");
+            }
+            break;
+        }
+        let name = unsafe { CStr::from_ptr((*entry).d_name.as_ptr()) }.to_bytes();
+        if name != b"." && name != b".." {
+            entries.insert(std::ffi::OsString::from_vec(name.to_vec()));
+        }
+    }
+    Ok(entries)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn list_directory_entries(_directory: &File) -> Result<BTreeSet<std::ffi::OsString>> {
+    bail!("descriptor-relative managed input validation is unsupported on this platform")
+}
+
+fn require_exact_directory_entries<I, S>(directory: &File, expected: I) -> Result<()>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let expected = expected
+        .into_iter()
+        .map(|name| name.as_ref().to_os_string())
+        .collect::<BTreeSet<_>>();
+    if list_directory_entries(directory)? != expected {
+        bail!("managed input directory contains missing or undeclared entries");
+    }
+    Ok(())
 }
 
 fn create_owner_only_dir(path: &Path) -> Result<()> {

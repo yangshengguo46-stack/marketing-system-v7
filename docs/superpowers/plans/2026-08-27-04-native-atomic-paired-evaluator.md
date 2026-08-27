@@ -184,6 +184,12 @@ git commit -m "test: cover descendant raw response usage"
 - Modify only if frozen public surfaces require build wiring: `codex-rs/responses-api-proxy/BUILD.bazel`
 - Append only when a direct fork seam changes: `docs/architecture/codex-fork-patch-ledger.md`
 
+**Narrow review-closure authority amendment (2026-08-27):** Task 4 may also modify only
+the `#[cfg(test)]` modules `codex-rs/ai-ip-eval/src/app_server_tests.rs` and
+`codex-rs/ai-ip-eval/src/tree_tests.rs` for the directly related Darwin retained-image,
+canonical-protocol, and quiet-tree REDs. This exception grants no production App Server
+authority and does not broaden Task 4 beyond those evaluator tests.
+
 ### RED
 
 Add mock-only tests for Contracts 9–12:
