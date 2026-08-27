@@ -8,8 +8,8 @@ use codex_responses_api_proxy::ResponseCompletedMetadata;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
-use crate::SkillUseTracker;
 use crate::SkillUseOutcome;
+use crate::SkillUseTracker;
 use crate::TreeEventCollector;
 use crate::TreeScan;
 use crate::tests::package_json;
@@ -444,8 +444,7 @@ fn candidate_skill_use_requires_the_exact_complete_skill_before_final_package() 
             "item": {"type": "agentMessage", "id": "final", "text": package_json()}
         }
     }));
-    let mut tracker =
-        SkillUseTracker::new_required(&skill, b"synthetic complete skill\n").unwrap();
+    let mut tracker = SkillUseTracker::new_required(&skill, b"synthetic complete skill\n").unwrap();
     tracker.ingest(&command_item).unwrap();
     tracker.ingest(&final_item).unwrap();
     let outcome = tracker.finish().unwrap();

@@ -694,12 +694,11 @@ impl SkillUseTracker {
                             .to_abs_path()
                             .ok()
                             .is_some_and(|path| match self.expectation {
-                                SkillUseExpectation::RequiredBeforeFinal => path
-                                    .canonicalize()
-                                    .ok()
-                                    .is_some_and(|path| {
+                                SkillUseExpectation::RequiredBeforeFinal => {
+                                    path.canonicalize().ok().is_some_and(|path| {
                                         path.as_path() == self.canonical_skill_path.as_path()
-                                    }),
+                                    })
+                                }
                                 SkillUseExpectation::Forbidden => {
                                     path.as_path() == self.canonical_skill_path.as_path()
                                 }

@@ -1059,11 +1059,11 @@ fn authorize_and_record(
                 .first_root_request
                 .replace(first_root_request)
                 .is_some()
-            {
-                return Err(anyhow!(
-                    "first-root request evidence was recorded more than once"
-                ));
-            }
+        {
+            return Err(anyhow!(
+                "first-root request evidence was recorded more than once"
+            ));
+        }
         active.arm_attempt_count += 1;
     }
     state.record_hashes.push(record_hash);
