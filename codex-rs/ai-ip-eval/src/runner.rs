@@ -160,9 +160,47 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     if repo.head() != args.fork_sha {
         bail!("live freeze fork SHA does not match clean worktree HEAD");
     }
-    let generated_dir = args.private_root.join("frozen-inputs");
+    let canonical_private_root = args
+        .private_root
+        .canonicalize()
+        .context("canonicalize evaluation private root")?;
+    if args.output.file_name() != Some(OsStr::new("frozen-run-context.json"))
+        || args
+            .output
+            .parent()
+            .context("live frozen context output has no parent")?
+            .canonicalize()?
+            != canonical_private_root
+    {
+        bail!("live frozen context must use the canonical private-root filename");
+    }
+    let generated_dir = canonical_private_root.join("frozen-inputs");
     create_owner_only_dir(&generated_dir)?;
-    let case_bytes = read_regular_file_no_follow(&args.case)?;
+    let imported = BTreeMap::from([
+        ("source", (args.case.as_path(), "source.json")),
+        ("materials", (args.attestation.as_path(), "materials.json")),
+        (
+            "providerBudgetReceipt",
+            (
+                args.provider_budget_evidence.as_path(),
+                "provider-budget-receipt.json",
+            ),
+        ),
+        ("rateCard", (args.rate_card.as_path(), "rate-card.json")),
+        (
+            "billingPolicy",
+            (args.billing_policy.as_path(), "billing-policy.json"),
+        ),
+        ("fxPolicy", (args.fx_policy.as_path(), "fx-policy.json")),
+        ("skill", (args.lead_skill.as_path(), "lead-skill.md")),
+    ]);
+    let mut imported_paths = BTreeMap::new();
+    for (name, (source, leaf)) in imported {
+        let destination = generated_dir.join(leaf);
+        write_owner_only_new(&destination, &read_regular_file_no_follow(source)?)?;
+        imported_paths.insert(name.to_string(), destination);
+    }
+    let case_bytes = read_regular_file_no_follow(&imported_paths["source"])?;
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(&case_bytes).context("parse held-out live case")?;
     let schema_path = generated_dir.join("content-package-schema.json");
@@ -172,10 +210,7 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     )?;
     let prompt_path = generated_dir.join("root-prompt.txt");
     write_owner_only_new(&prompt_path, codex_ai_ip_runtime::root_prompt().as_bytes())?;
-    let canonical_eval_tree = args
-        .private_root
-        .canonicalize()
-        .context("canonicalize evaluation tree")?;
+    let canonical_eval_tree = canonical_private_root.clone();
     let thread_projection = build_thread_start(
         &args.model_label,
         "ai-ip-proof-broker",
@@ -192,23 +227,26 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     let evaluator_binary = evaluator_binary_for_freeze(&generated_dir)?;
     let broker_source = repo_root.join("codex-rs/responses-api-proxy/src/broker.rs");
     let named = BTreeMap::from([
-        ("source".to_string(), args.case),
-        ("materials".to_string(), args.attestation),
+        ("source".to_string(), imported_paths["source"].clone()),
+        ("materials".to_string(), imported_paths["materials"].clone()),
         ("codexBinary".to_string(), args.codex_bin),
         ("evaluatorBinary".to_string(), evaluator_binary),
         ("brokerSource".to_string(), broker_source),
         ("schema".to_string(), schema_path),
         ("prompt".to_string(), prompt_path),
-        ("skill".to_string(), args.lead_skill),
+        ("skill".to_string(), imported_paths["skill"].clone()),
         ("threadStartRequest".to_string(), thread_path),
         ("turnStartRequest".to_string(), turn_path),
         (
             "providerBudgetReceipt".to_string(),
-            args.provider_budget_evidence,
+            imported_paths["providerBudgetReceipt"].clone(),
         ),
-        ("rateCard".to_string(), args.rate_card),
-        ("billingPolicy".to_string(), args.billing_policy),
-        ("fxPolicy".to_string(), args.fx_policy),
+        ("rateCard".to_string(), imported_paths["rateCard"].clone()),
+        (
+            "billingPolicy".to_string(),
+            imported_paths["billingPolicy"].clone(),
+        ),
+        ("fxPolicy".to_string(), imported_paths["fxPolicy"].clone()),
     ]);
     let frozen_artifacts = ArtifactCommitments::freeze(named)?;
     let mut artifacts = BTreeMap::new();
@@ -229,10 +267,7 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         pair_id: sha256(pair_material.as_bytes()),
         public_run_id: sha256(args.provider_label.as_bytes()),
         candidate_sha: args.fork_sha.clone(),
-        private_root: args
-            .private_root
-            .canonicalize()
-            .context("canonicalize private root")?,
+        private_root: canonical_private_root,
         repo_root,
         repo_head: args.fork_sha,
         provider_upstream_url: args.provider_upstream_url,
@@ -266,8 +301,26 @@ impl codex_responses_api_proxy::RequestInspector for RuntimeInspector {
 
 /// Executes exactly two arms against the frozen loopback mock upstream.
 pub fn run_local_mock_pair(path: &Path) -> Result<()> {
+    // Binding is deliberately first. `bind` creates the loopback listener but
+    // cannot accept or forward until the fully validated gate is activated.
+    let placeholder_config = codex_responses_api_proxy::ProxyConfig {
+        listen_port: None,
+        upstream_url: reqwest::Url::parse("http://127.0.0.1:1/v1/responses")?,
+        dump_dir: None,
+        http_shutdown: false,
+        default_request_timeout: None,
+        request_transform: None,
+    };
+    let bound = codex_responses_api_proxy::bind(&placeholder_config)?;
+    let broker_port = bound.addr().port();
     let frozen = verify_frozen_context(path)?;
     validate_local_mock_upstream(&frozen.context.provider_upstream_url)?;
+    let pair_duration = Duration::from_secs(frozen.context.max_elapsed_seconds);
+    let started_at = chrono::Utc::now();
+    let pair_deadline = Instant::now()
+        .checked_add(pair_duration)
+        .context("pair deadline overflow")?;
+    let frozen_path = std::env::var("PATH").context("pinned App Server PATH is unavailable")?;
     let mut guard = frozen.execution_guard()?;
     let coordinator_dir = frozen.context.private_root.join("coordinator");
     let skill_bytes = frozen.artifact_bytes("skill")?;
@@ -285,8 +338,6 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         default_request_timeout: None,
         request_transform: Some(runtime.request_transform(Arc::new(RuntimeInspector))),
     };
-    let bound = codex_responses_api_proxy::bind(&proxy_config)?;
-    let broker_port = bound.addr().port();
     let shared_config = build_shared_config(&frozen.context.model_label, broker_port)?;
     let homes = prepare_isolated_homes(
         &frozen.context.private_root,
@@ -302,14 +353,10 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
     let order = commit_arm_order(&frozen, &coordinator_dir)?;
     let first = order.first();
     let second = order.second();
-    let started_at = chrono::Utc::now();
-    let pair_seconds = frozen
-        .context
-        .max_elapsed_seconds
-        .checked_mul(2)
-        .context("pair deadline overflow")?;
     let deadline = started_at
-        .checked_add_signed(chrono::Duration::seconds(i64::try_from(pair_seconds)?))
+        .checked_add_signed(chrono::Duration::seconds(i64::try_from(
+            frozen.context.max_elapsed_seconds,
+        )?))
         .context("pair deadline is out of range")?;
     let execution_bytes = serde_json::to_vec_pretty(&serde_json::json!({
         "schemaVersion": 1,
@@ -331,6 +378,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         "candidateHome": homes.candidate_home,
         "candidateCodexHome": homes.candidate_codex_home,
         "sharedConfigSha256": sha256(&shared_config.bytes),
+        "pathSha256": sha256(frozen_path.as_bytes()),
     }))?;
     let execution_context_sha256 = sha256(&execution_bytes);
     write_owner_only_new(
@@ -346,16 +394,29 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         arm_order_commitment: order.seed_commitment().to_string(),
         runtime,
     })?);
-    gate.commit_order(order)?;
-    guard.advance(ExecutionBoundary::OrderCommitted)?;
-    generated.advance(ExecutionBoundary::OrderCommitted, &coordinator_dir)?;
-    let proxy = codex_responses_api_proxy::activate(
+    poison_on_error(&gate, "commit arm order", gate.commit_order(order))?;
+    let order_guard = guard.advance(ExecutionBoundary::OrderCommitted);
+    poison_on_error(&gate, "rehash after arm-order commitment", order_guard)?;
+    let generated_order = generated.advance(ExecutionBoundary::OrderCommitted, &coordinator_dir);
+    poison_on_error(
+        &gate,
+        "verify generated execution context after arm order",
+        generated_order,
+    )?;
+    let deadline_check = remaining_pair_duration(pair_deadline);
+    poison_on_error(
+        &gate,
+        "check deadline before broker activation",
+        deadline_check,
+    )?;
+    let proxy_result = codex_responses_api_proxy::activate(
         bound,
         proxy_config,
         codex_responses_api_proxy::local_mock_auth_header(),
         gate.clone(),
         gate.clone(),
-    )?;
+    );
+    let proxy = poison_on_error(&gate, "activate bound proof broker", proxy_result)?;
     let run_result = (|| -> Result<()> {
         let tokio_runtime = tokio::runtime::Runtime::new()?;
         for (index, condition) in [(1_u8, first), (2_u8, second)] {
@@ -366,6 +427,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             };
             guard.advance(pre)?;
             generated.advance(pre, &coordinator_dir)?;
+            let verified_config_bytes = generated.config_bytes(condition)?;
             tokio_runtime.block_on(run_app_server_arm(
                 &frozen,
                 &homes,
@@ -374,8 +436,11 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 index,
                 condition,
                 &coordinator_dir,
+                &verified_config_bytes,
+                &frozen_path,
+                pair_deadline,
+                &deadline.to_rfc3339(),
             ))?;
-            gate.seal_arm()?;
             let post = if index == 1 {
                 ExecutionBoundary::Arm1Post
             } else {
@@ -383,34 +448,34 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             };
             guard.advance(post)?;
             generated.advance(post, &coordinator_dir)?;
+            gate.seal_arm()?;
         }
-        gate.finish()?;
         guard.advance(ExecutionBoundary::Finished)?;
-        generated.advance(ExecutionBoundary::Finished, &coordinator_dir)
+        generated.advance(ExecutionBoundary::Finished, &coordinator_dir)?;
+        gate.finish()?;
+        Ok(())
     })();
-    let shutdown_result = proxy.shutdown_with_timeout(Duration::from_secs(2));
+    if let Err(error) = &run_result {
+        let _ = gate.poison_permanently(&format!("paired evaluator failed: {error:#}"));
+    }
+    let shutdown_result = proxy.shutdown_with_timeout(
+        remaining_pair_duration(pair_deadline).unwrap_or(Duration::from_millis(1)),
+    );
+    if let Err(error) = &shutdown_result {
+        let _ = gate.poison_permanently(&format!("broker teardown failed: {error:#}"));
+    }
     run_result?;
     shutdown_result
 }
 
-#[derive(Deserialize)]
-struct StartedThread {
-    thread: ThreadIdentity,
-}
-
-#[derive(Deserialize)]
-struct ThreadIdentity {
-    id: String,
-}
-
-#[derive(Deserialize)]
-struct StartedTurn {
-    turn: TurnIdentity,
-}
-
-#[derive(Deserialize)]
-struct TurnIdentity {
-    id: String,
+fn poison_on_error<T>(gate: &PairCoordinator, step: &str, result: Result<T>) -> Result<T> {
+    match result {
+        Ok(value) => Ok(value),
+        Err(error) => {
+            let _ = gate.poison_permanently(&format!("{step} failed: {error:#}"));
+            Err(error)
+        }
+    }
 }
 
 async fn run_app_server_arm(
@@ -421,17 +486,24 @@ async fn run_app_server_arm(
     run_ordinal: u8,
     condition: EvaluationCondition,
     coordinator_dir: &Path,
+    verified_config_bytes: &[u8],
+    frozen_path: &str,
+    pair_deadline: Instant,
+    pair_deadline_rfc3339: &str,
 ) -> Result<()> {
+    use codex_app_server_protocol::ApprovalsReviewer;
+    use codex_app_server_protocol::AskForApproval;
+    use codex_app_server_protocol::ThreadStartResponse;
+    use codex_app_server_protocol::TurnStartResponse;
     use codex_app_server_protocol::TurnStatus;
 
     let (home, codex_home) = match condition {
         EvaluationCondition::Generic => (&homes.generic_home, &homes.generic_codex_home),
         EvaluationCondition::Candidate => (&homes.candidate_home, &homes.candidate_codex_home),
     };
-    let path = std::env::var("PATH").context("pinned App Server PATH is unavailable")?;
     let temporary = home.join("tmp");
     let environment = ChildEnvironment::from_environment(
-        &BTreeMap::from([("PATH".to_string(), path)]),
+        &BTreeMap::from([("PATH".to_string(), frozen_path.to_string())]),
         home.to_str().context("non-UTF-8 isolated Home")?,
         codex_home
             .to_str()
@@ -442,25 +514,18 @@ async fn run_app_server_arm(
         .artifacts
         .artifacts
         .get("codexBinary")
-        .context("missing codex binary commitment")?
-        .canonical_path
-        .clone();
-    let mut app_server = AppServerClient::spawn(
-        &codex_binary,
+        .context("missing codex binary commitment")?;
+    let retained_executable_descriptor = codex_binary.verified_exec_descriptor()?;
+    let mut app_server = AppServerClient::spawn_verified(
+        &codex_binary.canonical_path,
+        retained_executable_descriptor,
         &coordinator_dir.join(format!("app-server-{run_ordinal}.stderr")),
         &environment,
     )
     .await?;
-    let arm_duration = Duration::from_secs(frozen.context.max_elapsed_seconds);
-    let arm_deadline = Instant::now()
-        .checked_add(arm_duration)
-        .context("arm deadline overflow")?;
-    let deadline_rfc3339 = (chrono::Utc::now()
-        + chrono::Duration::seconds(i64::try_from(frozen.context.max_elapsed_seconds)?))
-    .to_rfc3339();
-    let handshake_timeout = remaining_arm_duration(arm_deadline)?;
+    let handshake_timeout = remaining_pair_duration(pair_deadline)?;
     let handshake = run_before_deadline(
-        arm_deadline,
+        pair_deadline,
         app_server.handshake(codex_home, &frozen.context.private_root, handshake_timeout),
     )
     .await?;
@@ -469,7 +534,7 @@ async fn run_app_server_arm(
         &handshake.requirements,
         &ConfigAuditExpectation {
             canonical_config_path: codex_home.join("config.toml").canonicalize()?,
-            expected_config_bytes: shared_config.bytes.clone(),
+            expected_config_bytes: verified_config_bytes.to_vec(),
             expected_layer_config: shared_config.layer_json.clone(),
             expected_effective_config: serde_json::to_value(&handshake.config.config)?,
         },
@@ -482,20 +547,34 @@ async fn run_app_server_arm(
     if serde_json::to_vec_pretty(&thread_params)? != frozen.artifact_bytes("threadStartRequest")? {
         bail!("runtime thread/start request differs from frozen projection");
     }
-    let started: StartedThread = app_server
+    let started: ThreadStartResponse = app_server
         .protocol_mut()?
         .request(
             "thread/start",
             Some(&thread_params),
-            remaining_arm_duration(arm_deadline)?,
+            remaining_pair_duration(pair_deadline)?,
         )
         .await?;
+    if started.model != frozen.context.model_label
+        || started.model_provider != "ai-ip-proof-broker"
+        || started.cwd.as_path() != frozen.context.private_root
+        || started.approval_policy != AskForApproval::Never
+        || started.approvals_reviewer != ApprovalsReviewer::User
+        || started.service_tier.is_some()
+        || started
+            .active_permission_profile
+            .as_ref()
+            .is_none_or(|profile| profile.id != crate::app_server::EVALUATION_PERMISSION_PROFILE)
+    {
+        bail!("thread/start response differs from the frozen execution controls");
+    }
+    let mut tree = crate::TreeEventCollector::new(&started.thread)?;
     gate.activate_arm(ArmActivation {
         run_ordinal,
         condition,
         root_thread_id: started.thread.id.clone(),
-        deadline: arm_deadline,
-        deadline_rfc3339,
+        deadline: pair_deadline,
+        deadline_rfc3339: pair_deadline_rfc3339.to_string(),
     })?;
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(&frozen.artifact_bytes("source")?)?;
@@ -505,48 +584,166 @@ async fn run_app_server_arm(
     if serde_json::to_vec_pretty(&normalized_turn)? != frozen.artifact_bytes("turnStartRequest")? {
         bail!("runtime turn/start request differs from frozen projection");
     }
-    let started_turn: StartedTurn = app_server
+    let started_turn: TurnStartResponse = app_server
         .protocol_mut()?
         .request(
             "turn/start",
             Some(&turn_params),
-            remaining_arm_duration(arm_deadline)?,
+            remaining_pair_duration(pair_deadline)?,
         )
         .await?;
+    if started_turn.turn.status != TurnStatus::InProgress || !started_turn.turn.items.is_empty() {
+        bail!("turn/start response is not a fresh in-progress turn");
+    }
     let completed = app_server
         .protocol_mut()?
         .wait_for_turn_completion(
             &started.thread.id,
             &started_turn.turn.id,
-            remaining_arm_duration(arm_deadline)?,
-            |notification| observe_app_server_lifecycle(gate, &started.thread.id, notification),
+            remaining_pair_duration(pair_deadline)?,
+            |notification| {
+                observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
+                tree.ingest(notification.clone())
+            },
         )
         .await?;
     if completed.turn.status != TurnStatus::Completed {
         bail!("App Server turn did not complete successfully");
     }
-    let close_timeout = remaining_arm_duration(arm_deadline)?;
-    let status = run_before_deadline(arm_deadline, app_server.close(close_timeout)).await?;
+    tree.ingest(codex_app_server_protocol::ServerNotification::TurnCompleted(completed))?;
+    let first_scan =
+        complete_quiet_tree_scan(app_server.protocol_mut()?, &started.thread, pair_deadline)
+            .await?;
+    let second_scan =
+        complete_quiet_tree_scan(app_server.protocol_mut()?, &started.thread, pair_deadline)
+            .await?;
+    first_scan.verify_broker_thread_ids(&gate.active_thread_ids()?)?;
+    tree.close(
+        &first_scan,
+        &second_scan,
+        &gate.active_completions()?,
+        gate.in_flight_count(),
+    )?;
+    let close_timeout = remaining_pair_duration(pair_deadline)?;
+    let status = run_before_deadline(pair_deadline, app_server.close(close_timeout)).await?;
     if !status.success() {
         bail!("pinned App Server exited unsuccessfully");
     }
     Ok(())
 }
 
-fn remaining_arm_duration(deadline: Instant) -> Result<Duration> {
+async fn complete_quiet_tree_scan<R, W>(
+    client: &mut crate::JsonLineClient<R, W>,
+    root: &codex_app_server_protocol::Thread,
+    deadline: Instant,
+) -> Result<crate::TreeScan>
+where
+    R: tokio::io::AsyncRead + Unpin,
+    W: tokio::io::AsyncWrite + Unpin,
+{
+    use codex_app_server_protocol::ThreadListParams;
+    use codex_app_server_protocol::ThreadListResponse;
+    use codex_app_server_protocol::ThreadLoadedListParams;
+    use codex_app_server_protocol::ThreadLoadedListResponse;
+    use codex_app_server_protocol::ThreadReadParams;
+    use codex_app_server_protocol::ThreadReadResponse;
+    use codex_app_server_protocol::ThreadSourceKind;
+
+    let mut ancestor_pages = Vec::new();
+    let mut cursor = None;
+    loop {
+        if ancestor_pages.len() >= 100 {
+            bail!("thread/list pagination exceeded the frozen bound");
+        }
+        let params = ThreadListParams {
+            cursor: cursor.clone(),
+            limit: Some(100),
+            sort_key: None,
+            sort_direction: None,
+            model_providers: Some(vec!["ai-ip-proof-broker".to_string()]),
+            source_kinds: Some(vec![
+                ThreadSourceKind::SubAgent,
+                ThreadSourceKind::SubAgentThreadSpawn,
+                ThreadSourceKind::SubAgentOther,
+            ]),
+            archived: Some(false),
+            section_id: None,
+            project_id: None,
+            cwd: None,
+            use_state_db_only: false,
+            search_term: None,
+            parent_thread_id: None,
+            ancestor_thread_id: Some(root.id.clone()),
+        };
+        let page: ThreadListResponse = client
+            .request(
+                "thread/list",
+                Some(&params),
+                remaining_pair_duration(deadline)?,
+            )
+            .await?;
+        cursor = page.next_cursor.clone();
+        ancestor_pages.push(page);
+        if cursor.is_none() {
+            break;
+        }
+    }
+
+    let mut loaded_pages = Vec::new();
+    let mut cursor = None;
+    loop {
+        if loaded_pages.len() >= 100 {
+            bail!("thread/loaded/list pagination exceeded the frozen bound");
+        }
+        let params = ThreadLoadedListParams {
+            cursor: cursor.clone(),
+            limit: Some(100),
+        };
+        let page: ThreadLoadedListResponse = client
+            .request(
+                "thread/loaded/list",
+                Some(&params),
+                remaining_pair_duration(deadline)?,
+            )
+            .await?;
+        cursor = page.next_cursor.clone();
+        loaded_pages.push(page);
+        if cursor.is_none() {
+            break;
+        }
+    }
+
+    let mut loaded_reads = Vec::new();
+    for thread_id in loaded_pages.iter().flat_map(|page| &page.data) {
+        let response: ThreadReadResponse = client
+            .request(
+                "thread/read",
+                Some(&ThreadReadParams {
+                    thread_id: thread_id.clone(),
+                    include_turns: true,
+                }),
+                remaining_pair_duration(deadline)?,
+            )
+            .await?;
+        loaded_reads.push(response);
+    }
+    crate::TreeScan::from_typed_pages(root, &ancestor_pages, &loaded_pages, &loaded_reads)
+}
+
+fn remaining_pair_duration(deadline: Instant) -> Result<Duration> {
     deadline
         .checked_duration_since(Instant::now())
         .filter(|remaining| !remaining.is_zero())
-        .context("frozen per-arm elapsed deadline expired")
+        .context("frozen absolute pair deadline expired")
 }
 
 pub(crate) async fn run_before_deadline<T>(
     deadline: Instant,
     future: impl std::future::Future<Output = Result<T>>,
 ) -> Result<T> {
-    tokio::time::timeout(remaining_arm_duration(deadline)?, future)
+    tokio::time::timeout(remaining_pair_duration(deadline)?, future)
         .await
-        .context("frozen per-arm elapsed deadline expired")?
+        .context("frozen absolute pair deadline expired")?
 }
 
 fn observe_app_server_lifecycle(
@@ -640,8 +837,12 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
     let bytes = frozen_file.read_verified()?;
     let context: FrozenRunContext =
         serde_json::from_slice(&bytes).context("parse strict frozen context JSON")?;
-    let artifacts = ArtifactCommitments::from_references(&context.artifacts)?;
+    if canonical_path != context.private_root.join("frozen-run-context.json") {
+        bail!("frozen context is outside its canonical private-root location");
+    }
+    require_owner_only_file(&canonical_path)?;
     validate_frozen_context(&context)?;
+    let artifacts = ArtifactCommitments::from_references(&context.artifacts)?;
     Ok(VerifiedFrozenContext {
         canonical_path,
         sha256: sha256(&bytes),
@@ -899,7 +1100,6 @@ pub enum ExecutionBoundary {
 
 struct GeneratedExecutionArtifacts {
     immutable: BTreeMap<String, ArtifactCommitment>,
-    ledger_snapshots: Vec<(ExecutionBoundary, String)>,
 }
 
 impl GeneratedExecutionArtifacts {
@@ -915,7 +1115,6 @@ impl GeneratedExecutionArtifacts {
                 ("genericConfig".to_string(), generic),
                 ("candidateConfig".to_string(), candidate),
             ]),
-            ledger_snapshots: Vec::new(),
         })
     }
 
@@ -930,37 +1129,19 @@ impl GeneratedExecutionArtifacts {
                 "executionContext",
                 &coordinator_dir.join("execution-context.json"),
             )?;
-            let ledger = read_regular_file_no_follow(&coordinator_dir.join("attempt-index.jsonl"))?;
-            self.ledger_snapshots.push((boundary, sha256(&ledger)));
-        }
-        if matches!(
-            boundary,
-            ExecutionBoundary::Arm1Post
-                | ExecutionBoundary::Arm2Pre
-                | ExecutionBoundary::Arm2Post
-                | ExecutionBoundary::Finished
-        ) {
-            self.capture_once(
-                "arm1Receipt",
-                &coordinator_dir.join("receipts/arm-1-receipt.json"),
-            )?;
-        }
-        if matches!(
-            boundary,
-            ExecutionBoundary::Arm2Post | ExecutionBoundary::Finished
-        ) {
-            self.capture_once(
-                "arm2Receipt",
-                &coordinator_dir.join("receipts/arm-2-receipt.json"),
-            )?;
-        }
-        if boundary == ExecutionBoundary::Finished {
-            self.capture_once(
-                "pairReceipt",
-                &coordinator_dir.join("receipts/pair-receipt.json"),
-            )?;
         }
         Ok(())
+    }
+
+    fn config_bytes(&self, condition: EvaluationCondition) -> Result<Vec<u8>> {
+        let name = match condition {
+            EvaluationCondition::Generic => "genericConfig",
+            EvaluationCondition::Candidate => "candidateConfig",
+        };
+        self.immutable
+            .get(name)
+            .context("missing generated config commitment")?
+            .read_verified()
     }
 
     fn capture_once(&mut self, name: &str, path: &Path) -> Result<()> {
@@ -1163,6 +1344,19 @@ impl ArtifactCommitment {
         }
         Ok(bytes)
     }
+
+    #[cfg(unix)]
+    fn verified_exec_descriptor(&self) -> Result<File> {
+        self.read_verified()?;
+        self.handle
+            .try_clone()
+            .context("duplicate verified executable descriptor")
+    }
+
+    #[cfg(not(unix))]
+    fn verified_exec_descriptor(&self) -> Result<File> {
+        bail!("descriptor-backed executable launch requires Unix fexec semantics")
+    }
 }
 
 #[cfg(unix)]
@@ -1305,6 +1499,67 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         if private_metadata.permissions().mode() & 0o077 != 0 {
             bail!("private root must be owner-only");
+        }
+    }
+    let frozen_inputs = context.private_root.join("frozen-inputs");
+    require_owner_only_directory(&frozen_inputs)?;
+    let expected_private_inputs = [
+        ("source", "source.json"),
+        ("materials", "materials.json"),
+        ("providerBudgetReceipt", "provider-budget-receipt.json"),
+        ("rateCard", "rate-card.json"),
+        ("billingPolicy", "billing-policy.json"),
+        ("fxPolicy", "fx-policy.json"),
+        ("skill", "lead-skill.md"),
+        ("schema", "content-package-schema.json"),
+        ("prompt", "root-prompt.txt"),
+        ("threadStartRequest", "thread-start-request.json"),
+        ("turnStartRequest", "turn-start-request.json"),
+    ];
+    for (name, leaf) in expected_private_inputs {
+        let expected = frozen_inputs
+            .join(leaf)
+            .canonicalize()
+            .with_context(|| format!("canonicalize private frozen input {name}"))?;
+        if context.artifacts[name].path != expected {
+            bail!("frozen {name} reference is outside its canonical private input slot");
+        }
+        require_owner_only_file(&expected)?;
+    }
+    Ok(())
+}
+
+fn require_owner_only_file(path: &Path) -> Result<()> {
+    let metadata = fs::symlink_metadata(path)?;
+    if !metadata.file_type().is_file()
+        || metadata.file_type().is_symlink()
+        || has_multiple_links(&metadata)
+    {
+        bail!(
+            "private input must be a single-link regular file: {}",
+            path.display()
+        );
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if metadata.permissions().mode() & 0o077 != 0 {
+            bail!("private input must be owner-only: {}", path.display());
+        }
+    }
+    Ok(())
+}
+
+fn require_owner_only_directory(path: &Path) -> Result<()> {
+    let metadata = fs::symlink_metadata(path)?;
+    if !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
+        bail!("private input root must be a non-symlink directory");
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if metadata.permissions().mode() & 0o077 != 0 {
+            bail!("private input root must be owner-only");
         }
     }
     Ok(())

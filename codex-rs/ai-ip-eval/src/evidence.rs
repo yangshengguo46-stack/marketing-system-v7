@@ -366,6 +366,15 @@ impl TreeScan {
             {
                 bail!("thread/read disagrees with the paginated tree scan");
             }
+            if id != &root.id
+                && (thread.turns.is_empty()
+                    || thread
+                        .turns
+                        .iter()
+                        .any(|turn| turn.status != TurnStatus::Completed))
+            {
+                bail!("descendant thread/read lacks complete terminal turn history");
+            }
         }
         for read in loaded_reads {
             if !loaded_ids.contains(&read.thread.id) {
@@ -381,6 +390,17 @@ impl TreeScan {
 
     pub fn thread_count(&self) -> usize {
         self.records.len()
+    }
+
+    pub(crate) fn verify_broker_thread_ids(
+        &self,
+        broker_thread_ids: &HashSet<String>,
+    ) -> anyhow::Result<()> {
+        let scanned = self.records.keys().cloned().collect::<HashSet<_>>();
+        if &scanned != broker_thread_ids {
+            bail!("App Server quiet tree differs from the broker lifecycle tree");
+        }
+        Ok(())
     }
 }
 

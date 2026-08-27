@@ -14,7 +14,7 @@ use crate::TreeScan;
 use crate::tests::package_json;
 
 fn thread(id: &str, parent: Option<&str>) -> Thread {
-    serde_json::from_value(json!({
+    let mut value = json!({
         "id": id,
         "extra": null,
         "sessionId": "session-1",
@@ -42,8 +42,20 @@ fn thread(id: &str, parent: Option<&str>) -> Thread {
         "gitInfo": null,
         "name": null,
         "turns": []
-    }))
-    .unwrap()
+    });
+    if parent.is_some() {
+        value["turns"] = json!([{
+            "id": format!("turn-{id}"),
+            "items": [],
+            "itemsView": "full",
+            "status": "completed",
+            "error": null,
+            "startedAt": null,
+            "completedAt": null,
+            "durationMs": 1
+        }]);
+    }
+    serde_json::from_value(value).unwrap()
 }
 
 fn notification(value: serde_json::Value) -> ServerNotification {
@@ -174,6 +186,18 @@ fn tree_collector_closes_root_child_grandchild_and_sibling_with_exact_usage_pari
     let first_scan = scans(&root, &descendants);
     let second_scan = scans(&root, &descendants);
     assert_eq!(first_scan.thread_count(), 4);
+    let broker_threads = ["root", "child", "grandchild", "sibling"]
+        .into_iter()
+        .map(str::to_string)
+        .collect();
+    first_scan
+        .verify_broker_thread_ids(&broker_threads)
+        .unwrap();
+    assert!(
+        first_scan
+            .verify_broker_thread_ids(&["root".to_string()].into_iter().collect())
+            .is_err()
+    );
 
     let mut collector = TreeEventCollector::new(&root).unwrap();
     for descendant in [&child, &grandchild, &sibling] {
@@ -218,6 +242,32 @@ fn tree_collector_closes_root_child_grandchild_and_sibling_with_exact_usage_pari
     assert_eq!(evidence.thread_count, 4);
     assert_eq!(evidence.raw_response_count, 4);
     assert_eq!(evidence.usage.total_tokens, 100);
+}
+
+#[test]
+fn typed_quiet_scan_rejects_descendant_without_terminal_turn_history() {
+    let root = thread("root", None);
+    let mut child = thread("child", Some("root"));
+    child.turns.clear();
+    let scan = TreeScan::from_typed_pages(
+        &root,
+        &[ThreadListResponse {
+            data: vec![child.clone()],
+            next_cursor: None,
+            backwards_cursor: None,
+        }],
+        &[ThreadLoadedListResponse {
+            data: vec![root.id.clone(), child.id.clone()],
+            next_cursor: None,
+        }],
+        &[
+            ThreadReadResponse {
+                thread: root.clone(),
+            },
+            ThreadReadResponse { thread: child },
+        ],
+    );
+    assert!(scan.is_err());
 }
 
 #[test]

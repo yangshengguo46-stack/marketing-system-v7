@@ -12,6 +12,7 @@ use std::time::Instant;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::bail;
 use chrono::Utc;
 use codex_protocol::ThreadId;
 use codex_responses_api_proxy::ExchangeObserver;
@@ -57,7 +58,7 @@ pub struct BrokerRuntimeConfig {
     max_attempts_per_arm: u64,
     max_output_tokens: u64,
     max_body_bytes: usize,
-    max_total_tokens_per_arm: u64,
+    max_total_tokens_per_pair: u64,
 }
 
 impl BrokerRuntimeConfig {
@@ -81,12 +82,12 @@ impl BrokerRuntimeConfig {
         max_attempts_per_arm: u64,
         max_output_tokens: u64,
         max_body_bytes: usize,
-        max_total_tokens_per_arm: u64,
+        max_total_tokens_per_pair: u64,
     ) -> Result<Self> {
         if max_attempts_per_arm == 0
             || max_output_tokens == 0
             || max_body_bytes == 0
-            || max_total_tokens_per_arm == 0
+            || max_total_tokens_per_pair == 0
         {
             return Err(anyhow!("broker runtime limits must be positive"));
         }
@@ -94,7 +95,7 @@ impl BrokerRuntimeConfig {
             max_attempts_per_arm,
             max_output_tokens,
             max_body_bytes,
-            max_total_tokens_per_arm,
+            max_total_tokens_per_pair,
         })
     }
 
@@ -248,7 +249,7 @@ struct ActiveArm {
     failure_start: u64,
     timeout_start: u64,
     accepting: bool,
-    total_tokens: u64,
+    completions: Vec<ResponseCompletedMetadata>,
 }
 
 struct InFlight {
@@ -261,6 +262,7 @@ struct TerminalMetadata {
     actual_model_revision: Option<String>,
     deployment_commitment: Option<String>,
     usage: Option<Usage>,
+    completion: Option<ResponseCompletedMetadata>,
 }
 
 struct Counts {
@@ -274,14 +276,18 @@ struct CoordinatorState {
     order: Option<(EvaluationCondition, EvaluationCondition)>,
     active: Option<ActiveArm>,
     ledger: File,
+    ledger_directory: File,
+    ledger_leaf: String,
     receipt_directory: File,
     ledger_bytes: Vec<u8>,
     record_hashes: Vec<[u8; 32]>,
     in_flight: HashMap<u64, InFlight>,
     terminal_metadata: HashMap<u64, TerminalMetadata>,
     invalid_completions: HashSet<u64>,
+    invalid_usage: HashSet<u64>,
     completed_attempts: HashSet<u64>,
     counts: Counts,
+    total_tokens: u64,
     first_receipt: Option<ArmReceipt>,
     second_receipt: Option<ArmReceipt>,
     #[cfg(test)]
@@ -331,16 +337,7 @@ impl PairCoordinator {
                 config.receipt_dir.display()
             )
         })?;
-        let mut ledger_options = OpenOptions::new();
-        ledger_options.write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            ledger_options.mode(0o600);
-        }
-        let ledger = ledger_options
-            .open(&config.ledger_path)
-            .with_context(|| format!("create ledger {}", config.ledger_path.display()))?;
+        let (ledger, ledger_directory, ledger_leaf) = create_anchored_ledger(&config.ledger_path)?;
         ledger.sync_all().context("fsync empty attempt ledger")?;
         Ok(Self {
             config,
@@ -349,18 +346,22 @@ impl PairCoordinator {
                 order: None,
                 active: None,
                 ledger,
+                ledger_directory,
+                ledger_leaf,
                 receipt_directory,
                 ledger_bytes: Vec::new(),
                 record_hashes: Vec::new(),
                 in_flight: HashMap::new(),
                 terminal_metadata: HashMap::new(),
                 invalid_completions: HashSet::new(),
+                invalid_usage: HashSet::new(),
                 completed_attempts: HashSet::new(),
                 counts: Counts {
                     completed: 0,
                     failed: 0,
                     timeout: 0,
                 },
+                total_tokens: 0,
                 first_receipt: None,
                 second_receipt: None,
                 #[cfg(test)]
@@ -376,6 +377,12 @@ impl PairCoordinator {
             },
             |state| state.phase.clone(),
         )
+    }
+
+    /// Durably and permanently invalidates this pair after any coordinator-side failure.
+    pub fn poison_permanently(&self, reason: &str) -> Result<()> {
+        let mut state = self.lock_state()?;
+        poison(&self.config, &mut state, reason)
     }
 
     pub fn commit_order(&self, order: CommittedArmOrder) -> Result<()> {
@@ -457,7 +464,7 @@ impl PairCoordinator {
             failure_start: state.counts.failed,
             timeout_start: state.counts.timeout,
             accepting: true,
-            total_tokens: 0,
+            completions: Vec::new(),
         });
         state.phase = if run_ordinal == 1 {
             PairPhase::Active1 { condition }
@@ -553,6 +560,24 @@ impl PairCoordinator {
             .unwrap_or(u64::MAX)
     }
 
+    pub(crate) fn active_completions(&self) -> Result<Vec<ResponseCompletedMetadata>> {
+        let state = self.lock_state()?;
+        state
+            .active
+            .as_ref()
+            .map(|active| active.completions.clone())
+            .context("completion snapshot requested outside an active arm")
+    }
+
+    pub(crate) fn active_thread_ids(&self) -> Result<HashSet<String>> {
+        let state = self.lock_state()?;
+        state
+            .active
+            .as_ref()
+            .map(|active| active.known_threads.keys().cloned().collect())
+            .context("thread snapshot requested outside an active arm")
+    }
+
     #[cfg(test)]
     pub(crate) fn fail_next_terminal_append_for_test(&self) {
         if let Ok(mut state) = self.state.lock() {
@@ -562,6 +587,13 @@ impl PairCoordinator {
 
     pub fn seal_arm(&self) -> Result<ArmReceipt> {
         let mut state = self.lock_state()?;
+        if let Err(error) = verify_anchored_ledger(&self.config, &state) {
+            return poison(
+                &self.config,
+                &mut state,
+                &format!("attempt ledger identity or prefix changed: {error:#}"),
+            );
+        }
         let phase = state.phase.clone();
         if !state.in_flight.is_empty() {
             return poison(
@@ -594,6 +626,17 @@ impl PairCoordinator {
             .first_receipt
             .as_ref()
             .map(|receipt| receipt.receipt_sha256.clone());
+        if run_ordinal == 2
+            && let Some(first) = state.first_receipt.as_ref()
+            && let Err(error) =
+                verify_anchored_receipt(&state, "arm-1-receipt.json", &first.receipt_sha256)
+        {
+            return poison(
+                &self.config,
+                &mut state,
+                &format!("first arm receipt changed before second seal: {error:#}"),
+            );
+        }
         let mut receipt = ArmReceipt {
             schema_version: SCHEMA_VERSION,
             pair_id: self.config.pair_id.clone(),
@@ -647,6 +690,13 @@ impl PairCoordinator {
 
     pub fn finish(&self) -> Result<PairReceipt> {
         let mut state = self.lock_state()?;
+        if let Err(error) = verify_anchored_ledger(&self.config, &state) {
+            return poison(
+                &self.config,
+                &mut state,
+                &format!("attempt ledger identity or prefix changed: {error:#}"),
+            );
+        }
         if !matches!(state.phase, PairPhase::Active2 { .. })
             || state.active.as_ref().is_none_or(|active| active.accepting)
         {
@@ -655,11 +705,25 @@ impl PairCoordinator {
         let first = state
             .first_receipt
             .as_ref()
+            .cloned()
             .ok_or_else(|| anyhow!("missing first arm receipt"))?;
         let second = state
             .second_receipt
             .as_ref()
+            .cloned()
             .ok_or_else(|| anyhow!("missing second arm receipt"))?;
+        for (leaf, expected) in [
+            ("arm-1-receipt.json", first.receipt_sha256.as_str()),
+            ("arm-2-receipt.json", second.receipt_sha256.as_str()),
+        ] {
+            if let Err(error) = verify_anchored_receipt(&state, leaf, expected) {
+                return poison(
+                    &self.config,
+                    &mut state,
+                    &format!("arm receipt changed before pair finish: {error:#}"),
+                );
+            }
+        }
         let total_attempt_count = u64::try_from(state.completed_attempts.len())
             .context("attempt count does not fit u64")?;
         let receipt = PairReceipt {
@@ -667,8 +731,8 @@ impl PairCoordinator {
             pair_id: self.config.pair_id.clone(),
             frozen_run_context_sha256: self.config.frozen_run_context_sha256.clone(),
             execution_context_sha256: self.config.execution_context_sha256.clone(),
-            first_arm_receipt_sha256: first.receipt_sha256.clone(),
-            second_arm_receipt_sha256: second.receipt_sha256.clone(),
+            first_arm_receipt_sha256: first.receipt_sha256,
+            second_arm_receipt_sha256: second.receipt_sha256,
             total_attempt_count,
             total_completion_count: state.counts.completed,
             total_failure_count: state.counts.failed,
@@ -753,6 +817,11 @@ impl ExchangeObserver for PairCoordinator {
             );
             return;
         }
+        if validate_observed_usage(event.usage.as_ref()).is_err() {
+            state.invalid_usage.insert(permit.attempt_id());
+            let _ = poison::<()>(&self.config, &mut state, "invalid response usage");
+            return;
+        }
         state.terminal_metadata.insert(
             permit.attempt_id(),
             TerminalMetadata {
@@ -770,6 +839,7 @@ impl ExchangeObserver for PairCoordinator {
                     output_tokens: usage.output_tokens,
                     reasoning_output_tokens: usage.reasoning_output_tokens,
                 }),
+                completion: Some(event.clone()),
             },
         );
     }
@@ -897,21 +967,25 @@ fn append_terminal(
         .ok_or_else(|| anyhow!("terminal record has no request"))?;
     let metadata = state.terminal_metadata.get(&attempt_id).cloned();
     let invalid_completion = state.invalid_completions.contains(&attempt_id);
+    let invalid_usage = state.invalid_usage.contains(&attempt_id);
     let observed_total_tokens = metadata
         .as_ref()
         .and_then(|metadata| metadata.usage.as_ref())
         .map(|usage| usage.total_tokens);
-    let token_cap_exceeded = match (state.active.as_ref(), observed_total_tokens) {
-        (_, Some(tokens)) if tokens < 0 => true,
-        (Some(active), Some(tokens)) => u64::try_from(tokens)
+    let token_cap_exceeded = match observed_total_tokens {
+        Some(tokens) if tokens < 0 => true,
+        Some(tokens) => u64::try_from(tokens)
             .ok()
-            .and_then(|tokens| active.total_tokens.checked_add(tokens))
-            .is_none_or(|total| total > config.runtime.max_total_tokens_per_arm),
+            .and_then(|tokens| state.total_tokens.checked_add(tokens))
+            .is_none_or(|total| total > config.runtime.max_total_tokens_per_pair),
         _ => false,
     };
     let (status, failure_class, count_kind) = match result {
         ForwardResult::Completed { .. } if token_cap_exceeded => {
             ("failed", Some("maxTotalTokensExceeded".to_string()), 1_u8)
+        }
+        ForwardResult::Completed { .. } if invalid_usage => {
+            ("failed", Some("invalidResponseUsage".to_string()), 1_u8)
         }
         ForwardResult::Completed { .. } if invalid_completion => (
             "failed",
@@ -928,6 +1002,7 @@ fn append_terminal(
         ForwardResult::Failed { class } => ("failed", Some(format!("{class:?}")), 1_u8),
     };
     let metadata = metadata.unwrap_or_default();
+    let completion = metadata.completion.clone();
     let record = TerminalRecord {
         schema_version: SCHEMA_VERSION,
         record_type: "terminal",
@@ -951,10 +1026,16 @@ fn append_terminal(
     state.in_flight.remove(&attempt_id);
     state.terminal_metadata.remove(&attempt_id);
     state.invalid_completions.remove(&attempt_id);
-    if let (Some(active), Some(tokens)) = (state.active.as_mut(), observed_total_tokens)
+    state.invalid_usage.remove(&attempt_id);
+    if let Some(tokens) = observed_total_tokens
         && let Ok(tokens) = u64::try_from(tokens)
     {
-        active.total_tokens = active.total_tokens.saturating_add(tokens);
+        state.total_tokens = state.total_tokens.saturating_add(tokens);
+    }
+    if count_kind == 0
+        && let (Some(active), Some(completion)) = (state.active.as_mut(), completion)
+    {
+        active.completions.push(completion);
     }
     match count_kind {
         0 => state.counts.completed += 1,
@@ -964,6 +1045,33 @@ fn append_terminal(
     state.record_hashes.push(Sha256::digest(&bytes).into());
     state.completed_attempts.insert(attempt_id);
     Ok(count_kind != 0)
+}
+
+fn validate_observed_usage(usage: Option<&codex_responses_api_proxy::ObservedUsage>) -> Result<()> {
+    let usage = usage.context("response completion is missing usage")?;
+    let values = [
+        usage.total_tokens,
+        usage.input_tokens,
+        usage.cached_input_tokens,
+        usage.cache_write_input_tokens,
+        usage.output_tokens,
+        usage.reasoning_output_tokens,
+    ];
+    if values.into_iter().any(|value| value < 0) {
+        bail!("negative response usage");
+    }
+    if usage.input_tokens.checked_add(usage.output_tokens) != Some(usage.total_tokens) {
+        bail!("response total usage is inconsistent");
+    }
+    if usage
+        .cached_input_tokens
+        .checked_add(usage.cache_write_input_tokens)
+        .is_none_or(|cached| cached > usage.input_tokens)
+        || usage.reasoning_output_tokens > usage.output_tokens
+    {
+        bail!("response usage breakdown is inconsistent");
+    }
+    Ok(())
 }
 
 fn append_synced(state: &mut CoordinatorState, bytes: &[u8]) -> Result<()> {
@@ -979,6 +1087,108 @@ fn append_synced(state: &mut CoordinatorState, bytes: &[u8]) -> Result<()> {
     state.ledger_bytes.extend_from_slice(bytes);
     state.ledger_bytes.push(b'\n');
     Ok(())
+}
+
+#[cfg(unix)]
+fn verify_anchored_ledger(_config: &BrokerGateConfig, state: &CoordinatorState) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::fs::FileExt;
+    use std::os::unix::fs::MetadataExt;
+
+    let leaf = CString::new(state.ledger_leaf.as_bytes()).context("ledger leaf contains NUL")?;
+    let descriptor = unsafe {
+        libc::openat(
+            state.ledger_directory.as_raw_fd(),
+            leaf.as_ptr(),
+            libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    if descriptor < 0 {
+        return Err(std::io::Error::last_os_error()).context("reopen anchored attempt ledger");
+    }
+    let current = unsafe { File::from_raw_fd(descriptor) };
+    let retained_metadata = state.ledger.metadata()?;
+    let current_metadata = current.metadata()?;
+    if retained_metadata.dev() != current_metadata.dev()
+        || retained_metadata.ino() != current_metadata.ino()
+    {
+        bail!("attempt ledger pathname no longer names the retained file");
+    }
+    if retained_metadata.len() != u64::try_from(state.ledger_bytes.len())? {
+        bail!("attempt ledger was truncated or extended outside the coordinator");
+    }
+    let mut bytes = vec![0_u8; state.ledger_bytes.len()];
+    let mut offset = 0_usize;
+    while offset < bytes.len() {
+        let read = state
+            .ledger
+            .read_at(&mut bytes[offset..], u64::try_from(offset)?)?;
+        if read == 0 {
+            bail!("attempt ledger ended before the committed prefix");
+        }
+        offset += read;
+    }
+    if bytes != state.ledger_bytes {
+        bail!("attempt ledger bytes differ from the committed append-only prefix");
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn verify_anchored_ledger(_config: &BrokerGateConfig, _state: &CoordinatorState) -> Result<()> {
+    bail!("attempt ledger verification requires Unix openat semantics")
+}
+
+#[cfg(unix)]
+fn create_anchored_ledger(path: &std::path::Path) -> Result<(File, File, String)> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::OpenOptionsExt;
+
+    let parent = path.parent().context("attempt ledger has no parent")?;
+    let leaf = path
+        .file_name()
+        .context("attempt ledger has no leaf name")?;
+    let leaf_text = leaf
+        .to_str()
+        .context("attempt ledger leaf is not UTF-8")?
+        .to_string();
+    if leaf_text.contains('/') || leaf_text.contains('\\') {
+        bail!("attempt ledger name is not a leaf");
+    }
+    let mut directory_options = OpenOptions::new();
+    directory_options
+        .read(true)
+        .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW);
+    let directory = directory_options
+        .open(parent)
+        .with_context(|| format!("open anchored ledger directory {}", parent.display()))?;
+    let leaf_c = CString::new(leaf.as_bytes()).context("attempt ledger leaf contains NUL")?;
+    let descriptor = unsafe {
+        libc::openat(
+            directory.as_raw_fd(),
+            leaf_c.as_ptr(),
+            libc::O_RDWR | libc::O_CREAT | libc::O_EXCL | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+            0o600,
+        )
+    };
+    if descriptor < 0 {
+        return Err(std::io::Error::last_os_error()).context("create anchored attempt ledger");
+    }
+    Ok((
+        unsafe { File::from_raw_fd(descriptor) },
+        directory,
+        leaf_text,
+    ))
+}
+
+#[cfg(not(unix))]
+fn create_anchored_ledger(_path: &std::path::Path) -> Result<(File, File, String)> {
+    bail!("attempt ledger creation requires Unix openat semantics")
 }
 
 fn poison<T>(config: &BrokerGateConfig, state: &mut CoordinatorState, reason: &str) -> Result<T> {
@@ -1071,6 +1281,57 @@ fn write_receipt_new_synced(
     file.write_all(b"\n")
         .context("terminate anchored receipt")?;
     file.sync_all().context("fsync anchored receipt")
+}
+
+#[cfg(unix)]
+fn verify_anchored_receipt(
+    state: &CoordinatorState,
+    leaf: &str,
+    expected_sha256: &str,
+) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::fd::FromRawFd;
+    use std::os::unix::fs::FileExt;
+
+    let leaf = CString::new(leaf).context("receipt leaf contains NUL")?;
+    let descriptor = unsafe {
+        libc::openat(
+            state.receipt_directory.as_raw_fd(),
+            leaf.as_ptr(),
+            libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    if descriptor < 0 {
+        return Err(std::io::Error::last_os_error()).context("open anchored receipt for verify");
+    }
+    let file = unsafe { File::from_raw_fd(descriptor) };
+    let metadata = file.metadata()?;
+    if !metadata.is_file() || metadata.len() > 1024 * 1024 {
+        bail!("anchored receipt is not a bounded regular file");
+    }
+    let mut bytes = vec![0_u8; usize::try_from(metadata.len())?];
+    let mut offset = 0_usize;
+    while offset < bytes.len() {
+        let read = file.read_at(&mut bytes[offset..], u64::try_from(offset)?)?;
+        if read == 0 {
+            bail!("anchored receipt was truncated while reading");
+        }
+        offset += read;
+    }
+    if sha256_hex(&bytes) != expected_sha256 {
+        bail!("anchored receipt digest differs from the staged receipt material");
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn verify_anchored_receipt(
+    _state: &CoordinatorState,
+    _leaf: &str,
+    _expected_sha256: &str,
+) -> Result<()> {
+    bail!("receipt verification requires Unix openat semantics")
 }
 
 #[cfg(not(unix))]

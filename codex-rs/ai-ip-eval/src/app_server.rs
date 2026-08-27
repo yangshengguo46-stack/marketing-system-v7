@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::ExitStatus;
@@ -451,8 +450,11 @@ pub struct AppServerClient {
 }
 
 impl AppServerClient {
-    pub async fn spawn(
+    /// Spawns the pinned executable after a final child-side identity check
+    /// against the retained descriptor immediately before `exec`.
+    pub async fn spawn_verified(
         codex_binary: &Path,
+        verified_descriptor: std::fs::File,
         stderr_path: &Path,
         environment: &ChildEnvironment,
     ) -> anyhow::Result<Self> {
@@ -463,6 +465,48 @@ impl AppServerClient {
             .with_context(|| format!("create {}", stderr_path.display()))?;
         let mut command = Command::new(codex_binary);
         environment.apply_tokio(&mut command);
+        #[cfg(unix)]
+        {
+            use std::ffi::CString;
+            use std::os::fd::AsRawFd;
+
+            let descriptor = verified_descriptor.as_raw_fd();
+            let executable = CString::new(codex_binary.as_os_str().as_encoded_bytes())?;
+            // SAFETY: the callback uses only async-signal-safe libc metadata
+            // syscalls and returns an io::Error. The owned descriptor and path
+            // bytes are retained by the closure until the child exec boundary.
+            unsafe {
+                command.pre_exec(move || {
+                    let mut retained: libc::stat = std::mem::zeroed();
+                    let mut current: libc::stat = std::mem::zeroed();
+                    let mut link: libc::stat = std::mem::zeroed();
+                    if libc::fstat(descriptor, &mut retained) != 0
+                        || libc::stat(executable.as_ptr(), &mut current) != 0
+                        || libc::lstat(executable.as_ptr(), &mut link) != 0
+                    {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    if retained.st_dev != current.st_dev
+                        || retained.st_ino != current.st_ino
+                        || retained.st_size != current.st_size
+                        || current.st_dev != link.st_dev
+                        || current.st_ino != link.st_ino
+                        || current.st_size != link.st_size
+                    {
+                        return Err(std::io::Error::new(
+                            std::io::ErrorKind::PermissionDenied,
+                            "verified App Server executable identity changed at exec",
+                        ));
+                    }
+                    Ok(())
+                });
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = verified_descriptor;
+            bail!("verified App Server launch requires Unix descriptor semantics");
+        }
         let mut child = command
             .arg("app-server")
             .arg("--listen")
@@ -649,13 +693,12 @@ pub fn audit_config(
     if auth_path.exists() {
         bail!("auth.json is forbidden in the isolated evaluation CODEX_HOME");
     }
-    let disk_bytes = fs::read(&expectation.canonical_config_path)
-        .with_context(|| format!("read {}", expectation.canonical_config_path.display()))?;
-    if disk_bytes != expectation.expected_config_bytes {
-        bail!("config.toml bytes differ from the typed builder output");
-    }
+    // The caller supplies these bytes from the retained, descriptor-anchored
+    // config commitment. Reopening the pathname here would create a second
+    // verification-to-consumption race.
+    let disk_bytes = &expectation.expected_config_bytes;
     let disk_toml: toml::Value =
-        toml::from_str(std::str::from_utf8(&disk_bytes).context("config is not UTF-8")?)
+        toml::from_str(std::str::from_utf8(disk_bytes).context("config is not UTF-8")?)
             .context("parse config.toml")?;
     let disk_json = serde_json::to_value(disk_toml)?;
     if disk_json != expectation.expected_layer_config {

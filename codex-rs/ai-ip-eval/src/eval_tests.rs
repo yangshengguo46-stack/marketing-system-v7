@@ -667,7 +667,7 @@ fn complete(gate: &PairCoordinator, permit: codex_responses_api_proxy::RequestPe
 }
 
 #[test]
-fn frozen_per_arm_total_token_ceiling_fails_the_terminal_and_poisons() {
+fn frozen_pair_total_token_ceiling_fails_the_terminal_and_poisons() {
     let temp = tempfile::tempdir().unwrap();
     let gate = PairCoordinator::create(BrokerGateConfig {
         ledger_path: temp.path().join("attempt-index.jsonl"),
@@ -696,6 +696,41 @@ fn frozen_per_arm_total_token_ceiling_fails_the_terminal_and_poisons() {
             .collect();
     assert_eq!(records[1]["status"], json!("failed"));
     assert_eq!(records[1]["failureClass"], json!("maxTotalTokensExceeded"));
+}
+
+#[test]
+fn successful_completion_requires_exactly_one_consistent_usage_report() {
+    for usage in [
+        None,
+        Some(ObservedUsage {
+            total_tokens: 9,
+            input_tokens: 2,
+            cached_input_tokens: 0,
+            cache_write_input_tokens: 0,
+            output_tokens: 1,
+            reasoning_output_tokens: 0,
+        }),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let gate = coordinator(&temp, 1);
+        activate_first(&gate, "root", Duration::from_secs(5));
+        let permit = gate
+            .before_forward(&root_request("root"), &transformed())
+            .unwrap();
+        gate.response_completed(
+            &permit,
+            &ResponseCompletedMetadata {
+                response_id: "invalid-usage".to_string(),
+                usage,
+                actual_model: Some("mock-revision".to_string()),
+                deployment_or_fingerprint: None,
+            },
+        );
+        gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+        assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+        let ledger = fs::read_to_string(temp.path().join("attempt-index.jsonl")).unwrap();
+        assert!(ledger.contains("invalidResponseUsage"));
+    }
 }
 
 #[test]
@@ -770,8 +805,29 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         .trim()
         .to_string();
     let artifacts_dir = temp.path().join("context-artifacts");
+    let frozen_inputs = temp.path().join("frozen-inputs");
     fs::create_dir(&artifacts_dir).unwrap();
-    let artifacts: serde_json::Map<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
+    fs::create_dir(&frozen_inputs).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&frozen_inputs, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let private_leaf = |name: &str| match name {
+        "source" => Some("source.json"),
+        "materials" => Some("materials.json"),
+        "providerBudgetReceipt" => Some("provider-budget-receipt.json"),
+        "rateCard" => Some("rate-card.json"),
+        "billingPolicy" => Some("billing-policy.json"),
+        "fxPolicy" => Some("fx-policy.json"),
+        "skill" => Some("lead-skill.md"),
+        "schema" => Some("content-package-schema.json"),
+        "prompt" => Some("root-prompt.txt"),
+        "threadStartRequest" => Some("thread-start-request.json"),
+        "turnStartRequest" => Some("turn-start-request.json"),
+        _ => None,
+    };
+    let artifacts: BTreeMap<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
         .iter()
         .map(|name| {
             let (path, bytes) = match *name {
@@ -789,13 +845,23 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
                     (path, bytes)
                 }
                 "source" => (
-                    artifacts_dir.join(name),
+                    frozen_inputs.join(private_leaf(name).unwrap()),
                     serde_json::to_vec_pretty(&mission_case()).unwrap(),
                 ),
-                _ => (artifacts_dir.join(name), format!("{name}\n").into_bytes()),
+                _ => (
+                    private_leaf(name)
+                        .map(|leaf| frozen_inputs.join(leaf))
+                        .unwrap_or_else(|| artifacts_dir.join(name)),
+                    format!("{name}\n").into_bytes(),
+                ),
             };
             if !path.exists() {
                 fs::write(&path, &bytes).unwrap();
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+                }
             }
             let path = path.canonicalize().unwrap();
             (
@@ -828,6 +894,11 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         .unwrap(),
     )
     .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    }
     path
 }
 
@@ -1027,6 +1098,25 @@ fn attempt_index_is_gap_free_append_only_and_each_request_has_one_terminal() {
     }
 }
 
+#[cfg(unix)]
+#[test]
+fn ledger_identity_or_prefix_change_is_detected_before_arm_receipt_persistence() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = coordinator(&temp, 1);
+    activate_first(&gate, "root", Duration::from_secs(5));
+    let permit = gate
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    complete(&gate, permit);
+    let ledger = temp.path().join("attempt-index.jsonl");
+    fs::rename(&ledger, temp.path().join("detached-ledger.jsonl")).unwrap();
+    fs::write(&ledger, b"replacement\n").unwrap();
+
+    assert!(gate.seal_arm().is_err());
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    assert!(!temp.path().join("receipts/arm-1-receipt.json").exists());
+}
+
 #[test]
 fn failed_attempt_appends_terminal_then_permanently_poisons_the_pair() {
     let temp = tempfile::tempdir().unwrap();
@@ -1085,6 +1175,41 @@ fn second_arm_receipt_chains_the_actual_first_receipt_file_bytes() {
         second.previous_arm_receipt_sha256,
         Some(format!("{:x}", Sha256::digest(first_bytes)))
     );
+}
+
+#[cfg(unix)]
+#[test]
+fn pair_finish_revalidates_actual_generated_arm_receipts_before_success() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = coordinator(&temp, 1);
+    activate_first(&gate, "root-1", Duration::from_secs(5));
+    let first = gate
+        .before_forward(&root_request("root-1"), &transformed())
+        .unwrap();
+    complete(&gate, first);
+    gate.seal_arm().unwrap();
+    gate.activate_arm(ArmActivation {
+        run_ordinal: 2,
+        condition: EvaluationCondition::Candidate,
+        root_thread_id: test_thread_id("root-2").to_string(),
+        deadline: Instant::now() + Duration::from_secs(5),
+        deadline_rfc3339: "2026-08-27T12:01:00Z".to_string(),
+    })
+    .unwrap();
+    let second = gate
+        .before_forward(&root_request("root-2"), &transformed())
+        .unwrap();
+    complete(&gate, second);
+    gate.seal_arm().unwrap();
+    fs::write(
+        temp.path().join("receipts/arm-1-receipt.json"),
+        b"tampered\n",
+    )
+    .unwrap();
+
+    assert!(gate.finish().is_err());
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    assert!(!temp.path().join("receipts/pair-receipt.json").exists());
 }
 
 #[test]
@@ -1432,8 +1557,7 @@ fn artifact_consumption_is_anchored_to_the_verified_handle_and_digest() {
     let artifact = parent.join("source");
     fs::write(&artifact, b"trusted\n").unwrap();
     let frozen =
-        ArtifactCommitments::freeze(BTreeMap::from([("source".to_string(), artifact)]))
-            .unwrap();
+        ArtifactCommitments::freeze(BTreeMap::from([("source".to_string(), artifact)])).unwrap();
     assert_eq!(frozen.read_verified("source").unwrap(), b"trusted\n");
 
     let moved = temp.path().join("moved-parent");
@@ -1808,7 +1932,7 @@ fn minimal_live_context_and_skipped_rehash_boundaries_are_rejected() {
 }
 
 #[test]
-fn hand_authored_external_upstream_and_identity_drift_fail_before_bind() {
+fn hand_authored_external_upstream_and_identity_drift_fail_before_activation() {
     for mutation in [
         "external",
         "candidate",
@@ -2119,16 +2243,19 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
     let upstream_addr = upstream.server_addr().to_ip().unwrap();
     let worker = std::thread::spawn(move || {
-        for _ in 0..4 {
+        for index in 0..4 {
             let request = upstream
                 .recv_timeout(Duration::from_secs(120))
                 .unwrap()
                 .unwrap();
-            request.respond(tiny_http::Response::from_string(concat!(
-                "data: {\"type\":\"response.completed\",\"response\":{",
-                "\"id\":\"mock-response\",\"model\":\"mock-revision\",",
-                "\"usage\":{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}\n\n"
-            )).with_header(tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap())).unwrap();
+            let body = format!(
+                "data: {{\"type\":\"response.completed\",\"response\":{{\"id\":\"mock-response-{index}\",\"model\":\"mock-revision\",\"usage\":{{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}}}}\n\n"
+            );
+            request
+                .respond(tiny_http::Response::from_string(body).with_header(
+                    tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap(),
+                ))
+                .unwrap();
         }
     });
     let temp = tempfile::tempdir().unwrap();
@@ -2143,18 +2270,40 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
 import json, os, sys, time, tomllib, urllib.request
 home = os.environ["HOME"]
 codex_home = os.environ["CODEX_HOME"]
+eval_root = os.path.dirname(home)
 with open(os.path.join(home, "app-server-launch.json"), "w") as f:
-    json.dump({"argv": sys.argv[1:], "home": home, "codexHome": codex_home, "envKeys": sorted(os.environ.keys())}, f)
+    json.dump({"argv": sys.argv[1:], "home": home, "codexHome": codex_home, "path": os.environ["PATH"], "envKeys": sorted(os.environ.keys())}, f)
 with open(os.path.join(codex_home, "config.toml"), "rb") as f:
     config = tomllib.load(f)
 candidate = "candidate-home" in home
 thread_id = "0198f5aa-0000-7000-8000-000000000102" if candidate else "0198f5aa-0000-7000-8000-000000000101"
+child_id = "0198f5aa-0000-7000-8000-000000000202" if candidate else "0198f5aa-0000-7000-8000-000000000201"
 def send(value):
     sys.stdout.write(json.dumps(value, separators=(",", ":")) + "\n")
     sys.stdout.flush()
+def thread(value, parent=None, source=None):
+    return {"id":value,"extra":None,"sessionId":"session-candidate" if candidate else "session-generic","forkedFromId":None,"parentThreadId":parent,"preview":"","ephemeral":False,"section":None,"sectionEnteredAt":None,"projectId":None,"historyMode":"legacy","modelProvider":"ai-ip-proof-broker","createdAt":0,"updatedAt":0,"recencyAt":None,"status":{"type":"idle"},"path":None,"cwd":eval_root,"cliVersion":"mock","source":"appServer","canAcceptDirectInput":True,"threadSource":source,"agentNickname":None,"agentRole":None,"gitInfo":None,"name":None,"turns":[]}
+root = thread(thread_id)
+child = thread(child_id, thread_id, "subagent")
+def turn(value, status):
+    return {"id":value,"items":[],"itemsView":"full","status":status,"error":None,"startedAt":None,"completedAt":None,"durationMs":1}
+def call_broker(thread_value, turn_value, parent=None):
+    base = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
+    headers = {"content-type":"application/json","x-codex-window-id":thread_value + ":0"}
+    if parent is not None:
+        headers["x-codex-parent-thread-id"] = parent
+        headers["x-openai-subagent"] = "collab_spawn"
+    request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers=headers)
+    with urllib.request.urlopen(request, timeout=5) as response:
+        body = response.read().decode()
+    completed = json.loads(body.split("data: ",1)[1].split("\n",1)[0])["response"]
+    usage = completed["usage"]
+    send({"method":"rawResponse/completed","params":{"threadId":thread_value,"turnId":turn_value,"responseId":completed["id"],"usage":{"totalTokens":usage["total_tokens"],"inputTokens":usage["input_tokens"],"cachedInputTokens":0,"cacheWriteInputTokens":0,"outputTokens":usage["output_tokens"],"reasoningOutputTokens":0}}})
 for line in sys.stdin:
     message = json.loads(line)
     method = message.get("method")
+    with open(os.path.join(home, "app-server-methods.log"), "a") as f:
+        f.write(str(method) + "\n")
     request_id = message.get("id")
     if request_id is None:
         continue
@@ -2166,23 +2315,28 @@ for line in sys.stdin:
     elif method == "configRequirements/read":
         result = {"requirements":None}
     elif method == "thread/start":
-        result = {"thread":{"id":thread_id}}
+        result = {"thread":root,"model":"local-mock","modelProvider":"ai-ip-proof-broker","serviceTier":None,"cwd":eval_root,"runtimeWorkspaceRoots":[],"instructionSources":[],"approvalPolicy":"never","approvalsReviewer":"user","sandbox":{"type":"dangerFullAccess"},"activePermissionProfile":{"id":"ai-ip-eval","extends":None},"reasoningEffort":None,"multiAgentMode":"explicitRequestOnly"}
     elif method == "turn/start":
         turn_id = "turn-candidate" if candidate else "turn-generic"
-        child_id = "0198f5aa-0000-7000-8000-000000000202" if candidate else "0198f5aa-0000-7000-8000-000000000201"
-        base = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
-        send({"id":request_id,"result":{"turn":{"id":turn_id}}})
-        child = {"id":child_id,"extra":None,"sessionId":"session","forkedFromId":None,"parentThreadId":thread_id,"preview":"","ephemeral":False,"section":None,"sectionEnteredAt":None,"projectId":None,"historyMode":"legacy","modelProvider":"ai-ip-proof-broker","createdAt":0,"updatedAt":0,"recencyAt":None,"status":{"type":"idle"},"path":None,"cwd":home,"cliVersion":"mock","source":"appServer","canAcceptDirectInput":True,"threadSource":"subagent","agentNickname":None,"agentRole":None,"gitInfo":None,"name":None,"turns":[]}
+        child_turn_id = "child-" + turn_id
+        send({"id":request_id,"result":{"turn":turn(turn_id,"inProgress")}})
+        send({"method":"turn/started","params":{"threadId":thread_id,"turn":turn(turn_id,"inProgress")}})
         send({"method":"thread/started","params":{"thread":child}})
+        send({"method":"turn/started","params":{"threadId":child_id,"turn":turn(child_turn_id,"inProgress")}})
         time.sleep(0.2)
-        request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers={"content-type":"application/json","x-codex-window-id":thread_id + ":0"})
-        with urllib.request.urlopen(request, timeout=5) as response:
-            response.read()
-        request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers={"content-type":"application/json","x-codex-window-id":child_id + ":0","x-codex-parent-thread-id":thread_id,"x-openai-subagent":"collab_spawn"})
-        with urllib.request.urlopen(request, timeout=5) as response:
-            response.read()
-        send({"method":"turn/completed","params":{"threadId":thread_id,"turn":{"id":turn_id,"items":[],"itemsView":"full","status":"completed","error":None,"startedAt":None,"completedAt":None,"durationMs":1}}})
+        call_broker(thread_id, turn_id)
+        call_broker(child_id, child_turn_id, thread_id)
+        send({"method":"turn/completed","params":{"threadId":child_id,"turn":turn(child_turn_id,"completed")}})
+        send({"method":"turn/completed","params":{"threadId":thread_id,"turn":turn(turn_id,"completed")}})
+        child["turns"] = [turn(child_turn_id,"completed")]
+        root["turns"] = [turn(turn_id,"completed")]
         continue
+    elif method == "thread/list":
+        result = {"data":[child],"nextCursor":None,"backwardsCursor":None}
+    elif method == "thread/loaded/list":
+        result = {"data":[thread_id,child_id],"nextCursor":None}
+    elif method == "thread/read":
+        result = {"thread":root if message["params"]["threadId"] == thread_id else child}
     else:
         send({"id":request_id,"error":{"code":-32601,"message":"unsupported"}})
         continue
@@ -2195,14 +2349,21 @@ for line in sys.stdin:
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
     }
-    let output = temp.path().join("typed-frozen.json");
+    let live_root = temp.path().join("live-private");
+    fs::create_dir(&live_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let output = live_root.join("frozen-run-context.json");
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
             mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
                 repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
                 evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
                 fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
-                private_root: temp.path().to_path_buf(),
+                private_root: live_root.clone(),
                 codex_bin: mock_codex,
                 case: artifact("source"),
                 attestation: artifact("materials"),
@@ -2219,7 +2380,7 @@ for line in sys.stdin:
                 authorized_per_run_cost_fen: 0,
                 max_provider_request_attempts_per_run: 2,
                 max_total_tokens_per_run: 10,
-                max_elapsed_seconds_per_run: 5,
+                max_elapsed_seconds_per_run: 180,
                 max_output_tokens_per_request: 17,
                 output: output.clone(),
             }),
@@ -2229,6 +2390,26 @@ for line in sys.stdin:
     let frozen_json: serde_json::Value =
         serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
     assert_eq!(frozen_json["providerMode"], json!("not-run"));
+    for (name, leaf) in [
+        ("source", "source.json"),
+        ("materials", "materials.json"),
+        ("providerBudgetReceipt", "provider-budget-receipt.json"),
+        ("rateCard", "rate-card.json"),
+        ("billingPolicy", "billing-policy.json"),
+        ("fxPolicy", "fx-policy.json"),
+        ("skill", "lead-skill.md"),
+    ] {
+        assert_eq!(
+            frozen_json["artifacts"][name]["path"],
+            json!(
+                live_root
+                    .join("frozen-inputs")
+                    .join(leaf)
+                    .canonicalize()
+                    .unwrap()
+            )
+        );
+    }
     assert_ne!(
         frozen_json["artifacts"]["codexBinary"]["path"],
         frozen_json["artifacts"]["evaluatorBinary"]["path"]
@@ -2248,37 +2429,40 @@ for line in sys.stdin:
         }),
     });
     if let Err(error) = pair_result {
-        let stderr = fs::read_to_string(temp.path().join("coordinator/app-server-1.stderr"))
+        let stderr = fs::read_to_string(live_root.join("coordinator/app-server-1.stderr"))
             .unwrap_or_else(|read_error| format!("unavailable: {read_error}"));
         panic!("pair failed: {error:#}; app server stderr: {stderr}");
     }
     worker.join().unwrap();
     for home in ["generic-home", "candidate-home"] {
         let launch: serde_json::Value = serde_json::from_slice(
-            &fs::read(temp.path().join(home).join("app-server-launch.json")).unwrap(),
+            &fs::read(live_root.join(home).join("app-server-launch.json")).unwrap(),
         )
         .unwrap();
         assert_eq!(
             launch["home"],
-            json!(temp.path().join(home).canonicalize().unwrap())
+            json!(live_root.join(home).canonicalize().unwrap())
         );
         assert_eq!(
             launch["codexHome"],
-            json!(
-                temp.path()
-                    .join(home)
-                    .join(".codex")
-                    .canonicalize()
-                    .unwrap()
-            )
+            json!(live_root.join(home).join(".codex").canonicalize().unwrap())
         );
+        assert_eq!(launch["path"], json!(std::env::var("PATH").unwrap()));
         let keys = launch["envKeys"].as_array().unwrap();
         for forbidden in ["OPENAI_API_KEY", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"] {
             assert!(!keys.iter().any(|key| key == forbidden));
         }
+        let methods =
+            fs::read_to_string(live_root.join(home).join("app-server-methods.log")).unwrap();
+        for required in ["thread/list", "thread/loaded/list", "thread/read"] {
+            assert!(
+                methods.lines().any(|method| method == required),
+                "{required}"
+            );
+        }
     }
     let execution: serde_json::Value = serde_json::from_slice(
-        &fs::read(temp.path().join("coordinator/execution-context.json")).unwrap(),
+        &fs::read(live_root.join("coordinator/execution-context.json")).unwrap(),
     )
     .unwrap();
     assert!(execution["broker"]["port"].as_u64().unwrap() > 0);
@@ -2295,16 +2479,23 @@ for line in sys.stdin:
         chrono::DateTime::parse_from_rfc3339(execution["startedAt"].as_str().unwrap()).unwrap();
     let deadline =
         chrono::DateTime::parse_from_rfc3339(execution["deadline"].as_str().unwrap()).unwrap();
-    assert_eq!((deadline - started_at).num_seconds(), 10);
+    assert_eq!((deadline - started_at).num_seconds(), 180);
+    assert_eq!(
+        execution["pathSha256"],
+        json!(format!(
+            "{:x}",
+            Sha256::digest(std::env::var("PATH").unwrap().as_bytes())
+        ))
+    );
     assert_eq!(execution["maxTotalTokensPerRun"], json!(10));
-    assert_eq!(execution["maxElapsedSecondsPerRun"], json!(5));
+    assert_eq!(execution["maxElapsedSecondsPerRun"], json!(180));
     assert!(
-        temp.path()
+        live_root
             .join("coordinator/receipts/pair-receipt.json")
             .is_file()
     );
     assert_eq!(
-        fs::read_to_string(temp.path().join("coordinator/attempt-index.jsonl"))
+        fs::read_to_string(live_root.join("coordinator/attempt-index.jsonl"))
             .unwrap()
             .lines()
             .count(),
