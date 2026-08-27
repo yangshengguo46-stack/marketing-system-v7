@@ -564,6 +564,11 @@ ignored = [
 # across local dev builds.
 debug = "limited"
 
+# The evaluator deliberately rehashes its complete executable at every frozen
+# execution boundary. Keep those mandatory checks inside nextest's timeout.
+[profile.test.package.sha2]
+opt-level = 3
+
 [profile.dev-small]
 inherits = "dev"
 opt-level = 0

@@ -57,6 +57,7 @@ pub struct BrokerRuntimeConfig {
     max_attempts_per_arm: u64,
     max_output_tokens: u64,
     max_body_bytes: usize,
+    max_total_tokens_per_arm: u64,
 }
 
 impl BrokerRuntimeConfig {
@@ -68,10 +69,32 @@ impl BrokerRuntimeConfig {
         if max_attempts_per_arm == 0 || max_output_tokens == 0 || max_body_bytes == 0 {
             return Err(anyhow!("broker runtime limits must be positive"));
         }
+        Self::with_run_limits(
+            max_attempts_per_arm,
+            max_output_tokens,
+            max_body_bytes,
+            u64::MAX,
+        )
+    }
+
+    pub fn with_run_limits(
+        max_attempts_per_arm: u64,
+        max_output_tokens: u64,
+        max_body_bytes: usize,
+        max_total_tokens_per_arm: u64,
+    ) -> Result<Self> {
+        if max_attempts_per_arm == 0
+            || max_output_tokens == 0
+            || max_body_bytes == 0
+            || max_total_tokens_per_arm == 0
+        {
+            return Err(anyhow!("broker runtime limits must be positive"));
+        }
         Ok(Self {
             max_attempts_per_arm,
             max_output_tokens,
             max_body_bytes,
+            max_total_tokens_per_arm,
         })
     }
 
@@ -127,6 +150,7 @@ pub enum ThreadLifecycle {
     },
     GuardianReview,
     Guardian,
+    InvalidThread,
 }
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -224,6 +248,7 @@ struct ActiveArm {
     failure_start: u64,
     timeout_start: u64,
     accepting: bool,
+    total_tokens: u64,
 }
 
 struct InFlight {
@@ -432,6 +457,7 @@ impl PairCoordinator {
             failure_start: state.counts.failed,
             timeout_start: state.counts.timeout,
             accepting: true,
+            total_tokens: 0,
         });
         state.phase = if run_ordinal == 1 {
             PairPhase::Active1 { condition }
@@ -463,6 +489,11 @@ impl PairCoordinator {
             ThreadLifecycle::GuardianReview | ThreadLifecycle::Guardian => {
                 poison(&self.config, &mut state, "Guardian lifecycle is forbidden")
             }
+            ThreadLifecycle::InvalidThread => poison(
+                &self.config,
+                &mut state,
+                "non-Subagent descendant lifecycle is forbidden",
+            ),
             ThreadLifecycle::Subagent {
                 thread_id,
                 parent_thread_id,
@@ -690,7 +721,7 @@ impl RequestGate for PairCoordinator {
         let Ok(mut state) = self.state.lock() else {
             return;
         };
-        match append_terminal(&mut state, permit.attempt_id(), result) {
+        match append_terminal(&self.config, &mut state, permit.attempt_id(), result) {
             Err(error) => {
                 let _ = poison::<()>(&self.config, &mut state, &error.to_string());
             }
@@ -852,6 +883,7 @@ fn authorize_and_record(
 }
 
 fn append_terminal(
+    config: &BrokerGateConfig,
     state: &mut CoordinatorState,
     attempt_id: u64,
     result: &ForwardResult,
@@ -865,7 +897,22 @@ fn append_terminal(
         .ok_or_else(|| anyhow!("terminal record has no request"))?;
     let metadata = state.terminal_metadata.get(&attempt_id).cloned();
     let invalid_completion = state.invalid_completions.contains(&attempt_id);
+    let observed_total_tokens = metadata
+        .as_ref()
+        .and_then(|metadata| metadata.usage.as_ref())
+        .map(|usage| usage.total_tokens);
+    let token_cap_exceeded = match (state.active.as_ref(), observed_total_tokens) {
+        (_, Some(tokens)) if tokens < 0 => true,
+        (Some(active), Some(tokens)) => u64::try_from(tokens)
+            .ok()
+            .and_then(|tokens| active.total_tokens.checked_add(tokens))
+            .is_none_or(|total| total > config.runtime.max_total_tokens_per_arm),
+        _ => false,
+    };
     let (status, failure_class, count_kind) = match result {
+        ForwardResult::Completed { .. } if token_cap_exceeded => {
+            ("failed", Some("maxTotalTokensExceeded".to_string()), 1_u8)
+        }
         ForwardResult::Completed { .. } if invalid_completion => (
             "failed",
             Some("duplicateResponseCompleted".to_string()),
@@ -904,6 +951,11 @@ fn append_terminal(
     state.in_flight.remove(&attempt_id);
     state.terminal_metadata.remove(&attempt_id);
     state.invalid_completions.remove(&attempt_id);
+    if let (Some(active), Some(tokens)) = (state.active.as_mut(), observed_total_tokens)
+        && let Ok(tokens) = u64::try_from(tokens)
+    {
+        active.total_tokens = active.total_tokens.saturating_add(tokens);
+    }
     match count_kind {
         0 => state.counts.completed += 1,
         1 => state.counts.failed += 1,

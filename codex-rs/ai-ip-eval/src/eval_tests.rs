@@ -666,10 +666,75 @@ fn complete(gate: &PairCoordinator, permit: codex_responses_api_proxy::RequestPe
     gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
 }
 
+#[test]
+fn frozen_per_arm_total_token_ceiling_fails_the_terminal_and_poisons() {
+    let temp = tempfile::tempdir().unwrap();
+    let gate = PairCoordinator::create(BrokerGateConfig {
+        ledger_path: temp.path().join("attempt-index.jsonl"),
+        receipt_dir: temp.path().join("receipts"),
+        pair_id: "pair-1".to_string(),
+        frozen_run_context_sha256: "a".repeat(64),
+        execution_context_sha256: "b".repeat(64),
+        arm_order_commitment: "c".repeat(64),
+        runtime: std::sync::Arc::new(
+            BrokerRuntimeConfig::with_run_limits(1, 321, 1024 * 1024, 2).unwrap(),
+        ),
+    })
+    .unwrap();
+    activate_first(&gate, "root", Duration::from_secs(5));
+    let permit = gate
+        .before_forward(&root_request("root"), &transformed())
+        .unwrap();
+    complete(&gate, permit);
+
+    assert!(matches!(gate.phase(), PairPhase::Poisoned { .. }));
+    let records: Vec<serde_json::Value> =
+        fs::read_to_string(temp.path().join("attempt-index.jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+    assert_eq!(records[1]["status"], json!("failed"));
+    assert_eq!(records[1]["failureClass"], json!("maxTotalTokensExceeded"));
+}
+
+#[test]
+fn frozen_elapsed_ceiling_is_one_shared_arm_deadline_not_per_call() {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let deadline = Instant::now() + Duration::from_millis(80);
+        crate::runner::run_before_deadline(deadline, async {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            Ok::<_, anyhow::Error>(())
+        })
+        .await
+        .unwrap();
+        assert!(
+            crate::runner::run_before_deadline(deadline, async {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                Ok::<_, anyhow::Error>(())
+            })
+            .await
+            .is_err()
+        );
+    });
+}
+
 fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o700)).unwrap();
+    }
     let repository = temp.path().join("context-repo");
     fs::create_dir(&repository).unwrap();
     fs::write(repository.join("source"), b"committed source\n").unwrap();
+    fs::create_dir_all(repository.join("codex-rs/responses-api-proxy/src")).unwrap();
+    fs::write(
+        repository.join("codex-rs/responses-api-proxy/src/broker.rs"),
+        b"// synthetic committed broker source\n",
+    )
+    .unwrap();
     let run_git = |args: &[&str]| {
         let output = std::process::Command::new("git")
             .arg("-C")
@@ -685,7 +750,11 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         output.stdout
     };
     run_git(&["init", "--quiet"]);
-    run_git(&["add", "source"]);
+    run_git(&[
+        "add",
+        "source",
+        "codex-rs/responses-api-proxy/src/broker.rs",
+    ]);
     run_git(&[
         "-c",
         "user.name=Synthetic",
@@ -705,9 +774,30 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
     let artifacts: serde_json::Map<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
         .iter()
         .map(|name| {
-            let path = artifacts_dir.join(name);
-            let bytes = format!("{name}\n").into_bytes();
-            fs::write(&path, &bytes).unwrap();
+            let (path, bytes) = match *name {
+                "evaluatorBinary" => {
+                    let path = std::env::current_exe().unwrap().canonicalize().unwrap();
+                    let bytes = fs::read(&path).unwrap();
+                    (path, bytes)
+                }
+                "brokerSource" => {
+                    let path = repository
+                        .join("codex-rs/responses-api-proxy/src/broker.rs")
+                        .canonicalize()
+                        .unwrap();
+                    let bytes = fs::read(&path).unwrap();
+                    (path, bytes)
+                }
+                "source" => (
+                    artifacts_dir.join(name),
+                    serde_json::to_vec_pretty(&mission_case()).unwrap(),
+                ),
+                _ => (artifacts_dir.join(name), format!("{name}\n").into_bytes()),
+            };
+            if !path.exists() {
+                fs::write(&path, &bytes).unwrap();
+            }
+            let path = path.canonicalize().unwrap();
             (
                 name.to_string(),
                 json!({"path": path, "sha256": format!("{:x}", Sha256::digest(&bytes))}),
@@ -721,15 +811,18 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
             "schemaVersion": 1,
             "executionMode": "live",
             "providerMode": "not-run",
-            "pairId": "pair-context",
-            "publicRunId": "run-context",
-            "candidateSha": "candidate-sha",
-            "privateRoot": temp.path(),
+            "pairId": "a".repeat(64),
+            "publicRunId": "b".repeat(64),
+            "candidateSha": head,
+            "privateRoot": temp.path().canonicalize().unwrap(),
             "repoRoot": repository.canonicalize().unwrap(),
             "repoHead": head,
             "providerUpstreamUrl": "http://127.0.0.1:1/v1/responses",
+            "modelLabel": "local-mock",
             "maxOutputTokens": 321,
             "maxAttemptsPerArm": 2,
+            "maxTotalTokens": 100,
+            "maxElapsedSeconds": 5,
             "artifacts": artifacts,
         }))
         .unwrap(),
@@ -1330,6 +1423,26 @@ fn frozen_artifacts_rehash_every_named_boundary_and_detect_mutation() {
     assert_eq!(frozen.sha256("source").unwrap(), format!("{expected:x}"));
 }
 
+#[cfg(unix)]
+#[test]
+fn artifact_consumption_is_anchored_to_the_verified_handle_and_digest() {
+    let temp = tempfile::tempdir().unwrap();
+    let parent = temp.path().join("original-parent");
+    fs::create_dir(&parent).unwrap();
+    let artifact = parent.join("source");
+    fs::write(&artifact, b"trusted\n").unwrap();
+    let frozen =
+        ArtifactCommitments::freeze(BTreeMap::from([("source".to_string(), artifact)]))
+            .unwrap();
+    assert_eq!(frozen.read_verified("source").unwrap(), b"trusted\n");
+
+    let moved = temp.path().join("moved-parent");
+    fs::rename(&parent, &moved).unwrap();
+    fs::create_dir(&parent).unwrap();
+    fs::write(parent.join("source"), b"substituted\n").unwrap();
+    assert!(frozen.read_verified("source").is_err());
+}
+
 #[test]
 fn frozen_worktree_revalidates_exact_head_and_clean_status_at_each_boundary() {
     let temp = tempfile::tempdir().unwrap();
@@ -1694,6 +1807,66 @@ fn minimal_live_context_and_skipped_rehash_boundaries_are_rejected() {
     assert!(guard.advance(ExecutionBoundary::Arm1Pre).is_err());
 }
 
+#[test]
+fn hand_authored_external_upstream_and_identity_drift_fail_before_bind() {
+    for mutation in [
+        "external",
+        "candidate",
+        "pair",
+        "public",
+        "artifactPath",
+        "evaluatorPath",
+        "brokerPath",
+        "privateRoot",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = strict_live_context(&temp);
+        let mut context: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        match mutation {
+            "external" => {
+                context["providerUpstreamUrl"] = json!("https://example.invalid/v1/responses")
+            }
+            "candidate" => context["candidateSha"] = json!("different-head"),
+            "pair" => context["pairId"] = json!("not-a-canonical-id"),
+            "public" => context["publicRunId"] = json!("ABCDEF"),
+            "artifactPath" => {
+                let source = context["artifacts"]["source"]["path"].as_str().unwrap();
+                let source = std::path::Path::new(source);
+                context["artifacts"]["source"]["path"] = json!(
+                    source
+                        .parent()
+                        .unwrap()
+                        .join("..")
+                        .join(source.parent().unwrap().file_name().unwrap())
+                        .join(source.file_name().unwrap())
+                );
+            }
+            "evaluatorPath" => {
+                context["artifacts"]["evaluatorBinary"] = context["artifacts"]["source"].clone();
+            }
+            "brokerPath" => {
+                context["artifacts"]["brokerSource"] = context["artifacts"]["source"].clone();
+            }
+            "privateRoot" => {
+                let private_root = std::path::Path::new(context["privateRoot"].as_str().unwrap());
+                context["privateRoot"] = json!(
+                    private_root
+                        .parent()
+                        .unwrap()
+                        .join("..")
+                        .join(private_root.parent().unwrap().file_name().unwrap())
+                        .join(private_root.file_name().unwrap())
+                );
+            }
+            _ => unreachable!(),
+        }
+        fs::write(&path, serde_json::to_vec_pretty(&context).unwrap()).unwrap();
+        assert!(verify_frozen_context(&path).is_err(), "mutation {mutation}");
+        assert!(!temp.path().join("coordinator").exists());
+    }
+}
+
 struct IntegrationInspector;
 
 impl codex_responses_api_proxy::RequestInspector for IntegrationInspector {
@@ -1946,9 +2119,9 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
     let upstream_addr = upstream.server_addr().to_ip().unwrap();
     let worker = std::thread::spawn(move || {
-        for _ in 0..2 {
+        for _ in 0..4 {
             let request = upstream
-                .recv_timeout(Duration::from_secs(5))
+                .recv_timeout(Duration::from_secs(120))
                 .unwrap()
                 .unwrap();
             request.respond(tiny_http::Response::from_string(concat!(
@@ -1963,6 +2136,65 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let seed: serde_json::Value = serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
     let artifacts = seed["artifacts"].as_object().unwrap();
     let artifact = |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
+    let mock_codex = artifact("codexBinary");
+    fs::write(
+        &mock_codex,
+        r#"#!/usr/bin/env python3
+import json, os, sys, time, tomllib, urllib.request
+home = os.environ["HOME"]
+codex_home = os.environ["CODEX_HOME"]
+with open(os.path.join(home, "app-server-launch.json"), "w") as f:
+    json.dump({"argv": sys.argv[1:], "home": home, "codexHome": codex_home, "envKeys": sorted(os.environ.keys())}, f)
+with open(os.path.join(codex_home, "config.toml"), "rb") as f:
+    config = tomllib.load(f)
+candidate = "candidate-home" in home
+thread_id = "0198f5aa-0000-7000-8000-000000000102" if candidate else "0198f5aa-0000-7000-8000-000000000101"
+def send(value):
+    sys.stdout.write(json.dumps(value, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
+for line in sys.stdin:
+    message = json.loads(line)
+    method = message.get("method")
+    request_id = message.get("id")
+    if request_id is None:
+        continue
+    if method == "initialize":
+        result = {"userAgent":"mock-app-server","codexHome":codex_home,"platformFamily":"unix","platformOs":"mock"}
+    elif method == "config/read":
+        config_path = os.path.join(codex_home, "config.toml")
+        result = {"config":config,"origins":{},"layers":[{"name":{"type":"user","file":config_path,"profile":None},"version":"v1","config":config}]}
+    elif method == "configRequirements/read":
+        result = {"requirements":None}
+    elif method == "thread/start":
+        result = {"thread":{"id":thread_id}}
+    elif method == "turn/start":
+        turn_id = "turn-candidate" if candidate else "turn-generic"
+        child_id = "0198f5aa-0000-7000-8000-000000000202" if candidate else "0198f5aa-0000-7000-8000-000000000201"
+        base = config["model_providers"]["ai-ip-proof-broker"]["base_url"]
+        send({"id":request_id,"result":{"turn":{"id":turn_id}}})
+        child = {"id":child_id,"extra":None,"sessionId":"session","forkedFromId":None,"parentThreadId":thread_id,"preview":"","ephemeral":False,"section":None,"sectionEnteredAt":None,"projectId":None,"historyMode":"legacy","modelProvider":"ai-ip-proof-broker","createdAt":0,"updatedAt":0,"recencyAt":None,"status":{"type":"idle"},"path":None,"cwd":home,"cliVersion":"mock","source":"appServer","canAcceptDirectInput":True,"threadSource":"subagent","agentNickname":None,"agentRole":None,"gitInfo":None,"name":None,"turns":[]}
+        send({"method":"thread/started","params":{"thread":child}})
+        time.sleep(0.2)
+        request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers={"content-type":"application/json","x-codex-window-id":thread_id + ":0"})
+        with urllib.request.urlopen(request, timeout=5) as response:
+            response.read()
+        request = urllib.request.Request(base + "/responses", data=b'{"model":"local-mock","input":[]}', method="POST", headers={"content-type":"application/json","x-codex-window-id":child_id + ":0","x-codex-parent-thread-id":thread_id,"x-openai-subagent":"collab_spawn"})
+        with urllib.request.urlopen(request, timeout=5) as response:
+            response.read()
+        send({"method":"turn/completed","params":{"threadId":thread_id,"turn":{"id":turn_id,"items":[],"itemsView":"full","status":"completed","error":None,"startedAt":None,"completedAt":None,"durationMs":1}}})
+        continue
+    else:
+        send({"id":request_id,"error":{"code":-32601,"message":"unsupported"}})
+        continue
+    send({"id":request_id,"result":result})
+"#,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
+    }
     let output = temp.path().join("typed-frozen.json");
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
@@ -1971,13 +2203,13 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
                 evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
                 fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
                 private_root: temp.path().to_path_buf(),
-                codex_bin: artifact("codexBinary"),
+                codex_bin: mock_codex,
                 case: artifact("source"),
                 attestation: artifact("materials"),
-                provider_budget_evidence: artifact("receipt"),
-                rate_card: artifact("config"),
-                billing_policy: artifact("schema"),
-                fx_policy: artifact("prompt"),
+                provider_budget_evidence: artifact("providerBudgetReceipt"),
+                rate_card: artifact("rateCard"),
+                billing_policy: artifact("billingPolicy"),
+                fx_policy: artifact("fxPolicy"),
                 lead_skill: artifact("skill"),
                 model_label: "local-mock".to_string(),
                 provider_label: "local-mock".to_string(),
@@ -1985,7 +2217,7 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
                 provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
                 authorized_total_cost_fen: 0,
                 authorized_per_run_cost_fen: 0,
-                max_provider_request_attempts_per_run: 1,
+                max_provider_request_attempts_per_run: 2,
                 max_total_tokens_per_run: 10,
                 max_elapsed_seconds_per_run: 5,
                 max_output_tokens_per_request: 17,
@@ -1997,14 +2229,75 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
     let frozen_json: serde_json::Value =
         serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
     assert_eq!(frozen_json["providerMode"], json!("not-run"));
+    assert_ne!(
+        frozen_json["artifacts"]["codexBinary"]["path"],
+        frozen_json["artifacts"]["evaluatorBinary"]["path"]
+    );
+    assert!(
+        frozen_json["artifacts"]["brokerSource"]["path"]
+            .as_str()
+            .unwrap()
+            .ends_with("responses-api-proxy/src/broker.rs")
+    );
+    assert!(frozen_json["artifacts"].get("config").is_none());
+    assert!(frozen_json["artifacts"].get("receipt").is_none());
     verify_frozen_context(&output).unwrap();
-    crate::execute_cli(Cli {
+    let pair_result = crate::execute_cli(Cli {
         command: crate::EvalCommand::LivePair(crate::model::LivePairArgs {
             frozen_run_context: output,
         }),
-    })
-    .unwrap();
+    });
+    if let Err(error) = pair_result {
+        let stderr = fs::read_to_string(temp.path().join("coordinator/app-server-1.stderr"))
+            .unwrap_or_else(|read_error| format!("unavailable: {read_error}"));
+        panic!("pair failed: {error:#}; app server stderr: {stderr}");
+    }
     worker.join().unwrap();
+    for home in ["generic-home", "candidate-home"] {
+        let launch: serde_json::Value = serde_json::from_slice(
+            &fs::read(temp.path().join(home).join("app-server-launch.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            launch["home"],
+            json!(temp.path().join(home).canonicalize().unwrap())
+        );
+        assert_eq!(
+            launch["codexHome"],
+            json!(
+                temp.path()
+                    .join(home)
+                    .join(".codex")
+                    .canonicalize()
+                    .unwrap()
+            )
+        );
+        let keys = launch["envKeys"].as_array().unwrap();
+        for forbidden in ["OPENAI_API_KEY", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"] {
+            assert!(!keys.iter().any(|key| key == forbidden));
+        }
+    }
+    let execution: serde_json::Value = serde_json::from_slice(
+        &fs::read(temp.path().join("coordinator/execution-context.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(execution["broker"]["port"].as_u64().unwrap() > 0);
+    assert!(matches!(
+        execution["firstCondition"].as_str(),
+        Some("generic" | "candidate")
+    ));
+    assert!(matches!(
+        execution["secondCondition"].as_str(),
+        Some("generic" | "candidate")
+    ));
+    assert_ne!(execution["firstCondition"], execution["secondCondition"]);
+    let started_at =
+        chrono::DateTime::parse_from_rfc3339(execution["startedAt"].as_str().unwrap()).unwrap();
+    let deadline =
+        chrono::DateTime::parse_from_rfc3339(execution["deadline"].as_str().unwrap()).unwrap();
+    assert_eq!((deadline - started_at).num_seconds(), 10);
+    assert_eq!(execution["maxTotalTokensPerRun"], json!(10));
+    assert_eq!(execution["maxElapsedSecondsPerRun"], json!(5));
     assert!(
         temp.path()
             .join("coordinator/receipts/pair-receipt.json")
@@ -2015,6 +2308,6 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
             .unwrap()
             .lines()
             .count(),
-        4
+        8
     );
 }

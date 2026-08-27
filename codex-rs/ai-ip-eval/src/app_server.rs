@@ -51,6 +51,8 @@ use tokio::process::ChildStdin;
 use tokio::process::ChildStdout;
 use tokio::process::Command;
 
+use crate::runner::ChildEnvironment;
+
 pub const EVALUATION_PERMISSION_PROFILE: &str = "ai-ip-eval";
 const MAX_JSON_LINE_BYTES: usize = 8 * 1024 * 1024;
 
@@ -263,6 +265,71 @@ where
         }
     }
 
+    pub async fn wait_for_turn_completion(
+        &mut self,
+        thread_id: &str,
+        turn_id: &str,
+        request_timeout: Duration,
+        mut observe: impl FnMut(&ServerNotification) -> anyhow::Result<()>,
+    ) -> anyhow::Result<codex_app_server_protocol::TurnCompletedNotification> {
+        self.ensure_usable()?;
+        for typed in std::mem::take(&mut self.notifications) {
+            if let ServerNotification::TurnCompleted(completed) = &typed
+                && completed.thread_id == thread_id
+                && completed.turn.id == turn_id
+            {
+                return Ok(completed.clone());
+            }
+            observe(&typed)?;
+            self.notifications.push(typed);
+        }
+        let result = tokio::time::timeout(request_timeout, async {
+            loop {
+                match self.read_message().await? {
+                    JSONRPCMessage::Notification(notification) => {
+                        let typed = ServerNotification::try_from(notification)
+                            .context("deserialize typed App Server notification")?;
+                        if let ServerNotification::TurnCompleted(completed) = &typed
+                            && completed.thread_id == thread_id
+                            && completed.turn.id == turn_id
+                        {
+                            return Ok(completed.clone());
+                        }
+                        observe(&typed)?;
+                        self.notifications.push(typed);
+                    }
+                    JSONRPCMessage::Request(request) => {
+                        let error = JSONRPCError {
+                            id: request.id,
+                            error: JSONRPCErrorError {
+                                code: -32601,
+                                data: None,
+                                message: "evaluation client does not implement server requests"
+                                    .to_string(),
+                            },
+                        };
+                        self.write_message(&error).await?;
+                        bail!("unknown App Server request while waiting for turn completion");
+                    }
+                    JSONRPCMessage::Response(response) => {
+                        bail!("unexpected App Server response {}", response.id)
+                    }
+                    JSONRPCMessage::Error(error) => {
+                        bail!("unexpected App Server error {}", error.id)
+                    }
+                }
+            }
+        })
+        .await;
+        match result {
+            Ok(result) => result,
+            Err(_) => {
+                self.poison(format!("turn {turn_id} completion timed out"));
+                bail!("App Server turn completion timed out")
+            }
+        }
+    }
+
     async fn read_response<T>(&mut self, expected_id: &RequestId) -> anyhow::Result<T>
     where
         T: for<'de> Deserialize<'de>,
@@ -384,13 +451,19 @@ pub struct AppServerClient {
 }
 
 impl AppServerClient {
-    pub async fn spawn(codex_binary: &Path, stderr_path: &Path) -> anyhow::Result<Self> {
+    pub async fn spawn(
+        codex_binary: &Path,
+        stderr_path: &Path,
+        environment: &ChildEnvironment,
+    ) -> anyhow::Result<Self> {
         let stderr = std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
             .open(stderr_path)
             .with_context(|| format!("create {}", stderr_path.display()))?;
-        let mut child = Command::new(codex_binary)
+        let mut command = Command::new(codex_binary);
+        environment.apply_tokio(&mut command);
+        let mut child = command
             .arg("app-server")
             .arg("--listen")
             .arg("stdio://")
