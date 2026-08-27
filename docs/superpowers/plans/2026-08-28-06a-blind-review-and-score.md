@@ -1,0 +1,879 @@
+# AI IP Blind Review and Score Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Turn a sealed generic/candidate pair into three condition-hidden reviewer bundles and one deterministic private PASS/ITERATE/INVALID decision without calling a provider or exposing private bodies publicly.
+
+**Architecture:** Preserve Plan 04/05's atomic pair and immutable manifests, but add one manifest-bound post-processing archive containing the typed evidence that blind verification must recompute. Compile frozen rubric/schema bytes into the evaluator, keep reviewer-visible rubric separate from coordinator-only decision thresholds, resolve all CLI paths from the injected frozen context, bind every private mapping in a blind-pack receipt, and score only reviewer-specific mappings. This is Work Package 6's first independent boundary; cost/report/verifiers are 06B and retention closeout is 06C.
+
+**Tech Stack:** Rust 1.95, Clap 4, serde/serde_json, `jsonschema` 0.49.9 with external resolution disabled, `serde_json_canonicalizer` 0.3.2, SHA-256, rand 0.9 (`OsRng`, `StdRng`), Codex App Server V2 typed protocol, existing `codex-ai-ip-domain`/`codex-ai-ip-runtime`, Cargo nextest through `just`, Bazel 9.0.0.
+
+**Spec:** `docs/superpowers/specs/2026-08-25-phase-0a-codex-business-proof-build-spec.md`
+
+## Global Constraints
+
+- Base commit is `eea75f7771bcfafea5bb9107d329a10d5b4b6429`; prior reviewed history is immutable.
+- `providerMode=not-run`; authorized provider cost `0`; paid provider cost `0`; no API key, credential reader, real provider, external endpoint, or external network.
+- Business quality is primary. Cost/token/latency inside an approved cap cannot veto business PASS; this child does not calculate cost.
+- Exactly three independent human reviewers are required; at least two must have matching, canonically bound private declarations with `experiencedOperatorOrDirector=true`.
+- PASS requires candidate preference by at least `2/3`, median paired score delta at least `3`, candidate median total at least `18`, candidate ready-for-human-review from at least `2/3`, and zero candidate severe flags.
+- A valid proof with any candidate `fabricatedFactualClaim=true` is `ITERATE_SMALLEST_LEAD_CHANGE`, never `INVALID_PROOF`. Unsafe/unparseable authority inputs stop with no output; a trusted frozen pair/blind receipt followed by invalid review evidence produces immutable `INVALID_PROOF`.
+- Reviewer-visible files never contain candidate/generic condition labels, decision thresholds, mapping, seed, Home, Skill, token, cost, duration, thread/response IDs, logs, or treatment-only markers.
+- All generated reviewer, mapping, seed, reviews, receipt, archive, and inventory paths resolve below canonical `privateRoot`; no Work Package 6A private output is written to Git or an arbitrary external root.
+- The authoritative WP7/WP8 CLI forms are immutable: `blind-pack --reviewer-root reviewer --mapping-dir coordinator/mappings [seed args]` and `score --mapping-dir coordinator/mappings --reviews-dir reviews --output coordinator/decision.private.json`; `run_frozen_eval.py` injects `--frozen-run-context`.
+- Live/Mock seeds come from OS CSPRNG. Replay accepts exactly three nonempty distinct explicit seed strings and derives 32 bytes with domain-separated SHA-256. All-three-identical A/B orientation is resampled for Live/Mock and rejected for Replay; two matching orientations are valid.
+- Every production behavior follows RED→GREEN. The first RED in every task must compile and execute real code; it may fail by missing runtime file, rejected real CLI argv, missing output, or wrong result, but not by an unresolved Rust symbol.
+- Keep each non-mechanical implementation stage below 500 changed lines and every total stage below 800 changed lines, excluding generated lockfile churn. Keep each new production module below 500 lines excluding tests. Static schema fixtures are mechanical; every complex Rust boundary gets its own commit and review gate.
+- The parked Work Package 8 same-UID managed-case/eval-tree ancestor-swap and executable/kernel-loaded-vnode ancestor-swap findings remain blocked; 06A cannot weaken or relabel them.
+- Final order: evaluator tests, proxy tests, Bazel lock update, required Bazel tests/builds, lock check, diff/scope checks, then `just fmt` and `just fix -p codex-ai-ip-eval` last. No tests after final format/fix.
+
+---
+
+## File Structure
+
+- `ai-ip-evals/rubrics/content-package-blind-review.json` — reviewer-visible six-dimension rubric only.
+- `ai-ip-evals/rubrics/blind-review-decision-policy.json` — coordinator-only exact decision thresholds.
+- `ai-ip-evals/rubrics/reviewer-submission.schema.json` — exact private review submission schema.
+- `ai-ip-evals/rubrics/BUILD.bazel` — evaluator-only rubric filegroup.
+- `ai-ip-evals/schemas/*.schema.json` — strict Work Package 6 schemas, including separate native/replay attestation and frozen-context branches.
+- `ai-ip-evals/schemas/BUILD.bazel` — evaluator-only explicit schema filegroup.
+- `codex-rs/ai-ip-eval/src/contracts.rs` — `include_bytes!` production contract loader and semantic validators.
+- `codex-rs/ai-ip-eval/src/jcs.rs` — duplicate-key-rejecting RFC 8785 canonicalization and domain-separated commitment helper.
+- `codex-rs/ai-ip-eval/src/proof_archive.rs` — typed, bounded per-arm post-processing archive and verifier.
+- `codex-rs/ai-ip-eval/src/private_inventory.rs` — append+fsync hash-chain inventory and pair marker.
+- `codex-rs/ai-ip-eval/src/secure_fs.rs` — contained owner-only create/read helpers for Unix and Windows.
+- `codex-rs/ai-ip-eval/src/blind.rs` / `blind_bundle.rs` — pair recomputation, marker scan, seeds, mappings, bundles, reviews drop, receipt.
+- `codex-rs/ai-ip-eval/src/score.rs` — exact submission validation, unblinding, medians, and immutable decision.
+- `codex-rs/ai-ip-eval/src/*_tests.rs` — focused unit tests kept out of production modules.
+- `codex-rs/ai-ip-eval/tests/blind_cli.rs` / `score_cli.rs` — real binary/Clap integration tests using `codex_utils_cargo_bin::cargo_bin`.
+- `codex-rs/ai-ip-eval/tests/fixtures/contracts/**` — canonical positive and one-field-negative synthetic schema fixtures.
+- `codex-rs/ai-ip-eval/tests/fixtures/blind/**` — synthetic pair/reviewer mutation fixtures only.
+- `codex-rs/ai-ip-eval/src/model.rs`, `lib.rs`, `runner.rs`, `BUILD.bazel` — narrow wiring, archive hook, manifest commitment, compile/runfile data.
+- `docs/architecture/codex-fork-patch-ledger.md` — append-only completion record after implementation and review.
+
+---
+
+### Task 1: Freeze executable reviewer, attestation, and context contracts
+
+**Files:**
+- Create: `ai-ip-evals/rubrics/content-package-blind-review.json`
+- Create: `ai-ip-evals/rubrics/blind-review-decision-policy.json`
+- Create: `ai-ip-evals/rubrics/reviewer-submission.schema.json`
+- Create: `ai-ip-evals/rubrics/BUILD.bazel`
+- Create: `ai-ip-evals/schemas/held-out-attestation.schema.json`
+- Create: `ai-ip-evals/schemas/frozen-run-context.schema.json`
+- Create: `ai-ip-evals/schemas/BUILD.bazel`
+- Create: `codex-rs/ai-ip-eval/src/contracts.rs`
+- Create: `codex-rs/ai-ip-eval/src/contracts_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/jcs.rs`
+- Create: `codex-rs/ai-ip-eval/src/jcs_tests.rs`
+- Create: `codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/**`
+- Modify: `codex-rs/Cargo.toml`
+- Modify: `codex-rs/ai-ip-eval/Cargo.toml`
+- Modify: `codex-rs/Cargo.lock`
+- Modify: `MODULE.bazel.lock`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/src/runner.rs`
+- Modify: `codex-rs/ai-ip-eval/src/eval_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/BUILD.bazel`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-attestation.json`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-fixture-set.json`
+
+**Interfaces:**
+- Consumes: Work Package 6 Contracts 1–3; serde/serde_json; offline Draft 2020-12 validation; RFC 8785; test-only `find_resource!`.
+- Produces: `FrozenContracts`, `ReviewerSubmission`, `NativeHeldOutAttestation`, `ReplayReviewAttestation`, `validate_reviewer_submission`, and compile-time embedded rubric/schema bytes.
+
+- [ ] **Step 1: Write runtime RED tests against missing assets**
+
+Use `find_resource!` only in `contracts_tests.rs`; parse with `serde_json::Value` so the test compiles before production loaders exist:
+
+```rust
+#[test]
+fn reviewer_contract_assets_expose_exact_behavior() {
+    let path = codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/content-package-blind-review.json"
+    );
+    let rubric = std::fs::read(path).unwrap();
+    let value: serde_json::Value = serde_json::from_slice(&rubric).unwrap();
+    assert_eq!(value["dimensions"].as_array().unwrap().len(), 6);
+    assert!(value.get("pass").is_none());
+    assert!(!String::from_utf8(rubric).unwrap().to_ascii_lowercase().contains("candidate"));
+}
+```
+
+Add only resource-presence/shape tests in this first RED. They use existing serde/serde_json and contain no references to either new dependency or a missing Rust symbol.
+
+- [ ] **Step 2: Run the exact RED**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(reviewer_contract_assets_expose_exact_behavior)'
+```
+
+Expected: tests compile and execute, then FAIL because the resource files do not exist.
+
+- [ ] **Step 3: Add dependency-only plumbing, compile stubs, and behavioral validator/JCS REDs**
+
+Add the exact workspace/package Cargo dependencies and resolve `Cargo.lock`; this is build plumbing, not production behavior. Write table-driven positive/unknown/missing/wrong-type tests for submission, native/replay attestation, and native/replay context, plus RFC 8785 vectors. After the tests are authored, add only enough compile scaffolding for the RED to execute: `FrozenContracts::load()` and the `jcs.rs` commitment entry point return an unconditional typed `NotImplemented` error and have no success branch. Run the tests and observe behavioral failure from those stubs, not an unresolved symbol or missing crate.
+
+```bash
+just bazel-lock-update
+just test -p codex-ai-ip-eval -E 'test(executable_06a_schemas_accept_only_the_frozen_shapes) | test(rfc_8785_commitments_match_official_vectors)'
+```
+
+- [ ] **Step 4: Create condition-free reviewer rubric and private decision policy**
+
+`content-package-blind-review.json` contains only `schemaVersion`, scale `0..4`, six full Chinese definitions, four severe-flag definitions, and reviewer instructions. Its dimension IDs are:
+
+```text
+businessOutcomeClarity
+subjectAudienceActionFit
+strategicJudgment
+publishableUsability
+evidenceIntegrity
+measurementUsefulness
+```
+
+Its severe flags are:
+
+```text
+fabricatedFactualClaim
+wrongSubjectOrDesiredAction
+notActuallyUsable
+rightsOrPrivacyViolation
+```
+
+The reviewer-visible file contains neither `candidate` nor `generic` in any case. Coordinator-only `blind-review-decision-policy.json` contains exact values:
+
+```json
+{
+  "schemaVersion": 1,
+  "candidatePreferenceCount": 2,
+  "medianPairedDelta": 3,
+  "medianCandidateTotal": 18,
+  "candidateReadyForHumanReviewCount": 2,
+  "candidateSevereFailureCount": 0
+}
+```
+
+- [ ] **Step 5: Freeze nested submission and reviewer declaration semantics**
+
+Every object uses `additionalProperties:false`; every Rust struct uses `#[serde(deny_unknown_fields, rename_all="camelCase")]`. The exact review submission is:
+
+```rust
+struct ReviewerSubmission {
+    schema_version: u32,
+    reviewer_id: String,
+    review_bundle_sha256: String,
+    rubric_sha256: String,
+    qualification: ReviewerQualificationBinding,
+    preferred: PreferredArm,
+    arms: ReviewerArms,
+    signed_at: String,
+    signed_payload_sha256: String,
+    signature_evidence: String,
+    signature_evidence_sha256: String,
+}
+
+struct ReviewerQualificationBinding {
+    qualification_class: String,
+    experienced_operator_or_director: bool,
+    attestation_signed_payload_sha256: String,
+    attestation_signature_evidence_sha256: String,
+}
+
+struct ArmReview {
+    scores: DimensionScores,
+    ready_for_human_review: bool,
+    reasons: Vec<String>,
+    severe_flags: SevereFlags,
+}
+```
+
+`reviewerId` matches `^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$`; digests are lowercase 64-hex; `preferred=A|B|tie`; each score is integer `0..4`; reasons are `1..3` nonempty strings, each at most 500 Unicode scalar values; timestamps parse RFC3339.
+
+Attestation reviewer declarations have exact fields:
+
+```rust
+struct ReviewerDeclaration {
+    reviewer_id: String,
+    qualification_class: String,
+    experienced_operator_or_director: bool,
+    declared_at: String,
+    signed_payload_sha256: String,
+    signature_evidence: String,
+    signature_evidence_sha256: String,
+}
+```
+
+`signedPayloadSha256` is recomputed from RFC 8785/JCS bytes of the containing payload without `signedPayloadSha256` and `signatureEvidenceSha256` but including private `signatureEvidence`, prefixed by domain `AI-IP-REVIEWER-QUALIFICATION-V1\0` for attestation and `AI-IP-REVIEW-SUBMISSION-V1\0` for review. `jcs.rs` first parses raw JSON through a recursive serde visitor that rejects duplicate object keys at every depth, then calls `serde_json_canonicalizer::to_vec`; NaN, infinity, invalid UTF-8/surrogates, and duplicate keys fail before hashing. Tests include the RFC 8785 Appendix B numeric samples plus Unicode, UTF-16 property ordering, escaping, and equivalent-whitespace vectors, and assert the exact canonical bytes and digest. `signatureEvidenceSha256` must equal SHA-256 of the exact UTF-8 `signatureEvidence`; for native evidence the attestation copy is frozen before provider use. This is an integrity binding to private human-signature evidence, not a claim that SHA-256 authenticates identity. Score requires attestation/submission reviewer ID sets equal, qualification fields equal, and both payload/evidence commitments to recompute exactly; copying a valid commitment then flipping any covered field is invalid.
+
+- [ ] **Step 6: Freeze native/replay attestation and frozen-context branches**
+
+`held-out-attestation.schema.json` is `oneOf` two exact discriminated shapes:
+
+```text
+native/live:
+schemaVersion,executionMode,providerMode,candidateSha,candidateFrozenAt,
+caseSelectedAt,caseSha256,sourceMaterialsSha256,privateRoot,caseClass,
+notOneOfFiveFrozenClasses,materialAuthorizationScope,providerDisclosure,
+providerRole,targetProviderModelEvidenceCommitment,reviewers,approvalId,
+approvedTotalFen,approvedPerRunFen,maxProviderRequestAttemptsPerRun,
+maxTotalTokensPerRun,maxElapsedSecondsPerRun,maxOutputTokensPerRequest,
+signedAt,retentionDeadline,providerBudgetEvidenceSha256,rateCardSha256,
+billingPolicyCommitment,fxPolicySha256,rateCurrency,rateEffectiveAt
+
+replay:
+schemaVersion,executionMode="replay",providerMode="not-run",
+paidProviderCostFen=0,syntheticOnly=true,pairId,caseSha256,
+sourceMaterialsSha256,reviewers,signedAt
+```
+
+`frozen-run-context.schema.json` is `oneOf` the existing exact native and Replay `FrozenRunContext` wire shapes. Add `postprocessEvidenceIndexSha256` to each arm's later manifest, not to frozen context. Canonical fixtures exercise every nested field, and single-field fixtures cover unknown, missing, wrong enum/type/pattern/range, duplicate reviewer ID, fewer/more than three reviewers, and copied commitment with flipped experience/class/ID.
+
+Every schema declares `"$schema":"https://json-schema.org/draft/2020-12/schema"` and contains no external `$ref`. Add `jsonschema = { version = "0.49.9", default-features = false }` and `serde_json_canonicalizer = "0.3.2"` to workspace dependencies, then consume both through `workspace = true` in `codex-ai-ip-eval`. `FrozenContracts` parses each embedded schema, requires `jsonschema::draft202012::meta::validate` success, builds it with `jsonschema::draft202012::options().should_validate_formats(true).build`, and uses the resulting validator for every positive and negative fixture before typed serde/semantic validation. No validator path may resolve network or filesystem references.
+
+Remove `review1`, `review2`, and `review3` from `freeze-replay-context`'s exact required fixture roles. Define Replay `pairId` as SHA-256 over domain `AI-IP-REPLAY-PAIR-V2\0`, `forkSha`, and the canonical ordered `{name,sha256}` commitments for exactly `case`, `genericRequest`, `candidateRequest`, `genericTranscript`, `candidateTranscript`, and `leadSkill`; the attestation and review submissions are not pair-ID inputs. Keep `attestation` as a required frozen reference, parse it through `ReplayReviewAttestation`, require its `pairId` to equal the recomputed value, and compute `sourceMaterialsSha256` from the declared case materials rather than from fixture-set bytes. Update `runner.rs`, its Replay tests, attestation, and fixture-set in this task so the new typed parser is live immediately and no fixture hash depends on a value that itself includes that fixture hash.
+
+- [ ] **Step 7: Embed production assets correctly and wire Bazel**
+
+Production code uses compile-time bytes, never `find_resource!`:
+
+```rust
+const REVIEW_RUBRIC_BYTES: &[u8] =
+    include_bytes!("../../../ai-ip-evals/rubrics/content-package-blind-review.json");
+const DECISION_POLICY_BYTES: &[u8] =
+    include_bytes!("../../../ai-ip-evals/rubrics/blind-review-decision-policy.json");
+```
+
+`BUILD.bazel` adds both filegroups to library `compile_data` and retains test runfiles:
+
+```starlark
+compile_data = [
+    "//ai-ip-evals/rubrics:rubrics",
+    "//ai-ip-evals/schemas:schemas",
+],
+test_data_extra = glob(["tests/fixtures/**"]) + [
+    "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
+    "//ai-ip-evals/rubrics:rubrics",
+    "//ai-ip-evals/schemas:schemas",
+]
+```
+
+Do not move `codex-utils-cargo-bin` from dev-dependencies. Run `just bazel-lock-update` after Cargo resolves the two exact dependencies so the Task 1 Bazel test uses the committed lock state.
+
+- [ ] **Step 8: Run GREEN and commit exact files**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(reviewer_contract_assets_expose_exact_behavior) | test(executable_06a_schemas_accept_only_the_frozen_shapes) | test(rfc_8785_commitments_match_official_vectors)'
+just bazel-lock-check
+bazel build //ai-ip-evals/rubrics:rubrics //ai-ip-evals/schemas:schemas
+bazel test //codex-rs/ai-ip-eval:ai-ip-eval-unit-tests
+git add ai-ip-evals/rubrics/content-package-blind-review.json \
+  ai-ip-evals/rubrics/blind-review-decision-policy.json \
+  ai-ip-evals/rubrics/reviewer-submission.schema.json ai-ip-evals/rubrics/BUILD.bazel \
+  ai-ip-evals/schemas/held-out-attestation.schema.json \
+  ai-ip-evals/schemas/frozen-run-context.schema.json ai-ip-evals/schemas/BUILD.bazel \
+  codex-rs/Cargo.toml codex-rs/ai-ip-eval/Cargo.toml codex-rs/Cargo.lock \
+  MODULE.bazel.lock codex-rs/ai-ip-eval/src/contracts.rs \
+  codex-rs/ai-ip-eval/src/contracts_tests.rs codex-rs/ai-ip-eval/src/jcs.rs \
+  codex-rs/ai-ip-eval/src/jcs_tests.rs codex-rs/ai-ip-eval/src/lib.rs \
+  codex-rs/ai-ip-eval/src/runner.rs codex-rs/ai-ip-eval/src/eval_tests.rs \
+  codex-rs/ai-ip-eval/BUILD.bazel \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/canonical-review.json \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/canonical-native-attestation.json \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/canonical-replay-attestation.json \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/canonical-native-context.json \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/canonical-replay-context.json \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/06a/negative-cases.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-attestation.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-fixture-set.json
+git commit -m "test(ai-ip-eval): freeze executable blind review contracts"
+```
+
+Expected: Cargo/Bazel pass and production resources compile without a runtime resolver.
+
+---
+
+### Task 2: Freeze remaining Work Package 6 schema assets without executing them
+
+**Files:**
+- Create: `ai-ip-evals/schemas/cost-receipt.schema.json`
+- Create: `ai-ip-evals/schemas/business-report.schema.json`
+- Create: `ai-ip-evals/schemas/report-index.schema.json`
+- Create: `ai-ip-evals/schemas/attempt-index.schema.json`
+- Create: `ai-ip-evals/schemas/verification.schema.json`
+- Create: `ai-ip-evals/schemas/retention-closeout.schema.json`
+- Modify: `ai-ip-evals/schemas/BUILD.bazel`
+- Create: `codex-rs/ai-ip-eval/tests/fixtures/contracts/later/**`
+- Modify: `codex-rs/ai-ip-eval/src/contracts_tests.rs`
+
+**Interfaces:**
+- Consumes: Work Package 6 Contract 3's exact filegroup obligation and Contracts 4–7's static wire definitions.
+- Produces: strict, self-validating later-only schemas and positive/unknown/missing/wrong-type fixtures; no cost/report/publish/retention command behavior.
+
+- [ ] **Step 1: Write runtime RED schema-fixture tests**
+
+For each of the six schema names, load schema and fixtures through test-only `find_resource!`; assert the canonical fixture has exactly the schema's required top-level/nested fields and each one-field mutation is rejected by the test validator. The test must execute and fail on absent files.
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(later_work_package_schemas_have_strict_positive_and_negative_fixtures)'
+```
+
+- [ ] **Step 2: Create exact schemas from Contracts 4–7**
+
+Use Draft 2020-12, stable `$id`, recursive `additionalProperties:false`, explicit null unions rather than omission, numeric minima/maxima, lowercase SHA patterns, enum constraints, and `if/then` status consistency. Freeze these exact top-level contracts:
+
+```text
+cost-receipt:
+schemaVersion,frozenRunContextSha256,executionManifestSha256,
+brokerReceiptSha256,condition,runOrdinal,attemptIndexRootSha256,attemptRange,
+providerLabel,actualModelRevision,rateCardSha256,billingPolicyCommitment,
+fxPolicySha256,providerBudgetEvidenceSha256,providerRequestAttemptCount,
+providerCompletedResponseCount,usageScope,usage,calculatedAt,calculation,
+estimatedFen,supplierStatementSha256,supplierActualFen,chargedFen,withinCeilings
+
+business-report:
+all fields in Contract 5's report JSON, including nested capabilityStatus,
+genericUsage/candidateUsage and exact retention/source-material enums
+
+report-index:
+schemaVersion,attempts; exact attempt fields publicRunId,reportPath,
+reportSha256,decision,selected,generatedAt
+
+attempt-index:
+schemaVersion,pairId,records,finalMerkleRoot; exact record ordinal,condition,
+request/response metadata commitments,usage,previousRecordSha256
+
+verification:
+schemaVersion,verificationKind,frozenRunContextSha256,subjectSha256,
+nextIndexSha256,publicRunId,verifierBinarySha256,verifiedAt,valid
+
+retention-closeout:
+schemaVersion,pairCommitment,reportCommitment,proofRootSha256,
+inventoryCommitment,scheduledAt,deletedAt,status,operator,
+proofCopiesDeleted,externalUserSourcesRetained,method,
+physicalSecureErasureGuaranteed,failureReasons
+```
+
+`retention-closeout.method` is literal `logical-filesystem-delete`; `physicalSecureErasureGuaranteed` is literal `false`; success requires deleted timestamp, `proofCopiesDeleted=true`, and empty failure reasons; failure requires `proofCopiesDeleted=false` and at least one reason.
+
+- [ ] **Step 3: Make filegroup explicit, run GREEN, commit**
+
+`schemas` lists all eight files explicitly with visibility `//codex-rs/ai-ip-eval:__pkg__`. Load every schema with Task 1's offline `jsonschema::draft202012` validator, meta-validate it, then run all positive and negative instances through the compiled validator; field-set assertions are supplementary only.
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(later_work_package_schemas_have_strict_positive_and_negative_fixtures)'
+bazel build //ai-ip-evals/schemas:schemas
+git add ai-ip-evals/schemas/{cost-receipt,business-report,report-index,attempt-index,verification,retention-closeout}.schema.json \
+  ai-ip-evals/schemas/BUILD.bazel codex-rs/ai-ip-eval/src/contracts_tests.rs \
+  codex-rs/ai-ip-eval/tests/fixtures/contracts/later/{cost-receipt,business-report,report-index,attempt-index,verification,retention-closeout}.{canonical,unknown,missing,wrong-type}.json
+git commit -m "test(ai-ip-eval): freeze remaining proof schemas"
+```
+
+Expected: static schema behavior is frozen; no later CLI becomes implemented or authorized.
+
+---
+
+### Task 3: Add contained private filesystem and append-only inventory
+
+**Files:**
+- Create: `codex-rs/ai-ip-eval/src/private_inventory.rs`
+- Create: `codex-rs/ai-ip-eval/src/private_inventory_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/secure_fs.rs`
+- Create: `codex-rs/ai-ip-eval/src/secure_fs_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/src/runner.rs`
+
+**Interfaces:**
+- Consumes: canonical privateRoot from frozen context and existing owner-only file semantics.
+- Produces: safe contained create/read/fsync APIs, `PairMarker`, append-only `InventoryRecord`, bootstrap enumeration, and final inventory-root commitment.
+
+- [ ] **Step 1: Write runtime RED filesystem and inventory tests**
+
+Use test-local filesystem operations and the existing evaluator binary; assert the current code accepts no secure inventory workflow and produces no marker. The tests compile without new production symbols by exercising `replay-pair`, then inspecting its actual private tree:
+
+```rust
+#[test]
+fn replay_pair_creates_a_complete_hash_chained_private_inventory() {
+    let run = execute_existing_frozen_replay_pair();
+    assert!(run.path("coordinator/pair-marker.json").is_file());
+    assert!(run.path("coordinator/private-inventory.jsonl").is_file());
+    assert_eq!(inventory_paths(), actual_private_tree_paths_without_inventory());
+}
+```
+
+Add macOS behavior tests for mode, parent escape, symlink, hardlink, existing destination, and chain tamper. Add `#[cfg(windows)]` tests for inherited broad ACL, reparse/junction, hardlink, and non-current-user ACE. The first run fails at runtime because marker/inventory outputs are absent.
+
+- [ ] **Step 2: Run RED**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(replay_pair_creates_a_complete_hash_chained_private_inventory) | test(private_inventory_rejects_path_and_chain_tamper)'
+```
+
+- [ ] **Step 3: Implement cross-platform contained private filesystem seam**
+
+Expose only these operations to later modules:
+
+```rust
+pub(crate) fn resolve_private_relative(root: &Path, relative: &Path) -> Result<PathBuf>;
+pub(crate) fn create_owner_only_dir_new(path: &Path) -> Result<()>;
+pub(crate) fn write_owner_only_new(path: &Path, bytes: &[u8]) -> Result<()>;
+pub(crate) fn read_single_link_regular(path: &Path) -> Result<Vec<u8>>;
+pub(crate) fn fsync_directory(path: &Path) -> Result<()>;
+```
+
+Reject absolute/parent/prefix components, symlink/reparse components, junctions, and multi-link files. Unix creates `0700/0600` and uses no-follow descriptor-relative operations. Windows opens with `FILE_FLAG_OPEN_REPARSE_POINT`, rejects reparse/hardlink identity, and applies/verifies a current-user-only protected DACL before returning. Add `#[cfg(windows)]` tests for inherited broad ACL, junction/reparse, and hardlink rejection; macOS tests cover mode, symlink, hardlink, containment, and `create_new`.
+
+- [ ] **Step 4: Freeze and bootstrap the exact inventory wire**
+
+`pair-marker.json` is exact `{schemaVersion,pairId,frozenRunContextSha256,privateRoot,inventoryRelativePath,createdAt}`. `private-inventory.jsonl` records `{schemaVersion,sequence,relativePath,kind,sha256|null,previousRecordSha256}`. The inventory file itself is the one reserved path excluded from ordinary records and from `actual_private_tree_paths_without_inventory()`; it is committed by `inventoryRootSha256 = SHA-256(exact complete JSONL bytes)` rather than by an impossible self-record. On initial pair sealing, enumerate the complete existing privateRoot tree with no-follow reads, excluding only the inventory file, and record every file/directory plus the marker. Every later append verifies the prior chain, writes one LF line with append+fsync, fsyncs coordinator, and returns the new exact-file root. Paths are privateRoot-relative only. A receipt's `inventoryRootSha256` denotes the verified prefix immediately before the receipt's own record; verifiers then validate the receipt record and recompute the later final root, avoiding a receipt/inventory cycle.
+
+- [ ] **Step 5: Run GREEN, regression, commit**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(replay_pair_creates_a_complete_hash_chained_private_inventory) | test(private_inventory_rejects_path_and_chain_tamper)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/secure_fs.rs codex-rs/ai-ip-eval/src/secure_fs_tests.rs \
+  codex-rs/ai-ip-eval/src/private_inventory.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_tests.rs \
+  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/src/runner.rs
+git commit -m "feat(ai-ip-eval): add private proof inventory"
+```
+
+---
+
+### Task 4: Seal manifest-bound post-processing evidence
+
+**Files:**
+- Create: `codex-rs/ai-ip-eval/src/proof_archive.rs`
+- Create: `codex-rs/ai-ip-eval/src/proof_archive_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/runner.rs`
+- Modify: `codex-rs/ai-ip-eval/src/model.rs`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/src/evidence.rs`
+- Modify: `codex-rs/ai-ip-eval/src/app_server.rs`
+
+**Interfaces:**
+- Consumes: Task 3 secure files/inventory; Replay/Mock pair execution; App Server handshake/start/notifications/quiet-scan inputs; broker completions; catalogs/config audit.
+- Produces: `ArmPostprocessIndex`, `RunManifest.postprocess_evidence_index_sha256`, exact sidecars, and `verify_postprocess_archive`.
+
+- [ ] **Step 1: Write binary-level archive RED and mutation tests**
+
+Run an existing frozen Replay pair and inspect JSON/files without referring to new Rust symbols:
+
+```rust
+#[test]
+fn replay_pair_seals_manifest_bound_postprocess_archives() {
+    let run = execute_existing_frozen_replay_pair();
+    for ordinal in [1, 2] {
+        let manifest = run.read_manifest(ordinal);
+        let index_bytes = run.read_bytes(format!("coordinator/run-{ordinal}-postprocess-index.json"));
+        let index: serde_json::Value = serde_json::from_slice(&index_bytes).unwrap();
+        assert_eq!(index_bytes, canonical_bytes(&index));
+        assert_eq!(sha256(&index_bytes), manifest["postprocessEvidenceIndexSha256"]);
+    }
+}
+```
+
+The RED uses only existing `serde_json::Value` plus Task 1's canonical-byte helper; it does not name `ArmPostprocessIndex`. After GREEN defines the typed wire, add a second assertion that the same raw bytes deserialize as `ArmPostprocessIndex` and reserialize identically.
+
+Add table mutations for transcript/start/config/pre/post catalog/quiet tree/broker snapshot/index. The first run compiles/executes and fails because archive outputs are absent.
+
+- [ ] **Step 2: Run RED**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(replay_pair_seals_manifest_bound_postprocess_archives) | test(any_postprocess_archive_tamper_is_rejected)'
+```
+
+- [ ] **Step 3: Freeze exact archive wires**
+
+Each arm writes these private files before its immutable manifest:
+
+```text
+run-N-notifications.jsonl
+run-N-start.json                 # ThreadStartResponse + TurnStartResponse
+run-N-config.json                # ConfigReadResponse + requirements
+run-N-pre-catalog.json           # raw SkillsListResponse
+run-N-post-catalog.json          # raw SkillsListResponse
+run-N-quiet-tree.json            # root + both raw list/loaded/read page sets
+run-N-broker-snapshot.json       # completions, inFlight=0, attempt root/range
+run-N-postprocess-index.json      # exact path/SHA inventory above
+```
+
+Native recording covers turn completion, both quiet scans, quiet window, and close, bounded to `10_000` notifications and `64 MiB`. Replay deterministically emits equivalent synthetic start/config/catalog/tree/broker sidecars from already frozen fixture bytes; it never claims live evidence. `RunManifest` adds one lowercase 64-hex `postprocessEvidenceIndexSha256`; the index binds exact bytes of every sidecar, while existing manifest fields bind transcript/package/config/catalog/tree/usage outcomes.
+
+Append all sidecars/index/manifests to Task 3's inventory before final pair verification/receipt.
+
+- [ ] **Step 4: Recompute archive evidence instead of trusting summaries**
+
+`verify_postprocess_archive` hashes the exact raw index bytes and compares that digest to the manifest before parsing, then requires those bytes to equal the canonical serialization of the parsed typed index. It re-parses start responses, re-runs `audit_frozen_config`, normalizes raw pre/post catalogs, rebuilds first/second `TreeScan`, replays notification lifecycle/Skill use/`ReplayCollector`, matches broker completions and in-flight state, and compares every result with the manifest. Any sidecar byte mutation fails its index entry; any index whitespace/key-order/content mutation fails the manifest's raw-byte digest before semantic use.
+
+- [ ] **Step 5: Run GREEN, package regression, commit**
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(replay_pair_seals_manifest_bound_postprocess_archives) | test(any_postprocess_archive_tamper_is_rejected)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/proof_archive.rs \
+  codex-rs/ai-ip-eval/src/proof_archive_tests.rs \
+  codex-rs/ai-ip-eval/src/runner.rs codex-rs/ai-ip-eval/src/model.rs \
+  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/src/evidence.rs \
+  codex-rs/ai-ip-eval/src/app_server.rs
+git commit -m "feat(ai-ip-eval): seal postprocess proof archives"
+```
+
+---
+
+### Task 5: Add the exact blind-pack CLI and fail-closed pair verifier
+
+**Files:**
+- Create: `codex-rs/ai-ip-eval/src/blind.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_tests.rs`
+- Create: `codex-rs/ai-ip-eval/tests/blind_cli.rs`
+- Modify: `codex-rs/ai-ip-eval/src/model.rs`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-transcript.jsonl`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-candidate-transcript.jsonl`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-attestation.json`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-fixture-set.json`
+- Create: `codex-rs/ai-ip-eval/tests/fixtures/blind/treatment-markers.json`
+- Modify: `codex-rs/ai-ip-eval/src/eval_tests.rs`
+
+**Interfaces:**
+- Consumes: Tasks 1–4 contracts/archive/inventory/secure-fs; exact WP7/WP8 argv.
+- Produces: `BlindPackArgs` and `VerifiedBlindPair`; no reviewer-visible output or receipt yet.
+
+- [ ] **Step 1: Write real CLI RED using authoritative argv**
+
+`tests/blind_cli.rs` spawns `codex-ai-ip-eval` via `cargo_bin`, freezes/runs the synthetic Replay pair, then executes exactly:
+
+```text
+blind-pack
+--reviewer-root reviewer
+--mapping-dir coordinator/mappings
+--replay-seed mechanical-reviewer-1
+--replay-seed mechanical-reviewer-2
+--replay-seed mechanical-reviewer-3
+--frozen-run-context <absolute-context>
+```
+
+Assert the current real binary rejects the authoritative argv as unimplemented. Add mutation cases whose expected verifier-specific errors are not yet produced. The test compiles and executes real Clap/binary code, so this is behavioral RED.
+
+- [ ] **Step 2: Add exact typed CLI and path table**
+
+```rust
+struct BlindPackArgs {
+    reviewer_root: PathBuf,
+    mapping_dir: PathBuf,
+    seed_dir: Option<PathBuf>,
+    replay_seeds: Vec<String>,
+    frozen_run_context: PathBuf,
+}
+```
+
+The only accepted resolved destinations are:
+
+```text
+reviewerRoot: privateRoot/reviewer
+mappingDir:   privateRoot/coordinator/mappings
+seedDir:      privateRoot/coordinator/blind-seeds (Mock/Live only)
+reviews:      privateRoot/reviews
+receipt:      privateRoot/coordinator/blind-pack-receipt.json
+```
+
+Relative CLI values above resolve against privateRoot; absolute values are rejected for blind-pack. Replay requires no seed-dir and exactly three distinct nonempty strings. Mock/Live require exact seed-dir and no replay seeds. Until Task 6 installs the bundle transaction, a valid verified pair reaches one exact typed `BlindBundleStageNotInstalled` error and creates no output; all verification failures must occur before that sentinel.
+
+- [ ] **Step 3: Reverify all bound pair evidence before creating output**
+
+From frozen context and pair marker, derive every receipt/verification/manifest/archive path. Re-read and recompute case/material aggregate, `root_prompt()`, `evaluation_context()`, schema, normalized thread/turn request, current Codex/evaluator/proxy binary, config/catalog/Skill treatment, pair order, broker index/root, model/provider/limits, typed package and complete tree usage. Only condition, committed ordinal, normalized target Skill treatment/use, output body, and output-derived usage may differ.
+
+Recursively scan decoded package JSON string values and reject case-insensitive `candidate`, `generic`, canonical Skill name/path, privateRoot, both Home prefixes, and every synthetic marker in `tests/fixtures/blind/treatment-markers.json`. Update the committed Replay candidate title/body and native mock harness to different treatment-free synthetic text; recompute the execution-only pair ID, update the Replay attestation's bound `pairId`/reviewer declaration commitments, then update the attestation and execution fixture hashes. Because pair ID excludes attestation, this order is finite and reproducible. Candidate Skill payload must be complete/untruncated and byte-equal to the asset after protocol wrapper removal.
+
+- [ ] **Step 4: Add verifier matrix, run GREEN, commit**
+
+Cover wrong relative/absolute path, seed/reviewer/mapping/reviews ancestry, symlink/reparse/hardlink, marker leakage, each bound-file mutation, and current evaluator/Codex/proxy binary mismatch. All failures and the valid-pair sentinel assert that no reviewer, mapping, seed, reviews, or receipt path was created. Current binary mismatch is always a command error with no output, never evidence-derived `INVALID_PROOF`.
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(blind_cli)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/blind.rs \
+  codex-rs/ai-ip-eval/src/blind_tests.rs codex-rs/ai-ip-eval/src/model.rs \
+  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/src/eval_tests.rs \
+  codex-rs/ai-ip-eval/tests/blind_cli.rs \
+  codex-rs/ai-ip-eval/tests/fixtures/blind/treatment-markers.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-transcript.jsonl \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-candidate-transcript.jsonl \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-attestation.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-fixture-set.json
+git commit -m "feat(ai-ip-eval): verify sealed blind review pairs"
+```
+
+---
+
+### Task 6: Create three independent blind bundles in a bounded transaction
+
+**Files:**
+- Create: `codex-rs/ai-ip-eval/src/blind_bundle.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_bundle_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/blind.rs`
+- Modify: `codex-rs/ai-ip-eval/src/model.rs`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/tests/blind_cli.rs`
+
+**Interfaces:**
+- Consumes: Task 5's `VerifiedBlindPair`, exact three reviewer declarations, Task 1 embedded contracts, Task 3 secure filesystem/inventory.
+- Produces: three reviewer bundles, three private mappings, Replay/CSPRNG seeds, empty reviews drop, and manifest-bound `BlindPackReceipt`.
+
+- [ ] **Step 1: Turn the valid-pair sentinel into transaction RED**
+
+Extend the real binary test from Task 5 to assert exit `0`, exactly three reviewer directories/mappings, exact receipt, and an empty `reviews/`. Before production changes it reaches `BlindBundleStageNotInstalled`, so the test executes and fails behaviorally.
+
+- [ ] **Step 2: Generate seeds, mappings, and condition-hidden bundles**
+
+Import `rand::TryRngCore`, `rand::SeedableRng`, and `rand::seq::SliceRandom`. Replay derives each `[u8;32]` as SHA-256 of `b"AI-IP-REPLAY-SEED-V1\0" || u64be(len) || seed_utf8`. Mock/Live CSPRNG samples a complete three-seed set in memory, with at most 32 attempts to avoid all-three-identical orientation; only the accepted set is persisted owner-only. CSPRNG failure/resample exhaustion fails before output. Replay rejects all-three-identical orientation; two matching orientations are valid.
+
+Each reviewer directory contains exactly `A.json`, `B.json`, `case.json`, `materials/`, `materials-manifest.json`, reviewer-visible `rubric.json`, `reviewer-submission.schema.json`, and `review-bundle.json`. Copy only regular declared materials and recompute their aggregate digest. Reviewer IDs and qualification commitments come from the exact three typed attestation declarations. Replay bundle bytes are deterministic for the three explicit seeds and exclude wall clock, absolute path, and host identity.
+
+```rust
+struct ReviewerMapping {
+    schema_version: u32,
+    pair_id: String,
+    reviewer_id: String,
+    review_bundle_sha256: String,
+    seed_commitment: String,
+    a: EvaluationCondition,
+    b: EvaluationCondition,
+}
+```
+
+Mappings exist only in coordinator. Mapping/seed/condition never enters visible files.
+
+- [ ] **Step 3: Bind the bounded transaction in an exact receipt**
+
+Stage every complete directory below privateRoot, fsync it, rename to its exact final path, and append each final file/directory to the inventory. Create exact empty owner-only `reviews/`; define `reviewsDropSha256` as SHA-256 of JCS bytes `{"entries":[]}`. The operation is fail-closed and does not claim cross-directory atomicity: any pre-existing/partial final path makes rerun reject before further output.
+
+```rust
+struct BlindPackReceipt {
+    schema_version: u32,
+    pair_id: String,
+    frozen_run_context_sha256: String,
+    pair_receipt_sha256: Option<String>,
+    pair_verification_sha256: String,
+    rubric_sha256: String,
+    decision_policy_sha256: String,
+    reviewer_submission_schema_sha256: String,
+    reviewer_mappings: Vec<ReviewerMappingCommitment>,
+    inventory_root_sha256: String,
+    reviews_drop_sha256: String,
+    generated_at: String,
+}
+
+struct ReviewerMappingCommitment {
+    reviewer_id: String,
+    review_bundle_sha256: String,
+    mapping_sha256: String,
+    seed_commitment: String,
+}
+```
+
+`inventoryRootSha256` is the verified inventory prefix immediately before the receipt record, as defined in Task 3. Replay has `pairReceiptSha256:null`; Mock/Live require a digest. Exactly three reviewer IDs, bundle hashes, mapping hashes, and seed commitments are unique where required. Score can detect an A/B swap by recomputing mapping SHA.
+
+- [ ] **Step 4: Run the transaction/retry matrix and commit**
+
+Cover duplicate/two/four Replay seeds, Replay seed-dir, Mock/Live replay seeds, all-three Replay orientation, CSPRNG failure/exhaustion, existing destination, failure before first rename, failure between renames, failure before receipt, and rerun after partial/final output. Assert any partial result is detectable, never silently repaired, and no successful receipt exists until every bound output is durable.
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(blind_cli) | test(blind_bundle)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/blind_bundle.rs \
+  codex-rs/ai-ip-eval/src/blind_bundle_tests.rs \
+  codex-rs/ai-ip-eval/src/blind.rs codex-rs/ai-ip-eval/src/model.rs \
+  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/tests/blind_cli.rs
+git commit -m "feat(ai-ip-eval): create bound blind review bundles"
+```
+
+---
+
+### Task 7: Score exactly three reviews into an immutable private decision
+
+**Files:**
+- Create: `codex-rs/ai-ip-eval/src/score.rs`
+- Create: `codex-rs/ai-ip-eval/src/score_tests.rs`
+- Create: `codex-rs/ai-ip-eval/tests/score_cli.rs`
+- Modify: `codex-rs/ai-ip-eval/src/model.rs`
+- Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-review-1.json`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-review-2.json`
+- Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-review-3.json`
+- Modify: `docs/architecture/codex-fork-patch-ledger.md`
+
+**Interfaces:**
+- Consumes: frozen context, attestation role, exact blind receipt, three committed mappings/bundles, exact reviews directory, Task 1 contracts/policy.
+- Produces: `ScoreArgs`, `BusinessDecision`, body-free private `BlindDecision`, and F-0006 implementation disposition.
+
+- [ ] **Step 1: Write exact real CLI RED and decision table**
+
+After the Replay blind pack, copy the three full schema-valid synthetic submissions and run exactly:
+
+```text
+score
+--mapping-dir coordinator/mappings
+--reviews-dir <privateRoot/reviews>
+--output <privateRoot/coordinator/decision.private.json>
+--frozen-run-context <absolute-context>
+```
+
+Current code compiles/executes but rejects/unimplements the command. Add hand-derived decision rows for preference `1/2`, delta `2/3`, candidate median `17/18`, ready `1/2`, every severe flag, tie, duplicate reviewer, wrong bundle/rubric/mapping hash, flipped qualification field with copied signed digest, malformed review, and current evaluator mismatch. The mismatch row expects command error and no output.
+
+- [ ] **Step 2: Add exact CLI and outcome classification**
+
+```rust
+struct ScoreArgs {
+    mapping_dir: PathBuf,
+    reviews_dir: PathBuf,
+    output: PathBuf,
+    frozen_run_context: PathBuf,
+}
+
+enum BusinessDecision {
+    Pass,
+    IterateSmallestLeadChange,
+    InvalidProof,
+}
+```
+
+Accept mapping dir only at `privateRoot/coordinator/mappings`. Accept reviews/output as either the exact relative spelling used in WP8 or the exact canonical absolute path used in WP7; both must resolve to `privateRoot/reviews` and `privateRoot/coordinator/decision.private.json`.
+
+Freeze outcome classification:
+
+```text
+command error, no output:
+- frozen context or pair marker unsafe/unparseable
+- current evaluator/Codex/proxy binary differs from the frozen commitment
+- blind receipt unsafe/unparseable or not the derived exact file
+- reviews directory not yet exactly three regular files
+- output exists, unsafe path, or any I/O/fsync failure
+
+immutable INVALID_PROOF:
+- after trusted context+receipt, any submission JSON/schema/digest/signature invalid
+- reviewer ID set/qualification/experience disclosure mismatch
+- mapping/bundle/seed/rubric commitment mismatch
+- fewer than two matching experienced reviewers
+
+valid ITERATE:
+- any candidate fabricatedFactualClaim=true
+- or any other valid result below PASS thresholds
+```
+
+Tests assert one exact outcome per mutation; no `error || INVALID` assertions.
+
+- [ ] **Step 3: Verify mappings, declarations, and signed payloads before unblinding**
+
+Recompute each mapping file SHA and compare it to the receipt before using A/B. Require exact equality among attestation reviewer IDs, receipt reviewer IDs, mapping reviewer IDs, and submission reviewer IDs. Recompute attestation/submission domain-separated JCS signed payload digests and match frozen signature-evidence SHA. Compare qualification class and experience boolean field-for-field. A copied valid digest with changed ID/class/experience/bundle/time/arms is invalid.
+
+- [ ] **Step 4: Apply exact scoring algorithm**
+
+For each reviewer, map A/B to generic/candidate using only that reviewer's verified mapping. Checked-sum six dimensions. Sort three generic totals, candidate totals, and signed deltas; median is index `1`. Candidate preference count excludes ties. Count ready and each severe flag.
+
+```rust
+if proof_invalid {
+    BusinessDecision::InvalidProof
+} else if candidate_fabricated_count > 0 {
+    BusinessDecision::IterateSmallestLeadChange
+} else if candidate_preference_count >= 2
+    && median_paired_delta >= 3
+    && median_candidate_total >= 18
+    && candidate_ready_count >= 2
+    && candidate_severe_total == 0
+{
+    BusinessDecision::Pass
+} else {
+    BusinessDecision::IterateSmallestLeadChange
+}
+```
+
+Write owner-only with `create_new`. `BlindDecision` contains commitments, decision, timestamp, `metrics: DecisionMetrics|null`, and exact body-free validation failure codes. PASS/ITERATE require non-null counts/totals/deltas/medians/severe metrics and an empty failure list; INVALID requires `metrics:null` and at least one enum failure code, so zero is never used as a fake score. It contains no reasons, bodies, paths, seeds, raw mappings, or public report. Replay may exercise private `PASS` mechanically, but no 06A command emits `BUSINESS_SIGNAL_PASS_PENDING_FOUNDATION` or `PASS_TO_PHASE_0B`.
+
+- [ ] **Step 5: Update Replay evidence, run GREEN, append ledger, commit**
+
+Replace all three Replay review fixtures with full valid submissions bound to Task 6's deterministic bundle/mapping/rubric values. These reviewer submissions are post-pair inputs and are not roles in `replay-fixture-set.json`; do not mutate the frozen execution fixture-set.
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(score_cli)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/score.rs codex-rs/ai-ip-eval/src/score_tests.rs \
+  codex-rs/ai-ip-eval/src/model.rs codex-rs/ai-ip-eval/src/lib.rs \
+  codex-rs/ai-ip-eval/tests/score_cli.rs \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-review-1.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-review-2.json \
+  codex-rs/ai-ip-eval/tests/fixtures/replay-review-3.json \
+  docs/architecture/codex-fork-patch-ledger.md
+git commit -m "test(ai-ip-eval): freeze private blind review decision"
+```
+
+F-0006 records exact Task 1–7 commits, private/public boundary, tests, provider not-run/cost zero, parked WP8 blockers, sync risk, and reverse rollback order.
+
+---
+
+### Task 8: Verify the complete provider-free WP6A boundary
+
+**Files:**
+- Modify only when generated by required tooling: `codex-rs/Cargo.lock`
+- Modify only when generated by required tooling: `MODULE.bazel.lock`
+
+**Interfaces:**
+- Consumes: Tasks 1–7 and existing proxy/evaluator contracts.
+- Produces: clean reviewed WP6A tip; no provider spend or public business claim.
+
+- [ ] **Step 1: Run Cargo regressions**
+
+```bash
+cd codex-rs
+just test -p codex-ai-ip-eval
+just test -p codex-responses-api-proxy
+cd ..
+```
+
+- [ ] **Step 2: Run Bazel and resource matrix**
+
+```bash
+just bazel-lock-update
+bazel test //codex-rs/ai-ip-eval:ai-ip-eval-unit-tests \
+  //codex-rs/ai-ip-eval:codex-ai-ip-eval-bin-unit-tests \
+  //codex-rs/ai-ip-eval:ai-ip-eval-blind_cli-test \
+  //codex-rs/ai-ip-eval:ai-ip-eval-score_cli-test
+bazel build //ai-ip-evals/rubrics:rubrics //ai-ip-evals/schemas:schemas
+just bazel-lock-check
+```
+
+- [ ] **Step 3: Verify scope/governance before formatting**
+
+```bash
+git diff --check
+git status --short
+git diff --name-only eea75f7771bcfafea5bb9107d329a10d5b4b6429..HEAD
+rg -n 'providerMode=not-run|paidProviderCost=0|same-UID|ancestor-swap' \
+  docs/architecture/codex-fork-patch-ledger.md
+```
+
+Expected: only planned paths; ledger explicitly preserves zero provider use/cost and both blockers. Inspect staged/untracked paths before every commit; never use a directory-wide `git add` that can capture unrelated user files.
+
+- [ ] **Step 4: Run formatter/fixer last**
+
+```bash
+cd codex-rs
+just fmt
+just fix -p codex-ai-ip-eval
+cd ..
+```
+
+Run no test after this step.
+
+- [ ] **Step 5: Retain generated output only if present**
+
+Stage only the exact modified formatter/lock files shown by `git status`; inspect `git diff --cached --check`, then commit:
+
+```bash
+git diff --cached --quiet || git commit -m "style(ai-ip-eval): retain blind review formatter output"
+```
+
+Expected: clean worktree. After two-stage task reviews and a broad final review with no open Critical/Important findings, mark 06A complete and authorize only reviewed 06B. Do not mark Work Package 6, G0–G2, `PASS_TO_PHASE_0B`, or product Plan 02 complete.
