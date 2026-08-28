@@ -220,6 +220,44 @@ fn private_inventory_rejects_noncanonical_root_and_existing_destination() {
     assert_eq!(fs::read(inventory_path(&root)).unwrap(), b"occupied");
     assert!(!root.join("coordinator/pair-marker.json").exists());
 }
+#[test]
+fn private_inventory_windows_stream_snapshot_policy_is_exact() {
+    let encoded = |name: &str| {
+        name.encode_utf16()
+            .flat_map(u16::to_le_bytes)
+            .collect::<Vec<_>>()
+    };
+    let default = encoded("::$DATA");
+    let named = encoded(":hidden:$DATA");
+    let validate = |buffer: &[u8], name_bytes, next_offset, stream_size, directory| {
+        crate::runner::validate_windows_stream_snapshot_for_test(
+            buffer,
+            0,
+            name_bytes,
+            next_offset,
+            stream_size,
+            directory,
+        )
+    };
+    assert!(validate(&default, default.len(), 0, 0, true).is_ok());
+    assert!(validate(&default, default.len(), 0, 9, false).is_ok());
+    assert!(validate(&default, default.len(), 0, 1, true).is_err());
+    assert!(validate(&named, named.len(), 0, 0, true).is_err());
+    assert!(validate(&named, named.len(), 0, 9, false).is_err());
+    assert!(validate(&default, default.len(), 8, 0, false).is_err());
+    assert!(validate(&default, default.len() - 1, 0, 0, false).is_err());
+    assert!(
+        crate::runner::validate_windows_stream_snapshot_for_test(
+            &default,
+            1,
+            default.len(),
+            0,
+            0,
+            false,
+        )
+        .is_err()
+    );
+}
 #[cfg(windows)]
 fn add_stream(path: &Path) -> PathBuf {
     let stream = PathBuf::from(format!("{}:hidden", path.display()));

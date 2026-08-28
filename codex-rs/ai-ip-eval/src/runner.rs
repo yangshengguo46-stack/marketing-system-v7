@@ -4061,6 +4061,49 @@ pub(crate) fn read_private_existing_no_follow(path: &Path) -> Result<Vec<u8>> {
 pub(crate) fn validate_private_existing_directory_no_follow(path: &Path) -> Result<()> {
     open_anchored(path, true).map(drop)
 }
+#[cfg(any(windows, test))]
+fn validate_windows_stream_snapshot(
+    buffer: &[u8],
+    name_offset: usize,
+    name_bytes: usize,
+    next_offset: u32,
+    stream_size: i64,
+    directory: bool,
+) -> Result<()> {
+    const DEFAULT: &[u16] = &[58, 58, 36, 68, 65, 84, 65];
+    let end = name_offset
+        .checked_add(name_bytes)
+        .context("Windows stream name bounds overflow")?;
+    if !name_bytes.is_multiple_of(2) || end > buffer.len() || next_offset != 0 {
+        bail!("private entry has malformed or multiple data streams");
+    }
+    let name = buffer[name_offset..end]
+        .chunks_exact(2)
+        .map(|unit| u16::from_le_bytes([unit[0], unit[1]]))
+        .collect::<Vec<_>>();
+    if name != DEFAULT || directory && stream_size != 0 {
+        bail!("private entry has a named or disallowed data stream");
+    }
+    Ok(())
+}
+#[cfg(test)]
+pub(crate) fn validate_windows_stream_snapshot_for_test(
+    buffer: &[u8],
+    name_offset: usize,
+    name_bytes: usize,
+    next_offset: u32,
+    stream_size: i64,
+    directory: bool,
+) -> Result<()> {
+    validate_windows_stream_snapshot(
+        buffer,
+        name_offset,
+        name_bytes,
+        next_offset,
+        stream_size,
+        directory,
+    )
+}
 #[cfg(windows)]
 pub(crate) mod private_existing_windows {
     use super::*;
@@ -4070,7 +4113,6 @@ pub(crate) mod private_existing_windows {
     use windows_sys::Win32::Foundation::*;
     use windows_sys::Win32::Storage::FileSystem::*;
     fn streams(file: &File, directory: bool) -> Result<()> {
-        const DEFAULT: &[u16] = &[58, 58, 36, 68, 65, 84, 65];
         let mut words = [0u64; 1024];
         if unsafe {
             GetFileInformationByHandleEx(
@@ -4088,21 +4130,18 @@ pub(crate) mod private_existing_windows {
             return Err(std::io::Error::from_raw_os_error(i32::try_from(code)?))
                 .context("enumerate private tree data streams");
         }
-        if directory {
-            bail!("private directory has a data stream");
-        }
         let entry = unsafe { &*words.as_ptr().cast::<FILE_STREAM_INFO>() };
-        let name_bytes = usize::try_from(entry.StreamNameLength)?;
-        let end = std::mem::offset_of!(FILE_STREAM_INFO, StreamName) + name_bytes;
-        if name_bytes % 2 != 0 || end > std::mem::size_of_val(&words) || entry.NextEntryOffset != 0
-        {
-            bail!("private file has malformed or multiple data streams");
-        }
-        let name = unsafe { std::slice::from_raw_parts(entry.StreamName.as_ptr(), name_bytes / 2) };
-        if name != DEFAULT {
-            bail!("private file has a named data stream");
-        }
-        Ok(())
+        let buffer = unsafe {
+            std::slice::from_raw_parts(words.as_ptr().cast::<u8>(), std::mem::size_of_val(&words))
+        };
+        validate_windows_stream_snapshot(
+            buffer,
+            std::mem::offset_of!(FILE_STREAM_INFO, StreamName),
+            usize::try_from(entry.StreamNameLength)?,
+            entry.NextEntryOffset,
+            entry.StreamSize,
+            directory,
+        )
     }
     pub(crate) fn info(file: &File, directory: bool) -> Result<BY_HANDLE_FILE_INFORMATION> {
         let mut info = unsafe { std::mem::zeroed() };
