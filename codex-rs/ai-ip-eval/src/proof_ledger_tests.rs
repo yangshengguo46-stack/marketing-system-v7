@@ -35,6 +35,9 @@ use crate::proof_ledger::ParsedAttemptLedger;
 use crate::proof_ledger::ParsedLedgerArm;
 use crate::proof_ledger::RequestRecord;
 use crate::proof_ledger::TerminalRecord;
+use crate::proof_ledger::VerifiedAttemptLedger;
+use crate::proof_ledger::VerifiedLedgerArm;
+use crate::proof_ledger::derive_native_attempt_ledger;
 use crate::proof_ledger::parse_native_attempt_ledger;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -342,6 +345,337 @@ fn expected_parsed(fixture: &ProducerFixture) -> ParsedAttemptLedger {
     }
 }
 
+fn rewrite_resigned_ledger(fixture: &mut ProducerFixture, lines: &[String]) {
+    let mut root = [0_u8; 32];
+    let mut byte_end = 0_usize;
+    let arm_ends = [
+        usize::try_from(fixture.attempts_per_arm[0] * 2).unwrap(),
+        lines.len(),
+    ];
+    let bytes = format!("{}\n", lines.join("\n")).into_bytes();
+    for (index, line) in lines.iter().enumerate() {
+        let raw = line.as_bytes();
+        let leaf = Sha256::digest(raw);
+        let mut hasher = Sha256::new();
+        hasher.update(root);
+        hasher.update(leaf);
+        root = hasher.finalize().into();
+        byte_end += raw.len() + 1;
+        if let Some(arm) = arm_ends.iter().position(|end| index + 1 == *end) {
+            fixture.manifests[arm].broker_attempt_ledger_sha256 = sha256(&bytes[..byte_end]);
+            fixture.manifests[arm].attempt_index_root_sha256 =
+                root.iter().map(|byte| format!("{byte:02x}")).collect();
+        }
+    }
+    std::fs::write(fixture.root.join("coordinator/attempt-index.jsonl"), bytes).unwrap();
+    refresh_manifest_shas(fixture);
+}
+
+fn refresh_manifest_shas(fixture: &mut ProducerFixture) {
+    for index in 0..2 {
+        fixture.manifest_sha256[index] =
+            sha256(&serde_json::to_vec_pretty(&fixture.manifests[index]).unwrap());
+    }
+}
+
+fn replace_json_value(record: &mut String, key: &str, replacement: &str) {
+    let marker = format!("\"{key}\":");
+    let start = record.find(&marker).unwrap() + marker.len();
+    let raw = record.as_bytes();
+    let end = match raw[start] {
+        b'"' => start + 1 + record[start + 1..].find('"').unwrap() + 1,
+        b'{' => start + record[start..].find('}').unwrap() + 1,
+        _ => {
+            start
+                + record[start..]
+                    .find([',', '}'])
+                    .unwrap_or(record.len() - start)
+        }
+    };
+    record.replace_range(start..end, replacement);
+}
+
+fn repair_request_links(lines: &mut [String]) {
+    for index in (0..lines.len()).step_by(2) {
+        let request_sha256 = sha256(lines[index].as_bytes());
+        replace_json_value(
+            &mut lines[index + 1],
+            "requestRecordSha256",
+            &format!("\"{request_sha256}\""),
+        );
+    }
+}
+
+fn expected_verified(fixture: &ProducerFixture) -> VerifiedAttemptLedger {
+    let parsed = expected_parsed(fixture);
+    VerifiedAttemptLedger {
+        attempt_index_sha256: parsed.attempt_index_sha256,
+        attempt_index_root_sha256: parsed.attempt_index_root_sha256,
+        arms: std::array::from_fn(|index| {
+            let arm = &parsed.arms[index];
+            let manifest = &fixture.manifests[index];
+            VerifiedLedgerArm {
+                condition: arm.condition,
+                global_start_inclusive: arm.global_start_inclusive,
+                global_end_exclusive: arm.global_end_exclusive,
+                provider_request_attempt_count: arm.attempt_count,
+                provider_completed_response_count: arm.attempt_count,
+                raw_response_count: arm.attempt_count,
+                usage: manifest.usage.clone(),
+                run_manifest_sha256: fixture.manifest_sha256[index].clone(),
+            }
+        }),
+    }
+}
+
+#[test]
+fn proof_ledger_semantic_request_link_mutation_reaches_runtime_red() {
+    let mut fixture =
+        producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let path = fixture.root.join("coordinator/attempt-index.jsonl");
+    let ledger = std::fs::read(path).unwrap();
+    let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    lines[1] = lines[1].replacen(
+        &format!(
+            "\"requestRecordSha256\":\"{}\"",
+            sha256(lines[0].as_bytes())
+        ),
+        &format!("\"requestRecordSha256\":\"{}\"", "f".repeat(64)),
+        1,
+    );
+    rewrite_resigned_ledger(&mut fixture, &lines);
+
+    assert!(
+        parse_native_attempt_ledger(&fixture.root, &fixture.binding()).is_ok(),
+        "re-signed mutation did not reach the semantic boundary"
+    );
+    assert!(
+        derive_native_attempt_ledger(&fixture.root, &fixture.binding()).is_err(),
+        "semantic derive accepted a re-signed requestRecordSha256 mutation"
+    );
+}
+
+#[test]
+fn proof_ledger_real_producer_orders_verify_complete_attempt_semantics() {
+    for (first, second) in [
+        (EvaluationCondition::Generic, EvaluationCondition::Candidate),
+        (EvaluationCondition::Candidate, EvaluationCondition::Generic),
+    ] {
+        let fixture = producer_fixture(first, second);
+        assert_eq!(
+            derive_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+            expected_verified(&fixture)
+        );
+    }
+}
+
+#[test]
+fn proof_ledger_accepts_exact_optional_deployment_absence() {
+    let mut fixture =
+        producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let ledger = std::fs::read(fixture.root.join("coordinator/attempt-index.jsonl")).unwrap();
+    let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    for index in (1..lines.len()).step_by(2) {
+        replace_json_value(&mut lines[index], "deploymentCommitment", "null");
+    }
+    for manifest in &mut fixture.manifests {
+        manifest.deployment_or_fingerprint_commitment = None;
+    }
+    repair_request_links(&mut lines);
+    rewrite_resigned_ledger(&mut fixture, &lines);
+
+    assert_eq!(
+        derive_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+        expected_verified(&fixture)
+    );
+}
+
+#[test]
+fn proof_ledger_rejects_resigned_semantic_mutations() {
+    for case in [
+        "request-pair",
+        "request-frozen",
+        "request-execution",
+        "request-deadline",
+        "request-output",
+        "usage-arithmetic",
+        "first-commitment",
+        "pair-token-cap",
+        "model",
+        "deployment",
+        "failed-terminal",
+        "raw-manifest-sha",
+        "manifest-identity",
+        "manifest-total-limit",
+        "usage-scope",
+        "manifest-completion-count",
+        "manifest-raw-count",
+        "manifest-aggregate-usage",
+        "tree-closed",
+    ] {
+        let mut fixture =
+            producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+        let path = fixture.root.join("coordinator/attempt-index.jsonl");
+        let ledger = std::fs::read(path).unwrap();
+        let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+            .unwrap()
+            .lines()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        let intended_error = match case {
+            "request-pair" => {
+                replace_json_value(&mut lines[0], "pairId", &format!("\"{}\"", "f".repeat(64)));
+                "request identity"
+            }
+            "request-frozen" => {
+                replace_json_value(
+                    &mut lines[0],
+                    "frozenRunContextSha256",
+                    &format!("\"{}\"", "f".repeat(64)),
+                );
+                "request identity"
+            }
+            "request-execution" => {
+                replace_json_value(
+                    &mut lines[0],
+                    "executionContextSha256",
+                    &format!("\"{}\"", "f".repeat(64)),
+                );
+                "request identity"
+            }
+            "request-deadline" => {
+                replace_json_value(&mut lines[0], "deadline", "\"2099-08-29T12:00:00Z\"");
+                "request deadline"
+            }
+            "request-output" => {
+                replace_json_value(&mut lines[0], "maxOutputTokens", "320");
+                "request output limit"
+            }
+            "usage-arithmetic" => {
+                replace_json_value(
+                    &mut lines[1],
+                    "usage",
+                    "{\"totalTokens\":4,\"inputTokens\":2,\"cachedInputTokens\":0,\"cacheWriteInputTokens\":0,\"outputTokens\":1,\"reasoningOutputTokens\":0}",
+                );
+                fixture.manifests[0].usage.total_tokens = 4;
+                "usage arithmetic"
+            }
+            "first-commitment" => {
+                replace_json_value(
+                    &mut lines[0],
+                    "requestCommitment",
+                    &format!("\"{}\"", "f".repeat(64)),
+                );
+                "first request commitments"
+            }
+            "pair-token-cap" => {
+                let usage = Usage {
+                    total_tokens: 101,
+                    input_tokens: 100,
+                    output_tokens: 1,
+                    ..Usage::default()
+                };
+                replace_json_value(
+                    &mut lines[1],
+                    "usage",
+                    &serde_json::to_string(&usage).unwrap(),
+                );
+                fixture.manifests[0].usage = usage;
+                "pair token cap"
+            }
+            "model" => {
+                replace_json_value(&mut lines[1], "actualModelRevision", "\"forged-model\"");
+                "terminal model"
+            }
+            "deployment" => {
+                replace_json_value(
+                    &mut lines[1],
+                    "deploymentCommitment",
+                    &format!("\"{}\"", "f".repeat(64)),
+                );
+                "terminal deployment"
+            }
+            "failed-terminal" => {
+                replace_json_value(&mut lines[1], "status", "\"failed\"");
+                replace_json_value(&mut lines[1], "responseIdCommitment", "null");
+                replace_json_value(&mut lines[1], "usage", "null");
+                replace_json_value(&mut lines[1], "failureClass", "\"provider\"");
+                "completed terminal"
+            }
+            "raw-manifest-sha" => {
+                fixture.manifest_sha256[0] = "F".repeat(64);
+                "raw manifest SHA"
+            }
+            "manifest-identity" => {
+                fixture.manifests[0].pair_id = "f".repeat(64);
+                "manifest semantic binding"
+            }
+            "manifest-total-limit" => {
+                fixture.manifests[0].max_total_tokens -= 1;
+                "manifest semantic binding"
+            }
+            "usage-scope" => {
+                fixture.manifests[0].usage_scope = "partial".to_string();
+                "usage scope"
+            }
+            "manifest-completion-count" => {
+                fixture.manifests[0].provider_completed_response_count = 0;
+                "response counts or usage"
+            }
+            "manifest-raw-count" => {
+                fixture.manifests[0].raw_response_count = 0;
+                "response counts or usage"
+            }
+            "manifest-aggregate-usage" => {
+                fixture.manifests[0].usage.total_tokens += 1;
+                fixture.manifests[0].usage.input_tokens += 1;
+                "response counts or usage"
+            }
+            "tree-closed" => {
+                fixture.manifests[0].tree_closed = false;
+                "manifest semantic binding"
+            }
+            _ => unreachable!(),
+        };
+        let rewrites_ledger = !matches!(
+            case,
+            "raw-manifest-sha"
+                | "manifest-identity"
+                | "manifest-total-limit"
+                | "usage-scope"
+                | "manifest-completion-count"
+                | "manifest-raw-count"
+                | "manifest-aggregate-usage"
+                | "tree-closed"
+        );
+        if rewrites_ledger {
+            repair_request_links(&mut lines);
+            rewrite_resigned_ledger(&mut fixture, &lines);
+        } else if case != "raw-manifest-sha" {
+            refresh_manifest_shas(&mut fixture);
+        }
+        assert!(
+            parse_native_attempt_ledger(&fixture.root, &fixture.binding()).is_ok(),
+            "{case} did not reach the semantic boundary"
+        );
+        let error = derive_native_attempt_ledger(&fixture.root, &fixture.binding())
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains(intended_error),
+            "{case} reached the wrong semantic rule: {error}"
+        );
+    }
+}
+
 #[test]
 fn proof_ledger_real_producer_orders_parse_complete_structure() {
     for (first, second) in [
@@ -367,6 +701,10 @@ fn proof_ledger_real_multi_attempt_pair_derives_exact_ranges() {
     assert_eq!(
         parse_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
         expected_parsed(&fixture)
+    );
+    assert_eq!(
+        derive_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+        expected_verified(&fixture)
     );
 }
 
