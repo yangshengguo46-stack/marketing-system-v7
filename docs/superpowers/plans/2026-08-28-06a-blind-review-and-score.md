@@ -810,6 +810,20 @@ the crate; the test commit owns the narrow `eval_tests.rs` child mount needed to
 harness. This measured split supersedes the single Task 6C staging stanza below; each commit remains
 independently below 800 changed lines.
 
+**Task 6D inventory-cursor amendment (2026-08-29):** read-only seam review found that the existing
+inventory append APIs accept any currently self-consistent prefix. A pathname-level verification
+before calling them would leave a race between verification and the retained append handle. Before
+the transaction commit, add checked batch and single-entry variants that compare an
+`expectedOldInventoryRootSha256` against the exact old bytes read from the retained inventory
+handle before any write. Add a narrow `VerifiedBlindPair::begin_bundle_transaction()` that
+reverifies the sealed pair and returns only its initial inventory-root commitment; it must not
+expose `PairEvidenceCore` or `VerifiedPrivateInventory`. The transaction then advances this scalar
+cursor with every checked append. This prerequisite may modify `blind_finalize.rs`,
+`private_inventory.rs`, and `private_inventory_batch.rs` in a separate sub-800-line commit named
+`fix(ai-ip-eval): bind blind bundle inventory cursor`; focused tests belong in the existing sibling
+inventory/finalizer test modules. This measured seam correction precedes and is consumed by the
+Task 6D transaction commit.
+
 The exact Task 6 wire and bytes are frozen as follows:
 
 ```rust
