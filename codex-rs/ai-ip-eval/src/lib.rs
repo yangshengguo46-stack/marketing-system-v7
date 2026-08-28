@@ -2,6 +2,8 @@
 
 mod app_server;
 mod blind;
+mod blind_bundle;
+mod blind_bundle_model;
 mod blind_finalize;
 mod blind_verify;
 mod broker_gate;

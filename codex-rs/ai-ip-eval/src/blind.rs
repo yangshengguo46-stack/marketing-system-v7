@@ -159,7 +159,7 @@ pub(crate) fn verify_blind_pair_stage(
         bail!("blind-pack frozen context snapshot changed before pair verification");
     }
     let pair = crate::blind_finalize::finalize_blind_pair(verify_pair_evidence_core(snapshot)?)?;
-    let _ = pair.evidence();
+    let _ = pair.bundle_projection()?;
     Err(BlindBundleStageNotInstalled.into())
 }
 

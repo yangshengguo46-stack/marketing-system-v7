@@ -217,6 +217,25 @@ impl FrozenContracts {
         REVIEWER_SUBMISSION_SCHEMA_BYTES
     }
 
+    pub(crate) fn blind_review_contracts(
+        &self,
+    ) -> Result<crate::blind_bundle_model::BlindReviewContracts, ContractError> {
+        Ok(crate::blind_bundle_model::BlindReviewContracts {
+            rubric_bytes: REVIEW_RUBRIC_BYTES,
+            rubric_sha256: commitment(b"", REVIEW_RUBRIC_BYTES)
+                .map_err(invalid)?
+                .sha256,
+            decision_policy_sha256: commitment(b"", DECISION_POLICY_BYTES)
+                .map_err(invalid)?
+                .sha256,
+            reviewer_submission_schema_bytes: REVIEWER_SUBMISSION_SCHEMA_BYTES,
+            reviewer_submission_schema_sha256: format!(
+                "{:x}",
+                Sha256::digest(REVIEWER_SUBMISSION_SCHEMA_BYTES)
+            ),
+        })
+    }
+
     pub fn validate_reviewer_submission(
         &self,
         raw: &[u8],

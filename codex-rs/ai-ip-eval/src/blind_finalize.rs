@@ -10,6 +10,10 @@ use crate::EvaluationCondition;
 use crate::ExecutionMode;
 use crate::SkillUseOutcome;
 use crate::blind::FrozenInputToken;
+use crate::blind_bundle_model::BlindArmProjection;
+use crate::blind_bundle_model::BlindMaterialProjection;
+use crate::blind_bundle_model::BlindPairBundleProjection;
+use crate::blind_bundle_model::BlindReviewerProjection;
 use crate::blind_verify::PairEvidenceCore;
 
 const TREATMENT_MARKERS: &[u8] = include_bytes!("../tests/fixtures/blind/treatment-markers.json");
@@ -20,8 +24,53 @@ pub(crate) struct VerifiedBlindPair {
 }
 
 impl VerifiedBlindPair {
-    pub(crate) fn evidence(&self) -> &PairEvidenceCore {
-        &self.core
+    pub(crate) fn bundle_projection(&self) -> Result<BlindPairBundleProjection<'_>> {
+        let forbidden_visible_markers = treatment_markers_for(&self.core)?
+            .into_iter()
+            .filter(|marker| !matches!(marker.as_str(), "candidate" | "generic"))
+            .collect();
+        Ok(BlindPairBundleProjection {
+            mode: self.core.mode,
+            private_root: &self.core.private_root,
+            pair_id: &self.core.pair_id,
+            frozen_run_context_sha256: &self.core.frozen_run_context_sha256,
+            pair_verification_sha256: &self.core.pair_verification_raw_sha256,
+            pair_receipt_sha256: self.core.native_pair_receipt_raw_sha256.as_deref(),
+            reviewers: self
+                .core
+                .reviewers
+                .each_ref()
+                .map(|reviewer| BlindReviewerProjection {
+                    reviewer_id: &reviewer.reviewer_id,
+                    qualification_class: &reviewer.qualification_class,
+                    experienced_operator_or_director: reviewer.experienced_operator_or_director,
+                    attestation_signed_payload_sha256: &reviewer.signed_payload_sha256,
+                    attestation_signature_evidence_sha256: &reviewer.signature_evidence_sha256,
+                }),
+            case_bytes: &self.core.case_bytes,
+            materials_manifest: &self.core.materials_manifest,
+            materials_manifest_bytes: &self.core.materials_manifest_bytes,
+            materials: self
+                .core
+                .materials
+                .iter()
+                .map(|material| BlindMaterialProjection {
+                    material_id: &material.material_id,
+                    relative_path: &material.relative_path,
+                    sha256: &material.sha256,
+                    bytes: &material.bytes,
+                })
+                .collect(),
+            arms: self.core.arms.each_ref().map(|arm| BlindArmProjection {
+                condition: arm.condition,
+                package_bytes: &arm.content_package_bytes,
+            }),
+            forbidden_visible_markers,
+        })
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        reverify_core(&self.core)
     }
 }
 
@@ -33,7 +82,12 @@ struct TreatmentMarkerTable {
 }
 
 pub(crate) fn finalize_blind_pair(core: PairEvidenceCore) -> Result<VerifiedBlindPair> {
-    verify_treatment_and_skill(&core)?;
+    reverify_core(&core)?;
+    Ok(VerifiedBlindPair { core })
+}
+
+fn reverify_core(core: &PairEvidenceCore) -> Result<()> {
+    verify_treatment_and_skill(core)?;
     match &core.inputs {
         FrozenInputToken::Replay(inputs) => inputs.reverify_all()?,
         FrozenInputToken::Native { frozen, content } => {
@@ -43,7 +97,7 @@ pub(crate) fn finalize_blind_pair(core: PairEvidenceCore) -> Result<VerifiedBlin
     }
     core.inventory.reverify_unchanged()?;
     crate::blind::ensure_destinations_absent(&core.private_root)?;
-    Ok(VerifiedBlindPair { core })
+    Ok(())
 }
 
 pub(crate) fn verify_treatment_and_skill(core: &PairEvidenceCore) -> Result<()> {
