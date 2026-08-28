@@ -27,7 +27,6 @@ pub use app_server::build_thread_start;
 pub use app_server::build_turn_start;
 pub use app_server::config_read_params;
 pub use app_server::initialize_params;
-pub use blind::BlindPairVerifierStageNotInstalled;
 pub use broker_gate::ArmActivation;
 pub use broker_gate::ArmReceipt;
 pub use broker_gate::BrokerGateConfig;
