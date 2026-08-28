@@ -51,6 +51,7 @@ struct ProducerFixture {
     root: PathBuf,
     manifests: [RunManifest; 2],
     manifest_sha256: [String; 2],
+    attempts_per_arm: [u64; 2],
 }
 
 impl ProducerFixture {
@@ -79,6 +80,14 @@ impl ProducerFixture {
 }
 
 fn producer_fixture(first: EvaluationCondition, second: EvaluationCondition) -> ProducerFixture {
+    producer_fixture_with_attempts(first, second, [1, 1])
+}
+
+fn producer_fixture_with_attempts(
+    first: EvaluationCondition,
+    second: EvaluationCondition,
+    attempts_per_arm: [u64; 2],
+) -> ProducerFixture {
     let temp = tempfile::tempdir().unwrap();
     #[cfg(unix)]
     let root = {
@@ -116,6 +125,7 @@ fn producer_fixture(first: EvaluationCondition, second: EvaluationCondition) -> 
     let mut manifests = Vec::new();
     let mut manifest_sha256 = Vec::new();
     for (ordinal, condition) in [(1_u8, first), (2_u8, second)] {
+        let attempt_count = attempts_per_arm[usize::from(ordinal - 1)];
         let root_thread_id = if ordinal == 1 {
             "0198f5aa-0000-7000-8000-000000000002"
         } else {
@@ -129,49 +139,52 @@ fn producer_fixture(first: EvaluationCondition, second: EvaluationCondition) -> 
             deadline_rfc3339: DEADLINE.to_string(),
         })
         .unwrap();
-        let request_sha = [ordinal; 32];
-        let treatment = (condition == EvaluationCondition::Candidate).then_some([9_u8; 32]);
-        let transformed = TransformedRequestMetadata {
-            content_length: 23,
-            sha256: request_sha,
-            evidence: TransformedRequestEvidence {
-                raw_sha256: request_sha,
-                normalized_sha256: [ordinal + 2; 32],
-                normalized_base_commitment: [7; 32],
-                treatment_diff_commitment: treatment,
-            },
-        };
-        let permit = gate
-            .before_forward(
-                &RequestMetadata {
-                    method: "POST".to_string(),
-                    path: "/v1/responses".to_string(),
-                    window_id: Some(format!("{root_thread_id}:0")),
-                    parent_thread_id: None,
-                    is_subagent: false,
+        for attempt in 0..attempt_count {
+            let request_byte = ordinal + u8::try_from(attempt * 2).unwrap();
+            let request_sha = [request_byte; 32];
+            let treatment = (condition == EvaluationCondition::Candidate).then_some([9_u8; 32]);
+            let transformed = TransformedRequestMetadata {
+                content_length: 23,
+                sha256: request_sha,
+                evidence: TransformedRequestEvidence {
+                    raw_sha256: request_sha,
+                    normalized_sha256: [request_byte + 2; 32],
+                    normalized_base_commitment: [7; 32],
+                    treatment_diff_commitment: treatment,
                 },
-                &transformed,
-            )
-            .unwrap();
-        gate.response_completed(
-            &permit,
-            &ResponseCompletedMetadata {
-                response_id: format!("response-{ordinal}"),
-                usage: Some(ObservedUsage {
-                    total_tokens: 3,
-                    input_tokens: 2,
-                    cached_input_tokens: 0,
-                    cache_write_input_tokens: 0,
-                    output_tokens: 1,
-                    reasoning_output_tokens: 0,
-                }),
-                actual_model: Some("mock-revision".to_string()),
-                deployment_or_fingerprint: Some("mock-deployment".to_string()),
-            },
-        );
-        gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+            };
+            let permit = gate
+                .before_forward(
+                    &RequestMetadata {
+                        method: "POST".to_string(),
+                        path: "/v1/responses".to_string(),
+                        window_id: Some(format!("{root_thread_id}:{attempt}")),
+                        parent_thread_id: None,
+                        is_subagent: false,
+                    },
+                    &transformed,
+                )
+                .unwrap();
+            gate.response_completed(
+                &permit,
+                &ResponseCompletedMetadata {
+                    response_id: format!("response-{ordinal}-{attempt}"),
+                    usage: Some(ObservedUsage {
+                        total_tokens: 3,
+                        input_tokens: 2,
+                        cached_input_tokens: 0,
+                        cache_write_input_tokens: 0,
+                        output_tokens: 1,
+                        reasoning_output_tokens: 0,
+                    }),
+                    actual_model: Some("mock-revision".to_string()),
+                    deployment_or_fingerprint: Some("mock-deployment".to_string()),
+                },
+            );
+            gate.after_forward(permit, &ForwardResult::Completed { status: 200 });
+        }
         let proof = gate.active_arm_proof_snapshot().unwrap();
-        let manifest = manifest(ordinal, condition, root_thread_id, &proof);
+        let manifest = manifest(ordinal, condition, root_thread_id, attempt_count, &proof);
         let raw = serde_json::to_vec_pretty(&manifest).unwrap();
         let raw_sha256 = sha256(&raw);
         gate.bind_active_run_manifest(raw_sha256.clone()).unwrap();
@@ -185,6 +198,7 @@ fn producer_fixture(first: EvaluationCondition, second: EvaluationCondition) -> 
         root,
         manifests: manifests.try_into().unwrap(),
         manifest_sha256: manifest_sha256.try_into().unwrap(),
+        attempts_per_arm,
     }
 }
 
@@ -192,6 +206,7 @@ fn manifest(
     ordinal: u8,
     condition: EvaluationCondition,
     root_thread_id: &str,
+    attempt_count: u64,
     proof: &crate::broker_gate::ActiveArmProofSnapshot,
 ) -> RunManifest {
     let hash = "e".repeat(64);
@@ -243,16 +258,16 @@ fn manifest(
         root_thread_id: root_thread_id.to_string(),
         root_turn_id: format!("turn-{ordinal}"),
         session_id: "session".to_string(),
-        provider_request_attempt_count: 1,
-        provider_completed_response_count: 1,
-        raw_response_count: 1,
+        provider_request_attempt_count: attempt_count,
+        provider_completed_response_count: attempt_count,
+        raw_response_count: attempt_count,
         usage_scope: "completeNativeThreadTree".to_string(),
         usage: Usage {
-            total_tokens: 3,
-            input_tokens: 2,
+            total_tokens: i64::try_from(attempt_count * 3).unwrap(),
+            input_tokens: i64::try_from(attempt_count * 2).unwrap(),
             cached_input_tokens: 0,
             cache_write_input_tokens: 0,
-            output_tokens: 1,
+            output_tokens: i64::try_from(attempt_count).unwrap(),
             reasoning_output_tokens: 0,
         },
         model_label: "mock".to_string(),
@@ -298,21 +313,32 @@ fn expected_parsed(fixture: &ProducerFixture) -> ParsedAttemptLedger {
         hasher.update(leaf);
         fold = hasher.finalize().into();
     }
-    let arm = |index: usize, start| ParsedLedgerArm {
-        condition: fixture.manifests[index].condition,
-        global_start_inclusive: start,
-        global_end_exclusive: start + 1,
-        attempt_count: 1,
-        attempts: vec![ParsedAttempt {
-            request_raw_sha256: sha256(lines[index * 2]),
-            request: serde_json::from_slice::<RequestRecord>(lines[index * 2]).unwrap(),
-            terminal: serde_json::from_slice::<TerminalRecord>(lines[index * 2 + 1]).unwrap(),
-        }],
+    let arm = |index: usize, start: u64| {
+        let attempt_count = fixture.attempts_per_arm[index];
+        let attempts = (start..start + attempt_count)
+            .map(|global| {
+                let request_index = usize::try_from(global * 2).unwrap();
+                ParsedAttempt {
+                    request_raw_sha256: sha256(lines[request_index]),
+                    request: serde_json::from_slice::<RequestRecord>(lines[request_index]).unwrap(),
+                    terminal: serde_json::from_slice::<TerminalRecord>(lines[request_index + 1])
+                        .unwrap(),
+                }
+            })
+            .collect();
+        ParsedLedgerArm {
+            condition: fixture.manifests[index].condition,
+            global_start_inclusive: start,
+            global_end_exclusive: start + attempt_count,
+            attempt_count,
+            attempts,
+        }
     };
+    let second_start = fixture.attempts_per_arm[0];
     ParsedAttemptLedger {
         attempt_index_sha256: sha256(&ledger),
         attempt_index_root_sha256: fold.iter().map(|byte| format!("{byte:02x}")).collect(),
-        arms: [arm(0, 0), arm(1, 1)],
+        arms: [arm(0, 0), arm(1, second_start)],
     }
 }
 
@@ -331,46 +357,176 @@ fn proof_ledger_real_producer_orders_parse_complete_structure() {
 }
 
 #[test]
+fn proof_ledger_real_multi_attempt_pair_derives_exact_ranges() {
+    let fixture = producer_fixture_with_attempts(
+        EvaluationCondition::Generic,
+        EvaluationCondition::Candidate,
+        [2, 2],
+    );
+
+    assert_eq!(
+        parse_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+        expected_parsed(&fixture)
+    );
+}
+
+#[test]
 fn proof_ledger_rejects_structural_jsonl_mutations() {
     for case in [
         "missing-lf",
+        "crlf",
         "blank-line",
         "duplicate-key",
         "unknown-field",
+        "file-cap",
+        "line-cap",
+        "record-cap",
+        "missing-terminal",
+        "alternating-records",
+        "whitespace",
+        "key-order",
         "index-gap",
+        "arm-index-gap",
+        "second-arm-index-reset",
+        "terminal-index",
         "ordinal-reversal",
+        "post-arm-records",
+        "arm-1-prefix-sha",
+        "arm-1-prefix-root",
+        "arm-2-full-sha",
+        "arm-2-final-root",
+        "manifest-count",
     ] {
-        let fixture =
+        let mut fixture =
             producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
         let path = fixture.root.join("coordinator/attempt-index.jsonl");
-        let mut ledger = std::fs::read(&path).unwrap();
-        match case {
-            "missing-lf" => assert_eq!(ledger.pop(), Some(b'\n')),
-            "blank-line" => ledger.splice(0..0, b"\n".iter().copied()).for_each(drop),
-            "duplicate-key" => ledger
-                .splice(1..1, b"\"schemaVersion\":1,".iter().copied())
-                .for_each(drop),
-            "unknown-field" => ledger
-                .splice(1..1, b"\"unknown\":null,".iter().copied())
-                .for_each(drop),
-            "index-gap" => {
-                ledger = String::from_utf8(ledger)
+        let ledger = std::fs::read(&path).unwrap();
+        let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+            .unwrap()
+            .lines()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        let mut exact_bytes = None;
+        let mut rewrite = true;
+        let intended_error = match case {
+            "missing-lf" => {
+                exact_bytes = Some(lines.join("\n").into_bytes());
+                "LF-framed JSONL"
+            }
+            "crlf" => {
+                exact_bytes = Some(format!("{}\r\n", lines.join("\r\n")).into_bytes());
+                "LF-framed JSONL"
+            }
+            "blank-line" => {
+                lines.splice(0..0, [String::new(), String::new()]);
+                "parse unique-key JSON"
+            }
+            "duplicate-key" => {
+                lines[0].insert_str(1, "\"schemaVersion\":1,");
+                "duplicate object key"
+            }
+            "unknown-field" => {
+                lines[0].insert_str(1, "\"unknown\":null,");
+                "schema validation failed"
+            }
+            "file-cap" => {
+                let cap = MAX_ATTEMPTS_PER_ARM * 4 * (1024 * 1024 + 1);
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .open(&path)
                     .unwrap()
-                    .replacen("\"globalAttemptIndex\":0", "\"globalAttemptIndex\":1", 2)
-                    .into_bytes();
+                    .set_len(cap + 1)
+                    .unwrap();
+                rewrite = false;
+                "exceeds its byte cap"
+            }
+            "line-cap" => {
+                lines[0].insert_str(1, &format!("\"padding\":\"{}\",", "a".repeat(1024 * 1024)));
+                "record exceeds its byte cap"
+            }
+            "record-cap" => {
+                exact_bytes = Some(b"{}\n".repeat(9));
+                "record count is invalid"
+            }
+            "missing-terminal" => {
+                lines.pop();
+                "record count is invalid"
+            }
+            "alternating-records" => {
+                lines.swap(0, 1);
+                "do not alternate"
+            }
+            "whitespace" => {
+                lines[0].insert(1, ' ');
+                "exact compact typed JSON"
+            }
+            "key-order" => {
+                lines[0] = lines[0].replacen(
+                    "{\"schemaVersion\":1,\"recordType\":\"request\"",
+                    "{\"recordType\":\"request\",\"schemaVersion\":1",
+                    1,
+                );
+                "exact compact typed JSON"
+            }
+            "index-gap" => {
+                lines[0] =
+                    lines[0].replacen("\"globalAttemptIndex\":0", "\"globalAttemptIndex\":1", 1);
+                "identity or sequence"
+            }
+            "arm-index-gap" => {
+                lines[0] = lines[0].replacen("\"armAttemptIndex\":0", "\"armAttemptIndex\":1", 1);
+                "identity or sequence"
+            }
+            "second-arm-index-reset" => {
+                lines[2] = lines[2].replacen("\"armAttemptIndex\":0", "\"armAttemptIndex\":1", 1);
+                "identity or sequence"
+            }
+            "terminal-index" => {
+                lines[1] =
+                    lines[1].replacen("\"globalAttemptIndex\":0", "\"globalAttemptIndex\":1", 1);
+                "identity or sequence"
             }
             "ordinal-reversal" => {
-                ledger = String::from_utf8(ledger)
-                    .unwrap()
-                    .replacen("\"runOrdinal\":1", "\"runOrdinal\":2", 1)
-                    .into_bytes();
+                lines[0] = lines[0].replacen("\"runOrdinal\":1", "\"runOrdinal\":2", 1);
+                "missing an arm"
+            }
+            "post-arm-records" => {
+                lines.extend_from_within(0..2);
+                "after the second arm"
+            }
+            "arm-1-prefix-sha" => {
+                fixture.manifests[0].broker_attempt_ledger_sha256 = "f".repeat(64);
+                "summary is invalid"
+            }
+            "arm-1-prefix-root" => {
+                fixture.manifests[0].attempt_index_root_sha256 = "f".repeat(64);
+                "summary is invalid"
+            }
+            "arm-2-full-sha" => {
+                fixture.manifests[1].broker_attempt_ledger_sha256 = "f".repeat(64);
+                "summary is invalid"
+            }
+            "arm-2-final-root" => {
+                fixture.manifests[1].attempt_index_root_sha256 = "f".repeat(64);
+                "summary is invalid"
+            }
+            "manifest-count" => {
+                fixture.manifests[0].provider_request_attempt_count = 2;
+                "summary is invalid"
             }
             _ => unreachable!(),
+        };
+        if rewrite {
+            let bytes =
+                exact_bytes.unwrap_or_else(|| format!("{}\n", lines.join("\n")).into_bytes());
+            std::fs::write(&path, bytes).unwrap();
         }
-        std::fs::write(path, ledger).unwrap();
+        let error = parse_native_attempt_ledger(&fixture.root, &fixture.binding())
+            .unwrap_err()
+            .to_string();
         assert!(
-            parse_native_attempt_ledger(&fixture.root, &fixture.binding()).is_err(),
-            "accepted structural mutation {case}"
+            error.contains(intended_error),
+            "{case} reached the wrong rule: {error}"
         );
     }
 }

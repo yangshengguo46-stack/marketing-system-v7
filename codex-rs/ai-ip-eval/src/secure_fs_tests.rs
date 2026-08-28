@@ -53,6 +53,24 @@ fn secure_fs_modes_create_new_fsync_and_roundtrip() {
     }
 }
 
+#[test]
+fn secure_fs_bounded_read_accepts_exact_cap_and_rejects_one_byte_over() {
+    let (_temp, root) = private_root();
+    let file = root.join("bounded.json");
+    write_owner_only_new(&file, b"private").unwrap();
+
+    assert_eq!(
+        read_single_link_regular_bounded(&file, 7).unwrap(),
+        b"private"
+    );
+    assert!(
+        read_single_link_regular_bounded(&file, 6)
+            .unwrap_err()
+            .to_string()
+            .contains("byte cap")
+    );
+}
+
 #[cfg(unix)]
 #[test]
 fn secure_fs_rejects_escape_and_symlink_components() {

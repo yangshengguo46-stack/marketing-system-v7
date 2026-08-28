@@ -145,13 +145,19 @@ fn derive_arms(ledger: &[u8], binding: &NativeLedgerBinding<'_>) -> Result<Parse
     if ledger.is_empty() || ledger.last() != Some(&b'\n') || ledger.contains(&b'\r') {
         bail!("attempt ledger must be nonempty LF-framed JSONL");
     }
-    let body = ledger
-        .strip_suffix(b"\n")
-        .context("attempt ledger framing is invalid")?;
-    let lines = body.split(|byte| *byte == b'\n').collect::<Vec<_>>();
     let maximum_records = usize::try_from(binding.max_attempts_per_arm)?
         .checked_mul(4)
         .context("attempt ledger record cap overflow")?;
+    let observed_records = maximum_records
+        .checked_add(1)
+        .context("attempt ledger record probe overflow")?;
+    let body = ledger
+        .strip_suffix(b"\n")
+        .context("attempt ledger framing is invalid")?;
+    let lines = body
+        .split(|byte| *byte == b'\n')
+        .take(observed_records)
+        .collect::<Vec<_>>();
     if lines.len() > maximum_records || lines.len() % 2 != 0 {
         bail!("attempt ledger record count is invalid");
     }
@@ -263,15 +269,7 @@ fn parse_record<T: serde::de::DeserializeOwned + Serialize>(
 
 fn read_bounded(root: &Path, relative: &Path, cap: u64) -> Result<Vec<u8>> {
     let path = crate::secure_fs::resolve_private_relative(root, relative)?;
-    let metadata = std::fs::symlink_metadata(&path)?;
-    if metadata.len() > cap {
-        bail!("private proof file exceeds its byte cap");
-    }
-    let bytes = crate::secure_fs::read_single_link_regular(&path)?;
-    if u64::try_from(bytes.len())? > cap {
-        bail!("private proof file exceeds its byte cap");
-    }
-    Ok(bytes)
+    crate::secure_fs::read_single_link_regular_bounded(&path, cap)
 }
 
 fn mode_order(manifest: &RunManifest) -> Result<&str> {

@@ -60,6 +60,9 @@ pub(crate) fn write_owner_only_new(path: &Path, bytes: &[u8]) -> Result<()> {
 pub(crate) fn read_single_link_regular(path: &Path) -> Result<Vec<u8>> {
     platform::read_file(path)
 }
+pub(crate) fn read_single_link_regular_bounded(path: &Path, cap: u64) -> Result<Vec<u8>> {
+    platform::read_file_bounded(path, cap)
+}
 pub(crate) fn fsync_directory(path: &Path) -> Result<()> {
     platform::sync_directory(path)
 }
@@ -201,10 +204,21 @@ mod platform {
     }
 
     pub(super) fn read_file(path: &Path) -> Result<Vec<u8>> {
+        read_file_bounded(path, u64::MAX)
+    }
+
+    pub(super) fn read_file_bounded(path: &Path, cap: u64) -> Result<Vec<u8>> {
         let file = open(path, EntryKind::File)?;
         let before = file.metadata()?;
+        if before.len() > cap {
+            bail!("private file exceeds its byte cap");
+        }
         let mut bytes = vec![0_u8; usize::try_from(before.len())?];
         file.read_exact_at(&mut bytes, 0)?;
+        let mut eof_probe = [0_u8; 1];
+        if file.read_at(&mut eof_probe, before.len())? != 0 {
+            bail!("private file grew during bounded read");
+        }
         let after = file.metadata()?;
         if before.dev() != after.dev()
             || before.ino() != after.ino()
@@ -463,12 +477,24 @@ mod platform {
     }
 
     pub(super) fn read_file(path: &Path) -> Result<Vec<u8>> {
+        read_file_bounded(path, u64::MAX)
+    }
+
+    pub(super) fn read_file_bounded(path: &Path, cap: u64) -> Result<Vec<u8>> {
         validate_chain(path)?;
         let mut file = open_read(path)?;
         let before = checked_info(&file)?;
         verify_dacl(&file)?;
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes)?;
+        let accepted_size = u64::from(before.nFileSizeHigh) << 32 | u64::from(before.nFileSizeLow);
+        if accepted_size > cap {
+            bail!("private file exceeds its byte cap");
+        }
+        let mut bytes = vec![0_u8; usize::try_from(accepted_size)?];
+        file.read_exact(&mut bytes)?;
+        let mut eof_probe = [0_u8; 1];
+        if file.read(&mut eof_probe)? != 0 {
+            bail!("private file grew during bounded read");
+        }
         let after = checked_info(&file)?;
         verify_dacl(&file)?;
         if before.dwVolumeSerialNumber != after.dwVolumeSerialNumber
