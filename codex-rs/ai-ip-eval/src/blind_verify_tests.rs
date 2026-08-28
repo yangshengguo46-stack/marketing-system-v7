@@ -47,7 +47,7 @@ fn assert_no_blind_outputs(private_root: &Path) {
 
 fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
     let error = crate::blind::run_blind_pack(args).unwrap_err();
-    assert_eq!(error.to_string(), "BlindPairFinalizationStageNotInstalled");
+    assert_eq!(error.to_string(), "BlindBundleStageNotInstalled");
     assert_no_blind_outputs(private_root);
 }
 
@@ -101,7 +101,9 @@ fn rebuild_native_inventory(private_root: &Path) {
 
 #[test]
 fn blind_native_pair_rejects_fully_resigned_live_manifest_mode() {
-    let native = run_native_mock_pair_with_marker(None, 10);
+    let native = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     native.result.as_ref().unwrap();
     let coordinator = native.live_root.join("coordinator");
     let manifest_path = coordinator.join("run-1-manifest.json");
@@ -180,7 +182,9 @@ fn blind_pair_parser_retains_exact_real_replay_and_native_envelopes() {
     parsed.inventory.reverify_unchanged().unwrap();
     assert_current_stage(replay_args, &replay.private_root);
 
-    let native = run_native_mock_pair_with_marker(None, 10);
+    let native = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     native.result.as_ref().unwrap();
     let native_args = native_blind_args(&native.live_root);
     let snapshot = crate::blind::read_context_snapshot(&native_args.frozen_run_context).unwrap();
@@ -583,7 +587,9 @@ fn blind_envelope_rejects_replay_binding_and_direct_link_drift() {
 
 #[test]
 fn blind_envelope_rejects_native_mode_and_execution_link_drift() {
-    let native = run_native_mock_pair_with_marker(None, 10);
+    let native = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     native.result.as_ref().unwrap();
     let snapshot = crate::blind::read_context_snapshot(
         &native_blind_args(&native.live_root).frozen_run_context,

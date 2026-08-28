@@ -73,10 +73,7 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
     ] {
         assert!(!stderr.contains(stale_error), "stale CLI error: {stderr}");
     }
-    assert_eq!(
-        stderr.trim_end(),
-        "Error: BlindPairFinalizationStageNotInstalled"
-    );
+    assert_eq!(stderr.trim_end(), "Error: BlindBundleStageNotInstalled");
     assert_no_outputs(&private_root);
     Ok(())
 }

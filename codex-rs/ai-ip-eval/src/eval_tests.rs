@@ -56,6 +56,9 @@ mod blind_verify_tests;
 #[path = "blind_verify_semantics_tests.rs"]
 mod blind_verify_semantics_tests;
 
+#[path = "blind_finalize_tests.rs"]
+mod blind_finalize_tests;
+
 fn usage() -> TokenUsageBreakdown {
     TokenUsageBreakdown {
         total_tokens: 15,
@@ -1321,7 +1324,7 @@ fn paired_outputs_are_independently_valid_and_may_differ() {
     );
     assert!(verification.get("contentPackageSha256").is_none());
     assert!(!verification_text.contains("Synthetic body"));
-    assert!(!verification_text.contains("Candidate synthetic body"));
+    assert!(!verification_text.contains("Refined synthetic body"));
 }
 
 #[test]
@@ -4389,7 +4392,9 @@ fn run_native_mock_pair_with_marker(
 
 #[test]
 fn native_mock_pair_reaches_verified_content_projection() {
-    let run = run_native_mock_pair_with_marker(None, 10);
+    let run = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     run.result.as_ref().unwrap();
     let frozen_path = run.live_root.join("frozen-run-context.json");
     let frozen_json: serde_json::Value =
@@ -4909,8 +4914,8 @@ fn native_app_server_fixture() {
                 let package = if candidate {
                     let mut package: serde_json::Value =
                         serde_json::from_str(&package_json()).unwrap();
-                    package["publishableContent"]["title"] = json!("Candidate synthetic title");
-                    package["publishableContent"]["body"] = json!("Candidate synthetic body");
+                    package["publishableContent"]["title"] = json!("Refined synthetic title");
+                    package["publishableContent"]["body"] = json!("Refined synthetic body");
                     package.to_string()
                 } else {
                     package_json()

@@ -2,12 +2,12 @@ load("//:defs.bzl", "codex_rust_crate")
 
 codex_rust_crate(
     name = "ai-ip-eval",
-    compile_data = [
+    compile_data = glob(["tests/fixtures/blind/treatment-markers.json"]) + [
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",
     ],
     crate_name = "codex_ai_ip_eval",
-    test_data_extra = glob(["tests/fixtures/**"]) + [
+    test_data_extra = [
         "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",

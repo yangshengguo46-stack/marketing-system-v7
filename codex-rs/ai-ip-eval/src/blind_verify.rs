@@ -1,4 +1,3 @@
-use std::fmt;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -67,17 +66,6 @@ pub(crate) enum PairVerification {
     Replay(ReplayPairVerification),
     Native(NativePairVerification),
 }
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub(crate) struct BlindPairFinalizationStageNotInstalled;
-
-impl fmt::Display for BlindPairFinalizationStageNotInstalled {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("BlindPairFinalizationStageNotInstalled")
-    }
-}
-
-impl std::error::Error for BlindPairFinalizationStageNotInstalled {}
 
 pub(crate) fn verify_pair_evidence_core(
     snapshot: &FrozenContextSnapshot,

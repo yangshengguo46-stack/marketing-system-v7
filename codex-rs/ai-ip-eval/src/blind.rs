@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 use std::ffi::OsStr;
+use std::fmt;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -157,9 +158,21 @@ pub(crate) fn verify_blind_pair_stage(
     if args.frozen_run_context.as_os_str() != snapshot.canonical_path().as_os_str() {
         bail!("blind-pack frozen context snapshot changed before pair verification");
     }
-    verify_pair_evidence_core(snapshot)?;
-    Err(crate::blind_verify::BlindPairFinalizationStageNotInstalled.into())
+    let pair = crate::blind_finalize::finalize_blind_pair(verify_pair_evidence_core(snapshot)?)?;
+    let _ = pair.evidence();
+    Err(BlindBundleStageNotInstalled.into())
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub(crate) struct BlindBundleStageNotInstalled;
+
+impl fmt::Display for BlindBundleStageNotInstalled {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("BlindBundleStageNotInstalled")
+    }
+}
+
+impl std::error::Error for BlindBundleStageNotInstalled {}
 
 fn require_exact_canonical(path: &Path, error: &str) -> Result<PathBuf> {
     if !path.is_absolute() {
@@ -219,7 +232,7 @@ fn validate_seed_arguments(args: &BlindPackArgs, execution_mode: ExecutionMode) 
     Ok(())
 }
 
-fn ensure_destinations_absent(private_root: &Path) -> Result<()> {
+pub(crate) fn ensure_destinations_absent(private_root: &Path) -> Result<()> {
     for relative in [REVIEWER_ROOT, MAPPING_DIR, SEED_DIR, REVIEWS_DIR, RECEIPT] {
         let path = resolve_private_relative(private_root, Path::new(relative))?;
         match std::fs::symlink_metadata(&path) {

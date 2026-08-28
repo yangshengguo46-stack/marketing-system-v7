@@ -44,7 +44,7 @@ fn assert_no_blind_outputs(private_root: &Path) {
 
 fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
     let error = crate::blind::run_blind_pack(args).unwrap_err();
-    assert_eq!(error.to_string(), "BlindPairFinalizationStageNotInstalled");
+    assert_eq!(error.to_string(), "BlindBundleStageNotInstalled");
     assert_no_blind_outputs(private_root);
 }
 
@@ -421,7 +421,7 @@ fn resign_native_identity(private_root: &Path, attack: NativeIdentityAttack) {
 }
 
 #[test]
-fn sealed_replay_pair_reaches_blind_finalization_stage() {
+fn sealed_replay_pair_reaches_blind_bundle_stage() {
     let fixture = replay_fixture_with_material();
     let replay = run_frozen_replay_pair_from(fixture.path()).unwrap();
     let args = replay_blind_args(&replay.private_root);
@@ -429,7 +429,7 @@ fn sealed_replay_pair_reaches_blind_finalization_stage() {
         semantic_core(&args),
         &replay.manifests,
         &replay.private_root.join("replay-coordinator"),
-        false,
+        /*native*/ false,
     );
     assert_current_stage(args, &replay.private_root);
 }
@@ -442,7 +442,7 @@ fn run_native_identity_attack_pair() -> NativeMockPairTestRun {
 }
 
 #[test]
-fn sealed_native_pair_reaches_blind_finalization_stage() {
+fn sealed_native_pair_reaches_blind_bundle_stage() {
     let native = run_native_identity_attack_pair();
     let args = native_blind_args(&native.live_root);
     let manifests = read_native_mock_manifests(&native.live_root);
@@ -450,7 +450,7 @@ fn sealed_native_pair_reaches_blind_finalization_stage() {
         semantic_core(&args),
         &manifests,
         &native.live_root.join("coordinator"),
-        true,
+        /*native*/ true,
     );
     assert_current_stage(args, &native.live_root);
 }
@@ -529,7 +529,7 @@ fn sealed_replay_pair_rejects_fully_resigned_frozen_request_commitments() {
 fn sealed_replay_pair_rejects_fully_resigned_alternate_shared_config() {
     let fixture = replay_fixture_with_material();
     let replay = run_frozen_replay_pair_from(fixture.path()).unwrap();
-    let alternate = crate::build_shared_config("replay-fixture", 2).unwrap();
+    let alternate = crate::build_shared_config("replay-fixture", /*broker_port*/ 2).unwrap();
     for home in ["replay-generic-home", "replay-candidate-home"] {
         fs::write(
             replay.private_root.join(home).join(".codex/config.toml"),
