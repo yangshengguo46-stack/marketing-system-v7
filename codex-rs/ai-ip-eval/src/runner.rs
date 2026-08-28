@@ -66,6 +66,67 @@ pub struct VerifiedFrozenContext {
     artifacts: ArtifactCommitments,
 }
 
+const NATIVE_PROVIDER_LABEL: &str = "synthetic-loopback-mock";
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct NativeMaterialInput {
+    pub(crate) material_id: String,
+    pub(crate) relative_path: String,
+    pub(crate) sha256: String,
+    pub(crate) bytes: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct NativeContentInputs {
+    pub(crate) mission_case: codex_ai_ip_domain::HeldOutMissionCase,
+    pub(crate) case_bytes: Vec<u8>,
+    pub(crate) attestation: NativeHeldOutAttestation,
+    pub(crate) reviewers: [crate::ReviewerDeclaration; 3],
+    pub(crate) attestation_bytes: Vec<u8>,
+    pub(crate) materials_manifest: Vec<codex_ai_ip_domain::MissionMaterial>,
+    pub(crate) materials_manifest_bytes: Vec<u8>,
+    pub(crate) materials: Vec<NativeMaterialInput>,
+    pub(crate) prompt_bytes: Vec<u8>,
+    pub(crate) additional_context_bytes: Vec<u8>,
+    pub(crate) schema_bytes: Vec<u8>,
+    pub(crate) thread_start_bytes: Vec<u8>,
+    pub(crate) turn_start_bytes: Vec<u8>,
+    pub(crate) skill_bytes: Vec<u8>,
+    pub(crate) codex_binary_sha256: String,
+    pub(crate) evaluator_binary_sha256: String,
+    pub(crate) broker_component_sha256: String,
+    pub(crate) model_label: String,
+    pub(crate) provider_mode: String,
+    pub(crate) provider_label: String,
+    pub(crate) provider_compatibility_name: ProofBrokerCompatibilityName,
+    pub(crate) max_output_tokens: u64,
+    pub(crate) max_provider_request_attempts: u64,
+    pub(crate) max_total_tokens_per_run: u64,
+    pub(crate) max_elapsed_seconds_per_run: u64,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct VerifiedNativeContentInputs {
+    inputs: NativeContentInputs,
+    context: FrozenRunContext,
+    artifacts: ArtifactCommitments,
+}
+
+impl VerifiedNativeContentInputs {
+    pub(crate) fn projection(&self) -> &NativeContentInputs {
+        &self.inputs
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.artifacts.verify()?;
+        let observed = collect_native_content_inputs(&self.context, &self.artifacts)?;
+        if observed != self.inputs {
+            bail!("verified Native content inputs changed after verification");
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct FrozenArtifactReference {
@@ -166,6 +227,10 @@ impl VerifiedFrozenContext {
             .verify_context_bytes(&self.raw_bytes)
             .context("reverify native frozen context identity")?;
         self.artifacts.verify()?;
+        validate_managed_source_artifacts(self).map(drop)
+    }
+
+    pub(crate) fn native_content_inputs(&self) -> Result<VerifiedNativeContentInputs> {
         validate_managed_source_artifacts(self)
     }
 }
@@ -679,41 +744,94 @@ pub(crate) fn validate_imported_source_proof(imported: &ImportedSourceProof) -> 
             })
             .collect::<Result<BTreeMap<_, _>>>()?,
     )
+    .map(drop)
 }
 
-fn validate_managed_source_artifacts(frozen: &VerifiedFrozenContext) -> Result<()> {
-    let case_bytes = frozen.artifact_bytes("source")?;
+fn validate_managed_source_artifacts(
+    frozen: &VerifiedFrozenContext,
+) -> Result<VerifiedNativeContentInputs> {
+    Ok(VerifiedNativeContentInputs {
+        inputs: collect_native_content_inputs(&frozen.context, &frozen.artifacts)?,
+        context: frozen.context.clone(),
+        artifacts: frozen.artifacts.clone(),
+    })
+}
+
+fn collect_native_content_inputs(
+    context: &FrozenRunContext,
+    artifacts: &ArtifactCommitments,
+) -> Result<NativeContentInputs> {
+    let case_bytes = artifacts.read_verified("source")?;
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(&case_bytes).context("parse managed held-out case")?;
     mission_case
         .validate()
         .context("validate managed held-out case")?;
-    let manifest_bytes = frozen.artifact_bytes("materials")?;
-    if manifest_bytes != serde_json::to_vec(&mission_case.materials)? {
+    let materials_manifest_bytes = artifacts.read_verified("materials")?;
+    if materials_manifest_bytes != serde_json::to_vec(&mission_case.materials)? {
         bail!("managed materials manifest differs from the case declaration");
     }
-    let attestation_bytes = frozen.artifact_bytes("attestation")?;
-    let material_bytes = mission_case
-        .materials
-        .iter()
-        .map(|material| {
-            Ok((
-                PathBuf::from(&material.relative_path),
-                frozen.artifact_bytes(&format!("material:{}", material.material_id))?,
-            ))
-        })
-        .collect::<Result<BTreeMap<_, _>>>()?;
-    validate_managed_source_tree(
-        &frozen.context.private_root,
+    let attestation_bytes = artifacts.read_verified("attestation")?;
+    let mut material_bytes = BTreeMap::new();
+    let mut materials = Vec::with_capacity(mission_case.materials.len());
+    for material in &mission_case.materials {
+        let bytes = artifacts.read_verified(&format!("material:{}", material.material_id))?;
+        material_bytes.insert(PathBuf::from(&material.relative_path), bytes.clone());
+        materials.push(NativeMaterialInput {
+            material_id: material.material_id.clone(),
+            relative_path: material.relative_path.clone(),
+            sha256: material.sha256.clone(),
+            bytes,
+        });
+    }
+    let attestation = validate_managed_source_tree(
+        &context.private_root,
         &case_bytes,
         &attestation_bytes,
-        &manifest_bytes,
+        &materials_manifest_bytes,
         &material_bytes,
     )?;
-    let attestation = FrozenContracts::load()?
-        .validate_native_attestation(&attestation_bytes)
-        .context("validate managed native attestation before arm")?;
-    validate_native_attestation_context_binding(&attestation, &frozen.context)
+    validate_native_attestation_context_binding(&attestation, context)?;
+    let reviewers: [crate::ReviewerDeclaration; 3] = attestation
+        .reviewers
+        .clone()
+        .try_into()
+        .map_err(|reviewers: Vec<_>| {
+            anyhow!("expected three reviewers, got {}", reviewers.len())
+        })?;
+    let artifact_sha = |name: &str| -> Result<String> {
+        Ok(artifacts
+            .sha256(name)
+            .with_context(|| format!("missing frozen artifact {name}"))?
+            .to_string())
+    };
+    Ok(NativeContentInputs {
+        materials_manifest: mission_case.materials.clone(),
+        mission_case,
+        case_bytes,
+        reviewers,
+        attestation,
+        attestation_bytes,
+        materials_manifest_bytes,
+        materials,
+        prompt_bytes: artifacts.read_verified("prompt")?,
+        additional_context_bytes: artifacts.read_verified("additionalContext")?,
+        schema_bytes: artifacts.read_verified("schema")?,
+        thread_start_bytes: artifacts.read_verified("threadStartRequest")?,
+        turn_start_bytes: artifacts.read_verified("turnStartRequest")?,
+        skill_bytes: artifacts.read_verified("skill")?,
+        codex_binary_sha256: artifact_sha("codexBinary")?,
+        evaluator_binary_sha256: artifact_sha("evaluatorBinary")?,
+        broker_component_sha256: artifact_sha("brokerSource")?,
+        model_label: context.model_label.clone(),
+        provider_mode: context.provider_mode.clone(),
+        provider_label: NATIVE_PROVIDER_LABEL.to_string(),
+        provider_compatibility_name: ProofBrokerCompatibilityName::OpenAi,
+        max_output_tokens: context.max_output_tokens,
+        max_provider_request_attempts: context.max_attempts_per_arm,
+        max_total_tokens_per_run: context.max_total_tokens,
+        max_elapsed_seconds_per_run: context.max_elapsed_seconds,
+    })
 }
 
 pub(crate) fn validate_managed_source_before_arm(
@@ -721,8 +839,9 @@ pub(crate) fn validate_managed_source_before_arm(
     gate: &PairCoordinator,
     pair_deadline: Instant,
 ) -> Result<()> {
-    let validation =
-        run_sync_before_deadline(pair_deadline, || validate_managed_source_artifacts(frozen));
+    let validation = run_sync_before_deadline(pair_deadline, || {
+        validate_managed_source_artifacts(frozen).map(drop)
+    });
     poison_on_error(
         gate,
         "validate exact managed source tree before arm",
@@ -751,7 +870,7 @@ fn validate_managed_source_tree(
     attestation_bytes: &[u8],
     manifest_bytes: &[u8],
     material_bytes: &BTreeMap<PathBuf, Vec<u8>>,
-) -> Result<()> {
+) -> Result<NativeHeldOutAttestation> {
     let attestation = FrozenContracts::load()?
         .validate_native_attestation(attestation_bytes)
         .context("validate strict managed native attestation")?;
@@ -785,7 +904,7 @@ fn validate_managed_source_tree(
     let mut expected = BTreeMap::from([(PathBuf::from("case.json"), case_bytes.to_vec())]);
     expected.extend(material_bytes.clone());
     validate_exact_relative_tree(&case, Path::new(""), &expected)?;
-    Ok(())
+    Ok(attestation)
 }
 
 fn validate_exact_relative_tree(
@@ -3034,7 +3153,7 @@ fn build_live_run_manifest(
         model_label: frozen.context.model_label.clone(),
         actual_model_revision,
         deployment_or_fingerprint_commitment,
-        provider_label: "synthetic-loopback-mock".to_string(),
+        provider_label: NATIVE_PROVIDER_LABEL.to_string(),
         provider_compatibility_name: ProofBrokerCompatibilityName::OpenAi,
         authorized_evaluation_run_cost_fen: 0,
         max_provider_request_attempts: frozen.context.max_attempts_per_arm,

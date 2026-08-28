@@ -4382,6 +4382,76 @@ fn run_native_mock_pair_with_marker(
 }
 
 #[test]
+fn native_mock_pair_reaches_verified_content_projection() {
+    let run = run_native_mock_pair_with_marker(None, 10);
+    run.result.as_ref().unwrap();
+    let frozen_path = run.live_root.join("frozen-run-context.json");
+    let frozen_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&frozen_path).unwrap()).unwrap();
+    let artifact_path = |name: &str| {
+        std::path::PathBuf::from(frozen_json["artifacts"][name]["path"].as_str().unwrap())
+    };
+    let artifact_bytes = |name: &str| fs::read(artifact_path(name)).unwrap();
+    let case_bytes = artifact_bytes("source");
+    let mission_case: HeldOutMissionCase = serde_json::from_slice(&case_bytes).unwrap();
+    let attestation_bytes = artifact_bytes("attestation");
+    let attestation: crate::NativeHeldOutAttestation =
+        serde_json::from_slice(&attestation_bytes).unwrap();
+    let reviewers: [crate::ReviewerDeclaration; 3] =
+        attestation.reviewers.clone().try_into().unwrap();
+    let materials_manifest_bytes = artifact_bytes("materials");
+    let materials_manifest: Vec<codex_ai_ip_domain::MissionMaterial> =
+        serde_json::from_slice(&materials_manifest_bytes).unwrap();
+    let material_bytes = artifact_bytes("material:evidence-1");
+    let expected = crate::runner::NativeContentInputs {
+        mission_case,
+        case_bytes,
+        attestation,
+        reviewers,
+        attestation_bytes,
+        materials_manifest,
+        materials_manifest_bytes,
+        materials: vec![crate::runner::NativeMaterialInput {
+            material_id: "evidence-1".to_string(),
+            relative_path: "notes/evidence.txt".to_string(),
+            sha256: test_sha256(&material_bytes),
+            bytes: material_bytes.clone(),
+        }],
+        prompt_bytes: artifact_bytes("prompt"),
+        additional_context_bytes: artifact_bytes("additionalContext"),
+        schema_bytes: artifact_bytes("schema"),
+        thread_start_bytes: artifact_bytes("threadStartRequest"),
+        turn_start_bytes: artifact_bytes("turnStartRequest"),
+        skill_bytes: artifact_bytes("skill"),
+        codex_binary_sha256: test_sha256(&artifact_bytes("codexBinary")),
+        evaluator_binary_sha256: test_sha256(&artifact_bytes("evaluatorBinary")),
+        broker_component_sha256: test_sha256(&artifact_bytes("brokerSource")),
+        model_label: "local-mock".to_string(),
+        provider_mode: "not-run".to_string(),
+        provider_label: "synthetic-loopback-mock".to_string(),
+        provider_compatibility_name: ProofBrokerCompatibilityName::OpenAi,
+        max_output_tokens: 17,
+        max_provider_request_attempts: 2,
+        max_total_tokens_per_run: 10,
+        max_elapsed_seconds_per_run: 180,
+    };
+    let frozen = verify_frozen_context(&frozen_path).unwrap();
+    let verified = frozen.native_content_inputs().unwrap();
+    assert_eq!(verified.projection(), &expected);
+    verified.reverify_unchanged().unwrap();
+
+    let material_path = artifact_path("material:evidence-1");
+    fs::write(&material_path, b"changed native material\n").unwrap();
+    let error = verified.reverify_unchanged().unwrap_err();
+    assert!(format!("{error:#}").contains("artifact bytes changed after freeze"));
+    fs::write(&material_path, &material_bytes).unwrap();
+    verified.reverify_unchanged().unwrap();
+    replace_with_same_owner_only_bytes(&material_path);
+    let error = verified.reverify_unchanged().unwrap_err();
+    assert!(format!("{error:#}").contains("artifact path identity changed after freeze"));
+}
+
+#[test]
 fn native_runtime_allows_both_arms_to_reach_the_per_run_token_ceiling() {
     let run =
         run_native_mock_pair_with_marker(/*marker*/ None, /*max_total_tokens_per_run*/ 4);
