@@ -527,6 +527,75 @@ fn json_line_client_routes_typed_notifications_and_response_ids() {
 }
 
 #[test]
+fn json_line_client_observes_queued_and_streamed_turn_completion_exactly_once() {
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+        use tokio::io::AsyncBufReadExt;
+        use tokio::io::AsyncWriteExt;
+        use tokio::io::BufReader;
+
+        const STATUS: &[u8] = b"{\"method\":\"thread/status/changed\",\"params\":{\"threadId\":\"root-thread\",\"status\":{\"type\":\"idle\"}}}\n";
+        const COMPLETED: &[u8] = b"{\"method\":\"turn/completed\",\"params\":{\"threadId\":\"root-thread\",\"turn\":{\"id\":\"root-turn\",\"items\":[],\"itemsView\":\"full\",\"status\":\"completed\",\"error\":null,\"startedAt\":null,\"completedAt\":null,\"durationMs\":null}}}\n";
+
+        for queued in [true, false] {
+            let (client_io, server_io) = tokio::io::duplex(16 * 1024);
+            let (client_read, client_write) = tokio::io::split(client_io);
+            let (server_read, mut server_write) = tokio::io::split(server_io);
+            let server = tokio::spawn(async move {
+                if queued {
+                    let mut reader = BufReader::new(server_read);
+                    let mut request = String::new();
+                    reader.read_line(&mut request).await.unwrap();
+                    server_write.write_all(STATUS).await.unwrap();
+                    server_write.write_all(COMPLETED).await.unwrap();
+                    server_write
+                        .write_all(b"{\"id\":1,\"result\":{\"ok\":true}}\n")
+                        .await
+                        .unwrap();
+                } else {
+                    drop(server_read);
+                    server_write.write_all(STATUS).await.unwrap();
+                    server_write.write_all(COMPLETED).await.unwrap();
+                }
+            });
+            let mut client = JsonLineClient::new(client_read, client_write);
+            if queued {
+                let _: serde_json::Value = client
+                    .request(
+                        "synthetic/request",
+                        Some(&json!({})),
+                        Duration::from_secs(1),
+                    )
+                    .await
+                    .unwrap();
+            }
+            let mut observed = Vec::new();
+            client
+                .wait_for_turn_completion(
+                    "root-thread",
+                    "root-turn",
+                    Duration::from_secs(1),
+                    |notification| {
+                        observed.push(match notification {
+                            codex_app_server_protocol::ServerNotification::ThreadStatusChanged(
+                                _,
+                            ) => "status",
+                            codex_app_server_protocol::ServerNotification::TurnCompleted(_) => {
+                                "completed"
+                            }
+                            other => panic!("unexpected notification: {other:?}"),
+                        });
+                        Ok(())
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(observed, vec!["status", "completed"]);
+            server.await.unwrap();
+        }
+    });
+}
+
+#[test]
 fn json_line_client_drains_queued_notifications_and_restarts_the_quiet_window() {
     tokio::runtime::Runtime::new().unwrap().block_on(async {
         use tokio::io::AsyncBufReadExt;

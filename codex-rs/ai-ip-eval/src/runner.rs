@@ -844,10 +844,13 @@ pub(crate) fn freeze_replay_context_with_hook(
 struct ReplayArmResult {
     condition: EvaluationCondition,
     catalog: CatalogSnapshot,
+    catalog_response: codex_app_server_protocol::SkillsListResponse,
+    catalog_roots: crate::proof_archive::CatalogRootsSidecar,
     collected: CollectedReplay,
     successful_read_observed: bool,
     skill_use_evidence_sha256: Option<String>,
     transcript_sha256: String,
+    notifications: Vec<u8>,
 }
 
 #[derive(Serialize)]
@@ -941,7 +944,8 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         bail!("replay Lead Skill fixture has the wrong canonical name");
     }
 
-    let (homes, candidate_skill_path) = prepare_replay_homes(&context.private_root, &skill_bytes)?;
+    let (homes, candidate_skill_path, replay_config) =
+        prepare_replay_homes(&context.private_root, &skill_bytes)?;
     let generic_request = canonicalize_replay_request(
         &context,
         EvaluationCondition::Generic,
@@ -963,19 +967,29 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         .parent()
         .context("replay case has no fixture directory")?
         .to_path_buf();
-    let generic_catalog = replay_catalog(
+    let generic_roots = crate::proof_archive::CatalogRootsSidecar {
+        codex_home: homes.generic_codex_home.clone(),
+        host_home: homes.generic_home.clone(),
+        case_dir: case_dir.clone(),
+    };
+    let candidate_roots = crate::proof_archive::CatalogRootsSidecar {
+        codex_home: homes.candidate_codex_home.clone(),
+        host_home: homes.candidate_home.clone(),
+        case_dir,
+    };
+    let (generic_catalog_response, generic_catalog) = replay_catalog(
         &CatalogRoots {
-            codex_home: homes.generic_codex_home.clone(),
-            host_home: homes.generic_home.clone(),
-            case_dir: case_dir.clone(),
+            codex_home: generic_roots.codex_home.clone(),
+            host_home: generic_roots.host_home.clone(),
+            case_dir: generic_roots.case_dir.clone(),
         },
         None,
     )?;
-    let candidate_catalog = replay_catalog(
+    let (candidate_catalog_response, candidate_catalog) = replay_catalog(
         &CatalogRoots {
-            codex_home: homes.candidate_codex_home.clone(),
-            host_home: homes.candidate_home.clone(),
-            case_dir,
+            codex_home: candidate_roots.codex_home.clone(),
+            host_home: candidate_roots.host_home.clone(),
+            case_dir: candidate_roots.case_dir.clone(),
         },
         Some(&candidate_skill_path),
     )?;
@@ -993,7 +1007,8 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &mission,
         &homes.generic_codex_home,
         &skill_bytes,
-        context.fixtures["genericTranscript"].sha256.clone(),
+        generic_catalog_response,
+        generic_roots,
         generic_catalog,
     )?;
     let candidate = collect_replay_arm(
@@ -1002,7 +1017,8 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &mission,
         &homes.candidate_codex_home,
         &skill_bytes,
-        context.fixtures["candidateTranscript"].sha256.clone(),
+        candidate_catalog_response,
+        candidate_roots,
         candidate_catalog,
     )?;
     if generic.catalog.normalized_base_catalog_sha256()
@@ -1037,6 +1053,38 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         (1_u8, &generic, &generic_request),
         (2_u8, &candidate, &candidate_request),
     ] {
+        let codex_home = match arm.condition {
+            EvaluationCondition::Generic => &homes.generic_codex_home,
+            EvaluationCondition::Candidate => &homes.candidate_codex_home,
+        };
+        let (config_sidecar, config_evidence) =
+            replay_config_sidecar(codex_home, &replay_config)?;
+        let capture = crate::proof_archive::ArmPostprocessCapture {
+            pair_id: context.pair_id.clone(),
+            run_ordinal: ordinal,
+            condition: arm.condition,
+            evidence_source: crate::ArchiveEvidenceSource::ReplaySynthetic,
+            notifications: arm.notifications.clone(),
+            start: replay_start_sidecar(&arm.catalog_roots.case_dir)?,
+            config: config_sidecar,
+            pre_catalog: crate::proof_archive::CatalogSidecar {
+                schema_version: 1,
+                roots: arm.catalog_roots.clone(),
+                response: arm.catalog_response.clone(),
+            },
+            post_catalog: crate::proof_archive::CatalogSidecar {
+                schema_version: 1,
+                roots: arm.catalog_roots.clone(),
+                response: arm.catalog_response.clone(),
+            },
+            quiet_tree: replay_quiet_tree(&arm.catalog_roots.case_dir)?,
+            broker_snapshot: replay_broker_snapshot(&context.pair_id, ordinal, arm)?,
+        };
+        let postprocess_sha256 = crate::proof_archive_seal::seal_postprocess_archive(
+            &context.private_root,
+            Path::new("replay-coordinator"),
+            capture,
+        )?;
         let package_sha256 = sha256(&serde_json::to_vec(&arm.collected.content_package)?);
         let manifest = build_replay_manifest(
             &context,
@@ -1045,9 +1093,18 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             &execution_context_sha256,
             ordinal,
             arm,
+            &config_evidence,
+            &sha256(&replay_config.bytes),
+            &postprocess_sha256,
             &catalog_parity,
             &package_sha256,
             request,
+        )?;
+        crate::verify_postprocess_archive(
+            &context.private_root,
+            &manifest,
+            &mission,
+            &skill_bytes,
         )?;
         let bytes = serde_json::to_vec_pretty(&manifest)?;
         write_owner_only_new(
@@ -1059,6 +1116,12 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             EvaluationCondition::Candidate => candidate_manifest_sha256 = Some(sha256(&bytes)),
         }
     }
+    crate::private_inventory::bootstrap_private_inventory(
+        &context.private_root,
+        &context.pair_id,
+        &sha256(&context_bytes),
+        &chrono::Utc::now().to_rfc3339(),
+    )?;
     let mut verification = serde_json::json!({
         "schemaVersion": 1,
         "executionMode": "replay",
@@ -1083,13 +1146,11 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &coordinator.join("replay-pair-verification.json"),
         &verification,
     )?;
-    crate::private_inventory::bootstrap_private_inventory(
+    crate::private_inventory::append_private_inventory(
         &context.private_root,
-        &context.pair_id,
-        &sha256(&context_bytes),
-        &chrono::Utc::now().to_rfc3339(),
-    )
-    .map(drop)
+        Path::new("replay-coordinator/replay-pair-verification.json"),
+    )?;
+    crate::private_inventory::verify_private_inventory(&context.private_root).map(drop)
 }
 
 fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<()> {
@@ -1229,7 +1290,7 @@ fn materialize_replay_request_home(
 fn prepare_replay_homes(
     private_root: &Path,
     skill_bytes: &[u8],
-) -> Result<(IsolatedHomes, PathBuf)> {
+) -> Result<(IsolatedHomes, PathBuf, crate::FrozenSharedConfig)> {
     let generic_home = private_root.join("replay-generic-home");
     let generic_codex_home = generic_home.join(".codex");
     let candidate_home = private_root.join("replay-candidate-home");
@@ -1250,6 +1311,13 @@ fn prepare_replay_homes(
     create_owner_only_dir(&candidate_skill_dir)?;
     let candidate_skill_path = candidate_skill_dir.join("SKILL.md");
     write_owner_only_new(&candidate_skill_path, skill_bytes)?;
+    let shared_config = build_shared_config("replay-fixture", 1)?;
+    for path in [
+        generic_codex_home.join("config.toml"),
+        candidate_codex_home.join("config.toml"),
+    ] {
+        crate::secure_fs::write_owner_only_new(&path, &shared_config.bytes)?;
+    }
     Ok((
         IsolatedHomes {
             generic_home,
@@ -1258,10 +1326,14 @@ fn prepare_replay_homes(
             candidate_codex_home,
         },
         candidate_skill_path,
+        shared_config,
     ))
 }
 
-fn replay_catalog(roots: &CatalogRoots, target: Option<&Path>) -> Result<CatalogSnapshot> {
+fn replay_catalog(
+    roots: &CatalogRoots,
+    target: Option<&Path>,
+) -> Result<(codex_app_server_protocol::SkillsListResponse, CatalogSnapshot)> {
     let skills = target
         .map(|path| {
             vec![serde_json::json!({
@@ -1280,7 +1352,8 @@ fn replay_catalog(roots: &CatalogRoots, target: Option<&Path>) -> Result<Catalog
         serde_json::from_value(serde_json::json!({
             "data": [{"cwd": roots.case_dir, "skills": skills, "errors": []}]
         }))?;
-    crate::normalize_catalog(&response, roots)
+    let snapshot = crate::normalize_catalog(&response, roots)?;
+    Ok((response, snapshot))
 }
 
 fn collect_replay_arm(
@@ -1289,7 +1362,8 @@ fn collect_replay_arm(
     mission: &codex_ai_ip_domain::HeldOutMissionCase,
     codex_home: &Path,
     skill_bytes: &[u8],
-    transcript_sha256: String,
+    catalog_response: codex_app_server_protocol::SkillsListResponse,
+    catalog_roots: crate::proof_archive::CatalogRootsSidecar,
     catalog: CatalogSnapshot,
 ) -> Result<ReplayArmResult> {
     let mut collector = ReplayCollector::new(
@@ -1313,23 +1387,39 @@ fn collect_replay_arm(
     if text.is_empty() || !text.ends_with('\n') {
         bail!("replay transcript must be non-empty LF-terminated JSONL");
     }
+    let mut recorder = crate::evidence::NotificationRecorder::default();
+    let turn_started: codex_app_server_protocol::ServerNotification =
+        serde_json::from_value(serde_json::json!({
+            "method": "turn/started",
+            "params": {
+                "threadId": "root-thread",
+                "turn": replay_turn("root-turn", "inProgress")
+            }
+        }))?;
+    recorder.record(&turn_started)?;
+    collector.ingest(turn_started)?;
     for line in text.lines() {
         let mut value: serde_json::Value = serde_json::from_str(line)?;
         materialize_replay_codex_home(&mut value, codex_home)?;
         let notification: codex_app_server_protocol::ServerNotification =
             serde_json::from_value(value)?;
+        recorder.record(&notification)?;
         skill_use.ingest(&notification)?;
         collector.ingest(notification)?;
     }
     let collected = collector.finish(mission)?;
     let skill_use = skill_use.finish()?;
+    let notifications = recorder.finish();
     Ok(ReplayArmResult {
         condition,
         catalog,
+        catalog_response,
+        catalog_roots,
         collected,
         successful_read_observed: skill_use.successful_read_observed,
         skill_use_evidence_sha256: skill_use.evidence_sha256,
-        transcript_sha256,
+        transcript_sha256: sha256(&notifications),
+        notifications,
     })
 }
 
@@ -1356,6 +1446,181 @@ fn materialize_replay_codex_home(value: &mut serde_json::Value, codex_home: &Pat
     Ok(())
 }
 
+fn replay_turn(id: &str, status: &str) -> serde_json::Value {
+    serde_json::json!({
+        "id": id,
+        "items": [],
+        "itemsView": "full",
+        "status": status,
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+    })
+}
+
+fn replay_root_thread(case_dir: &Path) -> Result<codex_app_server_protocol::Thread> {
+    Ok(serde_json::from_value(serde_json::json!({
+        "id": "root-thread",
+        "extra": null,
+        "sessionId": "replay-fixture-session",
+        "forkedFromId": null,
+        "parentThreadId": null,
+        "preview": "synthetic replay",
+        "ephemeral": false,
+        "section": null,
+        "sectionEnteredAt": null,
+        "projectId": null,
+        "historyMode": "legacy",
+        "modelProvider": "replay-not-run",
+        "createdAt": 1,
+        "updatedAt": 1,
+        "recencyAt": null,
+        "status": {"type": "idle"},
+        "path": null,
+        "cwd": case_dir,
+        "cliVersion": "synthetic",
+        "source": "appServer",
+        "canAcceptDirectInput": true,
+        "threadSource": "user",
+        "agentNickname": null,
+        "agentRole": null,
+        "gitInfo": null,
+        "name": null,
+        "turns": []
+    }))?)
+}
+
+fn replay_start_sidecar(case_dir: &Path) -> Result<crate::proof_archive::StartSidecar> {
+    let root = replay_root_thread(case_dir)?;
+    Ok(crate::proof_archive::StartSidecar {
+        schema_version: 1,
+        thread: serde_json::from_value(serde_json::json!({
+            "thread": root,
+            "model": "replay-fixture",
+            "modelProvider": "replay-not-run",
+            "serviceTier": null,
+            "cwd": case_dir,
+            "runtimeWorkspaceRoots": [],
+            "instructionSources": [],
+            "approvalPolicy": "never",
+            "approvalsReviewer": "user",
+            "sandbox": {"type": "dangerFullAccess"},
+            "activePermissionProfile": {"id": "ai-ip-eval", "extends": null},
+            "reasoningEffort": null,
+            "multiAgentMode": "explicitRequestOnly"
+        }))?,
+        turn: serde_json::from_value(serde_json::json!({
+            "turn": replay_turn("root-turn", "inProgress")
+        }))?,
+    })
+}
+
+fn replay_config_sidecar(
+    codex_home: &Path,
+    shared: &crate::FrozenSharedConfig,
+) -> Result<(crate::proof_archive::ConfigSidecar, ConfigAuditEvidence)> {
+    let config_path = codex_home.join("config.toml").canonicalize()?;
+    let mut effective = shared.layer_json.clone();
+    effective["allow_login_shell"] = serde_json::Value::Bool(true);
+    let response = serde_json::from_value(serde_json::json!({
+        "config": effective,
+        "origins": {},
+        "layers": [{
+            "name": {"type": "user", "file": config_path, "profile": null},
+            "version": "v1",
+            "config": shared.layer_json
+        }]
+    }))?;
+    let requirements = codex_app_server_protocol::ConfigRequirementsReadResponse {
+        requirements: None,
+    };
+    let evidence = audit_frozen_config(
+        &response,
+        &requirements,
+        config_path.clone(),
+        shared.bytes.clone(),
+        shared.layer_json.clone(),
+    )?;
+    Ok((
+        crate::proof_archive::ConfigSidecar {
+            schema_version: 1,
+            response,
+            requirements,
+            canonical_config_path: config_path,
+            expected_config_utf8: String::from_utf8(shared.bytes.clone())?,
+            expected_layer_config: shared.layer_json.clone(),
+        },
+        evidence,
+    ))
+}
+
+fn replay_quiet_tree(case_dir: &Path) -> Result<crate::proof_archive::QuietTreeSidecar> {
+    let root = replay_root_thread(case_dir)?;
+    let scan = |root: &codex_app_server_protocol::Thread| crate::proof_archive::TreeScanSidecar {
+        ancestor_pages: vec![codex_app_server_protocol::ThreadListResponse {
+            data: Vec::new(),
+            next_cursor: None,
+            backwards_cursor: None,
+        }],
+        loaded_pages: vec![codex_app_server_protocol::ThreadLoadedListResponse {
+            data: vec![root.id.clone()],
+            next_cursor: None,
+        }],
+        loaded_reads: vec![codex_app_server_protocol::ThreadReadResponse {
+            thread: root.clone(),
+        }],
+    };
+    Ok(crate::proof_archive::QuietTreeSidecar {
+        schema_version: 1,
+        first: scan(&root),
+        second: scan(&root),
+        root,
+    })
+}
+
+fn replay_broker_snapshot(
+    pair_id: &str,
+    ordinal: u8,
+    arm: &ReplayArmResult,
+) -> Result<crate::proof_archive::BrokerSnapshotSidecar> {
+    let completions = crate::evidence::parse_notification_archive(&arm.notifications)?
+        .into_iter()
+        .filter_map(|notification| {
+            let codex_app_server_protocol::ServerNotification::RawResponseCompleted(raw) =
+                notification
+            else {
+                return None;
+            };
+            Some(crate::proof_archive::BrokerCompletionSidecar {
+                response_id: raw.response_id,
+                usage: raw.usage.map(|usage| crate::Usage {
+                    total_tokens: usage.total_tokens,
+                    input_tokens: usage.input_tokens,
+                    cached_input_tokens: usage.cached_input_tokens,
+                    cache_write_input_tokens: usage.cache_write_input_tokens,
+                    output_tokens: usage.output_tokens,
+                    reasoning_output_tokens: usage.reasoning_output_tokens,
+                }),
+                actual_model: Some("replay-fixture-recording".to_string()),
+                deployment_or_fingerprint: None,
+            })
+        })
+        .collect();
+    Ok(crate::proof_archive::BrokerSnapshotSidecar {
+        schema_version: 1,
+        pair_id: pair_id.to_string(),
+        run_ordinal: ordinal,
+        condition: arm.condition,
+        completions,
+        in_flight: 0,
+        attempt_index_file_sha256: sha256(b"replay:no-broker-ledger"),
+        attempt_index_merkle_root: sha256(b"replay:no-provider-attempts"),
+        global_attempt_start_inclusive: 0,
+        global_attempt_end_exclusive: 0,
+    })
+}
+
 fn build_replay_manifest(
     context: &ReplayFrozenContext,
     context_bytes: &[u8],
@@ -1363,6 +1628,9 @@ fn build_replay_manifest(
     execution_context_sha256: &str,
     run_ordinal: u8,
     arm: &ReplayArmResult,
+    config: &ConfigAuditEvidence,
+    shared_config_sha256: &str,
+    postprocess_evidence_index_sha256: &str,
     catalog_parity: &crate::CatalogParity,
     package_sha256: &str,
     request: &codex_responses_api_proxy::TransformedRequestEvidence,
@@ -1386,7 +1654,6 @@ fn build_replay_manifest(
         "root-thread",
         mission,
     )?)?);
-    let replay_config_sha256 = sha256(b"replay:no-live-config");
     let native_skill_sha256 = (arm.condition == EvaluationCondition::Candidate)
         .then(|| context.fixtures["leadSkill"].sha256.clone());
     Ok(RunManifest {
@@ -1404,9 +1671,9 @@ fn build_replay_manifest(
         output_schema_sha256: schema_sha256,
         thread_start_request_sha256: thread_start_sha256,
         turn_start_request_sha256: turn_start_sha256,
-        shared_config_sha256: replay_config_sha256.clone(),
-        effective_config_sha256: replay_config_sha256.clone(),
-        config_layers_sha256: replay_config_sha256,
+        shared_config_sha256: shared_config_sha256.to_string(),
+        effective_config_sha256: config.effective_config_sha256.clone(),
+        config_layers_sha256: config.config_layers_sha256.clone(),
         native_skill_sha256,
         pre_skill_catalog_sha256: arm.catalog.sha256.clone(),
         post_skill_catalog_sha256: arm.catalog.sha256.clone(),
@@ -1422,7 +1689,7 @@ fn build_replay_manifest(
         app_server_transcript_sha256: arm.transcript_sha256.clone(),
         broker_attempt_ledger_sha256: sha256(b"replay:no-broker-ledger"),
         attempt_index_root_sha256: sha256(b"replay:no-provider-attempts"),
-        postprocess_evidence_index_sha256: String::new(),
+        postprocess_evidence_index_sha256: postprocess_evidence_index_sha256.to_string(),
         content_package_sha256: package_sha256.to_string(),
         root_thread_id: "root-thread".to_string(),
         root_turn_id: "root-turn".to_string(),
@@ -2132,7 +2399,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             remaining_pair_duration(pair_deadline)?;
             let proof = gate.active_arm_proof_snapshot()?;
             let completions = gate.active_completions()?;
-            let manifest = build_live_run_manifest(
+            let mut manifest = build_live_run_manifest(
                 &frozen,
                 &outcome,
                 &proof,
@@ -2140,6 +2407,19 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 &shared_config,
                 &execution_context_sha256,
                 &order,
+            )?;
+            let postprocess_evidence_index_sha256 =
+                crate::proof_archive_seal::seal_postprocess_archive(
+                    &frozen.context.private_root,
+                    Path::new("coordinator"),
+                    native_postprocess_capture(&frozen, &outcome, &proof, &completions)?,
+                )?;
+            manifest.postprocess_evidence_index_sha256 = postprocess_evidence_index_sha256;
+            crate::verify_postprocess_archive(
+                &frozen.context.private_root,
+                &manifest,
+                &serde_json::from_slice(&frozen.artifact_bytes("source")?)?,
+                &frozen.artifact_bytes("skill")?,
             )?;
             let manifest_bytes = serde_json::to_vec_pretty(&manifest)?;
             write_owner_only_new(
@@ -2152,12 +2432,22 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             manifests.push((manifest, manifest_sha256));
             if outcomes.len() == 2 {
                 verify_live_arm_business_parity(&frozen, &homes, &outcomes)?;
+                crate::private_inventory::bootstrap_private_inventory(
+                    &frozen.context.private_root,
+                    frozen.pair_id(),
+                    frozen.sha256(),
+                    &chrono::Utc::now().to_rfc3339(),
+                )?;
                 write_live_pair_verification(
                     &frozen,
                     &execution_context_sha256,
                     &request_inspector,
                     &manifests,
                     &coordinator_dir,
+                )?;
+                crate::private_inventory::append_private_inventory(
+                    &frozen.context.private_root,
+                    Path::new("coordinator/pair-verification.json"),
                 )?;
             }
             let post = if index == 1 {
@@ -2168,6 +2458,12 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             run_sync_before_deadline(pair_deadline, || guard.advance(post))?;
             run_sync_before_deadline(pair_deadline, || generated.advance(post, &coordinator_dir))?;
             run_sync_before_deadline(pair_deadline, || gate.seal_arm())?;
+            if index == 2 {
+                crate::private_inventory::append_private_inventory(
+                    &frozen.context.private_root,
+                    Path::new("coordinator/receipts/arm-2-receipt.json"),
+                )?;
+            }
         }
         Ok(())
     })();
@@ -2196,13 +2492,13 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 })
             },
         )
-        .and_then(|_| {
-            crate::private_inventory::bootstrap_private_inventory(
+        .and_then(|receipt| {
+            crate::private_inventory::append_private_inventory(
                 &frozen.context.private_root,
-                frozen.pair_id(),
-                frozen.sha256(),
-                &chrono::Utc::now().to_rfc3339(),
-            )
+                Path::new("coordinator/receipts/pair-receipt.json"),
+            )?;
+            crate::private_inventory::verify_private_inventory(&frozen.context.private_root)?;
+            Ok(receipt)
         })
         .map(drop),
     }
@@ -2256,8 +2552,12 @@ struct ArmRunEvidence {
     root_turn_id: String,
     session_id: String,
     config: ConfigAuditEvidence,
-    pre_catalog: CatalogSnapshot,
-    post_catalog: CatalogSnapshot,
+    start: crate::proof_archive::StartSidecar,
+    config_sidecar: crate::proof_archive::ConfigSidecar,
+    pre_catalog: CapturedCatalog,
+    post_catalog: CapturedCatalog,
+    quiet_tree: crate::proof_archive::QuietTreeSidecar,
+    notifications: Vec<u8>,
     collected: CollectedReplay,
     successful_read_observed: bool,
     skill_use_evidence_sha256: Option<String>,
@@ -2346,9 +2646,12 @@ fn build_live_run_manifest(
         effective_config_sha256: outcome.config.effective_config_sha256.clone(),
         config_layers_sha256: outcome.config.config_layers_sha256.clone(),
         native_skill_sha256,
-        pre_skill_catalog_sha256: outcome.pre_catalog.sha256.clone(),
-        post_skill_catalog_sha256: outcome.post_catalog.sha256.clone(),
-        normalized_base_catalog_sha256: outcome.pre_catalog.normalized_base_catalog_sha256(),
+        pre_skill_catalog_sha256: outcome.pre_catalog.snapshot.sha256.clone(),
+        post_skill_catalog_sha256: outcome.post_catalog.snapshot.sha256.clone(),
+        normalized_base_catalog_sha256: outcome
+            .pre_catalog
+            .snapshot
+            .normalized_base_catalog_sha256(),
         skill_use_evidence_sha256: outcome.skill_use_evidence_sha256.clone(),
         codex_binary_sha256: artifact_sha("codexBinary")?,
         evaluator_binary_sha256: artifact_sha("evaluatorBinary")?,
@@ -2399,6 +2702,62 @@ fn build_live_run_manifest(
     })
 }
 
+fn native_postprocess_capture(
+    frozen: &VerifiedFrozenContext,
+    outcome: &ArmRunEvidence,
+    proof: &crate::broker_gate::ActiveArmProofSnapshot,
+    completions: &[codex_responses_api_proxy::ResponseCompletedMetadata],
+) -> Result<crate::proof_archive::ArmPostprocessCapture> {
+    let completions = completions
+        .iter()
+        .map(|completion| crate::proof_archive::BrokerCompletionSidecar {
+            response_id: completion.response_id.clone(),
+            usage: completion.usage.as_ref().map(|usage| crate::Usage {
+                total_tokens: usage.total_tokens,
+                input_tokens: usage.input_tokens,
+                cached_input_tokens: usage.cached_input_tokens,
+                cache_write_input_tokens: usage.cache_write_input_tokens,
+                output_tokens: usage.output_tokens,
+                reasoning_output_tokens: usage.reasoning_output_tokens,
+            }),
+            actual_model: completion.actual_model.clone(),
+            deployment_or_fingerprint: completion.deployment_or_fingerprint.clone(),
+        })
+        .collect();
+    Ok(crate::proof_archive::ArmPostprocessCapture {
+        pair_id: frozen.pair_id().to_string(),
+        run_ordinal: outcome.run_ordinal,
+        condition: outcome.condition,
+        evidence_source: crate::ArchiveEvidenceSource::NativeRecorded,
+        notifications: outcome.notifications.clone(),
+        start: outcome.start.clone(),
+        config: outcome.config_sidecar.clone(),
+        pre_catalog: crate::proof_archive::CatalogSidecar {
+            schema_version: 1,
+            roots: outcome.pre_catalog.roots.clone(),
+            response: outcome.pre_catalog.response.clone(),
+        },
+        post_catalog: crate::proof_archive::CatalogSidecar {
+            schema_version: 1,
+            roots: outcome.post_catalog.roots.clone(),
+            response: outcome.post_catalog.response.clone(),
+        },
+        quiet_tree: outcome.quiet_tree.clone(),
+        broker_snapshot: crate::proof_archive::BrokerSnapshotSidecar {
+            schema_version: 1,
+            pair_id: frozen.pair_id().to_string(),
+            run_ordinal: outcome.run_ordinal,
+            condition: outcome.condition,
+            completions,
+            in_flight: 0,
+            attempt_index_file_sha256: proof.attempt_index_file_sha256.clone(),
+            attempt_index_merkle_root: proof.attempt_index_merkle_root.clone(),
+            global_attempt_start_inclusive: proof.global_attempt_start_inclusive,
+            global_attempt_end_exclusive: proof.global_attempt_end_exclusive,
+        },
+    })
+}
+
 fn verify_live_arm_business_parity(
     frozen: &VerifiedFrozenContext,
     homes: &IsolatedHomes,
@@ -2427,14 +2786,14 @@ fn verify_live_arm_business_parity(
         .join("SKILL.md");
     let skill_bytes = frozen.artifact_bytes("skill")?;
     let pre = crate::compare_catalogs(
-        &generic.pre_catalog,
-        &candidate.pre_catalog,
+        &generic.pre_catalog.snapshot,
+        &candidate.pre_catalog.snapshot,
         &candidate_skill_path,
         &skill_bytes,
     )?;
     let post = crate::compare_catalogs(
-        &generic.post_catalog,
-        &candidate.post_catalog,
+        &generic.post_catalog.snapshot,
+        &candidate.post_catalog.snapshot,
         &candidate_skill_path,
         &skill_bytes,
     )?;
@@ -2529,11 +2888,18 @@ fn append_pair_output_commitments(
     Ok(())
 }
 
+#[derive(Clone)]
+struct CapturedCatalog {
+    response: codex_app_server_protocol::SkillsListResponse,
+    roots: crate::proof_archive::CatalogRootsSidecar,
+    snapshot: CatalogSnapshot,
+}
+
 async fn read_skill_catalog(
     app_server: &mut AppServerClient,
     roots: &CatalogRoots,
     pair_deadline: Instant,
-) -> Result<CatalogSnapshot> {
+) -> Result<CapturedCatalog> {
     let params = codex_app_server_protocol::SkillsListParams {
         cwds: vec![roots.case_dir.clone()],
         force_reload: true,
@@ -2547,7 +2913,18 @@ async fn read_skill_catalog(
         )
         .await?
     };
-    run_sync_before_deadline(pair_deadline, || crate::normalize_catalog(&response, roots))
+    let snapshot = run_sync_before_deadline(pair_deadline, || {
+        crate::normalize_catalog(&response, roots)
+    })?;
+    Ok(CapturedCatalog {
+        response,
+        roots: crate::proof_archive::CatalogRootsSidecar {
+            codex_home: roots.codex_home.clone(),
+            host_home: roots.host_home.clone(),
+            case_dir: roots.case_dir.clone(),
+        },
+        snapshot,
+    })
 }
 
 async fn run_app_server_arm(
@@ -2618,15 +2995,26 @@ async fn run_app_server_arm(
         app_server.handshake(codex_home, canonical_eval_tree, handshake_timeout),
     )
     .await?;
+    let canonical_config_path = run_sync_before_deadline(pair_deadline, || {
+        Ok(codex_home.join("config.toml").canonicalize()?)
+    })?;
     let config_evidence = run_sync_before_deadline(pair_deadline, || {
         audit_frozen_config(
             &handshake.config,
             &handshake.requirements,
-            codex_home.join("config.toml").canonicalize()?,
+            canonical_config_path.clone(),
             verified_config_bytes.to_vec(),
             shared_config.layer_json.clone(),
         )
     })?;
+    let config_sidecar = crate::proof_archive::ConfigSidecar {
+        schema_version: 1,
+        response: handshake.config,
+        requirements: handshake.requirements,
+        canonical_config_path,
+        expected_config_utf8: String::from_utf8(verified_config_bytes.to_vec())?,
+        expected_layer_config: shared_config.layer_json.clone(),
+    };
     let catalog_roots = CatalogRoots {
         codex_home: codex_home.clone(),
         host_home: home.clone(),
@@ -2728,7 +3116,7 @@ async fn run_app_server_arm(
             SkillUseTracker::new_required(&candidate_skill_path, &frozen.artifact_bytes("skill")?)
         }
     })?;
-    let mut transcript = Sha256::new();
+    let mut notifications = crate::evidence::NotificationRecorder::default();
     let completion_timeout = remaining_pair_duration(pair_deadline)?;
     let completed = {
         let protocol = app_server.protocol_mut()?;
@@ -2739,13 +3127,15 @@ async fn run_app_server_arm(
                 &started_turn.turn.id,
                 completion_timeout,
                 |notification| {
-                    observe_app_server_lifecycle(gate, &started.thread.id, notification)?;
-                    tree.ingest(notification.clone())?;
-                    replay.ingest(notification.clone())?;
-                    skill_use.ingest(notification)?;
-                    let bytes = serde_json::to_vec(notification)?;
-                    transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
-                    transcript.update(bytes);
+                    observe_captured_notification(
+                        gate,
+                        &started.thread.id,
+                        &mut tree,
+                        &mut replay,
+                        &mut skill_use,
+                        &mut notifications,
+                        notification,
+                    )?;
                     Ok(())
                 },
             ),
@@ -2753,23 +3143,10 @@ async fn run_app_server_arm(
         .await
         .context("wait for App Server turn completion")?
     };
-    let completed_notification =
-        codex_app_server_protocol::ServerNotification::TurnCompleted(completed);
     run_sync_before_deadline(pair_deadline, || {
-        let codex_app_server_protocol::ServerNotification::TurnCompleted(completed) =
-            &completed_notification
-        else {
-            unreachable!()
-        };
         if completed.turn.status != TurnStatus::Completed {
             bail!("App Server turn did not complete successfully");
         }
-        tree.ingest(completed_notification.clone())?;
-        replay.ingest(completed_notification.clone())?;
-        skill_use.ingest(&completed_notification)?;
-        let bytes = serde_json::to_vec(&completed_notification)?;
-        transcript.update(u64::try_from(bytes.len())?.to_be_bytes());
-        transcript.update(bytes);
         Ok(())
     })?;
     let first_scan = complete_quiet_tree_scan(
@@ -2777,11 +3154,13 @@ async fn run_app_server_arm(
         &started.thread,
         pair_deadline,
         |notification| {
-            observe_post_completion_notification(
+            observe_captured_notification(
                 gate,
                 &started.thread.id,
                 &mut tree,
+                &mut replay,
                 &mut skill_use,
+                &mut notifications,
                 notification,
             )
             .map(drop)
@@ -2792,11 +3171,13 @@ async fn run_app_server_arm(
     app_server
         .protocol_mut()?
         .observe_until_quiet(Duration::from_secs(2), pair_deadline, |notification| {
-            observe_post_completion_notification(
+            observe_captured_notification(
                 gate,
                 &started.thread.id,
                 &mut tree,
+                &mut replay,
                 &mut skill_use,
+                &mut notifications,
                 notification,
             )
         })
@@ -2807,11 +3188,13 @@ async fn run_app_server_arm(
         &started.thread,
         pair_deadline,
         |notification| {
-            if observe_post_completion_notification(
+            if observe_captured_notification(
                 gate,
                 &started.thread.id,
                 &mut tree,
+                &mut replay,
                 &mut skill_use,
+                &mut notifications,
                 notification,
             )? {
                 bail!("late relevant App Server event arrived during the final tree scan");
@@ -2823,16 +3206,18 @@ async fn run_app_server_arm(
     .context("collect final complete tree scan")?;
     let post_catalog = read_skill_catalog(&mut app_server, &catalog_roots, pair_deadline).await?;
     run_sync_before_deadline(pair_deadline, || {
-        crate::validate_stable_catalog(&pre_catalog, &post_catalog)
+        crate::validate_stable_catalog(&pre_catalog.snapshot, &post_catalog.snapshot)
     })?;
     let status = run_before_deadline(
         pair_deadline,
         app_server.close_observing(pair_deadline, |notification| {
-            if observe_post_completion_notification(
+            if observe_captured_notification(
                 gate,
                 &started.thread.id,
                 &mut tree,
+                &mut replay,
                 &mut skill_use,
+                &mut notifications,
                 notification,
             )? {
                 bail!("late relevant App Server event arrived after the final tree scan");
@@ -2846,34 +3231,55 @@ async fn run_app_server_arm(
         bail!("pinned App Server exited unsuccessfully");
     }
     run_sync_before_deadline(pair_deadline, || {
-        first_scan.verify_broker_thread_ids(&gate.active_thread_ids()?)
+        first_scan
+            .scan
+            .verify_broker_thread_ids(&gate.active_thread_ids()?)
     })?;
     let tree_evidence = run_sync_before_deadline(pair_deadline, || {
         tree.close(
-            &first_scan,
-            &second_scan,
+            &first_scan.scan,
+            &second_scan.scan,
             &gate.active_completions()?,
             gate.in_flight_count(),
         )
     })?;
     let collected = run_sync_before_deadline(pair_deadline, || replay.finish(&mission_case))?;
     let skill_use = run_sync_before_deadline(pair_deadline, || skill_use.finish())?;
+    let notification_bytes = notifications.finish();
     Ok(ArmRunEvidence {
         run_ordinal,
         condition,
-        root_thread_id: started.thread.id,
-        root_turn_id: started_turn.turn.id,
-        session_id: started.thread.session_id,
+        root_thread_id: started.thread.id.clone(),
+        root_turn_id: started_turn.turn.id.clone(),
+        session_id: started.thread.session_id.clone(),
         config: config_evidence,
+        start: crate::proof_archive::StartSidecar {
+            schema_version: 1,
+            thread: started.clone(),
+            turn: started_turn.clone(),
+        },
+        config_sidecar,
         pre_catalog,
         post_catalog,
+        quiet_tree: crate::proof_archive::QuietTreeSidecar {
+            schema_version: 1,
+            root: started.thread.clone(),
+            first: first_scan.raw,
+            second: second_scan.raw,
+        },
+        app_server_transcript_sha256: sha256(&notification_bytes),
+        notifications: notification_bytes,
         collected,
         successful_read_observed: skill_use.successful_read_observed,
         skill_use_evidence_sha256: skill_use.evidence_sha256,
         tree: tree_evidence,
-        app_server_transcript_sha256: format!("{:x}", transcript.finalize()),
         elapsed_ms: arm_started.elapsed().as_millis(),
     })
+}
+
+struct CapturedTreeScan {
+    scan: crate::TreeScan,
+    raw: crate::proof_archive::TreeScanSidecar,
 }
 
 async fn complete_quiet_tree_scan<R, W>(
@@ -2881,7 +3287,7 @@ async fn complete_quiet_tree_scan<R, W>(
     root: &codex_app_server_protocol::Thread,
     deadline: Instant,
     mut observe: impl FnMut(&codex_app_server_protocol::ServerNotification) -> Result<()>,
-) -> Result<crate::TreeScan>
+) -> Result<CapturedTreeScan>
 where
     R: tokio::io::AsyncRead + Unpin,
     W: tokio::io::AsyncWrite + Unpin,
@@ -2996,7 +3402,14 @@ where
     let scan =
         crate::TreeScan::from_typed_pages(root, &ancestor_pages, &loaded_pages, &loaded_reads)?;
     remaining_pair_duration(deadline)?;
-    Ok(scan)
+    Ok(CapturedTreeScan {
+        scan,
+        raw: crate::proof_archive::TreeScanSidecar {
+            ancestor_pages,
+            loaded_pages,
+            loaded_reads,
+        },
+    })
 }
 
 fn observe_tree_notification(
@@ -3019,6 +3432,20 @@ fn observe_post_completion_notification(
 ) -> Result<bool> {
     skill_use.ingest(notification)?;
     observe_tree_notification(gate, root_thread_id, tree, notification)
+}
+
+fn observe_captured_notification(
+    gate: &PairCoordinator,
+    root_thread_id: &str,
+    tree: &mut crate::TreeEventCollector,
+    replay: &mut ReplayCollector,
+    skill_use: &mut SkillUseTracker,
+    recorder: &mut crate::evidence::NotificationRecorder,
+    notification: &codex_app_server_protocol::ServerNotification,
+) -> Result<bool> {
+    recorder.record(notification)?;
+    replay.ingest(notification.clone())?;
+    observe_post_completion_notification(gate, root_thread_id, tree, skill_use, notification)
 }
 
 fn is_relevant_tree_notification(

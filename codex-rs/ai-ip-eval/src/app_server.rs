@@ -442,14 +442,20 @@ where
         mut observe: impl FnMut(&ServerNotification) -> anyhow::Result<()>,
     ) -> anyhow::Result<codex_app_server_protocol::TurnCompletedNotification> {
         self.ensure_usable()?;
+        let mut queued_completion = None;
         for typed in std::mem::take(&mut self.notifications) {
+            observe(&typed)?;
             if let ServerNotification::TurnCompleted(completed) = &typed
                 && completed.thread_id == thread_id
                 && completed.turn.id == turn_id
             {
-                return Ok(completed.clone());
+                if queued_completion.replace(completed.clone()).is_some() {
+                    bail!("duplicate queued root turn completion");
+                }
             }
-            observe(&typed)?;
+        }
+        if let Some(completed) = queued_completion {
+            return Ok(completed);
         }
         let result = tokio::time::timeout(request_timeout, async {
             loop {
@@ -461,6 +467,7 @@ where
                             && completed.thread_id == thread_id
                             && completed.turn.id == turn_id
                         {
+                            observe(&typed)?;
                             return Ok(completed.clone());
                         }
                         observe(&typed)?;
