@@ -590,9 +590,16 @@ git commit -m "feat(ai-ip-eval): seal postprocess proof archives"
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/blind.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_verify.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_verify_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/proof_ledger.rs`
+- Create: `codex-rs/ai-ip-eval/src/proof_ledger_tests.rs`
 - Create: `codex-rs/ai-ip-eval/tests/blind_cli.rs`
 - Modify: `codex-rs/ai-ip-eval/src/model.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/src/proof_archive.rs` (read-only verified-summary projection only)
+- Modify: `codex-rs/ai-ip-eval/src/runner.rs` (crate-private frozen-context accessors only)
+- Modify: `codex-rs/ai-ip-eval/BUILD.bazel` (treatment-marker compile data only)
 - Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-transcript.jsonl`
 - Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-candidate-transcript.jsonl`
 - Modify: `codex-rs/ai-ip-eval/tests/fixtures/replay-attestation.json`
@@ -603,6 +610,16 @@ git commit -m "feat(ai-ip-eval): seal postprocess proof archives"
 **Interfaces:**
 - Consumes: Tasks 1–4 contracts/archive/inventory/secure-fs; exact WP7/WP8 argv.
 - Produces: `BlindPackArgs` and `VerifiedBlindPair`; no reviewer-visible output or receipt yet.
+
+**Preflight authority amendment (2026-08-28):** Task 5's original single `blind.rs` file list conflicts with the repository's under-500-line production-module rule. Read-only seam inspection estimates 650–900 production lines if context, archive, ledger/receipt, parity, marker scanning, path rules, and CLI orchestration are combined, and it would duplicate already reviewed verification logic. The authorized split is therefore:
+
+- `blind.rs` owns typed CLI destinations/seed rules, no-output preflight, the `VerifiedBlindPair` handoff, and the exact `BlindBundleStageNotInstalled` sentinel; target 180–260 lines.
+- `blind_verify.rs` owns frozen context/pair/manifest/archive parity and treatment-marker orchestration; target 320–430 lines.
+- `proof_ledger.rs` owns strict offline attempt-index plus arm/pair-receipt recomputation; target 230–320 lines and must not grow the existing 1,500+ line `broker_gate.rs`.
+- `proof_archive.rs` may expose only the already recomputed package/usage/Skill outcome as a read-only summary; it must not duplicate archive verification. `runner.rs` may expose only crate-private accessors for an already verified frozen context; it must not receive new blind verification logic.
+- The three production modules receive dedicated sibling test modules. The exact treatment-marker JSON is compile data so Cargo and Bazel execute identical bytes.
+
+Implementation is split into coherent independently reviewable commits below 800 changed lines: (A) real CLI RED plus typed path/seed surface, (B) offline ledger verifier, (C) frozen pair/archive verifier and summary seams, and (D) treatment-free fixtures plus complete real-CLI sentinel/mutation matrix. The final feature commit retains the planned title. No Task 6 output transaction, provider request, credential read, scoring, or reviewer-visible file is authorized by this amendment.
 
 - [ ] **Step 1: Write real CLI RED using authoritative argv**
 
@@ -646,20 +663,26 @@ Relative CLI values above resolve against privateRoot; absolute values are rejec
 
 - [ ] **Step 3: Reverify all bound pair evidence before creating output**
 
-From frozen context and pair marker, derive every receipt/verification/manifest/archive path. Re-read and recompute case/material aggregate, `root_prompt()`, `evaluation_context()`, schema, normalized thread/turn request, current Codex/evaluator/proxy binary, config/catalog/Skill treatment, pair order, broker index/root, model/provider/limits, typed package and complete tree usage. Only condition, committed ordinal, normalized target Skill treatment/use, output body, and output-derived usage may differ.
+From frozen context and pair marker, derive every receipt/verification/manifest/archive path. Re-read and recompute case/material aggregate, `root_prompt()`, `evaluation_context()`, schema, normalized thread/turn request, current Codex/evaluator binaries and broker component source, config/catalog/Skill treatment, pair order, broker index/root, model/provider/limits, typed package and complete tree usage. Only condition, committed ordinal, normalized target Skill treatment/use, output body, and output-derived usage may differ.
 
-Recursively scan decoded package JSON string values and reject case-insensitive `candidate`, `generic`, canonical Skill name/path, privateRoot, both Home prefixes, and every synthetic marker in `tests/fixtures/blind/treatment-markers.json`. Update the committed Replay candidate title/body and native mock harness to different treatment-free synthetic text; recompute the execution-only pair ID, update the Replay attestation's bound `pairId`/reviewer declaration commitments, then update the attestation and execution fixture hashes. Because pair ID excludes attestation, this order is finite and reproducible. Candidate Skill payload must be complete/untruncated and byte-equal to the asset after protocol wrapper removal.
+Recursively scan decoded package JSON string values and reject case-insensitive `candidate`, `generic`, canonical Skill name/path, privateRoot, both Home prefixes, and every synthetic marker in `tests/fixtures/blind/treatment-markers.json`. Update the committed Replay candidate title/body and native mock harness to different treatment-free synthetic text; recompute the execution-only pair ID, update only the Replay attestation's bound `pairId`, then update the attestation and execution fixture hashes. Reviewer declaration commitments remain byte-stable unless the reviewer declaration objects themselves change. Because pair ID excludes attestation, this order is finite and reproducible. Candidate Skill payload must be complete/untruncated and byte-equal to the asset after protocol wrapper removal.
 
 - [ ] **Step 4: Add verifier matrix, run GREEN, commit**
 
-Cover wrong relative/absolute path, seed/reviewer/mapping/reviews ancestry, symlink/reparse/hardlink, marker leakage, each bound-file mutation, and current evaluator/Codex/proxy binary mismatch. All failures and the valid-pair sentinel assert that no reviewer, mapping, seed, reviews, or receipt path was created. Current binary mismatch is always a command error with no output, never evidence-derived `INVALID_PROOF`.
+Cover wrong relative/absolute path, seed/reviewer/mapping/reviews ancestry, symlink/reparse/hardlink, marker leakage, each bound-file mutation, and current evaluator/Codex binary or broker component source mismatch. All failures and the valid-pair sentinel assert that no reviewer, mapping, seed, reviews, or receipt path was created. Current binary or broker source mismatch is always a command error with no output, never evidence-derived `INVALID_PROOF`.
 
 ```bash
 just test -p codex-ai-ip-eval -E 'test(blind_cli)'
 just test -p codex-ai-ip-eval
 git add codex-rs/ai-ip-eval/src/blind.rs \
-  codex-rs/ai-ip-eval/src/blind_tests.rs codex-rs/ai-ip-eval/src/model.rs \
-  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/src/eval_tests.rs \
+  codex-rs/ai-ip-eval/src/blind_tests.rs \
+  codex-rs/ai-ip-eval/src/blind_verify.rs \
+  codex-rs/ai-ip-eval/src/blind_verify_tests.rs \
+  codex-rs/ai-ip-eval/src/proof_ledger.rs \
+  codex-rs/ai-ip-eval/src/proof_ledger_tests.rs \
+  codex-rs/ai-ip-eval/src/model.rs codex-rs/ai-ip-eval/src/lib.rs \
+  codex-rs/ai-ip-eval/src/proof_archive.rs codex-rs/ai-ip-eval/src/runner.rs \
+  codex-rs/ai-ip-eval/src/eval_tests.rs codex-rs/ai-ip-eval/BUILD.bazel \
   codex-rs/ai-ip-eval/tests/blind_cli.rs \
   codex-rs/ai-ip-eval/tests/fixtures/blind/treatment-markers.json \
   codex-rs/ai-ip-eval/tests/fixtures/replay-transcript.jsonl \
@@ -810,7 +833,7 @@ Freeze outcome classification:
 ```text
 command error, no output:
 - frozen context or pair marker unsafe/unparseable
-- current evaluator/Codex/proxy binary differs from the frozen commitment
+- current evaluator/Codex binary or broker component source differs from the frozen commitment
 - blind receipt unsafe/unparseable or not the derived exact file
 - reviews directory not yet exactly three regular files
 - output exists, unsafe path, or any I/O/fsync failure
