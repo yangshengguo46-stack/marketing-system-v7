@@ -81,6 +81,78 @@ pub struct ReplayCollector {
     terminal_final: Option<(String, String)>,
 }
 
+pub(crate) const MAX_ARCHIVE_NOTIFICATIONS: usize = 10_000;
+pub(crate) const MAX_ARCHIVE_NOTIFICATION_BYTES: usize = 64 * 1024 * 1024;
+
+#[derive(Default)]
+pub(crate) struct NotificationRecorder {
+    count: usize,
+    bytes: Vec<u8>,
+}
+
+impl NotificationRecorder {
+    pub(crate) fn record(&mut self, notification: &ServerNotification) -> anyhow::Result<()> {
+        if self.count >= MAX_ARCHIVE_NOTIFICATIONS {
+            bail!("postprocess notification count exceeded 10,000");
+        }
+        let encoded = serde_json::to_vec(notification)?;
+        let next_len = self
+            .bytes
+            .len()
+            .checked_add(encoded.len())
+            .and_then(|length| length.checked_add(1))
+            .context("postprocess notification byte count overflow")?;
+        if next_len > MAX_ARCHIVE_NOTIFICATION_BYTES {
+            bail!("postprocess notification archive exceeded 64 MiB");
+        }
+        self.bytes.extend_from_slice(&encoded);
+        self.bytes.push(b'\n');
+        self.count += 1;
+        Ok(())
+    }
+
+    pub(crate) fn finish(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+pub(crate) fn parse_notification_archive(bytes: &[u8]) -> anyhow::Result<Vec<ServerNotification>> {
+    if bytes.is_empty()
+        || !bytes.ends_with(b"\n")
+        || bytes.len() > MAX_ARCHIVE_NOTIFICATION_BYTES
+    {
+        bail!("notification archive is empty, unterminated, or oversized");
+    }
+    let mut notifications = Vec::new();
+    for line in bytes[..bytes.len() - 1].split(|byte| *byte == b'\n') {
+        if line.is_empty() || notifications.len() >= MAX_ARCHIVE_NOTIFICATIONS {
+            bail!("notification archive has an empty line or too many records");
+        }
+        notifications.push(serde_json::from_value(crate::jcs::parse_json(line)?)?);
+    }
+    Ok(notifications)
+}
+
+pub(crate) fn verify_broker_completion_metadata(
+    completions: &[ResponseCompletedMetadata],
+    actual_model_revision: &str,
+    deployment_commitment: Option<&str>,
+) -> anyhow::Result<()> {
+    for completion in completions {
+        if completion.actual_model.as_deref() != Some(actual_model_revision) {
+            bail!("broker completion has the wrong actual model revision");
+        }
+        let current = completion
+            .deployment_or_fingerprint
+            .as_ref()
+            .map(|deployment| format!("{:x}", Sha256::digest(deployment.as_bytes())));
+        if current.as_deref() != deployment_commitment {
+            bail!("broker completion has the wrong deployment commitment");
+        }
+    }
+    Ok(())
+}
+
 impl ReplayCollector {
     pub fn new(
         root_thread_id: impl Into<String>,
@@ -419,6 +491,10 @@ impl TreeScan {
 
     pub fn thread_count(&self) -> usize {
         self.records.len()
+    }
+
+    pub(crate) fn thread_ids(&self) -> HashSet<String> {
+        self.records.keys().cloned().collect()
     }
 
     pub(crate) fn verify_broker_thread_ids(

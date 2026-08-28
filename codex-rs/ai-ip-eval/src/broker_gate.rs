@@ -273,6 +273,8 @@ pub struct FirstRootRequestEvidence {
 pub struct ActiveArmProofSnapshot {
     pub run_ordinal: u8,
     pub condition: EvaluationCondition,
+    pub global_attempt_start_inclusive: u64,
+    pub global_attempt_end_exclusive: u64,
     pub first_root_request: FirstRootRequestEvidence,
     pub attempt_index_file_sha256: String,
     pub attempt_index_merkle_root: String,
@@ -634,6 +636,11 @@ impl PairCoordinator {
         Ok(ActiveArmProofSnapshot {
             run_ordinal: active.run_ordinal,
             condition: active.condition,
+            global_attempt_start_inclusive: active.global_start,
+            global_attempt_end_exclusive: active
+                .global_start
+                .checked_add(active.arm_attempt_count)
+                .context("active arm global attempt range overflow")?,
             first_root_request: active
                 .first_root_request
                 .clone()
