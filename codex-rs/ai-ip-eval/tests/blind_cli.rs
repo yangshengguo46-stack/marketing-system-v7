@@ -1,13 +1,22 @@
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::Command;
 use std::process::Output;
 
 use anyhow::Result;
+use chrono::SecondsFormat;
 use codex_utils_cargo_bin::cargo_bin;
 use pretty_assertions::assert_eq;
+use rand::SeedableRng;
+use rand::seq::SliceRandom;
+use serde_json::Value;
+use sha2::Digest;
+use sha2::Sha256;
 use tempfile::TempDir;
 
 #[test]
@@ -22,31 +31,7 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
     #[cfg(unix)]
     fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
     let private_root = private_root.canonicalize()?;
-    let frozen_context = private_root.join("frozen-run-context.json");
-
-    let freeze = Command::new(&binary)
-        .args(["freeze-run-context", "replay", "--repo-root"])
-        .arg(&fixture_root)
-        .args(["--fork-sha", "synthetic-replay-fork", "--private-root"])
-        .arg(&private_root)
-        .arg("--codex-bin")
-        .arg(&binary)
-        .arg("--case")
-        .arg(fixture_root.join("replay-case.json"))
-        .arg("--transcript")
-        .arg(fixture_root.join("replay-transcript.jsonl"))
-        .arg("--fixture-set-manifest")
-        .arg(&fixture_set)
-        .arg("--output")
-        .arg(&frozen_context)
-        .output()?;
-    assert_success("freeze-run-context replay", &freeze);
-
-    let replay = Command::new(&binary)
-        .args(["replay-pair", "--frozen-run-context"])
-        .arg(&frozen_context)
-        .output()?;
-    assert_success("replay-pair", &replay);
+    let frozen_context = run_replay_pair(&binary, &fixture_root, &fixture_set, &private_root)?;
     assert!(
         private_root
             .join("replay-coordinator/replay-pair-verification.json")
@@ -64,18 +49,403 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
     assert_no_outputs(&private_root);
 
     let output = blind_command(&binary, &frozen_context).output()?;
-    assert!(!output.status.success());
-    let stderr = String::from_utf8(output.stderr)?;
-    for stale_error in [
-        "unexpected argument",
-        "Usage:",
-        "selected evaluator workflow",
-    ] {
-        assert!(!stderr.contains(stale_error), "stale CLI error: {stderr}");
-    }
-    assert_eq!(stderr.trim_end(), "Error: BlindBundleStageNotInstalled");
-    assert_no_outputs(&private_root);
+    assert_success("blind-pack", &output);
+    assert_replay_outputs(&private_root, &fixture_root, &frozen_context)?;
+
+    let before_rerun = tree_snapshot(&private_root)?;
+    let rerun = blind_command(&binary, &frozen_context).output()?;
+    assert!(!rerun.status.success());
+    assert!(String::from_utf8(rerun.stderr)?.contains("blind-pack output already exists"));
+    assert_eq!(tree_snapshot(&private_root)?, before_rerun);
+
+    let second = TempDir::new()?;
+    let second_root = second.path().join("private");
+    fs::create_dir(&second_root)?;
+    #[cfg(unix)]
+    fs::set_permissions(&second_root, fs::Permissions::from_mode(0o700))?;
+    let second_root = second_root.canonicalize()?;
+    let second_context = run_replay_pair(&binary, &fixture_root, &fixture_set, &second_root)?;
+    let second_output = blind_command(&binary, &second_context).output()?;
+    assert_success("second blind-pack", &second_output);
+    assert_eq!(
+        deterministic_outputs(&private_root)?,
+        deterministic_outputs(&second_root)?
+    );
     Ok(())
+}
+
+fn run_replay_pair(
+    binary: &Path,
+    fixture_root: &Path,
+    fixture_set: &Path,
+    private_root: &Path,
+) -> Result<PathBuf> {
+    let frozen_context = private_root.join("frozen-run-context.json");
+    let freeze = Command::new(binary)
+        .args(["freeze-run-context", "replay", "--repo-root"])
+        .arg(fixture_root)
+        .args(["--fork-sha", "synthetic-replay-fork", "--private-root"])
+        .arg(private_root)
+        .arg("--codex-bin")
+        .arg(binary)
+        .arg("--case")
+        .arg(fixture_root.join("replay-case.json"))
+        .arg("--transcript")
+        .arg(fixture_root.join("replay-transcript.jsonl"))
+        .arg("--fixture-set-manifest")
+        .arg(fixture_set)
+        .arg("--output")
+        .arg(&frozen_context)
+        .output()?;
+    assert_success("freeze-run-context replay", &freeze);
+    let replay = Command::new(binary)
+        .args(["replay-pair", "--frozen-run-context"])
+        .arg(&frozen_context)
+        .output()?;
+    assert_success("replay-pair", &replay);
+    Ok(frozen_context)
+}
+
+fn deterministic_outputs(root: &Path) -> Result<BTreeMap<PathBuf, Option<Vec<u8>>>> {
+    Ok(tree_snapshot(root)?
+        .into_iter()
+        .filter(|(path, _)| {
+            path.starts_with("reviewer") || path.starts_with("coordinator/mappings")
+        })
+        .collect())
+}
+
+fn assert_replay_outputs(root: &Path, fixture_root: &Path, frozen_context: &Path) -> Result<()> {
+    let reviewer_ids = ["reviewer-1", "reviewer-2", "reviewer-3"];
+    assert_eq!(
+        fs::read_dir(root.join("reviewer"))?
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<BTreeSet<_>>(),
+        reviewer_ids.map(Into::into).into_iter().collect()
+    );
+    assert!(fs::read_dir(root.join("reviews"))?.next().is_none());
+    assert!(!root.join("coordinator/blind-seeds").exists());
+    assert_eq!(
+        fs::read_dir(root.join("coordinator/mappings"))?
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<BTreeSet<_>>(),
+        reviewer_ids
+            .map(|id| format!("{id}.json").into())
+            .into_iter()
+            .collect()
+    );
+
+    let case_bytes = fs::read(fixture_root.join("replay-case.json"))?;
+    let rubric_bytes = fs::read(codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/content-package-blind-review.json"
+    )?)?;
+    let schema_bytes = fs::read(codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/reviewer-submission.schema.json"
+    )?)?;
+    let policy_bytes = fs::read(codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/blind-review-decision-policy.json"
+    )?)?;
+    let attestation: Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-attestation.json"))?)?;
+    let packages = [
+        transcript_package(&fixture_root.join("replay-transcript.jsonl"))?,
+        transcript_package(&fixture_root.join("replay-candidate-transcript.jsonl"))?,
+    ];
+    let mut receipt_mappings = Vec::new();
+    let mut sensitive = vec![
+        root.to_string_lossy().to_ascii_lowercase(),
+        frozen_context.to_string_lossy().to_ascii_lowercase(),
+        jcs_sha(&policy_bytes)?,
+        "coordinator/mappings".into(),
+        "coordinator/blind-seeds".into(),
+        "$codex_home".into(),
+        "skill.md".into(),
+        "lead-skill-read".into(),
+        "root-thread".into(),
+        "root-turn".into(),
+        "resp-1".into(),
+    ];
+    for ((reviewer_id, seed_text), declaration) in reviewer_ids
+        .into_iter()
+        .zip(["one", "two", "three"])
+        .zip(attestation["reviewers"].as_array().unwrap())
+    {
+        let reviewer_root = root.join("reviewer").join(reviewer_id);
+        assert_eq!(
+            tree_snapshot(&reviewer_root)?
+                .keys()
+                .cloned()
+                .collect::<BTreeSet<_>>(),
+            [
+                "A.json",
+                "B.json",
+                "case.json",
+                "materials",
+                "materials-manifest.json",
+                "review-bundle.json",
+                "reviewer-submission.schema.json",
+                "rubric.json",
+            ]
+            .map(PathBuf::from)
+            .into_iter()
+            .collect()
+        );
+        assert_eq!(fs::read(reviewer_root.join("case.json"))?, case_bytes);
+        assert_eq!(
+            fs::read(reviewer_root.join("materials-manifest.json"))?,
+            b"[]"
+        );
+        assert_eq!(fs::read(reviewer_root.join("rubric.json"))?, rubric_bytes);
+        assert_eq!(
+            fs::read(reviewer_root.join("reviewer-submission.schema.json"))?,
+            schema_bytes
+        );
+
+        let mapping_bytes = fs::read(
+            root.join("coordinator/mappings")
+                .join(format!("{reviewer_id}.json")),
+        )?;
+        assert_canonical(&mapping_bytes)?;
+        let mapping: Value = serde_json::from_slice(&mapping_bytes)?;
+        let seed = replay_seed(seed_text);
+        let mut orientation = ["generic", "candidate"];
+        orientation.shuffle(&mut rand::rngs::StdRng::from_seed(seed));
+        let expected_a = &packages[usize::from(orientation[0] == "candidate")];
+        let expected_b = &packages[usize::from(orientation[1] == "candidate")];
+        assert_eq!(fs::read(reviewer_root.join("A.json"))?, *expected_a);
+        assert_eq!(fs::read(reviewer_root.join("B.json"))?, *expected_b);
+
+        let bundle_bytes = fs::read(reviewer_root.join("review-bundle.json"))?;
+        assert_canonical(&bundle_bytes)?;
+        let bundle: Value = serde_json::from_slice(&bundle_bytes)?;
+        let qualification = serde_json::json!({
+            "qualificationClass": declaration["qualificationClass"],
+            "experiencedOperatorOrDirector": declaration["experiencedOperatorOrDirector"],
+            "attestationSignedPayloadSha256": declaration["signedPayloadSha256"],
+            "attestationSignatureEvidenceSha256": declaration["signatureEvidenceSha256"],
+        });
+        assert_eq!(
+            bundle,
+            serde_json::json!({
+                "schemaVersion": 1, "pairId": attestation["pairId"], "reviewerId": reviewer_id,
+                "qualification": qualification, "caseSha256": sha256(&case_bytes),
+                "materialsManifestSha256": sha256(b"[]"), "sourceMaterialsSha256": sha256(b"[]"),
+                "aSha256": sha256(expected_a), "bSha256": sha256(expected_b),
+                "rubricSha256": jcs_sha(&rubric_bytes)?,
+                "reviewerSubmissionSchemaSha256": sha256(&schema_bytes),
+            })
+        );
+        let commitment = seed_commitment(&seed);
+        assert_eq!(
+            mapping,
+            serde_json::json!({
+                "schemaVersion": 1, "pairId": attestation["pairId"], "reviewerId": reviewer_id,
+                "reviewBundleSha256": sha256(&bundle_bytes), "seedCommitment": commitment,
+                "a": orientation[0], "b": orientation[1],
+            })
+        );
+        sensitive.extend([
+            commitment.clone(),
+            sha256(&mapping_bytes),
+            seed.iter().map(|byte| format!("{byte:02x}")).collect(),
+        ]);
+        receipt_mappings.push(serde_json::json!({
+            "reviewerId": reviewer_id,
+            "reviewBundleSha256": sha256(&bundle_bytes),
+            "mappingSha256": sha256(&mapping_bytes),
+            "seedCommitment": commitment,
+        }));
+    }
+
+    let inventory_root = assert_private_inventory(root)?;
+    let receipt_bytes = fs::read(root.join("coordinator/blind-pack-receipt.json"))?;
+    assert_canonical(&receipt_bytes)?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)?;
+    let pair_verification =
+        fs::read(root.join("replay-coordinator/replay-pair-verification.json"))?;
+    let generated = chrono::DateTime::parse_from_rfc3339(receipt["generatedAt"].as_str().unwrap())?;
+    assert_eq!(
+        generated
+            .to_utc()
+            .to_rfc3339_opts(SecondsFormat::Millis, true),
+        receipt["generatedAt"]
+    );
+    assert_eq!(
+        receipt,
+        serde_json::json!({
+            "schemaVersion": 1, "pairId": attestation["pairId"],
+            "frozenRunContextSha256": sha256(&fs::read(frozen_context)?),
+            "pairReceiptSha256": Value::Null, "pairVerificationSha256": sha256(&pair_verification),
+            "rubricSha256": jcs_sha(&rubric_bytes)?, "decisionPolicySha256": jcs_sha(&policy_bytes)?,
+            "reviewerSubmissionSchemaSha256": sha256(&schema_bytes),
+            "reviewerMappings": receipt_mappings, "inventoryRootSha256": inventory_root,
+            "reviewsDropSha256": sha256(br#"{"entries":[]}"#),
+            "generatedAt": generated.to_utc().to_rfc3339_opts(SecondsFormat::Millis, true),
+        })
+    );
+
+    let visible = tree_snapshot(&root.join("reviewer"))?;
+    let visible_bytes = visible
+        .into_iter()
+        .flat_map(|(path, bytes)| {
+            path.to_string_lossy()
+                .as_bytes()
+                .to_vec()
+                .into_iter()
+                .chain(bytes.unwrap_or_default())
+        })
+        .collect::<Vec<_>>();
+    let visible_text = String::from_utf8_lossy(&visible_bytes).to_ascii_lowercase();
+    for forbidden in [
+        "generic",
+        "candidate",
+        "blind_treatment_alpha_7d92",
+        "hidden_arm_signal_c4e1",
+        "mechanical_review_seed_9b7a",
+        "seedcommitment",
+        "threadid",
+        "turnid",
+        "responseid",
+        "totaltokens",
+        "durationms",
+    ] {
+        assert!(
+            !visible_text.contains(forbidden),
+            "visible leak: {forbidden}"
+        );
+    }
+    for forbidden in sensitive {
+        assert!(
+            !visible_text.contains(&forbidden),
+            "visible leak: {forbidden}"
+        );
+    }
+    Ok(())
+}
+
+fn assert_private_inventory(root: &Path) -> Result<String> {
+    let bytes = fs::read(root.join("coordinator/private-inventory.jsonl"))?;
+    assert!(bytes.ends_with(b"\n"));
+    let lines = bytes
+        .split(|byte| *byte == b'\n')
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>();
+    let mut paths = BTreeSet::new();
+    for (index, line) in lines.iter().enumerate() {
+        assert_canonical(line)?;
+        let record: Value = serde_json::from_slice(line)?;
+        assert_eq!(record["sequence"], index + 1);
+        assert_eq!(
+            record["previousRecordSha256"],
+            index
+                .checked_sub(1)
+                .map(|previous| Value::String(sha256(lines[previous])))
+                .unwrap_or(Value::Null)
+        );
+        let relative = record["relativePath"].as_str().unwrap();
+        assert!(paths.insert(relative.to_string()));
+        let path = root.join(relative);
+        if record["kind"] == "file" {
+            assert_eq!(record["sha256"], sha256(&fs::read(path)?));
+        } else {
+            assert!(path.is_dir());
+            assert_eq!(record["sha256"], Value::Null);
+        }
+    }
+    let last = serde_json::from_slice::<Value>(lines.last().unwrap())?;
+    assert_eq!(last["relativePath"], "coordinator/blind-pack-receipt.json");
+    let last_start = bytes.len() - lines.last().unwrap().len() - 1;
+    let receipt: Value =
+        serde_json::from_slice(&fs::read(root.join("coordinator/blind-pack-receipt.json"))?)?;
+    let inventory_root = sha256(&bytes[..last_start]);
+    assert_eq!(receipt["inventoryRootSha256"], inventory_root);
+    let expected = tree_snapshot(root)?
+        .into_keys()
+        .filter(|path| path != Path::new("coordinator/private-inventory.jsonl"))
+        .map(|path| path.to_string_lossy().replace('\\', "/"))
+        .collect();
+    assert_eq!(paths, expected);
+    Ok(inventory_root)
+}
+
+fn transcript_package(path: &Path) -> Result<Vec<u8>> {
+    let mut package = None;
+    for line in fs::read_to_string(path)?.lines() {
+        let event: Value = serde_json::from_str(line)?;
+        if event["method"] == "item/completed" && event["params"]["item"]["type"] == "agentMessage"
+        {
+            package = Some(
+                event["params"]["item"]["text"]
+                    .as_str()
+                    .unwrap()
+                    .as_bytes()
+                    .to_vec(),
+            );
+        }
+    }
+    Ok(package.unwrap())
+}
+
+fn replay_seed(value: &str) -> [u8; 32] {
+    let mut digest = Sha256::new();
+    digest.update(b"AI-IP-REPLAY-SEED-V1\0");
+    digest.update(u64::try_from(value.len()).unwrap().to_be_bytes());
+    digest.update(value.as_bytes());
+    digest.finalize().into()
+}
+
+fn seed_commitment(seed: &[u8; 32]) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"AI-IP-BLIND-SEED-COMMITMENT-V1\0");
+    digest.update(seed);
+    format!("{:x}", digest.finalize())
+}
+
+fn assert_canonical(bytes: &[u8]) -> Result<()> {
+    assert!(!bytes.ends_with(b"\n"));
+    assert_eq!(
+        serde_json_canonicalizer::to_vec(&serde_json::from_slice::<Value>(bytes)?)?,
+        bytes
+    );
+    Ok(())
+}
+
+fn jcs_sha(bytes: &[u8]) -> Result<String> {
+    Ok(sha256(&serde_json_canonicalizer::to_vec(
+        &serde_json::from_slice::<Value>(bytes)?,
+    )?))
+}
+
+fn sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+fn tree_snapshot(root: &Path) -> Result<BTreeMap<PathBuf, Option<Vec<u8>>>> {
+    fn visit(
+        root: &Path,
+        current: &Path,
+        snapshot: &mut BTreeMap<PathBuf, Option<Vec<u8>>>,
+    ) -> Result<()> {
+        let mut entries = fs::read_dir(current)?.collect::<std::io::Result<Vec<_>>>()?;
+        entries.sort_by_key(std::fs::DirEntry::file_name);
+        for entry in entries {
+            let path = entry.path();
+            let relative = path.strip_prefix(root)?.to_path_buf();
+            let kind = entry.file_type()?;
+            if kind.is_dir() {
+                snapshot.insert(relative, None);
+                visit(root, &path, snapshot)?;
+            } else {
+                assert!(kind.is_file(), "unexpected tree entry: {}", path.display());
+                snapshot.insert(relative, Some(fs::read(path)?));
+            }
+        }
+        Ok(())
+    }
+
+    let mut snapshot = BTreeMap::new();
+    visit(root, root, &mut snapshot)?;
+    Ok(snapshot)
 }
 
 fn blind_command(binary: &Path, frozen_context: &Path) -> Command {
@@ -88,11 +458,11 @@ fn blind_command(binary: &Path, frozen_context: &Path) -> Command {
             "--mapping-dir",
             "coordinator/mappings",
             "--replay-seed",
-            "mechanical-reviewer-1",
+            "one",
             "--replay-seed",
-            "mechanical-reviewer-2",
+            "two",
             "--replay-seed",
-            "mechanical-reviewer-3",
+            "three",
             "--frozen-run-context",
         ])
         .arg(frozen_context);
