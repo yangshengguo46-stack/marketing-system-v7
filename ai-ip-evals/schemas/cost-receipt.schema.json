@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openai.local/ai-ip/cost-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "frozenRunContextSha256",
+    "executionManifestSha256",
+    "brokerReceiptSha256",
+    "condition",
+    "runOrdinal",
+    "attemptIndexRootSha256",
+    "attemptRange",
+    "providerLabel",
+    "actualModelRevision",
+    "rateCardSha256",
+    "billingPolicyCommitment",
+    "fxPolicySha256",
+    "providerBudgetEvidenceSha256",
+    "providerRequestAttemptCount",
+    "providerCompletedResponseCount",
+    "usageScope",
+    "usage",
+    "calculatedAt",
+    "calculation",
+    "estimatedFen",
+    "supplierStatementSha256",
+    "supplierActualFen",
+    "chargedFen",
+    "withinCeilings"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "frozenRunContextSha256": {"$ref": "#/$defs/sha256"},
+    "executionManifestSha256": {"$ref": "#/$defs/sha256"},
+    "brokerReceiptSha256": {"$ref": "#/$defs/sha256"},
+    "condition": {"enum": ["generic", "candidate"]},
+    "runOrdinal": {"type": "integer", "minimum": 1, "maximum": 2},
+    "attemptIndexRootSha256": {"$ref": "#/$defs/sha256"},
+    "attemptRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startInclusive", "endExclusive"],
+      "properties": {
+        "startInclusive": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+        "endExclusive": {"type": "integer", "minimum": 1, "maximum": 18446744073709551615}
+      }
+    },
+    "providerLabel": {"type": "string", "minLength": 1, "maxLength": 200},
+    "actualModelRevision": {"type": "string", "minLength": 1, "maxLength": 200},
+    "rateCardSha256": {"$ref": "#/$defs/sha256"},
+    "billingPolicyCommitment": {"$ref": "#/$defs/sha256"},
+    "fxPolicySha256": {"$ref": "#/$defs/sha256"},
+    "providerBudgetEvidenceSha256": {"$ref": "#/$defs/sha256"},
+    "providerRequestAttemptCount": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "providerCompletedResponseCount": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "usageScope": {"const": "rootSessionTree"},
+    "usage": {"$ref": "#/$defs/usage"},
+    "calculatedAt": {"type": "string", "format": "date-time"},
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rateUnit", "rounding", "reasoningTokensBilledSeparately"],
+      "properties": {
+        "rateUnit": {"const": "fenPerMillionTokens"},
+        "rounding": {"const": "ceilingToFen"},
+        "reasoningTokensBilledSeparately": {"const": false}
+      }
+    },
+    "estimatedFen": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "supplierStatementSha256": {"$ref": "#/$defs/nullableSha256"},
+    "supplierActualFen": {"type": ["integer", "null"], "minimum": 0, "maximum": 18446744073709551615},
+    "chargedFen": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "withinCeilings": {"type": "boolean"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"supplierStatementSha256": {"type": "null"}}},
+      "then": {"properties": {"supplierActualFen": {"type": "null"}}},
+      "else": {"properties": {"supplierActualFen": {"type": "integer"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalTokens",
+        "inputTokens",
+        "cachedInputTokens",
+        "cacheWriteInputTokens",
+        "outputTokens",
+        "reasoningOutputTokens"
+      ],
+      "properties": {
+        "totalTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "inputTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "cachedInputTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "cacheWriteInputTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "outputTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "reasoningOutputTokens": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807}
+      }
+    }
+  }
+}

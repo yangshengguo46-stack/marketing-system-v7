@@ -348,7 +348,7 @@ pub fn validate_reviewer_submission(raw: &[u8]) -> Result<ReviewerSubmission, Co
     FrozenContracts::load()?.validate_reviewer_submission(raw)
 }
 
-fn compile_schema(raw: &[u8]) -> Result<Validator, ContractError> {
+pub(crate) fn compile_schema(raw: &[u8]) -> Result<Validator, ContractError> {
     let schema = parse_json(raw).map_err(invalid)?;
     reject_external_references(&schema)?;
     jsonschema::draft202012::meta::validate(&schema).map_err(|error| {
@@ -384,7 +384,7 @@ fn reject_external_references(value: &Value) -> Result<(), ContractError> {
     Ok(())
 }
 
-fn validate_instance(validator: &Validator, raw: &[u8]) -> Result<Value, ContractError> {
+pub(crate) fn validate_instance(validator: &Validator, raw: &[u8]) -> Result<Value, ContractError> {
     let value = parse_json(raw).map_err(invalid)?;
     validator
         .validate(&value)

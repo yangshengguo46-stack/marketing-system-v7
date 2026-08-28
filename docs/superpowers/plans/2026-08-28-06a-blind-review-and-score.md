@@ -341,8 +341,13 @@ schemaVersion,attempts; exact attempt fields publicRunId,reportPath,
 reportSha256,decision,selected,generatedAt
 
 attempt-index:
-schemaVersion,pairId,records,finalMerkleRoot; exact record ordinal,condition,
-request/response metadata commitments,usage,previousRecordSha256
+the schema validates one exact `attempt-index.jsonl` line, with top-level
+`oneOf(requestRecord,terminalRecord)`. The request branch freezes Contract 9's
+exact request fields including Plan 05's normalizedRequestCommitment,
+normalizedBaseCommitment and explicit-null treatmentDiffCommitment; the terminal
+branch freezes Contract 9's exact terminal fields and explicit nullable values.
+Consumers validate every nonempty line independently; request/terminal pairing,
+gap/uniqueness checks, exact-file SHA and Merkle root remain Rust/receipt duties.
 
 verification:
 schemaVersion,verificationKind,frozenRunContextSha256,subjectSha256,
@@ -356,6 +361,29 @@ physicalSecureErasureGuaranteed,failureReasons
 ```
 
 `retention-closeout.method` is literal `logical-filesystem-delete`; `physicalSecureErasureGuaranteed` is literal `false`; success requires deleted timestamp, `proofCopiesDeleted=true`, and empty failure reasons; failure requires `proofCopiesDeleted=false` and at least one reason.
+
+`BUSINESS_SIGNAL_PASS_PENDING_FOUNDATION` additionally requires
+`experiencedOperatorOrDirectorCount>=2`, `candidatePreferenceCount>=2`,
+`candidateReadyForHumanReviewCount>=2`,
+`medianCandidateScore>=18`, `medianPairedDelta>=3`,
+`candidateSkillUseVerified=true`, `candidateSevereFailureCount=0`, and
+`capabilityStatus.liveProviderReachable=true` with
+`businessBlindReview="passed"`. Tests recursively bind each canonical object to
+the corresponding schema `required`/`properties` field set, prove object closure,
+mutate every required field, and explicitly exercise supplier, decision,
+verification-kind, ordinal, and retention condition branches. The committed 24
+fixture files remain the minimum canonical/unknown/missing/wrong-type corpus;
+additional exhaustive mutations may be generated in memory.
+
+The business report always includes bounded
+`candidateReadyForHumanReviewCount` rather than inferring readiness from
+preference or score. Attempt terminal status is consistent: `completed` requires
+a response commitment, non-null usage, and `failureClass=null`; `failed` and
+`timeout` require a non-null failure class while preserving their other explicit
+nullable fields. All JSON integer fields representing Rust `u64` or nonnegative
+`i64` values freeze the matching maximum as well as the minimum. Tests bind the
+terminal and terminal-usage field sets through independent hard-coded arrays,
+not only by reflecting the schema under test.
 
 - [ ] **Step 3: Make filegroup explicit, run GREEN, commit**
 

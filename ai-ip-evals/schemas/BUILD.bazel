@@ -1,8 +1,14 @@
 filegroup(
     name = "schemas",
     srcs = [
+        "attempt-index.schema.json",
+        "business-report.schema.json",
+        "cost-receipt.schema.json",
         "frozen-run-context.schema.json",
         "held-out-attestation.schema.json",
+        "report-index.schema.json",
+        "retention-closeout.schema.json",
+        "verification.schema.json",
     ],
     visibility = ["//codex-rs/ai-ip-eval:__pkg__"],
 )
