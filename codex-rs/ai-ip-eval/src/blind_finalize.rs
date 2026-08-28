@@ -23,6 +23,21 @@ pub(crate) struct VerifiedBlindPair {
     core: PairEvidenceCore,
 }
 
+pub(crate) struct BlindBundleTransactionCursor {
+    inventory_root_sha256: String,
+    retained_private_root: crate::secure_fs_retain::RetainedPrivateRoot,
+}
+
+impl BlindBundleTransactionCursor {
+    pub(crate) fn inventory_root_sha256(&self) -> &str {
+        &self.inventory_root_sha256
+    }
+
+    pub(crate) fn reverify_root_unchanged(&self) -> Result<()> {
+        self.retained_private_root.reverify_unchanged()
+    }
+}
+
 impl VerifiedBlindPair {
     pub(crate) fn bundle_projection(&self) -> Result<BlindPairBundleProjection<'_>> {
         let forbidden_visible_markers = treatment_markers_for(&self.core)?
@@ -73,9 +88,15 @@ impl VerifiedBlindPair {
         reverify_core(&self.core)
     }
 
-    pub(crate) fn begin_bundle_transaction(&self) -> Result<String> {
+    pub(crate) fn begin_bundle_transaction(&self) -> Result<BlindBundleTransactionCursor> {
+        let retained_private_root =
+            crate::secure_fs_retain::RetainedPrivateRoot::retain(&self.core.private_root)?;
         reverify_core(&self.core)?;
-        Ok(self.core.inventory.inventory_root_sha256().to_string())
+        retained_private_root.reverify_unchanged()?;
+        Ok(BlindBundleTransactionCursor {
+            inventory_root_sha256: self.core.inventory.inventory_root_sha256().to_string(),
+            retained_private_root,
+        })
     }
 }
 

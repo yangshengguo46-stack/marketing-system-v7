@@ -1,12 +1,12 @@
 use std::collections::BTreeSet;
 use std::ffi::OsStr;
-use std::fmt;
 use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
+use rand::rngs::OsRng;
 use serde::Deserialize;
 
 use crate::ExecutionMode;
@@ -31,7 +31,23 @@ pub(crate) fn run_blind_pack(args: BlindPackArgs) -> Result<()> {
     let snapshot = read_context_snapshot(&args.frozen_run_context)?;
     validate_seed_arguments(&args, snapshot.execution_mode)?;
     ensure_destinations_absent(&snapshot.private_root)?;
-    verify_blind_pair_stage(&args, &snapshot)
+    create_blind_pair_stage(&args, &snapshot)
+}
+
+fn create_blind_pair_stage(args: &BlindPackArgs, snapshot: &FrozenContextSnapshot) -> Result<()> {
+    if args.frozen_run_context.as_os_str() != snapshot.canonical_path().as_os_str() {
+        bail!("blind-pack frozen context snapshot changed before pair verification");
+    }
+    let pair = crate::blind_finalize::finalize_blind_pair(verify_pair_evidence_core(snapshot)?)?;
+    let prepared = match snapshot.execution_mode() {
+        ExecutionMode::Replay => {
+            crate::blind_bundle::prepare_replay_blind_bundles(&pair, &args.replay_seeds)?
+        }
+        ExecutionMode::Mock | ExecutionMode::Live => {
+            crate::blind_bundle::prepare_native_blind_bundles(&pair, &mut OsRng)?
+        }
+    };
+    crate::blind_bundle_transaction::commit_blind_bundles(&pair, &prepared)
 }
 
 #[derive(Debug, Deserialize)]
@@ -159,20 +175,8 @@ pub(crate) fn verify_blind_pair_stage(
         bail!("blind-pack frozen context snapshot changed before pair verification");
     }
     let pair = crate::blind_finalize::finalize_blind_pair(verify_pair_evidence_core(snapshot)?)?;
-    let _ = pair.bundle_projection()?;
-    Err(BlindBundleStageNotInstalled.into())
+    pair.reverify_unchanged()
 }
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub(crate) struct BlindBundleStageNotInstalled;
-
-impl fmt::Display for BlindBundleStageNotInstalled {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("BlindBundleStageNotInstalled")
-    }
-}
-
-impl std::error::Error for BlindBundleStageNotInstalled {}
 
 fn require_exact_canonical(path: &Path, error: &str) -> Result<PathBuf> {
     if !path.is_absolute() {
