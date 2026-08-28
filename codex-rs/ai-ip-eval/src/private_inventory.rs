@@ -18,6 +18,8 @@ use std::path::Path;
 use std::path::PathBuf;
 const MARKER: &str = "coordinator/pair-marker.json";
 const INVENTORY: &str = "coordinator/private-inventory.jsonl";
+#[path = "private_inventory_batch.rs"]
+pub(crate) mod batch;
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub(crate) struct PairMarker {
@@ -164,13 +166,14 @@ pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<S
     if relative == INVENTORY {
         bail!("inventory path is reserved");
     }
-    let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
-    let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
-    let (records, _, _) = verified_state(root, Some(&relative), Some(old_bytes.clone()))?;
     let tree = collect_tree(root)?;
     let entry = tree
         .get(&relative)
         .context("inventory append target is absent")?;
+    let allowed_new = BTreeMap::from([(relative.clone(), entry.clone())]);
+    let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
+    let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
+    let (records, _, _) = verified_state(root, Some(&allowed_new), Some(old_bytes.clone()))?;
     let previous = records.last().map(canonical).transpose()?;
     let record = InventoryRecord {
         schema_version: 1,
@@ -196,7 +199,7 @@ pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<S
 }
 fn verified_state(
     root: &Path,
-    allowed_new: Option<&str>,
+    allowed_new: Option<&BTreeMap<String, TreeEntry>>,
     supplied_bytes: Option<Vec<u8>>,
 ) -> Result<(Vec<InventoryRecord>, Vec<u8>, PairMarker)> {
     let root_string = canonical_root(root)?;
@@ -243,10 +246,12 @@ fn verified_state(
     {
         bail!("inventory contains a duplicate or reserved path");
     }
-    if let Some(path) = allowed_new
-        && (expected.contains_key(path) || tree.remove(path).is_none())
-    {
-        bail!("inventory append target is absent or already recorded");
+    if let Some(allowed_new) = allowed_new {
+        for (path, entry) in allowed_new {
+            if expected.contains_key(path) || tree.remove(path).as_ref() != Some(entry) {
+                bail!("inventory append target is absent, recorded, or mismatched");
+            }
+        }
     }
     if tree != expected {
         bail!("private tree differs from its inventory records");

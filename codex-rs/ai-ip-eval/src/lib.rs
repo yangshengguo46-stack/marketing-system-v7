@@ -148,6 +148,10 @@ mod jcs_tests;
 mod private_inventory_tests;
 
 #[cfg(test)]
+#[path = "private_inventory_batch_tests.rs"]
+mod private_inventory_batch_tests;
+
+#[cfg(test)]
 #[path = "proof_archive_tests.rs"]
 mod proof_archive_tests;
 
