@@ -131,6 +131,10 @@ mod jcs_tests;
 mod private_inventory_tests;
 
 #[cfg(test)]
+#[path = "proof_archive_tests.rs"]
+mod proof_archive_tests;
+
+#[cfg(test)]
 #[path = "secure_fs_tests.rs"]
 mod secure_fs_tests;
 
