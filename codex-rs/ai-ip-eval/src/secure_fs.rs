@@ -21,17 +21,7 @@ pub(crate) fn resolve_private_relative(root: &Path, relative: &Path) -> Result<P
     if !root.is_absolute() || root.canonicalize()? != root {
         bail!("private root must be an existing canonical absolute path");
     }
-    if relative.as_os_str().is_empty()
-        || relative
-            .components()
-            .any(|component| !matches!(component, Component::Normal(_)))
-        || cfg!(windows)
-            && relative.components().any(|component| {
-                matches!(component, Component::Normal(name) if windows_ads_component(name))
-            })
-    {
-        bail!("private path must be a nonempty normalized relative path");
-    }
+    validate_private_relative_path(relative)?;
     platform::validate_existing(root, EntryKind::Directory)?;
     let resolved = root.join(relative);
     let mut current = root.to_path_buf();
@@ -51,6 +41,21 @@ pub(crate) fn resolve_private_relative(root: &Path, relative: &Path) -> Result<P
     Ok(resolved)
 }
 
+pub(crate) fn validate_private_relative_path(relative: &Path) -> Result<()> {
+    if relative.as_os_str().is_empty()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+        || cfg!(windows)
+            && relative.components().any(|component| {
+                matches!(component, Component::Normal(name) if windows_ads_component(name))
+            })
+    {
+        bail!("private path must be a nonempty normalized relative path");
+    }
+    Ok(())
+}
+
 pub(crate) fn create_owner_only_dir_new(path: &Path) -> Result<()> {
     platform::create_directory(path)
 }
@@ -68,6 +73,8 @@ pub(crate) fn fsync_directory(path: &Path) -> Result<()> {
 }
 #[cfg(all(test, windows))]
 pub(crate) use platform::open_read as windows_open_read_for_test;
+#[cfg(windows)]
+pub(crate) use platform::validate_directory_handle as validate_private_directory_handle;
 
 #[derive(Clone, Copy)]
 enum EntryKind {
@@ -417,6 +424,14 @@ mod platform {
             bail!("private Windows entry has the wrong type");
         }
         verify_dacl(&file)
+    }
+
+    pub(crate) fn validate_directory_handle(file: &File) -> Result<()> {
+        let info = checked_info(file)?;
+        if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 {
+            bail!("private Windows entry is not a directory");
+        }
+        verify_dacl(file)
     }
 
     fn create(path: &Path, directory: bool) -> Result<File> {

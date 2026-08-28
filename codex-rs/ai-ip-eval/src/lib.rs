@@ -16,6 +16,7 @@ mod proof_archive_seal;
 mod proof_ledger;
 mod runner;
 mod secure_fs;
+mod secure_fs_publish;
 
 pub use app_server::AppServerClient;
 pub use app_server::AppServerHandshake;
@@ -157,6 +158,10 @@ mod proof_ledger_tests;
 #[cfg(test)]
 #[path = "secure_fs_tests.rs"]
 mod secure_fs_tests;
+
+#[cfg(test)]
+#[path = "secure_fs_publish_tests.rs"]
+mod secure_fs_publish_tests;
 
 #[cfg(test)]
 #[path = "app_server_tests.rs"]
