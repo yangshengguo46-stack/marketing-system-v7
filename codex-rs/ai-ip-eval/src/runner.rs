@@ -1057,8 +1057,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             EvaluationCondition::Generic => &homes.generic_codex_home,
             EvaluationCondition::Candidate => &homes.candidate_codex_home,
         };
-        let (config_sidecar, config_evidence) =
-            replay_config_sidecar(codex_home, &replay_config)?;
+        let (config_sidecar, config_evidence) = replay_config_sidecar(codex_home, &replay_config)?;
         let capture = crate::proof_archive::ArmPostprocessCapture {
             pair_id: context.pair_id.clone(),
             run_ordinal: ordinal,
@@ -1333,7 +1332,10 @@ fn prepare_replay_homes(
 fn replay_catalog(
     roots: &CatalogRoots,
     target: Option<&Path>,
-) -> Result<(codex_app_server_protocol::SkillsListResponse, CatalogSnapshot)> {
+) -> Result<(
+    codex_app_server_protocol::SkillsListResponse,
+    CatalogSnapshot,
+)> {
     let skills = target
         .map(|path| {
             vec![serde_json::json!({
@@ -1532,9 +1534,8 @@ fn replay_config_sidecar(
             "config": shared.layer_json
         }]
     }))?;
-    let requirements = codex_app_server_protocol::ConfigRequirementsReadResponse {
-        requirements: None,
-    };
+    let requirements =
+        codex_app_server_protocol::ConfigRequirementsReadResponse { requirements: None };
     let evidence = audit_frozen_config(
         &response,
         &requirements,
@@ -2913,9 +2914,8 @@ async fn read_skill_catalog(
         )
         .await?
     };
-    let snapshot = run_sync_before_deadline(pair_deadline, || {
-        crate::normalize_catalog(&response, roots)
-    })?;
+    let snapshot =
+        run_sync_before_deadline(pair_deadline, || crate::normalize_catalog(&response, roots))?;
     Ok(CapturedCatalog {
         response,
         roots: crate::proof_archive::CatalogRootsSidecar {

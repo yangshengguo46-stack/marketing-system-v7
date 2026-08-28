@@ -448,10 +448,9 @@ where
             if let ServerNotification::TurnCompleted(completed) = &typed
                 && completed.thread_id == thread_id
                 && completed.turn.id == turn_id
+                && queued_completion.replace(completed.clone()).is_some()
             {
-                if queued_completion.replace(completed.clone()).is_some() {
-                    bail!("duplicate queued root turn completion");
-                }
+                bail!("duplicate queued root turn completion");
             }
         }
         if let Some(completed) = queued_completion {

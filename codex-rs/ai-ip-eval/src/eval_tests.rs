@@ -531,9 +531,7 @@ fn run_manifest_rejects_cross_mode_and_replay_is_never_g2_eligible() {
         .as_object_mut()
         .unwrap()
         .remove("postprocessEvidenceIndexSha256");
-    assert!(
-        serde_json::from_value::<crate::RunManifest>(missing_postprocess_commitment).is_err()
-    );
+    assert!(serde_json::from_value::<crate::RunManifest>(missing_postprocess_commitment).is_err());
 
     let mut replay_with_live_field = manifest_json;
     replay_with_live_field["modeEvidence"]["approvalCommitment"] = json!("forbidden");

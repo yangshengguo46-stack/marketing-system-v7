@@ -112,7 +112,11 @@ fn semantic_mutation(leaf: &str, bytes: &[u8]) -> Vec<u8> {
     if leaf == "notifications.jsonl" {
         let mut output = Vec::new();
         let mut changed = false;
-        for line in bytes.strip_suffix(b"\n").unwrap().split(|byte| *byte == b'\n') {
+        for line in bytes
+            .strip_suffix(b"\n")
+            .unwrap()
+            .split(|byte| *byte == b'\n')
+        {
             let mut value: Value = serde_json::from_slice(line).unwrap();
             if !changed && value["method"] == "rawResponse/completed" {
                 value["params"]["usage"]["totalTokens"] = Value::from(151);
@@ -131,9 +135,7 @@ fn semantic_mutation(leaf: &str, bytes: &[u8]) -> Vec<u8> {
         "pre-catalog.json" | "post-catalog.json" | "quiet-tree.json" => {
             value["schemaVersion"] = Value::from(2)
         }
-        "broker-snapshot.json" => {
-            value["globalAttemptStartInclusive"] = Value::from(100)
-        }
+        "broker-snapshot.json" => value["globalAttemptStartInclusive"] = Value::from(100),
         other => panic!("unexpected mutation leaf {other}"),
     }
     serde_json::to_vec(&value).unwrap()
@@ -148,8 +150,8 @@ fn resign_sidecar(
 ) {
     let path = coordinator(root).join(format!("run-{ordinal}-{leaf}"));
     fs::write(&path, sidecar_bytes).unwrap();
-    let mut index: Value = crate::jcs::parse_json(&fs::read(index_path(root, ordinal)).unwrap())
-        .unwrap();
+    let mut index: Value =
+        crate::jcs::parse_json(&fs::read(index_path(root, ordinal)).unwrap()).unwrap();
     let relative = format!("replay-coordinator/run-{ordinal}-{leaf}");
     let entry = index["sidecars"]
         .as_array_mut()
@@ -247,7 +249,8 @@ fn any_postprocess_archive_tamper_is_rejected() {
         let mutated = semantic_mutation(leaf, &original_sidecar);
         resign_sidecar(&run.private_root, 1, leaf, &mutated, &manifest);
         let resigned_manifest: crate::RunManifest =
-            serde_json::from_slice(&fs::read(manifest_path(&run.private_root, 1)).unwrap()).unwrap();
+            serde_json::from_slice(&fs::read(manifest_path(&run.private_root, 1)).unwrap())
+                .unwrap();
         assert!(
             crate::verify_postprocess_archive(
                 &run.private_root,
@@ -269,7 +272,7 @@ fn any_postprocess_archive_tamper_is_rejected() {
     index["pairId"] = Value::from("wrong-pair");
     let index_bytes = crate::jcs::canonicalize_value(&index).unwrap();
     fs::write(index_path(&run.private_root, 1), &index_bytes).unwrap();
-    let mut resigned_manifest = manifest.clone();
+    let mut resigned_manifest = manifest;
     resigned_manifest.postprocess_evidence_index_sha256 = sha256(&index_bytes);
     fs::write(
         manifest_path(&run.private_root, 1),

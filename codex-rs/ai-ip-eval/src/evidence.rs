@@ -117,10 +117,7 @@ impl NotificationRecorder {
 }
 
 pub(crate) fn parse_notification_archive(bytes: &[u8]) -> anyhow::Result<Vec<ServerNotification>> {
-    if bytes.is_empty()
-        || !bytes.ends_with(b"\n")
-        || bytes.len() > MAX_ARCHIVE_NOTIFICATION_BYTES
-    {
+    if bytes.is_empty() || !bytes.ends_with(b"\n") || bytes.len() > MAX_ARCHIVE_NOTIFICATION_BYTES {
         bail!("notification archive is empty, unterminated, or oversized");
     }
     let mut notifications = Vec::new();

@@ -80,7 +80,10 @@ pub(crate) const SIDECARS: [(PostprocessSidecarKind, &str); 7] = [
     (PostprocessSidecarKind::PreCatalog, "pre-catalog.json"),
     (PostprocessSidecarKind::PostCatalog, "post-catalog.json"),
     (PostprocessSidecarKind::QuietTree, "quiet-tree.json"),
-    (PostprocessSidecarKind::BrokerSnapshot, "broker-snapshot.json"),
+    (
+        PostprocessSidecarKind::BrokerSnapshot,
+        "broker-snapshot.json",
+    ),
 ];
 
 pub fn verify_postprocess_archive(
@@ -103,7 +106,7 @@ pub fn verify_postprocess_archive(
         bail!("manifest does not bind the raw postprocess index");
     }
     let value = crate::jcs::parse_json(&index_bytes)?;
-    let index: ArmPostprocessIndex = serde_json::from_value(value.clone())?;
+    let index: ArmPostprocessIndex = serde_json::from_value(value)?;
     if index_bytes != crate::jcs::canonicalize_value(&serde_json::to_value(&index)?)? {
         bail!("postprocess index is not exact canonical typed JSON");
     }
@@ -168,7 +171,11 @@ fn verify_semantics(
         || start.thread.service_tier.is_some()
         || start.thread.approval_policy != AskForApproval::Never
         || start.thread.approvals_reviewer != ApprovalsReviewer::User
-        || start.thread.active_permission_profile.as_ref().map(|profile| profile.id.as_str())
+        || start
+            .thread
+            .active_permission_profile
+            .as_ref()
+            .map(|profile| profile.id.as_str())
             != Some(crate::app_server::EVALUATION_PERMISSION_PROFILE)
         || !start.thread.runtime_workspace_roots.is_empty()
         || !start.thread.instruction_sources.is_empty()
@@ -201,8 +208,7 @@ fn verify_semantics(
         || post.schema_version != 1
         || pre_snapshot.sha256 != manifest.pre_skill_catalog_sha256
         || post_snapshot.sha256 != manifest.post_skill_catalog_sha256
-        || pre_snapshot.normalized_base_catalog_sha256()
-            != manifest.normalized_base_catalog_sha256
+        || pre_snapshot.normalized_base_catalog_sha256() != manifest.normalized_base_catalog_sha256
         || pre.roots.codex_home != post.roots.codex_home
         || pre.roots.host_home != post.roots.host_home
         || pre.roots.case_dir != post.roots.case_dir
@@ -237,8 +243,12 @@ fn verify_semantics(
         .join(codex_ai_ip_runtime::LEAD_SKILL_NAME)
         .join("SKILL.md");
     let mut skill = match manifest.condition {
-        EvaluationCondition::Generic => crate::SkillUseTracker::new_forbidden(&skill_path, skill_bytes)?,
-        EvaluationCondition::Candidate => crate::SkillUseTracker::new_required(&skill_path, skill_bytes)?,
+        EvaluationCondition::Generic => {
+            crate::SkillUseTracker::new_forbidden(&skill_path, skill_bytes)?
+        }
+        EvaluationCondition::Candidate => {
+            crate::SkillUseTracker::new_required(&skill_path, skill_bytes)?
+        }
     };
     for notification in notifications {
         replay.ingest(notification.clone())?;
@@ -263,12 +273,8 @@ fn verify_semantics(
     } else {
         u64::try_from(completions.len())?
     };
-    let expected_attempt_start = expected_attempt_start(
-        private_root,
-        manifest,
-        mission_case,
-        skill_bytes,
-    )?;
+    let expected_attempt_start =
+        expected_attempt_start(private_root, manifest, mission_case, skill_bytes)?;
     let expected_attempt_end = expected_attempt_start
         .checked_add(manifest.provider_request_attempt_count)
         .context("postprocess attempt range overflow")?;
@@ -350,14 +356,17 @@ fn broker_completion(
 ) -> codex_responses_api_proxy::ResponseCompletedMetadata {
     codex_responses_api_proxy::ResponseCompletedMetadata {
         response_id: completion.response_id.clone(),
-        usage: completion.usage.as_ref().map(|usage| codex_responses_api_proxy::ObservedUsage {
-            total_tokens: usage.total_tokens,
-            input_tokens: usage.input_tokens,
-            cached_input_tokens: usage.cached_input_tokens,
-            cache_write_input_tokens: usage.cache_write_input_tokens,
-            output_tokens: usage.output_tokens,
-            reasoning_output_tokens: usage.reasoning_output_tokens,
-        }),
+        usage: completion
+            .usage
+            .as_ref()
+            .map(|usage| codex_responses_api_proxy::ObservedUsage {
+                total_tokens: usage.total_tokens,
+                input_tokens: usage.input_tokens,
+                cached_input_tokens: usage.cached_input_tokens,
+                cache_write_input_tokens: usage.cache_write_input_tokens,
+                output_tokens: usage.output_tokens,
+                reasoning_output_tokens: usage.reasoning_output_tokens,
+            }),
         actual_model: completion.actual_model.clone(),
         deployment_or_fingerprint: completion.deployment_or_fingerprint.clone(),
     }
