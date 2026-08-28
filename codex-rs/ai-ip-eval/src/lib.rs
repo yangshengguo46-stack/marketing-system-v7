@@ -11,6 +11,7 @@ mod model;
 mod private_inventory;
 mod proof_archive;
 mod proof_archive_seal;
+mod proof_ledger;
 mod runner;
 mod secure_fs;
 
@@ -146,6 +147,10 @@ mod private_inventory_tests;
 #[cfg(test)]
 #[path = "proof_archive_tests.rs"]
 mod proof_archive_tests;
+
+#[cfg(test)]
+#[path = "proof_ledger_tests.rs"]
+mod proof_ledger_tests;
 
 #[cfg(test)]
 #[path = "secure_fs_tests.rs"]
