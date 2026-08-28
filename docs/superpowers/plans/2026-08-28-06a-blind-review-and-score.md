@@ -504,6 +504,7 @@ git commit -m "feat(ai-ip-eval): add private proof inventory"
 
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/proof_archive.rs`
+- Create: `codex-rs/ai-ip-eval/src/proof_archive_seal.rs` (owner-only create-new persistence for the seven sidecars and canonical index)
 - Create: `codex-rs/ai-ip-eval/src/proof_archive_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/runner.rs`
 - Modify: `codex-rs/ai-ip-eval/src/model.rs`
