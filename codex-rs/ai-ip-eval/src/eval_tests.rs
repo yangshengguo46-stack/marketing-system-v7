@@ -741,6 +741,29 @@ fn replay_verified_context_retains_inputs_and_rejects_drift() {
     assert!(verified.reverify_all().is_err());
 }
 
+fn replace_with_same_owner_only_bytes(path: &std::path::Path) {
+    let path = path.canonicalize().unwrap();
+    let bytes = fs::read(&path).unwrap();
+    let replacement = path.with_extension("replacement");
+    let displaced = path.with_extension("displaced");
+    crate::secure_fs::write_owner_only_new(&replacement, &bytes).unwrap();
+    fs::rename(&path, &displaced).unwrap();
+    fs::rename(&replacement, &path).unwrap();
+}
+
+#[test]
+fn frozen_context_identity_replacement_replay_is_rejected() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let prepared = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let raw = fs::read(&prepared.frozen).unwrap();
+    let verified = crate::runner::verify_replay_frozen_context(&prepared.frozen, &raw).unwrap();
+
+    replace_with_same_owner_only_bytes(&prepared.frozen);
+
+    assert!(verified.reverify_all().is_err());
+}
+
 #[test]
 fn replay_verified_context_rejects_raw_path_sha_and_reference_drift() {
     let fixture_set =
@@ -1869,6 +1892,17 @@ fn native_verified_context_retains_inputs_and_rejects_drift() {
     let context: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
     let source = context["artifacts"]["source"]["path"].as_str().unwrap();
     fs::write(source, b"changed source bytes\n").unwrap();
+    assert!(verified.reverify_all().is_err());
+}
+
+#[test]
+fn frozen_context_identity_replacement_native_is_rejected() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = strict_live_context(&temp);
+    let verified = verify_frozen_context(&path).unwrap();
+
+    replace_with_same_owner_only_bytes(&path);
+
     assert!(verified.reverify_all().is_err());
 }
 

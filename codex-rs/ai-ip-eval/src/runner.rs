@@ -60,6 +60,7 @@ use crate::model::RunManifest;
 pub struct VerifiedFrozenContext {
     canonical_path: PathBuf,
     sha256: String,
+    raw_bytes: Vec<u8>,
     context: FrozenRunContext,
     frozen_file: ArtifactCommitment,
     artifacts: ArtifactCommitments,
@@ -123,7 +124,7 @@ impl VerifiedFrozenContext {
     }
 
     pub(crate) fn raw_bytes(&self) -> Result<Vec<u8>> {
-        self.frozen_file.read_verified()
+        Ok(self.raw_bytes.clone())
     }
 
     pub(crate) fn private_root(&self) -> &Path {
@@ -165,7 +166,9 @@ impl VerifiedFrozenContext {
         if current.sha256 != self.sha256 || current.context != self.context {
             bail!("native frozen context changed after verification");
         }
-        self.frozen_file.read_verified()?;
+        self.frozen_file
+            .verify_context_bytes(&self.raw_bytes)
+            .context("reverify native frozen context identity")?;
         self.artifacts.verify()?;
         validate_managed_source_artifacts(self)
     }
@@ -198,6 +201,7 @@ pub(crate) struct VerifiedReplayFrozenContext {
     canonical_path: PathBuf,
     raw_bytes: Vec<u8>,
     raw_sha256: String,
+    frozen_file: ArtifactCommitment,
     context: ReplayFrozenContext,
     fixture_set: ArtifactCommitment,
     fixtures: BTreeMap<String, VerifiedReplayReference>,
@@ -275,13 +279,9 @@ impl VerifiedReplayFrozenContext {
     }
 
     pub(crate) fn reverify_all(&self) -> Result<()> {
-        let raw = crate::secure_fs::read_single_link_regular_bounded(
-            &self.canonical_path,
-            FROZEN_CONTEXT_CAP,
-        )?;
-        if raw != self.raw_bytes {
-            bail!("Replay frozen context changed after verification");
-        }
+        self.frozen_file
+            .verify_context_bytes(&self.raw_bytes)
+            .context("reverify Replay frozen context identity")?;
         self.fixture_set.read_verified()?;
         self.codex_binary.read_verified()?;
         self.evaluator_binary.read_verified()?;
@@ -1240,6 +1240,18 @@ pub(crate) fn verify_replay_frozen_context(
     if !canonical_path.is_absolute() || canonical_path.canonicalize()? != canonical_path {
         bail!("Replay frozen context path is not canonical");
     }
+    let (frozen_file, retained_bytes) = ArtifactCommitment::freeze_context(canonical_path)?;
+    if retained_bytes != raw_context_bytes {
+        bail!("Replay frozen context differs from its retained file handle");
+    }
+    verify_retained_replay_frozen_context(canonical_path, raw_context_bytes, frozen_file)
+}
+
+fn verify_retained_replay_frozen_context(
+    canonical_path: &Path,
+    raw_context_bytes: &[u8],
+    frozen_file: ArtifactCommitment,
+) -> Result<VerifiedReplayFrozenContext> {
     let contracts = FrozenContracts::load()?;
     contracts.validate_replay_context(raw_context_bytes)?;
     let context: ReplayFrozenContext =
@@ -1353,6 +1365,7 @@ pub(crate) fn verify_replay_frozen_context(
         canonical_path: canonical_path.to_path_buf(),
         raw_bytes: raw_context_bytes.to_vec(),
         raw_sha256: sha256(raw_context_bytes),
+        frozen_file,
         context,
         fixture_set,
         fixtures,
@@ -1373,9 +1386,8 @@ fn load_verified_replay_frozen_context(path: &Path) -> Result<VerifiedReplayFroz
     let canonical_path = path
         .canonicalize()
         .context("canonicalize replay frozen context")?;
-    let bytes =
-        crate::secure_fs::read_single_link_regular_bounded(&canonical_path, FROZEN_CONTEXT_CAP)?;
-    verify_replay_frozen_context(&canonical_path, &bytes)
+    let (frozen_file, bytes) = ArtifactCommitment::freeze_context(&canonical_path)?;
+    verify_retained_replay_frozen_context(&canonical_path, &bytes, frozen_file)
 }
 
 fn retain_replay_reference(
@@ -3820,8 +3832,7 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
     if !metadata.file_type().is_file() || metadata.file_type().is_symlink() {
         bail!("frozen context must be a regular non-symlink file");
     }
-    let frozen_file = ArtifactCommitment::freeze(&canonical_path)?;
-    let bytes = frozen_file.read_verified()?;
+    let (frozen_file, bytes) = ArtifactCommitment::freeze_context(&canonical_path)?;
     FrozenContracts::load()?
         .validate_native_context(&bytes)
         .context("validate frozen native context contract")?;
@@ -3839,6 +3850,7 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
     Ok(VerifiedFrozenContext {
         canonical_path,
         sha256: sha256(&bytes),
+        raw_bytes: bytes,
         context,
         frozen_file,
         artifacts,
@@ -4346,6 +4358,28 @@ impl ArtifactCommitment {
         })
     }
 
+    fn freeze_context(path: &Path) -> Result<(Self, Vec<u8>)> {
+        let canonical_path = path
+            .canonicalize()
+            .with_context(|| format!("canonicalize frozen context {}", path.display()))?;
+        if canonical_path != path {
+            bail!("frozen context path is not canonical");
+        }
+        require_owner_only_file(&canonical_path)?;
+        let path_metadata = fs::symlink_metadata(&canonical_path)?;
+        let handle = Arc::new(open_anchored_regular(&canonical_path)?);
+        if !same_file(&path_metadata, &handle.metadata()?) {
+            bail!("frozen context identity changed while opening retained handle");
+        }
+        let bytes = read_context_handle_bounded(&handle)?;
+        let commitment = Self {
+            canonical_path,
+            sha256: sha256(&bytes),
+            handle,
+        };
+        Ok((commitment, bytes))
+    }
+
     fn read_verified(&self) -> Result<Vec<u8>> {
         let current = open_anchored_regular(&self.canonical_path)?;
         if !same_file(&self.handle.metadata()?, &current.metadata()?) {
@@ -4356,6 +4390,19 @@ impl ArtifactCommitment {
             bail!("artifact bytes changed after freeze");
         }
         Ok(bytes)
+    }
+
+    fn verify_context_bytes(&self, expected: &[u8]) -> Result<()> {
+        require_owner_only_file(&self.canonical_path)?;
+        let current = open_anchored_regular(&self.canonical_path)?;
+        if !same_file(&self.handle.metadata()?, &current.metadata()?) {
+            bail!("frozen context path identity changed after verification");
+        }
+        let bytes = read_context_handle_bounded(&self.handle)?;
+        if bytes != expected || sha256(&bytes) != self.sha256 {
+            bail!("frozen context bytes changed after verification");
+        }
+        Ok(())
     }
 
     #[cfg(unix)]
@@ -4959,8 +5006,34 @@ fn read_handle(file: &File) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
+#[cfg(unix)]
+fn read_context_handle_bounded(file: &File) -> Result<Vec<u8>> {
+    use std::os::unix::fs::FileExt;
+
+    let before = file.metadata()?;
+    if before.len() > FROZEN_CONTEXT_CAP {
+        bail!("frozen context exceeds its byte cap");
+    }
+    let mut bytes = vec![0_u8; usize::try_from(before.len())?];
+    file.read_exact_at(&mut bytes, 0)?;
+    let mut eof_probe = [0_u8; 1];
+    if file.read_at(&mut eof_probe, before.len())? != 0 {
+        bail!("frozen context grew during bounded retained read");
+    }
+    let after = file.metadata()?;
+    if !same_file(&before, &after) || before.len() != after.len() || has_multiple_links(&after) {
+        bail!("frozen context changed during bounded retained read");
+    }
+    Ok(bytes)
+}
+
 #[cfg(not(unix))]
 fn read_handle(_file: &File) -> Result<Vec<u8>> {
+    bail!("live artifact access requires descriptor-anchored Unix reads")
+}
+
+#[cfg(not(unix))]
+fn read_context_handle_bounded(_file: &File) -> Result<Vec<u8>> {
     bail!("live artifact access requires descriptor-anchored Unix reads")
 }
 
