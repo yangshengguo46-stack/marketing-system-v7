@@ -14,6 +14,15 @@ use crate::ModeEvidence;
 use crate::RunManifest;
 use crate::Usage;
 
+#[path = "proof_ledger_semantics.rs"]
+mod semantics;
+#[allow(unused_imports)]
+pub(crate) use semantics::VerifiedAttemptLedger;
+#[allow(unused_imports)]
+pub(crate) use semantics::VerifiedLedgerArm;
+#[allow(unused_imports)]
+pub(crate) use semantics::derive_native_attempt_ledger;
+
 const ATTEMPT_SCHEMA: &[u8] =
     include_bytes!("../../../ai-ip-evals/schemas/attempt-index.schema.json");
 const LEDGER: &str = "coordinator/attempt-index.jsonl";
@@ -21,6 +30,7 @@ const MIB: u64 = 1024 * 1024;
 
 pub(crate) struct BoundRunManifest<'a> {
     pub(crate) manifest: &'a RunManifest,
+    pub(crate) raw_bytes: &'a [u8],
     pub(crate) raw_sha256: &'a str,
 }
 
@@ -32,7 +42,7 @@ pub(crate) struct NativeLedgerBinding<'a> {
     pub(crate) deadline: &'a str,
     pub(crate) max_output_tokens: u64,
     pub(crate) max_attempts_per_arm: u64,
-    pub(crate) max_total_tokens: u64,
+    pub(crate) max_total_tokens_per_run: u64,
     pub(crate) manifests: [BoundRunManifest<'a>; 2],
 }
 
@@ -50,25 +60,6 @@ pub(crate) struct ParsedAttemptLedger {
     pub(crate) attempt_index_sha256: String,
     pub(crate) attempt_index_root_sha256: String,
     pub(crate) arms: [ParsedLedgerArm; 2],
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub(crate) struct VerifiedLedgerArm {
-    pub(crate) condition: EvaluationCondition,
-    pub(crate) global_start_inclusive: u64,
-    pub(crate) global_end_exclusive: u64,
-    pub(crate) provider_request_attempt_count: u64,
-    pub(crate) provider_completed_response_count: u64,
-    pub(crate) raw_response_count: u64,
-    pub(crate) usage: Usage,
-    pub(crate) run_manifest_sha256: String,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub(crate) struct VerifiedAttemptLedger {
-    pub(crate) attempt_index_sha256: String,
-    pub(crate) attempt_index_root_sha256: String,
-    pub(crate) arms: [VerifiedLedgerArm; 2],
 }
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -131,183 +122,6 @@ pub(crate) fn parse_native_attempt_ledger(
         .context("attempt ledger byte cap overflow")?;
     let ledger = read_bounded(private_root, Path::new(LEDGER), ledger_cap)?;
     derive_arms(&ledger, binding)
-}
-
-pub(crate) fn derive_native_attempt_ledger(
-    private_root: &Path,
-    binding: &NativeLedgerBinding<'_>,
-) -> Result<VerifiedAttemptLedger> {
-    let parsed = parse_native_attempt_ledger(private_root, binding)?;
-    validate_semantic_binding(binding)?;
-    let mut pair_total_tokens = 0_i64;
-    let mut arms = Vec::with_capacity(2);
-    for (index, parsed_arm) in parsed.arms.iter().enumerate() {
-        let bound = &binding.manifests[index];
-        let manifest = bound.manifest;
-        let mut usage = Usage::default();
-        for (attempt_index, attempt) in parsed_arm.attempts.iter().enumerate() {
-            verify_attempt(attempt, attempt_index, manifest, binding)?;
-            let observed = attempt
-                .terminal
-                .usage
-                .as_ref()
-                .context("completed terminal usage is missing")?;
-            validate_usage(observed)?;
-            add_usage(&mut usage, observed)?;
-        }
-        pair_total_tokens = pair_total_tokens
-            .checked_add(usage.total_tokens)
-            .context("pair token total overflow")?;
-        if manifest.usage_scope != "completeNativeThreadTree" {
-            bail!("run manifest usage scope is invalid");
-        }
-        if manifest.provider_completed_response_count != parsed_arm.attempt_count
-            || manifest.raw_response_count != parsed_arm.attempt_count
-            || manifest.usage != usage
-        {
-            bail!("run manifest response counts or usage are invalid");
-        }
-        arms.push(VerifiedLedgerArm {
-            condition: parsed_arm.condition,
-            global_start_inclusive: parsed_arm.global_start_inclusive,
-            global_end_exclusive: parsed_arm.global_end_exclusive,
-            provider_request_attempt_count: parsed_arm.attempt_count,
-            provider_completed_response_count: parsed_arm.attempt_count,
-            raw_response_count: parsed_arm.attempt_count,
-            usage,
-            run_manifest_sha256: bound.raw_sha256.to_string(),
-        });
-    }
-    if u64::try_from(pair_total_tokens)? > binding.max_total_tokens {
-        bail!("pair token cap exceeded");
-    }
-    Ok(VerifiedAttemptLedger {
-        attempt_index_sha256: parsed.attempt_index_sha256,
-        attempt_index_root_sha256: parsed.attempt_index_root_sha256,
-        arms: arms
-            .try_into()
-            .map_err(|_| anyhow::anyhow!("missing arm"))?,
-    })
-}
-
-fn validate_semantic_binding(binding: &NativeLedgerBinding<'_>) -> Result<()> {
-    let max_total_tokens = i64::try_from(binding.max_total_tokens)?;
-    for bound in &binding.manifests {
-        let manifest = bound.manifest;
-        if manifest.pair_id != binding.pair_id
-            || manifest.frozen_run_context_sha256 != binding.frozen_run_context_sha256
-            || manifest.execution_context_sha256 != binding.execution_context_sha256
-            || manifest.max_total_tokens != max_total_tokens
-            || !manifest.tree_closed
-        {
-            bail!("run manifest semantic binding is invalid");
-        }
-        if !is_lower_sha256(bound.raw_sha256) {
-            bail!("raw manifest SHA must be lowercase SHA-256 hex");
-        }
-    }
-    Ok(())
-}
-
-fn verify_attempt(
-    attempt: &ParsedAttempt,
-    attempt_index: usize,
-    manifest: &RunManifest,
-    binding: &NativeLedgerBinding<'_>,
-) -> Result<()> {
-    let request = &attempt.request;
-    let terminal = &attempt.terminal;
-    if terminal.request_record_sha256 != attempt.request_raw_sha256 {
-        bail!("terminal request record SHA is invalid");
-    }
-    if request.pair_id != binding.pair_id
-        || request.frozen_run_context_sha256 != binding.frozen_run_context_sha256
-        || request.execution_context_sha256 != binding.execution_context_sha256
-    {
-        bail!("attempt request identity is invalid");
-    }
-    if request.deadline != binding.deadline {
-        bail!("attempt request deadline is invalid");
-    }
-    if request.max_output_tokens != binding.max_output_tokens {
-        bail!("attempt request output limit is invalid");
-    }
-    if attempt_index == 0
-        && (request.request_commitment != manifest.first_root_provider_request_commitment
-            || request.normalized_request_commitment
-                != manifest.normalized_first_root_request_commitment
-            || request.normalized_base_commitment != manifest.normalized_first_root_base_commitment
-            || request.treatment_diff_commitment != manifest.first_root_treatment_diff_commitment)
-    {
-        bail!("first request commitments are invalid");
-    }
-    if terminal.status != "completed"
-        || terminal.response_id_commitment.is_none()
-        || terminal.failure_class.is_some()
-    {
-        bail!("attempt does not have a completed terminal");
-    }
-    if terminal.actual_model_revision.as_deref() != Some(&manifest.actual_model_revision) {
-        bail!("completed terminal model is invalid");
-    }
-    if terminal.deployment_commitment.as_ref()
-        != manifest.deployment_or_fingerprint_commitment.as_ref()
-    {
-        bail!("completed terminal deployment is invalid");
-    }
-    Ok(())
-}
-
-fn validate_usage(usage: &Usage) -> Result<()> {
-    let values = [
-        usage.total_tokens,
-        usage.input_tokens,
-        usage.cached_input_tokens,
-        usage.cache_write_input_tokens,
-        usage.output_tokens,
-        usage.reasoning_output_tokens,
-    ];
-    let total = usage
-        .input_tokens
-        .checked_add(usage.output_tokens)
-        .context("usage arithmetic overflow")?;
-    let cached = usage
-        .cached_input_tokens
-        .checked_add(usage.cache_write_input_tokens)
-        .context("usage arithmetic overflow")?;
-    if values.iter().any(|value| *value < 0)
-        || usage.total_tokens != total
-        || cached > usage.input_tokens
-        || usage.reasoning_output_tokens > usage.output_tokens
-    {
-        bail!("usage arithmetic is invalid");
-    }
-    Ok(())
-}
-
-fn add_usage(total: &mut Usage, observed: &Usage) -> Result<()> {
-    macro_rules! add_field {
-        ($field:ident) => {
-            total.$field = total
-                .$field
-                .checked_add(observed.$field)
-                .context("usage aggregate overflow")?;
-        };
-    }
-    add_field!(total_tokens);
-    add_field!(input_tokens);
-    add_field!(cached_input_tokens);
-    add_field!(cache_write_input_tokens);
-    add_field!(output_tokens);
-    add_field!(reasoning_output_tokens);
-    Ok(())
-}
-
-fn is_lower_sha256(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
 }
 
 fn validate_binding(binding: &NativeLedgerBinding<'_>) -> Result<()> {

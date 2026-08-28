@@ -53,6 +53,7 @@ struct ProducerFixture {
     _temp: tempfile::TempDir,
     root: PathBuf,
     manifests: [RunManifest; 2],
+    manifest_raw: [Vec<u8>; 2],
     manifest_sha256: [String; 2],
     attempts_per_arm: [u64; 2],
 }
@@ -67,14 +68,16 @@ impl ProducerFixture {
             deadline: DEADLINE,
             max_output_tokens: MAX_OUTPUT_TOKENS,
             max_attempts_per_arm: MAX_ATTEMPTS_PER_ARM,
-            max_total_tokens: MAX_TOTAL_TOKENS,
+            max_total_tokens_per_run: MAX_TOTAL_TOKENS,
             manifests: [
                 BoundRunManifest {
                     manifest: &self.manifests[0],
+                    raw_bytes: &self.manifest_raw[0],
                     raw_sha256: &self.manifest_sha256[0],
                 },
                 BoundRunManifest {
                     manifest: &self.manifests[1],
+                    raw_bytes: &self.manifest_raw[1],
                     raw_sha256: &self.manifest_sha256[1],
                 },
             ],
@@ -126,6 +129,7 @@ fn producer_fixture_with_attempts(
     gate.commit_order_for_test(first, second).unwrap();
 
     let mut manifests = Vec::new();
+    let mut manifest_raw = Vec::new();
     let mut manifest_sha256 = Vec::new();
     for (ordinal, condition) in [(1_u8, first), (2_u8, second)] {
         let attempt_count = attempts_per_arm[usize::from(ordinal - 1)];
@@ -193,6 +197,7 @@ fn producer_fixture_with_attempts(
         gate.bind_active_run_manifest(raw_sha256.clone()).unwrap();
         gate.seal_arm().unwrap();
         manifests.push(manifest);
+        manifest_raw.push(raw);
         manifest_sha256.push(raw_sha256);
     }
     gate.finish().unwrap();
@@ -200,6 +205,7 @@ fn producer_fixture_with_attempts(
         _temp: temp,
         root,
         manifests: manifests.try_into().unwrap(),
+        manifest_raw: manifest_raw.try_into().unwrap(),
         manifest_sha256: manifest_sha256.try_into().unwrap(),
         attempts_per_arm,
     }
@@ -373,8 +379,8 @@ fn rewrite_resigned_ledger(fixture: &mut ProducerFixture, lines: &[String]) {
 
 fn refresh_manifest_shas(fixture: &mut ProducerFixture) {
     for index in 0..2 {
-        fixture.manifest_sha256[index] =
-            sha256(&serde_json::to_vec_pretty(&fixture.manifests[index]).unwrap());
+        fixture.manifest_raw[index] = serde_json::to_vec_pretty(&fixture.manifests[index]).unwrap();
+        fixture.manifest_sha256[index] = sha256(&fixture.manifest_raw[index]);
     }
 }
 
@@ -411,6 +417,11 @@ fn expected_verified(fixture: &ProducerFixture) -> VerifiedAttemptLedger {
     VerifiedAttemptLedger {
         attempt_index_sha256: parsed.attempt_index_sha256,
         attempt_index_root_sha256: parsed.attempt_index_root_sha256,
+        model_label: "mock".to_string(),
+        actual_model_revision: "mock-revision".to_string(),
+        deployment_or_fingerprint_commitment: fixture.manifests[0]
+            .deployment_or_fingerprint_commitment
+            .clone(),
         arms: std::array::from_fn(|index| {
             let arm = &parsed.arms[index];
             let manifest = &fixture.manifests[index];
@@ -499,6 +510,175 @@ fn proof_ledger_accepts_exact_optional_deployment_absence() {
 }
 
 #[test]
+fn proof_ledger_accepts_each_run_at_cap_when_pair_sum_exceeds_cap() {
+    let mut fixture =
+        producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let ledger = std::fs::read(fixture.root.join("coordinator/attempt-index.jsonl")).unwrap();
+    let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let usage = Usage {
+        total_tokens: 60,
+        input_tokens: 59,
+        output_tokens: 1,
+        ..Usage::default()
+    };
+    for index in (1..lines.len()).step_by(2) {
+        replace_json_value(
+            &mut lines[index],
+            "usage",
+            &serde_json::to_string(&usage).unwrap(),
+        );
+    }
+    for manifest in &mut fixture.manifests {
+        manifest.usage = usage.clone();
+    }
+    repair_request_links(&mut lines);
+    rewrite_resigned_ledger(&mut fixture, &lines);
+
+    assert!(
+        parse_native_attempt_ledger(&fixture.root, &fixture.binding()).is_ok(),
+        "per-run-valid 60+60 mutation did not reach semantic verification"
+    );
+    assert!(
+        derive_native_attempt_ledger(&fixture.root, &fixture.binding()).is_ok(),
+        "per-run-valid 60+60 usage was rejected as a pair sum"
+    );
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ReviewSemanticAttack {
+    CrossArmModel,
+    CrossArmDeployment,
+    ForgedRawManifestSha,
+    TypedManifestRawMismatch,
+    FirstRootThread,
+    FirstRootParent,
+}
+
+fn assert_review_semantic_attack_rejected(attack: ReviewSemanticAttack, intended_error: &str) {
+    let mut fixture =
+        producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let ledger = std::fs::read(fixture.root.join("coordinator/attempt-index.jsonl")).unwrap();
+    let mut lines = std::str::from_utf8(ledger.strip_suffix(b"\n").unwrap())
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let rewrites_ledger = match attack {
+        ReviewSemanticAttack::CrossArmModel => {
+            for index in (1..usize::try_from(fixture.attempts_per_arm[0] * 2).unwrap()).step_by(2) {
+                replace_json_value(&mut lines[index], "actualModelRevision", "\"forged-model\"");
+            }
+            fixture.manifests[0].actual_model_revision = "forged-model".to_string();
+            true
+        }
+        ReviewSemanticAttack::CrossArmDeployment => {
+            let forged = "f".repeat(64);
+            for index in (1..usize::try_from(fixture.attempts_per_arm[0] * 2).unwrap()).step_by(2) {
+                replace_json_value(
+                    &mut lines[index],
+                    "deploymentCommitment",
+                    &format!("\"{forged}\""),
+                );
+            }
+            fixture.manifests[0].deployment_or_fingerprint_commitment = Some(forged);
+            true
+        }
+        ReviewSemanticAttack::ForgedRawManifestSha => {
+            fixture.manifest_sha256[0] = "0".repeat(64);
+            false
+        }
+        ReviewSemanticAttack::TypedManifestRawMismatch => {
+            fixture.manifests[0].model_label = "forged-label".to_string();
+            false
+        }
+        ReviewSemanticAttack::FirstRootThread => {
+            replace_json_value(
+                &mut lines[0],
+                "threadCommitment",
+                &format!("\"{}\"", "f".repeat(64)),
+            );
+            true
+        }
+        ReviewSemanticAttack::FirstRootParent => {
+            replace_json_value(
+                &mut lines[0],
+                "parentThreadCommitment",
+                &format!("\"{}\"", "f".repeat(64)),
+            );
+            true
+        }
+    };
+    if rewrites_ledger {
+        repair_request_links(&mut lines);
+        rewrite_resigned_ledger(&mut fixture, &lines);
+    }
+
+    assert!(
+        parse_native_attempt_ledger(&fixture.root, &fixture.binding()).is_ok(),
+        "{attack:?} did not reach semantic verification"
+    );
+    let result = derive_native_attempt_ledger(&fixture.root, &fixture.binding());
+    assert!(result.is_err(), "semantic derive accepted {attack:?}");
+    let error = result.unwrap_err().to_string();
+    assert!(
+        error.contains(intended_error),
+        "{attack:?} reached the wrong semantic rule: {error}"
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_cross_arm_model_drift() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::CrossArmModel,
+        "cross-arm model identity",
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_cross_arm_deployment_drift() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::CrossArmDeployment,
+        "cross-arm deployment identity",
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_forged_lowercase_raw_manifest_sha() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::ForgedRawManifestSha,
+        "raw manifest SHA does not match bytes",
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_typed_manifest_raw_mismatch() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::TypedManifestRawMismatch,
+        "raw manifest does not match typed manifest",
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_forged_first_root_thread() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::FirstRootThread,
+        "first request thread commitment",
+    );
+}
+
+#[test]
+fn proof_ledger_review_rejects_forged_first_root_parent() {
+    assert_review_semantic_attack_rejected(
+        ReviewSemanticAttack::FirstRootParent,
+        "first request parent thread",
+    );
+}
+
+#[test]
 fn proof_ledger_rejects_resigned_semantic_mutations() {
     for case in [
         "request-pair",
@@ -508,7 +688,7 @@ fn proof_ledger_rejects_resigned_semantic_mutations() {
         "request-output",
         "usage-arithmetic",
         "first-commitment",
-        "pair-token-cap",
+        "run-token-cap",
         "model",
         "deployment",
         "failed-terminal",
@@ -576,7 +756,7 @@ fn proof_ledger_rejects_resigned_semantic_mutations() {
                 );
                 "first request commitments"
             }
-            "pair-token-cap" => {
+            "run-token-cap" => {
                 let usage = Usage {
                     total_tokens: 101,
                     input_tokens: 100,
@@ -589,7 +769,7 @@ fn proof_ledger_rejects_resigned_semantic_mutations() {
                     &serde_json::to_string(&usage).unwrap(),
                 );
                 fixture.manifests[0].usage = usage;
-                "pair token cap"
+                "run token cap"
             }
             "model" => {
                 replace_json_value(&mut lines[1], "actualModelRevision", "\"forged-model\"");
