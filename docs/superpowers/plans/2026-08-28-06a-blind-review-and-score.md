@@ -895,7 +895,6 @@ struct ReviewBundleManifest {
 - Modify: `codex-rs/ai-ip-eval/src/contracts.rs`
 - Modify: `codex-rs/ai-ip-eval/src/blind_finalize.rs`
 - Modify: `codex-rs/ai-ip-eval/src/blind.rs`
-- Modify: `codex-rs/ai-ip-eval/src/model.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
 - Modify: `codex-rs/ai-ip-eval/tests/blind_cli.rs`
 
