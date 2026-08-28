@@ -21,6 +21,12 @@ use crate::private_inventory::verify_private_inventory_state;
 use crate::secure_fs::read_single_link_regular_bounded;
 use crate::secure_fs::resolve_private_relative;
 
+#[path = "blind_verify_semantics.rs"]
+mod semantics;
+#[path = "blind_verify_semantics_bindings.rs"]
+mod semantics_bindings;
+pub(crate) use semantics::PairEvidenceCore;
+
 const EVIDENCE_FILE_CAP: u64 = 1024 * 1024;
 
 #[derive(Debug)]
@@ -63,21 +69,20 @@ pub(crate) enum PairVerification {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub(crate) struct PairEvidenceCoreStageNotInstalled;
+pub(crate) struct BlindPairFinalizationStageNotInstalled;
 
-impl fmt::Display for PairEvidenceCoreStageNotInstalled {
+impl fmt::Display for BlindPairFinalizationStageNotInstalled {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("PairEvidenceCoreStageNotInstalled")
+        formatter.write_str("BlindPairFinalizationStageNotInstalled")
     }
 }
 
-impl std::error::Error for PairEvidenceCoreStageNotInstalled {}
+impl std::error::Error for BlindPairFinalizationStageNotInstalled {}
 
 pub(crate) fn verify_pair_evidence_core(
     snapshot: &FrozenContextSnapshot,
-) -> Result<ParsedPairEvidence> {
-    parse_pair_evidence(snapshot)?;
-    Err(PairEvidenceCoreStageNotInstalled.into())
+) -> Result<PairEvidenceCore> {
+    semantics::verify_parsed_pair_evidence(parse_pair_evidence(snapshot)?)
 }
 
 pub(crate) fn parse_pair_evidence(snapshot: &FrozenContextSnapshot) -> Result<ParsedPairEvidence> {

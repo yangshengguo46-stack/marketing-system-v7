@@ -157,7 +157,8 @@ pub(crate) fn verify_blind_pair_stage(
     if args.frozen_run_context.as_os_str() != snapshot.canonical_path().as_os_str() {
         bail!("blind-pack frozen context snapshot changed before pair verification");
     }
-    verify_pair_evidence_core(snapshot).map(drop)
+    verify_pair_evidence_core(snapshot)?;
+    Err(crate::blind_verify::BlindPairFinalizationStageNotInstalled.into())
 }
 
 fn require_exact_canonical(path: &Path, error: &str) -> Result<PathBuf> {

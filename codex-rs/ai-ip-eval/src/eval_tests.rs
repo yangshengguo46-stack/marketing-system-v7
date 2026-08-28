@@ -53,6 +53,9 @@ use sha2::Sha256;
 #[path = "blind_verify_tests.rs"]
 mod blind_verify_tests;
 
+#[path = "blind_verify_semantics_tests.rs"]
+mod blind_verify_semantics_tests;
+
 fn usage() -> TokenUsageBreakdown {
     TokenUsageBreakdown {
         total_tokens: 15,
