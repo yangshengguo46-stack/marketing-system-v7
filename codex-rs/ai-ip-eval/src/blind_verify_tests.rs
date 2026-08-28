@@ -411,7 +411,12 @@ fn blind_envelope_rejects_missing_and_linked_fixed_paths() {
     fs::rename(&pair, &pair_backup).unwrap();
     fs::hard_link(&pair_backup, &pair).unwrap();
     let error = parse_pair_evidence(&snapshot).unwrap_err();
-    assert!(format!("{error:#}").contains("unsafe type, links, or permissions"));
+    let report = format!("{error:#}");
+    assert!(
+        report.contains("unsafe type, links, or permissions")
+            || report.contains("reparse point or hardlink"),
+        "{report}"
+    );
     assert_no_blind_outputs(&replay.private_root);
     fs::remove_file(&pair).unwrap();
     fs::rename(pair_backup, pair).unwrap();
