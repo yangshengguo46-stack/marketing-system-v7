@@ -59,6 +59,9 @@ mod blind_verify_semantics_tests;
 #[path = "blind_finalize_tests.rs"]
 mod blind_finalize_tests;
 
+#[path = "blind_bundle_tests.rs"]
+mod blind_bundle_tests;
+
 fn usage() -> TokenUsageBreakdown {
     TokenUsageBreakdown {
         total_tokens: 15,
