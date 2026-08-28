@@ -1082,7 +1082,14 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     write_owner_only_new(
         &coordinator.join("replay-pair-verification.json"),
         &verification,
+    )?;
+    crate::private_inventory::bootstrap_private_inventory(
+        &context.private_root,
+        &context.pair_id,
+        &sha256(&context_bytes),
+        &chrono::Utc::now().to_rfc3339(),
     )
+    .map(drop)
 }
 
 fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<()> {
@@ -2188,6 +2195,14 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
                 })
             },
         )
+        .and_then(|_| {
+            crate::private_inventory::bootstrap_private_inventory(
+                &frozen.context.private_root,
+                frozen.pair_id(),
+                frozen.sha256(),
+                &chrono::Utc::now().to_rfc3339(),
+            )
+        })
         .map(drop),
     }
 }
@@ -4031,7 +4046,78 @@ fn read_regular_file_no_follow(path: &Path) -> Result<Vec<u8>> {
 }
 
 #[cfg(unix)]
-fn open_anchored_regular(path: &Path) -> Result<File> {
+pub(crate) fn read_private_existing_no_follow(path: &Path) -> Result<Vec<u8>> {
+    read_handle(&open_anchored_regular(path)?)
+}
+#[cfg(unix)]
+pub(crate) fn validate_private_existing_directory_no_follow(path: &Path) -> Result<()> {
+    open_anchored(path, true).map(drop)
+}
+#[cfg(windows)]
+mod private_existing_windows {
+    use super::*;
+    use std::io::Read;
+    use std::os::windows::fs::OpenOptionsExt;
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Foundation::HANDLE;
+    use windows_sys::Win32::Storage::FileSystem::*;
+    fn info(file: &File, directory: bool) -> Result<BY_HANDLE_FILE_INFORMATION> {
+        let mut info = unsafe { std::mem::zeroed() };
+        if unsafe { GetFileInformationByHandle(file.as_raw_handle() as HANDLE, &mut info) } == 0
+            || info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+            || (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0) != directory
+            || !directory && info.nNumberOfLinks != 1
+        {
+            bail!("private tree entry is a reparse point, hardlink, or wrong type");
+        }
+        Ok(info)
+    }
+    fn open(path: &Path, directory: bool) -> Result<(File, BY_HANDLE_FILE_INFORMATION)> {
+        if !path.is_absolute() || path.components().any(|component| {
+            matches!(component, std::path::Component::Normal(name) if name.to_string_lossy().contains(':'))
+                || matches!(component, std::path::Component::CurDir | std::path::Component::ParentDir)
+        }) { bail!("private tree path is not normalized"); }
+        let mut options = OpenOptions::new();
+        let access = directory
+            .then_some(FILE_READ_ATTRIBUTES)
+            .unwrap_or(FILE_GENERIC_READ);
+        options
+            .access_mode(access)
+            .share_mode(FILE_SHARE_READ)
+            .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS);
+        let file = options.open(path)?;
+        let info = info(&file, directory)?;
+        Ok((file, info))
+    }
+    pub(super) fn validate_directory(path: &Path) -> Result<()> {
+        open(path, true).map(drop)
+    }
+    pub(super) fn read(path: &Path) -> Result<Vec<u8>> {
+        let (mut file, before) = open(path, false)?;
+        let before_len = file.metadata()?.len();
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes)?;
+        let after = info(&file, false)?;
+        let identity = |value: &BY_HANDLE_FILE_INFORMATION| {
+            (u128::from(value.dwVolumeSerialNumber) << 64)
+                | (u128::from(value.nFileIndexHigh) << 32)
+                | u128::from(value.nFileIndexLow)
+        };
+        if identity(&before) != identity(&after)
+            || before_len != file.metadata()?.len()
+            || before_len != u64::try_from(bytes.len())?
+        {
+            bail!("private tree file changed during retained read");
+        }
+        Ok(bytes)
+    }
+}
+#[cfg(windows)]
+pub(crate) use private_existing_windows::read as read_private_existing_no_follow;
+#[cfg(windows)]
+pub(crate) use private_existing_windows::validate_directory as validate_private_existing_directory_no_follow;
+#[cfg(unix)]
+fn open_anchored(path: &Path, directory: bool) -> Result<File> {
     use std::ffi::CString;
     use std::os::fd::AsRawFd;
     use std::os::fd::FromRawFd;
@@ -4067,10 +4153,11 @@ fn open_anchored_regular(path: &Path) -> Result<File> {
                 let flags = libc::O_RDONLY
                     | libc::O_CLOEXEC
                     | libc::O_NOFOLLOW
-                    | if final_component {
-                        0
-                    } else {
+                    | libc::O_NONBLOCK
+                    | if !final_component || directory {
                         libc::O_DIRECTORY
+                    } else {
+                        0
                     };
                 let fd = unsafe { libc::openat(current.as_raw_fd(), name.as_ptr(), flags) };
                 if fd < 0 {
@@ -4083,12 +4170,18 @@ fn open_anchored_regular(path: &Path) -> Result<File> {
         }
     }
     let metadata = current.metadata()?;
-    if !metadata.is_file() || has_multiple_links(&metadata) {
-        bail!("anchored artifact is not a single-link regular file");
+    if directory && !metadata.is_dir()
+        || !directory && (!metadata.is_file() || has_multiple_links(&metadata))
+    {
+        bail!("anchored artifact has the wrong type or multiple links");
     }
     Ok(current)
 }
 
+#[cfg(unix)]
+fn open_anchored_regular(path: &Path) -> Result<File> {
+    open_anchored(path, false)
+}
 #[cfg(not(unix))]
 fn open_anchored_regular(_path: &Path) -> Result<File> {
     bail!("live artifact access requires descriptor-anchored Unix openat support")
