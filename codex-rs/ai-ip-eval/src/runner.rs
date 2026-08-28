@@ -192,6 +192,20 @@ struct VerifiedReplayReference {
     bytes: Vec<u8>,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct ReplayMaterialInput {
+    pub(crate) material_id: String,
+    pub(crate) relative_path: String,
+    pub(crate) sha256: String,
+    pub(crate) bytes: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+struct VerifiedReplayMaterial {
+    input: ReplayMaterialInput,
+    commitment: ArtifactCommitment,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct VerifiedReplayFrozenContext {
     canonical_path: PathBuf,
@@ -201,6 +215,7 @@ pub(crate) struct VerifiedReplayFrozenContext {
     context: ReplayFrozenContext,
     fixture_set: ArtifactCommitment,
     fixtures: BTreeMap<String, VerifiedReplayReference>,
+    materials: Vec<VerifiedReplayMaterial>,
     codex_binary: ArtifactCommitment,
     evaluator_binary: ArtifactCommitment,
     mission_case: codex_ai_ip_domain::HeldOutMissionCase,
@@ -220,7 +235,9 @@ pub(crate) struct ReplayFrozenInputProjection<'a> {
     pub(crate) private_root: &'a Path,
     pub(crate) pair_id: &'a str,
     pub(crate) fork_sha: &'a str,
+    pub(crate) fixture_set_sha256: &'a str,
     pub(crate) mission_case: &'a codex_ai_ip_domain::HeldOutMissionCase,
+    pub(crate) materials: Vec<ReplayMaterialInput>,
     pub(crate) attestation: &'a crate::ReplayReviewAttestation,
     pub(crate) materials_manifest_bytes: &'a [u8],
     pub(crate) prompt_bytes: &'a [u8],
@@ -247,7 +264,13 @@ impl VerifiedReplayFrozenContext {
             private_root: &self.context.private_root,
             pair_id: &self.context.pair_id,
             fork_sha: &self.context.fork_sha,
+            fixture_set_sha256: &self.fixture_set.sha256,
             mission_case: &self.mission_case,
+            materials: self
+                .materials
+                .iter()
+                .map(|material| material.input.clone())
+                .collect(),
             attestation: &self.attestation,
             materials_manifest_bytes: &self.materials_manifest_bytes,
             prompt_bytes: &self.prompt_bytes,
@@ -284,6 +307,16 @@ impl VerifiedReplayFrozenContext {
         for (name, fixture) in &self.fixtures {
             if fixture.commitment.read_verified()? != fixture.bytes {
                 bail!("verified replay fixture changed after verification: {name}");
+            }
+        }
+        for material in &self.materials {
+            let material_id = &material.input.material_id;
+            let bytes = material
+                .commitment
+                .read_verified()
+                .with_context(|| format!("reverify Replay material {material_id}"))?;
+            if bytes != material.input.bytes {
+                bail!("verified Replay material changed after verification: {material_id}");
             }
         }
         Ok(())
@@ -955,6 +988,16 @@ fn freeze_replay_context_inner(
     let mission: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(case_bytes).context("parse frozen replay case")?;
     mission.validate().context("validate frozen replay case")?;
+    let primary_fixture_paths = verified_fixtures
+        .values()
+        .map(|fixture| fixture.reference.path.clone())
+        .collect::<BTreeSet<_>>();
+    retain_replay_materials(
+        &mission,
+        &verified_fixtures["case"].reference.path,
+        &fixture_set_path,
+        &primary_fixture_paths,
+    )?;
     let attestation = FrozenContracts::load()?
         .validate_replay_attestation(&verified_fixtures["attestation"].bytes)?;
     if attestation.pair_id != pair_id
@@ -1329,6 +1372,17 @@ fn verify_retained_replay_frozen_context(
     mission_case
         .validate()
         .context("validate frozen replay case")?;
+    let primary_fixture_paths = context
+        .fixtures
+        .values()
+        .map(|reference| reference.path.clone())
+        .collect::<BTreeSet<_>>();
+    let materials = retain_replay_materials(
+        &mission_case,
+        &context.fixtures["case"].path,
+        &context.fixture_set_manifest.path,
+        &primary_fixture_paths,
+    )?;
     let attestation = contracts.validate_replay_attestation(&fixtures["attestation"].bytes)?;
     let materials_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
     if attestation.pair_id != context.pair_id
@@ -1365,6 +1419,7 @@ fn verify_retained_replay_frozen_context(
         context,
         fixture_set,
         fixtures,
+        materials,
         codex_binary,
         evaluator_binary,
         prompt_bytes,
@@ -1405,6 +1460,70 @@ fn retain_replay_reference(
         bail!("frozen replay {label} bytes or identity changed");
     }
     Ok(commitment)
+}
+
+fn retain_replay_materials(
+    mission: &codex_ai_ip_domain::HeldOutMissionCase,
+    case_path: &Path,
+    fixture_set_path: &Path,
+    primary_fixture_paths: &BTreeSet<PathBuf>,
+) -> Result<Vec<VerifiedReplayMaterial>> {
+    let material_root = case_path
+        .parent()
+        .context("frozen Replay case has no material root")?;
+    if material_root.canonicalize()? != material_root {
+        bail!("frozen Replay material root is not canonical");
+    }
+    let mut reserved = primary_fixture_paths.clone();
+    reserved.insert(fixture_set_path.to_path_buf());
+    let mut relative_paths = BTreeSet::new();
+    let mut retained = Vec::with_capacity(mission.materials.len());
+    for material in &mission.materials {
+        let relative = Path::new(&material.relative_path);
+        if !relative
+            .components()
+            .all(|component| matches!(component, std::path::Component::Normal(_)))
+        {
+            bail!("Replay material path is not a normalized relative path");
+        }
+        if !relative_paths.insert(material.relative_path.as_str()) {
+            bail!("Replay case declares a duplicate material path");
+        }
+        let supplied = material_root.join(relative);
+        if reserved.contains(&supplied) {
+            bail!("Replay material collides with a frozen Replay fixture");
+        }
+        let canonical = supplied
+            .canonicalize()
+            .with_context(|| format!("canonicalize Replay material {}", material.material_id))?;
+        if canonical != supplied || !canonical.starts_with(material_root) {
+            bail!("Replay material path traverses a link or escapes its root");
+        }
+        if reserved.contains(&canonical) {
+            bail!("Replay material collides with a frozen Replay fixture");
+        }
+        let commitment = ArtifactCommitment::freeze(&canonical)
+            .with_context(|| format!("retain Replay material {}", material.material_id))?;
+        let bytes = commitment
+            .read_verified()
+            .with_context(|| format!("read retained Replay material {}", material.material_id))?;
+        if commitment.sha256 != material.sha256 {
+            bail!(
+                "Replay material digest mismatch for {}",
+                material.material_id
+            );
+        }
+        retained.push(VerifiedReplayMaterial {
+            input: ReplayMaterialInput {
+                material_id: material.material_id.clone(),
+                relative_path: material.relative_path.clone(),
+                sha256: material.sha256.clone(),
+                bytes,
+            },
+            commitment,
+        });
+    }
+    Ok(retained)
 }
 
 fn read_verified_replay_reference(

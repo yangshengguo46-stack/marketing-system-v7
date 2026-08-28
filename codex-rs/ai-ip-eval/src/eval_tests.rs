@@ -616,6 +616,91 @@ fn assert_replay_request_fixture_digests(fixture_root: &std::path::Path) {
     }
 }
 
+fn resign_replay_fixture(fixture_root: &std::path::Path) {
+    let fixture_set_path = fixture_root.join("replay-fixture-set.json");
+    let mut fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(&fixture_set_path).unwrap()).unwrap();
+    let case_bytes = fs::read(fixture_root.join("replay-case.json")).unwrap();
+    let entries = fixture_set["fixtures"].as_array_mut().unwrap();
+    entries
+        .iter_mut()
+        .find(|entry| entry["name"] == "case")
+        .unwrap()["sha256"] = json!(test_sha256(&case_bytes));
+    let commitments = [
+        "case",
+        "genericRequest",
+        "candidateRequest",
+        "genericTranscript",
+        "candidateTranscript",
+        "leadSkill",
+    ]
+    .map(|name| {
+        let sha256 = entries.iter().find(|entry| entry["name"] == name).unwrap()["sha256"].clone();
+        json!({"name": name, "sha256": sha256})
+    });
+    let canonical = crate::jcs::canonicalize_value(&json!(commitments)).unwrap();
+    let mut hasher = Sha256::new();
+    hasher.update(b"AI-IP-REPLAY-PAIR-V2\0");
+    hasher.update(b"synthetic-replay-fork");
+    hasher.update(canonical);
+    let pair_id = format!("{:x}", hasher.finalize());
+    let attestation_path = fixture_root.join("replay-attestation.json");
+    let mut attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(&attestation_path).unwrap()).unwrap();
+    attestation["pairId"] = json!(pair_id);
+    attestation["caseSha256"] = json!(test_sha256(&case_bytes));
+    let typed_mission: HeldOutMissionCase = serde_json::from_slice(&case_bytes).unwrap();
+    attestation["sourceMaterialsSha256"] = json!(test_sha256(
+        &serde_json::to_vec(&typed_mission.materials).unwrap()
+    ));
+    let attestation_bytes = serde_json::to_vec_pretty(&attestation).unwrap();
+    fs::write(&attestation_path, &attestation_bytes).unwrap();
+    entries
+        .iter_mut()
+        .find(|entry| entry["name"] == "attestation")
+        .unwrap()["sha256"] = json!(test_sha256(&attestation_bytes));
+    fs::write(
+        fixture_set_path,
+        serde_json::to_vec_pretty(&fixture_set).unwrap(),
+    )
+    .unwrap();
+}
+
+fn replay_fixture_with_material() -> tempfile::TempDir {
+    let source_manifest =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let source_root = source_manifest.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let fixture_root = temp.path();
+    let fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(&source_manifest).unwrap()).unwrap();
+    for entry in fixture_set["fixtures"].as_array().unwrap() {
+        let path = entry["path"].as_str().unwrap();
+        fs::copy(source_root.join(path), fixture_root.join(path)).unwrap();
+    }
+    fs::copy(
+        &source_manifest,
+        fixture_root.join("replay-fixture-set.json"),
+    )
+    .unwrap();
+    let material_path = fixture_root.join("notes/evidence.txt");
+    fs::create_dir(material_path.parent().unwrap()).unwrap();
+    fs::write(&material_path, b"retained replay material\n").unwrap();
+    let case_path = fixture_root.join("replay-case.json");
+    let mut mission: serde_json::Value =
+        serde_json::from_slice(&fs::read(&case_path).unwrap()).unwrap();
+    mission["materials"] = json!([{
+        "materialId": "replay-evidence",
+        "relativePath": "notes/evidence.txt",
+        "sha256": test_sha256(b"retained replay material\n"),
+        "materialKind": "evidence"
+    }]);
+    let case_bytes = serde_json::to_vec_pretty(&mission).unwrap();
+    fs::write(&case_path, &case_bytes).unwrap();
+    resign_replay_fixture(fixture_root);
+    temp
+}
+
 fn prepare_replay_test_context(
     fixture_root: &std::path::Path,
 ) -> anyhow::Result<PreparedReplayTestContext> {
@@ -701,6 +786,85 @@ fn replay_pair_accepts_shared_verified_frozen_context() {
 }
 
 #[test]
+fn replay_pair_rejects_frozen_material_drift_before_coordinator_output() {
+    let fixture = replay_fixture_with_material();
+    let prepared = prepare_replay_test_context(fixture.path()).unwrap();
+    fs::write(fixture.path().join("notes/evidence.txt"), b"changed\n").unwrap();
+
+    let result = crate::run_replay_pair(crate::ReplayPairArgs {
+        frozen_run_context: prepared.frozen,
+    });
+
+    let error = result.expect_err("accepted a changed frozen Replay material");
+    assert!(format!("{error:#}").contains("material"));
+    assert!(!prepared.private_root.join("replay-coordinator").exists());
+}
+
+#[test]
+fn replay_material_freeze_rejects_invalid_files_and_declarations() {
+    for mutation in ["digest", "missing", "collision", "duplicate-path"] {
+        let fixture = replay_fixture_with_material();
+        let fixture_root = fixture.path();
+        let material_path = fixture_root.join("notes/evidence.txt");
+        match mutation {
+            "digest" => fs::write(&material_path, b"wrong digest\n").unwrap(),
+            "missing" => fs::remove_file(&material_path).unwrap(),
+            "collision" | "duplicate-path" => {
+                let case_path = fixture_root.join("replay-case.json");
+                let mut mission: serde_json::Value =
+                    serde_json::from_slice(&fs::read(&case_path).unwrap()).unwrap();
+                if mutation == "collision" {
+                    mission["materials"][0]["relativePath"] = json!("replay-transcript.jsonl");
+                    mission["materials"][0]["sha256"] = json!(test_sha256(
+                        &fs::read(fixture_root.join("replay-transcript.jsonl")).unwrap()
+                    ));
+                } else {
+                    let mut duplicate = mission["materials"][0].clone();
+                    duplicate["materialId"] = json!("duplicate-evidence");
+                    mission["materials"].as_array_mut().unwrap().push(duplicate);
+                }
+                fs::write(&case_path, serde_json::to_vec_pretty(&mission).unwrap()).unwrap();
+                resign_replay_fixture(fixture_root);
+            }
+            _ => unreachable!(),
+        }
+
+        let error = prepare_replay_test_context(fixture_root)
+            .err()
+            .expect("accepted an invalid Replay material");
+        let expected = match mutation {
+            "digest" => "digest mismatch",
+            "missing" => "canonicalize Replay material",
+            "collision" => "collides with a frozen Replay fixture",
+            "duplicate-path" => "duplicate material path",
+            _ => unreachable!(),
+        };
+        assert!(
+            format!("{error:#}").contains(expected),
+            "unexpected {mutation} error: {error:#}"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn replay_material_freeze_rejects_symlink_escape() {
+    use std::os::unix::fs::symlink;
+
+    let fixture = replay_fixture_with_material();
+    let material_path = fixture.path().join("notes/evidence.txt");
+    fs::remove_file(&material_path).unwrap();
+    let outside = tempfile::NamedTempFile::new().unwrap();
+    fs::write(outside.path(), b"retained replay material\n").unwrap();
+    symlink(outside.path(), &material_path).unwrap();
+
+    let error = prepare_replay_test_context(fixture.path())
+        .err()
+        .expect("accepted a Replay material path escape");
+    assert!(format!("{error:#}").contains("traverses a link or escapes"));
+}
+
+#[test]
 fn replay_verified_context_retains_inputs_and_rejects_drift() {
     let fixture_set =
         codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
@@ -714,6 +878,11 @@ fn replay_verified_context_retains_inputs_and_rejects_drift() {
     assert_eq!(projection.private_root, prepared.private_root);
     assert_eq!(projection.pair_id, prepared.frozen_json["pairId"]);
     assert_eq!(projection.fork_sha, "synthetic-replay-fork");
+    assert_eq!(
+        projection.fixture_set_sha256,
+        prepared.frozen_json["fixtureSetManifest"]["sha256"]
+    );
+    assert!(projection.materials.is_empty());
     assert_eq!(projection.materials_manifest_bytes, b"[]");
     assert_eq!(projection.attestation.reviewers.len(), 3);
     assert!(!projection.prompt_bytes.is_empty());
@@ -741,6 +910,33 @@ fn replay_verified_context_retains_inputs_and_rejects_drift() {
     assert!(verified.reverify_all().is_err());
 }
 
+#[test]
+fn replay_verified_context_projects_and_reverifies_materials() {
+    let fixture = replay_fixture_with_material();
+    let prepared = prepare_replay_test_context(fixture.path()).unwrap();
+    let raw = fs::read(&prepared.frozen).unwrap();
+    let verified = crate::runner::verify_replay_frozen_context(&prepared.frozen, &raw).unwrap();
+    let projection = verified.projection();
+    assert_eq!(
+        projection.fixture_set_sha256,
+        test_sha256(&fs::read(fixture.path().join("replay-fixture-set.json")).unwrap())
+    );
+    assert_eq!(
+        projection.materials,
+        vec![crate::runner::ReplayMaterialInput {
+            material_id: "replay-evidence".to_string(),
+            relative_path: "notes/evidence.txt".to_string(),
+            sha256: test_sha256(b"retained replay material\n"),
+            bytes: b"retained replay material\n".to_vec(),
+        }]
+    );
+    verified.reverify_all().unwrap();
+
+    fs::write(fixture.path().join("notes/evidence.txt"), b"changed\n").unwrap();
+    let error = verified.reverify_all().unwrap_err();
+    assert!(format!("{error:#}").contains("Replay material replay-evidence"));
+}
+
 fn replace_with_same_owner_only_bytes(path: &std::path::Path) {
     let path = path.canonicalize().unwrap();
     let bytes = fs::read(&path).unwrap();
@@ -766,6 +962,28 @@ fn frozen_context_identity_replacement_replay_is_rejected() {
         format!("{error:#}"),
         "reverify Replay frozen context identity: frozen context path identity changed after verification"
     );
+}
+
+#[test]
+fn replay_material_same_bytes_inode_replacement_is_rejected() {
+    let fixture = replay_fixture_with_material();
+    let prepared = prepare_replay_test_context(fixture.path()).unwrap();
+    let raw = fs::read(&prepared.frozen).unwrap();
+    let verified = crate::runner::verify_replay_frozen_context(&prepared.frozen, &raw).unwrap();
+    let material_path = fixture.path().join("notes/evidence.txt");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(
+            material_path.parent().unwrap(),
+            fs::Permissions::from_mode(0o700),
+        )
+        .unwrap();
+    }
+    replace_with_same_owner_only_bytes(&material_path);
+
+    let error = verified.reverify_all().unwrap_err();
+    assert!(format!("{error:#}").contains("Replay material replay-evidence"));
 }
 
 #[test]
