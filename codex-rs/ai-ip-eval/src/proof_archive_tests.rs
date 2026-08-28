@@ -7,6 +7,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Duration;
 
 const SIDECAR_KINDS: [(&str, &str); 7] = [
     ("notifications", "notifications.jsonl"),
@@ -19,6 +20,13 @@ const SIDECAR_KINDS: [(&str, &str); 7] = [
 ];
 
 struct ReplayArchiveRun {
+    _temp: tempfile::TempDir,
+    private_root: PathBuf,
+    mission: codex_ai_ip_domain::HeldOutMissionCase,
+    skill_bytes: Vec<u8>,
+}
+
+struct NativeArchiveRun {
     _temp: tempfile::TempDir,
     private_root: PathBuf,
     mission: codex_ai_ip_domain::HeldOutMissionCase,
@@ -66,6 +74,202 @@ fn execute_existing_frozen_replay_pair() -> anyhow::Result<ReplayArchiveRun> {
     })
 }
 
+fn execute_native_archive_pair() -> anyhow::Result<NativeArchiveRun> {
+    use serde_json::json;
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::Ordering;
+
+    let temp = tempfile::tempdir()?;
+    #[cfg(unix)]
+    fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o700))?;
+    let repository = temp.path().join("repo");
+    fs::create_dir(&repository)?;
+    fs::write(repository.join("source"), b"committed source\n")?;
+    fs::create_dir_all(repository.join("codex-rs/responses-api-proxy/src"))?;
+    fs::write(
+        repository.join("codex-rs/responses-api-proxy/src/broker.rs"),
+        b"// committed synthetic broker\n",
+    )?;
+    let git = |args: &[&str]| -> anyhow::Result<Vec<u8>> {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repository)
+            .args(args)
+            .output()?;
+        anyhow::ensure!(output.status.success(), "synthetic git command failed");
+        Ok(output.stdout)
+    };
+    git(&["init", "--quiet"])?;
+    git(&["add", "."])?;
+    git(&[
+        "-c",
+        "user.name=Synthetic",
+        "-c",
+        "user.email=synthetic@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "native archive",
+    ])?;
+    let head = String::from_utf8(git(&["rev-parse", "HEAD"])?)?
+        .trim()
+        .to_string();
+
+    let inputs = temp.path().join("inputs");
+    fs::create_dir(&inputs)?;
+    let private_root = temp.path().join("private");
+    fs::create_dir(&private_root)?;
+    #[cfg(unix)]
+    fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
+    let private_root = private_root.canonicalize()?;
+    let mission: codex_ai_ip_domain::HeldOutMissionCase = serde_json::from_value(json!({
+        "caseId": "native-archive-case",
+        "objective": "Produce one native archive pair",
+        "subjectKind": "brand",
+        "constraints": [],
+        "materials": []
+    }))?;
+    let case_bytes = serde_json::to_vec_pretty(&mission)?;
+    let materials_bytes = serde_json::to_vec(&mission.materials)?;
+    let case = inputs.join("case.json");
+    let materials = inputs.join("materials");
+    fs::write(&case, &case_bytes)?;
+    fs::create_dir(&materials)?;
+
+    let named_input = |name: &str, bytes: &[u8]| -> anyhow::Result<PathBuf> {
+        let path = inputs.join(name);
+        fs::write(&path, bytes)?;
+        #[cfg(unix)]
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
+        Ok(path)
+    };
+    let provider_budget = named_input("provider-budget.json", b"provider budget\n")?;
+    let rate_card = named_input("rate-card.json", b"rate card\n")?;
+    let billing_policy = named_input("billing-policy.json", b"billing policy\n")?;
+    let fx_policy = named_input("fx-policy.json", b"fx policy\n")?;
+    let skill = named_input("lead-skill.md", b"synthetic skill\n")?;
+    let mut attestation: Value =
+        serde_json::from_slice(&fs::read(codex_utils_cargo_bin::find_resource!(
+            "tests/fixtures/contracts/06a/canonical-native-attestation.json"
+        )?)?)?;
+    attestation["candidateSha"] = json!(head);
+    attestation["candidateFrozenAt"] = json!("2026-08-27T06:00:00Z");
+    attestation["caseSelectedAt"] = json!("2026-08-27T07:00:00Z");
+    attestation["caseSha256"] = json!(sha256(&case_bytes));
+    attestation["sourceMaterialsSha256"] = json!(sha256(&materials_bytes));
+    attestation["privateRoot"] = json!(private_root.canonicalize()?);
+    attestation["providerRole"] = json!("approvedReference");
+    attestation["approvedTotalFen"] = json!(0);
+    attestation["approvedPerRunFen"] = json!(0);
+    attestation["maxProviderRequestAttemptsPerRun"] = json!(2);
+    attestation["maxTotalTokensPerRun"] = json!(10);
+    attestation["maxElapsedSecondsPerRun"] = json!(180);
+    attestation["maxOutputTokensPerRequest"] = json!(17);
+    attestation["signedAt"] = json!("2026-08-27T08:00:00Z");
+    attestation["retentionDeadline"] = json!("2099-09-04T08:00:00Z");
+    attestation["rateEffectiveAt"] = json!("2026-08-27T00:00:00Z");
+    for (field, path) in [
+        ("providerBudgetEvidenceSha256", &provider_budget),
+        ("rateCardSha256", &rate_card),
+        ("billingPolicyCommitment", &billing_policy),
+        ("fxPolicySha256", &fx_policy),
+    ] {
+        attestation[field] = json!(sha256(&fs::read(path)?));
+    }
+    for (index, reviewer) in attestation["reviewers"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .enumerate()
+    {
+        reviewer["declaredAt"] = json!(format!("2026-08-27T07:2{index}:00Z"));
+        let mut payload = reviewer.clone();
+        payload
+            .as_object_mut()
+            .unwrap()
+            .remove("signedPayloadSha256");
+        payload
+            .as_object_mut()
+            .unwrap()
+            .remove("signatureEvidenceSha256");
+        reviewer["signedPayloadSha256"] = json!(
+            crate::jcs::commitment(
+                b"AI-IP-REVIEWER-QUALIFICATION-V1\0",
+                &serde_json::to_vec(&payload)?,
+            )?
+            .sha256
+        );
+    }
+    let attestation_path = named_input(
+        "attestation.json",
+        &serde_json::to_vec_pretty(&attestation)?,
+    )?;
+
+    let mock_codex = temp.path().join("native-mock-app-server-test-harness");
+    fs::copy(std::env::current_exe()?, &mock_codex)?;
+    #[cfg(unix)]
+    fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700))?;
+    let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
+    let upstream_addr = upstream.server_addr().to_ip().unwrap();
+    let stop = Arc::new(AtomicBool::new(false));
+    let worker_stop = stop.clone();
+    let worker = std::thread::spawn(move || {
+        let mut index = 0_u64;
+        while !worker_stop.load(Ordering::SeqCst) {
+            let Some(request) = upstream.recv_timeout(Duration::from_millis(100)).unwrap() else {
+                continue;
+            };
+            let body = format!(
+                "data: {{\"type\":\"response.completed\",\"response\":{{\"id\":\"archive-response-{index}\",\"model\":\"mock-revision\",\"usage\":{{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}}}}\n\n"
+            );
+            request
+                .respond(tiny_http::Response::from_string(body).with_header(
+                    tiny_http::Header::from_bytes("content-type", "text/event-stream").unwrap(),
+                ))
+                .unwrap();
+            index += 1;
+        }
+    });
+    let frozen = private_root.join("frozen-run-context.json");
+    crate::freeze_live_context(crate::model::LiveFreezeArgs {
+        repo_root: repository.clone(),
+        evidence_repo_root: repository,
+        fork_sha: head,
+        private_root: private_root.clone(),
+        codex_bin: mock_codex,
+        case,
+        material_root: materials,
+        attestation: attestation_path,
+        provider_budget_evidence: provider_budget,
+        rate_card,
+        billing_policy,
+        fx_policy,
+        lead_skill: skill.clone(),
+        model_label: "local-mock".to_string(),
+        provider_label: "local-mock".to_string(),
+        provider_role: crate::ProviderRole::ApprovedReference,
+        provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
+        authorized_total_cost_fen: 0,
+        authorized_per_run_cost_fen: 0,
+        max_provider_request_attempts_per_run: 2,
+        max_total_tokens_per_run: 10,
+        max_elapsed_seconds_per_run: 180,
+        max_output_tokens_per_request: 17,
+        output: frozen.clone(),
+    })?;
+    let result = crate::run_local_mock_pair(&frozen);
+    stop.store(true, Ordering::SeqCst);
+    worker.join().unwrap();
+    result?;
+    Ok(NativeArchiveRun {
+        _temp: temp,
+        private_root,
+        mission,
+        skill_bytes: fs::read(skill)?,
+    })
+}
+
 fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", sha2::Sha256::digest(bytes))
 }
@@ -80,6 +284,85 @@ fn manifest_path(root: &Path, ordinal: u8) -> PathBuf {
 
 fn index_path(root: &Path, ordinal: u8) -> PathBuf {
     coordinator(root).join(format!("run-{ordinal}-postprocess-index.json"))
+}
+
+fn coordinator_for(root: &Path, mode: crate::ExecutionMode) -> PathBuf {
+    root.join(if mode == crate::ExecutionMode::Replay {
+        "replay-coordinator"
+    } else {
+        "coordinator"
+    })
+}
+
+fn manifest_path_for(root: &Path, mode: crate::ExecutionMode, ordinal: u8) -> PathBuf {
+    coordinator_for(root, mode).join(format!("run-{ordinal}-manifest.json"))
+}
+
+fn retire_run_one_archive(
+    root: &Path,
+    mode: crate::ExecutionMode,
+) -> anyhow::Result<tempfile::TempDir> {
+    let retired = tempfile::tempdir()?;
+    let coordinator = coordinator_for(root, mode);
+    for leaf in std::iter::once("manifest.json")
+        .chain(std::iter::once("postprocess-index.json"))
+        .chain(SIDECAR_KINDS.map(|(_, leaf)| leaf))
+    {
+        fs::rename(
+            coordinator.join(format!("run-1-{leaf}")),
+            retired.path().join(leaf),
+        )?;
+    }
+    Ok(retired)
+}
+
+fn verify_sequential_run_two_after_retiring_run_one(
+    root: &Path,
+    mode: crate::ExecutionMode,
+    mission: &codex_ai_ip_domain::HeldOutMissionCase,
+    skill_bytes: &[u8],
+) -> anyhow::Result<(
+    crate::proof_archive::VerifiedPostprocessSummary,
+    crate::proof_archive::VerifiedPostprocessSummary,
+)> {
+    let run_one: crate::RunManifest =
+        serde_json::from_slice(&fs::read(manifest_path_for(root, mode, 1))?)?;
+    let run_two: crate::RunManifest =
+        serde_json::from_slice(&fs::read(manifest_path_for(root, mode, 2))?)?;
+    let first = crate::proof_archive::verify_postprocess_archive_summary(
+        root,
+        &run_one,
+        mission,
+        skill_bytes,
+    )?;
+    let expected_first_end = run_one.provider_request_attempt_count;
+    assert_eq!(first.broker_global_attempt_start_inclusive, 0);
+    assert_eq!(
+        first.broker_global_attempt_end_exclusive,
+        expected_first_end
+    );
+    let _retired = retire_run_one_archive(root, mode)?;
+    let second = crate::proof_archive::verify_sequential_postprocess_archive_summary(
+        root,
+        &run_two,
+        mission,
+        skill_bytes,
+        &first,
+    )?;
+    let expected_second_start = if mode == crate::ExecutionMode::Replay {
+        0
+    } else {
+        expected_first_end
+    };
+    assert_eq!(
+        second.broker_global_attempt_start_inclusive,
+        expected_second_start
+    );
+    assert_eq!(
+        second.broker_global_attempt_end_exclusive,
+        expected_second_start + run_two.provider_request_attempt_count
+    );
+    Ok((first, second))
 }
 
 fn raw_archive_is_bound(root: &Path, ordinal: u8) -> anyhow::Result<Value> {
@@ -229,6 +512,8 @@ fn postprocess_summary_returns_the_complete_same_pass_recomputation() {
             evidence_sha256: None,
         },
         normalized_base_catalog_sha256: manifest.normalized_base_catalog_sha256.clone(),
+        broker_global_attempt_start_inclusive: 0,
+        broker_global_attempt_end_exclusive: 0,
     };
     assert_eq!(
         crate::proof_archive::verify_postprocess_archive_summary(
@@ -240,6 +525,85 @@ fn postprocess_summary_returns_the_complete_same_pass_recomputation() {
         .unwrap(),
         expected
     );
+}
+
+#[test]
+fn sequential_replay_archive_summary_never_reopens_run_one() {
+    let run = execute_existing_frozen_replay_pair().unwrap();
+    verify_sequential_run_two_after_retiring_run_one(
+        &run.private_root,
+        crate::ExecutionMode::Replay,
+        &run.mission,
+        &run.skill_bytes,
+    )
+    .unwrap();
+}
+
+#[test]
+fn sequential_native_archive_summary_never_reopens_run_one() {
+    let run = execute_native_archive_pair().unwrap();
+    verify_sequential_run_two_after_retiring_run_one(
+        &run.private_root,
+        crate::ExecutionMode::Mock,
+        &run.mission,
+        &run.skill_bytes,
+    )
+    .unwrap();
+}
+
+#[test]
+fn sequential_archive_summary_rejects_untrusted_prior_identity_and_ranges() {
+    let run = execute_existing_frozen_replay_pair().unwrap();
+    let run_one: crate::RunManifest = serde_json::from_slice(
+        &fs::read(manifest_path_for(
+            &run.private_root,
+            crate::ExecutionMode::Replay,
+            1,
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let run_two: crate::RunManifest = serde_json::from_slice(
+        &fs::read(manifest_path_for(
+            &run.private_root,
+            crate::ExecutionMode::Replay,
+            2,
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let baseline = crate::proof_archive::verify_postprocess_archive_summary(
+        &run.private_root,
+        &run_one,
+        &run.mission,
+        &run.skill_bytes,
+    )
+    .unwrap();
+    for mutation in ["pair", "ordinal", "condition", "source", "start", "end"] {
+        let mut prior = baseline.clone();
+        match mutation {
+            "pair" => prior.index.pair_id = "wrong-pair".to_string(),
+            "ordinal" => prior.index.run_ordinal = 2,
+            "condition" => prior.index.condition = run_two.condition,
+            "source" => prior.index.evidence_source = crate::ArchiveEvidenceSource::NativeRecorded,
+            "start" => prior.broker_global_attempt_start_inclusive = 1,
+            "end" => prior.broker_global_attempt_end_exclusive = 1,
+            _ => unreachable!(),
+        }
+        let error = crate::proof_archive::verify_sequential_postprocess_archive_summary(
+            &run.private_root,
+            &run_two,
+            &run.mission,
+            &run.skill_bytes,
+            &prior,
+        )
+        .unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "prior summary identity does not authorize the sequential attempt range",
+            "wrong rejection for {mutation}"
+        );
+    }
 }
 
 #[test]

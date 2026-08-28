@@ -73,6 +73,8 @@ pub(crate) struct VerifiedPostprocessSummary {
     pub(crate) tree_closed: bool,
     pub(crate) skill_use: crate::SkillUseOutcome,
     pub(crate) normalized_base_catalog_sha256: String,
+    pub(crate) broker_global_attempt_start_inclusive: u64,
+    pub(crate) broker_global_attempt_end_exclusive: u64,
 }
 
 impl CatalogRootsSidecar {
@@ -116,6 +118,57 @@ pub(crate) fn verify_postprocess_archive_summary(
     mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
     skill_bytes: &[u8],
 ) -> Result<VerifiedPostprocessSummary> {
+    let expected_attempt_start =
+        expected_attempt_start(private_root, manifest, mission_case, skill_bytes)?;
+    verify_postprocess_archive_summary_at(
+        private_root,
+        manifest,
+        mission_case,
+        skill_bytes,
+        expected_attempt_start,
+    )
+}
+
+pub(crate) fn verify_sequential_postprocess_archive_summary(
+    private_root: &Path,
+    manifest: &RunManifest,
+    mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
+    skill_bytes: &[u8],
+    prior: &VerifiedPostprocessSummary,
+) -> Result<VerifiedPostprocessSummary> {
+    manifest.validate_execution_mode()?;
+    let expected_source = evidence_source(manifest.execution_mode);
+    if manifest.run_ordinal != 2
+        || prior.index.pair_id != manifest.pair_id
+        || prior.index.run_ordinal != 1
+        || prior.index.condition == manifest.condition
+        || prior.index.evidence_source != expected_source
+        || prior.broker_global_attempt_start_inclusive != 0
+        || manifest.execution_mode == ExecutionMode::Replay
+            && prior.broker_global_attempt_end_exclusive != 0
+    {
+        bail!("prior summary identity does not authorize the sequential attempt range");
+    }
+    let expected_attempt_start = match manifest.execution_mode {
+        ExecutionMode::Replay => 0,
+        ExecutionMode::Mock | ExecutionMode::Live => prior.broker_global_attempt_end_exclusive,
+    };
+    verify_postprocess_archive_summary_at(
+        private_root,
+        manifest,
+        mission_case,
+        skill_bytes,
+        expected_attempt_start,
+    )
+}
+
+fn verify_postprocess_archive_summary_at(
+    private_root: &Path,
+    manifest: &RunManifest,
+    mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
+    skill_bytes: &[u8],
+    expected_attempt_start: u64,
+) -> Result<VerifiedPostprocessSummary> {
     manifest.validate_execution_mode()?;
     let coordinator = match manifest.execution_mode {
         ExecutionMode::Replay => Path::new("replay-coordinator"),
@@ -134,10 +187,7 @@ pub(crate) fn verify_postprocess_archive_summary(
     if index_bytes != crate::jcs::canonicalize_value(&serde_json::to_value(&index)?)? {
         bail!("postprocess index is not exact canonical typed JSON");
     }
-    let expected_source = match manifest.execution_mode {
-        ExecutionMode::Replay => ArchiveEvidenceSource::ReplaySynthetic,
-        ExecutionMode::Mock | ExecutionMode::Live => ArchiveEvidenceSource::NativeRecorded,
-    };
+    let expected_source = evidence_source(manifest.execution_mode);
     if index.schema_version != 1
         || index.pair_id != manifest.pair_id
         || index.run_ordinal != manifest.run_ordinal
@@ -165,22 +215,22 @@ pub(crate) fn verify_postprocess_archive_summary(
         bytes.push(current);
     }
     verify_semantics(
-        private_root,
         manifest,
         mission_case,
         skill_bytes,
         &bytes,
         index,
+        expected_attempt_start,
     )
 }
 
 fn verify_semantics(
-    private_root: &Path,
     manifest: &RunManifest,
     mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
     skill_bytes: &[u8],
     bytes: &[Vec<u8>],
     index: ArmPostprocessIndex,
+    expected_attempt_start: u64,
 ) -> Result<VerifiedPostprocessSummary> {
     let notifications = crate::evidence::parse_notification_archive(&bytes[0])?;
     if sha256(&bytes[0]) != manifest.app_server_transcript_sha256 {
@@ -311,8 +361,6 @@ fn verify_semantics(
     } else {
         u64::try_from(completions.len())?
     };
-    let expected_attempt_start =
-        expected_attempt_start(private_root, manifest, mission_case, skill_bytes)?;
     let expected_attempt_end = expected_attempt_start
         .checked_add(manifest.provider_request_attempt_count)
         .context("postprocess attempt range overflow")?;
@@ -346,7 +394,16 @@ fn verify_semantics(
         tree_closed: tree.tree_closed,
         skill_use: skill,
         normalized_base_catalog_sha256,
+        broker_global_attempt_start_inclusive: broker.global_attempt_start_inclusive,
+        broker_global_attempt_end_exclusive: broker.global_attempt_end_exclusive,
     })
+}
+
+fn evidence_source(mode: ExecutionMode) -> ArchiveEvidenceSource {
+    match mode {
+        ExecutionMode::Replay => ArchiveEvidenceSource::ReplaySynthetic,
+        ExecutionMode::Mock | ExecutionMode::Live => ArchiveEvidenceSource::NativeRecorded,
+    }
 }
 
 fn expected_attempt_start(
