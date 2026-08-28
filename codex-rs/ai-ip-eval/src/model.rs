@@ -377,6 +377,14 @@ pub struct RunManifest {
 
 impl RunManifest {
     pub fn validate_execution_mode(&self) -> anyhow::Result<()> {
+        if self.postprocess_evidence_index_sha256.len() != 64
+            || !self
+                .postprocess_evidence_index_sha256
+                .bytes()
+                .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+        {
+            bail!("postprocess evidence index commitment must be lowercase SHA-256 hex");
+        }
         let matches = matches!(
             (self.execution_mode, &self.mode_evidence),
             (ExecutionMode::Replay, ModeEvidence::Replay { .. })

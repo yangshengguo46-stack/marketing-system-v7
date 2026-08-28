@@ -469,6 +469,7 @@ fn run_manifest_rejects_cross_mode_and_replay_is_never_g2_eligible() {
         "appServerTranscriptSha256": "v",
         "brokerAttemptLedgerSha256": "w",
         "attemptIndexRootSha256": "x",
+        "postprocessEvidenceIndexSha256": "0".repeat(64),
         "contentPackageSha256": "y",
         "rootThreadId": "root-thread",
         "rootTurnId": "root-turn",
@@ -514,6 +515,25 @@ fn run_manifest_rejects_cross_mode_and_replay_is_never_g2_eligible() {
     let mut top_level_role = manifest_json.clone();
     top_level_role["providerRole"] = json!("targetVolcengine");
     assert!(serde_json::from_value::<crate::RunManifest>(top_level_role).is_err());
+
+    let mut uppercase_postprocess_commitment = manifest_json.clone();
+    uppercase_postprocess_commitment["postprocessEvidenceIndexSha256"] = json!("A".repeat(64));
+    let uppercase_postprocess_commitment: crate::RunManifest =
+        serde_json::from_value(uppercase_postprocess_commitment).unwrap();
+    assert!(
+        uppercase_postprocess_commitment
+            .validate_execution_mode()
+            .is_err()
+    );
+
+    let mut missing_postprocess_commitment = manifest_json.clone();
+    missing_postprocess_commitment
+        .as_object_mut()
+        .unwrap()
+        .remove("postprocessEvidenceIndexSha256");
+    assert!(
+        serde_json::from_value::<crate::RunManifest>(missing_postprocess_commitment).is_err()
+    );
 
     let mut replay_with_live_field = manifest_json;
     replay_with_live_field["modeEvidence"]["approvalCommitment"] = json!("forbidden");

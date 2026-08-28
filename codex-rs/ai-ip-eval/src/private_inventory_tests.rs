@@ -139,8 +139,13 @@ fn replay_pair_creates_a_complete_hash_chained_private_inventory() {
         .map(|record| record.relative_path.clone())
         .collect();
     assert_eq!(paths, actual_paths(&private_root));
+    let (appended_verification, bootstrap_records) = records.split_last().unwrap();
+    assert_eq!(
+        appended_verification.relative_path,
+        "replay-coordinator/replay-pair-verification.json"
+    );
     assert!(
-        records
+        bootstrap_records
             .windows(2)
             .all(|pair| pair[0].relative_path < pair[1].relative_path)
     );
