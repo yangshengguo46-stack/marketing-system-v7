@@ -46,8 +46,8 @@ fn assert_no_blind_outputs(private_root: &Path) {
 }
 
 fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
-    let error = crate::blind::run_blind_pack(args).unwrap_err();
-    assert_eq!(error.to_string(), "BlindBundleStageNotInstalled");
+    let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
+    crate::blind::verify_blind_pair_stage(&args, &snapshot).unwrap();
     assert_no_blind_outputs(private_root);
 }
 

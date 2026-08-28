@@ -853,6 +853,15 @@ written; it may not discover and bless whatever bytes happen to exist at the rec
 Use an exact one-entry checked batch or an equivalent expected-SHA single append. The success/fault
 tests must include receipt replacement in the post-create/pre-inventory hook.
 
+**Post-format Task 6D success-test split (2026-08-29):** required workspace formatting expands the
+complete real-CLI oracle enough that combining it with the 368-line sibling transaction test would
+exceed the 800-changed-line review ceiling. Commit the sibling Replay/Native transaction,
+compatibility-success, exact prepared-byte, receipt, inventory, and semantic-mutation tests first as
+`test(ai-ip-eval): verify bound blind review transactions`; then commit the real binary exact-tree,
+source-byte, mapping/bundle/receipt, privacy, inventory-chain, rerun, and cross-root determinism
+oracle as `test(ai-ip-eval): verify bound blind review CLI contract`. No success assertion moves to
+Task 6E, and both commits remain independently below 800 changed lines.
+
 The exact Task 6 wire and bytes are frozen as follows:
 
 ```rust

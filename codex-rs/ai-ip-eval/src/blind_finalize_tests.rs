@@ -91,20 +91,22 @@ fn treatment_marker_scan_is_recursive_case_insensitive_and_committed() {
 }
 
 #[test]
-fn real_replay_pair_reaches_bundle_stage_without_outputs() {
+fn real_replay_pair_reaches_verified_blind_pair_without_outputs() {
     let fixture = replay_fixture_with_material();
     let replay = run_frozen_replay_pair_from(fixture.path()).unwrap();
-    let error = crate::blind::run_blind_pack(replay_args(&replay.private_root)).unwrap_err();
-    assert_eq!(error.to_string(), "BlindBundleStageNotInstalled");
+    let args = replay_args(&replay.private_root);
+    let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
+    crate::blind::verify_blind_pair_stage(&args, &snapshot).unwrap();
     assert_no_outputs(&replay.private_root);
 }
 
 #[test]
-fn real_native_pair_reaches_bundle_stage_without_outputs() {
+fn real_native_pair_reaches_verified_blind_pair_without_outputs() {
     let (native, core) = native_core();
     drop(core);
-    let error = crate::blind::run_blind_pack(native_args(&native.live_root)).unwrap_err();
-    assert_eq!(error.to_string(), "BlindBundleStageNotInstalled");
+    let args = native_args(&native.live_root);
+    let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
+    crate::blind::verify_blind_pair_stage(&args, &snapshot).unwrap();
     assert_no_outputs(&native.live_root);
 }
 
