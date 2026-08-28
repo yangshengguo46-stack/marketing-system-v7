@@ -416,6 +416,20 @@ Expected: static schema behavior is frozen; no later CLI becomes implemented or 
 - Consumes: canonical privateRoot from frozen context and existing owner-only file semantics.
 - Produces: safe contained create/read/fsync APIs, `PairMarker`, append-only `InventoryRecord`, bootstrap enumeration, and final inventory-root commitment.
 
+**Review-boundary amendment (2026-08-28):** The qualified Task 3 RED proved
+the missing marker/inventory behavior, but the complete cross-platform safe
+filesystem plus inventory draft cannot fit the global 800-line review boundary
+without deleting required checks. Preserve the exact functional scope and execute
+it as two dependency-ordered commits with independent specification and quality
+reviews. Task 3A owns only `secure_fs.rs`, `secure_fs_tests.rs`, the `lib.rs`
+module seam, and this plan amendment; its commit is
+`feat(ai-ip-eval): add contained private filesystem`. Task 3B begins only after
+3A is Ready Yes and owns `private_inventory.rs`,
+`private_inventory_tests.rs`, the narrow `runner.rs` hook and `lib.rs` wiring;
+its commit remains `feat(ai-ip-eval): add private proof inventory`. Each commit
+must independently remain below 800 changed lines, each new production module
+below 500 lines, and Task 4 remains blocked until 3B is Ready Yes.
+
 - [ ] **Step 1: Write runtime RED filesystem and inventory tests**
 
 Use test-local filesystem operations and the existing evaluator binary; assert the current code accepts no secure inventory workflow and produces no marker. The tests compile without new production symbols by exercising `replay-pair`, then inspecting its actual private tree:
@@ -452,17 +466,33 @@ pub(crate) fn fsync_directory(path: &Path) -> Result<()>;
 
 Reject absolute/parent/prefix components, symlink/reparse components, junctions, and multi-link files. Unix creates `0700/0600` and uses no-follow descriptor-relative operations. Windows opens with `FILE_FLAG_OPEN_REPARSE_POINT`, rejects reparse/hardlink identity, and applies/verifies a current-user-only protected DACL before returning. Add `#[cfg(windows)]` tests for inherited broad ACL, junction/reparse, and hardlink rejection; macOS tests cover mode, symlink, hardlink, containment, and `create_new`.
 
+- [ ] **Step 3A: Verify and review the contained filesystem commit**
+
+Run the secure-filesystem focused tests plus the evaluator regression, lock and
+scope checks, then final format/fix. Commit only the Task 3A boundary:
+
+```bash
+just test -p codex-ai-ip-eval -E 'test(secure_fs_)'
+just test -p codex-ai-ip-eval
+git add docs/superpowers/plans/2026-08-28-06a-blind-review-and-score.md \
+  codex-rs/ai-ip-eval/src/secure_fs.rs \
+  codex-rs/ai-ip-eval/src/secure_fs_tests.rs codex-rs/ai-ip-eval/src/lib.rs
+git commit -m "feat(ai-ip-eval): add contained private filesystem"
+```
+
+Fresh specification and quality reviews must return Ready Yes before restoring
+or implementing Task 3B inventory changes.
+
 - [ ] **Step 4: Freeze and bootstrap the exact inventory wire**
 
 `pair-marker.json` is exact `{schemaVersion,pairId,frozenRunContextSha256,privateRoot,inventoryRelativePath,createdAt}`. `private-inventory.jsonl` records `{schemaVersion,sequence,relativePath,kind,sha256|null,previousRecordSha256}`. The inventory file itself is the one reserved path excluded from ordinary records and from `actual_private_tree_paths_without_inventory()`; it is committed by `inventoryRootSha256 = SHA-256(exact complete JSONL bytes)` rather than by an impossible self-record. On initial pair sealing, enumerate the complete existing privateRoot tree with no-follow reads, excluding only the inventory file, and record every file/directory plus the marker. Every later append verifies the prior chain, writes one LF line with append+fsync, fsyncs coordinator, and returns the new exact-file root. Paths are privateRoot-relative only. A receipt's `inventoryRootSha256` denotes the verified prefix immediately before the receipt's own record; verifiers then validate the receipt record and recompute the later final root, avoiding a receipt/inventory cycle.
 
-- [ ] **Step 5: Run GREEN, regression, commit**
+- [ ] **Step 5: Run inventory GREEN, regression, commit Task 3B**
 
 ```bash
 just test -p codex-ai-ip-eval -E 'test(replay_pair_creates_a_complete_hash_chained_private_inventory) | test(private_inventory_rejects_path_and_chain_tamper)'
 just test -p codex-ai-ip-eval
-git add codex-rs/ai-ip-eval/src/secure_fs.rs codex-rs/ai-ip-eval/src/secure_fs_tests.rs \
-  codex-rs/ai-ip-eval/src/private_inventory.rs \
+git add codex-rs/ai-ip-eval/src/private_inventory.rs \
   codex-rs/ai-ip-eval/src/private_inventory_tests.rs \
   codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/src/runner.rs
 git commit -m "feat(ai-ip-eval): add private proof inventory"

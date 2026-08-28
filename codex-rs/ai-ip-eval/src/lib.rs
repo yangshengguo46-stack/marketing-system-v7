@@ -8,6 +8,8 @@ mod evidence;
 mod jcs;
 mod model;
 mod runner;
+#[allow(dead_code)] // Consumed by the independently reviewed Task 3B inventory stage.
+mod secure_fs;
 
 pub use app_server::AppServerClient;
 pub use app_server::AppServerHandshake;
@@ -116,6 +118,10 @@ mod contracts_tests;
 #[cfg(test)]
 #[path = "jcs_tests.rs"]
 mod jcs_tests;
+
+#[cfg(test)]
+#[path = "secure_fs_tests.rs"]
+mod secure_fs_tests;
 
 #[cfg(test)]
 #[path = "app_server_tests.rs"]
