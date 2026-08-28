@@ -1,5 +1,10 @@
 load("//:defs.bzl", "codex_rust_crate")
 
+filegroup(
+    name = "ai-ip-eval-unit-test-fixtures",
+    srcs = glob(["tests/fixtures/**"]),
+)
+
 codex_rust_crate(
     name = "ai-ip-eval",
     compile_data = glob(["tests/fixtures/blind/treatment-markers.json"]) + [
@@ -8,6 +13,7 @@ codex_rust_crate(
     ],
     crate_name = "codex_ai_ip_eval",
     test_data_extra = [
+        ":ai-ip-eval-unit-test-fixtures",
         "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",
