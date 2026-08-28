@@ -45,7 +45,7 @@ fn assert_no_blind_outputs(private_root: &Path) {
     }
 }
 
-pub(super) fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
+fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
     let error = crate::blind::run_blind_pack(args).unwrap_err();
     assert_eq!(error.to_string(), "BlindPairFinalizationStageNotInstalled");
     assert_no_blind_outputs(private_root);

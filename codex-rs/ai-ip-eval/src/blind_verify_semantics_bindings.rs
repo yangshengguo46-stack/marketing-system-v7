@@ -57,12 +57,20 @@ pub(super) struct ContentBinding {
     pub(super) max_attempts: u64,
     pub(super) max_total_tokens: u64,
     max_elapsed_seconds: u64,
+    replay_request_parity: Option<PairRequestParity>,
 }
 
 pub(super) fn content_binding(inputs: &FrozenInputToken) -> Result<ContentBinding> {
     match inputs {
         FrozenInputToken::Replay(verified) => {
             let source = verified.projection();
+            let homes = crate::IsolatedHomes {
+                generic_home: source.private_root.join("replay-generic-home"),
+                generic_codex_home: source.private_root.join("replay-generic-home/.codex"),
+                candidate_home: source.private_root.join("replay-candidate-home"),
+                candidate_codex_home: source.private_root.join("replay-candidate-home/.codex"),
+            };
+            let request_parity = replay_request_parity(verified, &homes)?;
             Ok(ContentBinding {
                 mode: ExecutionMode::Replay,
                 private_root: source.private_root.to_path_buf(),
@@ -100,6 +108,7 @@ pub(super) fn content_binding(inputs: &FrozenInputToken) -> Result<ContentBindin
                 max_attempts: source.max_provider_request_attempts,
                 max_total_tokens: source.max_total_tokens,
                 max_elapsed_seconds: source.max_elapsed_seconds,
+                replay_request_parity: Some(request_parity),
             })
         }
         FrozenInputToken::Native { frozen, content } => {
@@ -141,9 +150,40 @@ pub(super) fn content_binding(inputs: &FrozenInputToken) -> Result<ContentBindin
                 max_attempts: source.max_provider_request_attempts,
                 max_total_tokens: source.max_total_tokens_per_run,
                 max_elapsed_seconds: source.max_elapsed_seconds_per_run,
+                replay_request_parity: None,
             })
         }
     }
+}
+
+fn replay_request_parity(
+    verified: &crate::runner::VerifiedReplayFrozenContext,
+    homes: &crate::IsolatedHomes,
+) -> Result<PairRequestParity> {
+    let generic =
+        crate::runner::canonicalize_replay_request(verified, EvaluationCondition::Generic, homes)?;
+    let candidate = crate::runner::canonicalize_replay_request(
+        verified,
+        EvaluationCondition::Candidate,
+        homes,
+    )?;
+    if generic.normalized_base_commitment != candidate.normalized_base_commitment
+        || generic.treatment_diff_commitment.is_some()
+    {
+        bail!("retained Replay requests differ outside the canonical Skill treatment");
+    }
+    let treatment = candidate
+        .treatment_diff_commitment
+        .context("retained Replay candidate request has no Skill treatment")?;
+    Ok(PairRequestParity {
+        candidate_normalized_commitment: digest_hex(candidate.normalized_sha256),
+        candidate_raw_commitment: digest_hex(candidate.raw_sha256),
+        candidate_treatment_diff_commitment: digest_hex(treatment),
+        generic_normalized_commitment: digest_hex(generic.normalized_sha256),
+        generic_raw_commitment: digest_hex(generic.raw_sha256),
+        normalized_base_commitment: digest_hex(generic.normalized_base_commitment),
+        schema_version: 1,
+    })
 }
 
 fn exact_reviewers(reviewers: &[ReviewerDeclaration]) -> Result<[ReviewerDeclaration; 3]> {
@@ -188,6 +228,18 @@ pub(super) fn verify_manifest_bindings(
         if manifest.native_skill_sha256 != expected_skill {
             bail!("run manifest Skill treatment differs from the assigned condition");
         }
+        if content.mode == ExecutionMode::Replay
+            && (manifest.provider_request_attempt_count != 0
+                || manifest.provider_completed_response_count != 0
+                || manifest.broker_attempt_ledger_sha256 != sha256(b"replay:no-broker-ledger")
+                || manifest.attempt_index_root_sha256 != sha256(b"replay:no-provider-attempts")
+                || manifest.usage_scope != "completeTypedReplayTranscript"
+                || manifest.actual_model_revision != "replay-fixture-recording"
+                || manifest.deployment_or_fingerprint_commitment.is_some()
+                || manifest.elapsed_ms != 0)
+        {
+            bail!("Replay manifest violates provider-not-run semantics");
+        }
         match (&manifest.mode_evidence, content.mode) {
             (ModeEvidence::Replay { fixture_set_sha256 }, ExecutionMode::Replay)
                 if Some(fixture_set_sha256) == content.fixture_set_sha.as_ref() => {}
@@ -224,6 +276,7 @@ pub(super) fn verify_execution_and_pair(
     pair: &PairVerification,
     arms: &[super::ExactDocument<RunManifest>; 2],
 ) -> Result<()> {
+    verify_deterministic_shared_config(content, execution, arms)?;
     match (execution, pair) {
         (ExecutionContext::Replay(_), PairVerification::Replay(pair)) => {
             if pair.candidate_skill_sha256 != sha256(&content.skill_bytes)
@@ -231,6 +284,9 @@ pub(super) fn verify_execution_and_pair(
                     != arms[0].typed.normalized_base_catalog_sha256
             {
                 bail!("Replay semantic envelopes differ from verified C1 inputs");
+            }
+            if content.replay_request_parity.as_ref() != Some(&pair.request_parity) {
+                bail!("Replay request commitments differ from retained frozen fixtures");
             }
             verify_request_parity(&pair.request_parity, arms)?;
         }
@@ -250,6 +306,30 @@ pub(super) fn verify_execution_and_pair(
     Ok(())
 }
 
+fn verify_deterministic_shared_config(
+    content: &ContentBinding,
+    execution: &ExecutionContext,
+    arms: &[super::ExactDocument<RunManifest>; 2],
+) -> Result<()> {
+    let broker_port = match execution {
+        ExecutionContext::Replay(_) => 1,
+        ExecutionContext::Native(context) => context.broker.port,
+    };
+    let expected = crate::build_shared_config(&content.model_label, broker_port)?;
+    let expected_sha = sha256(&expected.bytes);
+    if arms
+        .iter()
+        .any(|arm| arm.typed.shared_config_sha256 != expected_sha)
+        || matches!(
+            execution,
+            ExecutionContext::Native(context) if context.shared_config_sha256 != expected_sha
+        )
+    {
+        bail!("shared config bytes differ from deterministic producer config");
+    }
+    Ok(())
+}
+
 fn verify_native_execution(
     content: &ContentBinding,
     execution: &NativeExecutionContext,
@@ -261,14 +341,13 @@ fn verify_native_execution(
             content.max_elapsed_seconds,
         )?))
         .context("native execution deadline overflow")?;
-    let path = std::env::var("PATH").context("read current PATH for sealed execution")?;
     if execution.model_label != content.model_label
         || execution.max_output_tokens_per_request != content.max_output_tokens
         || execution.max_provider_request_attempts_per_run != content.max_attempts
         || execution.max_total_tokens_per_run != content.max_total_tokens
         || execution.max_elapsed_seconds_per_run != content.max_elapsed_seconds
         || execution.shared_config_sha256 != arms[0].typed.shared_config_sha256
-        || execution.path_sha256 != sha256(path.as_bytes())
+        || !is_lower_sha256(&execution.path_sha256)
         || execution.generic_home != content.private_root.join("generic-home")
         || execution.generic_codex_home != content.private_root.join("generic-home/.codex")
         || execution.candidate_home != content.private_root.join("candidate-home")
@@ -328,4 +407,15 @@ fn verify_request_parity(
 
 fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn digest_hex(digest: [u8; 32]) -> String {
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn is_lower_sha256(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
 }

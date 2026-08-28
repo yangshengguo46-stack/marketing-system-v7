@@ -1190,18 +1190,10 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
 
     let (homes, candidate_skill_path, replay_config) =
         prepare_replay_homes(&context.private_root, skill_bytes)?;
-    let generic_request = canonicalize_replay_request(
-        &verified,
-        EvaluationCondition::Generic,
-        &homes,
-        REPLAY_GENERIC_REQUEST_THREAD_ID,
-    )?;
-    let candidate_request = canonicalize_replay_request(
-        &verified,
-        EvaluationCondition::Candidate,
-        &homes,
-        REPLAY_CANDIDATE_REQUEST_THREAD_ID,
-    )?;
+    let generic_request =
+        canonicalize_replay_request(&verified, EvaluationCondition::Generic, &homes)?;
+    let candidate_request =
+        canonicalize_replay_request(&verified, EvaluationCondition::Candidate, &homes)?;
     let request_verification =
         build_pair_request_verification(&generic_request, &candidate_request)?;
     let coordinator = context.private_root.join("replay-coordinator");
@@ -1667,22 +1659,23 @@ pub(crate) fn read_replay_reference_with_hook(
     Ok(bytes)
 }
 
-fn canonicalize_replay_request(
+pub(crate) fn canonicalize_replay_request(
     verified: &VerifiedReplayFrozenContext,
     condition: EvaluationCondition,
     homes: &IsolatedHomes,
-    committed_thread_id: &str,
 ) -> Result<codex_responses_api_proxy::TransformedRequestEvidence> {
-    let (fixture_name, token, codex_home) = match condition {
+    let (fixture_name, token, codex_home, committed_thread_id) = match condition {
         EvaluationCondition::Generic => (
             "genericRequest",
             "$GENERIC_CODEX_HOME",
             &homes.generic_codex_home,
+            REPLAY_GENERIC_REQUEST_THREAD_ID,
         ),
         EvaluationCondition::Candidate => (
             "candidateRequest",
             "$CANDIDATE_CODEX_HOME",
             &homes.candidate_codex_home,
+            REPLAY_CANDIDATE_REQUEST_THREAD_ID,
         ),
     };
     let mut body: serde_json::Value = serde_json::from_slice(verified.fixture_bytes(fixture_name)?)

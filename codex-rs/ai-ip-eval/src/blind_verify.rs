@@ -85,6 +85,18 @@ pub(crate) fn verify_pair_evidence_core(
     semantics::verify_parsed_pair_evidence(parse_pair_evidence(snapshot)?)
 }
 
+#[cfg(test)]
+pub(crate) fn verify_with_native_path_commitment_for_test(
+    mut parsed: ParsedPairEvidence,
+    path_sha256: String,
+) -> Result<PairEvidenceCore> {
+    let ExecutionContext::Native(context) = &mut parsed.execution_context.typed else {
+        bail!("test seam requires Native execution context");
+    };
+    context.path_sha256 = path_sha256;
+    semantics::verify_parsed_pair_evidence(parsed)
+}
+
 pub(crate) fn parse_pair_evidence(snapshot: &FrozenContextSnapshot) -> Result<ParsedPairEvidence> {
     let inputs = snapshot.verified_inputs()?;
     let binding = PairBinding::from_snapshot(snapshot, &inputs)?;
