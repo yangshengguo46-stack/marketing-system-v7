@@ -21,6 +21,8 @@ pub(crate) struct VerifiedLedgerArm {
     pub(crate) provider_completed_response_count: u64,
     pub(crate) raw_response_count: u64,
     pub(crate) usage: Usage,
+    pub(crate) attempt_index_prefix_sha256: String,
+    pub(crate) attempt_index_prefix_root_sha256: String,
     pub(crate) run_manifest_sha256: String,
 }
 
@@ -89,6 +91,8 @@ pub(crate) fn derive_native_attempt_ledger(
             provider_completed_response_count: parsed_arm.attempt_count,
             raw_response_count: parsed_arm.attempt_count,
             usage,
+            attempt_index_prefix_sha256: parsed_arm.attempt_index_prefix_sha256.clone(),
+            attempt_index_prefix_root_sha256: parsed_arm.attempt_index_prefix_root_sha256.clone(),
             run_manifest_sha256: bound.raw_sha256.to_string(),
         });
     }

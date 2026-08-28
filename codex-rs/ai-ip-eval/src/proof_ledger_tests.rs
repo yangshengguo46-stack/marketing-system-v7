@@ -18,6 +18,7 @@ use sha2::Digest;
 use sha2::Sha256;
 
 use crate::ArmActivation;
+use crate::ArmReceipt;
 use crate::BrokerGateConfig;
 use crate::BrokerRuntimeConfig;
 use crate::EvaluationCondition;
@@ -25,6 +26,7 @@ use crate::ExecutionMode;
 use crate::MockProviderMode;
 use crate::ModeEvidence;
 use crate::PairCoordinator;
+use crate::PairReceipt;
 use crate::ProofBrokerCompatibilityName;
 use crate::RunManifest;
 use crate::Usage;
@@ -37,8 +39,11 @@ use crate::proof_ledger::RequestRecord;
 use crate::proof_ledger::TerminalRecord;
 use crate::proof_ledger::VerifiedAttemptLedger;
 use crate::proof_ledger::VerifiedLedgerArm;
+use crate::proof_ledger::VerifiedNativeLedger;
 use crate::proof_ledger::derive_native_attempt_ledger;
 use crate::proof_ledger::parse_native_attempt_ledger;
+use crate::proof_ledger::verify_native_proof_ledger;
+use crate::proof_ledger::verify_replay_proof_ledger_absence;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const FROZEN_SHA: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -324,6 +329,23 @@ fn expected_parsed(fixture: &ProducerFixture) -> ParsedAttemptLedger {
     }
     let arm = |index: usize, start: u64| {
         let attempt_count = fixture.attempts_per_arm[index];
+        let prefix_end = usize::try_from((start + attempt_count) * 2).unwrap();
+        let prefix = format!(
+            "{}\n",
+            lines[..prefix_end]
+                .iter()
+                .map(|line| std::str::from_utf8(line).unwrap())
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+        let mut prefix_root = [0_u8; 32];
+        for line in &lines[..prefix_end] {
+            let leaf = Sha256::digest(line);
+            let mut hasher = Sha256::new();
+            hasher.update(prefix_root);
+            hasher.update(leaf);
+            prefix_root = hasher.finalize().into();
+        }
         let attempts = (start..start + attempt_count)
             .map(|global| {
                 let request_index = usize::try_from(global * 2).unwrap();
@@ -340,6 +362,11 @@ fn expected_parsed(fixture: &ProducerFixture) -> ParsedAttemptLedger {
             global_start_inclusive: start,
             global_end_exclusive: start + attempt_count,
             attempt_count,
+            attempt_index_prefix_sha256: sha256(prefix.as_bytes()),
+            attempt_index_prefix_root_sha256: prefix_root
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect(),
             attempts,
         }
     };
@@ -433,9 +460,290 @@ fn expected_verified(fixture: &ProducerFixture) -> VerifiedAttemptLedger {
                 provider_completed_response_count: arm.attempt_count,
                 raw_response_count: arm.attempt_count,
                 usage: manifest.usage.clone(),
+                attempt_index_prefix_sha256: arm.attempt_index_prefix_sha256.clone(),
+                attempt_index_prefix_root_sha256: arm.attempt_index_prefix_root_sha256.clone(),
                 run_manifest_sha256: fixture.manifest_sha256[index].clone(),
             }
         }),
+    }
+}
+
+fn read_receipt<T: serde::de::DeserializeOwned>(fixture: &ProducerFixture, leaf: &str) -> T {
+    serde_json::from_slice(
+        &std::fs::read(fixture.root.join("coordinator/receipts").join(leaf)).unwrap(),
+    )
+    .unwrap()
+}
+
+fn rewrite_receipt<T: serde::Serialize>(
+    fixture: &ProducerFixture,
+    leaf: &str,
+    receipt: &T,
+) -> String {
+    let mut raw = serde_json::to_vec(receipt).unwrap();
+    raw.push(b'\n');
+    std::fs::write(fixture.root.join("coordinator/receipts").join(leaf), &raw).unwrap();
+    sha256(&raw)
+}
+
+fn expected_native(fixture: &ProducerFixture) -> VerifiedNativeLedger {
+    let mut first: ArmReceipt = read_receipt(fixture, "arm-1-receipt.json");
+    let mut second: ArmReceipt = read_receipt(fixture, "arm-2-receipt.json");
+    let first_raw =
+        std::fs::read(fixture.root.join("coordinator/receipts/arm-1-receipt.json")).unwrap();
+    let second_raw =
+        std::fs::read(fixture.root.join("coordinator/receipts/arm-2-receipt.json")).unwrap();
+    first.receipt_sha256 = sha256(&first_raw);
+    second.receipt_sha256 = sha256(&second_raw);
+    let pair_raw =
+        std::fs::read(fixture.root.join("coordinator/receipts/pair-receipt.json")).unwrap();
+    VerifiedNativeLedger {
+        attempt_ledger: expected_verified(fixture),
+        arm_receipts: [first, second],
+        pair_receipt: serde_json::from_slice(&pair_raw).unwrap(),
+        pair_receipt_sha256: sha256(&pair_raw),
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ReceiptAttack {
+    ArmTwoPrefix,
+    ArmRange,
+    ArmCount,
+    ArmOrder,
+    FirstPrevious,
+    SecondPrevious,
+    ArmManifest,
+    ArmTimestampFormat,
+    ArmTimestampOrder,
+    PairArmSwap,
+    PairManifest,
+    PairTotal,
+    PairFailure,
+    PairOrder,
+    PairRoot,
+    PairTimestampFormat,
+    PairTimestampOrder,
+}
+
+fn apply_receipt_attack(fixture: &ProducerFixture, attack: ReceiptAttack) {
+    let mut first: ArmReceipt = read_receipt(fixture, "arm-1-receipt.json");
+    let mut second: ArmReceipt = read_receipt(fixture, "arm-2-receipt.json");
+    let mut pair: PairReceipt = read_receipt(fixture, "pair-receipt.json");
+    let forged = "f".repeat(64);
+    match attack {
+        ReceiptAttack::ArmTwoPrefix => {
+            second.attempt_index_file_sha256 = first.attempt_index_file_sha256.clone();
+            second.attempt_index_merkle_root = first.attempt_index_merkle_root.clone();
+        }
+        ReceiptAttack::ArmRange => first.global_attempt_end_exclusive += 1,
+        ReceiptAttack::ArmCount => first.completion_count += 1,
+        ReceiptAttack::ArmOrder => first.second_condition = first.first_condition,
+        ReceiptAttack::FirstPrevious => first.previous_arm_receipt_sha256 = Some(forged),
+        ReceiptAttack::SecondPrevious => second.previous_arm_receipt_sha256 = None,
+        ReceiptAttack::ArmManifest => {
+            first.run_manifest_sha256 = Some(forged.clone());
+            pair.first_run_manifest_sha256 = Some(forged);
+        }
+        ReceiptAttack::ArmTimestampFormat => first.sealed_at = "2026-08-28T12:00:00Z".to_string(),
+        ReceiptAttack::ArmTimestampOrder => {
+            first.sealed_at = "2099-08-28T12:00:00.000Z".to_string()
+        }
+        ReceiptAttack::PairArmSwap => {}
+        ReceiptAttack::PairManifest => pair.first_run_manifest_sha256 = Some(forged),
+        ReceiptAttack::PairTotal => pair.total_attempt_count += 1,
+        ReceiptAttack::PairFailure => pair.total_failure_count = 1,
+        ReceiptAttack::PairOrder => pair.arm_order_commitment = forged,
+        ReceiptAttack::PairRoot => pair.final_attempt_index_root = forged,
+        ReceiptAttack::PairTimestampFormat => pair.finished_at = "2026-08-28T12:00:00Z".to_string(),
+        ReceiptAttack::PairTimestampOrder => {
+            pair.finished_at = "2000-08-28T12:00:00.000Z".to_string()
+        }
+    }
+    let first_sha256 = rewrite_receipt(fixture, "arm-1-receipt.json", &first);
+    if !matches!(attack, ReceiptAttack::SecondPrevious) {
+        second.previous_arm_receipt_sha256 = Some(first_sha256.clone());
+    }
+    let second_sha256 = rewrite_receipt(fixture, "arm-2-receipt.json", &second);
+    if matches!(attack, ReceiptAttack::PairArmSwap) {
+        pair.first_arm_receipt_sha256 = second_sha256;
+        pair.second_arm_receipt_sha256 = first_sha256;
+    } else {
+        pair.first_arm_receipt_sha256 = first_sha256;
+        pair.second_arm_receipt_sha256 = second_sha256;
+    }
+    rewrite_receipt(fixture, "pair-receipt.json", &pair);
+}
+
+#[test]
+fn proof_ledger_receipt_rejects_resigned_arm_one_prefix_full_confusion() {
+    let fixture = producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let expected_core = expected_verified(&fixture);
+    let mut first: ArmReceipt = read_receipt(&fixture, "arm-1-receipt.json");
+    let mut second: ArmReceipt = read_receipt(&fixture, "arm-2-receipt.json");
+    let mut pair: PairReceipt = read_receipt(&fixture, "pair-receipt.json");
+
+    first.attempt_index_file_sha256 = expected_core.attempt_index_sha256.clone();
+    first.attempt_index_merkle_root = expected_core.attempt_index_root_sha256.clone();
+    let first_sha256 = rewrite_receipt(&fixture, "arm-1-receipt.json", &first);
+    second.previous_arm_receipt_sha256 = Some(first_sha256.clone());
+    let second_sha256 = rewrite_receipt(&fixture, "arm-2-receipt.json", &second);
+    pair.first_arm_receipt_sha256 = first_sha256;
+    pair.second_arm_receipt_sha256 = second_sha256;
+    rewrite_receipt(&fixture, "pair-receipt.json", &pair);
+
+    assert_eq!(
+        derive_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+        expected_core,
+        "receipt-only re-signing changed the B1b verified core"
+    );
+    let error = verify_native_proof_ledger(&fixture.root, &fixture.binding()).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("arm receipt ledger snapshot is invalid"),
+        "prefix/full confusion reached the wrong receipt rule: {error:#}"
+    );
+}
+
+#[test]
+fn proof_ledger_receipt_real_producer_orders_deep_equal_complete_native_core() {
+    for (first, second) in [
+        (EvaluationCondition::Generic, EvaluationCondition::Candidate),
+        (EvaluationCondition::Candidate, EvaluationCondition::Generic),
+    ] {
+        let fixture = producer_fixture(first, second);
+        assert_eq!(
+            verify_native_proof_ledger(&fixture.root, &fixture.binding()).unwrap(),
+            expected_native(&fixture)
+        );
+    }
+}
+
+#[test]
+fn proof_ledger_receipt_rejects_resigned_semantic_matrix() {
+    for (attack, intended_error) in [
+        (ReceiptAttack::ArmTwoPrefix, "arm receipt ledger snapshot"),
+        (ReceiptAttack::ArmRange, "arm receipt attempt accounting"),
+        (ReceiptAttack::ArmCount, "arm receipt attempt accounting"),
+        (ReceiptAttack::ArmOrder, "arm receipt order"),
+        (ReceiptAttack::FirstPrevious, "arm receipt previous link"),
+        (ReceiptAttack::SecondPrevious, "arm receipt previous link"),
+        (ReceiptAttack::ArmManifest, "arm receipt run manifest link"),
+        (
+            ReceiptAttack::ArmTimestampFormat,
+            "receipt timestamp format",
+        ),
+        (ReceiptAttack::ArmTimestampOrder, "receipt timestamp order"),
+        (ReceiptAttack::PairArmSwap, "pair receipt arm links"),
+        (ReceiptAttack::PairManifest, "pair receipt manifest links"),
+        (ReceiptAttack::PairTotal, "pair receipt totals"),
+        (ReceiptAttack::PairFailure, "pair receipt totals"),
+        (ReceiptAttack::PairOrder, "pair receipt order"),
+        (ReceiptAttack::PairRoot, "pair receipt final root"),
+        (
+            ReceiptAttack::PairTimestampFormat,
+            "receipt timestamp format",
+        ),
+        (ReceiptAttack::PairTimestampOrder, "receipt timestamp order"),
+    ] {
+        let fixture =
+            producer_fixture(EvaluationCondition::Candidate, EvaluationCondition::Generic);
+        let expected_core = expected_verified(&fixture);
+        apply_receipt_attack(&fixture, attack);
+        assert_eq!(
+            derive_native_attempt_ledger(&fixture.root, &fixture.binding()).unwrap(),
+            expected_core,
+            "{attack:?} changed the B1b verified core"
+        );
+        let error = verify_native_proof_ledger(&fixture.root, &fixture.binding()).unwrap_err();
+        assert!(
+            error.to_string().contains(intended_error),
+            "{attack:?} reached the wrong rule: {error:#}"
+        );
+    }
+}
+
+#[test]
+fn proof_ledger_receipt_rejects_exact_encoding_and_framing_mutations() {
+    for (case, intended_error) in [
+        ("whitespace", "exact compact typed JSON"),
+        ("unknown", "exact compact typed JSON"),
+        ("duplicate", "parse receipt JSON"),
+        ("missing-lf", "receipt framing"),
+        ("extra-lf", "receipt framing"),
+    ] {
+        let fixture =
+            producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+        let path = fixture.root.join("coordinator/receipts/arm-1-receipt.json");
+        let mut raw = std::fs::read(&path).unwrap();
+        match case {
+            "whitespace" => raw.insert(0, b' '),
+            "unknown" => {
+                raw.splice(
+                    raw.len() - 2..raw.len() - 2,
+                    b",\"unknown\":true".iter().copied(),
+                );
+            }
+            "duplicate" => {
+                raw.splice(1..1, b"\"schemaVersion\":1,".iter().copied());
+            }
+            "missing-lf" => {
+                raw.pop();
+            }
+            "extra-lf" => raw.push(b'\n'),
+            _ => unreachable!(),
+        }
+        std::fs::write(path, raw).unwrap();
+        let error = verify_native_proof_ledger(&fixture.root, &fixture.binding()).unwrap_err();
+        assert!(
+            error.to_string().contains(intended_error),
+            "{case} reached the wrong receipt rule: {error:#}"
+        );
+    }
+}
+
+#[test]
+fn proof_ledger_receipt_rejects_poison_before_native_receipt_use() {
+    let fixture = producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    let poison = fixture.root.join("coordinator/receipts/poison.json");
+    crate::secure_fs::write_owner_only_new(&poison, b"poison").unwrap();
+    let error = verify_native_proof_ledger(&fixture.root, &fixture.binding()).unwrap_err();
+    assert!(
+        error.to_string().contains("poison receipt is present"),
+        "poison coexistence reached the wrong rule: {error:#}"
+    );
+}
+
+#[test]
+fn proof_ledger_receipt_replay_requires_ledger_and_entire_receipts_path_absent() {
+    let fixture = producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+    std::fs::remove_file(fixture.root.join("coordinator/attempt-index.jsonl")).unwrap();
+    std::fs::remove_dir_all(fixture.root.join("coordinator/receipts")).unwrap();
+    verify_replay_proof_ledger_absence(&fixture.root).unwrap();
+
+    for artifact in ["ledger", "receipts"] {
+        let fixture =
+            producer_fixture(EvaluationCondition::Generic, EvaluationCondition::Candidate);
+        std::fs::remove_file(fixture.root.join("coordinator/attempt-index.jsonl")).unwrap();
+        std::fs::remove_dir_all(fixture.root.join("coordinator/receipts")).unwrap();
+        if artifact == "ledger" {
+            crate::secure_fs::write_owner_only_new(
+                &fixture.root.join("coordinator/attempt-index.jsonl"),
+                b"present",
+            )
+            .unwrap();
+        } else {
+            crate::secure_fs::create_owner_only_dir_new(&fixture.root.join("coordinator/receipts"))
+                .unwrap();
+        }
+        let error = verify_replay_proof_ledger_absence(&fixture.root).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("replay native proof artifact is present"),
+            "{artifact} presence reached the wrong replay rule: {error:#}"
+        );
     }
 }
 

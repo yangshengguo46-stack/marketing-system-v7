@@ -23,6 +23,15 @@ pub(crate) use semantics::VerifiedLedgerArm;
 #[allow(unused_imports)]
 pub(crate) use semantics::derive_native_attempt_ledger;
 
+#[path = "proof_ledger_receipts.rs"]
+mod receipts;
+#[allow(unused_imports)]
+pub(crate) use receipts::VerifiedNativeLedger;
+#[allow(unused_imports)]
+pub(crate) use receipts::verify_native_proof_ledger;
+#[allow(unused_imports)]
+pub(crate) use receipts::verify_replay_proof_ledger_absence;
+
 const ATTEMPT_SCHEMA: &[u8] =
     include_bytes!("../../../ai-ip-evals/schemas/attempt-index.schema.json");
 const LEDGER: &str = "coordinator/attempt-index.jsonl";
@@ -52,6 +61,8 @@ pub(crate) struct ParsedLedgerArm {
     pub(crate) global_start_inclusive: u64,
     pub(crate) global_end_exclusive: u64,
     pub(crate) attempt_count: u64,
+    pub(crate) attempt_index_prefix_sha256: String,
+    pub(crate) attempt_index_prefix_root_sha256: String,
     pub(crate) attempts: Vec<ParsedAttempt>,
 }
 
@@ -234,6 +245,8 @@ fn derive_arms(ledger: &[u8], binding: &NativeLedgerBinding<'_>) -> Result<Parse
             global_start_inclusive: start,
             global_end_exclusive: end,
             attempt_count: count,
+            attempt_index_prefix_sha256: prefix_sha256,
+            attempt_index_prefix_root_sha256: prefix_root,
             attempts,
         });
     }
