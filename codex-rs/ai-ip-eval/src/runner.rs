@@ -4317,6 +4317,34 @@ struct ArtifactCommitment {
     handle: Arc<File>,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct RetainedFrozenContextFile {
+    commitment: ArtifactCommitment,
+    raw_bytes: Vec<u8>,
+}
+
+impl RetainedFrozenContextFile {
+    pub(crate) fn retain(path: &Path) -> Result<Self> {
+        let (commitment, raw_bytes) = ArtifactCommitment::freeze_context(path)?;
+        Ok(Self {
+            commitment,
+            raw_bytes,
+        })
+    }
+
+    pub(crate) fn raw_bytes(&self) -> &[u8] {
+        &self.raw_bytes
+    }
+
+    pub(crate) fn sha256(&self) -> &str {
+        &self.commitment.sha256
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.commitment.verify_context_bytes(&self.raw_bytes)
+    }
+}
+
 /// Named byte commitments revalidated at coordinator boundaries.
 ///
 /// Callers use explicit semantic names (source, materials, binaries, config,

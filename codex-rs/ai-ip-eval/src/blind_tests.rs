@@ -471,7 +471,7 @@ fn frozen_context_snapshot_retains_exact_bytes_digest_and_placeholder_input() {
         crate::blind::verify_blind_pair_stage(&args, &initial)
             .unwrap_err()
             .to_string(),
-        "Replay frozen context differs from its retained file handle"
+        "reverify retained blind-pack frozen context identity"
     );
     assert_no_outputs(&private_root);
 }

@@ -3,6 +3,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use pretty_assertions::assert_eq;
+use serde_json::json;
 
 use super::*;
 use crate::blind::FrozenInputToken;
@@ -48,6 +49,99 @@ fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
     let error = crate::blind::run_blind_pack(args).unwrap_err();
     assert_eq!(error.to_string(), "PairEvidenceCoreStageNotInstalled");
     assert_no_blind_outputs(private_root);
+}
+
+fn replace_with_same_owner_only_bytes(path: &Path) {
+    let path = path.canonicalize().unwrap();
+    let bytes = fs::read(&path).unwrap();
+    let replacement = path.with_extension("blind-replacement");
+    let displaced = path
+        .parent()
+        .and_then(Path::parent)
+        .unwrap()
+        .join("blind-displaced-frozen-context.json");
+    crate::secure_fs::write_owner_only_new(&replacement, &bytes).unwrap();
+    fs::rename(&path, displaced).unwrap();
+    fs::rename(replacement, path).unwrap();
+}
+
+#[test]
+fn blind_snapshot_rejects_same_bytes_new_inode_before_pair_verification() {
+    let replay = run_frozen_replay_pair().unwrap();
+    let args = replay_blind_args(&replay.private_root);
+    let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
+    replace_with_same_owner_only_bytes(&args.frozen_run_context);
+
+    let error = crate::blind::verify_blind_pair_stage(&args, &snapshot).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "reverify retained blind-pack frozen context identity"
+    );
+    assert_no_blind_outputs(&replay.private_root);
+}
+
+fn rebuild_native_inventory(private_root: &Path) {
+    let private_root = private_root.canonicalize().unwrap();
+    for relative in [
+        "coordinator/pair-marker.json",
+        "coordinator/private-inventory.jsonl",
+    ] {
+        fs::remove_file(private_root.join(relative)).unwrap();
+    }
+    let frozen = fs::read(private_root.join("frozen-run-context.json")).unwrap();
+    let context: serde_json::Value = serde_json::from_slice(&frozen).unwrap();
+    crate::private_inventory::bootstrap_private_inventory(
+        &private_root,
+        context["pairId"].as_str().unwrap(),
+        &test_sha256(&frozen),
+        "2026-08-29T00:00:00Z",
+    )
+    .unwrap();
+}
+
+#[test]
+fn blind_native_pair_rejects_fully_resigned_live_manifest_mode() {
+    let native = run_native_mock_pair_with_marker(None, 10);
+    native.result.as_ref().unwrap();
+    let coordinator = native.live_root.join("coordinator");
+    let manifest_path = coordinator.join("run-1-manifest.json");
+    let mut manifest: crate::RunManifest =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest.execution_mode = crate::ExecutionMode::Live;
+    manifest.mode_evidence = crate::ModeEvidence::Live {
+        attestation_sha256: "1".repeat(64),
+        provider_budget_evidence_sha256: "2".repeat(64),
+        approval_commitment: "3".repeat(64),
+        provider_endpoint_commitment: "4".repeat(64),
+        provider_role: crate::ProviderRole::ApprovedReference,
+        arm_order_commitment: "5".repeat(64),
+        rate_card_sha256: "6".repeat(64),
+        billing_policy_sha256: "7".repeat(64),
+        fx_policy_sha256: None,
+        authorized_pair_cost_fen: 0,
+        retention_deadline: "2026-08-29T01:00:00Z".to_string(),
+    };
+    let manifest_bytes = serde_json::to_vec_pretty(&manifest).unwrap();
+    fs::write(&manifest_path, &manifest_bytes).unwrap();
+    let pair_path = coordinator.join("pair-verification.json");
+    let mut pair: serde_json::Value =
+        serde_json::from_slice(&fs::read(&pair_path).unwrap()).unwrap();
+    let link = match manifest.condition {
+        crate::EvaluationCondition::Generic => "genericRunManifestSha256",
+        crate::EvaluationCondition::Candidate => "candidateRunManifestSha256",
+    };
+    pair[link] = json!(test_sha256(&manifest_bytes));
+    fs::write(&pair_path, serde_json::to_vec_pretty(&pair).unwrap()).unwrap();
+    rebuild_native_inventory(&native.live_root);
+
+    let args = native_blind_args(&native.live_root);
+    let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
+    let error = parse_pair_evidence(&snapshot).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "run manifest mode differs from verified C1 producer mode"
+    );
+    assert_no_blind_outputs(&native.live_root);
 }
 
 #[test]
@@ -111,5 +205,26 @@ fn blind_pair_parser_retains_exact_real_replay_and_native_envelopes() {
     ] {
         assert_eq!(document, &fs::read(path).unwrap());
     }
+    for (ordinal, arm) in [1_u8, 2].into_iter().zip(&parsed.arms) {
+        let bytes = fs::read(coordinator.join(format!("run-{ordinal}-manifest.json"))).unwrap();
+        let typed: crate::RunManifest = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            (&arm.typed, &arm.raw_bytes, &arm.sha256),
+            (&typed, &bytes, &test_sha256(&bytes))
+        );
+    }
+    let canonical_root = native.live_root.canonicalize().unwrap();
+    let frozen_bytes = fs::read(canonical_root.join("frozen-run-context.json")).unwrap();
+    let frozen: serde_json::Value = serde_json::from_slice(&frozen_bytes).unwrap();
+    assert_eq!(
+        parsed.inventory_binding,
+        crate::blind_verify::PrivateInventoryBinding {
+            private_root: canonical_root,
+            pair_id: frozen["pairId"].as_str().unwrap().to_string(),
+            frozen_run_context_sha256: test_sha256(&frozen_bytes),
+            inventory_root_sha256: parsed.inventory.inventory_root_sha256().to_string(),
+        }
+    );
+    parsed.inventory.reverify_unchanged().unwrap();
     assert_current_stage(native_args, &native.live_root);
 }

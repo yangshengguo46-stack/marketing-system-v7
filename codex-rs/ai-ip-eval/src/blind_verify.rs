@@ -153,10 +153,12 @@ struct PairBinding {
     fork_sha: String,
     frozen_run_context_sha256: String,
     fixture_set_sha256: Option<String>,
+    expected_manifest_mode: ExecutionMode,
 }
 
 impl PairBinding {
     fn from_snapshot(snapshot: &FrozenContextSnapshot, inputs: &FrozenInputToken) -> Result<Self> {
+        let expected_manifest_mode = inputs.expected_manifest_mode()?;
         let (private_root, pair_id, fork_sha, frozen_sha, fixture_set_sha256) = match inputs {
             FrozenInputToken::Replay(verified) => {
                 let projection = verified.projection();
@@ -189,6 +191,7 @@ impl PairBinding {
             fork_sha,
             frozen_run_context_sha256: frozen_sha,
             fixture_set_sha256,
+            expected_manifest_mode,
         })
     }
 }
@@ -242,22 +245,15 @@ fn validate_structural_links(
     }
     for arm in arms {
         let manifest = &arm.typed;
-        let mode_matches = match binding.mode {
-            ExecutionMode::Replay => manifest.execution_mode == ExecutionMode::Replay,
-            ExecutionMode::Mock | ExecutionMode::Live => {
-                matches!(
-                    manifest.execution_mode,
-                    ExecutionMode::Mock | ExecutionMode::Live
-                )
-            }
-        };
         manifest.validate_execution_mode()?;
+        if manifest.execution_mode != binding.expected_manifest_mode {
+            bail!("run manifest mode differs from verified C1 producer mode");
+        }
         if manifest.schema_version != 1
             || manifest.pair_id != binding.pair_id
             || manifest.frozen_run_context_sha256 != binding.frozen_run_context_sha256
             || manifest.execution_context_sha256 != execution.sha256
             || manifest.fork_sha != binding.fork_sha
-            || !mode_matches
         {
             bail!("run manifest differs from the retained pair binding");
         }
