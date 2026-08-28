@@ -1598,9 +1598,9 @@ python3 scripts/ai_ip/foundation/run_frozen_eval.py --context "$AI_IP_FROZEN_RUN
   blind-pack \
   --reviewer-root reviewer \
   --mapping-dir coordinator/mappings \
-  --replay-seed mechanical-reviewer-1 \
-  --replay-seed mechanical-reviewer-2 \
-  --replay-seed mechanical-reviewer-3
+  --replay-seed one \
+  --replay-seed two \
+  --replay-seed three
 for ai_ip_reviewer in 1 2 3; do
   test -f "$ai_ip_replay_root/reviewer/reviewer-$ai_ip_reviewer/A.json"
   test -f "$ai_ip_replay_root/reviewer/reviewer-$ai_ip_reviewer/B.json"

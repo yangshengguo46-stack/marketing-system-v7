@@ -824,6 +824,35 @@ cursor with every checked append. This prerequisite may modify `blind_finalize.r
 inventory/finalizer test modules. This measured seam correction precedes and is consumed by the
 Task 6D transaction commit.
 
+**Measured Task 6D production/success-test split (2026-08-29):** the real transaction production
+path, exact prepared-token re-binding, root-identity anchoring, and CLI wiring no longer fit honestly
+beside the exact Replay/Native success oracles in one sub-800-line commit. Commit production first
+as `feat(ai-ip-eval): create bound blind review bundles`, then commit the real CLI, Replay/Native
+transaction, compatibility-success, exact-byte, receipt, inventory-prefix, privacy, determinism, and
+rerun tests as `test(ai-ip-eval): verify bound blind review transactions`; the existing Task 6E
+failure/fault matrix remains a third commit. The production commit may add
+`blind_bundle_transaction_validate.rs` and a narrow retained private-root identity module if needed.
+The success-test commit may modify `blind_finalize_tests.rs`, `blind_verify_tests.rs`,
+`blind_verify_semantics_tests.rs`, and `eval_tests.rs` solely to replace the obsolete
+`BlindBundleStageNotInstalled` success sentinel and mount the new sibling transaction tests. This
+measured split supersedes the single Task 6D staging stanza below; no exact success assertion moves
+to the Task 6E failure commit.
+
+**Authoritative Replay seed correction (2026-08-29):** the earlier illustrative CLI seeds
+`mechanical-reviewer-{1,2,3}` deterministically produce one orientation for all three reviewers and
+therefore conflict with the later frozen anti-degeneracy rule. The authoritative Task 6/7 Replay
+CLI vector is now exactly `one`, `two`, `three` in reviewer-slot order; the earlier three values are
+superseded, not silently accepted. All three derived seeds and commitments remain unique, and this
+vector produces both orientations.
+
+**Task 6D retained-root and receipt-binding correction (2026-08-29):** the transaction must retain
+an opaque identity for the canonical private root at `begin_bundle_transaction`, reverify that
+identity across every mutation boundary, and reject same-path/same-bytes inode replacement. The
+receipt inventory append must bind the SHA-256 of the exact JCS bytes originally generated and
+written; it may not discover and bless whatever bytes happen to exist at the receipt pathname.
+Use an exact one-entry checked batch or an equivalent expected-SHA single append. The success/fault
+tests must include receipt replacement in the post-create/pre-inventory hook.
+
 The exact Task 6 wire and bytes are frozen as follows:
 
 ```rust
