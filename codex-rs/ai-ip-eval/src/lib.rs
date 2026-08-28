@@ -3,7 +3,9 @@
 mod app_server;
 mod broker_gate;
 mod catalog;
+mod contracts;
 mod evidence;
+mod jcs;
 mod model;
 mod runner;
 
@@ -34,6 +36,18 @@ pub use catalog::CatalogSnapshot;
 pub use catalog::compare_catalogs;
 pub use catalog::normalize_catalog;
 pub use catalog::validate_stable_catalog;
+pub use contracts::ArmReview;
+pub use contracts::DimensionScores;
+pub use contracts::FrozenContracts;
+pub use contracts::NativeHeldOutAttestation;
+pub use contracts::PreferredArm;
+pub use contracts::ReplayReviewAttestation;
+pub use contracts::ReviewerArms;
+pub use contracts::ReviewerDeclaration;
+pub use contracts::ReviewerQualificationBinding;
+pub use contracts::ReviewerSubmission;
+pub use contracts::SevereFlags;
+pub use contracts::validate_reviewer_submission;
 pub use evidence::CollectedReplay;
 pub use evidence::ReplayCollector;
 pub use evidence::SkillUseExpectation;
@@ -94,6 +108,14 @@ pub fn run_main() -> anyhow::Result<()> {
 #[cfg(test)]
 #[path = "eval_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "contracts_tests.rs"]
+mod contracts_tests;
+
+#[cfg(test)]
+#[path = "jcs_tests.rs"]
+mod jcs_tests;
 
 #[cfg(test)]
 #[path = "app_server_tests.rs"]

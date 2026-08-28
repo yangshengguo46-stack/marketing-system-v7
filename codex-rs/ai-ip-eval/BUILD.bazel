@@ -2,9 +2,16 @@ load("//:defs.bzl", "codex_rust_crate")
 
 codex_rust_crate(
     name = "ai-ip-eval",
+    compile_data = [
+        "//ai-ip-evals/rubrics:rubrics",
+        "//ai-ip-evals/schemas:schemas",
+    ],
     crate_name = "codex_ai_ip_eval",
     test_data_extra = glob(["tests/fixtures/**"]) + [
         "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
+        "//ai-ip-evals/rubrics:rubrics",
+        "//ai-ip-evals/schemas:schemas",
     ],
     unit_test_args = ["--test-threads=4"],
+    unit_test_timeout = "long",
 )

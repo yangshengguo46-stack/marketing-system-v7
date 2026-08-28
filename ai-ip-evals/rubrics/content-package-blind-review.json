@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "scale": {
+    "minimum": 0,
+    "maximum": 4,
+    "definitions": [
+      {"score": 0, "definition": "完全不满足该维度，或证据显示结论与任务直接冲突。"},
+      {"score": 1, "definition": "仅有零散要素，核心判断缺失，不能支持实际使用。"},
+      {"score": 2, "definition": "达到基本要求，但仍需明显补写、校正或重组。"},
+      {"score": 3, "definition": "整体可靠且可用，只需小范围人工润色或确认。"},
+      {"score": 4, "definition": "判断完整、证据清楚、表达成熟，可直接进入人工发布复核。"}
+    ]
+  },
+  "dimensions": [
+    {"id": "businessOutcomeClarity", "definition": "是否明确说明内容要推动的业务结果，并让读者能够判断成功意味着什么，而不是只描述一个宽泛主题。"},
+    {"id": "subjectAudienceActionFit", "definition": "主体、目标受众与期望行动是否彼此匹配；表达是否针对真实对象，并给出合理、具体且不过度承诺的下一步。"},
+    {"id": "strategicJudgment", "definition": "是否展现对取舍、优先级、风险与时机的判断；各部分是否服务于同一个策略，而不是机械堆叠信息。"},
+    {"id": "publishableUsability", "definition": "结构、语言、篇幅和交付要素是否足以支持真实制作或发布；人工接手时是否无需大规模重写。"},
+    {"id": "evidenceIntegrity", "definition": "事实、关系、时间、数量和因果是否忠于所给案例与材料；推测、未知与建议是否被清楚标注，没有把缺失证据包装成事实。"},
+    {"id": "measurementUsefulness", "definition": "是否给出与目标一致、可观察且可执行的衡量方式，使团队能够在发布或测试后知道该看什么并据此迭代。"}
+  ],
+  "severeFlags": [
+    {"id": "fabricatedFactualClaim", "definition": "存在未标注且无来源支持的事实附着、跨来源实体或事件桥接、角色或序号替换、时间或体貌漂移、把先后提升为因果、把预测提升为完成，或把事件次数提升为独立人数。"},
+    {"id": "wrongSubjectOrDesiredAction", "definition": "内容服务了错误主体、错误受众，或推动了与任务目标不一致的行动。"},
+    {"id": "notActuallyUsable", "definition": "交付物缺少关键部分、无法执行，或需要整体重做后才可能进入人工复核。"},
+    {"id": "rightsOrPrivacyViolation", "definition": "内容泄露未获授权的隐私信息，或使用了没有相应权利与披露范围的材料。"}
+  ],
+  "reviewerInstructions": [
+    "仅依据包内案例、材料和两份匿名内容独立评审，不推测其生成方式。",
+    "先分别为 A 与 B 的六个维度打分，再选择 A、B 或平局，并为每臂写一至三条具体理由。",
+    "只有当交付物无需大规模重写即可进入人工发布复核时，才标记 readyForHumanReview。",
+    "严重标记彼此独立；任一标记为真时，理由必须指出可核验的问题位置。"
+  ]
+}

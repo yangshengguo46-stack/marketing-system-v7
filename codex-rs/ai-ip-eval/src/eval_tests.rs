@@ -538,13 +538,7 @@ fn committed_replay_transcript_is_typed_and_contains_the_validated_final_package
     assert_eq!(result.raw_response_count, 1);
     assert_eq!(result.usage.total_tokens, 150);
 
-    for name in [
-        "replay-fixture-set.json",
-        "replay-attestation.json",
-        "replay-review-1.json",
-        "replay-review-2.json",
-        "replay-review-3.json",
-    ] {
+    for name in ["replay-fixture-set.json", "replay-attestation.json"] {
         let resource = format!("tests/fixtures/{name}");
         let path = codex_utils_cargo_bin::find_resource!(resource).unwrap();
         let _: serde_json::Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
@@ -567,6 +561,15 @@ struct PreparedReplayTestContext {
 
 fn test_sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn create_owner_only_test_dir(path: &std::path::Path) {
+    fs::create_dir(path).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o700)).unwrap();
+    }
 }
 
 fn test_digest_hex(digest: [u8; 32]) -> String {
@@ -878,6 +881,48 @@ fn replay_request_fixture_drift_fails_before_manifests() {
         .find(|entry| entry["name"] == "genericRequest")
         .unwrap();
     request_entry["sha256"] = json!(test_sha256(&request_bytes));
+    let fixture_sha256 = fixture_set["fixtures"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|entry| {
+            (
+                entry["name"].as_str().unwrap(),
+                entry["sha256"].as_str().unwrap(),
+            )
+        })
+        .collect::<std::collections::HashMap<_, _>>();
+    let pair_inputs = [
+        "case",
+        "genericRequest",
+        "candidateRequest",
+        "genericTranscript",
+        "candidateTranscript",
+        "leadSkill",
+    ]
+    .map(|name| json!({"name": name, "sha256": fixture_sha256[name]}));
+    let canonical_pair_inputs =
+        crate::jcs::canonicalize_value(&serde_json::Value::Array(pair_inputs.into())).unwrap();
+    let mut pair_hasher = Sha256::new();
+    pair_hasher.update(b"AI-IP-REPLAY-PAIR-V2\0");
+    pair_hasher.update(b"synthetic-replay-fork");
+    pair_hasher.update(canonical_pair_inputs);
+    let mut attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-attestation.json")).unwrap())
+            .unwrap();
+    attestation["pairId"] = json!(format!("{:x}", pair_hasher.finalize()));
+    let attestation_bytes = serde_json::to_vec_pretty(&attestation).unwrap();
+    fs::write(
+        fixture_root.join("replay-attestation.json"),
+        &attestation_bytes,
+    )
+    .unwrap();
+    fixture_set["fixtures"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["name"] == "attestation")
+        .unwrap()["sha256"] = json!(test_sha256(&attestation_bytes));
     fs::write(
         fixture_root.join("replay-fixture-set.json"),
         serde_json::to_vec_pretty(&fixture_set).unwrap(),
@@ -998,9 +1043,6 @@ fn replay_pair_reverifies_every_fixture_set_byte_before_creating_evidence() {
         "replay-candidate-transcript.jsonl",
         "replay-lead-skill.md",
         "replay-attestation.json",
-        "replay-review-1.json",
-        "replay-review-2.json",
-        "replay-review-3.json",
     ] {
         fs::copy(source_root.join(leaf), fixture_root.join(leaf)).unwrap();
     }
@@ -1026,7 +1068,7 @@ fn replay_pair_reverifies_every_fixture_set_byte_before_creating_evidence() {
     })
     .unwrap();
     fs::write(
-        fixture_root.join("replay-review-3.json"),
+        fixture_root.join("replay-attestation.json"),
         b"{\"tampered\":true}\n",
     )
     .unwrap();
@@ -1037,6 +1079,174 @@ fn replay_pair_reverifies_every_fixture_set_byte_before_creating_evidence() {
     .unwrap_err();
     assert!(error.to_string().contains("bytes or identity changed"));
     assert!(!private_root.join("replay-coordinator").exists());
+}
+
+#[test]
+fn replay_freeze_rejects_attestation_not_bound_to_acyclic_pair() {
+    let source_manifest =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let source_root = source_manifest.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let fixture_root = temp.path().join("fixtures");
+    fs::create_dir(&fixture_root).unwrap();
+    for leaf in [
+        "replay-fixture-set.json",
+        "replay-case.json",
+        "replay-generic-request.json",
+        "replay-candidate-request.json",
+        "replay-transcript.jsonl",
+        "replay-candidate-transcript.jsonl",
+        "replay-lead-skill.md",
+        "replay-attestation.json",
+    ] {
+        fs::copy(source_root.join(leaf), fixture_root.join(leaf)).unwrap();
+    }
+    let attestation_path = fixture_root.join("replay-attestation.json");
+    let mut attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(&attestation_path).unwrap()).unwrap();
+    attestation["pairId"] = serde_json::json!("0".repeat(64));
+    fs::write(
+        &attestation_path,
+        serde_json::to_vec_pretty(&attestation).unwrap(),
+    )
+    .unwrap();
+    let mut fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-fixture-set.json")).unwrap())
+            .unwrap();
+    fixture_set["fixtures"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["name"] == "attestation")
+        .unwrap()["sha256"] = serde_json::json!(test_sha256(&fs::read(&attestation_path).unwrap()));
+    fs::write(
+        fixture_root.join("replay-fixture-set.json"),
+        serde_json::to_vec_pretty(&fixture_set).unwrap(),
+    )
+    .unwrap();
+
+    let private_root = temp.path().join("private");
+    fs::create_dir(&private_root).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let codex_binary = private_root.join("synthetic-codex");
+    fs::write(&codex_binary, b"synthetic\n").unwrap();
+    let output = private_root.join("frozen-run-context.json");
+    let error = crate::freeze_replay_context(crate::model::ReplayFreezeArgs {
+        repo_root: fixture_root.clone(),
+        fork_sha: "synthetic-replay-fork".to_string(),
+        private_root,
+        codex_bin: codex_binary,
+        case: fixture_root.join("replay-case.json"),
+        transcript: fixture_root.join("replay-transcript.jsonl"),
+        fixture_set_manifest: fixture_root.join("replay-fixture-set.json"),
+        output: output.clone(),
+    })
+    .unwrap_err();
+
+    assert!(error.to_string().contains("does not bind the frozen pair"));
+    assert!(!output.exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn replay_freeze_reuses_initially_verified_case_and_attestation_buffers_after_swap() {
+    let source_manifest =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let source_root = source_manifest.parent().unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let fixture_root = temp.path().join("fixtures");
+    fs::create_dir(&fixture_root).unwrap();
+    for leaf in [
+        "replay-fixture-set.json",
+        "replay-case.json",
+        "replay-generic-request.json",
+        "replay-candidate-request.json",
+        "replay-transcript.jsonl",
+        "replay-candidate-transcript.jsonl",
+        "replay-lead-skill.md",
+        "replay-attestation.json",
+    ] {
+        fs::copy(source_root.join(leaf), fixture_root.join(leaf)).unwrap();
+    }
+    let case_path = fixture_root.join("replay-case.json");
+    let mut invalid_case = serde_json::to_value(mission_case()).unwrap();
+    invalid_case["objective"] = json!("");
+    let invalid_case_bytes = serde_json::to_vec_pretty(&invalid_case).unwrap();
+    fs::write(&case_path, &invalid_case_bytes).unwrap();
+    let mut fixture_set: serde_json::Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-fixture-set.json")).unwrap())
+            .unwrap();
+    fixture_set["fixtures"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["name"] == "case")
+        .unwrap()["sha256"] = json!(test_sha256(&invalid_case_bytes));
+    let commitments = fixture_set["fixtures"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|entry| entry["name"] != "attestation")
+        .map(|entry| json!({"name": entry["name"], "sha256": entry["sha256"]}))
+        .collect::<Vec<_>>();
+    let mut pair_hasher = Sha256::new();
+    pair_hasher.update(b"AI-IP-REPLAY-PAIR-V2\0");
+    pair_hasher.update(b"synthetic-replay-fork");
+    pair_hasher
+        .update(crate::jcs::canonicalize_value(&serde_json::Value::Array(commitments)).unwrap());
+    let old_pair_id = format!("{:x}", pair_hasher.finalize());
+    fs::write(
+        fixture_root.join("replay-fixture-set.json"),
+        serde_json::to_vec_pretty(&fixture_set).unwrap(),
+    )
+    .unwrap();
+    let replacement_case = temp.path().join("replacement-case.json");
+    let valid_case_bytes = serde_json::to_vec_pretty(&mission_case()).unwrap();
+    fs::write(&replacement_case, &valid_case_bytes).unwrap();
+    let attestation_path = fixture_root.join("replay-attestation.json");
+    let mut replacement_attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(&attestation_path).unwrap()).unwrap();
+    replacement_attestation["pairId"] = json!(old_pair_id);
+    replacement_attestation["caseSha256"] = json!(test_sha256(&valid_case_bytes));
+    replacement_attestation["sourceMaterialsSha256"] = json!(test_sha256(
+        &serde_json::to_vec(&mission_case().materials).unwrap()
+    ));
+    let replacement_attestation_path = temp.path().join("replacement-attestation.json");
+    fs::write(
+        &replacement_attestation_path,
+        serde_json::to_vec_pretty(&replacement_attestation).unwrap(),
+    )
+    .unwrap();
+    let private_root = temp.path().join("private");
+    create_owner_only_test_dir(&private_root);
+    let codex_binary = private_root.join("synthetic-codex");
+    fs::write(&codex_binary, b"synthetic\n").unwrap();
+    let output = private_root.join("frozen-run-context.json");
+    let result = crate::runner::freeze_replay_context_with_hook(
+        crate::model::ReplayFreezeArgs {
+            repo_root: fixture_root.clone(),
+            fork_sha: "synthetic-replay-fork".to_string(),
+            private_root,
+            codex_bin: codex_binary,
+            case: case_path.clone(),
+            transcript: fixture_root.join("replay-transcript.jsonl"),
+            fixture_set_manifest: fixture_root.join("replay-fixture-set.json"),
+            output: output.clone(),
+        },
+        || {
+            fs::rename(&case_path, temp.path().join("invalid-case.json"))?;
+            fs::rename(&replacement_case, &case_path)?;
+            fs::rename(&attestation_path, temp.path().join("old-attestation.json"))?;
+            fs::rename(&replacement_attestation_path, &attestation_path)?;
+            Ok(())
+        },
+    );
+    assert!(result.is_err(), "freeze consumed pathname-swapped bytes");
+    assert!(!output.exists());
 }
 
 #[test]
@@ -1450,11 +1660,17 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
     };
     let case_bytes = serde_json::to_vec_pretty(&mission_case()).unwrap();
     let materials_bytes = serde_json::to_vec(&mission_case().materials).unwrap();
-    let attestation_bytes = serde_json::to_vec_pretty(&json!({
-        "caseSha256": format!("{:x}", Sha256::digest(&case_bytes)),
-        "sourceMaterialsSha256": format!("{:x}", Sha256::digest(&materials_bytes)),
-    }))
-    .unwrap();
+    let mut attestation = complete_native_attestation_value(&case_bytes, temp.path());
+    attestation["candidateSha"] = json!(head);
+    attestation["maxProviderRequestAttemptsPerRun"] = json!(2);
+    attestation["maxTotalTokensPerRun"] = json!(100);
+    attestation["maxElapsedSecondsPerRun"] = json!(5);
+    attestation["maxOutputTokensPerRequest"] = json!(321);
+    attestation["providerBudgetEvidenceSha256"] = json!(test_sha256(b"providerBudgetReceipt\n"));
+    attestation["rateCardSha256"] = json!(test_sha256(b"rateCard\n"));
+    attestation["billingPolicyCommitment"] = json!(test_sha256(b"billingPolicy\n"));
+    attestation["fxPolicySha256"] = json!(test_sha256(b"fxPolicy\n"));
+    let attestation_bytes = serde_json::to_vec_pretty(&attestation).unwrap();
     let artifacts: BTreeMap<String, serde_json::Value> = crate::REQUIRED_EXECUTION_ARTIFACTS
         .iter()
         .map(|name| {
@@ -1539,6 +1755,140 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
     }
     path
+}
+
+#[test]
+fn native_attestation_is_cross_bound_at_the_verify_boundary() {
+    for mutation in [
+        "candidate",
+        "privateRoot",
+        "case",
+        "materials",
+        "budget",
+        "rateCard",
+        "billingPolicy",
+        "fxPolicy",
+        "limits",
+        "approval",
+        "retention",
+        "timestamp",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let context_path = strict_live_context(&temp);
+        verify_frozen_context(&context_path).unwrap();
+        let mut context: serde_json::Value =
+            serde_json::from_slice(&fs::read(&context_path).unwrap()).unwrap();
+        let attestation_path = std::path::PathBuf::from(
+            context["artifacts"]["attestation"]["path"]
+                .as_str()
+                .unwrap(),
+        );
+        let mut attestation: serde_json::Value =
+            serde_json::from_slice(&fs::read(&attestation_path).unwrap()).unwrap();
+        match mutation {
+            "candidate" => attestation["candidateSha"] = json!("changed-candidate"),
+            "privateRoot" => attestation["privateRoot"] = json!("/changed/private/root"),
+            "case" => attestation["caseSha256"] = json!("1".repeat(64)),
+            "materials" => attestation["sourceMaterialsSha256"] = json!("2".repeat(64)),
+            "budget" => attestation["providerBudgetEvidenceSha256"] = json!("3".repeat(64)),
+            "rateCard" => attestation["rateCardSha256"] = json!("4".repeat(64)),
+            "billingPolicy" => attestation["billingPolicyCommitment"] = json!("5".repeat(64)),
+            "fxPolicy" => attestation["fxPolicySha256"] = json!("6".repeat(64)),
+            "limits" => attestation["maxTotalTokensPerRun"] = json!(101),
+            "approval" => attestation["approvedTotalFen"] = json!(1),
+            "retention" => attestation["retentionDeadline"] = json!("2026-08-27T09:00:00Z"),
+            "timestamp" => attestation["caseSelectedAt"] = json!("2099-08-27T07:00:00Z"),
+            other => panic!("unknown native verify mutation {other}"),
+        }
+        let attestation_bytes = serde_json::to_vec_pretty(&attestation).unwrap();
+        fs::write(&attestation_path, &attestation_bytes).unwrap();
+        context["artifacts"]["attestation"]["sha256"] = json!(test_sha256(&attestation_bytes));
+        fs::write(&context_path, serde_json::to_vec_pretty(&context).unwrap()).unwrap();
+        assert!(
+            verify_frozen_context(&context_path).is_err(),
+            "verify accepted native attestation {mutation} drift"
+        );
+    }
+}
+
+#[test]
+fn native_attestation_is_cross_bound_at_the_freeze_boundary() {
+    for mutation in [
+        "candidate",
+        "providerRole",
+        "budget",
+        "limits",
+        "rateCard",
+        "retention",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let seed_context = strict_live_context(&temp);
+        let seed: serde_json::Value =
+            serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
+        let artifacts = seed["artifacts"].as_object().unwrap();
+        let artifact =
+            |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
+        let private_root = temp.path().join(format!("native-freeze-{mutation}"));
+        create_owner_only_test_dir(&private_root);
+        let codex_binary = temp.path().join(format!("native-codex-{mutation}"));
+        fs::copy(std::env::current_exe().unwrap(), &codex_binary).unwrap();
+        let (case, material_root, attestation) = write_nonempty_source_fixture(
+            temp.path(),
+            &private_root,
+            "notes/evidence.txt",
+            None,
+            None,
+        );
+        let output = private_root.join("frozen-run-context.json");
+        let args = crate::model::LiveFreezeArgs {
+            repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+            evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+            fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+            private_root,
+            codex_bin: codex_binary,
+            case,
+            material_root,
+            attestation,
+            provider_budget_evidence: artifact("providerBudgetReceipt"),
+            rate_card: artifact("rateCard"),
+            billing_policy: artifact("billingPolicy"),
+            fx_policy: artifact("fxPolicy"),
+            lead_skill: artifact("skill"),
+            model_label: "local-mock".to_string(),
+            provider_label: "local-mock".to_string(),
+            provider_role: ProviderRole::ApprovedReference,
+            provider_upstream_url: "http://127.0.0.1:1/v1/responses".to_string(),
+            authorized_total_cost_fen: 0,
+            authorized_per_run_cost_fen: 0,
+            max_provider_request_attempts_per_run: 2,
+            max_total_tokens_per_run: 10,
+            max_elapsed_seconds_per_run: 180,
+            max_output_tokens_per_request: 17,
+            output: output.clone(),
+        };
+        bind_native_attestation_to_live_args(&args);
+        let mut value: serde_json::Value =
+            serde_json::from_slice(&fs::read(&args.attestation).unwrap()).unwrap();
+        match mutation {
+            "candidate" => value["candidateSha"] = json!("changed-candidate"),
+            "providerRole" => value["providerRole"] = json!("targetVolcengine"),
+            "budget" => value["approvedTotalFen"] = json!(1),
+            "limits" => value["maxTotalTokensPerRun"] = json!(11),
+            "rateCard" => value["rateCardSha256"] = json!("7".repeat(64)),
+            "retention" => value["retentionDeadline"] = json!("2026-08-27T09:00:00Z"),
+            other => panic!("unknown native freeze mutation {other}"),
+        }
+        fs::write(
+            &args.attestation,
+            serde_json::to_vec_pretty(&value).unwrap(),
+        )
+        .unwrap();
+        assert!(
+            crate::runner::freeze_live_context(args).is_err(),
+            "freeze accepted native attestation {mutation} drift"
+        );
+        assert!(!output.exists());
+    }
 }
 
 #[test]
@@ -2170,6 +2520,7 @@ fn cli_freeze_modes_are_disjoint_and_live_pair_has_no_override_or_single_arm() {
 
 fn write_nonempty_source_fixture(
     root: &std::path::Path,
+    private_root: &std::path::Path,
     relative_path: &str,
     declared_digest: Option<&str>,
     attested_case_digest: Option<&str>,
@@ -2198,24 +2549,136 @@ fn write_nonempty_source_fixture(
     let case_bytes = serde_json::to_vec_pretty(&case_value).unwrap();
     let case_path = root.join("external-case.json");
     fs::write(&case_path, &case_bytes).unwrap();
-    let materials_bytes = format!(
-        "[{{\"materialId\":\"evidence-1\",\"relativePath\":{},\"sha256\":\"{}\",\"materialKind\":\"evidence\"}}]",
-        serde_json::to_string(relative_path).unwrap(),
-        digest,
-    );
-    let attestation = json!({
-        "caseSha256": attested_case_digest
-            .map(str::to_string)
-            .unwrap_or_else(|| format!("{:x}", Sha256::digest(&case_bytes))),
-        "sourceMaterialsSha256": format!("{:x}", Sha256::digest(materials_bytes.as_bytes()))
-    });
     let attestation_path = root.join("external-attestation.json");
     fs::write(
         &attestation_path,
+        serde_json::to_vec_pretty(&complete_native_attestation_value(
+            &case_bytes,
+            private_root,
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    if let Some(attested_case_digest) = attested_case_digest {
+        let mut attestation: serde_json::Value =
+            serde_json::from_slice(&fs::read(&attestation_path).unwrap()).unwrap();
+        attestation["caseSha256"] = json!(attested_case_digest);
+        fs::write(
+            &attestation_path,
+            serde_json::to_vec_pretty(&attestation).unwrap(),
+        )
+        .unwrap();
+    }
+    (case_path, material_root, attestation_path)
+}
+
+fn complete_native_attestation_value(
+    case_bytes: &[u8],
+    private_root: &std::path::Path,
+) -> serde_json::Value {
+    let resource = codex_utils_cargo_bin::find_resource!(
+        "tests/fixtures/contracts/06a/canonical-native-attestation.json"
+    )
+    .unwrap();
+    let mut attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(resource).unwrap()).unwrap();
+    let mission: HeldOutMissionCase = serde_json::from_slice(case_bytes).unwrap();
+    attestation["candidateSha"] = json!("synthetic-candidate-sha");
+    attestation["candidateFrozenAt"] = json!("2026-08-27T06:00:00Z");
+    attestation["caseSelectedAt"] = json!("2026-08-27T07:00:00Z");
+    attestation["caseSha256"] = json!(test_sha256(case_bytes));
+    attestation["sourceMaterialsSha256"] = json!(test_sha256(
+        &serde_json::to_vec(&mission.materials).unwrap()
+    ));
+    attestation["privateRoot"] = json!(private_root.canonicalize().unwrap());
+    attestation["approvedTotalFen"] = json!(0);
+    attestation["approvedPerRunFen"] = json!(0);
+    attestation["signedAt"] = json!("2026-08-27T08:00:00Z");
+    attestation["retentionDeadline"] = json!("2099-09-04T08:00:00Z");
+    attestation["rateEffectiveAt"] = json!("2026-08-27T00:00:00Z");
+    for (index, reviewer) in attestation["reviewers"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .enumerate()
+    {
+        reviewer["declaredAt"] = json!(format!("2026-08-27T07:2{index}:00Z"));
+        let mut payload = reviewer.clone();
+        payload
+            .as_object_mut()
+            .unwrap()
+            .remove("signedPayloadSha256");
+        payload
+            .as_object_mut()
+            .unwrap()
+            .remove("signatureEvidenceSha256");
+        reviewer["signedPayloadSha256"] = json!(
+            crate::jcs::commitment(
+                b"AI-IP-REVIEWER-QUALIFICATION-V1\0",
+                &serde_json::to_vec(&payload).unwrap(),
+            )
+            .unwrap()
+            .sha256
+        );
+    }
+    attestation
+}
+
+fn bind_native_attestation_to_live_args(args: &crate::model::LiveFreezeArgs) {
+    let mut attestation: serde_json::Value =
+        serde_json::from_slice(&fs::read(&args.attestation).unwrap()).unwrap();
+    attestation["candidateSha"] = json!(args.fork_sha);
+    attestation["privateRoot"] = json!(args.private_root.canonicalize().unwrap());
+    attestation["providerRole"] = json!(match args.provider_role {
+        ProviderRole::TargetVolcengine => "targetVolcengine",
+        ProviderRole::ApprovedReference => "approvedReference",
+    });
+    attestation["approvedTotalFen"] = json!(args.authorized_total_cost_fen);
+    attestation["approvedPerRunFen"] = json!(args.authorized_per_run_cost_fen);
+    attestation["maxProviderRequestAttemptsPerRun"] =
+        json!(args.max_provider_request_attempts_per_run);
+    attestation["maxTotalTokensPerRun"] = json!(args.max_total_tokens_per_run);
+    attestation["maxElapsedSecondsPerRun"] = json!(args.max_elapsed_seconds_per_run);
+    attestation["maxOutputTokensPerRequest"] = json!(args.max_output_tokens_per_request);
+    for (field, path) in [
+        (
+            "providerBudgetEvidenceSha256",
+            &args.provider_budget_evidence,
+        ),
+        ("rateCardSha256", &args.rate_card),
+        ("billingPolicyCommitment", &args.billing_policy),
+        ("fxPolicySha256", &args.fx_policy),
+    ] {
+        attestation[field] = json!(test_sha256(&fs::read(path).unwrap()));
+    }
+    fs::write(
+        &args.attestation,
         serde_json::to_vec_pretty(&attestation).unwrap(),
     )
     .unwrap();
-    (case_path, material_root, attestation_path)
+}
+
+#[cfg(unix)]
+#[test]
+fn replay_fixture_read_reuses_the_verified_handle_buffer_after_path_swap() {
+    let temp = tempfile::tempdir().unwrap();
+    let fixture = temp.path().join("fixture.json");
+    let replacement = temp.path().join("replacement.json");
+    let displaced = temp.path().join("displaced.json");
+    let committed = b"{\"committed\":true}\n";
+    fs::write(&fixture, committed).unwrap();
+    fs::write(&replacement, b"{\"attacker\":true}\n").unwrap();
+    let actual = crate::runner::read_replay_reference_with_hook(
+        &fixture.canonicalize().unwrap(),
+        &test_sha256(committed),
+        |path| {
+            fs::rename(path, &displaced)?;
+            fs::rename(&replacement, path)?;
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(actual, committed);
 }
 
 #[test]
@@ -2229,7 +2692,7 @@ fn live_freeze_imports_nonempty_case_attestation_and_declared_materials() {
         fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
     let imported =
         crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
@@ -2277,6 +2740,28 @@ fn live_freeze_imports_nonempty_case_attestation_and_declared_materials() {
             );
         }
     }
+    let legacy_private = temp.path().join("legacy-private-proof");
+    create_owner_only_test_dir(&legacy_private);
+    let complete: serde_json::Value =
+        serde_json::from_slice(&fs::read(&attestation).unwrap()).unwrap();
+    fs::write(
+        &attestation,
+        serde_json::to_vec(&json!({
+            "caseSha256": complete["caseSha256"],
+            "sourceMaterialsSha256": complete["sourceMaterialsSha256"]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(
+        crate::runner::import_live_source_proof(
+            &case,
+            &material_root,
+            &attestation,
+            &legacy_private,
+        )
+        .is_err()
+    );
 }
 
 #[test]
@@ -2301,6 +2786,7 @@ fn live_freeze_rejects_material_digest_path_type_and_attestation_drift() {
             .then_some("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         let (case, material_root, attestation) = write_nonempty_source_fixture(
             temp.path(),
+            &private_root,
             relative,
             declared_digest,
             attested_case_digest,
@@ -2347,7 +2833,7 @@ fn live_freeze_rejects_a_prepopulated_managed_case_tree() {
         }
     }
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
     assert!(
         crate::runner::import_live_source_proof(
@@ -2371,7 +2857,7 @@ fn live_freeze_rejects_unknown_attestation_fields() {
         fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
     let mut value: serde_json::Value =
         serde_json::from_slice(&fs::read(&attestation).unwrap()).unwrap();
     value["unapprovedField"] = json!(true);
@@ -2402,7 +2888,7 @@ fn live_freeze_import_is_anchored_against_parent_directory_substitution() {
     let external = temp.path().join("attacker-directory");
     fs::create_dir(&external).unwrap();
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
     let result = crate::runner::import_live_source_proof_with_hook(
         &case,
@@ -2431,7 +2917,7 @@ fn managed_source_tree_rejects_every_undeclared_entry() {
         fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
     let imported =
         crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
             .unwrap();
@@ -2455,7 +2941,7 @@ fn between_arm_managed_tree_mutation_poisons_without_a_pair_receipt() {
         fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let (case, material_root, attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
     let imported =
         crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
             .unwrap();
@@ -3437,8 +3923,6 @@ fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestR
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
     }
-    let (live_case, live_material_root, live_attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
     let live_root = temp.path().join("native-private");
     fs::create_dir(&live_root).unwrap();
     #[cfg(unix)]
@@ -3446,35 +3930,39 @@ fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestR
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
+    let (live_case, live_material_root, live_attestation) =
+        write_nonempty_source_fixture(temp.path(), &live_root, "notes/evidence.txt", None, None);
     let output = live_root.join("frozen-run-context.json");
+    let live_args = crate::model::LiveFreezeArgs {
+        repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+        private_root: live_root.clone(),
+        codex_bin: mock_codex,
+        case: live_case,
+        material_root: live_material_root,
+        attestation: live_attestation,
+        provider_budget_evidence: artifact("providerBudgetReceipt"),
+        rate_card: artifact("rateCard"),
+        billing_policy: artifact("billingPolicy"),
+        fx_policy: artifact("fxPolicy"),
+        lead_skill: artifact("skill"),
+        model_label: "local-mock".to_string(),
+        provider_label: "local-mock".to_string(),
+        provider_role: ProviderRole::ApprovedReference,
+        provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
+        authorized_total_cost_fen: 0,
+        authorized_per_run_cost_fen: 0,
+        max_provider_request_attempts_per_run: 2,
+        max_total_tokens_per_run: 10,
+        max_elapsed_seconds_per_run: 180,
+        max_output_tokens_per_request: 17,
+        output: output.clone(),
+    };
+    bind_native_attestation_to_live_args(&live_args);
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
-            mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
-                repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
-                evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
-                fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
-                private_root: live_root.clone(),
-                codex_bin: mock_codex,
-                case: live_case,
-                material_root: live_material_root,
-                attestation: live_attestation,
-                provider_budget_evidence: artifact("providerBudgetReceipt"),
-                rate_card: artifact("rateCard"),
-                billing_policy: artifact("billingPolicy"),
-                fx_policy: artifact("fxPolicy"),
-                lead_skill: artifact("skill"),
-                model_label: "local-mock".to_string(),
-                provider_label: "local-mock".to_string(),
-                provider_role: ProviderRole::ApprovedReference,
-                provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
-                authorized_total_cost_fen: 0,
-                authorized_per_run_cost_fen: 0,
-                max_provider_request_attempts_per_run: 2,
-                max_total_tokens_per_run: 10,
-                max_elapsed_seconds_per_run: 180,
-                max_output_tokens_per_request: 17,
-                output: output.clone(),
-            }),
+            mode: crate::FreezeRunContextArgs::Live(live_args),
         }),
     })
     .unwrap();
@@ -4118,8 +4606,6 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700)).unwrap();
     }
-    let (live_case, live_material_root, live_attestation) =
-        write_nonempty_source_fixture(temp.path(), "notes/evidence.txt", None, None);
     let live_root = temp.path().join("live-private");
     fs::create_dir(&live_root).unwrap();
     #[cfg(unix)]
@@ -4127,35 +4613,39 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
+    let (live_case, live_material_root, live_attestation) =
+        write_nonempty_source_fixture(temp.path(), &live_root, "notes/evidence.txt", None, None);
     let output = live_root.join("frozen-run-context.json");
+    let live_args = crate::model::LiveFreezeArgs {
+        repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+        private_root: live_root.clone(),
+        codex_bin: mock_codex,
+        case: live_case,
+        material_root: live_material_root,
+        attestation: live_attestation,
+        provider_budget_evidence: artifact("providerBudgetReceipt"),
+        rate_card: artifact("rateCard"),
+        billing_policy: artifact("billingPolicy"),
+        fx_policy: artifact("fxPolicy"),
+        lead_skill: artifact("skill"),
+        model_label: "local-mock".to_string(),
+        provider_label: "local-mock".to_string(),
+        provider_role: ProviderRole::ApprovedReference,
+        provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
+        authorized_total_cost_fen: 0,
+        authorized_per_run_cost_fen: 0,
+        max_provider_request_attempts_per_run: 2,
+        max_total_tokens_per_run: 10,
+        max_elapsed_seconds_per_run: 180,
+        max_output_tokens_per_request: 17,
+        output: output.clone(),
+    };
+    bind_native_attestation_to_live_args(&live_args);
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
-            mode: crate::FreezeRunContextArgs::Live(crate::model::LiveFreezeArgs {
-                repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
-                evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
-                fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
-                private_root: live_root.clone(),
-                codex_bin: mock_codex,
-                case: live_case,
-                material_root: live_material_root,
-                attestation: live_attestation,
-                provider_budget_evidence: artifact("providerBudgetReceipt"),
-                rate_card: artifact("rateCard"),
-                billing_policy: artifact("billingPolicy"),
-                fx_policy: artifact("fxPolicy"),
-                lead_skill: artifact("skill"),
-                model_label: "local-mock".to_string(),
-                provider_label: "local-mock".to_string(),
-                provider_role: ProviderRole::ApprovedReference,
-                provider_upstream_url: format!("http://{upstream_addr}/v1/responses"),
-                authorized_total_cost_fen: 0,
-                authorized_per_run_cost_fen: 0,
-                max_provider_request_attempts_per_run: 2,
-                max_total_tokens_per_run: 10,
-                max_elapsed_seconds_per_run: 180,
-                max_output_tokens_per_request: 17,
-                output: output.clone(),
-            }),
+            mode: crate::FreezeRunContextArgs::Live(live_args),
         }),
     })
     .unwrap();

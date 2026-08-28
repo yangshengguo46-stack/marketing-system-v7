@@ -1,0 +1,8 @@
+filegroup(
+    name = "schemas",
+    srcs = [
+        "frozen-run-context.schema.json",
+        "held-out-attestation.schema.json",
+    ],
+    visibility = ["//codex-rs/ai-ip-eval:__pkg__"],
+)

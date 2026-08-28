@@ -34,6 +34,8 @@ use crate::CatalogSnapshot;
 use crate::CollectedReplay;
 use crate::ConfigAuditEvidence;
 use crate::EvaluationCondition;
+use crate::FrozenContracts;
+use crate::NativeHeldOutAttestation;
 use crate::PairCoordinator;
 use crate::ReplayCollector;
 use crate::SkillUseTracker;
@@ -43,10 +45,12 @@ use crate::audit_frozen_config;
 use crate::build_shared_config;
 use crate::build_thread_start;
 use crate::build_turn_start;
+use crate::jcs::canonicalize_value;
 use crate::model::LiveFreezeArgs;
 use crate::model::MockProviderMode;
 use crate::model::ModeEvidence;
 use crate::model::ProofBrokerCompatibilityName;
+use crate::model::ProviderRole;
 use crate::model::ReplayFreezeArgs;
 use crate::model::ReplayPairArgs;
 use crate::model::RunManifest;
@@ -163,14 +167,8 @@ pub(crate) struct ImportedSourceProof {
     pub(crate) material_paths: BTreeMap<String, PathBuf>,
     case_bytes: Vec<u8>,
     attestation_bytes: Vec<u8>,
+    attestation: NativeHeldOutAttestation,
     material_bytes: BTreeMap<String, Vec<u8>>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-struct SourceProofAttestation {
-    case_sha256: String,
-    source_materials_sha256: String,
 }
 
 pub(crate) fn import_live_source_proof(
@@ -216,6 +214,9 @@ fn import_live_source_proof_inner(
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(&case_bytes).context("parse held-out case")?;
     mission_case.validate().context("validate held-out case")?;
+    let private_root = private_root
+        .canonicalize()
+        .context("canonicalize managed proof private root")?;
     let material_root = material_root
         .canonicalize()
         .context("canonicalize source material root")?;
@@ -258,17 +259,15 @@ fn import_live_source_proof_inner(
     let materials_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
     let attestation_bytes =
         read_supplied_regular(attestation_path).context("read held-out attestation")?;
-    let attestation: SourceProofAttestation =
-        serde_json::from_slice(&attestation_bytes).context("parse held-out attestation")?;
-    if attestation.case_sha256 != sha256(&case_bytes)
-        || attestation.source_materials_sha256 != sha256(&materials_manifest_bytes)
-    {
-        bail!("held-out attestation does not bind the case and declared materials");
-    }
-
-    let private_root = private_root
-        .canonicalize()
-        .context("canonicalize managed proof private root")?;
+    let attestation = FrozenContracts::load()?
+        .validate_native_attestation(&attestation_bytes)
+        .context("validate complete native held-out attestation")?;
+    validate_native_attestation_source_binding(
+        &attestation,
+        &case_bytes,
+        &materials_manifest_bytes,
+        &private_root,
+    )?;
     let private_handle = open_anchored_directory(&private_root)?;
     let inputs_handle = create_fresh_directory_at(&private_handle, OsStr::new("inputs"))
         .context("create fresh managed proof input tree")?;
@@ -359,6 +358,7 @@ fn import_live_source_proof_inner(
         material_paths,
         case_bytes,
         attestation_bytes,
+        attestation,
         material_bytes,
     };
     validate_imported_source_proof(&imported)?;
@@ -378,6 +378,93 @@ fn read_supplied_regular(path: &Path) -> Result<Vec<u8>> {
         .canonicalize()
         .with_context(|| format!("canonicalize supplied file {}", path.display()))?;
     read_handle(&open_anchored_regular(&canonical)?)
+}
+
+fn validate_native_attestation_source_binding(
+    attestation: &NativeHeldOutAttestation,
+    case_bytes: &[u8],
+    materials_manifest_bytes: &[u8],
+    private_root: &Path,
+) -> Result<()> {
+    if attestation.case_sha256 != sha256(case_bytes)
+        || attestation.source_materials_sha256 != sha256(materials_manifest_bytes)
+        || Path::new(&attestation.private_root) != private_root
+    {
+        bail!("native attestation does not bind the case, materials, and canonical private root");
+    }
+    let signed_at = chrono::DateTime::parse_from_rfc3339(&attestation.signed_at)?;
+    let retention_deadline = chrono::DateTime::parse_from_rfc3339(&attestation.retention_deadline)?;
+    let run_start = chrono::Utc::now();
+    if signed_at.with_timezone(&chrono::Utc) > run_start
+        || run_start >= retention_deadline.with_timezone(&chrono::Utc)
+    {
+        bail!("native attestation is not signed and retained for this run boundary");
+    }
+    Ok(())
+}
+
+fn provider_role_wire(role: ProviderRole) -> &'static str {
+    match role {
+        ProviderRole::TargetVolcengine => "targetVolcengine",
+        ProviderRole::ApprovedReference => "approvedReference",
+    }
+}
+
+fn validate_native_attestation_freeze_binding(
+    attestation: &NativeHeldOutAttestation,
+    args: &LiveFreezeArgs,
+    private_root: &Path,
+    imported_paths: &BTreeMap<String, PathBuf>,
+) -> Result<()> {
+    let artifact_sha256 = |name: &str| -> Result<String> {
+        Ok(sha256(&read_regular_file_no_follow(
+            imported_paths
+                .get(name)
+                .with_context(|| format!("missing imported native {name}"))?,
+        )?))
+    };
+    if attestation.candidate_sha != args.fork_sha
+        || Path::new(&attestation.private_root) != private_root
+        || attestation.provider_role != provider_role_wire(args.provider_role)
+        || attestation.approved_total_fen != args.authorized_total_cost_fen
+        || attestation.approved_per_run_fen != args.authorized_per_run_cost_fen
+        || attestation.max_provider_request_attempts_per_run
+            != args.max_provider_request_attempts_per_run
+        || attestation.max_total_tokens_per_run != args.max_total_tokens_per_run
+        || attestation.max_elapsed_seconds_per_run != args.max_elapsed_seconds_per_run
+        || attestation.max_output_tokens_per_request != args.max_output_tokens_per_request
+        || attestation.provider_budget_evidence_sha256 != artifact_sha256("providerBudgetReceipt")?
+        || attestation.rate_card_sha256 != artifact_sha256("rateCard")?
+        || attestation.billing_policy_commitment != artifact_sha256("billingPolicy")?
+        || attestation.fx_policy_sha256 != artifact_sha256("fxPolicy")?
+    {
+        bail!("native attestation differs from the live freeze inputs");
+    }
+    Ok(())
+}
+
+fn validate_native_attestation_context_binding(
+    attestation: &NativeHeldOutAttestation,
+    context: &FrozenRunContext,
+) -> Result<()> {
+    if attestation.candidate_sha != context.candidate_sha
+        || Path::new(&attestation.private_root) != context.private_root
+        || attestation.provider_mode != context.provider_mode
+        || attestation.approved_total_fen != 0
+        || attestation.approved_per_run_fen != 0
+        || attestation.max_provider_request_attempts_per_run != context.max_attempts_per_arm
+        || attestation.max_total_tokens_per_run != context.max_total_tokens
+        || attestation.max_elapsed_seconds_per_run != context.max_elapsed_seconds
+        || attestation.max_output_tokens_per_request != context.max_output_tokens
+        || attestation.provider_budget_evidence_sha256
+            != context.artifacts["providerBudgetReceipt"].sha256
+        || attestation.rate_card_sha256 != context.artifacts["rateCard"].sha256
+        || attestation.billing_policy_commitment != context.artifacts["billingPolicy"].sha256
+        || attestation.fx_policy_sha256 != context.artifacts["fxPolicy"].sha256
+    {
+        bail!("native attestation differs from the frozen live context");
+    }
+    Ok(())
 }
 
 pub(crate) fn validate_imported_source_proof(imported: &ImportedSourceProof) -> Result<()> {
@@ -438,7 +525,11 @@ fn validate_managed_source_artifacts(frozen: &VerifiedFrozenContext) -> Result<(
         &attestation_bytes,
         &manifest_bytes,
         &material_bytes,
-    )
+    )?;
+    let attestation = FrozenContracts::load()?
+        .validate_native_attestation(&attestation_bytes)
+        .context("validate managed native attestation before arm")?;
+    validate_native_attestation_context_binding(&attestation, &frozen.context)
 }
 
 pub(crate) fn validate_managed_source_before_arm(
@@ -477,13 +568,15 @@ fn validate_managed_source_tree(
     manifest_bytes: &[u8],
     material_bytes: &BTreeMap<PathBuf, Vec<u8>>,
 ) -> Result<()> {
-    let attestation: SourceProofAttestation =
-        serde_json::from_slice(attestation_bytes).context("parse strict managed attestation")?;
-    if attestation.case_sha256 != sha256(case_bytes)
-        || attestation.source_materials_sha256 != sha256(manifest_bytes)
-    {
-        bail!("managed attestation does not bind the case and materials");
-    }
+    let attestation = FrozenContracts::load()?
+        .validate_native_attestation(attestation_bytes)
+        .context("validate strict managed native attestation")?;
+    validate_native_attestation_source_binding(
+        &attestation,
+        case_bytes,
+        manifest_bytes,
+        private_root,
+    )?;
     let private = open_anchored_directory(private_root)?;
     let inputs = open_directory_at(&private, OsStr::new("inputs"))?;
     require_exact_directory_entries(
@@ -558,8 +651,49 @@ fn validate_exact_relative_tree(
     Ok(())
 }
 
+fn replay_pair_id(
+    fork_sha: &str,
+    fixtures: &BTreeMap<String, FrozenArtifactReference>,
+) -> Result<String> {
+    const PAIR_INPUT_NAMES: [&str; 6] = [
+        "case",
+        "genericRequest",
+        "candidateRequest",
+        "genericTranscript",
+        "candidateTranscript",
+        "leadSkill",
+    ];
+    let commitments = PAIR_INPUT_NAMES
+        .iter()
+        .map(|name| {
+            let reference = fixtures
+                .get(*name)
+                .with_context(|| format!("missing replay pair input {name}"))?;
+            Ok(serde_json::json!({"name": name, "sha256": reference.sha256}))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let canonical_commitments = canonicalize_value(&serde_json::Value::Array(commitments))?;
+    let mut hasher = Sha256::new();
+    hasher.update(b"AI-IP-REPLAY-PAIR-V2\0");
+    hasher.update(fork_sha.as_bytes());
+    hasher.update(canonical_commitments);
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+struct VerifiedReplayFixture {
+    reference: FrozenArtifactReference,
+    bytes: Vec<u8>,
+}
+
 /// Writes a typed replay freeze record with no provider-capable fields.
 pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
+    freeze_replay_context_inner(args, || Ok(()))
+}
+
+fn freeze_replay_context_inner(
+    args: ReplayFreezeArgs,
+    hook: impl FnOnce() -> Result<()>,
+) -> Result<()> {
     let repo_root = args
         .repo_root
         .canonicalize()
@@ -592,7 +726,7 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
     let fixture_root = fixture_set_path
         .parent()
         .context("fixture-set manifest has no parent")?;
-    let mut fixtures = BTreeMap::new();
+    let mut verified_fixtures = BTreeMap::new();
     for entry in fixture_set.fixtures {
         validate_leaf_name(&entry.name)?;
         if entry.path.components().count() != 1
@@ -611,21 +745,13 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
         if path.parent() != Some(fixture_root) {
             bail!("replay fixture escapes the fixture-set directory");
         }
-        let bytes = read_regular_file_no_follow(&path)?;
-        if sha256(&bytes) != entry.sha256 {
-            bail!(
-                "replay fixture {} differs from its listed bytes",
-                entry.name
-            );
-        }
-        if fixtures
-            .insert(
-                entry.name,
-                FrozenArtifactReference {
-                    path,
-                    sha256: entry.sha256,
-                },
-            )
+        let reference = FrozenArtifactReference {
+            path,
+            sha256: entry.sha256,
+        };
+        let bytes = read_verified_replay_reference(&reference, &entry.name)?;
+        if verified_fixtures
+            .insert(entry.name, VerifiedReplayFixture { reference, bytes })
             .is_some()
         {
             bail!("fixture-set contains a duplicate semantic fixture name");
@@ -639,18 +765,25 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
         "candidateTranscript",
         "leadSkill",
         "attestation",
-        "review1",
-        "review2",
-        "review3",
     ]);
-    if fixtures.keys().map(String::as_str).collect::<BTreeSet<_>>() != required {
+    if verified_fixtures
+        .keys()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>()
+        != required
+    {
         bail!("fixture-set does not contain the exact replay fixture roles");
     }
-    if args.case.canonicalize()? != fixtures["case"].path
-        || args.transcript.canonicalize()? != fixtures["genericTranscript"].path
+    if args.case.canonicalize()? != verified_fixtures["case"].reference.path
+        || args.transcript.canonicalize()? != verified_fixtures["genericTranscript"].reference.path
     {
         bail!("explicit replay case/transcript differ from the fixture-set roles");
     }
+    hook()?;
+    let fixtures = verified_fixtures
+        .iter()
+        .map(|(name, fixture)| (name.clone(), fixture.reference.clone()))
+        .collect();
     let codex_path = args
         .codex_bin
         .canonicalize()
@@ -666,11 +799,19 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
         sha256: sha256(&read_regular_file_no_follow(&evaluator_path)?),
         path: evaluator_path,
     };
-    let pair_id = sha256(
-        [fixture_set_bytes.as_slice(), args.fork_sha.as_bytes()]
-            .concat()
-            .as_slice(),
-    );
+    let pair_id = replay_pair_id(&args.fork_sha, &fixtures)?;
+    let case_bytes = &verified_fixtures["case"].bytes;
+    let mission: codex_ai_ip_domain::HeldOutMissionCase =
+        serde_json::from_slice(case_bytes).context("parse frozen replay case")?;
+    mission.validate().context("validate frozen replay case")?;
+    let attestation = FrozenContracts::load()?
+        .validate_replay_attestation(&verified_fixtures["attestation"].bytes)?;
+    if attestation.pair_id != pair_id
+        || attestation.case_sha256 != sha256(case_bytes)
+        || attestation.source_materials_sha256 != sha256(&serde_json::to_vec(&mission.materials)?)
+    {
+        bail!("replay attestation does not bind the frozen pair and declared case materials");
+    }
     let record = ReplayFrozenContext {
         schema_version: 1,
         execution_mode: "replay".to_string(),
@@ -687,17 +828,17 @@ pub fn freeze_replay_context(args: ReplayFreezeArgs) -> Result<()> {
         },
         fixtures,
     };
-    write_owner_only_new(&args.output, &serde_json::to_vec_pretty(&record)?)
+    let record_bytes = serde_json::to_vec_pretty(&record)?;
+    FrozenContracts::load()?.validate_replay_context(&record_bytes)?;
+    write_owner_only_new(&args.output, &record_bytes)
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-struct ReplayAttestation {
-    schema_version: u32,
-    execution_mode: String,
-    provider_mode: String,
-    paid_provider_cost_fen: u64,
-    synthetic_only: bool,
+#[cfg(test)]
+pub(crate) fn freeze_replay_context_with_hook(
+    args: ReplayFreezeArgs,
+    hook: impl FnOnce() -> Result<()>,
+) -> Result<()> {
+    freeze_replay_context_inner(args, hook)
 }
 
 struct ReplayArmResult {
@@ -728,6 +869,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         .canonicalize()
         .context("canonicalize replay frozen context")?;
     let context_bytes = read_regular_file_no_follow(&canonical_context)?;
+    FrozenContracts::load()?.validate_replay_context(&context_bytes)?;
     let context: ReplayFrozenContext =
         serde_json::from_slice(&context_bytes).context("parse replay frozen context")?;
     if context.schema_version != 1
@@ -745,8 +887,8 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     if current_exe != context.evaluator_binary.path {
         bail!("replay evaluator executable differs from the frozen binary");
     }
-    verify_replay_reference(&context.fixture_set_manifest, "fixture-set manifest")?;
-    let fixture_set_bytes = read_regular_file_no_follow(&context.fixture_set_manifest.path)?;
+    let fixture_set_bytes =
+        read_verified_replay_reference(&context.fixture_set_manifest, "fixture-set manifest")?;
     let fixture_set: ReplayFixtureSet = serde_json::from_slice(&fixture_set_bytes)?;
     if fixture_set.schema_version != 1 || fixture_set.execution_mode != "replay" {
         bail!("frozen fixture-set mode changed before replay");
@@ -776,18 +918,22 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         }
         verify_replay_reference(reference, name)?;
     }
-    let attestation: ReplayAttestation =
-        serde_json::from_slice(&read_replay_fixture(&context, "attestation")?)?;
-    if attestation.schema_version != 1
-        || attestation.execution_mode != "replay"
-        || attestation.provider_mode != "not-run"
-        || attestation.paid_provider_cost_fen != 0
-        || !attestation.synthetic_only
-    {
-        bail!("replay attestation permits a live, provider, or paid surface");
+    if replay_pair_id(&context.fork_sha, &context.fixtures)? != context.pair_id {
+        bail!("frozen replay pair ID differs from its six execution inputs");
     }
-    let mission: codex_ai_ip_domain::HeldOutMissionCase =
-        serde_json::from_slice(&read_replay_fixture(&context, "case")?)?;
+    let attestation_bytes = read_replay_fixture(&context, "attestation")?;
+    let attestation = FrozenContracts::load()?.validate_replay_attestation(&attestation_bytes)?;
+    if attestation.pair_id != context.pair_id {
+        bail!("replay attestation pair ID differs from the frozen context");
+    }
+    let case_bytes = read_replay_fixture(&context, "case")?;
+    let mission: codex_ai_ip_domain::HeldOutMissionCase = serde_json::from_slice(&case_bytes)?;
+    let source_materials_sha256 = sha256(&serde_json::to_vec(&mission.materials)?);
+    if attestation.case_sha256 != sha256(&case_bytes)
+        || attestation.source_materials_sha256 != source_materials_sha256
+    {
+        bail!("replay attestation does not bind the declared case materials");
+    }
     let skill_bytes = read_replay_fixture(&context, "leadSkill")?;
     if !std::str::from_utf8(&skill_bytes)?
         .contains(&format!("name: {}", codex_ai_ip_runtime::LEAD_SKILL_NAME))
@@ -940,6 +1086,13 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
 }
 
 fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<()> {
+    read_verified_replay_reference(reference, label).map(drop)
+}
+
+fn read_verified_replay_reference(
+    reference: &FrozenArtifactReference,
+    label: &str,
+) -> Result<Vec<u8>> {
     if !reference.path.is_absolute() || !is_lower_hex(&reference.sha256, 64) {
         bail!("frozen replay {label} reference is not canonical");
     }
@@ -947,12 +1100,19 @@ fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> 
         .path
         .canonicalize()
         .with_context(|| format!("canonicalize frozen replay {label}"))?;
-    if canonical != reference.path
-        || sha256(&read_regular_file_no_follow(&canonical)?) != reference.sha256
-    {
+    if canonical != reference.path {
         bail!("frozen replay {label} bytes or identity changed");
     }
-    Ok(())
+    let retained = open_anchored_regular(&canonical)?;
+    let current = open_anchored_regular(&canonical)?;
+    if !same_file(&retained.metadata()?, &current.metadata()?) {
+        bail!("frozen replay {label} path identity changed before read");
+    }
+    let bytes = read_handle(&retained)?;
+    if sha256(&bytes) != reference.sha256 {
+        bail!("frozen replay {label} bytes or identity changed");
+    }
+    Ok(bytes)
 }
 
 fn read_replay_fixture(context: &ReplayFrozenContext, name: &str) -> Result<Vec<u8>> {
@@ -960,8 +1120,22 @@ fn read_replay_fixture(context: &ReplayFrozenContext, name: &str) -> Result<Vec<
         .fixtures
         .get(name)
         .with_context(|| format!("missing frozen replay fixture {name}"))?;
-    verify_replay_reference(reference, name)?;
-    read_regular_file_no_follow(&reference.path)
+    read_verified_replay_reference(reference, name)
+}
+
+#[cfg(test)]
+pub(crate) fn read_replay_reference_with_hook(
+    path: &Path,
+    expected_sha256: &str,
+    hook: impl FnOnce(&Path) -> Result<()>,
+) -> Result<Vec<u8>> {
+    let reference = FrozenArtifactReference {
+        path: path.to_path_buf(),
+        sha256: expected_sha256.to_string(),
+    };
+    let bytes = read_verified_replay_reference(&reference, "test fixture")?;
+    hook(path)?;
+    Ok(bytes)
 }
 
 fn canonicalize_replay_request(
@@ -1217,7 +1391,7 @@ fn build_replay_manifest(
         condition: arm.condition,
         fork_sha: context.fork_sha.clone(),
         case_sha256: context.fixtures["case"].sha256.clone(),
-        source_materials_sha256: context.fixture_set_manifest.sha256.clone(),
+        source_materials_sha256: sha256(&serde_json::to_vec(&mission.materials)?),
         prompt_sha256,
         additional_context_sha256,
         output_schema_sha256: schema_sha256,
@@ -1326,6 +1500,12 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         write_owner_only_new(&destination, &read_regular_file_no_follow(source)?)?;
         imported_paths.insert(name.to_string(), destination);
     }
+    validate_native_attestation_freeze_binding(
+        &source_proof.attestation,
+        &args,
+        &canonical_private_root,
+        &imported_paths,
+    )?;
     let mission_case = source_proof.mission_case;
     let schema_path = generated_dir.join("content-package-schema.json");
     write_owner_only_new(
@@ -1420,7 +1600,9 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         artifacts,
     };
     validate_frozen_context(&context)?;
-    write_owner_only_new(&args.output, &serde_json::to_vec_pretty(&context)?)
+    let context_bytes = serde_json::to_vec_pretty(&context)?;
+    FrozenContracts::load()?.validate_native_context(&context_bytes)?;
+    write_owner_only_new(&args.output, &context_bytes)
 }
 
 pub(crate) struct PairRequestInspector {
@@ -2975,6 +3157,9 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
     }
     let frozen_file = ArtifactCommitment::freeze(&canonical_path)?;
     let bytes = frozen_file.read_verified()?;
+    FrozenContracts::load()?
+        .validate_native_context(&bytes)
+        .context("validate frozen native context contract")?;
     let context: FrozenRunContext =
         serde_json::from_slice(&bytes).context("parse strict frozen context JSON")?;
     if canonical_path != context.private_root.join("frozen-run-context.json") {
@@ -3715,13 +3900,16 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
         bail!("frozen material manifest differs from the held-out case declaration");
     }
     let attestation_bytes = read_regular_file_no_follow(&context.artifacts["attestation"].path)?;
-    let attestation: SourceProofAttestation =
-        serde_json::from_slice(&attestation_bytes).context("parse frozen attestation")?;
-    if attestation.case_sha256 != sha256(&case_bytes)
-        || attestation.source_materials_sha256 != sha256(&material_manifest_bytes)
-    {
-        bail!("frozen attestation does not bind the managed case and materials");
-    }
+    let attestation = FrozenContracts::load()?
+        .validate_native_attestation(&attestation_bytes)
+        .context("validate frozen complete native attestation")?;
+    validate_native_attestation_source_binding(
+        &attestation,
+        &case_bytes,
+        &material_manifest_bytes,
+        &context.private_root,
+    )?;
+    validate_native_attestation_context_binding(&attestation, context)?;
     let declared_material_names: HashSet<String> = mission_case
         .materials
         .iter()
