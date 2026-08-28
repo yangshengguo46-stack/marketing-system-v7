@@ -761,7 +761,11 @@ fn frozen_context_identity_replacement_replay_is_rejected() {
 
     replace_with_same_owner_only_bytes(&prepared.frozen);
 
-    assert!(verified.reverify_all().is_err());
+    let error = verified.reverify_all().unwrap_err();
+    assert_eq!(
+        format!("{error:#}"),
+        "reverify Replay frozen context identity: frozen context path identity changed after verification"
+    );
 }
 
 #[test]
@@ -1903,7 +1907,11 @@ fn frozen_context_identity_replacement_native_is_rejected() {
 
     replace_with_same_owner_only_bytes(&path);
 
-    assert!(verified.reverify_all().is_err());
+    let error = verified.reverify_all().unwrap_err();
+    assert_eq!(
+        format!("{error:#}"),
+        "reverify native frozen context identity: frozen context path identity changed after verification"
+    );
 }
 
 #[test]
@@ -2378,6 +2386,26 @@ fn arm_order_uses_an_owner_only_os_seed_after_context_verification() {
             0o600
         );
     }
+}
+
+#[test]
+fn arm_order_context_recheck_rejects_over_cap_before_outputs() {
+    let temp = tempfile::tempdir().unwrap();
+    let frozen_path = strict_live_context(&temp);
+    let frozen = verify_frozen_context(&frozen_path).unwrap();
+    let mut context = fs::OpenOptions::new()
+        .append(true)
+        .open(frozen.canonical_path())
+        .unwrap();
+    std::io::Write::write_all(&mut context, &vec![b'x'; 1024 * 1024]).unwrap();
+    context.sync_all().unwrap();
+    let order_dir = frozen.canonical_path().parent().unwrap().join("order");
+
+    let error = commit_arm_order(&frozen, &order_dir).unwrap_err();
+
+    assert!(!order_dir.exists());
+    assert!(!order_dir.join("arm-order-seed.bin").exists());
+    assert_eq!(error.to_string(), "frozen context exceeds its byte cap");
 }
 
 #[test]

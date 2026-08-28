@@ -162,10 +162,6 @@ impl VerifiedFrozenContext {
     }
 
     pub(crate) fn reverify_all(&self) -> Result<()> {
-        let current = verify_frozen_context(&self.canonical_path)?;
-        if current.sha256 != self.sha256 || current.context != self.context {
-            bail!("native frozen context changed after verification");
-        }
         self.frozen_file
             .verify_context_bytes(&self.raw_bytes)
             .context("reverify native frozen context identity")?;
@@ -3901,8 +3897,8 @@ pub fn commit_arm_order(
     frozen: &VerifiedFrozenContext,
     coordinator_directory: &Path,
 ) -> Result<CommittedArmOrder> {
-    let bytes = frozen.frozen_file.read_verified()?;
-    if sha256(&bytes) != frozen.sha256() {
+    frozen.frozen_file.verify_context_bytes(&frozen.raw_bytes)?;
+    if sha256(&frozen.raw_bytes) != frozen.sha256() {
         bail!("frozen run context changed before arm-order commitment");
     }
     prepare_pair_coordinator(coordinator_directory)?;
