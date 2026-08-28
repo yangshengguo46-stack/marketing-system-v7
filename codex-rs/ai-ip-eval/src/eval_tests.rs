@@ -2226,7 +2226,7 @@ fn arm_order_uses_an_owner_only_os_seed_after_context_verification() {
     let temp = tempfile::tempdir().unwrap();
     let frozen_path = strict_live_context(&temp);
     let frozen = verify_frozen_context(&frozen_path).unwrap();
-    let order_dir = temp.path().join("order");
+    let order_dir = frozen.canonical_path().parent().unwrap().join("order");
     let order = commit_arm_order(&frozen, &order_dir).unwrap();
     assert_ne!(order.first(), order.second());
     assert_eq!(
@@ -2256,7 +2256,7 @@ fn production_coordinator_accepts_only_the_opaque_os_committed_order() {
     let temp = tempfile::tempdir().unwrap();
     let frozen_path = strict_live_context(&temp);
     let frozen = verify_frozen_context(&frozen_path).unwrap();
-    let order_dir = temp.path().join("order");
+    let order_dir = frozen.canonical_path().parent().unwrap().join("order");
     let order = commit_arm_order(&frozen, &order_dir).unwrap();
     let expected_phase = PairPhase::OrderCommitted {
         first: order.first(),
