@@ -122,8 +122,52 @@ impl VerifiedFrozenContext {
         FrozenExecutionGuard::from_commitments(self.artifacts.clone(), &self.context.repo_root)
     }
 
-    fn artifact_bytes(&self, name: &str) -> Result<Vec<u8>> {
+    pub(crate) fn raw_bytes(&self) -> Result<Vec<u8>> {
+        self.frozen_file.read_verified()
+    }
+
+    pub(crate) fn private_root(&self) -> &Path {
+        &self.context.private_root
+    }
+
+    pub(crate) fn fork_sha(&self) -> &str {
+        &self.context.repo_head
+    }
+
+    pub(crate) fn model_label(&self) -> &str {
+        &self.context.model_label
+    }
+
+    pub(crate) fn provider_mode(&self) -> &str {
+        &self.context.provider_mode
+    }
+
+    pub(crate) fn max_total_tokens_per_run(&self) -> u64 {
+        self.context.max_total_tokens
+    }
+
+    pub(crate) fn max_elapsed_seconds_per_run(&self) -> u64 {
+        self.context.max_elapsed_seconds
+    }
+
+    pub(crate) fn artifact_bytes(&self, name: &str) -> Result<Vec<u8>> {
         self.artifacts.read_verified(name)
+    }
+
+    pub(crate) fn artifact_sha256(&self, name: &str) -> Result<&str> {
+        self.artifacts
+            .sha256(name)
+            .with_context(|| format!("missing frozen artifact {name}"))
+    }
+
+    pub(crate) fn reverify_all(&self) -> Result<()> {
+        let current = verify_frozen_context(&self.canonical_path)?;
+        if current.sha256 != self.sha256 || current.context != self.context {
+            bail!("native frozen context changed after verification");
+        }
+        self.frozen_file.read_verified()?;
+        self.artifacts.verify()?;
+        validate_managed_source_artifacts(self)
     }
 }
 
@@ -141,6 +185,117 @@ struct ReplayFrozenContext {
     evaluator_binary: FrozenArtifactReference,
     fixture_set_manifest: FrozenArtifactReference,
     fixtures: BTreeMap<String, FrozenArtifactReference>,
+}
+
+#[derive(Debug, Clone)]
+struct VerifiedReplayReference {
+    commitment: ArtifactCommitment,
+    bytes: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct VerifiedReplayFrozenContext {
+    canonical_path: PathBuf,
+    raw_bytes: Vec<u8>,
+    raw_sha256: String,
+    context: ReplayFrozenContext,
+    fixture_set: ArtifactCommitment,
+    fixtures: BTreeMap<String, VerifiedReplayReference>,
+    codex_binary: ArtifactCommitment,
+    evaluator_binary: ArtifactCommitment,
+    mission_case: codex_ai_ip_domain::HeldOutMissionCase,
+    attestation: crate::ReplayReviewAttestation,
+    materials_manifest_bytes: Vec<u8>,
+    prompt_bytes: Vec<u8>,
+    additional_context_bytes: Vec<u8>,
+    schema_bytes: Vec<u8>,
+    thread_start_bytes: Vec<u8>,
+    turn_start_bytes: Vec<u8>,
+}
+
+pub(crate) struct ReplayFrozenInputProjection<'a> {
+    pub(crate) canonical_path: &'a Path,
+    pub(crate) raw_bytes: &'a [u8],
+    pub(crate) raw_sha256: &'a str,
+    pub(crate) private_root: &'a Path,
+    pub(crate) pair_id: &'a str,
+    pub(crate) fork_sha: &'a str,
+    pub(crate) mission_case: &'a codex_ai_ip_domain::HeldOutMissionCase,
+    pub(crate) attestation: &'a crate::ReplayReviewAttestation,
+    pub(crate) materials_manifest_bytes: &'a [u8],
+    pub(crate) prompt_bytes: &'a [u8],
+    pub(crate) additional_context_bytes: &'a [u8],
+    pub(crate) schema_bytes: &'a [u8],
+    pub(crate) thread_start_bytes: &'a [u8],
+    pub(crate) turn_start_bytes: &'a [u8],
+    pub(crate) codex_binary_sha256: &'a str,
+    pub(crate) evaluator_binary_sha256: &'a str,
+    pub(crate) broker_component_sha256: String,
+    pub(crate) model_label: &'static str,
+    pub(crate) provider_label: &'static str,
+    pub(crate) max_provider_request_attempts: u64,
+    pub(crate) max_total_tokens: u64,
+    pub(crate) max_elapsed_seconds: u64,
+}
+
+impl VerifiedReplayFrozenContext {
+    pub(crate) fn projection(&self) -> ReplayFrozenInputProjection<'_> {
+        ReplayFrozenInputProjection {
+            canonical_path: &self.canonical_path,
+            raw_bytes: &self.raw_bytes,
+            raw_sha256: &self.raw_sha256,
+            private_root: &self.context.private_root,
+            pair_id: &self.context.pair_id,
+            fork_sha: &self.context.fork_sha,
+            mission_case: &self.mission_case,
+            attestation: &self.attestation,
+            materials_manifest_bytes: &self.materials_manifest_bytes,
+            prompt_bytes: &self.prompt_bytes,
+            additional_context_bytes: &self.additional_context_bytes,
+            schema_bytes: &self.schema_bytes,
+            thread_start_bytes: &self.thread_start_bytes,
+            turn_start_bytes: &self.turn_start_bytes,
+            codex_binary_sha256: &self.codex_binary.sha256,
+            evaluator_binary_sha256: &self.evaluator_binary.sha256,
+            broker_component_sha256: sha256(b"replay:no-broker-component"),
+            model_label: "replay-fixture",
+            provider_label: "not-run",
+            max_provider_request_attempts: 0,
+            max_total_tokens: 0,
+            max_elapsed_seconds: 0,
+        }
+    }
+
+    pub(crate) fn fixture_bytes(&self, name: &str) -> Result<&[u8]> {
+        Ok(&self
+            .fixtures
+            .get(name)
+            .with_context(|| format!("missing verified replay fixture {name}"))?
+            .bytes)
+    }
+
+    pub(crate) fn reverify_all(&self) -> Result<()> {
+        let raw = crate::secure_fs::read_single_link_regular_bounded(
+            &self.canonical_path,
+            FROZEN_CONTEXT_CAP,
+        )?;
+        if raw != self.raw_bytes {
+            bail!("Replay frozen context changed after verification");
+        }
+        self.fixture_set.read_verified()?;
+        self.codex_binary.read_verified()?;
+        self.evaluator_binary.read_verified()?;
+        for (name, fixture) in &self.fixtures {
+            if fixture.commitment.read_verified()? != fixture.bytes {
+                bail!("verified replay fixture changed after verification: {name}");
+            }
+        }
+        Ok(())
+    }
+
+    fn context(&self) -> &ReplayFrozenContext {
+        &self.context
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -863,97 +1018,28 @@ struct PairOutputCommitments {
 const REPLAY_GENERIC_REQUEST_THREAD_ID: &str = "0198f5aa-0000-7000-8000-000000000002";
 const REPLAY_CANDIDATE_REQUEST_THREAD_ID: &str = "0198f5aa-0000-7000-8000-000000000003";
 const REPLAY_REQUEST_DEADLINE_RFC3339: &str = "2026-08-27T12:01:00Z";
+const FROZEN_CONTEXT_CAP: u64 = 1024 * 1024;
 
 /// Executes a fully frozen replay pair without constructing any provider,
 /// broker, credential, App Server, network, budget, or paid-execution surface.
 pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
-    let canonical_context = args
-        .frozen_run_context
-        .canonicalize()
-        .context("canonicalize replay frozen context")?;
-    let context_bytes = read_regular_file_no_follow(&canonical_context)?;
-    FrozenContracts::load()?.validate_replay_context(&context_bytes)?;
-    let context: ReplayFrozenContext =
-        serde_json::from_slice(&context_bytes).context("parse replay frozen context")?;
-    if context.schema_version != 1
-        || context.execution_mode != "replay"
-        || context.provider_mode != "not-run"
-        || !is_lower_hex(&context.pair_id, 64)
-        || canonical_context != context.private_root.join("frozen-run-context.json")
-    {
-        bail!("frozen replay context violates replay/live disjointness");
-    }
-    require_owner_only_directory(&context.private_root)?;
-    verify_replay_reference(&context.codex_binary, "Codex binary")?;
-    verify_replay_reference(&context.evaluator_binary, "evaluator binary")?;
-    let current_exe = std::env::current_exe()?.canonicalize()?;
-    if current_exe != context.evaluator_binary.path {
-        bail!("replay evaluator executable differs from the frozen binary");
-    }
-    let fixture_set_bytes =
-        read_verified_replay_reference(&context.fixture_set_manifest, "fixture-set manifest")?;
-    let fixture_set: ReplayFixtureSet = serde_json::from_slice(&fixture_set_bytes)?;
-    if fixture_set.schema_version != 1 || fixture_set.execution_mode != "replay" {
-        bail!("frozen fixture-set mode changed before replay");
-    }
-    let fixture_root = context
-        .fixture_set_manifest
-        .path
-        .parent()
-        .context("fixture-set manifest has no parent")?;
-    let listed = fixture_set
-        .fixtures
-        .into_iter()
-        .map(|entry| (entry.name, (entry.path, entry.sha256)))
-        .collect::<BTreeMap<_, _>>();
-    if listed.len() != context.fixtures.len() {
-        bail!("frozen fixture-set roles changed before replay");
-    }
-    for (name, reference) in &context.fixtures {
-        let (relative, listed_sha256) = listed
-            .get(name)
-            .with_context(|| format!("fixture-set no longer lists {name}"))?;
-        if relative.components().count() != 1
-            || fixture_root.join(relative).canonicalize()? != reference.path
-            || listed_sha256 != &reference.sha256
-        {
-            bail!("fixture-set reference changed for {name}");
-        }
-        verify_replay_reference(reference, name)?;
-    }
-    if replay_pair_id(&context.fork_sha, &context.fixtures)? != context.pair_id {
-        bail!("frozen replay pair ID differs from its six execution inputs");
-    }
-    let attestation_bytes = read_replay_fixture(&context, "attestation")?;
-    let attestation = FrozenContracts::load()?.validate_replay_attestation(&attestation_bytes)?;
-    if attestation.pair_id != context.pair_id {
-        bail!("replay attestation pair ID differs from the frozen context");
-    }
-    let case_bytes = read_replay_fixture(&context, "case")?;
-    let mission: codex_ai_ip_domain::HeldOutMissionCase = serde_json::from_slice(&case_bytes)?;
-    let source_materials_sha256 = sha256(&serde_json::to_vec(&mission.materials)?);
-    if attestation.case_sha256 != sha256(&case_bytes)
-        || attestation.source_materials_sha256 != source_materials_sha256
-    {
-        bail!("replay attestation does not bind the declared case materials");
-    }
-    let skill_bytes = read_replay_fixture(&context, "leadSkill")?;
-    if !std::str::from_utf8(&skill_bytes)?
-        .contains(&format!("name: {}", codex_ai_ip_runtime::LEAD_SKILL_NAME))
-    {
-        bail!("replay Lead Skill fixture has the wrong canonical name");
-    }
+    let verified = load_verified_replay_frozen_context(&args.frozen_run_context)?;
+    let context = verified.context();
+    let projection = verified.projection();
+    let context_bytes = projection.raw_bytes;
+    let mission = projection.mission_case;
+    let skill_bytes = verified.fixture_bytes("leadSkill")?;
 
     let (homes, candidate_skill_path, replay_config) =
-        prepare_replay_homes(&context.private_root, &skill_bytes)?;
+        prepare_replay_homes(&context.private_root, skill_bytes)?;
     let generic_request = canonicalize_replay_request(
-        &context,
+        &verified,
         EvaluationCondition::Generic,
         &homes,
         REPLAY_GENERIC_REQUEST_THREAD_ID,
     )?;
     let candidate_request = canonicalize_replay_request(
-        &context,
+        &verified,
         EvaluationCondition::Candidate,
         &homes,
         REPLAY_CANDIDATE_REQUEST_THREAD_ID,
@@ -997,26 +1083,26 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &generic_catalog,
         &candidate_catalog,
         &candidate_skill_path,
-        &skill_bytes,
+        skill_bytes,
     )?;
     crate::validate_stable_catalog(&generic_catalog, &generic_catalog)?;
     crate::validate_stable_catalog(&candidate_catalog, &candidate_catalog)?;
     let generic = collect_replay_arm(
         EvaluationCondition::Generic,
-        &read_replay_fixture(&context, "genericTranscript")?,
-        &mission,
+        verified.fixture_bytes("genericTranscript")?,
+        mission,
         &homes.generic_codex_home,
-        &skill_bytes,
+        skill_bytes,
         generic_catalog_response,
         generic_roots,
         generic_catalog,
     )?;
     let candidate = collect_replay_arm(
         EvaluationCondition::Candidate,
-        &read_replay_fixture(&context, "candidateTranscript")?,
-        &mission,
+        verified.fixture_bytes("candidateTranscript")?,
+        mission,
         &homes.candidate_codex_home,
-        &skill_bytes,
+        skill_bytes,
         candidate_catalog_response,
         candidate_roots,
         candidate_catalog,
@@ -1038,7 +1124,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         "providerMode": "not-run",
         "paidProviderCostFen": 0,
         "pairId": context.pair_id,
-        "frozenRunContextSha256": sha256(&context_bytes),
+        "frozenRunContextSha256": sha256(context_bytes),
         "fixtureSetSha256": context.fixture_set_manifest.sha256,
         "arms": ["generic", "candidate"]
     }))?;
@@ -1086,9 +1172,9 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         )?;
         let package_sha256 = sha256(&serde_json::to_vec(&arm.collected.content_package)?);
         let manifest = build_replay_manifest(
-            &context,
-            &context_bytes,
-            &mission,
+            context,
+            context_bytes,
+            mission,
             &execution_context_sha256,
             ordinal,
             arm,
@@ -1099,12 +1185,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
             &package_sha256,
             request,
         )?;
-        crate::verify_postprocess_archive(
-            &context.private_root,
-            &manifest,
-            &mission,
-            &skill_bytes,
-        )?;
+        crate::verify_postprocess_archive(&context.private_root, &manifest, mission, skill_bytes)?;
         let bytes = serde_json::to_vec_pretty(&manifest)?;
         write_owner_only_new(
             &coordinator.join(format!("run-{ordinal}-manifest.json")),
@@ -1118,7 +1199,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     crate::private_inventory::bootstrap_private_inventory(
         &context.private_root,
         &context.pair_id,
-        &sha256(&context_bytes),
+        &sha256(context_bytes),
         &chrono::Utc::now().to_rfc3339(),
     )?;
     let mut verification = serde_json::json!({
@@ -1127,7 +1208,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         "providerMode": "not-run",
         "paidProviderCostFen": 0,
         "pairId": context.pair_id,
-        "frozenRunContextSha256": sha256(&context_bytes),
+        "frozenRunContextSha256": sha256(context_bytes),
         "fixtureSetSha256": context.fixture_set_manifest.sha256,
         "genericRunManifestSha256": generic_manifest_sha256.context("missing generic replay manifest")?,
         "candidateRunManifestSha256": candidate_manifest_sha256.context("missing candidate replay manifest")?,
@@ -1152,14 +1233,155 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     crate::private_inventory::verify_private_inventory(&context.private_root).map(drop)
 }
 
-fn verify_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<()> {
-    read_verified_replay_reference(reference, label).map(drop)
+pub(crate) fn verify_replay_frozen_context(
+    canonical_path: &Path,
+    raw_context_bytes: &[u8],
+) -> Result<VerifiedReplayFrozenContext> {
+    if !canonical_path.is_absolute() || canonical_path.canonicalize()? != canonical_path {
+        bail!("Replay frozen context path is not canonical");
+    }
+    let contracts = FrozenContracts::load()?;
+    contracts.validate_replay_context(raw_context_bytes)?;
+    let context: ReplayFrozenContext =
+        serde_json::from_value(crate::jcs::parse_json(raw_context_bytes)?)?;
+    if serde_json::to_vec_pretty(&context)? != raw_context_bytes
+        || context.schema_version != 1
+        || context.execution_mode != "replay"
+        || context.provider_mode != "not-run"
+        || !is_lower_hex(&context.pair_id, 64)
+        || canonical_path != context.private_root.join("frozen-run-context.json")
+    {
+        bail!("frozen replay context violates its exact typed contract");
+    }
+    require_owner_only_directory(&context.private_root)?;
+    let codex_binary = retain_replay_reference(&context.codex_binary, "Codex binary")?;
+    let evaluator_binary = retain_replay_reference(&context.evaluator_binary, "evaluator binary")?;
+    if std::env::current_exe()?.canonicalize()? != context.evaluator_binary.path {
+        bail!("replay evaluator executable differs from the frozen binary");
+    }
+    let fixture_set =
+        retain_replay_reference(&context.fixture_set_manifest, "fixture-set manifest")?;
+    let fixture_set_bytes = fixture_set.read_verified()?;
+    let fixture_set_typed: ReplayFixtureSet =
+        serde_json::from_value(crate::jcs::parse_json(&fixture_set_bytes)?)?;
+    if fixture_set_typed.schema_version != 1 || fixture_set_typed.execution_mode != "replay" {
+        bail!("frozen fixture-set mode changed before replay");
+    }
+    let fixture_root = context
+        .fixture_set_manifest
+        .path
+        .parent()
+        .context("fixture-set manifest has no parent")?;
+    let mut listed = BTreeMap::new();
+    for entry in fixture_set_typed.fixtures {
+        if listed
+            .insert(entry.name, (entry.path, entry.sha256))
+            .is_some()
+        {
+            bail!("frozen fixture-set contains a duplicate role");
+        }
+    }
+    let required = BTreeSet::from([
+        "case",
+        "genericRequest",
+        "candidateRequest",
+        "genericTranscript",
+        "candidateTranscript",
+        "leadSkill",
+        "attestation",
+    ]);
+    if listed.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
+        || context
+            .fixtures
+            .keys()
+            .map(String::as_str)
+            .collect::<BTreeSet<_>>()
+            != required
+    {
+        bail!("frozen fixture-set roles changed before replay");
+    }
+    let mut fixtures = BTreeMap::new();
+    for (name, reference) in &context.fixtures {
+        let (relative, listed_sha256) = &listed[name];
+        if relative.components().count() != 1
+            || fixture_root.join(relative).canonicalize()? != reference.path
+            || listed_sha256 != &reference.sha256
+        {
+            bail!("fixture-set reference changed for {name}");
+        }
+        let commitment = retain_replay_reference(reference, name)?;
+        let bytes = commitment.read_verified()?;
+        fixtures.insert(name.clone(), VerifiedReplayReference { commitment, bytes });
+    }
+    if replay_pair_id(&context.fork_sha, &context.fixtures)? != context.pair_id {
+        bail!("frozen replay pair ID differs from its six execution inputs");
+    }
+    let case_bytes = &fixtures["case"].bytes;
+    let mission_case: codex_ai_ip_domain::HeldOutMissionCase = serde_json::from_slice(case_bytes)?;
+    mission_case
+        .validate()
+        .context("validate frozen replay case")?;
+    let attestation = contracts.validate_replay_attestation(&fixtures["attestation"].bytes)?;
+    let materials_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
+    if attestation.pair_id != context.pair_id
+        || attestation.case_sha256 != sha256(case_bytes)
+        || attestation.source_materials_sha256 != sha256(&materials_manifest_bytes)
+    {
+        bail!("replay attestation does not bind the frozen pair and declared case materials");
+    }
+    if !std::str::from_utf8(&fixtures["leadSkill"].bytes)?
+        .contains(&format!("name: {}", codex_ai_ip_runtime::LEAD_SKILL_NAME))
+    {
+        bail!("replay Lead Skill fixture has the wrong canonical name");
+    }
+    let case_dir = context.fixtures["case"]
+        .path
+        .parent()
+        .context("replay case has no fixture directory")?
+        .to_path_buf();
+    let prompt_bytes = codex_ai_ip_runtime::root_prompt().as_bytes().to_vec();
+    let additional_context_bytes =
+        codex_ai_ip_runtime::evaluation_context(&mission_case)?.into_bytes();
+    let schema_bytes = serde_json::to_vec(&codex_ai_ip_runtime::content_package_schema()?)?;
+    let thread_start_bytes = serde_json::to_vec(&build_thread_start(
+        "replay-fixture",
+        "replay-not-run",
+        &case_dir,
+    )?)?;
+    let turn_start_bytes = serde_json::to_vec(&build_turn_start("root-thread", &mission_case)?)?;
+    Ok(VerifiedReplayFrozenContext {
+        canonical_path: canonical_path.to_path_buf(),
+        raw_bytes: raw_context_bytes.to_vec(),
+        raw_sha256: sha256(raw_context_bytes),
+        context,
+        fixture_set,
+        fixtures,
+        codex_binary,
+        evaluator_binary,
+        prompt_bytes,
+        additional_context_bytes,
+        schema_bytes,
+        thread_start_bytes,
+        turn_start_bytes,
+        mission_case,
+        attestation,
+        materials_manifest_bytes,
+    })
 }
 
-fn read_verified_replay_reference(
+fn load_verified_replay_frozen_context(path: &Path) -> Result<VerifiedReplayFrozenContext> {
+    let canonical_path = path
+        .canonicalize()
+        .context("canonicalize replay frozen context")?;
+    let bytes =
+        crate::secure_fs::read_single_link_regular_bounded(&canonical_path, FROZEN_CONTEXT_CAP)?;
+    verify_replay_frozen_context(&canonical_path, &bytes)
+}
+
+fn retain_replay_reference(
     reference: &FrozenArtifactReference,
     label: &str,
-) -> Result<Vec<u8>> {
+) -> Result<ArtifactCommitment> {
     if !reference.path.is_absolute() || !is_lower_hex(&reference.sha256, 64) {
         bail!("frozen replay {label} reference is not canonical");
     }
@@ -1170,24 +1392,18 @@ fn read_verified_replay_reference(
     if canonical != reference.path {
         bail!("frozen replay {label} bytes or identity changed");
     }
-    let retained = open_anchored_regular(&canonical)?;
-    let current = open_anchored_regular(&canonical)?;
-    if !same_file(&retained.metadata()?, &current.metadata()?) {
-        bail!("frozen replay {label} path identity changed before read");
-    }
-    let bytes = read_handle(&retained)?;
-    if sha256(&bytes) != reference.sha256 {
+    let commitment = ArtifactCommitment::freeze(&canonical)?;
+    if commitment.sha256 != reference.sha256 {
         bail!("frozen replay {label} bytes or identity changed");
     }
-    Ok(bytes)
+    Ok(commitment)
 }
 
-fn read_replay_fixture(context: &ReplayFrozenContext, name: &str) -> Result<Vec<u8>> {
-    let reference = context
-        .fixtures
-        .get(name)
-        .with_context(|| format!("missing frozen replay fixture {name}"))?;
-    read_verified_replay_reference(reference, name)
+fn read_verified_replay_reference(
+    reference: &FrozenArtifactReference,
+    label: &str,
+) -> Result<Vec<u8>> {
+    retain_replay_reference(reference, label)?.read_verified()
 }
 
 #[cfg(test)]
@@ -1206,7 +1422,7 @@ pub(crate) fn read_replay_reference_with_hook(
 }
 
 fn canonicalize_replay_request(
-    context: &ReplayFrozenContext,
+    verified: &VerifiedReplayFrozenContext,
     condition: EvaluationCondition,
     homes: &IsolatedHomes,
     committed_thread_id: &str,
@@ -1223,9 +1439,8 @@ fn canonicalize_replay_request(
             &homes.candidate_codex_home,
         ),
     };
-    let mut body: serde_json::Value =
-        serde_json::from_slice(&read_replay_fixture(context, fixture_name)?)
-            .with_context(|| format!("parse frozen replay request fixture {fixture_name}"))?;
+    let mut body: serde_json::Value = serde_json::from_slice(verified.fixture_bytes(fixture_name)?)
+        .with_context(|| format!("parse frozen replay request fixture {fixture_name}"))?;
     materialize_replay_request_home(&mut body, token, codex_home)?;
     canonicalize_first_root_request(
         &body,
@@ -3612,6 +3827,9 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
         .context("validate frozen native context contract")?;
     let context: FrozenRunContext =
         serde_json::from_slice(&bytes).context("parse strict frozen context JSON")?;
+    if serde_json::to_vec_pretty(&context)? != bytes {
+        bail!("native frozen context is not exact producer-order typed JSON");
+    }
     if canonical_path != context.private_root.join("frozen-run-context.json") {
         bail!("frozen context is outside its canonical private-root location");
     }
@@ -3625,6 +3843,16 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
         frozen_file,
         artifacts,
     })
+}
+
+#[cfg(test)]
+pub(crate) fn encode_native_context_for_test(raw: &[u8]) -> Result<Vec<u8>> {
+    FrozenContracts::load()?
+        .validate_native_context(raw)
+        .context("validate synthetic native context contract")?;
+    let context: FrozenRunContext = serde_json::from_value(crate::jcs::parse_json(raw)?)
+        .context("parse synthetic native context")?;
+    Ok(serde_json::to_vec_pretty(&context)?)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

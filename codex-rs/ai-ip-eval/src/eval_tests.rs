@@ -694,6 +694,81 @@ fn run_frozen_replay_pair() -> anyhow::Result<ReplayPairTestRun> {
     run_frozen_replay_pair_from(fixture_set.parent().unwrap())
 }
 
+#[test]
+fn replay_pair_accepts_shared_verified_frozen_context() {
+    let run = run_frozen_replay_pair().unwrap();
+    assert_eq!(run.manifests.len(), 2);
+}
+
+#[test]
+fn replay_verified_context_retains_inputs_and_rejects_drift() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let prepared = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let raw = fs::read(&prepared.frozen).unwrap();
+    let verified = crate::runner::verify_replay_frozen_context(&prepared.frozen, &raw).unwrap();
+    let projection = verified.projection();
+    assert_eq!(projection.canonical_path, prepared.frozen);
+    assert_eq!(projection.raw_bytes, raw);
+    assert_eq!(projection.raw_sha256, test_sha256(&raw));
+    assert_eq!(projection.private_root, prepared.private_root);
+    assert_eq!(projection.pair_id, prepared.frozen_json["pairId"]);
+    assert_eq!(projection.fork_sha, "synthetic-replay-fork");
+    assert_eq!(projection.materials_manifest_bytes, b"[]");
+    assert_eq!(projection.attestation.reviewers.len(), 3);
+    assert!(!projection.prompt_bytes.is_empty());
+    assert!(!projection.additional_context_bytes.is_empty());
+    assert!(!projection.schema_bytes.is_empty());
+    assert!(!projection.thread_start_bytes.is_empty());
+    assert!(!projection.turn_start_bytes.is_empty());
+    assert_eq!(projection.model_label, "replay-fixture");
+    assert_eq!(projection.provider_label, "not-run");
+    assert_eq!(projection.max_provider_request_attempts, 0);
+    assert_eq!(projection.max_total_tokens, 0);
+    assert_eq!(projection.max_elapsed_seconds, 0);
+    assert_eq!(
+        projection.broker_component_sha256,
+        test_sha256(b"replay:no-broker-component")
+    );
+    verified.reverify_all().unwrap();
+
+    let codex = std::path::Path::new(
+        prepared.frozen_json["codexBinary"]["path"]
+            .as_str()
+            .unwrap(),
+    );
+    fs::write(codex, b"changed replay binary\n").unwrap();
+    assert!(verified.reverify_all().is_err());
+}
+
+#[test]
+fn replay_verified_context_rejects_raw_path_sha_and_reference_drift() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let prepared = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let raw = fs::read(&prepared.frozen).unwrap();
+    let mut with_lf = raw.clone();
+    with_lf.push(b'\n');
+    assert!(crate::runner::verify_replay_frozen_context(&prepared.frozen, &with_lf).is_err());
+    assert!(
+        crate::runner::verify_replay_frozen_context(fixture_set.parent().unwrap(), &raw).is_err()
+    );
+
+    for mutation in ["sha", "reference"] {
+        let mut context: serde_json::Value = serde_json::from_slice(&raw).unwrap();
+        match mutation {
+            "sha" => context["codexBinary"]["sha256"] = json!("0".repeat(64)),
+            "reference" => context["codexBinary"]["path"] = json!("/missing/replay-codex"),
+            _ => unreachable!(),
+        }
+        let bytes = serde_json::to_vec_pretty(&context).unwrap();
+        assert!(
+            crate::runner::verify_replay_frozen_context(&prepared.frozen, &bytes).is_err(),
+            "accepted Replay {mutation} drift"
+        );
+    }
+}
+
 struct ExpectedReplayRequestEvidence {
     generic_raw: String,
     generic_normalized: String,
@@ -1746,27 +1821,28 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         })
         .collect();
     let path = temp.path().join("frozen-run-context.json");
+    let unordered_context = serde_json::to_vec(&json!({
+        "schemaVersion": 1,
+        "executionMode": "live",
+        "providerMode": "not-run",
+        "pairId": "a".repeat(64),
+        "publicRunId": "b".repeat(64),
+        "candidateSha": head,
+        "privateRoot": temp.path().canonicalize().unwrap(),
+        "repoRoot": repository.canonicalize().unwrap(),
+        "repoHead": head,
+        "providerUpstreamUrl": "http://127.0.0.1:1/v1/responses",
+        "modelLabel": "local-mock",
+        "maxOutputTokens": 321,
+        "maxAttemptsPerArm": 2,
+        "maxTotalTokens": 100,
+        "maxElapsedSeconds": 5,
+        "artifacts": artifacts,
+    }))
+    .unwrap();
     fs::write(
         &path,
-        serde_json::to_vec_pretty(&json!({
-            "schemaVersion": 1,
-            "executionMode": "live",
-            "providerMode": "not-run",
-            "pairId": "a".repeat(64),
-            "publicRunId": "b".repeat(64),
-            "candidateSha": head,
-            "privateRoot": temp.path().canonicalize().unwrap(),
-            "repoRoot": repository.canonicalize().unwrap(),
-            "repoHead": head,
-            "providerUpstreamUrl": "http://127.0.0.1:1/v1/responses",
-            "modelLabel": "local-mock",
-            "maxOutputTokens": 321,
-            "maxAttemptsPerArm": 2,
-            "maxTotalTokens": 100,
-            "maxElapsedSeconds": 5,
-            "artifacts": artifacts,
-        }))
-        .unwrap(),
+        crate::runner::encode_native_context_for_test(&unordered_context).unwrap(),
     )
     .unwrap();
     #[cfg(unix)]
@@ -1775,6 +1851,25 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
     }
     path
+}
+
+#[test]
+fn native_verified_context_retains_inputs_and_rejects_drift() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = strict_live_context(&temp);
+    let verified = verify_frozen_context(&path).unwrap();
+    assert_eq!(verified.raw_bytes().unwrap(), fs::read(&path).unwrap());
+    assert_eq!(verified.private_root(), temp.path().canonicalize().unwrap());
+    assert_eq!(verified.model_label(), "local-mock");
+    assert_eq!(verified.provider_mode(), "not-run");
+    assert_eq!(verified.max_total_tokens_per_run(), 100);
+    assert_eq!(verified.max_elapsed_seconds_per_run(), 5);
+    verified.reverify_all().unwrap();
+
+    let context: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let source = context["artifacts"]["source"]["path"].as_str().unwrap();
+    fs::write(source, b"changed source bytes\n").unwrap();
+    assert!(verified.reverify_all().is_err());
 }
 
 #[test]
