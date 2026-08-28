@@ -12,15 +12,21 @@ use sha2::Digest;
 use sha2::Sha256;
 
 use crate::ExecutionMode;
+use crate::blind_verify::verify_pair_evidence_core;
 use crate::model::BlindPackArgs;
-use crate::secure_fs::read_single_link_regular;
+use crate::runner::VerifiedNativeContentInputs;
+use crate::runner::VerifiedReplayFrozenContext;
+use crate::runner::verify_replay_frozen_context;
+use crate::secure_fs::read_single_link_regular_bounded;
 use crate::secure_fs::resolve_private_relative;
+use crate::verify_frozen_context;
 
 const REVIEWER_ROOT: &str = "reviewer";
 const MAPPING_DIR: &str = "coordinator/mappings";
 const SEED_DIR: &str = "coordinator/blind-seeds";
 const REVIEWS_DIR: &str = "reviews";
 const RECEIPT: &str = "coordinator/blind-pack-receipt.json";
+const FROZEN_CONTEXT_CAP: u64 = 1024 * 1024;
 
 /// Task 5A stops here until the complete pair verifier is installed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -58,6 +64,15 @@ pub(crate) struct FrozenContextSnapshot {
     private_root: PathBuf,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) enum FrozenInputToken {
+    Replay(VerifiedReplayFrozenContext),
+    Native {
+        frozen: crate::VerifiedFrozenContext,
+        content: VerifiedNativeContentInputs,
+    },
+}
+
 impl FrozenContextSnapshot {
     pub(crate) fn canonical_path(&self) -> &Path {
         &self.canonical_path
@@ -70,6 +85,31 @@ impl FrozenContextSnapshot {
     pub(crate) fn sha256(&self) -> &str {
         &self.sha256
     }
+
+    pub(crate) fn execution_mode(&self) -> ExecutionMode {
+        self.execution_mode
+    }
+
+    pub(crate) fn private_root(&self) -> &Path {
+        &self.private_root
+    }
+
+    pub(crate) fn verified_inputs(&self) -> Result<FrozenInputToken> {
+        match self.execution_mode {
+            ExecutionMode::Replay => Ok(FrozenInputToken::Replay(verify_replay_frozen_context(
+                &self.canonical_path,
+                &self.raw_bytes,
+            )?)),
+            ExecutionMode::Mock | ExecutionMode::Live => {
+                let frozen = verify_frozen_context(&self.canonical_path)?;
+                if frozen.raw_bytes()? != self.raw_bytes {
+                    bail!("blind-pack frozen context differs from its retained C1 token");
+                }
+                let content = frozen.native_content_inputs()?;
+                Ok(FrozenInputToken::Native { frozen, content })
+            }
+        }
+    }
 }
 
 pub(crate) fn read_context_snapshot(path: &Path) -> Result<FrozenContextSnapshot> {
@@ -77,10 +117,10 @@ pub(crate) fn read_context_snapshot(path: &Path) -> Result<FrozenContextSnapshot
         path,
         "blind-pack frozen context must be an absolute canonical path",
     )?;
-    let bytes =
-        read_single_link_regular(&canonical).context("read retained blind-pack frozen context")?;
-    let context: BlindContextHeader =
-        serde_json::from_slice(&bytes).context("parse blind-pack context header")?;
+    let bytes = read_single_link_regular_bounded(&canonical, FROZEN_CONTEXT_CAP)
+        .context("read retained blind-pack frozen context")?;
+    let context: BlindContextHeader = serde_json::from_value(crate::jcs::parse_json(&bytes)?)
+        .context("parse blind-pack context header")?;
     let canonical_private_root = require_exact_canonical(
         &context.private_root,
         "blind-pack frozen context is outside its declared private root",
@@ -113,6 +153,7 @@ pub(crate) fn verify_blind_pair_stage(
     {
         bail!("blind-pack frozen context snapshot changed before pair verification");
     }
+    let _core = verify_pair_evidence_core(snapshot)?;
     Err(BlindPairVerifierStageNotInstalled.into())
 }
 

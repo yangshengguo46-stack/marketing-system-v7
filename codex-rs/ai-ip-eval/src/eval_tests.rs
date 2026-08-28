@@ -50,6 +50,9 @@ use codex_responses_api_proxy::TransformedRequestMetadata;
 use sha2::Digest;
 use sha2::Sha256;
 
+#[path = "blind_verify_tests.rs"]
+mod blind_verify_tests;
+
 fn usage() -> TokenUsageBreakdown {
     TokenUsageBreakdown {
         total_tokens: 15,

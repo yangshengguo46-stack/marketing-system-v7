@@ -229,7 +229,7 @@ fn blind_pack_enforces_mode_disjoint_seed_contract_before_verifier() {
     valid.seed_dir = Some(PathBuf::from("coordinator/blind-seeds"));
     valid.replay_seeds.clear();
     let error = crate::blind::run_blind_pack(valid).unwrap_err();
-    assert_eq!(error.to_string(), "BlindPairVerifierStageNotInstalled");
+    assert_eq!(error.to_string(), "validate frozen native context contract");
     assert_no_outputs(&private_root);
 }
 
@@ -471,7 +471,7 @@ fn frozen_context_snapshot_retains_exact_bytes_digest_and_placeholder_input() {
         crate::blind::verify_blind_pair_stage(&args, &initial)
             .unwrap_err()
             .to_string(),
-        "BlindPairVerifierStageNotInstalled"
+        "Replay frozen context differs from its retained file handle"
     );
     assert_no_outputs(&private_root);
 }

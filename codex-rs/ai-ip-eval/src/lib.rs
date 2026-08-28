@@ -2,6 +2,7 @@
 
 mod app_server;
 mod blind;
+mod blind_verify;
 mod broker_gate;
 mod catalog;
 mod contracts;

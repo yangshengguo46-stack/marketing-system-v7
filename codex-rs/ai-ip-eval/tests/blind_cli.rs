@@ -75,7 +75,7 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
     }
     assert_eq!(
         stderr.trim_end(),
-        "Error: BlindPairVerifierStageNotInstalled"
+        "Error: PairEvidenceCoreStageNotInstalled"
     );
     assert_no_outputs(&private_root);
     Ok(())
