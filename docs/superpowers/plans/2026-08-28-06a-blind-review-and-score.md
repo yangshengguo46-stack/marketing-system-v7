@@ -635,6 +635,10 @@ B2 TDD starts with an arm-1 prefix/full confusion whose arm file, arm-2 previous
 
 The same review exposed a pre-existing producer-side contract mismatch: `runner.rs` passes the attested per-run token ceiling into `BrokerRuntimeConfig::max_total_tokens_per_pair`. That over-restrictive native runtime behavior is not silently changed inside B1b; it is a separately tracked business-capability correction that must receive its own TDD authority before native execution can be called fully usable.
 
+**Producer token-ceiling mapping correction authority (2026-08-28):** B2 is complete and fresh reviews returned no Critical or Important findings. Before 5C, one narrow correction may modify only `runner.rs` and `eval_tests.rs`: map the frozen `maxTotalTokensPerRun` into the existing fixed-two-arm broker aggregate as `checked_mul(2)`, and fail with a dedicated configuration error before any provider request, coordinator output, or evidence output if that arithmetic cannot be represented. This is a bug correction inside the existing 5,000+ line runner, not new runner functionality; no broad runner refactor is authorized. The code commit remains below 800 changed lines.
+
+The runtime RED/GREEN must use the real local native pair path with two responses per arm and set the per-run ceiling equal to each arm's exact aggregate, proving that both legal arms finish even though the pair sum exceeds one arm's ceiling. A focused arithmetic negative proves checked overflow rather than saturation. Existing broker coverage continues to prove that a pair aggregate beyond its configured cap writes `maxTotalTokensExceeded` and poisons. The correction must not change the B1/B2 per-arm proof-validity rule, `BrokerRuntimeConfig` wire/state behavior, attempt caps, money caps, manifests, receipts, provider endpoints, credentials, or public CLI.
+
 - [ ] **Step 1: Write real CLI RED using authoritative argv**
 
 `tests/blind_cli.rs` spawns `codex-ai-ip-eval` via `cargo_bin`, freezes/runs the synthetic Replay pair, then executes exactly:
