@@ -139,6 +139,7 @@ pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<S
     line.push(b'\n');
     append_verified(&mut inventory_file, &line, &old_bytes)?;
     fsync_directory(&resolve_private_relative(root, Path::new("coordinator"))?)?;
+    drop(inventory_file);
     let mut complete = old_bytes;
     complete.extend(line);
     let expected = digest(&complete);
@@ -154,9 +155,17 @@ fn verified_state(
     supplied_bytes: Option<Vec<u8>>,
 ) -> Result<(Vec<InventoryRecord>, Vec<u8>)> {
     let root_string = canonical_root(root)?;
+    let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
     let bytes = match supplied_bytes {
         Some(bytes) => bytes,
-        None => read_single_link_regular(&resolve_private_relative(root, Path::new(INVENTORY))?)?,
+        None => {
+            let bytes = read_single_link_regular(&inventory_path)?;
+            #[cfg(windows)]
+            if crate::runner::read_private_existing_no_follow(&inventory_path)? != bytes {
+                bail!("inventory retained read disagrees with secure read");
+            }
+            bytes
+        }
     };
     let records = parse_chain(&bytes)?;
     let marker_bytes =
@@ -319,62 +328,28 @@ fn open_inventory_append(path: &Path) -> Result<(fs::File, Vec<u8>)> {
 #[cfg(windows)]
 mod windows_append {
     use super::*;
-    use std::os::windows::fs::OpenOptionsExt;
-    use std::os::windows::io::AsRawHandle;
-    use windows_sys::Win32::Foundation::*;
+    use crate::runner::private_existing_windows as existing;
     use windows_sys::Win32::Storage::FileSystem::*;
-    pub(super) fn checked_info(file: &fs::File) -> Result<BY_HANDLE_FILE_INFORMATION> {
-        let mut info = unsafe { std::mem::zeroed() };
-        if unsafe { GetFileInformationByHandle(file.as_raw_handle() as HANDLE, &mut info) } == 0
-            || info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
-            || info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 && info.nNumberOfLinks != 1
-        {
-            bail!("inventory append handle is a reparse point or hardlink");
-        }
-        Ok(info)
-    }
-    pub(super) fn identity(info: &BY_HANDLE_FILE_INFORMATION) -> [u32; 3] {
-        [
-            info.dwVolumeSerialNumber,
-            info.nFileIndexHigh,
-            info.nFileIndexLow,
-        ]
-    }
-    fn open(path: &Path, access: u32, share: u32) -> Result<fs::File> {
-        let mut options = fs::OpenOptions::new();
-        options
-            .access_mode(access)
-            .share_mode(share)
-            .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS);
-        let file = options.open(path)?;
-        checked_info(&file)?;
-        Ok(file)
-    }
     pub(super) fn open_inventory_append(path: &Path) -> Result<(fs::File, Vec<u8>)> {
         let bytes = read_single_link_regular(path)?;
+        if crate::runner::read_private_existing_no_follow(path)? != bytes {
+            bail!("inventory retained read disagrees with secure read");
+        }
         let parent_path = path.parent().context("inventory path has no parent")?;
         fsync_directory(parent_path)?;
-        let parent = open(
-            parent_path,
-            FILE_READ_ATTRIBUTES | READ_CONTROL,
-            FILE_SHARE_READ,
-        )?;
-        let file = open(
+        let (_parent, before) =
+            existing::open(parent_path, true, FILE_READ_ATTRIBUTES | READ_CONTROL)?;
+        let (file, _) = existing::open(
             path,
+            false,
             FILE_GENERIC_READ | FILE_APPEND_DATA | READ_CONTROL,
-            FILE_SHARE_READ,
         )?;
         let mut reader = file.try_clone()?;
         let mut retained = Vec::new();
         reader.read_to_end(&mut retained)?;
-        let parent_after = open(
-            parent_path,
-            FILE_READ_ATTRIBUTES | READ_CONTROL,
-            FILE_SHARE_READ,
-        )?;
-        let before = checked_info(&parent)?;
-        let after = checked_info(&parent_after)?;
-        if identity(&before) != identity(&after) {
+        let (_parent_after, after) =
+            existing::open(parent_path, true, FILE_READ_ATTRIBUTES | READ_CONTROL)?;
+        if existing::identity(&before) != existing::identity(&after) {
             bail!("inventory parent identity changed during append open");
         }
         if retained != bytes {
@@ -416,14 +391,15 @@ fn append_verified(file: &mut fs::File, line: &[u8], old_bytes: &[u8]) -> Result
     }
     #[cfg(windows)]
     {
-        let before = windows_append::checked_info(file)?;
+        use crate::runner::private_existing_windows as existing;
+        let before = existing::info(file, false)?;
         if file.metadata()?.len() != u64::try_from(old_len)? {
             bail!("inventory changed before append");
         }
         file.write_all(line)?;
         file.sync_all()?;
-        let after = windows_append::checked_info(file)?;
-        if windows_append::identity(&before) != windows_append::identity(&after)
+        let after = existing::info(file, false)?;
+        if existing::identity(&before) != existing::identity(&after)
             || file.metadata()?.len() != u64::try_from(old_len + line.len())?
         {
             bail!("inventory changed during append");

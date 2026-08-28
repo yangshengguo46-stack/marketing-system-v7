@@ -3230,7 +3230,7 @@ pub fn commit_arm_order(
     if sha256(&bytes) != frozen.sha256() {
         bail!("frozen run context changed before arm-order commitment");
     }
-    create_owner_only_dir(coordinator_directory)?;
+    prepare_pair_coordinator(coordinator_directory)?;
     let mut seed = [0u8; 32];
     OsRng
         .try_fill_bytes(&mut seed)
@@ -3253,6 +3253,14 @@ pub fn commit_arm_order(
         seed_commitment,
         frozen_run_context_sha256: frozen.sha256().to_string(),
     })
+}
+
+pub(crate) fn prepare_pair_coordinator(path: &Path) -> Result<()> {
+    if path.try_exists()? {
+        crate::secure_fs::fsync_directory(path)
+    } else {
+        crate::secure_fs::create_owner_only_dir_new(path)
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4054,14 +4062,49 @@ pub(crate) fn validate_private_existing_directory_no_follow(path: &Path) -> Resu
     open_anchored(path, true).map(drop)
 }
 #[cfg(windows)]
-mod private_existing_windows {
+pub(crate) mod private_existing_windows {
     use super::*;
     use std::io::Read;
     use std::os::windows::fs::OpenOptionsExt;
     use std::os::windows::io::AsRawHandle;
-    use windows_sys::Win32::Foundation::HANDLE;
+    use windows_sys::Win32::Foundation::*;
     use windows_sys::Win32::Storage::FileSystem::*;
-    fn info(file: &File, directory: bool) -> Result<BY_HANDLE_FILE_INFORMATION> {
+    fn streams(file: &File, directory: bool) -> Result<()> {
+        const DEFAULT: &[u16] = &[58, 58, 36, 68, 65, 84, 65];
+        let mut words = [0u64; 1024];
+        if unsafe {
+            GetFileInformationByHandleEx(
+                file.as_raw_handle() as HANDLE,
+                FileStreamInfo,
+                words.as_mut_ptr().cast(),
+                u32::try_from(std::mem::size_of_val(&words))?,
+            )
+        } == 0
+        {
+            let code = unsafe { GetLastError() };
+            if directory && code == ERROR_HANDLE_EOF {
+                return Ok(());
+            }
+            return Err(std::io::Error::from_raw_os_error(i32::try_from(code)?))
+                .context("enumerate private tree data streams");
+        }
+        if directory {
+            bail!("private directory has a data stream");
+        }
+        let entry = unsafe { &*words.as_ptr().cast::<FILE_STREAM_INFO>() };
+        let name_bytes = usize::try_from(entry.StreamNameLength)?;
+        let end = std::mem::offset_of!(FILE_STREAM_INFO, StreamName) + name_bytes;
+        if name_bytes % 2 != 0 || end > std::mem::size_of_val(&words) || entry.NextEntryOffset != 0
+        {
+            bail!("private file has malformed or multiple data streams");
+        }
+        let name = unsafe { std::slice::from_raw_parts(entry.StreamName.as_ptr(), name_bytes / 2) };
+        if name != DEFAULT {
+            bail!("private file has a named data stream");
+        }
+        Ok(())
+    }
+    pub(crate) fn info(file: &File, directory: bool) -> Result<BY_HANDLE_FILE_INFORMATION> {
         let mut info = unsafe { std::mem::zeroed() };
         if unsafe { GetFileInformationByHandle(file.as_raw_handle() as HANDLE, &mut info) } == 0
             || info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
@@ -4070,17 +4113,24 @@ mod private_existing_windows {
         {
             bail!("private tree entry is a reparse point, hardlink, or wrong type");
         }
+        streams(file, directory)?;
         Ok(info)
     }
-    fn open(path: &Path, directory: bool) -> Result<(File, BY_HANDLE_FILE_INFORMATION)> {
+    pub(crate) fn identity(value: &BY_HANDLE_FILE_INFORMATION) -> u128 {
+        (u128::from(value.dwVolumeSerialNumber) << 64)
+            | (u128::from(value.nFileIndexHigh) << 32)
+            | u128::from(value.nFileIndexLow)
+    }
+    pub(crate) fn open(
+        path: &Path,
+        directory: bool,
+        access: u32,
+    ) -> Result<(File, BY_HANDLE_FILE_INFORMATION)> {
         if !path.is_absolute() || path.components().any(|component| {
             matches!(component, std::path::Component::Normal(name) if name.to_string_lossy().contains(':'))
                 || matches!(component, std::path::Component::CurDir | std::path::Component::ParentDir)
         }) { bail!("private tree path is not normalized"); }
         let mut options = OpenOptions::new();
-        let access = directory
-            .then_some(FILE_READ_ATTRIBUTES)
-            .unwrap_or(FILE_GENERIC_READ);
         options
             .access_mode(access)
             .share_mode(FILE_SHARE_READ)
@@ -4089,20 +4139,15 @@ mod private_existing_windows {
         let info = info(&file, directory)?;
         Ok((file, info))
     }
-    pub(super) fn validate_directory(path: &Path) -> Result<()> {
-        open(path, true).map(drop)
+    pub(crate) fn validate_directory(path: &Path) -> Result<()> {
+        open(path, true, FILE_READ_ATTRIBUTES).map(drop)
     }
-    pub(super) fn read(path: &Path) -> Result<Vec<u8>> {
-        let (mut file, before) = open(path, false)?;
+    pub(crate) fn read(path: &Path) -> Result<Vec<u8>> {
+        let (mut file, before) = open(path, false, FILE_GENERIC_READ)?;
         let before_len = file.metadata()?.len();
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes)?;
         let after = info(&file, false)?;
-        let identity = |value: &BY_HANDLE_FILE_INFORMATION| {
-            (u128::from(value.dwVolumeSerialNumber) << 64)
-                | (u128::from(value.nFileIndexHigh) << 32)
-                | u128::from(value.nFileIndexLow)
-        };
         if identity(&before) != identity(&after)
             || before_len != file.metadata()?.len()
             || before_len != u64::try_from(bytes.len())?

@@ -16,7 +16,14 @@ fn owner_root() -> (tempfile::TempDir, PathBuf) {
     let temp = tempfile::tempdir().unwrap();
     #[cfg(unix)]
     fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o700)).unwrap();
+    #[cfg(unix)]
     let root = temp.path().canonicalize().unwrap();
+    #[cfg(windows)]
+    let root = {
+        let root = temp.path().join("private");
+        crate::secure_fs::create_owner_only_dir_new(&root).unwrap();
+        root.canonicalize().unwrap()
+    };
     (temp, root)
 }
 fn sealed_root() -> (tempfile::TempDir, PathBuf) {
@@ -212,4 +219,49 @@ fn private_inventory_rejects_noncanonical_root_and_existing_destination() {
     assert!(bootstrap(&root).is_err());
     assert_eq!(fs::read(inventory_path(&root)).unwrap(), b"occupied");
     assert!(!root.join("coordinator/pair-marker.json").exists());
+}
+#[cfg(windows)]
+fn add_stream(path: &Path) -> PathBuf {
+    let stream = PathBuf::from(format!("{}:hidden", path.display()));
+    fs::write(&stream, b"hidden").unwrap();
+    stream
+}
+#[cfg(windows)]
+#[test]
+fn private_inventory_windows_coordinator_append_and_stream_policy() {
+    let (_temp, root) = owner_root();
+    crate::secure_fs::write_owner_only_new(&root.join("proof.bin"), b"proof").unwrap();
+    crate::runner::prepare_pair_coordinator(&root.join("coordinator")).unwrap();
+    bootstrap(&root).unwrap();
+    let prefix = fs::read(inventory_path(&root)).unwrap();
+    crate::secure_fs::write_owner_only_new(&root.join("later.bin"), b"later").unwrap();
+    let final_root = append(&root, "later.bin").unwrap();
+    let complete = fs::read(inventory_path(&root)).unwrap();
+    assert!(complete.starts_with(&prefix));
+    assert_eq!(final_root, digest(&complete));
+    assert_eq!(
+        crate::private_inventory::verify_private_inventory(&root).unwrap(),
+        final_root
+    );
+
+    let (_pre_temp, pre_root) = owner_root();
+    crate::secure_fs::write_owner_only_new(&pre_root.join("proof.bin"), b"proof").unwrap();
+    crate::secure_fs::create_owner_only_dir_new(&pre_root.join("nested")).unwrap();
+    for relative in ["proof.bin", "nested"] {
+        let stream = add_stream(&pre_root.join(relative));
+        assert!(bootstrap(&pre_root).is_err());
+        fs::remove_file(stream).unwrap();
+    }
+    let (_sealed_temp, sealed_root) = sealed_root();
+    for relative in [
+        "proof.bin",
+        "nested",
+        "coordinator/pair-marker.json",
+        INVENTORY,
+    ] {
+        let stream = add_stream(&sealed_root.join(relative));
+        assert!(crate::private_inventory::verify_private_inventory(&sealed_root).is_err());
+        fs::remove_file(stream).unwrap();
+        crate::private_inventory::verify_private_inventory(&sealed_root).unwrap();
+    }
 }
