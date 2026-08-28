@@ -152,7 +152,7 @@ pub enum EvalCommand {
     ReplayPair(ReplayPairArgs),
     FreezeRunContext(FreezeRunContextCommand),
     LivePair(LivePairArgs),
-    BlindPack(PathInputArgs),
+    BlindPack(BlindPackArgs),
     Score(PathInputArgs),
     MakeCostReceipt(PathInputArgs),
     AnnotateCost(PathInputArgs),
@@ -162,6 +162,20 @@ pub enum EvalCommand {
     VerifyLiveProof(PathInputArgs),
     FinalizeCheckpoint(PathInputArgs),
     RetentionCloseout(PathInputArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct BlindPackArgs {
+    #[arg(long)]
+    pub reviewer_root: PathBuf,
+    #[arg(long)]
+    pub mapping_dir: PathBuf,
+    #[arg(long)]
+    pub seed_dir: Option<PathBuf>,
+    #[arg(long = "replay-seed")]
+    pub replay_seeds: Vec<String>,
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
 }
 
 #[derive(Debug, Args)]

@@ -1,6 +1,7 @@
 #![recursion_limit = "256"]
 
 mod app_server;
+mod blind;
 mod broker_gate;
 mod catalog;
 mod contracts;
@@ -26,6 +27,7 @@ pub use app_server::build_thread_start;
 pub use app_server::build_turn_start;
 pub use app_server::config_read_params;
 pub use app_server::initialize_params;
+pub use blind::BlindPairVerifierStageNotInstalled;
 pub use broker_gate::ArmActivation;
 pub use broker_gate::ArmReceipt;
 pub use broker_gate::BrokerGateConfig;
@@ -61,6 +63,7 @@ pub use evidence::TreeEventCollector;
 pub use evidence::TreeEvidence;
 pub use evidence::TreeScan;
 pub use evidence::validate_case_boundary;
+pub use model::BlindPackArgs;
 pub use model::Cli;
 pub use model::EvalCommand;
 pub use model::EvaluationCondition;
@@ -104,7 +107,18 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
         },
         EvalCommand::ReplayPair(args) => run_replay_pair(args),
         EvalCommand::LivePair(args) => run_local_mock_pair(&args.frozen_run_context),
-        _ => anyhow::bail!("selected evaluator workflow is not implemented in this work package"),
+        EvalCommand::BlindPack(args) => blind::run_blind_pack(args),
+        EvalCommand::Score(_)
+        | EvalCommand::MakeCostReceipt(_)
+        | EvalCommand::AnnotateCost(_)
+        | EvalCommand::Summarize(_)
+        | EvalCommand::VerifyReport(_)
+        | EvalCommand::PublishReport(_)
+        | EvalCommand::VerifyLiveProof(_)
+        | EvalCommand::FinalizeCheckpoint(_)
+        | EvalCommand::RetentionCloseout(_) => {
+            anyhow::bail!("selected evaluator workflow is not implemented in this work package")
+        }
     }
 }
 
@@ -141,6 +155,10 @@ mod secure_fs_tests;
 #[cfg(test)]
 #[path = "app_server_tests.rs"]
 mod app_server_tests;
+
+#[cfg(test)]
+#[path = "blind_tests.rs"]
+mod blind_tests;
 
 #[cfg(test)]
 #[path = "catalog_tests.rs"]
