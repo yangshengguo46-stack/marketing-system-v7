@@ -510,6 +510,7 @@ git commit -m "feat(ai-ip-eval): add private proof inventory"
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
 - Modify: `codex-rs/ai-ip-eval/src/evidence.rs`
 - Modify: `codex-rs/ai-ip-eval/src/app_server.rs`
+- Modify: `codex-rs/ai-ip-eval/src/broker_gate.rs` (read-only authoritative attempt-range fields on the existing proof snapshot only)
 
 **Interfaces:**
 - Consumes: Task 3 secure files/inventory; Replay/Mock pair execution; App Server handshake/start/notifications/quiet-scan inputs; broker completions; catalogs/config audit.
@@ -559,6 +560,8 @@ run-N-postprocess-index.json      # exact path/SHA inventory above
 ```
 
 Native recording covers turn completion, both quiet scans, quiet window, and close, bounded to `10_000` notifications and `64 MiB`. Replay deterministically emits equivalent synthetic start/config/catalog/tree/broker sidecars from already frozen fixture bytes; it never claims live evidence. `RunManifest` adds one lowercase 64-hex `postprocessEvidenceIndexSha256`; the index binds exact bytes of every sidecar, while existing manifest fields bind transcript/package/config/catalog/tree/usage outcomes.
+
+The broker snapshot's global attempt range comes from the existing private `ActiveArm.global_start` plus its checked arm attempt count, exposed only through two read-only fields on `ActiveArmProofSnapshot`. The runner must not reconstruct a second range oracle by independently accumulating arm counts, and this seam must not change broker behavior.
 
 Append all sidecars/index/manifests to Task 3's inventory before final pair verification/receipt.
 
