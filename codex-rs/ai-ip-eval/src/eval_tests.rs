@@ -965,7 +965,9 @@ fn replay_request_fixture_drift_fails_before_manifests() {
 
 #[test]
 fn paired_outputs_are_independently_valid_and_may_differ() {
-    let run = run_native_mock_pair_with_marker(None);
+    let run = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
     let manifests = read_native_mock_manifests(&run.live_root);
     let generic = manifests
@@ -3903,7 +3905,10 @@ struct NativeMockPairTestRun {
     result: anyhow::Result<()>,
 }
 
-fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestRun {
+fn run_native_mock_pair_with_marker(
+    marker: Option<&str>,
+    max_total_tokens_per_run: u64,
+) -> NativeMockPairTestRun {
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
     use std::sync::atomic::Ordering;
@@ -3972,7 +3977,7 @@ fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestR
         authorized_total_cost_fen: 0,
         authorized_per_run_cost_fen: 0,
         max_provider_request_attempts_per_run: 2,
-        max_total_tokens_per_run: 10,
+        max_total_tokens_per_run,
         max_elapsed_seconds_per_run: 180,
         max_output_tokens_per_request: 17,
         output: output.clone(),
@@ -4002,8 +4007,66 @@ fn run_native_mock_pair_with_marker(marker: Option<&str>) -> NativeMockPairTestR
 }
 
 #[test]
+fn native_runtime_allows_both_arms_to_reach_the_per_run_token_ceiling() {
+    let run =
+        run_native_mock_pair_with_marker(/*marker*/ None, /*max_total_tokens_per_run*/ 4);
+    assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
+
+    let manifests = read_native_mock_manifests(&run.live_root);
+    assert_eq!(
+        manifests
+            .into_iter()
+            .map(|manifest| (manifest.usage, manifest.max_total_tokens))
+            .collect::<Vec<_>>(),
+        vec![
+            (
+                Usage {
+                    total_tokens: 4,
+                    input_tokens: 2,
+                    cached_input_tokens: 0,
+                    cache_write_input_tokens: 0,
+                    output_tokens: 2,
+                    reasoning_output_tokens: 0,
+                },
+                4,
+            ),
+            (
+                Usage {
+                    total_tokens: 4,
+                    input_tokens: 2,
+                    cached_input_tokens: 0,
+                    cache_write_input_tokens: 0,
+                    output_tokens: 2,
+                    reasoning_output_tokens: 0,
+                },
+                4,
+            ),
+        ]
+    );
+}
+
+#[test]
+fn native_pair_token_cap_overflow_fails_before_coordinator_evidence() {
+    let run = run_native_mock_pair_with_marker(
+        /*marker*/ None,
+        /*max_total_tokens_per_run*/ u64::MAX,
+    );
+    let error = run.result.unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("native pair token ceiling is not representable"),
+        "unexpected error: {error:#}"
+    );
+    assert!(!run.live_root.join("coordinator").exists());
+}
+
+#[test]
 fn generic_target_skill_read_poisons_without_pair_receipt() {
-    let run = run_native_mock_pair_with_marker(Some("generic-target-skill-read"));
+    let run = run_native_mock_pair_with_marker(
+        Some("generic-target-skill-read"),
+        /*max_total_tokens_per_run*/ 10,
+    );
     assert!(
         run.result
             .unwrap_err()
@@ -4024,7 +4087,10 @@ fn generic_target_skill_read_poisons_without_pair_receipt() {
 
 #[test]
 fn generic_target_skill_read_during_quiet_window_poisons_without_pair_receipt() {
-    let run = run_native_mock_pair_with_marker(Some("generic-target-skill-read-quiet-window"));
+    let run = run_native_mock_pair_with_marker(
+        Some("generic-target-skill-read-quiet-window"),
+        /*max_total_tokens_per_run*/ 10,
+    );
     assert!(
         run.result
             .unwrap_err()
@@ -4058,7 +4124,9 @@ fn read_native_mock_manifests(live_root: &std::path::Path) -> Vec<crate::RunMani
 
 #[test]
 fn local_mock_manifests_are_typed_mock_and_never_g2_eligible() {
-    let run = run_native_mock_pair_with_marker(None);
+    let run = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
     let manifests = read_native_mock_manifests(&run.live_root);
 
@@ -4077,7 +4145,9 @@ fn local_mock_manifests_are_typed_mock_and_never_g2_eligible() {
 
 #[test]
 fn mock_manifest_binds_actual_additional_context_not_turn_request() {
-    let run = run_native_mock_pair_with_marker(None);
+    let run = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
     assert!(run.result.is_ok(), "pair failed: {:?}", run.result.err());
     let manifest = read_native_mock_manifests(&run.live_root).remove(0);
     let mission: HeldOutMissionCase =

@@ -2202,6 +2202,12 @@ pub(crate) fn canonical_target_skill_treatment(codex_home: &Path) -> serde_json:
     })
 }
 
+pub(crate) fn native_pair_total_token_cap(max_total_tokens_per_run: u64) -> Result<u64> {
+    max_total_tokens_per_run
+        .checked_mul(2)
+        .context("native pair token ceiling is not representable")
+}
+
 /// Executes exactly two arms against the frozen loopback mock upstream.
 pub fn run_local_mock_pair(path: &Path) -> Result<()> {
     // Binding is deliberately first. `bind` creates the loopback listener but
@@ -2220,7 +2226,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
     let pair_deadline = establish_pair_deadline(path, pair_started_at_instant)?;
     let broker_port = bound.addr().port();
     let frozen = run_sync_before_deadline(pair_deadline, || verify_frozen_context(path))?;
-    run_sync_before_deadline(pair_deadline, || {
+    let max_total_tokens_per_pair = run_sync_before_deadline(pair_deadline, || {
         validate_local_mock_upstream(&frozen.context.provider_upstream_url)?;
         let verified_deadline = pair_started_at_instant
             .checked_add(Duration::from_secs(frozen.context.max_elapsed_seconds))
@@ -2228,7 +2234,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
         if verified_deadline != pair_deadline {
             bail!("frozen pair deadline changed during context verification");
         }
-        Ok(())
+        native_pair_total_token_cap(frozen.context.max_total_tokens)
     })?;
     let frozen_path = run_sync_before_deadline(pair_deadline, || {
         std::env::var("PATH").context("pinned App Server PATH is unavailable")
@@ -2241,7 +2247,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             frozen.max_attempts_per_arm(),
             frozen.max_output_tokens(),
             1024 * 1024,
-            frozen.context.max_total_tokens,
+            max_total_tokens_per_pair,
         )?))
     })?;
     let shared_config = run_sync_before_deadline(pair_deadline, || {
