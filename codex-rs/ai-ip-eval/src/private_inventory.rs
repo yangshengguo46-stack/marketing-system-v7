@@ -162,40 +162,7 @@ pub(crate) fn verify_private_inventory_state(root: &Path) -> Result<VerifiedPriv
     })
 }
 pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<String> {
-    let relative = normalized(relative)?;
-    if relative == INVENTORY {
-        bail!("inventory path is reserved");
-    }
-    let tree = collect_tree(root)?;
-    let entry = tree
-        .get(&relative)
-        .context("inventory append target is absent")?;
-    let allowed_new = BTreeMap::from([(relative.clone(), entry.clone())]);
-    let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
-    let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
-    let (records, _, _) = verified_state(root, Some(&allowed_new), Some(old_bytes.clone()))?;
-    let previous = records.last().map(canonical).transpose()?;
-    let record = InventoryRecord {
-        schema_version: 1,
-        sequence: u64::try_from(records.len() + 1)?,
-        relative_path: relative,
-        kind: entry.0,
-        sha256: entry.1.clone(),
-        previous_record_sha256: previous.as_deref().map(digest),
-    };
-    let mut line = canonical(&record)?;
-    line.push(b'\n');
-    append_verified(&mut inventory_file, &line, &old_bytes)?;
-    fsync_directory(&resolve_private_relative(root, Path::new("coordinator"))?)?;
-    drop(inventory_file);
-    let mut complete = old_bytes;
-    complete.extend(line);
-    let expected = digest(&complete);
-    let actual = verify_private_inventory(root)?;
-    if actual != expected {
-        bail!("inventory root changed after append");
-    }
-    Ok(actual)
+    batch::append_private_inventory_unchecked(root, relative)
 }
 fn verified_state(
     root: &Path,

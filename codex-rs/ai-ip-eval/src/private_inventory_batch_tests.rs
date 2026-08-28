@@ -11,6 +11,8 @@ use crate::private_inventory::InventoryKind;
 use crate::private_inventory::InventoryRecord;
 use crate::private_inventory::batch::ExpectedInventoryEntry;
 use crate::private_inventory::batch::append_private_inventory_batch;
+use crate::private_inventory::batch::append_private_inventory_batch_from_root;
+use crate::private_inventory::batch::append_private_inventory_from_root;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const FROZEN_SHA: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -159,6 +161,38 @@ fn private_inventory_batch_appends_exact_tree_order_as_one_chain_extension() {
     crate::secure_fs::write_owner_only_new(&root.join("later.bin"), b"later").unwrap();
     crate::private_inventory::append_private_inventory(&root, Path::new("later.bin")).unwrap();
     crate::private_inventory::verify_private_inventory(&root).unwrap();
+}
+
+#[test]
+fn private_inventory_checked_appends_require_the_retained_old_root() {
+    let (_temp, root) = sealed_root();
+    let old_root = crate::private_inventory::verify_private_inventory(&root).unwrap();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("batch")).unwrap();
+    let before = inventory_bytes(&root);
+    let wrong_root = "f".repeat(64);
+    let error = append_private_inventory_batch_from_root(
+        &root,
+        &wrong_root,
+        &[directory("batch")],
+    )
+    .unwrap_err();
+    assert_eq!(error.to_string(), "private inventory cursor changed before batch append");
+    assert_eq!(inventory_bytes(&root), before);
+
+    let next_root =
+        append_private_inventory_batch_from_root(&root, &old_root, &[directory("batch")])
+            .unwrap();
+    crate::secure_fs::write_owner_only_new(&root.join("receipt.json"), b"receipt").unwrap();
+    let before_receipt = inventory_bytes(&root);
+    let error = append_private_inventory_from_root(
+        &root,
+        &old_root,
+        Path::new("receipt.json"),
+    )
+    .unwrap_err();
+    assert_eq!(error.to_string(), "private inventory cursor changed before append");
+    assert_eq!(inventory_bytes(&root), before_receipt);
+    append_private_inventory_from_root(&root, &next_root, Path::new("receipt.json")).unwrap();
 }
 
 #[test]

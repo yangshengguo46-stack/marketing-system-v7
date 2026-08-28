@@ -72,6 +72,11 @@ impl VerifiedBlindPair {
     pub(crate) fn reverify_unchanged(&self) -> Result<()> {
         reverify_core(&self.core)
     }
+
+    pub(crate) fn begin_bundle_transaction(&self) -> Result<String> {
+        reverify_core(&self.core)?;
+        Ok(self.core.inventory.inventory_root_sha256().to_string())
+    }
 }
 
 #[derive(Deserialize)]

@@ -11,9 +11,28 @@ pub(crate) fn append_private_inventory_batch(
     root: &Path,
     expected_new: &[ExpectedInventoryEntry],
 ) -> Result<String> {
+    append_private_inventory_batch_inner(root, None, expected_new)
+}
+
+pub(crate) fn append_private_inventory_batch_from_root(
+    root: &Path,
+    expected_old_root: &str,
+    expected_new: &[ExpectedInventoryEntry],
+) -> Result<String> {
+    append_private_inventory_batch_inner(root, Some(expected_old_root), expected_new)
+}
+
+fn append_private_inventory_batch_inner(
+    root: &Path,
+    expected_old_root: Option<&str>,
+    expected_new: &[ExpectedInventoryEntry],
+) -> Result<String> {
     let expected_tree = validate_expected_tree(expected_new)?;
     let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
     let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
+    if expected_old_root.is_some_and(|expected| digest(&old_bytes) != expected) {
+        bail!("private inventory cursor changed before batch append");
+    }
     let (records, _, _) = verified_state(root, Some(&expected_tree), Some(old_bytes.clone()))?;
     let mut previous = records.last().map(canonical).transpose()?;
     let base_sequence = u64::try_from(records.len())?;
@@ -48,6 +67,62 @@ pub(crate) fn append_private_inventory_batch(
         bail!("inventory root changed after batch append");
     }
     Ok(actual_root)
+}
+
+pub(super) fn append_private_inventory_unchecked(root: &Path, relative: &Path) -> Result<String> {
+    append_private_inventory_inner(root, None, relative)
+}
+
+pub(crate) fn append_private_inventory_from_root(
+    root: &Path,
+    expected_old_root: &str,
+    relative: &Path,
+) -> Result<String> {
+    append_private_inventory_inner(root, Some(expected_old_root), relative)
+}
+
+fn append_private_inventory_inner(
+    root: &Path,
+    expected_old_root: Option<&str>,
+    relative: &Path,
+) -> Result<String> {
+    let relative = normalized(relative)?;
+    if relative == INVENTORY {
+        bail!("inventory path is reserved");
+    }
+    let tree = collect_tree(root)?;
+    let entry = tree
+        .get(&relative)
+        .context("inventory append target is absent")?;
+    let allowed_new = BTreeMap::from([(relative.clone(), entry.clone())]);
+    let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
+    let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
+    if expected_old_root.is_some_and(|expected| digest(&old_bytes) != expected) {
+        bail!("private inventory cursor changed before append");
+    }
+    let (records, _, _) = verified_state(root, Some(&allowed_new), Some(old_bytes.clone()))?;
+    let previous = records.last().map(canonical).transpose()?;
+    let record = InventoryRecord {
+        schema_version: 1,
+        sequence: u64::try_from(records.len() + 1)?,
+        relative_path: relative,
+        kind: entry.0,
+        sha256: entry.1.clone(),
+        previous_record_sha256: previous.as_deref().map(digest),
+    };
+    let mut line = canonical(&record)?;
+    line.push(b'\n');
+    append_verified(&mut inventory_file, &line, &old_bytes)?;
+    fsync_directory(&resolve_private_relative(root, Path::new("coordinator"))?)?;
+    drop(inventory_file);
+    let mut complete = old_bytes;
+    complete.extend(line);
+    let expected = digest(&complete);
+    let actual = verify_private_inventory(root)?;
+    if actual != expected {
+        bail!("inventory root changed after append");
+    }
+    Ok(actual)
 }
 
 fn validate_expected_tree(
