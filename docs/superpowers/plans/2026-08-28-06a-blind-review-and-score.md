@@ -762,9 +762,127 @@ git commit -m "feat(ai-ip-eval): verify sealed blind review pairs"
 
 ### Task 6: Create three independent blind bundles in a bounded transaction
 
+**Task 6 exact-wire, transaction-seam, and review-boundary amendment (2026-08-29):** the original
+single Task 6 commit is not an honest sub-800-line boundary. The existing secure filesystem has no
+same-parent no-replace publish primitive, and the private inventory can admit only one new path at a
+time, while publishing one complete reviewer tree introduces its directory and all descendants at
+once. Task 6 is therefore delivered through the five independently reviewable commits below; no
+matrix or platform behavior may be dropped to fit a commit.
+
+- `feat(ai-ip-eval): publish private trees without replacement` may add
+  `secure_fs_publish.rs` plus a sibling test module and a narrow mount in `secure_fs.rs`/`lib.rs`.
+  It publishes one already durable owner-only staging entry to an absent final sibling without
+  replacement. Unix uses an anchored same-parent no-replace rename (`renameat2(RENAME_NOREPLACE)`
+  where available and `renameatx_np(RENAME_EXCL)` on Apple); Windows uses the equivalent
+  no-replace handle/path operation. It rejects links/reparse points, a changed parent or source
+  identity, cross-parent/cross-volume publication, and any existing destination, then fsyncs the
+  final entry and parent. Production and test modules each remain below 500 lines.
+- `feat(ai-ip-eval): append private inventory batches` may add
+  `private_inventory_batch.rs` plus a sibling test module and narrow shared internals in
+  `private_inventory.rs`/`lib.rs`. Its caller supplies a normalized, sorted, duplicate-free exact
+  set of `(relativePath, kind, optionalSha256)` entries. Against one retained old inventory prefix,
+  it requires the actual tree to equal the old tree plus exactly that set, appends every canonical
+  chained record in tree order, fsyncs once, and returns the new root. It never discovers and
+  blesses unexpected files. The existing one-entry append and verifier behavior remain unchanged.
+- `feat(ai-ip-eval): prepare deterministic blind review bundles` owns typed preparation only: a
+  narrow `VerifiedBlindPair::bundle_projection()` and `reverify_unchanged()` boundary,
+  contract-commitment accessors, deterministic Replay/native seed-set preparation, typed bundle and
+  mapping bytes, and no filesystem output. Task 6 must not consume or expose `PairEvidenceCore` or
+  `VerifiedPrivateInventory` directly. If production approaches 500 lines, exact wire types move to
+  `blind_bundle_model.rs` instead of growing one module.
+- `feat(ai-ip-eval): create bound blind review bundles` owns the real output transaction, receipt,
+  inventory integration, and real CLI GREEN. The transaction is fail-closed but does not claim
+  cross-directory atomicity. Each complete staging tree is published and batch-recorded before the
+  next staging tree is created; the receipt is created last and then recorded with the existing
+  one-entry append.
+- `test(ai-ip-eval): harden blind bundle transaction failures` adds the complete retry, entropy,
+  partial-publication, path, and fault-boundary matrix. A production defect found here receives a
+  separate narrow correction rather than weakening the matrix.
+
+The exact Task 6 wire and bytes are frozen as follows:
+
+```rust
+struct ReviewerQualificationCommitment {
+    qualification_class: String,
+    experienced_operator_or_director: bool,
+    attestation_signed_payload_sha256: String,
+    attestation_signature_evidence_sha256: String,
+}
+
+struct ReviewBundleManifest {
+    schema_version: u32,
+    pair_id: String,
+    reviewer_id: String,
+    qualification: ReviewerQualificationCommitment,
+    case_sha256: String,
+    materials_manifest_sha256: String,
+    source_materials_sha256: String,
+    a_sha256: String,
+    b_sha256: String,
+    rubric_sha256: String,
+    reviewer_submission_schema_sha256: String,
+}
+```
+
+- Reviewer roots are exactly `reviewer/<reviewerId>/`; mappings are exactly
+  `coordinator/mappings/<reviewerId>.json`; Native seeds are exactly
+  `coordinator/blind-seeds/<reviewerId>.seed`. The already validated reviewer-ID grammar makes each
+  ID one safe path component. A Native seed file is exactly 32 raw bytes with owner-only mode;
+  Replay never creates a seed directory.
+- `A.json` and `B.json` are the exact retained compact producer-order package bytes selected by that
+  reviewer's private mapping. `case.json`, `materials-manifest.json`, and every declared material
+  retain their exact verified source bytes. `rubric.json` and
+  `reviewer-submission.schema.json` retain their exact embedded bytes. All newly generated JSON
+  (`review-bundle.json`, mappings, and receipt) is RFC 8785/JCS UTF-8 with no trailing LF.
+- `caseSha256`, `materialsManifestSha256`, `aSha256`, `bSha256`,
+  `reviewBundleSha256`, and `mappingSha256` hash the exact corresponding file bytes.
+  `sourceMaterialsSha256` is recomputed as SHA-256 of the existing producer-order compact
+  `serde_json::to_vec` encoding of the typed material manifest and must equal the sealed
+  attestation commitment. `rubricSha256` is the already frozen rubric JCS commitment, while
+  `reviewerSubmissionSchemaSha256` hashes the exact embedded schema bytes. The coordinator-only
+  `decisionPolicySha256` is the policy JCS commitment; policy bytes never enter a visible bundle.
+- A seed commitment is lowercase SHA-256 of
+  `b"AI-IP-BLIND-SEED-COMMITMENT-V1\0" || seed32`. Replay seed bytes retain the planned
+  `b"AI-IP-REPLAY-SEED-V1\0" || u64be(len) || seed_utf8` derivation. Orientation uses the
+  workspace-locked rand 0.9 `StdRng::from_seed(seed32)` and `SliceRandom::shuffle` over the exact
+  two-element `[Generic, Candidate]` array. The three seed bytes and commitments must be unique,
+  and an all-three-identical orientation is invalid. Native samples a complete 96-byte set per
+  attempt and accepts at most the first of 32 sets satisfying both rules; rejected sets are never
+  persisted. Replay rejects rather than resamples.
+- `review-bundle.json` includes the reviewer ID and exact qualification commitment, so bundle hashes
+  remain reviewer-specific even when two mappings have the same orientation. Its
+  `qualification` fields are copied from the sealed declaration; no signature-evidence body is
+  reviewer-visible. Mapping, seed, condition names, private paths, logs, tokens, costs, durations,
+  thread/turn/response identifiers, Skill data, and treatment markers never enter visible files.
+- `BlindPackReceipt.generatedAt` is injected from a clock at commit time and must be canonical UTC
+  RFC3339 with millisecond precision. Replay determinism applies to reviewer-visible bundles and
+  mappings, not this private timestamp. `reviewsDropSha256` remains SHA-256 of JCS
+  `{"entries":[]}`. `inventoryRootSha256` is the verified inventory prefix after all published
+  directories are recorded and immediately before the receipt file is created.
+- Fixed same-parent staging names are `.blind-pack-staging-reviewer`,
+  `coordinator/.blind-pack-staging-mappings`,
+  `coordinator/.blind-pack-staging-seeds`, and `.blind-pack-staging-reviews`; all must be absent in
+  the initial preflight. A crash may leave one staging/final path, but the next invocation must
+  detect inventory/output drift and reject without repair. Publication order is reviewer,
+  mappings, optional Native seeds, reviews, then receipt. Test-only fault boundaries are
+  `BeforeFirstPublish`, `AfterReviewerPublish`, `AfterMappingsPublish`, `AfterSeedsPublish`,
+  `AfterReviewsPublish`, and `BeforeReceiptCreate`; production uses a no-op hook. Entropy and clock
+  are likewise injectable only through crate-private/test seams, never through the CLI.
+
 **Files:**
+- Create: `codex-rs/ai-ip-eval/src/secure_fs_publish.rs`
+- Create: `codex-rs/ai-ip-eval/src/secure_fs_publish_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/private_inventory_batch.rs`
+- Create: `codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle_tests.rs`
+- Create if required by the module ceiling: `codex-rs/ai-ip-eval/src/blind_bundle_model.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_bundle_transaction.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_bundle_transaction_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/secure_fs.rs`
+- Modify: `codex-rs/ai-ip-eval/src/private_inventory.rs`
+- Modify: `codex-rs/ai-ip-eval/src/contracts.rs`
+- Modify: `codex-rs/ai-ip-eval/src/blind_finalize.rs`
 - Modify: `codex-rs/ai-ip-eval/src/blind.rs`
 - Modify: `codex-rs/ai-ip-eval/src/model.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
