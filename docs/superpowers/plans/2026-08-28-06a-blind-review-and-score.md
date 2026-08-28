@@ -799,6 +799,17 @@ matrix or platform behavior may be dropped to fit a commit.
   partial-publication, path, and fault-boundary matrix. A production defect found here receives a
   separate narrow correction rather than weakening the matrix.
 
+**Measured Task 6C commit-boundary split (2026-08-29):** the typed preparation implementation is
+about 578 changed lines and its real Replay/Native, deterministic-seed, exact-wire, read-only, and
+drift matrix is about 402 more. No production boundary or behavioral coverage may be deleted to fit
+the ceiling. The preparation is therefore committed first as
+`feat(ai-ip-eval): prepare deterministic blind review bundles`, followed by
+`test(ai-ip-eval): harden deterministic blind bundle preparation`. The production commit also owns
+the one-line `blind.rs` adapter needed to remove the old `PairEvidenceCore` escape without breaking
+the crate; the test commit owns the narrow `eval_tests.rs` child mount needed to reuse the real pair
+harness. This measured split supersedes the single Task 6C staging stanza below; each commit remains
+independently below 800 changed lines.
+
 The exact Task 6 wire and bytes are frozen as follows:
 
 ```rust
