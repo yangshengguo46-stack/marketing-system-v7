@@ -167,6 +167,45 @@ fn replay_pair_creates_a_complete_hash_chained_private_inventory() {
     );
 }
 #[test]
+fn verified_inventory_binds_pair_marker_and_rejects_later_drift() {
+    let (_temp, private_root) = frozen_replay_pair().unwrap();
+    let verified = crate::private_inventory::verify_private_inventory_state(&private_root).unwrap();
+    let inventory_bytes = fs::read(inventory_path(&private_root)).unwrap();
+    let marker_bytes = fs::read(private_root.join("coordinator/pair-marker.json")).unwrap();
+    let marker: PairMarker = serde_json::from_slice(&marker_bytes).unwrap();
+    assert_eq!(verified.inventory_root_sha256(), digest(&inventory_bytes));
+    assert_eq!(verified.pair_marker(), &marker);
+    verified
+        .verify_binding(
+            &marker.pair_id,
+            &marker.frozen_run_context_sha256,
+            &private_root,
+        )
+        .unwrap();
+    assert!(
+        verified
+            .verify_binding(PAIR_ID, &marker.frozen_run_context_sha256, &private_root)
+            .is_err()
+    );
+    assert!(
+        verified
+            .verify_binding(&marker.pair_id, FROZEN_SHA, &private_root)
+            .is_err()
+    );
+    assert!(
+        verified
+            .verify_binding(
+                &marker.pair_id,
+                &marker.frozen_run_context_sha256,
+                private_root.parent().unwrap(),
+            )
+            .is_err()
+    );
+    verified.reverify_unchanged().unwrap();
+    fs::write(private_root.join("frozen-run-context.json"), b"changed\n").unwrap();
+    assert!(verified.reverify_unchanged().is_err());
+}
+#[test]
 fn private_inventory_append_preserves_exact_prefix_and_root() {
     let (_temp, root) = sealed_root();
     let prefix_root = crate::private_inventory::verify_private_inventory(&root).unwrap();

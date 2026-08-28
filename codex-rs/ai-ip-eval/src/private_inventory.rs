@@ -15,6 +15,7 @@ use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 use std::path::Path;
+use std::path::PathBuf;
 const MARKER: &str = "coordinator/pair-marker.json";
 const INVENTORY: &str = "coordinator/private-inventory.jsonl";
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -26,6 +27,42 @@ pub(crate) struct PairMarker {
     pub(crate) private_root: String,
     pub(crate) inventory_relative_path: String,
     pub(crate) created_at: String,
+}
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct VerifiedPrivateInventory {
+    canonical_private_root: PathBuf,
+    inventory_root_sha256: String,
+    pair_marker: PairMarker,
+}
+impl VerifiedPrivateInventory {
+    pub(crate) fn inventory_root_sha256(&self) -> &str {
+        &self.inventory_root_sha256
+    }
+    pub(crate) fn pair_marker(&self) -> &PairMarker {
+        &self.pair_marker
+    }
+    pub(crate) fn verify_binding(
+        &self,
+        pair_id: &str,
+        frozen_context_sha256: &str,
+        private_root: &Path,
+    ) -> Result<()> {
+        if self.canonical_private_root != private_root
+            || self.pair_marker.pair_id != pair_id
+            || self.pair_marker.frozen_run_context_sha256 != frozen_context_sha256
+            || self.pair_marker.private_root
+                != private_root.to_str().context("private root UTF-8")?
+        {
+            bail!("private inventory marker differs from the verified pair binding");
+        }
+        Ok(())
+    }
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        if verify_private_inventory_state(&self.canonical_private_root)? != *self {
+            bail!("private inventory changed after initial verification");
+        }
+        Ok(())
+    }
 }
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -112,7 +149,15 @@ pub(crate) fn bootstrap_private_inventory(
     verify_private_inventory(root)
 }
 pub(crate) fn verify_private_inventory(root: &Path) -> Result<String> {
-    verified_state(root, None, None).map(|(_, bytes)| digest(&bytes))
+    Ok(verify_private_inventory_state(root)?.inventory_root_sha256)
+}
+pub(crate) fn verify_private_inventory_state(root: &Path) -> Result<VerifiedPrivateInventory> {
+    let (_, bytes, pair_marker) = verified_state(root, None, None)?;
+    Ok(VerifiedPrivateInventory {
+        canonical_private_root: root.to_path_buf(),
+        inventory_root_sha256: digest(&bytes),
+        pair_marker,
+    })
 }
 pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<String> {
     let relative = normalized(relative)?;
@@ -121,7 +166,7 @@ pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<S
     }
     let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
     let (mut inventory_file, old_bytes) = open_inventory_append(&inventory_path)?;
-    let (records, _) = verified_state(root, Some(&relative), Some(old_bytes.clone()))?;
+    let (records, _, _) = verified_state(root, Some(&relative), Some(old_bytes.clone()))?;
     let tree = collect_tree(root)?;
     let entry = tree
         .get(&relative)
@@ -153,7 +198,7 @@ fn verified_state(
     root: &Path,
     allowed_new: Option<&str>,
     supplied_bytes: Option<Vec<u8>>,
-) -> Result<(Vec<InventoryRecord>, Vec<u8>)> {
+) -> Result<(Vec<InventoryRecord>, Vec<u8>, PairMarker)> {
     let root_string = canonical_root(root)?;
     let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
     let bytes = match supplied_bytes {
@@ -206,7 +251,7 @@ fn verified_state(
     if tree != expected {
         bail!("private tree differs from its inventory records");
     }
-    Ok((records, bytes))
+    Ok((records, bytes, marker))
 }
 fn collect_tree(root: &Path) -> Result<BTreeMap<String, TreeEntry>> {
     fn walk(root: &Path, relative: &Path, output: &mut BTreeMap<String, TreeEntry>) -> Result<()> {

@@ -1,6 +1,7 @@
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use sha2::Digest;
+use std::collections::HashSet;
 use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -196,6 +197,49 @@ fn replay_pair_seals_manifest_bound_postprocess_archives() {
         )
         .unwrap();
     }
+}
+
+#[test]
+fn postprocess_summary_returns_the_complete_same_pass_recomputation() {
+    let run = execute_existing_frozen_replay_pair().unwrap();
+    let manifest: crate::RunManifest =
+        serde_json::from_slice(&fs::read(manifest_path(&run.private_root, 1)).unwrap()).unwrap();
+    let index: crate::ArmPostprocessIndex =
+        serde_json::from_value(raw_archive_is_bound(&run.private_root, 1).unwrap()).unwrap();
+    let notifications =
+        fs::read(coordinator(&run.private_root).join("run-1-notifications.jsonl")).unwrap();
+    let mut collector = crate::ReplayCollector::new(
+        manifest.root_thread_id.clone(),
+        manifest.root_turn_id.clone(),
+        HashSet::from([manifest.root_thread_id.clone()]),
+    );
+    for notification in crate::evidence::parse_notification_archive(&notifications).unwrap() {
+        collector.ingest(notification).unwrap();
+    }
+    let collected = collector.finish(&run.mission).unwrap();
+    let expected = crate::proof_archive::VerifiedPostprocessSummary {
+        index,
+        content_package_bytes: serde_json::to_vec(&collected.content_package).unwrap(),
+        content_package: collected.content_package,
+        usage: collected.usage,
+        raw_response_count: collected.raw_response_count,
+        tree_closed: true,
+        skill_use: crate::SkillUseOutcome {
+            successful_read_observed: false,
+            evidence_sha256: None,
+        },
+        normalized_base_catalog_sha256: manifest.normalized_base_catalog_sha256.clone(),
+    };
+    assert_eq!(
+        crate::proof_archive::verify_postprocess_archive_summary(
+            &run.private_root,
+            &manifest,
+            &run.mission,
+            &run.skill_bytes,
+        )
+        .unwrap(),
+        expected
+    );
 }
 
 #[test]

@@ -63,6 +63,18 @@ pub struct ArmPostprocessIndex {
     pub sidecars: Vec<PostprocessSidecarEntry>,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct VerifiedPostprocessSummary {
+    pub(crate) index: ArmPostprocessIndex,
+    pub(crate) content_package: codex_ai_ip_domain::ContentPackage,
+    pub(crate) content_package_bytes: Vec<u8>,
+    pub(crate) usage: crate::Usage,
+    pub(crate) raw_response_count: u64,
+    pub(crate) tree_closed: bool,
+    pub(crate) skill_use: crate::SkillUseOutcome,
+    pub(crate) normalized_base_catalog_sha256: String,
+}
+
 impl CatalogRootsSidecar {
     fn as_roots(&self) -> CatalogRoots {
         CatalogRoots {
@@ -92,6 +104,18 @@ pub fn verify_postprocess_archive(
     mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
     skill_bytes: &[u8],
 ) -> Result<ArmPostprocessIndex> {
+    Ok(
+        verify_postprocess_archive_summary(private_root, manifest, mission_case, skill_bytes)?
+            .index,
+    )
+}
+
+pub(crate) fn verify_postprocess_archive_summary(
+    private_root: &Path,
+    manifest: &RunManifest,
+    mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
+    skill_bytes: &[u8],
+) -> Result<VerifiedPostprocessSummary> {
     manifest.validate_execution_mode()?;
     let coordinator = match manifest.execution_mode {
         ExecutionMode::Replay => Path::new("replay-coordinator"),
@@ -101,7 +125,7 @@ pub fn verify_postprocess_archive(
         "run-{}-postprocess-index.json",
         manifest.run_ordinal
     ));
-    let index_bytes = read_sidecar(private_root, &index_relative)?;
+    let index_bytes = read_sidecar(private_root, &index_relative, 1024 * 1024)?;
     if sha256(&index_bytes) != manifest.postprocess_evidence_index_sha256 {
         bail!("manifest does not bind the raw postprocess index");
     }
@@ -129,14 +153,25 @@ pub fn verify_postprocess_archive(
         if entry.kind != kind || entry.relative_path != relative_to_utf8(&relative)? {
             bail!("postprocess sidecar order or path is invalid");
         }
-        let current = read_sidecar(private_root, &relative)?;
+        let cap = if kind == PostprocessSidecarKind::Notifications {
+            u64::try_from(crate::evidence::MAX_ARCHIVE_NOTIFICATION_BYTES)?
+        } else {
+            1024 * 1024
+        };
+        let current = read_sidecar(private_root, &relative, cap)?;
         if entry.sha256 != sha256(&current) {
             bail!("postprocess sidecar digest changed");
         }
         bytes.push(current);
     }
-    verify_semantics(private_root, manifest, mission_case, skill_bytes, &bytes)?;
-    Ok(index)
+    verify_semantics(
+        private_root,
+        manifest,
+        mission_case,
+        skill_bytes,
+        &bytes,
+        index,
+    )
 }
 
 fn verify_semantics(
@@ -145,7 +180,8 @@ fn verify_semantics(
     mission_case: &codex_ai_ip_domain::HeldOutMissionCase,
     skill_bytes: &[u8],
     bytes: &[Vec<u8>],
-) -> Result<()> {
+    index: ArmPostprocessIndex,
+) -> Result<VerifiedPostprocessSummary> {
     let notifications = crate::evidence::parse_notification_archive(&bytes[0])?;
     if sha256(&bytes[0]) != manifest.app_server_transcript_sha256 {
         bail!("notification transcript differs from the manifest");
@@ -204,11 +240,12 @@ fn verify_semantics(
     let pre_snapshot = crate::normalize_catalog(&pre.response, &pre.roots.as_roots())?;
     let post_snapshot = crate::normalize_catalog(&post.response, &post.roots.as_roots())?;
     crate::validate_stable_catalog(&pre_snapshot, &post_snapshot)?;
+    let normalized_base_catalog_sha256 = pre_snapshot.normalized_base_catalog_sha256();
     if pre.schema_version != 1
         || post.schema_version != 1
         || pre_snapshot.sha256 != manifest.pre_skill_catalog_sha256
         || post_snapshot.sha256 != manifest.post_skill_catalog_sha256
-        || pre_snapshot.normalized_base_catalog_sha256() != manifest.normalized_base_catalog_sha256
+        || normalized_base_catalog_sha256 != manifest.normalized_base_catalog_sha256
         || pre.roots.codex_home != post.roots.codex_home
         || pre.roots.host_home != post.roots.host_home
         || pre.roots.case_dir != post.roots.case_dir
@@ -268,6 +305,7 @@ fn verify_semantics(
     let tree = tree.close(&first, &second, &completions, broker.in_flight)?;
     let replay = replay.finish(mission_case)?;
     let skill = skill.finish()?;
+    let content_package_bytes = serde_json::to_vec(&replay.content_package)?;
     let provider_completion_count = if manifest.execution_mode == ExecutionMode::Replay {
         0
     } else {
@@ -290,7 +328,7 @@ fn verify_semantics(
         || provider_completion_count != manifest.provider_completed_response_count
         || replay.usage != manifest.usage
         || replay.raw_response_count != manifest.raw_response_count
-        || sha256(&serde_json::to_vec(&replay.content_package)?) != manifest.content_package_sha256
+        || sha256(&content_package_bytes) != manifest.content_package_sha256
         || tree.usage != manifest.usage
         || tree.raw_response_count != manifest.raw_response_count
         || tree.tree_closed != manifest.tree_closed
@@ -299,7 +337,16 @@ fn verify_semantics(
     {
         bail!("postprocess archive semantics differ from the manifest");
     }
-    Ok(())
+    Ok(VerifiedPostprocessSummary {
+        index,
+        content_package: replay.content_package,
+        content_package_bytes,
+        usage: replay.usage,
+        raw_response_count: replay.raw_response_count,
+        tree_closed: tree.tree_closed,
+        skill_use: skill,
+        normalized_base_catalog_sha256,
+    })
 }
 
 fn expected_attempt_start(
@@ -314,7 +361,7 @@ fn expected_attempt_start(
         _ => bail!("postprocess archive has an invalid run ordinal"),
     }
     let prior_relative = Path::new("coordinator/run-1-manifest.json");
-    let prior: RunManifest = parse_json(&read_sidecar(private_root, prior_relative)?)?;
+    let prior: RunManifest = parse_json(&read_sidecar(private_root, prior_relative, 1024 * 1024)?)?;
     if prior.pair_id != manifest.pair_id
         || prior.run_ordinal != 1
         || prior.execution_mode != manifest.execution_mode
@@ -372,9 +419,9 @@ fn broker_completion(
     }
 }
 
-fn read_sidecar(root: &Path, relative: &Path) -> Result<Vec<u8>> {
+fn read_sidecar(root: &Path, relative: &Path, cap: u64) -> Result<Vec<u8>> {
     let path = crate::secure_fs::resolve_private_relative(root, relative)?;
-    crate::secure_fs::read_single_link_regular(&path)
+    crate::secure_fs::read_single_link_regular_bounded(&path, cap)
 }
 
 pub(crate) fn relative_to_utf8(path: &Path) -> Result<String> {
