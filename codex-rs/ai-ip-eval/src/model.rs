@@ -7,6 +7,16 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::path::PathBuf;
 
+use codex_app_server_protocol::ConfigReadResponse;
+use codex_app_server_protocol::ConfigRequirementsReadResponse;
+use codex_app_server_protocol::SkillsListResponse;
+use codex_app_server_protocol::Thread;
+use codex_app_server_protocol::ThreadListResponse;
+use codex_app_server_protocol::ThreadLoadedListResponse;
+use codex_app_server_protocol::ThreadReadResponse;
+use codex_app_server_protocol::ThreadStartResponse;
+use codex_app_server_protocol::TurnStartResponse;
+
 #[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum EvaluationCondition {
@@ -36,6 +46,96 @@ pub enum ProviderRole {
     TargetVolcengine,
     #[value(name = "approvedReference")]
     ApprovedReference,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct StartSidecar {
+    pub(crate) schema_version: u32,
+    pub(crate) thread: ThreadStartResponse,
+    pub(crate) turn: TurnStartResponse,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct ConfigSidecar {
+    pub(crate) schema_version: u32,
+    pub(crate) response: ConfigReadResponse,
+    pub(crate) requirements: ConfigRequirementsReadResponse,
+    pub(crate) canonical_config_path: PathBuf,
+    pub(crate) expected_config_utf8: String,
+    pub(crate) expected_layer_config: serde_json::Value,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct CatalogRootsSidecar {
+    pub(crate) codex_home: PathBuf,
+    pub(crate) host_home: PathBuf,
+    pub(crate) case_dir: PathBuf,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct CatalogSidecar {
+    pub(crate) schema_version: u32,
+    pub(crate) roots: CatalogRootsSidecar,
+    pub(crate) response: SkillsListResponse,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct TreeScanSidecar {
+    pub(crate) ancestor_pages: Vec<ThreadListResponse>,
+    pub(crate) loaded_pages: Vec<ThreadLoadedListResponse>,
+    pub(crate) loaded_reads: Vec<ThreadReadResponse>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct QuietTreeSidecar {
+    pub(crate) schema_version: u32,
+    pub(crate) root: Thread,
+    pub(crate) first: TreeScanSidecar,
+    pub(crate) second: TreeScanSidecar,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct BrokerCompletionSidecar {
+    pub(crate) response_id: String,
+    pub(crate) usage: Option<Usage>,
+    pub(crate) actual_model: Option<String>,
+    pub(crate) deployment_or_fingerprint: Option<String>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct BrokerSnapshotSidecar {
+    pub(crate) schema_version: u32,
+    pub(crate) pair_id: String,
+    pub(crate) run_ordinal: u8,
+    pub(crate) condition: EvaluationCondition,
+    pub(crate) completions: Vec<BrokerCompletionSidecar>,
+    pub(crate) in_flight: u64,
+    pub(crate) attempt_index_file_sha256: String,
+    pub(crate) attempt_index_merkle_root: String,
+    pub(crate) global_attempt_start_inclusive: u64,
+    pub(crate) global_attempt_end_exclusive: u64,
+}
+
+pub(crate) struct ArmPostprocessCapture {
+    pub(crate) pair_id: String,
+    pub(crate) run_ordinal: u8,
+    pub(crate) condition: EvaluationCondition,
+    pub(crate) evidence_source: crate::ArchiveEvidenceSource,
+    pub(crate) notifications: Vec<u8>,
+    pub(crate) start: StartSidecar,
+    pub(crate) config: ConfigSidecar,
+    pub(crate) pre_catalog: CatalogSidecar,
+    pub(crate) post_catalog: CatalogSidecar,
+    pub(crate) quiet_tree: QuietTreeSidecar,
+    pub(crate) broker_snapshot: BrokerSnapshotSidecar,
 }
 
 /// Typed evaluator command line. There is intentionally no single-arm live
@@ -250,6 +350,7 @@ pub struct RunManifest {
     pub app_server_transcript_sha256: String,
     pub broker_attempt_ledger_sha256: String,
     pub attempt_index_root_sha256: String,
+    pub postprocess_evidence_index_sha256: String,
     pub content_package_sha256: String,
     pub root_thread_id: String,
     pub root_turn_id: String,
