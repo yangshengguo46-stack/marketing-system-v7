@@ -284,14 +284,14 @@ fn derive_replay_seed(seed: &str) -> Result<[u8; 32]> {
     Ok(hasher.finalize().into())
 }
 
-fn seed_commitment(seed: &[u8; 32]) -> String {
+pub(crate) fn seed_commitment(seed: &[u8; 32]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(SEED_COMMITMENT_DOMAIN);
     hasher.update(seed);
     format!("{:x}", hasher.finalize())
 }
 
-fn orientation(seed: &[u8; 32]) -> [EvaluationCondition; 2] {
+pub(crate) fn orientation(seed: &[u8; 32]) -> [EvaluationCondition; 2] {
     let mut order = [EvaluationCondition::Generic, EvaluationCondition::Candidate];
     order.shuffle(&mut StdRng::from_seed(*seed));
     order
