@@ -829,6 +829,10 @@ struct ReviewBundleManifest {
   `coordinator/blind-seeds/<reviewerId>.seed`. The already validated reviewer-ID grammar makes each
   ID one safe path component. A Native seed file is exactly 32 raw bytes with owner-only mode;
   Replay never creates a seed directory.
+- Reviewer slot order is the sealed attestation `reviewers` array order. Replay CLI seed `i` and
+  Native 96-byte seed-set chunk `i` bind to reviewer slot `i`; reviewer preparation and
+  `BlindPackReceipt.reviewerMappings` retain that order. Filesystem inventory enumeration remains
+  lexical and does not redefine reviewer slot order.
 - `A.json` and `B.json` are the exact retained compact producer-order package bytes selected by that
   reviewer's private mapping. `case.json`, `materials-manifest.json`, and every declared material
   retain their exact verified source bytes. `rubric.json` and
@@ -864,10 +868,17 @@ struct ReviewBundleManifest {
   `coordinator/.blind-pack-staging-seeds`, and `.blind-pack-staging-reviews`; all must be absent in
   the initial preflight. A crash may leave one staging/final path, but the next invocation must
   detect inventory/output drift and reject without repair. Publication order is reviewer,
-  mappings, optional Native seeds, reviews, then receipt. Test-only fault boundaries are
-  `BeforeFirstPublish`, `AfterReviewerPublish`, `AfterMappingsPublish`, `AfterSeedsPublish`,
-  `AfterReviewsPublish`, and `BeforeReceiptCreate`; production uses a no-op hook. Entropy and clock
-  are likewise injectable only through crate-private/test seams, never through the CLI.
+  mappings, optional Native seeds, reviews, then receipt. `AfterReviewerPublish`,
+  `AfterMappingsPublish`, `AfterSeedsPublish`, and `AfterReviewsPublish` mean both the top-level
+  no-replace rename and its exact expected-batch inventory append are durable; Replay never emits
+  `AfterSeedsPublish`. Every tree also emits
+  `AfterTreeRenameBeforeInventoryAppend(Reviewer|Mappings|Seeds|Reviews)` in the deliberately
+  unrecorded-final-tree window. Receipt creation emits `AfterReceiptCreateBeforeInventoryAppend`
+  after its exact file is durable and before the one-entry append. The remaining test-only
+  boundaries are `BeforeFirstPublish` and `BeforeReceiptCreate`; production uses a no-op hook.
+  Entropy and clock are likewise injectable only through crate-private/test seams, never through
+  the CLI. Linux `renameat2` absence or `ENOSYS` fails closed before publication and must never
+  fall back to replacement-capable `rename`.
 
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/secure_fs_publish.rs`
@@ -876,7 +887,7 @@ struct ReviewBundleManifest {
 - Create: `codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle_tests.rs`
-- Create if required by the module ceiling: `codex-rs/ai-ip-eval/src/blind_bundle_model.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_bundle_model.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle_transaction.rs`
 - Create: `codex-rs/ai-ip-eval/src/blind_bundle_transaction_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/secure_fs.rs`
@@ -894,7 +905,24 @@ struct ReviewBundleManifest {
 
 - [ ] **Step 1: Turn the valid-pair sentinel into transaction RED**
 
-Extend the real binary test from Task 5 to assert exit `0`, exactly three reviewer directories/mappings, exact receipt, and an empty `reviews/`. Before production changes it reaches `BlindBundleStageNotInstalled`, so the test executes and fails behaviorally.
+Extend the real binary test from Task 5 to assert exit `0`, exactly three reviewer
+directories/mappings, exact receipt, and an empty `reviews/`. Before production changes it reaches
+`BlindBundleStageNotInstalled`, so the test executes and fails behaviorally. The same real CLI test
+must also:
+
+- deep-equal each mapping's A/B assignment to the two exact retained compact package bytes and
+  deep-equal the visible qualification, case, manifest, material, rubric, and submission-schema
+  bytes to their frozen sources;
+- recursively prove reviewer-visible bytes contain no condition name, seed, mapping, private path,
+  Home/Skill/treatment marker, log, token, cost, duration, or thread/turn/response identifier;
+- recompute every bundle, mapping, seed, contract, pair, frozen-context, and optional pair-receipt
+  commitment in the receipt;
+- hash the exact private-inventory prefix before its last receipt record and match
+  `inventoryRootSha256`, then require final inventory verification and the receipt as the last
+  record; and
+- rerun the same fixture and Replay seeds below another private root and require all visible bundle
+  and mapping bytes to be identical; rerun the original root and require rejection with every
+  existing output and inventory byte unchanged.
 
 - [ ] **Step 2: Generate seeds, mappings, and condition-hidden bundles**
 
@@ -946,18 +974,52 @@ struct ReviewerMappingCommitment {
 
 `inventoryRootSha256` is the verified inventory prefix immediately before the receipt record, as defined in Task 3. Replay has `pairReceiptSha256:null`; Mock/Live require a digest. Exactly three reviewer IDs, bundle hashes, mapping hashes, and seed commitments are unique where required. Score can detect an A/B swap by recomputing mapping SHA.
 
-- [ ] **Step 4: Run the transaction/retry matrix and commit**
+- [ ] **Step 4: Run the split transaction/retry matrix and commit**
 
 Cover duplicate/two/four Replay seeds, Replay seed-dir, Mock/Live replay seeds, all-three Replay orientation, CSPRNG failure/exhaustion, existing destination, failure before first rename, failure between renames, failure before receipt, and rerun after partial/final output. Assert any partial result is detectable, never silently repaired, and no successful receipt exists until every bound output is durable.
 
+The original single-commit block is superseded. Execute and stage the five review boundaries
+exactly as follows; each production boundary runs its focused test and the scoped full crate before
+the final `just fix -p codex-ai-ip-eval` and formatting sequence:
+
 ```bash
-just test -p codex-ai-ip-eval -E 'test(blind_cli) | test(blind_bundle)'
+just test -p codex-ai-ip-eval -E 'test(secure_publish)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/secure_fs_publish.rs \
+  codex-rs/ai-ip-eval/src/secure_fs_publish_tests.rs \
+  codex-rs/ai-ip-eval/src/secure_fs.rs codex-rs/ai-ip-eval/src/lib.rs
+git commit -m "feat(ai-ip-eval): publish private trees without replacement"
+
+just test -p codex-ai-ip-eval -E 'test(private_inventory_batch)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/private_inventory_batch.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs \
+  codex-rs/ai-ip-eval/src/private_inventory.rs codex-rs/ai-ip-eval/src/lib.rs
+git commit -m "feat(ai-ip-eval): append private inventory batches"
+
+just test -p codex-ai-ip-eval -E 'test(blind_bundle_preparation)'
 just test -p codex-ai-ip-eval
 git add codex-rs/ai-ip-eval/src/blind_bundle.rs \
   codex-rs/ai-ip-eval/src/blind_bundle_tests.rs \
-  codex-rs/ai-ip-eval/src/blind.rs codex-rs/ai-ip-eval/src/model.rs \
-  codex-rs/ai-ip-eval/src/lib.rs codex-rs/ai-ip-eval/tests/blind_cli.rs
+  codex-rs/ai-ip-eval/src/blind_bundle_model.rs \
+  codex-rs/ai-ip-eval/src/blind_finalize.rs \
+  codex-rs/ai-ip-eval/src/contracts.rs codex-rs/ai-ip-eval/src/lib.rs
+git commit -m "feat(ai-ip-eval): prepare deterministic blind review bundles"
+
+just test -p codex-ai-ip-eval -E 'test(blind_cli) | test(blind_bundle_transaction)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/blind_bundle_transaction.rs \
+  codex-rs/ai-ip-eval/src/blind_bundle_transaction_tests.rs \
+  codex-rs/ai-ip-eval/src/blind.rs codex-rs/ai-ip-eval/src/lib.rs \
+  codex-rs/ai-ip-eval/tests/blind_cli.rs
 git commit -m "feat(ai-ip-eval): create bound blind review bundles"
+
+just test -p codex-ai-ip-eval -E 'test(blind_bundle_transaction) | test(blind_cli)'
+just test -p codex-ai-ip-eval
+git add codex-rs/ai-ip-eval/src/blind_bundle_tests.rs \
+  codex-rs/ai-ip-eval/src/blind_bundle_transaction_tests.rs \
+  codex-rs/ai-ip-eval/tests/blind_cli.rs
+git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 ```
 
 ---
