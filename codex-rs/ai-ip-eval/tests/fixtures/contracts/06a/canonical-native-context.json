@@ -14,6 +14,11 @@
   "maxAttemptsPerArm": 3,
   "maxTotalTokens": 20000,
   "maxElapsedSeconds": 900,
+  "supplierStatementPolicy": {
+    "directory": "inputs/supplier-statements",
+    "allowedLeaves": ["generic.json", "candidate.json"],
+    "nestedEntriesAllowed": false
+  },
   "artifacts": {
     "source": {"path": "/private/ai-ip-run/inputs/case/case.json", "sha256": "0101010101010101010101010101010101010101010101010101010101010101"},
     "attestation": {"path": "/private/ai-ip-run/inputs/held-out-attestation.json", "sha256": "0202020202020202020202020202020202020202020202020202020202020202"},
@@ -27,10 +32,10 @@
     "skill": {"path": "/private/ai-ip-run/frozen-inputs/lead-skill.md", "sha256": "1010101010101010101010101010101010101010101010101010101010101010"},
     "threadStartRequest": {"path": "/private/ai-ip-run/frozen-inputs/thread-start-request.json", "sha256": "1111111111111111111111111111111111111111111111111111111111111111"},
     "turnStartRequest": {"path": "/private/ai-ip-run/frozen-inputs/turn-start-request.json", "sha256": "1212121212121212121212121212121212121212121212121212121212121212"},
-    "providerBudgetReceipt": {"path": "/private/ai-ip-run/frozen-inputs/provider-budget-receipt.json", "sha256": "1313131313131313131313131313131313131313131313131313131313131313"},
-    "rateCard": {"path": "/private/ai-ip-run/frozen-inputs/rate-card.json", "sha256": "1414141414141414141414141414141414141414141414141414141414141414"},
-    "billingPolicy": {"path": "/private/ai-ip-run/frozen-inputs/billing-policy.json", "sha256": "1515151515151515151515151515151515151515151515151515151515151515"},
-    "fxPolicy": {"path": "/private/ai-ip-run/frozen-inputs/fx-policy.json", "sha256": "1616161616161616161616161616161616161616161616161616161616161616"},
+    "providerBudgetEvidence": {"path": "/private/ai-ip-run/inputs/provider-budget-evidence.json", "sha256": "1313131313131313131313131313131313131313131313131313131313131313"},
+    "rateCard": {"path": "/private/ai-ip-run/inputs/rate-card.json", "sha256": "1414141414141414141414141414141414141414141414141414141414141414"},
+    "billingPolicy": {"path": "/private/ai-ip-run/inputs/billing-policy.json", "sha256": "1515151515151515151515151515151515151515151515151515151515151515"},
+    "fxPolicy": {"path": "/private/ai-ip-run/inputs/fx-policy.json", "sha256": "1616161616161616161616161616161616161616161616161616161616161616"},
     "material:source-1": {"path": "/private/ai-ip-run/inputs/case/source.txt", "sha256": "1717171717171717171717171717171717171717171717171717171717171717"}
   }
 }
