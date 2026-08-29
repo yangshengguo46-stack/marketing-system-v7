@@ -1094,6 +1094,114 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 
 ### Task 7: Score exactly three reviews into an immutable private decision
 
+> **Task 7 atomic implementation amendment (2026-08-29):** To keep every
+> non-mechanical commit below the repository's 800 changed-line ceiling, Task 7
+> is delivered as five behavior-complete slices: **7A** freezes the pure typed
+> scoring table and body-free decision model; **7B** freezes the exact CLI/path
+> and trusted-authority no-output boundary; **7C** verifies mappings,
+> declarations, signed submissions, and immutable `INVALID_PROOF`; **7D** runs
+> the real Replay CLI and the complete mutation table using the three committed
+> review fixtures; **7E** appends F-0006 and runs the scoped/full regressions.
+> This is a commit split only; Steps 1–5 and their exact classifications remain
+> unchanged.
+
+> **Task 7 score authority and wire amendment (2026-08-29):** The following is
+> the exact authority missing from the original prose. Task 7 may additionally
+> create `score_authority.rs`, `score_decision.rs`, `score_transaction.rs` and
+> sibling test modules, and may narrowly modify `contracts.rs`,
+> `blind_bundle_model.rs`, `blind_bundle_transaction.rs`, `blind_verify.rs`,
+> `private_inventory.rs`, and their sibling tests to share producer wire types
+> and add the Score continuation verifier. No Task 6 producer bytes may change.
+>
+> `BlindDecision` is canonical JCS with no trailing LF and this exact closed
+> producer-order-independent field set:
+>
+> ```text
+> schemaVersion: 1
+> pairId: string
+> frozenRunContextSha256: lowercase SHA-256
+> blindPackReceiptSha256: lowercase SHA-256 of exact receipt bytes
+> reviewerMappingsSha256: lowercase mapping-set commitment
+> reviewSubmissionsSha256: lowercase review-set commitment
+> rubricSha256: lowercase SHA-256
+> decisionPolicySha256: lowercase SHA-256
+> decision: PASS | ITERATE_SMALLEST_LEAD_CHANGE | INVALID_PROOF
+> metrics: DecisionMetrics | null
+> validationFailures: BlindDecisionFailure[]
+> generatedAt: canonical UTC RFC3339 milliseconds
+> ```
+>
+> `DecisionMetrics` has exactly `reviewerCount`,
+> `experiencedOperatorOrDirectorCount`, `candidatePreferenceCount`,
+> `candidateReadyForHumanReviewCount`, ascending `genericTotals[3]`, ascending
+> `candidateTotals[3]`, ascending signed `pairedDeltas[3]`,
+> `medianGenericTotal`, `medianCandidateTotal`, `medianPairedDelta`,
+> `candidateSevereFailureCount`, and `candidateSevereFlags`. The last object has
+> exactly the four rubric flag names, each holding its candidate-side count.
+> The paired-delta array is formed reviewer-by-reviewer before sorting; it is
+> not the difference between two medians.
+>
+> `BlindDecisionFailure` has this declared order and exact wire spelling:
+>
+> ```text
+> REVIEW_SUBMISSION_INVALID
+> REVIEWER_ID_SET_MISMATCH
+> REVIEWER_QUALIFICATION_MISMATCH
+> REVIEW_MAPPING_COMMITMENT_MISMATCH
+> REVIEW_BUNDLE_COMMITMENT_MISMATCH
+> REVIEW_SEED_COMMITMENT_MISMATCH
+> REVIEW_RUBRIC_COMMITMENT_MISMATCH
+> INSUFFICIENT_EXPERIENCED_REVIEWERS
+> ```
+>
+> Failures are deduplicated and emitted in that declared order. Valid PASS or
+> ITERATE has non-null metrics and `[]`; INVALID has `metrics:null` and at least
+> one failure. `reviewerMappingsSha256` and `reviewSubmissionsSha256` commit the
+> actual raw bytes, including bytes later found semantically invalid. For each
+> set, sort the three expected reviewer IDs by UTF-8 bytes and hash:
+> `domain || Σ(u32be(id_len) || id_utf8 || SHA256(raw_file_bytes))`, using the
+> domains `AI-IP-BLIND-MAPPING-SET-V1\0` and
+> `AI-IP-BLIND-REVIEW-SET-V1\0` respectively. The NUL is one byte. The decision
+> contains no reviewer ID/file name, qualification text, A/B value, reason,
+> signature evidence, body, case/material/path, seed/raw mapping, private-root
+> or Home, Skill, token/cost, thread/response, provider log, or public claim.
+>
+> Score path spellings are exact. `--mapping-dir` accepts only raw relative
+> `coordinator/mappings`. `--reviews-dir` accepts raw relative `reviews` or the
+> exact canonical absolute `privateRoot/reviews`. `--output` accepts raw
+> relative `coordinator/decision.private.json` or the exact canonical
+> coordinator directory plus the absent leaf `decision.private.json`.
+> `--frozen-run-context` is the existing canonical absolute
+> `privateRoot/frozen-run-context.json`. Dot segments, alternate separators,
+> links/reparse points, hardlinks, non-UTF-8 ambiguity, and any other spelling
+> are rejected.
+>
+> The Score continuation verifier first re-verifies the retained frozen input,
+> current evaluator/Codex/broker sources, sealed pair, exact typed blind receipt,
+> receipt-as-current-inventory-tail, and private-root identity. It then permits
+> exactly three unrecorded leaves named `reviews/<attestedReviewerId>.json` in
+> the already-recorded owner-only drop directory. Each leaf must be a
+> single-link regular file no larger than 64 KiB; leaf mode need not be `0600`
+> because the containing drop directory is owner-only. Missing/extra/special,
+> unreadable, over-cap, or identity-changing review leaves are command errors
+> with no decision. It retains the exact three file handles/bytes and the
+> inventory cursor through validation and publication. It does not call the
+> strict pre-review inventory verifier after the operator drop.
+>
+> Submission JSON/schema/digest/signature and all semantic bindings are checked
+> only after that trusted continuation exists; their failures write immutable
+> INVALID_PROOF. Command-authority errors always take precedence. The decision
+> transaction writes an owner-only staging file at
+> `coordinator/.decision.private.json.staging`, fsyncs it, re-verifies all
+> retained authority, publishes no-replace to the exact final leaf, fsyncs the
+> coordinator, then appends the three review leaves and decision leaf as one
+> inventory batch and verifies the new root. Any pre-publish I/O/fsync failure
+> leaves no final output. A failure after the no-replace publish boundary may
+> leave a detectable unrecorded final file; it is not a valid decision and a
+> rerun refuses without overwriting or repairing it. This narrow durable-partial
+> rule supersedes the original physically impossible blanket “any I/O failure,
+> no output” wording while preserving fail-closed business semantics.
+
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/score.rs`
 - Create: `codex-rs/ai-ip-eval/src/score_tests.rs`
