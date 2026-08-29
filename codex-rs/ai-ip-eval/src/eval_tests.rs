@@ -4732,6 +4732,46 @@ fn read_native_fixture_stderr(child: &mut std::process::Child) -> anyhow::Result
     Ok(String::from_utf8_lossy(&bytes).into_owned())
 }
 
+fn read_native_fixture_stdout(child: &mut std::process::Child) -> anyhow::Result<String> {
+    use anyhow::Context as _;
+    use std::io::Read;
+
+    let mut stdout = child
+        .stdout
+        .take()
+        .context("fixture stdout was not captured")?;
+    let mut output = String::new();
+    stdout
+        .read_to_string(&mut output)
+        .context("read fixture stdout")?;
+    Ok(output)
+}
+
+fn ensure_native_fixture_child_terminal(
+    child: &mut std::process::Child,
+) -> anyhow::Result<std::process::ExitStatus> {
+    let inspection = child.try_wait();
+    if let Ok(Some(status)) = inspection {
+        return Ok(status);
+    }
+    let kill = child.kill();
+    match child.wait() {
+        Ok(status) => Ok(status),
+        Err(wait_error) => anyhow::bail!(
+            "fixture could not be made terminal; inspection: {}; kill: {}; wait: {wait_error}",
+            match inspection {
+                Ok(None) => "still running".to_string(),
+                Ok(Some(status)) => format!("already terminal with {status}"),
+                Err(error) => format!("failed: {error}"),
+            },
+            match kill {
+                Ok(()) => "ok".to_string(),
+                Err(error) => format!("failed: {error}"),
+            },
+        ),
+    }
+}
+
 fn terminate_native_fixture_child(child: &mut std::process::Child) -> String {
     let status = match child.try_wait() {
         Ok(Some(status)) => format!("already exited with {status}"),
@@ -4755,6 +4795,484 @@ fn terminate_native_fixture_child(child: &mut std::process::Child) -> String {
     let stderr =
         read_native_fixture_stderr(child).unwrap_or_else(|error| format!("unavailable: {error:#}"));
     format!("{status}; stderr: {stderr}")
+}
+
+struct NativeFixtureBrokerRun {
+    home: std::path::PathBuf,
+    codex_home: std::path::PathBuf,
+    port: u16,
+    requests: Vec<Vec<u8>>,
+    status: std::process::ExitStatus,
+    stdout: String,
+    stderr: String,
+}
+
+enum NativeFixtureBrokerFault {
+    None,
+    AfterSpawn {
+        cleanup_events: std::sync::Arc<std::sync::Mutex<Vec<&'static str>>>,
+    },
+}
+
+fn record_native_fixture_cleanup_event(
+    cleanup_events: &Option<std::sync::Arc<std::sync::Mutex<Vec<&'static str>>>>,
+    event: &'static str,
+) {
+    if let Some(cleanup_events) = cleanup_events
+        && let Ok(mut cleanup_events) = cleanup_events.lock()
+    {
+        cleanup_events.push(event);
+    }
+}
+
+fn read_native_fixture_broker_request(stream: &mut std::net::TcpStream) -> anyhow::Result<Vec<u8>> {
+    use anyhow::Context as _;
+    use std::io::Read;
+
+    const MAX_REQUEST_BYTES: usize = 64 * 1024;
+    fn read_request_bytes(
+        stream: &mut std::net::TcpStream,
+        scratch: &mut [u8],
+        deadline: Instant,
+    ) -> anyhow::Result<usize> {
+        loop {
+            match stream.read(scratch) {
+                Ok(read) => return Ok(read),
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    anyhow::ensure!(
+                        Instant::now() < deadline,
+                        "fixture broker request read exceeded five-second test bound"
+                    );
+                }
+                Err(error) => return Err(error).context("read fixture broker request"),
+            }
+        }
+    }
+
+    let mut request = Vec::new();
+    let mut scratch = [0_u8; 4096];
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let (header_end, content_length) = loop {
+        let read = read_request_bytes(stream, &mut scratch, deadline)?;
+        anyhow::ensure!(read != 0, "fixture broker request ended before headers");
+        request.extend_from_slice(&scratch[..read]);
+        anyhow::ensure!(
+            request.len() <= MAX_REQUEST_BYTES,
+            "fixture broker request exceeded test bound"
+        );
+        let Some(header_end) = request.windows(4).position(|bytes| bytes == b"\r\n\r\n") else {
+            continue;
+        };
+        let header_end = header_end + 4;
+        let headers = std::str::from_utf8(&request[..header_end])?;
+        let lengths = headers
+            .split("\r\n")
+            .filter_map(|line| line.split_once(':'))
+            .filter(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+            .map(|(_, value)| value.trim().parse::<usize>())
+            .collect::<Result<Vec<_>, _>>()?;
+        anyhow::ensure!(lengths.len() == 1, "expected one request Content-Length");
+        break (header_end, lengths[0]);
+    };
+    let total_length = header_end
+        .checked_add(content_length)
+        .context("fixture broker request length overflow")?;
+    anyhow::ensure!(
+        total_length <= MAX_REQUEST_BYTES,
+        "fixture broker request exceeded test bound"
+    );
+    while request.len() < total_length {
+        let read = read_request_bytes(stream, &mut scratch, deadline)
+            .context("read fixture broker request body")?;
+        anyhow::ensure!(read != 0, "fixture broker request body ended early");
+        request.extend_from_slice(&scratch[..read]);
+    }
+    anyhow::ensure!(
+        request.len() == total_length,
+        "fixture broker request had trailing bytes"
+    );
+    Ok(request)
+}
+
+fn run_native_fixture_broker_contract(
+    responses: Vec<Vec<u8>>,
+) -> anyhow::Result<NativeFixtureBrokerRun> {
+    run_native_fixture_broker_contract_with_fault(responses, NativeFixtureBrokerFault::None)
+}
+
+fn run_native_fixture_broker_contract_with_fault(
+    responses: Vec<Vec<u8>>,
+    fault: NativeFixtureBrokerFault,
+) -> anyhow::Result<NativeFixtureBrokerRun> {
+    use anyhow::Context as _;
+    use std::io::Write;
+    use std::net::TcpListener;
+    use std::process::Command;
+    use std::process::Stdio;
+
+    let fixture = crate::native_app_server_fixture::locate()
+        .context("native App Server fixture target must be available")?;
+    let listener = TcpListener::bind(("127.0.0.1", 0))?;
+    listener.set_nonblocking(true)?;
+    let port = listener.local_addr()?.port();
+    let temp = tempfile::tempdir()?;
+    let home = temp.path().join("home");
+    let codex_home = home.join(".codex");
+    create_owner_only_test_dir(&home);
+    create_owner_only_test_dir(&codex_home);
+    fs::write(
+        codex_home.join("config.toml"),
+        format!(
+            concat!(
+                "model = \"fixture-test\"\n",
+                "model_provider = \"ai-ip-proof-broker\"\n",
+                "[model_providers.ai-ip-proof-broker]\n",
+                "name = \"OpenAI\"\n",
+                "base_url = \"http://127.0.0.1:{}/v1\"\n",
+                "wire_api = \"responses\"\n",
+                "requires_openai_auth = false\n"
+            ),
+            port,
+        ),
+    )?;
+    let worker = std::thread::Builder::new()
+        .name("native-fixture-broker".to_string())
+        .spawn(move || -> anyhow::Result<Vec<Vec<u8>>> {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            let mut requests = Vec::with_capacity(responses.len());
+            for response in responses {
+                let mut stream = loop {
+                    match listener.accept() {
+                        Ok((stream, _)) => break stream,
+                        Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                            anyhow::ensure!(
+                                Instant::now() < deadline,
+                                "fixture did not connect to broker within five seconds"
+                            );
+                            std::thread::sleep(Duration::from_millis(10));
+                        }
+                        Err(error) => return Err(error.into()),
+                    }
+                };
+                stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+                requests.push(read_native_fixture_broker_request(&mut stream)?);
+                stream.write_all(&response)?;
+                stream.flush()?;
+            }
+            Ok(requests)
+        })
+        .context("spawn native fixture broker worker")?;
+    let mut child = match Command::new(fixture)
+        .args(["app-server", "--listen", "stdio://", "--strict-config"])
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(error) => {
+            let broker = worker
+                .join()
+                .map_err(|_| anyhow::anyhow!("fixture broker worker panicked"));
+            return Err(error).with_context(|| match broker {
+                Ok(Ok(_)) => "broker worker finished after fixture spawn failed".to_string(),
+                Ok(Err(error)) | Err(error) => {
+                    format!("broker worker cleanup after fixture spawn failed: {error:#}")
+                }
+            });
+        }
+    };
+    let cleanup_events = match &fault {
+        NativeFixtureBrokerFault::None => None,
+        NativeFixtureBrokerFault::AfterSpawn { cleanup_events } => Some(cleanup_events.clone()),
+    };
+    let operation = (|| -> anyhow::Result<std::process::ExitStatus> {
+        if matches!(fault, NativeFixtureBrokerFault::AfterSpawn { .. }) {
+            anyhow::bail!("controlled broker-contract failure after fixture spawn");
+        }
+        let requests = [
+            json!({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": crate::initialize_params()}),
+            json!({"jsonrpc": "2.0", "method": "initialized"}),
+            json!({"jsonrpc": "2.0", "id": 2, "method": "thread/start", "params": {"cwd": temp.path()}}),
+            json!({"jsonrpc": "2.0", "id": 3, "method": "turn/start", "params": {}}),
+        ];
+        let stdin = child
+            .stdin
+            .as_mut()
+            .context("fixture stdin was not captured")?;
+        for request in requests {
+            writeln!(stdin, "{}", serde_json::to_string(&request)?)?;
+        }
+        stdin.flush()?;
+        drop(child.stdin.take());
+        wait_for_native_fixture_child(&mut child, "broker-contract")
+    })();
+
+    let child_terminal = ensure_native_fixture_child_terminal(&mut child);
+    if child_terminal.is_ok() {
+        record_native_fixture_cleanup_event(&cleanup_events, "child-terminal");
+    }
+    let stdout = if child_terminal.is_ok() {
+        read_native_fixture_stdout(&mut child)
+    } else {
+        Err(anyhow::anyhow!(
+            "fixture stdout not read because child terminal state was not established"
+        ))
+    };
+    record_native_fixture_cleanup_event(&cleanup_events, "stdout-read");
+    let stderr = if child_terminal.is_ok() {
+        read_native_fixture_stderr(&mut child)
+    } else {
+        Err(anyhow::anyhow!(
+            "fixture stderr not read because child terminal state was not established"
+        ))
+    };
+    record_native_fixture_cleanup_event(&cleanup_events, "stderr-read");
+    let broker = worker
+        .join()
+        .map_err(|_| anyhow::anyhow!("fixture broker worker panicked"));
+    record_native_fixture_cleanup_event(&cleanup_events, "broker-joined");
+
+    let cleanup_context = format!(
+        "child terminal: {}; stdout read: {}; stderr read: {}; broker worker: {}",
+        match &child_terminal {
+            Ok(status) => format!("{status}"),
+            Err(error) => format!("failed: {error:#}"),
+        },
+        match &stdout {
+            Ok(_) => "ok".to_string(),
+            Err(error) => format!("failed: {error:#}"),
+        },
+        match &stderr {
+            Ok(_) => "ok".to_string(),
+            Err(error) => format!("failed: {error:#}"),
+        },
+        match &broker {
+            Ok(Ok(_)) => "ok".to_string(),
+            Ok(Err(error)) => format!("failed: {error:#}"),
+            Err(error) => format!("failed: {error:#}"),
+        },
+    );
+    let status = operation.with_context(|| cleanup_context.clone())?;
+    child_terminal.with_context(|| cleanup_context.clone())?;
+    let stdout = stdout.with_context(|| cleanup_context.clone())?;
+    let stderr = stderr.with_context(|| cleanup_context.clone())?;
+    let requests = broker
+        .with_context(|| cleanup_context.clone())?
+        .with_context(|| cleanup_context.clone())?;
+    Ok(NativeFixtureBrokerRun {
+        home,
+        codex_home,
+        port,
+        requests,
+        status,
+        stdout,
+        stderr,
+    })
+}
+
+#[test]
+fn native_app_server_fixture_reaps_child_and_joins_broker_after_post_spawn_failure() {
+    let cleanup_events = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let error = match run_native_fixture_broker_contract_with_fault(
+        vec![Vec::new()],
+        NativeFixtureBrokerFault::AfterSpawn {
+            cleanup_events: cleanup_events.clone(),
+        },
+    ) {
+        Ok(_) => panic!("controlled post-spawn failure unexpectedly succeeded"),
+        Err(error) => error,
+    };
+
+    assert!(
+        format!("{error:#}").contains("controlled broker-contract failure after fixture spawn")
+    );
+    assert_eq!(
+        *cleanup_events.lock().unwrap(),
+        [
+            "child-terminal",
+            "stdout-read",
+            "stderr-read",
+            "broker-joined"
+        ]
+    );
+}
+
+fn completed_sse(response_id: &str) -> String {
+    format!(
+        "data: {{\"type\":\"response.completed\",\"response\":{{\"id\":\"{response_id}\",\"usage\":{{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}}}}\n\n"
+    )
+}
+
+fn split_fixture_broker_request(request: &[u8]) -> (&str, &[u8]) {
+    let header_end = request
+        .windows(4)
+        .position(|bytes| bytes == b"\r\n\r\n")
+        .unwrap();
+    (
+        std::str::from_utf8(&request[..header_end]).unwrap(),
+        &request[header_end + 4..],
+    )
+}
+
+#[test]
+fn native_app_server_fixture_emits_exact_broker_http_contract() {
+    let response_bodies = [
+        completed_sse("root-response"),
+        completed_sse("child-response"),
+    ];
+    let responses = response_bodies
+        .iter()
+        .map(|body| {
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .into_bytes()
+        })
+        .collect();
+    let run = run_native_fixture_broker_contract(responses).unwrap();
+    assert!(
+        run.status.success(),
+        "fixture failed exact broker contract: {}",
+        run.stderr
+    );
+    assert!(run.stdout.contains("root-response"));
+    assert!(run.stdout.contains("child-response"));
+    assert_eq!(run.requests.len(), 2);
+
+    let root_thread_id = "0198f5aa-0000-7000-8000-000000000101";
+    let child_thread_id = "0198f5aa-0000-7000-8000-000000000201";
+    let expected_bodies = [
+        json!({
+            "model": "local-mock",
+            "instructions": "Return the frozen synthetic package.",
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": "frozen mission"}]}],
+            "tools": [{"type": "function", "name": "read_file", "description": "Read one file", "parameters": {"type": "object"}}],
+            "metadata": {"aiIpThreadId": root_thread_id, "aiIpHome": run.home, "aiIpCodexHome": run.codex_home}
+        }),
+        json!({
+            "model": "local-mock",
+            "instructions": "Return the frozen synthetic package.",
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": "frozen mission"}]}],
+            "tools": [{"type": "function", "name": "read_file", "description": "Read one file", "parameters": {"type": "object"}}],
+            "metadata": {"aiIpThreadId": child_thread_id, "aiIpHome": run.home, "aiIpCodexHome": run.codex_home}
+        }),
+    ];
+    for (index, request) in run.requests.iter().enumerate() {
+        let (headers, body) = split_fixture_broker_request(request);
+        let expected_body = serde_json::to_vec(&expected_bodies[index]).unwrap();
+        let mut lines = headers.lines();
+        assert_eq!(lines.next(), Some("POST /v1/responses HTTP/1.1"));
+        let actual_headers = lines
+            .map(|line| {
+                let (name, value) = line.split_once(':').unwrap();
+                (name.to_ascii_lowercase(), value.trim().to_string())
+            })
+            .fold(
+                BTreeMap::<_, Vec<_>>::new(),
+                |mut headers, (name, value)| {
+                    headers.entry(name).or_default().push(value);
+                    headers
+                },
+            );
+        let mut expected_headers = BTreeMap::from([
+            ("host".to_string(), vec![format!("127.0.0.1:{}", run.port)]),
+            (
+                "content-type".to_string(),
+                vec!["application/json".to_string()],
+            ),
+            (
+                "content-length".to_string(),
+                vec![expected_body.len().to_string()],
+            ),
+            ("connection".to_string(), vec!["close".to_string()]),
+            (
+                "x-codex-window-id".to_string(),
+                vec![format!(
+                    "{}:0",
+                    if index == 0 {
+                        root_thread_id
+                    } else {
+                        child_thread_id
+                    }
+                )],
+            ),
+        ]);
+        if index == 1 {
+            expected_headers.insert(
+                "x-codex-parent-thread-id".to_string(),
+                vec![root_thread_id.to_string()],
+            );
+            expected_headers.insert(
+                "x-openai-subagent".to_string(),
+                vec!["collab_spawn".to_string()],
+            );
+        }
+        assert_eq!(actual_headers, expected_headers);
+        assert_eq!(body, expected_body);
+    }
+}
+
+#[test]
+fn native_app_server_fixture_accepts_chunked_sse_extensions_and_trailers() {
+    let responses = ["chunked-root", "chunked-child"]
+        .map(|response_id| {
+            let body = completed_sse(response_id);
+            format!(
+                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x};fixture=yes\r\n{body}\r\n0\r\nx-fixture-trailer: done\r\n\r\n",
+                body.len()
+            )
+            .into_bytes()
+        })
+        .to_vec();
+    let run = run_native_fixture_broker_contract(responses).unwrap();
+    assert!(
+        run.status.success(),
+        "fixture rejected valid chunked broker response: {}",
+        run.stderr
+    );
+    assert!(run.stdout.contains("chunked-root"));
+    assert!(run.stdout.contains("chunked-child"));
+}
+
+#[test]
+fn native_app_server_fixture_rejects_malformed_or_ambiguous_broker_framing() {
+    let completed = completed_sse("must-not-complete");
+    let malformed = [
+        (
+            "invalid status line",
+            b"HTTP/1.1 nope\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".to_vec(),
+        ),
+        (
+            "conflicting Content-Length values",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Length: 1\r\nConnection: close\r\n\r\n{completed}",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "Content-Length with Transfer-Encoding",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}\r\n{completed}\r\n0\r\n\r\n",
+                completed.len(),
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+    ];
+    for (description, response) in malformed {
+        let run = run_native_fixture_broker_contract(vec![response]).unwrap();
+        assert!(!run.status.success(), "fixture accepted {description}");
+        assert!(
+            !run.stdout.contains("rawResponse/completed"),
+            "fixture emitted a completion for {description}"
+        );
+    }
 }
 
 #[test]

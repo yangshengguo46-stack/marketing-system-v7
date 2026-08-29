@@ -7,6 +7,10 @@ filegroup(
 
 codex_rust_crate(
     name = "ai-ip-eval",
+    binary_rustc_flags_extra = {
+        "ai-ip-native-app-server-fixture": ["-Cstrip=symbols"],
+    },
+    build_script_enabled = False,
     compile_data = glob(["tests/fixtures/blind/treatment-markers.json"]) + [
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",
