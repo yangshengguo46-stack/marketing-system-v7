@@ -151,7 +151,7 @@ fn blind_native_pair_rejects_fully_resigned_live_manifest_mode() {
 }
 
 #[test]
-fn blind_pair_parser_retains_exact_real_replay_and_native_envelopes() {
+fn blind_pair_parser_retains_exact_real_replay_envelopes() {
     let replay = run_frozen_replay_pair().unwrap();
     let replay_args = replay_blind_args(&replay.private_root);
     let snapshot = crate::blind::read_context_snapshot(&replay_args.frozen_run_context).unwrap();
@@ -185,7 +185,10 @@ fn blind_pair_parser_retains_exact_real_replay_and_native_envelopes() {
     );
     parsed.inventory.reverify_unchanged().unwrap();
     assert_current_stage(replay_args, &replay.private_root);
+}
 
+#[test]
+fn blind_pair_parser_retains_exact_real_native_envelopes() {
     let native = run_native_mock_pair_with_marker(
         /*marker*/ None, /*max_total_tokens_per_run*/ 10,
     );

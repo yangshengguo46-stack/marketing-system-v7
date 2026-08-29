@@ -1318,6 +1318,23 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > Bazel, resource, lock, scope, fix/format, and independent-review gate is
 > GREEN. F-0006 itself remains immutable.
 
+> **Task 7E exact-envelope selector budget corrective authority
+> (2026-08-29):** After timeout-residue cleanup, locked serial run
+> `a8f3d671` still timed out
+> `blind_pair_parser_retains_exact_real_replay_and_native_envelopes` at
+> 60.061 seconds. The selector serializes a complete real Replay pair and a
+> complete real Native pair under one unchanged default-60-second watchdog;
+> the retained Native evidence reached its second run manifest at the watchdog
+> boundary without exposing an assertion or product failure. One narrow
+> test-only correction may modify only `blind_verify_tests.rs` and this plan to
+> split that selector into independently watched Replay-envelope and
+> Native-envelope tests. Every existing assertion must remain byte-for-byte
+> unchanged. No helper, producer, parser, runner, fixture, product, timeout,
+> retry, nextest profile, thread setting, proof/security rule, or business
+> behavior may change. Run `a8f3d671` remains the authoritative RED; GREEN
+> requires a fresh dedicated-fixture build followed by separate locked serial,
+> retries-zero runs of both new selectors under the unchanged watchdog.
+
 > **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
 > 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
 > scoring-table tests, and their `lib.rs` mount) and **7A2**
