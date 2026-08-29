@@ -1227,6 +1227,17 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > error `score review validation stage is not installed`; it creates neither
 > staging nor final decision and is removed with the first 7C consumer.
 
+> **Task 7B sealed-authority consuming-seam amendment (2026-08-29):** 7B may
+> narrowly modify `blind.rs`, `blind_verify.rs`, `blind_finalize.rs`,
+> `private_inventory_batch.rs`, and the existing `tests/blind_cli.rs` harness.
+> These changes may only project one already verified frozen token, consume the
+> already verified review-inventory continuation in the sealed-pair verifier,
+> split sealed-pair revalidation from Task 6 destination absence, and prove the
+> real Replay command reaches the exact no-output sentinel. They must not parse
+> review semantics, classify `INVALID_PROOF`, write an output, or install any
+> Task 7C behavior. Every production module remains below 500 lines and the
+> independent 7B commit remains below 800 changed lines.
+
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/score.rs`
 - Create: `codex-rs/ai-ip-eval/src/score_tests.rs`
