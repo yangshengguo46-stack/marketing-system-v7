@@ -2432,8 +2432,10 @@ fn freeze_live_context_inner(
     }
     hook(LiveFreezeHookPoint::BeforeArtifactFreeze)?;
     let frozen_artifacts = ArtifactCommitments::freeze(named)?;
-    retained_inputs.reverify_unchanged()?;
-    hook(LiveFreezeHookPoint::AfterArtifactFreeze)?;
+    let retained_reverify = retained_inputs.reverify_unchanged();
+    let after_hook = hook(LiveFreezeHookPoint::AfterArtifactFreeze);
+    retained_reverify?;
+    after_hook?;
     let mut artifacts = BTreeMap::new();
     for (name, artifact) in frozen_artifacts.artifacts {
         artifacts.insert(

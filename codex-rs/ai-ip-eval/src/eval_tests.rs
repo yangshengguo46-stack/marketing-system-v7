@@ -3490,28 +3490,41 @@ fn native_freeze_rejects_transient_retained_input_replacement() {
             .unwrap();
     assert_ne!(transient, original);
 
+    let mut trace = Vec::new();
     let result = crate::runner::freeze_live_context_with_hook(args, |point| {
         match point {
             crate::runner::LiveFreezeHookPoint::BeforeArtifactFreeze => {
+                trace.push("before");
                 fs::rename(&attestation, &displaced)?;
                 fs::write(&attestation, &transient)?;
                 fs::set_permissions(&attestation, fs::Permissions::from_mode(0o600))?;
             }
             crate::runner::LiveFreezeHookPoint::AfterArtifactFreeze => {
+                trace.push("after");
                 fs::remove_file(&attestation)?;
                 fs::rename(&displaced, &attestation)?;
             }
         }
         Ok(())
     });
+    let restored_inside_freeze = !displaced.exists()
+        && fs::read(&attestation)
+            .map(|bytes| bytes == original)
+            .unwrap_or(false);
     if displaced.exists() {
         let _ = fs::remove_file(&attestation);
         fs::rename(&displaced, &attestation).unwrap();
     }
 
+    assert_eq!(trace, ["before", "after"]);
     assert!(
-        result.is_err(),
-        "freeze accepted a transient retained replacement"
+        restored_inside_freeze,
+        "AfterArtifactFreeze did not restore the retained leaf inside freeze"
+    );
+    let error = result.expect_err("freeze accepted a transient retained replacement");
+    assert!(
+        format!("{error:#}").contains("retained private file identity changed"),
+        "freeze failed for a reason other than retained identity revalidation: {error:#}"
     );
     assert!(
         !output.exists(),
