@@ -4694,11 +4694,72 @@ fn mock_manifest_binds_actual_additional_context_not_turn_request() {
 
 #[test]
 fn native_app_server_fixture_uses_production_argv_and_stdout() {
+    use anyhow::Context as _;
     use std::io::BufRead;
     use std::io::BufReader;
+    use std::io::Read;
     use std::io::Write;
+    use std::process::Child;
+    use std::process::ExitStatus;
     use std::process::Command;
     use std::process::Stdio;
+    use std::sync::mpsc;
+
+    fn wait_for_child(child: &mut Child, description: &str) -> anyhow::Result<ExitStatus> {
+        let timeout = Duration::from_secs(5);
+        let deadline = Instant::now() + timeout;
+        loop {
+            if let Some(status) = child
+                .try_wait()
+                .with_context(|| format!("check {description} fixture status"))?
+            {
+                return Ok(status);
+            }
+            if Instant::now() >= deadline {
+                child
+                    .kill()
+                    .with_context(|| format!("kill timed-out {description} fixture"))?;
+                let status = child
+                    .wait()
+                    .with_context(|| format!("reap timed-out {description} fixture"))?;
+                anyhow::bail!(
+                    "{description} fixture timed out after {} seconds and was killed with {status}",
+                    timeout.as_secs()
+                );
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    fn read_stderr(child: &mut Child) -> anyhow::Result<String> {
+        let mut stderr = child
+            .stderr
+            .take()
+            .context("fixture stderr was not captured")?;
+        let mut bytes = Vec::new();
+        stderr.read_to_end(&mut bytes).context("read fixture stderr")?;
+        Ok(String::from_utf8_lossy(&bytes).into_owned())
+    }
+
+    fn terminate_child(child: &mut Child) -> String {
+        let status = match child.try_wait() {
+            Ok(Some(status)) => format!("already exited with {status}"),
+            Ok(None) => match child.kill().and_then(|()| child.wait()) {
+                Ok(status) => format!("killed and reaped with {status}"),
+                Err(error) => format!("cleanup failed: {error}"),
+            },
+            Err(error) => match child.kill().and_then(|()| child.wait()) {
+                Ok(status) => {
+                    format!("could not inspect child before cleanup: {error}; killed and reaped with {status}")
+                }
+                Err(cleanup_error) => {
+                    format!("could not inspect child before cleanup: {error}; cleanup failed: {cleanup_error}")
+                }
+            },
+        };
+        let stderr = read_stderr(child).unwrap_or_else(|error| format!("unavailable: {error:#}"));
+        format!("{status}; stderr: {stderr}")
+    }
 
     let fixture = crate::native_app_server_fixture::locate()
         .expect("native App Server fixture target must be available to this test");
@@ -4709,17 +4770,20 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
         "native App Server fixture exceeds the 64 MiB test-infrastructure I/O budget"
     );
 
-    let wrong_argv = Command::new(&fixture)
+    let mut wrong_argv = Command::new(&fixture)
         .arg("not-app-server")
         .stdin(Stdio::null())
-        .stdout(Stdio::piped())
+        .stdout(Stdio::null())
         .stderr(Stdio::piped())
-        .output()
+        .spawn()
         .unwrap();
+    let wrong_status = wait_for_child(&mut wrong_argv, "wrong-argv")
+        .unwrap_or_else(|error| panic!("wrong-argv fixture failed: {error:#}; {}", terminate_child(&mut wrong_argv)));
+    let wrong_stderr = read_stderr(&mut wrong_argv).unwrap();
     assert!(
-        !wrong_argv.status.success(),
+        !wrong_status.success(),
         "native App Server fixture accepted wrong argv; stderr: {}",
-        String::from_utf8_lossy(&wrong_argv.stderr)
+        wrong_stderr
     );
 
     let temp = tempfile::tempdir().unwrap();
@@ -4738,41 +4802,65 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    let request_id = 7;
-    let request = json!({
-        "jsonrpc": "2.0",
-        "id": request_id,
-        "method": "initialize",
-        "params": crate::initialize_params()
+    let stdout = child.stdout.take().unwrap();
+    let (response_sender, response_receiver) = mpsc::sync_channel(1);
+    let stdout_reader = std::thread::spawn(move || {
+        let mut stdout = BufReader::new(stdout);
+        let mut line = String::new();
+        let response = stdout
+            .read_line(&mut line)
+            .context("read fixture stdout JSONL")
+            .map(|bytes| (bytes, line));
+        let _ = response_sender.send(response);
     });
-    let mut stdin = child.stdin.take().unwrap();
-    writeln!(stdin, "{}", serde_json::to_string(&request).unwrap()).unwrap();
-    stdin.flush().unwrap();
+    let production_result = (|| -> anyhow::Result<()> {
+        let request_id = 7;
+        let request = json!({
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "method": "initialize",
+            "params": crate::initialize_params()
+        });
+        let stdin = child.stdin.as_mut().context("fixture stdin was not captured")?;
+        writeln!(stdin, "{}", serde_json::to_string(&request)?).context("write initialize")?;
+        stdin.flush().context("flush initialize")?;
 
-    let mut stdout = BufReader::new(child.stdout.take().unwrap());
-    let mut line = String::new();
-    assert_ne!(stdout.read_line(&mut line).unwrap(), 0, "fixture emitted no JSONL response");
-    let response: serde_json::Value = serde_json::from_str(&line).unwrap();
-    assert_eq!(
-        json!({
-            "id": response["id"],
-            "result": {"userAgent": response["result"]["userAgent"]}
-        }),
-        json!({"id": request_id, "result": {"userAgent": "mock-app-server"}})
-    );
+        let (bytes, line) = response_receiver
+            .recv_timeout(Duration::from_secs(5))
+            .context("fixture did not emit stdout JSONL within 5 seconds")??;
+        anyhow::ensure!(bytes != 0, "fixture emitted no JSONL response");
+        let response: serde_json::Value = serde_json::from_str(&line).context("parse fixture JSONL")?;
+        anyhow::ensure!(
+            json!({
+                "id": response["id"],
+                "result": {"userAgent": response["result"]["userAgent"]}
+            }) == json!({"id": request_id, "result": {"userAgent": "mock-app-server"}}),
+            "fixture initialize response did not include the expected id and user agent"
+        );
 
-    drop(stdin);
-    drop(stdout);
-    let status = child.wait().unwrap();
-    assert!(status.success(), "fixture failed after stdin closed: {status}");
-    let launch: serde_json::Value = serde_json::from_slice(
-        &fs::read(home.join("app-server-launch.json")).unwrap(),
-    )
-    .unwrap();
-    assert_eq!(
-        launch["argv"],
-        json!(["app-server", "--listen", "stdio://", "--strict-config"])
-    );
+        drop(child.stdin.take());
+        let status = wait_for_child(&mut child, "production-argv")?;
+        let stderr = read_stderr(&mut child)?;
+        anyhow::ensure!(
+            status.success(),
+            "fixture failed after stdin closed: {status}; stderr: {stderr}"
+        );
+        let launch: serde_json::Value = serde_json::from_slice(
+            &fs::read(home.join("app-server-launch.json")).context("read fixture launch record")?,
+        )
+        .context("parse fixture launch record")?;
+        anyhow::ensure!(
+            launch["argv"] == json!(["app-server", "--listen", "stdio://", "--strict-config"]),
+            "fixture recorded unexpected production argv"
+        );
+        Ok(())
+    })();
+    if let Err(error) = production_result {
+        let diagnostic = terminate_child(&mut child);
+        let _ = stdout_reader.join();
+        panic!("production-argv fixture failed: {error:#}; {diagnostic}");
+    }
+    stdout_reader.join().unwrap();
 }
 
 #[test]
