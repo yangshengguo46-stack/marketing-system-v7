@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::process::Output;
 
+use anyhow::Context;
 use anyhow::Result;
 use chrono::SecondsFormat;
 use codex_utils_cargo_bin::cargo_bin;
@@ -71,12 +72,28 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
         deterministic_outputs(&private_root)?,
         deterministic_outputs(&second_root)?
     );
+    for ordinal in 1..=3 {
+        fs::copy(
+            fixture_root.join(format!("replay-review-{ordinal}.json")),
+            second_root
+                .join("reviews")
+                .join(format!("reviewer-{ordinal}.json")),
+        )?;
+    }
+    fs::remove_file(second_root.join("coordinator/blind-pack-receipt.json"))?;
+    let before_missing_receipt = tree_snapshot(&second_root)?;
+    let missing_receipt = score_command(&binary, &second_root, &second_context).output()?;
+    assert!(!missing_receipt.status.success());
+    assert!(missing_receipt.stdout.is_empty());
+    assert!(String::from_utf8(missing_receipt.stderr)?.contains("blind-pack receipt"));
+    assert_path_absent(&second_root, "coordinator/.decision.private.json.staging");
+    assert_path_absent(&second_root, "coordinator/decision.private.json");
+    assert_eq!(tree_snapshot(&second_root)?, before_missing_receipt);
     Ok(())
 }
 
 #[test]
-fn score_cli_verified_replay_authority_reaches_exact_validation_sentinel_without_output()
--> Result<()> {
+fn score_cli_publishes_immutable_invalid_proof_for_verified_replay_placeholders() -> Result<()> {
     let binary = cargo_bin("codex-ai-ip-eval")?;
     let fixture_set =
         codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
@@ -98,29 +115,163 @@ fn score_cli_verified_replay_authority_reaches_exact_validation_sentinel_without
                 .join(format!("reviewer-{ordinal}.json")),
         )?;
     }
-    let before = tree_snapshot(&private_root)?;
+    let before_score = tree_snapshot(&private_root)?;
+    let snapshot_file = |relative: &str| -> Result<Vec<u8>> {
+        before_score
+            .get(Path::new(relative))
+            .and_then(Option::as_ref)
+            .cloned()
+            .with_context(|| format!("missing pre-score file {relative}"))
+    };
+    let reviewer_ids = ["reviewer-1", "reviewer-2", "reviewer-3"];
+    let mapping_entries = reviewer_ids
+        .map(|reviewer_id| {
+            Ok((
+                reviewer_id.to_string(),
+                snapshot_file(&format!("coordinator/mappings/{reviewer_id}.json"))?,
+            ))
+        })
+        .into_iter()
+        .collect::<Result<Vec<_>>>()?;
+    let review_entries = reviewer_ids
+        .map(|reviewer_id| {
+            Ok((
+                reviewer_id.to_string(),
+                snapshot_file(&format!("reviews/{reviewer_id}.json"))?,
+            ))
+        })
+        .into_iter()
+        .collect::<Result<Vec<_>>>()?;
+    let inventory_before = snapshot_file("coordinator/private-inventory.jsonl")?;
+    let receipt_bytes = snapshot_file("coordinator/blind-pack-receipt.json")?;
+    let frozen_context_bytes = snapshot_file("frozen-run-context.json")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)?;
+    let attestation: Value =
+        serde_json::from_slice(&fs::read(fixture_root.join("replay-attestation.json"))?)?;
+    let rubric = fs::read(codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/content-package-blind-review.json"
+    )?)?;
+    let policy = fs::read(codex_utils_cargo_bin::find_resource!(
+        "../../ai-ip-evals/rubrics/blind-review-decision-policy.json"
+    )?)?;
 
     let score = score_command(&binary, &private_root, &frozen_context).output()?;
-    assert!(!score.status.success());
+    assert_success("score", &score);
     assert!(score.stdout.is_empty());
+    assert!(score.stderr.is_empty());
+    assert_path_absent(&private_root, "coordinator/.decision.private.json.staging");
+    let decision_path = private_root.join("coordinator/decision.private.json");
+    let decision_bytes = fs::read(&decision_path)?;
+    assert_canonical(&decision_bytes)?;
+    let decision: Value = serde_json::from_slice(&decision_bytes)?;
+    let generated = chrono::DateTime::parse_from_rfc3339(
+        decision["generatedAt"]
+            .as_str()
+            .context("decision generatedAt")?,
+    )?;
     assert_eq!(
-        String::from_utf8(score.stderr)?.trim_end(),
-        "Error: score review validation stage is not installed"
+        generated
+            .to_utc()
+            .to_rfc3339_opts(SecondsFormat::Millis, true),
+        decision["generatedAt"]
     );
-    assert_score_outputs_absent(&private_root);
-    assert_eq!(tree_snapshot(&private_root)?, before);
+    assert_eq!(
+        decision,
+        serde_json::json!({
+            "schemaVersion": 1,
+            "pairId": attestation["pairId"],
+            "frozenRunContextSha256": sha256(&frozen_context_bytes),
+            "blindPackReceiptSha256": sha256(&receipt_bytes),
+            "reviewerMappingsSha256": raw_set_commitment(
+                b"AI-IP-BLIND-MAPPING-SET-V1\0", &mapping_entries)?,
+            "reviewSubmissionsSha256": raw_set_commitment(
+                b"AI-IP-BLIND-REVIEW-SET-V1\0", &review_entries)?,
+            "rubricSha256": jcs_sha(&rubric)?,
+            "decisionPolicySha256": jcs_sha(&policy)?,
+            "decision": "INVALID_PROOF",
+            "metrics": Value::Null,
+            "validationFailures": [
+                "REVIEW_SUBMISSION_INVALID", "INSUFFICIENT_EXPERIENCED_REVIEWERS"
+            ],
+            "generatedAt": generated.to_utc().to_rfc3339_opts(SecondsFormat::Millis, true),
+        })
+    );
+    assert_eq!(receipt["pairId"], attestation["pairId"]);
+    #[cfg(unix)]
+    assert_eq!(
+        fs::metadata(&decision_path)?.permissions().mode() & /*mask*/ 0o777,
+        /*owner_read_write*/ 0o600
+    );
+    let decision_text = String::from_utf8(decision_bytes.clone())?;
+    for forbidden in [
+        "reviewer-1",
+        "preferredArm",
+        "qualificationClass",
+        "signatureEvidence",
+        "seedCommitment",
+        "coordinator/mappings",
+    ] {
+        assert!(
+            !decision_text.contains(forbidden),
+            "decision leak: {forbidden}"
+        );
+    }
+    let inventory_after = fs::read(private_root.join("coordinator/private-inventory.jsonl"))?;
+    assert!(inventory_after.starts_with(&inventory_before));
+    let appended_lines = inventory_after[inventory_before.len()..]
+        .split(|byte| *byte == b'\n')
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>();
+    let prefix_lines = inventory_before
+        .split(|byte| *byte == b'\n')
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>();
+    let expected_files = [
+        (
+            "coordinator/decision.private.json",
+            decision_bytes.as_slice(),
+        ),
+        ("reviews/reviewer-1.json", review_entries[0].1.as_slice()),
+        ("reviews/reviewer-2.json", review_entries[1].1.as_slice()),
+        ("reviews/reviewer-3.json", review_entries[2].1.as_slice()),
+    ];
+    assert_eq!(appended_lines.len(), expected_files.len());
+    let mut previous = prefix_lines.last().map(|line| sha256(line));
+    for (index, (line, (relative_path, bytes))) in
+        appended_lines.iter().zip(expected_files).enumerate()
+    {
+        assert_canonical(line)?;
+        assert_eq!(
+            serde_json::from_slice::<Value>(line)?,
+            serde_json::json!({
+                "schemaVersion": 1,
+                "sequence": prefix_lines.len() + index + 1,
+                "relativePath": relative_path,
+                "kind": "file",
+                "sha256": sha256(bytes),
+                "previousRecordSha256": previous,
+            })
+        );
+        previous = Some(sha256(line));
+    }
+    let mut expected_after_score = before_score;
+    expected_after_score.insert(
+        PathBuf::from("coordinator/decision.private.json"),
+        Some(decision_bytes),
+    );
+    expected_after_score.insert(
+        PathBuf::from("coordinator/private-inventory.jsonl"),
+        Some(inventory_after),
+    );
+    assert_eq!(tree_snapshot(&private_root)?, expected_after_score);
 
-    fs::remove_file(private_root.join("coordinator/blind-pack-receipt.json"))?;
-    let before_missing_receipt = tree_snapshot(&private_root)?;
-    let missing_receipt = score_command(&binary, &private_root, &frozen_context).output()?;
-    assert!(!missing_receipt.status.success());
-    assert!(missing_receipt.stdout.is_empty());
-    assert_ne!(
-        String::from_utf8(missing_receipt.stderr)?.trim_end(),
-        "Error: score review validation stage is not installed"
-    );
-    assert_score_outputs_absent(&private_root);
-    assert_eq!(tree_snapshot(&private_root)?, before_missing_receipt);
+    let before_rerun = tree_snapshot(&private_root)?;
+    let rerun = score_command(&binary, &private_root, &frozen_context).output()?;
+    assert!(!rerun.status.success());
+    assert!(rerun.stdout.is_empty());
+    assert_eq!(rerun.stderr, b"Error: score final output already exists\n");
+    assert_eq!(tree_snapshot(&private_root)?, before_rerun);
+    assert_path_absent(&private_root, "coordinator/.decision.private.json.staging");
     Ok(())
 }
 
@@ -470,6 +621,19 @@ fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+fn raw_set_commitment(domain: &[u8], entries: &[(String, Vec<u8>)]) -> Result<String> {
+    let mut entries = entries.iter().collect::<Vec<_>>();
+    entries.sort_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
+    let mut digest = Sha256::new();
+    digest.update(domain);
+    for (reviewer_id, raw) in entries {
+        digest.update(u32::try_from(reviewer_id.len())?.to_be_bytes());
+        digest.update(reviewer_id.as_bytes());
+        digest.update(Sha256::digest(raw));
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
 fn tree_snapshot(root: &Path) -> Result<BTreeMap<PathBuf, Option<Vec<u8>>>> {
     fn visit(
         root: &Path,
@@ -532,20 +696,6 @@ fn score_command(binary: &Path, private_root: &Path, frozen_context: &Path) -> C
     command
 }
 
-fn assert_score_outputs_absent(private_root: &Path) {
-    for relative in [
-        "coordinator/.decision.private.json.staging",
-        "coordinator/decision.private.json",
-    ] {
-        assert_eq!(
-            fs::symlink_metadata(private_root.join(relative))
-                .unwrap_err()
-                .kind(),
-            std::io::ErrorKind::NotFound
-        );
-    }
-}
-
 fn assert_success(stage: &str, output: &Output) {
     assert!(
         output.status.success(),
@@ -563,15 +713,17 @@ fn assert_no_outputs(private_root: &Path) {
         "reviews",
         "coordinator/blind-pack-receipt.json",
     ] {
-        match fs::symlink_metadata(private_root.join(relative)) {
-            Err(error) => {
-                assert_eq!(
-                    error.kind(),
-                    std::io::ErrorKind::NotFound,
-                    "found {relative}"
-                );
-            }
-            Ok(metadata) => panic!("found {relative} with type {:?}", metadata.file_type()),
-        }
+        assert_path_absent(private_root, relative);
+    }
+}
+
+fn assert_path_absent(private_root: &Path, relative: &str) {
+    match fs::symlink_metadata(private_root.join(relative)) {
+        Err(error) => assert_eq!(
+            error.kind(),
+            std::io::ErrorKind::NotFound,
+            "found {relative}"
+        ),
+        Ok(metadata) => panic!("found {relative} with type {:?}", metadata.file_type()),
     }
 }

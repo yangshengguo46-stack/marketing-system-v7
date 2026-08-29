@@ -22,6 +22,7 @@ mod runner;
 mod score;
 mod score_authority;
 mod score_decision;
+mod score_transaction;
 mod score_validation;
 mod secure_fs;
 mod secure_fs_publish;

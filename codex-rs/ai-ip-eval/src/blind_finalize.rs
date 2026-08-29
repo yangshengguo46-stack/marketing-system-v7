@@ -118,6 +118,24 @@ fn reverify_core(core: &PairEvidenceCore) -> Result<()> {
 }
 
 pub(crate) fn reverify_sealed_pair_authority(core: &PairEvidenceCore) -> Result<()> {
+    reverify_sealed_pair_inputs(core)?;
+    core.inventory.reverify_unchanged()
+}
+
+pub(crate) fn reverify_sealed_pair_authority_with_score_staging(
+    core: &PairEvidenceCore,
+    reviews: &[crate::private_inventory::batch::RetainedPendingReview; 3],
+    staging: &crate::private_inventory::batch::RetainedScoreDecisionStaging,
+) -> Result<()> {
+    reverify_sealed_pair_inputs(core)?;
+    crate::private_inventory::batch::reverify_score_inventory_with_staging(
+        &core.inventory,
+        reviews,
+        staging,
+    )
+}
+
+fn reverify_sealed_pair_inputs(core: &PairEvidenceCore) -> Result<()> {
     verify_treatment_and_skill(core)?;
     match &core.inputs {
         FrozenInputToken::Replay(inputs) => inputs.reverify_all()?,
@@ -126,7 +144,6 @@ pub(crate) fn reverify_sealed_pair_authority(core: &PairEvidenceCore) -> Result<
             content.reverify_unchanged()?;
         }
     }
-    core.inventory.reverify_unchanged()?;
     Ok(())
 }
 

@@ -20,7 +20,10 @@ use crate::ScoreArgs;
 use crate::blind::FrozenContextSnapshot;
 use crate::blind_bundle_model::BlindPackReceipt;
 use crate::blind_verify::PairEvidenceCore;
+use crate::private_inventory::InventoryKind;
+use crate::private_inventory::batch::ExpectedInventoryEntry;
 use crate::private_inventory::batch::RetainedPendingReview;
+use crate::private_inventory::batch::RetainedScoreDecisionStaging;
 use crate::secure_fs::resolve_private_relative;
 use crate::secure_fs_retain::RetainedBoundedFile;
 use crate::secure_fs_retain::RetainedLeafPermissions;
@@ -28,12 +31,11 @@ use crate::secure_fs_retain::RetainedPrivateRoot;
 
 const MAPPING_DIR: &str = "coordinator/mappings";
 const REVIEWS_DIR: &str = "reviews";
-const OUTPUT: &str = "coordinator/decision.private.json";
-const STAGING_OUTPUT: &str = "coordinator/.decision.private.json.staging";
+pub(crate) const OUTPUT: &str = "coordinator/decision.private.json";
+pub(crate) const STAGING_OUTPUT: &str = "coordinator/.decision.private.json.staging";
 const FROZEN_CONTEXT: &str = "frozen-run-context.json";
 const RECEIPT: &str = "coordinator/blind-pack-receipt.json";
 const RECEIPT_CAP: u64 = 64 * 1024;
-const VALIDATION_SENTINEL: &str = "score review validation stage is not installed";
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct ResolvedScorePaths {
@@ -58,11 +60,13 @@ pub(crate) struct ReceiptAuthorityBinding<'a> {
     pub(crate) reviewer_ids: [&'a str; 3],
 }
 
-struct VerifiedScoreAuthority {
+pub(crate) struct VerifiedScoreAuthority {
     snapshot: FrozenContextSnapshot,
     pair: PairEvidenceCore,
     receipt: RetainedBlindPackReceipt,
     reviews: [RetainedPendingReview; 3],
+    reviewer_evidence: [crate::score_transaction::RetainedReviewerEvidence; 3],
+    source_commitments: crate::score_transaction::ScoreSourceCommitments,
     private_root: RetainedPrivateRoot,
     paths: ResolvedScorePaths,
 }
@@ -96,7 +100,8 @@ impl RetainedBlindPackReceipt {
             &path,
             RECEIPT_CAP,
             RetainedLeafPermissions::RequireOwnerOnly,
-        )?;
+        )
+        .context("retain blind-pack receipt")?;
         let typed = exact_jcs(retained.raw_bytes(), "blind pack receipt")?;
         retained.reverify_unchanged()?;
         Ok(Self { typed, retained })
@@ -106,15 +111,22 @@ impl RetainedBlindPackReceipt {
         sha256(self.retained.raw_bytes())
     }
 
+    fn raw_bytes(&self) -> &[u8] {
+        self.retained.raw_bytes()
+    }
+
     fn reverify_unchanged(&self) -> Result<()> {
         self.retained.reverify_unchanged()
     }
 }
 
 impl VerifiedScoreAuthority {
-    fn reverify_unchanged(&self, args: &ScoreArgs) -> Result<()> {
+    pub(crate) fn reverify_unchanged(&self, args: &ScoreArgs) -> Result<()> {
         for review in &self.reviews {
             review.reverify_unchanged()?;
+        }
+        for evidence in &self.reviewer_evidence {
+            evidence.reverify_unchanged()?;
         }
         self.snapshot.reverify_unchanged()?;
         self.receipt.reverify_unchanged()?;
@@ -127,6 +139,89 @@ impl VerifiedScoreAuthority {
         crate::blind_finalize::reverify_sealed_pair_authority(&self.pair)?;
         self.receipt.reverify_unchanged()?;
         self.snapshot.reverify_unchanged()?;
+        for evidence in self.reviewer_evidence.iter().rev() {
+            evidence.reverify_unchanged()?;
+        }
+        for review in &self.reviews {
+            review.reverify_unchanged()?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_reviews(
+        &self,
+    ) -> Result<crate::score_validation::ValidatedScoreReviews> {
+        crate::score_transaction::validate_reviews(
+            &self.pair,
+            self.receipt.raw_bytes(),
+            &self.source_commitments,
+            &self.reviewer_evidence,
+            &self.reviews,
+        )
+    }
+
+    pub(crate) fn private_root(&self) -> &Path {
+        &self.pair.private_root
+    }
+
+    pub(crate) fn paths(&self) -> &ResolvedScorePaths {
+        &self.paths
+    }
+
+    pub(crate) fn inventory_root_sha256(&self) -> &str {
+        self.pair.inventory.inventory_root_sha256()
+    }
+
+    pub(crate) fn inventory_entries(&self, decision_bytes: &[u8]) -> Vec<ExpectedInventoryEntry> {
+        let mut entries = self
+            .reviews
+            .iter()
+            .map(RetainedPendingReview::inventory_entry)
+            .collect::<Vec<_>>();
+        entries.push(ExpectedInventoryEntry {
+            relative_path: OUTPUT.to_string(),
+            kind: InventoryKind::File,
+            sha256: Some(sha256(decision_bytes)),
+        });
+        entries.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+        entries
+    }
+
+    pub(crate) fn reverify_with_staging(
+        &self,
+        args: &ScoreArgs,
+        staging: &RetainedScoreDecisionStaging,
+    ) -> Result<()> {
+        for review in &self.reviews {
+            review.reverify_unchanged()?;
+        }
+        for evidence in &self.reviewer_evidence {
+            evidence.reverify_unchanged()?;
+        }
+        self.snapshot.reverify_unchanged()?;
+        self.receipt.reverify_unchanged()?;
+        crate::blind_finalize::reverify_sealed_pair_authority_with_score_staging(
+            &self.pair,
+            &self.reviews,
+            staging,
+        )?;
+        self.private_root.reverify_unchanged()?;
+        if !score_path_spellings_match(args, &self.pair.private_root) {
+            bail!("score paths changed during decision staging");
+        }
+        ensure_absent(&self.paths.output, "score final output already exists")?;
+        staging.reverify_unchanged()?;
+        self.private_root.reverify_unchanged()?;
+        crate::blind_finalize::reverify_sealed_pair_authority_with_score_staging(
+            &self.pair,
+            &self.reviews,
+            staging,
+        )?;
+        self.receipt.reverify_unchanged()?;
+        self.snapshot.reverify_unchanged()?;
+        for evidence in self.reviewer_evidence.iter().rev() {
+            evidence.reverify_unchanged()?;
+        }
         for review in &self.reviews {
             review.reverify_unchanged()?;
         }
@@ -176,30 +271,28 @@ pub(crate) fn run_score_authority(args: ScoreArgs) -> Result<()> {
     let (inventory, reviews) = continuation.into_parts();
     let pair = crate::blind_verify::verify_pair_evidence_core_from(&snapshot, inputs, inventory)?;
     verify_receipt(&receipt.typed, &receipt_binding(&pair))?;
+    let reviewer_evidence = crate::score_transaction::retain_reviewer_evidence(&pair)?;
+    let source_commitments = crate::score_transaction::ScoreSourceCommitments::from_pair(&pair)?;
     let authority = VerifiedScoreAuthority {
         snapshot,
         pair,
         receipt,
         reviews,
+        reviewer_evidence,
+        source_commitments,
         private_root,
         paths,
     };
     authority.reverify_unchanged(&args)?;
-    bail!(VALIDATION_SENTINEL)
+    let validated = authority.validate_reviews()?;
+    crate::score_transaction::commit_score(&authority, &args, validated)
 }
 
 pub(crate) fn resolve_score_paths(
     args: &ScoreArgs,
     private_root: &Path,
 ) -> Result<ResolvedScorePaths> {
-    let expected_reviews = private_root.join(REVIEWS_DIR);
-    let expected_output = private_root.join(OUTPUT);
-    let expected_frozen = private_root.join(FROZEN_CONTEXT);
-    if args.mapping_dir.as_os_str() != OsStr::new(MAPPING_DIR)
-        || !one_of_exact_paths(&args.reviews_dir, Path::new(REVIEWS_DIR), &expected_reviews)
-        || !one_of_exact_paths(&args.output, Path::new(OUTPUT), &expected_output)
-        || args.frozen_run_context.as_os_str() != expected_frozen.as_os_str()
-    {
+    if !score_path_spellings_match(args, private_root) {
         bail!("score paths must use the exact frozen private-root path table");
     }
 
@@ -236,6 +329,17 @@ pub(crate) fn resolve_score_paths(
         staging_output,
         frozen_run_context,
     })
+}
+
+fn score_path_spellings_match(args: &ScoreArgs, private_root: &Path) -> bool {
+    args.mapping_dir.as_os_str() == OsStr::new(MAPPING_DIR)
+        && one_of_exact_paths(
+            &args.reviews_dir,
+            Path::new(REVIEWS_DIR),
+            &private_root.join(REVIEWS_DIR),
+        )
+        && one_of_exact_paths(&args.output, Path::new(OUTPUT), &private_root.join(OUTPUT))
+        && args.frozen_run_context.as_os_str() == private_root.join(FROZEN_CONTEXT).as_os_str()
 }
 
 fn one_of_exact_paths(actual: &Path, relative: &Path, absolute: &Path) -> bool {

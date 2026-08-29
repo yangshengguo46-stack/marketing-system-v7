@@ -27,6 +27,13 @@ pub(crate) struct RetainedBoundedFile {
     raw_bytes: Vec<u8>,
     cap: u64,
     permissions: RetainedLeafPermissions,
+    open_mode: RetainedOpenMode,
+}
+
+#[derive(Clone, Copy)]
+enum RetainedOpenMode {
+    Snapshot,
+    Publishable,
 }
 
 impl RetainedBoundedFile {
@@ -34,6 +41,23 @@ impl RetainedBoundedFile {
         path: &Path,
         cap: u64,
         permissions: RetainedLeafPermissions,
+    ) -> Result<Self> {
+        Self::retain_with_mode(path, cap, permissions, RetainedOpenMode::Snapshot)
+    }
+
+    pub(crate) fn retain_publishable(
+        path: &Path,
+        cap: u64,
+        permissions: RetainedLeafPermissions,
+    ) -> Result<Self> {
+        Self::retain_with_mode(path, cap, permissions, RetainedOpenMode::Publishable)
+    }
+
+    fn retain_with_mode(
+        path: &Path,
+        cap: u64,
+        permissions: RetainedLeafPermissions,
+        open_mode: RetainedOpenMode,
     ) -> Result<Self> {
         if !path.is_absolute()
             || path.components().any(|component| {
@@ -55,7 +79,7 @@ impl RetainedBoundedFile {
         crate::secure_fs::validate_private_relative_path(Path::new(leaf_name))?;
         let parent = RetainedPrivateRoot::retain(parent_path)?;
         let (file, identity, raw_bytes) =
-            platform::open_snapshot(&parent.file, path, leaf_name, cap, permissions)?;
+            platform::open_snapshot(&parent.file, path, leaf_name, cap, permissions, open_mode)?;
         parent.reverify_unchanged()?;
         Ok(Self {
             parent,
@@ -65,6 +89,7 @@ impl RetainedBoundedFile {
             raw_bytes,
             cap,
             permissions,
+            open_mode,
         })
     }
 
@@ -83,6 +108,7 @@ impl RetainedBoundedFile {
             &self.leaf_name,
             self.cap,
             self.permissions,
+            self.open_mode,
         )?;
         self.compare(current_identity, &current_bytes)?;
         drop(current);
@@ -171,6 +197,7 @@ mod platform {
         leaf_name: &OsStr,
         cap: u64,
         permissions: RetainedLeafPermissions,
+        _open_mode: RetainedOpenMode,
     ) -> Result<(File, FileIdentity, Vec<u8>)> {
         let leaf_name = CString::new(leaf_name.as_bytes())?;
         let flags = libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK;
@@ -234,6 +261,7 @@ mod platform {
     use windows_sys::Win32::Storage::FileSystem::FILE_FLAG_OPEN_REPARSE_POINT;
     use windows_sys::Win32::Storage::FileSystem::FILE_GENERIC_READ;
     use windows_sys::Win32::Storage::FileSystem::FILE_READ_ATTRIBUTES;
+    use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_DELETE;
     use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ;
     use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_WRITE;
 
@@ -243,11 +271,16 @@ mod platform {
         _leaf_name: &OsStr,
         cap: u64,
         permissions: RetainedLeafPermissions,
+        open_mode: RetainedOpenMode,
     ) -> Result<(File, FileIdentity, Vec<u8>)> {
+        let share_mode = match open_mode {
+            RetainedOpenMode::Snapshot => FILE_SHARE_READ,
+            RetainedOpenMode::Publishable => FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        };
         let mut options = std::fs::OpenOptions::new();
         options
             .access_mode(FILE_GENERIC_READ | READ_CONTROL)
-            .share_mode(FILE_SHARE_READ)
+            .share_mode(share_mode)
             .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT);
         let file = options.open(path)?;
         let (identity, bytes) = snapshot(&file, cap, permissions)?;

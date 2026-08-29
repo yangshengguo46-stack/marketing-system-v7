@@ -13,6 +13,11 @@ pub(crate) struct RetainedPendingReview {
     retained: crate::secure_fs_retain::RetainedBoundedFile,
 }
 
+pub(crate) struct RetainedScoreDecisionStaging {
+    canonical_private_root: PathBuf,
+    retained: crate::secure_fs_retain::RetainedBoundedFile,
+}
+
 pub(crate) struct VerifiedPendingReviewInventory {
     inventory: VerifiedPrivateInventory,
     pending_reviews: [RetainedPendingReview; 3],
@@ -90,13 +95,99 @@ impl RetainedPendingReview {
         self.retained.reverify_unchanged()
     }
 
-    fn inventory_entry(&self) -> ExpectedInventoryEntry {
+    pub(crate) fn inventory_entry(&self) -> ExpectedInventoryEntry {
         ExpectedInventoryEntry {
             relative_path: self.relative_path.clone(),
             kind: InventoryKind::File,
             sha256: Some(digest(self.raw_bytes())),
         }
     }
+}
+
+impl RetainedScoreDecisionStaging {
+    const RELATIVE_PATH: &'static str = "coordinator/.decision.private.json.staging";
+
+    pub(crate) fn retain(root: &Path, expected_bytes: &[u8]) -> Result<Self> {
+        const DECISION_CAP: u64 = 64 * 1024;
+        canonical_root(root)?;
+        let retained = crate::secure_fs_retain::RetainedBoundedFile::retain_publishable(
+            &root.join(Self::RELATIVE_PATH),
+            DECISION_CAP,
+            crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
+        )?;
+        if retained.raw_bytes() != expected_bytes {
+            bail!("retained score staging bytes differ from the prepared decision");
+        }
+        Ok(Self {
+            canonical_private_root: root.to_path_buf(),
+            retained,
+        })
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.retained.reverify_unchanged()
+    }
+
+    pub(crate) fn publish_no_replace(&self, final_relative: &Path) -> Result<()> {
+        crate::secure_fs_publish::publish_entry_with_hook(
+            &self.canonical_private_root,
+            Path::new(Self::RELATIVE_PATH),
+            final_relative,
+            crate::secure_fs_publish::EntryKind::File,
+            &mut |_| self.reverify_unchanged(),
+        )
+    }
+
+    fn inventory_entry(&self) -> ExpectedInventoryEntry {
+        ExpectedInventoryEntry {
+            relative_path: Self::RELATIVE_PATH.to_string(),
+            kind: InventoryKind::File,
+            sha256: Some(digest(self.retained.raw_bytes())),
+        }
+    }
+}
+
+pub(crate) fn reverify_score_inventory_with_staging(
+    inventory: &VerifiedPrivateInventory,
+    reviews: &[RetainedPendingReview; 3],
+    staging: &RetainedScoreDecisionStaging,
+) -> Result<()> {
+    if inventory.canonical_private_root != staging.canonical_private_root
+        || reviews
+            .iter()
+            .any(|review| review.canonical_private_root != inventory.canonical_private_root)
+    {
+        bail!("score staging authority belongs to a different private root");
+    }
+    for review in reviews {
+        review.reverify_unchanged()?;
+    }
+    staging.reverify_unchanged()?;
+    let mut expected = reviews
+        .iter()
+        .map(RetainedPendingReview::inventory_entry)
+        .chain([staging.inventory_entry()])
+        .collect::<Vec<_>>();
+    expected.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+    let allowed = validate_expected_tree(&expected)?;
+    let (records, bytes, pair_marker) = verified_state(
+        &inventory.canonical_private_root,
+        Some(&allowed),
+        /* supplied_bytes */ None,
+        /* trust_allowed_projection */ true,
+    )?;
+    drop(records);
+    if bytes != inventory.inventory_bytes
+        || pair_marker != inventory.pair_marker
+        || digest(&bytes) != inventory.inventory_root_sha256
+    {
+        bail!("private inventory changed during score staging");
+    }
+    staging.reverify_unchanged()?;
+    for review in reviews {
+        review.reverify_unchanged()?;
+    }
+    Ok(())
 }
 
 pub(crate) fn verify_private_inventory_continuation(

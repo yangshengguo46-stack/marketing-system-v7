@@ -12,9 +12,11 @@ use crate::private_inventory::InventoryKind;
 use crate::private_inventory::InventoryRecord;
 use crate::private_inventory::batch::ExpectedInventoryEntry;
 use crate::private_inventory::batch::RetainedPendingReview;
+use crate::private_inventory::batch::RetainedScoreDecisionStaging;
 use crate::private_inventory::batch::append_private_inventory_batch;
 use crate::private_inventory::batch::append_private_inventory_batch_from_root;
 use crate::private_inventory::batch::append_private_inventory_from_root;
+use crate::private_inventory::batch::reverify_score_inventory_with_staging;
 use crate::private_inventory::batch::verify_private_inventory_continuation;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -291,6 +293,56 @@ fn private_inventory_continuation_allows_only_exact_pending_reviews_at_receipt_t
         continuation.inventory_root_sha256(),
         digest(&inventory_bytes(&root))
     );
+}
+
+#[test]
+fn private_inventory_score_staging_projection_allows_only_one_exact_decision_leaf() {
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    let continuation = verify_private_inventory_continuation(
+        &root,
+        pending,
+        &digest(&receipt_bytes),
+        &receipt_prefix,
+    )
+    .unwrap();
+    let (inventory, reviews) = continuation.into_parts();
+    let decision = br#"{"decision":"INVALID_PROOF"}"#;
+    crate::secure_fs::write_owner_only_new(
+        &root.join("coordinator/.decision.private.json.staging"),
+        decision,
+    )
+    .unwrap();
+    let staging = RetainedScoreDecisionStaging::retain(&root, decision).unwrap();
+
+    assert!(inventory.reverify_unchanged().is_err());
+    reverify_score_inventory_with_staging(&inventory, &reviews, &staging).unwrap();
+
+    crate::secure_fs::write_owner_only_new(&root.join("unexpected.bin"), b"unexpected").unwrap();
+    assert!(reverify_score_inventory_with_staging(&inventory, &reviews, &staging).is_err());
+}
+
+#[test]
+fn retained_score_staging_publishes_without_releasing_its_authority() {
+    let (_temp, root) = owner_root();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("coordinator")).unwrap();
+    let decision = br#"{"decision":"INVALID_PROOF"}"#;
+    crate::secure_fs::write_owner_only_new(
+        &root.join("coordinator/.decision.private.json.staging"),
+        decision,
+    )
+    .unwrap();
+    let staging = RetainedScoreDecisionStaging::retain(&root, decision).unwrap();
+
+    staging
+        .publish_no_replace(Path::new("coordinator/decision.private.json"))
+        .unwrap();
+
+    assert_eq!(
+        fs::read(root.join("coordinator/decision.private.json")).unwrap(),
+        decision
+    );
+    assert!(fs::symlink_metadata(root.join("coordinator/.decision.private.json.staging")).is_err());
 }
 
 #[test]
