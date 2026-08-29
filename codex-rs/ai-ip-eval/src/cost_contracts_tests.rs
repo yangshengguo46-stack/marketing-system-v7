@@ -81,7 +81,7 @@ fn executable_06b1_cost_contracts_accept_only_exact_shapes() {
         crate::cost_contracts::test_typed_deep_equality_probe()
             .unwrap_err()
             .to_string()
-            .contains("does not preserve")
+            .contains("typed deep equality guard rejected")
     );
 }
 

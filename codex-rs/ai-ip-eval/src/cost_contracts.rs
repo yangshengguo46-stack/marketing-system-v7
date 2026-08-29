@@ -289,10 +289,18 @@ where
     }
     let value = crate::contracts::validate_instance(validator, bytes)?;
     let typed = serde_json::from_value(value.clone())?;
-    if serde_json::to_value(&typed)? != value {
-        anyhow::bail!("typed cost contract decode does not preserve JSON value exactly")
-    }
+    assert_typed_deep_equality(&typed, &value)?;
     Ok(typed)
+}
+
+fn assert_typed_deep_equality(
+    typed: &impl serde::Serialize,
+    original: &serde_json::Value,
+) -> anyhow::Result<()> {
+    if serde_json::to_value(typed)? != *original {
+        anyhow::bail!("typed deep equality guard rejected a lossy contract decode")
+    }
+    Ok(())
 }
 
 fn validate_input_semantics(
@@ -380,8 +388,5 @@ pub(crate) fn test_typed_deep_equality_probe() -> anyhow::Result<()> {
     }
     let value = serde_json::json!({"retained": "kept", "hidden": "dropped"});
     let typed: Probe = serde_json::from_value(value.clone())?;
-    if serde_json::to_value(typed)? != value {
-        anyhow::bail!("typed cost contract decode does not preserve JSON value exactly")
-    }
-    Ok(())
+    assert_typed_deep_equality(&typed, &value)
 }
