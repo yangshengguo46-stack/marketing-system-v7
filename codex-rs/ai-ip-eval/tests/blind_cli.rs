@@ -93,7 +93,7 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
 }
 
 #[test]
-fn score_cli_publishes_immutable_invalid_proof_for_verified_replay_placeholders() -> Result<()> {
+fn score_cli_publishes_immutable_pass_for_verified_replay_reviews() -> Result<()> {
     let binary = cargo_bin("codex-ai-ip-eval")?;
     let fixture_set =
         codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
@@ -188,11 +188,27 @@ fn score_cli_publishes_immutable_invalid_proof_for_verified_replay_placeholders(
                 b"AI-IP-BLIND-REVIEW-SET-V1\0", &review_entries)?,
             "rubricSha256": jcs_sha(&rubric)?,
             "decisionPolicySha256": jcs_sha(&policy)?,
-            "decision": "INVALID_PROOF",
-            "metrics": Value::Null,
-            "validationFailures": [
-                "REVIEW_SUBMISSION_INVALID", "INSUFFICIENT_EXPERIENCED_REVIEWERS"
-            ],
+            "decision": "PASS",
+            "metrics": {
+                "reviewerCount": 3,
+                "experiencedOperatorOrDirectorCount": 2,
+                "candidatePreferenceCount": 2,
+                "candidateReadyForHumanReviewCount": 2,
+                "genericTotals": [15, 15, 15],
+                "candidateTotals": [18, 18, 18],
+                "pairedDeltas": [3, 3, 3],
+                "medianGenericTotal": 15,
+                "medianCandidateTotal": 18,
+                "medianPairedDelta": 3,
+                "candidateSevereFailureCount": 0,
+                "candidateSevereFlags": {
+                    "fabricatedFactualClaim": 0,
+                    "wrongSubjectOrDesiredAction": 0,
+                    "notActuallyUsable": 0,
+                    "rightsOrPrivacyViolation": 0,
+                },
+            },
+            "validationFailures": [],
             "generatedAt": generated.to_utc().to_rfc3339_opts(SecondsFormat::Millis, true),
         })
     );
@@ -208,6 +224,8 @@ fn score_cli_publishes_immutable_invalid_proof_for_verified_replay_placeholders(
         "preferredArm",
         "qualificationClass",
         "signatureEvidence",
+        "synthetic review evidence",
+        "private review reason",
         "seedCommitment",
         "coordinator/mappings",
     ] {
