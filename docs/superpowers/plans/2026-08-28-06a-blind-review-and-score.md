@@ -1335,6 +1335,100 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > requires a fresh dedicated-fixture build followed by separate locked serial,
 > retries-zero runs of both new selectors under the unchanged watchdog.
 
+> **Task 8 Cargo/Bazel exact-wire feature-invariance corrective authority
+> (2026-08-30):** The clean Task 8 Cargo runs are GREEN (`292/292` evaluator
+> and `22/22` proxy), but Bazel invocation
+> `3a6eb425-d741-4dd4-ad8b-f8afd0e50fc3` is the authoritative cross-build
+> RED: the binary unit target passed while evaluator unit tests reported
+> `242 passed; 44 failed`, blind CLI `0/2`, and score CLI `0/4`. The first
+> shared failure is `Replay execution context is not exact producer-order
+> typed JSON without trailing bytes` or its Native equivalent. Read-only
+> diagnosis proved both builds use `serde_json 1.0.149`, while this Cargo
+> package graph enables only `default,std` and the workspace-generated Bazel
+> crates repository additionally enables `indexmap,preserve_order`. The four
+> exact typed documents still produced through `serde_json::Value` are Replay
+> and Native execution context plus Replay and Native pair verification. In
+> Cargo their object maps are already lexically ordered; in Bazel they retain
+> the non-typed literal/append order. Native execution also contains a nested
+> broker object with the same mismatch. Pretty formatting, trailing bytes,
+> concurrency, fixture behavior, and serde_json version are not the cause.
+>
+> One narrow correction may modify only this plan,
+> `codex-rs/ai-ip-eval/src/runner.rs`, and existing sibling tests in
+> `eval_tests.rs` or `blind_verify_tests.rs`. It may add one local serializer
+> which recursively sorts every object in an owned `serde_json::Value` before
+> existing pretty serialization, and route exactly those four producer
+> documents through it. This makes their already authoritative Cargo bytes
+> independent of dependency feature unification, including nested objects and
+> fields appended after literal construction. It may not change typed parser
+> structs, exact byte equality, duplicate/unknown/trailing-byte rejection,
+> schemas, hashes, inventory, provider/broker behavior, public output,
+> deadlines, retries, threads, nextest/Bazel configuration, shared macros,
+> serde dependency features, lock files, or any other producer. It may not
+> disable Bazel `preserve_order` or enable it for Cargo as a substitute.
+>
+> TDD retains the actual Bazel failure above as behavioral RED and adds focused
+> feature-invariance coverage for top-level, nested, and appended object keys;
+> existing non-producer-order negative coverage must stay strict. GREEN first
+> requires the two locked serial exact Replay/Native envelope selectors, then
+> focused Bazel proof that the prior shared gate passes, followed by the exact
+> four-target Task 8 Bazel command. Full Cargo suites need not be repeated
+> because the correction is exercised by the focused real-pair selectors and
+> those complete suites passed immediately before the RED. All later resource,
+> lock, scope, final fix/format, independent-review, and F-0006A gates remain
+> required and F-0006 remains immutable.
+
+> **Task 8 Bazel harness completion corrective authority (2026-08-30):**
+> After the exact-wire correction passed focused Cargo and Bazel Replay/Native
+> evidence chains, combined Bazel invocation
+> `58e72857-a771-4426-a121-db24e1d8ec80` removed every prior exact-wire
+> failure. The binary unit target passed, blind CLI passed `2/2`, score CLI
+> passed `3/4`, and the library unit log completed 216 tests without an
+> assertion failure before Bazel killed the aggregate target at exactly the
+> `long` 900-second outer budget. The sole score failure was independently
+> reproduced by invocation `c01d94a8-a77d-4d22-b0eb-7672c0608b89` in 53.84
+> seconds: `score_cli_rejects_frozen_codex_byte_drift_without_side_effects`
+> returned `Permission denied`. Bazel materializes the evaluator runfile as
+> mode `0555`; the test copies that executable into its private TempDir while
+> preserving mode, then intentionally performs an in-place byte mutation, so
+> the test helper cannot open its own isolated copy for writing. Cargo's source
+> executable is owner-writable, which is why the same contract passed there.
+> This is test-harness portability, not a product permission or proof failure.
+>
+> One test-only correction may additionally modify
+> `codex-rs/ai-ip-eval/tests/support/score_world.rs` and
+> `codex-rs/ai-ip-eval/BUILD.bazel`. Immediately after copying the exact
+> evaluator into the test-owned TempDir, the helper may add only the owner
+> write bit to that destination on Unix, and clear read-only only on non-Unix,
+> before the frozen context is created. It must not chmod or rewrite the Bazel
+> runfile, replace the destination pathname/inode, weaken the production
+> retained-handle byte/identity check, or change any product path, permission,
+> provider, security, scoring, or output behavior. The existing test must still
+> mutate the same frozen inode and receive exactly `frozen replay Codex binary
+> bytes or identity changed` with no decision side effect.
+>
+> The package-local Bazel `unit_test_timeout` attribute may change from `long`
+> to `eternal`, while `unit_test_args = ["--test-threads=4"]` remains exact.
+> The repository macro applies that one attribute to both the library-unit
+> outer target and this package's generated binary-unit outer targets; this
+> authority explicitly covers those aggregate Bazel wrappers, and the final
+> four-target gate must still prove the evaluator binary-unit target passes.
+> No Rust test body or binary product behavior receives this timeout. The
+> change does not alter any product deadline, per-test watchdog, thread count,
+> test body, retry, fixture, or assertion. Do not add `test_shard_counts`: the
+> current workspace launcher
+> treats the nonempty unit-test args as an ad-hoc filter and would run all 287
+> tests once per shard, while the shared macro would also mark shards flaky and
+> introduce default retries. Do not modify the shared macro, raise test
+> concurrency, add retry, or use a repeated PASS as closure evidence.
+>
+> GREEN requires the focused Cargo and Bazel frozen-Codex drift selector, full
+> Bazel score CLI `4/4`, isolated Bazel library unit `287/287` within its actual
+> completion time, and then the same four-target Task 8 command including the
+> generated evaluator binary-unit target. Every target
+> must pass on its first attempt. Only then continue to resource, lock, scope,
+> final fix/format, independent-review, and F-0006A gates.
+
 > **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
 > 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
 > scoring-table tests, and their `lib.rs` mount) and **7A2**

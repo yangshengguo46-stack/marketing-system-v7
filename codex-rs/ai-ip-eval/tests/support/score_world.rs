@@ -49,6 +49,12 @@ impl ScoreWorld {
                 .path()
                 .join(format!("frozen-codex{}", std::env::consts::EXE_SUFFIX));
             fs::copy(&score_binary, &copy)?;
+            let mut permissions = fs::metadata(&copy)?.permissions();
+            #[cfg(unix)]
+            permissions.set_mode(permissions.mode() | 0o200);
+            #[cfg(not(unix))]
+            permissions.set_readonly(false);
+            fs::set_permissions(&copy, permissions)?;
             copy.canonicalize()?
         } else {
             score_binary.clone()

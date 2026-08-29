@@ -1268,7 +1268,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
     {
         bail!("typed replay pair differs outside the canonical Lead Skill treatment");
     }
-    let execution_context = serde_json::to_vec_pretty(&serde_json::json!({
+    let execution_context = to_exact_pretty_json(serde_json::json!({
         "schemaVersion": 1,
         "executionMode": "replay",
         "providerMode": "not-run",
@@ -1371,7 +1371,7 @@ pub fn run_replay_pair(args: ReplayPairArgs) -> Result<()> {
         &sha256(&serde_json::to_vec(&generic.collected.content_package)?),
         &sha256(&serde_json::to_vec(&candidate.collected.content_package)?),
     )?;
-    let verification = serde_json::to_vec_pretty(&verification)?;
+    let verification = to_exact_pretty_json(verification)?;
     write_owner_only_new(
         &coordinator.join("replay-pair-verification.json"),
         &verification,
@@ -2740,7 +2740,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             .context("pair deadline is out of range")
     })?;
     let execution_bytes = run_sync_before_deadline(pair_deadline, || {
-        Ok(serde_json::to_vec_pretty(&serde_json::json!({
+        to_exact_pretty_json(serde_json::json!({
             "schemaVersion": 1,
             "providerMode": "not-run",
             "frozenRunContextSha256": frozen.sha256(),
@@ -2761,7 +2761,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             "candidateCodexHome": homes.candidate_codex_home,
             "sharedConfigSha256": sha256(&shared_config.bytes),
             "pathSha256": sha256(frozen_path.as_bytes()),
-        }))?)
+        }))
     })?;
     let execution_context_sha256 =
         run_sync_before_deadline(pair_deadline, || Ok(sha256(&execution_bytes)))?;
@@ -3324,8 +3324,13 @@ fn write_live_pair_verification(
         &generic.0.content_package_sha256,
         &candidate.0.content_package_sha256,
     )?;
-    let bytes = serde_json::to_vec_pretty(&verification)?;
+    let bytes = to_exact_pretty_json(verification)?;
     write_owner_only_new(&coordinator_dir.join("pair-verification.json"), &bytes)
+}
+
+pub(crate) fn to_exact_pretty_json(mut value: serde_json::Value) -> Result<Vec<u8>> {
+    value.sort_all_objects();
+    Ok(serde_json::to_vec_pretty(&value)?)
 }
 
 fn append_pair_output_commitments(

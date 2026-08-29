@@ -51,6 +51,45 @@ fn assert_current_stage(args: crate::BlindPackArgs, private_root: &Path) {
     assert_no_blind_outputs(private_root);
 }
 
+#[test]
+fn exact_pretty_value_serialization_sorts_nested_and_appended_keys() {
+    let mut document = json!({
+        "schemaVersion": 1,
+        "providerMode": "not-run",
+        "broker": {
+            "port": 4317,
+            "host": "127.0.0.1",
+            "path": "/v1/responses"
+        },
+        "candidateRunManifestSha256": "candidate"
+    });
+    document
+        .as_object_mut()
+        .unwrap()
+        .insert("arms".to_string(), json!(["generic", "candidate"]));
+
+    let bytes = crate::runner::to_exact_pretty_json(document).unwrap();
+    assert_eq!(
+        String::from_utf8(bytes).unwrap(),
+        concat!(
+            "{\n",
+            "  \"arms\": [\n",
+            "    \"generic\",\n",
+            "    \"candidate\"\n",
+            "  ],\n",
+            "  \"broker\": {\n",
+            "    \"host\": \"127.0.0.1\",\n",
+            "    \"path\": \"/v1/responses\",\n",
+            "    \"port\": 4317\n",
+            "  },\n",
+            "  \"candidateRunManifestSha256\": \"candidate\",\n",
+            "  \"providerMode\": \"not-run\",\n",
+            "  \"schemaVersion\": 1\n",
+            "}"
+        )
+    );
+}
+
 fn replace_with_same_owner_only_bytes(path: &Path) {
     let path = path.canonicalize().unwrap();
     let bytes = fs::read(&path).unwrap();
@@ -388,6 +427,21 @@ fn blind_envelope_rejects_nonexact_document_encodings() {
         &replay.private_root,
         &pair,
         &serde_json::to_vec(&pair_value).unwrap(),
+        "not exact producer-order typed JSON without trailing bytes",
+    );
+
+    let execution_bytes = fs::read(&execution).unwrap();
+    let execution_text = String::from_utf8(execution_bytes).unwrap();
+    let reordered = execution_text.replace(
+        "  \"providerMode\": \"not-run\",\n  \"schemaVersion\": 1\n",
+        "  \"schemaVersion\": 1,\n  \"providerMode\": \"not-run\"\n",
+    );
+    assert_ne!(reordered, execution_text);
+    assert_mutated_file_rejected(
+        &snapshot,
+        &replay.private_root,
+        &execution,
+        reordered.as_bytes(),
         "not exact producer-order typed JSON without trailing bytes",
     );
 
