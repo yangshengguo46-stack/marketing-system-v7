@@ -21,6 +21,7 @@ mod private_inventory;
 mod proof_archive;
 mod proof_archive_seal;
 mod proof_ledger;
+mod proof_commitment;
 mod runner;
 mod score;
 mod score_authority;
@@ -181,6 +182,10 @@ mod proof_archive_tests;
 #[cfg(test)]
 #[path = "proof_ledger_tests.rs"]
 mod proof_ledger_tests;
+
+#[cfg(test)]
+#[path = "proof_commitment_tests.rs"]
+mod proof_commitment_tests;
 
 #[cfg(test)]
 #[path = "secure_fs_tests.rs"]

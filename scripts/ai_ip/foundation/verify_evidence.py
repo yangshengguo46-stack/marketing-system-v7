@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -346,6 +347,58 @@ def canonical_json_bytes(value: object) -> bytes:
         ).encode("utf-8")
     except (TypeError, ValueError) as error:
         raise EvidenceError("value is not canonical JSON") from error
+
+
+def proof_commitment_vector(
+    key: bytes, label: str, canonical_value_bytes: bytes
+) -> str:
+    label_bytes = label.encode("utf-8")
+    framing = b"".join(
+        (
+            b"AI-IP-PROOF-V1\0",
+            len(label_bytes).to_bytes(4, "big"),
+            label_bytes,
+            len(canonical_value_bytes).to_bytes(8, "big"),
+            canonical_value_bytes,
+        )
+    )
+    return hmac.new(key, framing, hashlib.sha256).hexdigest()
+
+
+def proof_merkle_root_vector(leaves: Mapping[str, str]) -> str:
+    if not leaves:
+        raise EvidenceError("proof Merkle leaves must not be empty")
+    hashed: list[tuple[bytes, bytes]] = []
+    for name, value in leaves.items():
+        if name == "proofRootSha256":
+            raise EvidenceError("proofRootSha256 must not be a proof Merkle leaf")
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise EvidenceError("proof Merkle leaves must map strings to strings")
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise EvidenceError("proof Merkle leaf value must be lowercase 64-hex")
+        name_bytes = name.encode("utf-8")
+        value_bytes = value.encode("ascii")
+        hashed.append(
+            (
+                name_bytes,
+                hashlib.sha256(
+                    b"\x00"
+                    + len(name_bytes).to_bytes(4, "big")
+                    + name_bytes
+                    + len(value_bytes).to_bytes(4, "big")
+                    + value_bytes
+                ).digest(),
+            )
+        )
+    nodes = [digest for _, digest in sorted(hashed)]
+    while len(nodes) > 1:
+        if len(nodes) % 2:
+            nodes.append(nodes[-1])
+        nodes = [
+            hashlib.sha256(b"\x01" + nodes[index] + nodes[index + 1]).digest()
+            for index in range(0, len(nodes), 2)
+        ]
+    return nodes[0].hex()
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:

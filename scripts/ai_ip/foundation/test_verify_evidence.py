@@ -97,6 +97,65 @@ REPORT_KEYS = {
 }
 
 
+def _proof_commitment_vector_fixture() -> dict[str, object]:
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "codex-rs/ai-ip-eval/tests/fixtures/contracts/06b1/proof-commitment-vectors.json"
+    )
+    return json.loads(path.read_bytes())
+
+
+def test_proof_commitment_vectors_match_normative_framing() -> None:
+    vector = _proof_commitment_vector_fixture()
+    key = bytes.fromhex(str(vector["keyHex"]))
+    commitments = vector["commitments"]
+    assert isinstance(commitments, list)
+    for commitment in commitments:
+        assert isinstance(commitment, dict)
+        assert (
+            verifier.proof_commitment_vector(
+                key,
+                str(commitment["label"]),
+                str(commitment["canonicalValue"]).encode("utf-8"),
+            )
+            == commitment["expectedHex"]
+        )
+    merkle = vector["merkle"]
+    assert isinstance(merkle, dict)
+    single = merkle["singleLeaf"]
+    assert isinstance(single, dict)
+    assert (
+        verifier.proof_merkle_root_vector(
+            {str(single["name"]): str(single["value"])}
+        )
+        == single["expectedHex"]
+    )
+    assert (
+        verifier.proof_merkle_root_vector(
+            {
+                "z": str(single["value"]),
+                "é": "b" * 64,
+            }
+        )
+        == merkle["evenNode"]["expectedHex"]
+    )
+    odd_leaves = merkle["oddDuplicationLeaves"]
+    assert isinstance(odd_leaves, dict)
+    assert verifier.proof_merkle_root_vector(odd_leaves) == merkle["oddDuplicationRootHex"]
+    full_leaves = merkle["fullLeaves"]
+    assert isinstance(full_leaves, dict)
+    assert verifier.proof_merkle_root_vector(full_leaves) == merkle["fullRootHex"]
+
+
+def test_proof_commitment_vector_helpers_reject_invalid_merkle_inputs() -> None:
+    with pytest.raises(verifier.EvidenceError, match="must not be empty"):
+        verifier.proof_merkle_root_vector({})
+    with pytest.raises(verifier.EvidenceError, match="lowercase 64-hex"):
+        verifier.proof_merkle_root_vector({"leaf": "A" * 64})
+    with pytest.raises(verifier.EvidenceError, match="proofRootSha256"):
+        verifier.proof_merkle_root_vector({"proofRootSha256": "a" * 64})
+
+
 def _git(repo: Path, *args: str) -> str:
     completed = subprocess.run(
         ["/usr/local/bin/git", "-C", str(repo), *args],
