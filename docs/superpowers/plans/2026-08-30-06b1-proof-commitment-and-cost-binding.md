@@ -62,7 +62,7 @@ git diff --cached --check
 git commit -m "docs: plan private proof cost binding"
 ```
 
-- [ ] **Step 2: Switch all authority pointers cohesively**
+- [x] **Step 2: Switch all authority pointers cohesively**
 
 Update the plan index and roadmap §9 to say 06A is complete and 06B-1 is the only executable child. Append F-0007 authorization with plan path, reviewed scope, provider/cost zero, Mock refusal, both parked blockers, `G0/G1/G2=OPEN`, `PASS_TO_PHASE_0B=false`, sync risk, and rollback. F-0006/F-0006A remain byte-preserved history.
 
