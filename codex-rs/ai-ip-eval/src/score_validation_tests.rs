@@ -120,6 +120,193 @@ fn score_validation_commits_malformed_review_bytes_before_invalid_proof() {
     );
 }
 
+#[test]
+fn score_validation_classifies_each_submission_contract_failure_before_semantics() {
+    let cases: [(&str, fn(&mut Value)); 4] = [
+        ("missing required field", |submission| {
+            submission.as_object_mut().unwrap().remove("preferred");
+        }),
+        ("changed signed payload", |submission| {
+            submission["signedAt"] = Value::String("2026-08-29T12:41:00Z".to_string());
+        }),
+        ("changed signature evidence digest", |submission| {
+            submission["signatureEvidenceSha256"] = Value::String("8".repeat(64));
+        }),
+        ("changed qualification with copied digest", |submission| {
+            submission["qualification"]["qualificationClass"] =
+                Value::String("copied qualification".to_string());
+        }),
+    ];
+
+    for (name, mutate) in cases {
+        let mut fixture = ValidationFixture::valid();
+        let mut submission = fixture.submission_value(2);
+        mutate(&mut submission);
+        fixture.reviewers[2].submission_raw = crate::jcs::canonicalize_value(&submission).unwrap();
+        assert!(
+            FrozenContracts::load()
+                .unwrap()
+                .validate_reviewer_submission(&fixture.reviewers[2].submission_raw)
+                .is_err(),
+            "contract accepted {name}"
+        );
+        assert_failures(&fixture, &[BlindDecisionFailure::ReviewSubmissionInvalid]);
+    }
+}
+
+#[test]
+fn score_validation_isolates_each_contract_valid_submission_binding_failure() {
+    let cases: [(&str, fn(&mut Value), BlindDecisionFailure); 5] = [
+        (
+            "duplicate reviewer ID",
+            |submission| submission["reviewerId"] = Value::String("reviewer-1".to_string()),
+            BlindDecisionFailure::ReviewerIdSetMismatch,
+        ),
+        (
+            "qualification class",
+            |submission| {
+                submission["qualification"]["qualificationClass"] =
+                    Value::String("changed-qualification".to_string());
+            },
+            BlindDecisionFailure::ReviewerQualificationMismatch,
+        ),
+        (
+            "experience disclosure",
+            |submission| {
+                submission["qualification"]["experiencedOperatorOrDirector"] = Value::Bool(true);
+            },
+            BlindDecisionFailure::ReviewerQualificationMismatch,
+        ),
+        (
+            "review bundle",
+            |submission| {
+                submission["reviewBundleSha256"] = Value::String("8".repeat(64));
+            },
+            BlindDecisionFailure::ReviewBundleCommitmentMismatch,
+        ),
+        (
+            "rubric",
+            |submission| submission["rubricSha256"] = Value::String("8".repeat(64)),
+            BlindDecisionFailure::ReviewRubricCommitmentMismatch,
+        ),
+    ];
+
+    for (name, mutate, expected) in cases {
+        let mut fixture = ValidationFixture::valid();
+        let mut submission = fixture.submission_value(2);
+        mutate(&mut submission);
+        fixture.reviewers[2].submission_raw = resign_submission(submission);
+        FrozenContracts::load()
+            .unwrap()
+            .validate_reviewer_submission(&fixture.reviewers[2].submission_raw)
+            .unwrap_or_else(|error| panic!("{name} mutation broke the contract: {error}"));
+        assert_failures(&fixture, &[expected]);
+    }
+}
+
+#[test]
+fn score_validation_isolates_mapping_bundle_and_seed_commitment_failures() {
+    let cases = [
+        (
+            "mappingSha256",
+            BlindDecisionFailure::ReviewMappingCommitmentMismatch,
+        ),
+        (
+            "reviewBundleSha256",
+            BlindDecisionFailure::ReviewBundleCommitmentMismatch,
+        ),
+        (
+            "seedCommitment",
+            BlindDecisionFailure::ReviewSeedCommitmentMismatch,
+        ),
+    ];
+    for (field, expected) in cases {
+        let mut fixture = ValidationFixture::valid();
+        fixture.set_receipt_commitment(2, field, "8".repeat(64));
+        assert_failures(&fixture, &[expected]);
+    }
+
+    let mut malformed_mapping = ValidationFixture::valid();
+    malformed_mapping.reviewers[2].mapping_raw = b"{".to_vec();
+    assert_failures(
+        &malformed_mapping,
+        &[BlindDecisionFailure::ReviewMappingCommitmentMismatch],
+    );
+    let mut malformed_bundle = ValidationFixture::valid();
+    malformed_bundle.reviewers[2].review_bundle_raw = b"{".to_vec();
+    assert_failures(
+        &malformed_bundle,
+        &[BlindDecisionFailure::ReviewBundleCommitmentMismatch],
+    );
+}
+
+#[test]
+fn score_validation_rejects_fully_recommitted_bundle_source_drift() {
+    for field in [
+        "caseSha256",
+        "materialsManifestSha256",
+        "sourceMaterialsSha256",
+        "aSha256",
+        "bSha256",
+        "reviewerSubmissionSchemaSha256",
+    ] {
+        let mut fixture = ValidationFixture::valid();
+        fixture.recommit_bundle_mutation(2, |bundle| {
+            bundle[field] = Value::String("8".repeat(64));
+        });
+        fixture.assert_submission_contracts_valid();
+        assert_failures(
+            &fixture,
+            &[BlindDecisionFailure::ReviewBundleCommitmentMismatch],
+        );
+    }
+
+    let mut qualification = ValidationFixture::valid();
+    qualification.recommit_bundle_mutation(2, |bundle| {
+        bundle["qualification"]["qualificationClass"] =
+            Value::String("changed-qualification".to_string());
+    });
+    assert_failures(
+        &qualification,
+        &[BlindDecisionFailure::ReviewerQualificationMismatch],
+    );
+
+    let mut rubric = ValidationFixture::valid();
+    rubric.recommit_bundle_mutation(2, |bundle| {
+        bundle["rubricSha256"] = Value::String("8".repeat(64));
+    });
+    assert_failures(
+        &rubric,
+        &[BlindDecisionFailure::ReviewRubricCommitmentMismatch],
+    );
+
+    let mut reviewer_id = ValidationFixture::valid();
+    reviewer_id.recommit_bundle_mutation(2, |bundle| {
+        bundle["reviewerId"] = Value::String("reviewer-1".to_string());
+    });
+    assert_failures(&reviewer_id, &[BlindDecisionFailure::ReviewerIdSetMismatch]);
+
+    for (field, value) in [
+        ("pairId", Value::String("changed-pair".to_string())),
+        ("schemaVersion", Value::Number(2.into())),
+    ] {
+        let mut structure = ValidationFixture::valid();
+        structure.recommit_bundle_mutation(2, |bundle| bundle[field] = value);
+        assert_failures(
+            &structure,
+            &[BlindDecisionFailure::ReviewBundleCommitmentMismatch],
+        );
+    }
+}
+
+fn assert_failures(fixture: &ValidationFixture, expected: &[BlindDecisionFailure]) {
+    let validated = crate::score_validation::validate_score_reviews(fixture.input()).unwrap();
+    assert_eq!(
+        validated.outcome,
+        ScoreValidationOutcome::Invalid(expected.to_vec())
+    );
+}
+
 struct ValidationFixture {
     pair_id: String,
     frozen_context_sha256: String,
@@ -308,6 +495,38 @@ impl ValidationFixture {
                 reviewer.submission_raw.as_slice(),
             )
         })
+    }
+
+    fn submission_value(&self, index: usize) -> Value {
+        crate::jcs::parse_json(&self.reviewers[index].submission_raw).unwrap()
+    }
+
+    fn set_receipt_commitment(&mut self, index: usize, field: &str, value: String) {
+        let mut receipt = crate::jcs::parse_json(&self.blind_pack_receipt_raw).unwrap();
+        receipt["reviewerMappings"][index][field] = Value::String(value);
+        self.blind_pack_receipt_raw = crate::jcs::canonicalize_value(&receipt).unwrap();
+    }
+
+    fn recommit_bundle_mutation(&mut self, index: usize, mutate: impl FnOnce(&mut Value)) {
+        let mut bundle = crate::jcs::parse_json(&self.reviewers[index].review_bundle_raw).unwrap();
+        mutate(&mut bundle);
+        self.reviewers[index].review_bundle_raw = crate::jcs::canonicalize_value(&bundle).unwrap();
+        let bundle_sha256 = sha256(&self.reviewers[index].review_bundle_raw);
+
+        let mut mapping = crate::jcs::parse_json(&self.reviewers[index].mapping_raw).unwrap();
+        mapping["reviewBundleSha256"] = Value::String(bundle_sha256.clone());
+        self.reviewers[index].mapping_raw = crate::jcs::canonicalize_value(&mapping).unwrap();
+        let mapping_sha256 = sha256(&self.reviewers[index].mapping_raw);
+
+        let mut receipt = crate::jcs::parse_json(&self.blind_pack_receipt_raw).unwrap();
+        receipt["reviewerMappings"][index]["reviewBundleSha256"] =
+            Value::String(bundle_sha256.clone());
+        receipt["reviewerMappings"][index]["mappingSha256"] = Value::String(mapping_sha256);
+        self.blind_pack_receipt_raw = crate::jcs::canonicalize_value(&receipt).unwrap();
+
+        let mut submission = self.submission_value(index);
+        submission["reviewBundleSha256"] = Value::String(bundle_sha256);
+        self.reviewers[index].submission_raw = resign_submission(submission);
     }
 
     fn assert_submission_contracts_valid(&self) {
