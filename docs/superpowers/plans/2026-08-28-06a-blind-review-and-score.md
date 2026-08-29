@@ -1684,7 +1684,7 @@ if proof_invalid {
 
 Write owner-only with `create_new`. `BlindDecision` contains commitments, decision, timestamp, `metrics: DecisionMetrics|null`, and exact body-free validation failure codes. PASS/ITERATE require non-null counts/totals/deltas/medians/severe metrics and an empty failure list; INVALID requires `metrics:null` and at least one enum failure code, so zero is never used as a fake score. It contains no reasons, bodies, paths, seeds, raw mappings, or public report. Replay may exercise private `PASS` mechanically, but no 06A command emits `BUSINESS_SIGNAL_PASS_PENDING_FOUNDATION` or `PASS_TO_PHASE_0B`.
 
-- [ ] **Step 5: Update Replay evidence, run GREEN, append ledger, commit**
+- [x] **Step 5: Update Replay evidence, run GREEN, append ledger, commit**
 
 Replace all three Replay review fixtures with full valid submissions bound to Task 6's deterministic bundle/mapping/rubric values. These reviewer submissions are post-pair inputs and are not roles in `replay-fixture-set.json`; do not mutate the frozen execution fixture-set.
 
@@ -1715,7 +1715,7 @@ F-0006 records exact Task 1–7 commits, private/public boundary, tests, provide
 - Consumes: Tasks 1–7 and existing proxy/evaluator contracts.
 - Produces: clean reviewed WP6A tip; no provider spend or public business claim.
 
-- [ ] **Step 1: Run Cargo regressions**
+- [x] **Step 1: Run Cargo regressions**
 
 ```bash
 cd codex-rs
@@ -1724,7 +1724,7 @@ just test -p codex-responses-api-proxy
 cd ..
 ```
 
-- [ ] **Step 2: Run Bazel and resource matrix**
+- [x] **Step 2: Run Bazel and resource matrix**
 
 ```bash
 just bazel-lock-update
@@ -1736,7 +1736,7 @@ bazel build //ai-ip-evals/rubrics:rubrics //ai-ip-evals/schemas:schemas
 just bazel-lock-check
 ```
 
-- [ ] **Step 3: Verify scope/governance before formatting**
+- [x] **Step 3: Verify scope/governance before formatting**
 
 ```bash
 git diff --check
@@ -1748,18 +1748,18 @@ rg -n 'providerMode=not-run|paidProviderCost=0|same-UID|ancestor-swap' \
 
 Expected: only planned paths; ledger explicitly preserves zero provider use/cost and both blockers. Inspect staged/untracked paths before every commit; never use a directory-wide `git add` that can capture unrelated user files.
 
-- [ ] **Step 4: Run formatter/fixer last**
+- [x] **Step 4: Run formatter/fixer last**
 
 ```bash
 cd codex-rs
-just fmt
 just fix -p codex-ai-ip-eval
+just fmt
 cd ..
 ```
 
 Run no test after this step.
 
-- [ ] **Step 5: Retain generated output only if present**
+- [x] **Step 5: Retain generated output only if present**
 
 Stage only the exact modified formatter/lock files shown by `git status`; inspect `git diff --cached --check`, then commit:
 
