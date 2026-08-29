@@ -31,6 +31,7 @@
   {"name":"native context bad digest","contract":"nativeContext","mutation":"badDigest"},
   {"name":"native context bad commitment key digest","contract":"nativeContext","mutation":"badCommitmentKeyDigest"},
   {"name":"native context missing commitment key digest","contract":"nativeContext","mutation":"missingCommitmentKeyDigest"},
+  {"name":"native context missing public run id","contract":"nativeContext","mutation":"missingPublicRunId"},
   {"name":"native context zero range","contract":"nativeContext","mutation":"zeroRange"},
   {"name":"native context replay field","contract":"nativeContext","mutation":"replayFieldInNative"},
   {"name":"replay context unknown field","contract":"replayContext","mutation":"unknownTopLevel"},
@@ -38,6 +39,7 @@
   {"name":"replay context wrong type","contract":"replayContext","mutation":"wrongSchemaVersionType"},
   {"name":"replay context bad digest","contract":"replayContext","mutation":"badDigest"},
   {"name":"replay context bad commitment key digest","contract":"replayContext","mutation":"badCommitmentKeyDigest"},
+  {"name":"replay context missing commitment key digest","contract":"replayContext","mutation":"missingCommitmentKeyDigest"},
   {"name":"replay context missing public run id","contract":"replayContext","mutation":"missingPublicRunId"},
   {"name":"replay context native field","contract":"replayContext","mutation":"nativeFieldInReplay"}
 ]

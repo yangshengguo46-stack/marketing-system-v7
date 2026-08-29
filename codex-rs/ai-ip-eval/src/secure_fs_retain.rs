@@ -53,30 +53,38 @@ impl RetainedBoundedFile {
         Self::retain_with_mode(path, cap, permissions, RetainedOpenMode::Publishable)
     }
 
+    pub(crate) fn retain_created_with(
+        path: &Path,
+        file: File,
+        cap: u64,
+        permissions: RetainedLeafPermissions,
+        before_retain: impl FnOnce() -> Result<()>,
+    ) -> Result<Self> {
+        let (parent_path, leaf_name) = retained_path_parts(path)?;
+        let (identity, raw_bytes) = platform::snapshot(&file, cap, permissions)?;
+        before_retain()?;
+        let parent = RetainedPrivateRoot::retain(parent_path)?;
+        let retained = Self {
+            parent,
+            leaf_name: leaf_name.to_os_string(),
+            file,
+            identity,
+            raw_bytes,
+            cap,
+            permissions,
+            open_mode: RetainedOpenMode::Publishable,
+        };
+        retained.reverify_unchanged()?;
+        Ok(retained)
+    }
+
     fn retain_with_mode(
         path: &Path,
         cap: u64,
         permissions: RetainedLeafPermissions,
         open_mode: RetainedOpenMode,
     ) -> Result<Self> {
-        if !path.is_absolute()
-            || path.components().any(|component| {
-                matches!(
-                    component,
-                    std::path::Component::CurDir | std::path::Component::ParentDir
-                )
-            })
-        {
-            bail!("retained private file path must be normalized and absolute");
-        }
-        let parent_path = path.parent().context("retained file has no parent")?;
-        let leaf_name = path
-            .file_name()
-            .context("retained file has no final component")?;
-        if parent_path.join(leaf_name).as_os_str() != path.as_os_str() {
-            bail!("retained private file path must use one exact final component");
-        }
-        crate::secure_fs::validate_private_relative_path(Path::new(leaf_name))?;
+        let (parent_path, leaf_name) = retained_path_parts(path)?;
         let parent = RetainedPrivateRoot::retain(parent_path)?;
         let (file, identity, raw_bytes) =
             platform::open_snapshot(&parent.file, path, leaf_name, cap, permissions, open_mode)?;
@@ -127,6 +135,28 @@ impl RetainedBoundedFile {
         }
         Ok(())
     }
+}
+
+fn retained_path_parts(path: &Path) -> Result<(&Path, &OsStr)> {
+    if !path.is_absolute()
+        || path.components().any(|component| {
+            matches!(
+                component,
+                std::path::Component::CurDir | std::path::Component::ParentDir
+            )
+        })
+    {
+        bail!("retained private file path must be normalized and absolute");
+    }
+    let parent_path = path.parent().context("retained file has no parent")?;
+    let leaf_name = path
+        .file_name()
+        .context("retained file has no final component")?;
+    if parent_path.join(leaf_name).as_os_str() != path.as_os_str() {
+        bail!("retained private file path must use one exact final component");
+    }
+    crate::secure_fs::validate_private_relative_path(Path::new(leaf_name))?;
+    Ok((parent_path, leaf_name))
 }
 
 impl RetainedPrivateRoot {

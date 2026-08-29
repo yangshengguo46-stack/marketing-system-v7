@@ -1045,7 +1045,7 @@ fn assert_generated_commitment_identity(
             .unwrap()
     );
     let context_bytes = serde_json::to_vec(context).unwrap();
-    assert!(!key.raw_key_occurs_in(&context_bytes));
+    assert!(!key.key_material_occurs_in(&context_bytes));
     #[cfg(unix)]
     {
         use std::os::unix::fs::MetadataExt;
@@ -1341,18 +1341,18 @@ fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
     let replay_key =
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&replay.private_root)
             .unwrap();
-    assert!(!replay_key.raw_key_occurs_in(format!("{replay_verified:?}").as_bytes()));
+    assert!(!replay_key.key_material_occurs_in(format!("{replay_verified:?}").as_bytes()));
     replay_verified.clone().reverify_all().unwrap();
     for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
         let mut context: serde_json::Value = serde_json::from_slice(&replay_raw).unwrap();
         mutate_context_field(&mut context, field);
         let mutated = serde_json::to_vec_pretty(&context).unwrap();
         fs::write(&replay.frozen, &mutated).unwrap();
-        assert!(
-            crate::runner::verify_replay_frozen_context(&replay.frozen, &mutated).is_err(),
-            "Replay accepted {field} mutation"
-        );
-        assert!(replay_verified.reverify_all().is_err());
+        let verify_error =
+            crate::runner::verify_replay_frozen_context(&replay.frozen, &mutated).unwrap_err();
+        assert!(!replay_key.key_material_occurs_in(format!("{verify_error:#}").as_bytes()));
+        let reverify_error = replay_verified.reverify_all().unwrap_err();
+        assert!(!replay_key.key_material_occurs_in(format!("{reverify_error:#}").as_bytes()));
         fs::write(&replay.frozen, &replay_raw).unwrap();
         replay_verified.reverify_all().unwrap();
     }
@@ -1363,17 +1363,16 @@ fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
     let native_verified = verify_frozen_context(&native_path).unwrap();
     let native_key =
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&native_root).unwrap();
-    assert!(!native_key.raw_key_occurs_in(format!("{native_verified:?}").as_bytes()));
+    assert!(!native_key.key_material_occurs_in(format!("{native_verified:?}").as_bytes()));
     native_verified.clone().reverify_all().unwrap();
     for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
         let mut context: serde_json::Value = serde_json::from_slice(&native_raw).unwrap();
         mutate_context_field(&mut context, field);
         fs::write(&native_path, serde_json::to_vec_pretty(&context).unwrap()).unwrap();
-        assert!(
-            verify_frozen_context(&native_path).is_err(),
-            "Native accepted {field} mutation"
-        );
-        assert!(native_verified.reverify_all().is_err());
+        let verify_error = verify_frozen_context(&native_path).unwrap_err();
+        assert!(!native_key.key_material_occurs_in(format!("{verify_error:#}").as_bytes()));
+        let reverify_error = native_verified.reverify_all().unwrap_err();
+        assert!(!native_key.key_material_occurs_in(format!("{reverify_error:#}").as_bytes()));
         fs::write(&native_path, &native_raw).unwrap();
         native_verified.reverify_all().unwrap();
     }
@@ -1397,6 +1396,15 @@ fn assert_inventory_covers_commitment_key(private_root: &std::path::Path) {
 
     let key =
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(private_root).unwrap();
+    let raw_key = fs::read(private_root.join("coordinator/commitment-key.bin")).unwrap();
+    let lowercase_hex = raw_key
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
+    let uppercase_hex = lowercase_hex.to_ascii_uppercase();
+    assert!(key.key_material_occurs_in(&raw_key));
+    assert!(key.key_material_occurs_in(lowercase_hex.as_bytes()));
+    assert!(key.key_material_occurs_in(uppercase_hex.as_bytes()));
     fn inspect(
         key: &crate::proof_commitment::RetainedProofCommitmentKey,
         root: &std::path::Path,
@@ -1410,7 +1418,7 @@ fn assert_inventory_covers_commitment_key(private_root: &std::path::Path) {
             } else if entry_path != root.join("coordinator/commitment-key.bin") {
                 let bytes = fs::read(&entry_path).unwrap();
                 assert!(
-                    !key.raw_key_occurs_in(&bytes),
+                    !key.key_material_occurs_in(&bytes),
                     "raw key leaked into {}",
                     entry_path.display()
                 );

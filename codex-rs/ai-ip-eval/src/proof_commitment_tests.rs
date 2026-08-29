@@ -226,9 +226,84 @@ fn proof_commitment_retained_key_accepts_only_the_fixed_exact_leaf() {
     .unwrap();
     let retained =
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&exact_root).unwrap();
-    assert!(!retained.raw_key_occurs_in(format!("{retained:?}").as_bytes()));
+    assert!(!retained.key_material_occurs_in(format!("{retained:?}").as_bytes()));
     let public_run_id = retained.derive_public_run_id(&"a".repeat(64)).unwrap();
     retained
         .reverify_binding(retained.key_sha256(), &"a".repeat(64), &public_run_id)
         .unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn proof_commitment_creation_rejects_publish_to_retain_replacement() {
+    for same_bytes in [false, true] {
+        let (_temp, root) = private_root();
+        let context = root.join("frozen-run-context.json");
+        let result = crate::proof_commitment::RetainedProofCommitmentKey::create_fixed_with_hook(
+            &root,
+            |key_path| {
+                let mut replacement = fs::read(key_path)?;
+                if !same_bytes {
+                    replacement[0] ^= 1;
+                }
+                fs::rename(key_path, key_path.with_extension("created"))?;
+                crate::secure_fs::write_owner_only_new(key_path, &replacement)?;
+                Ok(())
+            },
+        )
+        .and_then(|_| crate::secure_fs::write_owner_only_new(&context, b"{}"));
+
+        let error = result.expect_err(&format!("accepted same_bytes={same_bytes} replacement"));
+        assert!(
+            error.to_string().contains("identity changed")
+                || error.to_string().contains("bytes changed"),
+            "replacement failed for the wrong reason: {error:#}"
+        );
+        assert!(!context.exists());
+    }
+}
+
+#[test]
+fn proof_commitment_sync_failure_preserves_key_and_forces_retry_collision() {
+    for fail_at_coordinator in [false, true] {
+        let (_temp, root) = private_root();
+        let coordinator = root.join("coordinator");
+        let key_path = coordinator.join("commitment-key.bin");
+        let context = root.join("frozen-run-context.json");
+        let failed_directory = if fail_at_coordinator {
+            coordinator.clone()
+        } else {
+            root.clone()
+        };
+        let calls = std::cell::RefCell::new(Vec::new());
+        let result = crate::proof_commitment::RetainedProofCommitmentKey::create_fixed_with_hooks(
+            &root,
+            |_| Ok(()),
+            |directory| {
+                assert!(key_path.exists(), "directory sync ran before key publication");
+                calls.borrow_mut().push(directory.to_path_buf());
+                if directory == failed_directory {
+                    anyhow::bail!("synthetic directory sync failure");
+                }
+                crate::secure_fs::fsync_directory(directory)
+            },
+        )
+        .and_then(|_| crate::secure_fs::write_owner_only_new(&context, b"{}"));
+
+        assert!(
+            format!("{:#}", result.unwrap_err()).contains("synthetic directory sync failure")
+        );
+        let expected_calls = if fail_at_coordinator {
+            vec![root.clone(), coordinator]
+        } else {
+            vec![root.clone()]
+        };
+        assert_eq!(*calls.borrow(), expected_calls);
+        assert_eq!(std::fs::read(&key_path).unwrap().len(), 32);
+        assert!(!context.exists());
+        assert!(
+            crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(&root).is_err(),
+            "retry reused the key left by a sync failure"
+        );
+    }
 }

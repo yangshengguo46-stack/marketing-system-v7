@@ -62,6 +62,9 @@ pub(crate) fn create_owner_only_dir_new(path: &Path) -> Result<()> {
 pub(crate) fn write_owner_only_new(path: &Path, bytes: &[u8]) -> Result<()> {
     platform::create_file(path, bytes)
 }
+pub(crate) fn create_owner_only_file_new_retained(path: &Path, bytes: &[u8]) -> Result<File> {
+    platform::create_file_retained(path, bytes)
+}
 pub(crate) fn read_single_link_regular(path: &Path) -> Result<Vec<u8>> {
     platform::read_file(path)
 }
@@ -210,6 +213,28 @@ mod platform {
             bail!("private file identity changed after creation");
         }
         parent.sync_all().context("fsync private file parent")
+    }
+
+    pub(super) fn create_file_retained(path: &Path, bytes: &[u8]) -> Result<File> {
+        let parent_path = path.parent().context("private file has no parent")?;
+        let parent = open(parent_path, EntryKind::Directory)?;
+        let name = leaf(path)?;
+        let mut created = owned(unsafe {
+            libc::openat(
+                parent.as_raw_fd(),
+                name.as_ptr(),
+                libc::O_RDWR | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_CREAT | libc::O_EXCL,
+                0o600,
+            )
+        })
+        .context("create private file")?;
+        if unsafe { libc::fchmod(created.as_raw_fd(), 0o600) } != 0 {
+            return Err(std::io::Error::last_os_error()).context("chmod private file");
+        }
+        created.write_all(bytes)?;
+        created.sync_all()?;
+        check(&created, EntryKind::File)?;
+        Ok(created)
     }
 
     pub(super) fn read_file(path: &Path) -> Result<Vec<u8>> {
@@ -444,7 +469,7 @@ mod platform {
         verify_dacl(file)
     }
 
-    fn create(path: &Path, directory: bool) -> Result<File> {
+    fn create(path: &Path, directory: bool, share_mode: u32) -> Result<File> {
         if path.file_name().is_none_or(windows_ads_component) {
             bail!("Windows alternate data streams are forbidden");
         }
@@ -464,7 +489,7 @@ mod platform {
                 CreateFileW(
                     path_wide.as_ptr(),
                     FILE_GENERIC_READ | FILE_GENERIC_WRITE | READ_CONTROL,
-                    0,
+                    share_mode,
                     &attributes,
                     CREATE_NEW,
                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
@@ -491,14 +516,21 @@ mod platform {
     }
 
     pub(super) fn create_directory(path: &Path) -> Result<()> {
-        let created = create(path, true)?;
+        let created = create(path, true, 0)?;
         created.sync_all().context("fsync private directory")
     }
 
     pub(super) fn create_file(path: &Path, bytes: &[u8]) -> Result<()> {
-        let mut file = create(path, false)?;
+        let mut file = create(path, false, 0)?;
         file.write_all(bytes)?;
         file.sync_all().context("fsync private file")
+    }
+
+    pub(super) fn create_file_retained(path: &Path, bytes: &[u8]) -> Result<File> {
+        let mut file = create(path, false, FILE_SHARE_READ | FILE_SHARE_DELETE)?;
+        file.write_all(bytes)?;
+        file.sync_all().context("fsync private file")?;
+        Ok(file)
     }
 
     pub(super) fn read_file(path: &Path) -> Result<Vec<u8>> {

@@ -34,8 +34,41 @@ impl fmt::Debug for RetainedProofCommitmentKey {
 
 impl RetainedProofCommitmentKey {
     pub(crate) fn create_fixed(private_root: &Path) -> anyhow::Result<Self> {
+        Self::create_fixed_inner(
+            private_root,
+            |_| Ok(()),
+            crate::secure_fs::fsync_directory,
+        )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn create_fixed_with_hook(
+        private_root: &Path,
+        after_create: impl FnOnce(&Path) -> anyhow::Result<()>,
+    ) -> anyhow::Result<Self> {
+        Self::create_fixed_inner(
+            private_root,
+            after_create,
+            crate::secure_fs::fsync_directory,
+        )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn create_fixed_with_hooks(
+        private_root: &Path,
+        after_create: impl FnOnce(&Path) -> anyhow::Result<()>,
+        sync_directory: impl FnMut(&Path) -> anyhow::Result<()>,
+    ) -> anyhow::Result<Self> {
+        Self::create_fixed_inner(private_root, after_create, sync_directory)
+    }
+
+    fn create_fixed_inner(
+        private_root: &Path,
+        after_create: impl FnOnce(&Path) -> anyhow::Result<()>,
+        mut sync_directory: impl FnMut(&Path) -> anyhow::Result<()>,
+    ) -> anyhow::Result<Self> {
         let coordinator = private_root.join("coordinator");
-        match std::fs::symlink_metadata(&coordinator) {
+        let coordinator_created = match std::fs::symlink_metadata(&coordinator) {
             Ok(_) => {
                 let resolved = crate::secure_fs::resolve_private_relative(
                     private_root,
@@ -44,16 +77,31 @@ impl RetainedProofCommitmentKey {
                 if resolved.canonicalize()? != coordinator {
                     bail!("proof commitment coordinator is not the exact fixed directory");
                 }
-                crate::secure_fs::fsync_directory(&coordinator)?;
+                false
             }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 crate::secure_fs::create_owner_only_dir_new(&coordinator)?;
+                true
             }
             Err(error) => return Err(error).context("inspect proof commitment coordinator"),
-        }
+        };
         let key = ProofCommitmentKey::generate()?;
-        key.publish_owner_only_new(&private_root.join(COMMITMENT_KEY_RELATIVE_PATH))?;
-        Self::read_fixed(private_root)
+        let key_path = private_root.join(COMMITMENT_KEY_RELATIVE_PATH);
+        let created = crate::secure_fs::create_owner_only_file_new_retained(&key_path, &key.0)?;
+        let retained = crate::secure_fs_retain::RetainedBoundedFile::retain_created_with(
+            &key_path,
+            created,
+            32,
+            crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
+            || {
+                if coordinator_created {
+                    sync_directory(private_root)?;
+                }
+                sync_directory(&coordinator)?;
+                after_create(&key_path)
+            },
+        )?;
+        Self::from_retained(retained)
     }
 
     pub(crate) fn read_fixed(private_root: &Path) -> anyhow::Result<Self> {
@@ -69,6 +117,12 @@ impl RetainedProofCommitmentKey {
             32,
             crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
         )?;
+        Self::from_retained(retained)
+    }
+
+    fn from_retained(
+        retained: crate::secure_fs_retain::RetainedBoundedFile,
+    ) -> anyhow::Result<Self> {
         if retained.raw_bytes().len() != 32 {
             bail!("proof commitment key must be exactly 32 bytes");
         }
@@ -116,10 +170,17 @@ impl RetainedProofCommitmentKey {
     }
 
     #[cfg(test)]
-    pub(crate) fn raw_key_occurs_in(&self, bytes: &[u8]) -> bool {
-        bytes
-            .windows(self.retained.raw_bytes().len())
-            .any(|window| window == self.retained.raw_bytes())
+    pub(crate) fn key_material_occurs_in(&self, bytes: &[u8]) -> bool {
+        let raw = self.retained.raw_bytes();
+        let lowercase = lowercase_hex(raw);
+        let uppercase = lowercase.to_ascii_uppercase();
+        [raw, lowercase.as_bytes(), uppercase.as_bytes()]
+            .into_iter()
+            .any(|needle| {
+                bytes
+                    .windows(needle.len())
+                    .any(|window| window == needle)
+            })
     }
 }
 
@@ -132,10 +193,12 @@ impl ProofCommitmentKey {
         Ok(Self(bytes))
     }
 
+    #[cfg(test)]
     pub(crate) fn publish_owner_only_new(&self, path: &Path) -> anyhow::Result<()> {
         crate::secure_fs::write_owner_only_new(path, &self.0)
     }
 
+    #[cfg(test)]
     pub(crate) fn read_exact_owner_only(path: &Path) -> anyhow::Result<Self> {
         let bytes = crate::secure_fs::read_single_link_regular_bounded(path, 32)?;
         let bytes: [u8; 32] = bytes
