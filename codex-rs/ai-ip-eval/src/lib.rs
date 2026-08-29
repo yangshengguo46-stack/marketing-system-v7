@@ -20,6 +20,7 @@ mod proof_archive_seal;
 mod proof_ledger;
 mod runner;
 mod score;
+mod score_authority;
 mod score_decision;
 mod secure_fs;
 mod secure_fs_publish;
@@ -195,6 +196,10 @@ mod blind_tests;
 #[cfg(test)]
 #[path = "score_tests.rs"]
 mod score_tests;
+
+#[cfg(test)]
+#[path = "score_authority_tests.rs"]
+mod score_authority_tests;
 
 #[cfg(test)]
 #[path = "score_decision_tests.rs"]
