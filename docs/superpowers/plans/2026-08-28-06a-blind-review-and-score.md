@@ -1208,6 +1208,116 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > loopback-only/no-key/no-customer-material disposition. F-0006A still leaves
 > G0/G1/G2 and `PASS_TO_PHASE_0B` open unless their separate gates are met.
 
+> **Task 7E dedicated-fixture weight corrective authority (2026-08-29):**
+> Task 8's first full serial evaluator run after `d6c51eacb` is a new
+> append-only RED, not closure evidence. Under locked `cargo-nextest 0.9.103`,
+> the unchanged default 60-second watchdog, `--test-threads=1`, and
+> `--retries=0`, run `57c6b74e-aa4a-4185-aa40-c960693de795` executed 284 tests
+> in 3976.108 seconds: 258 passed (20 slow), 26 timed out, zero assertion
+> failures, and zero LEAK labels. The proxy, Bazel, lock, fix, and format gates
+> were correctly not started. Exact names, timings, first-failure sequence, and
+> environment are retained in `task-8-closure-validation-report.md`.
+>
+> The dedicated fixture correction is directionally correct but not yet small
+> enough for the complete suite. Its Cargo Mach-O is 19,870,672 bytes, including
+> approximately 8.95 MiB of `__LINKEDIT`, and it links the full reqwest/TLS
+> client only to call the already-authorized numeric loopback HTTP broker. A
+> standalone strip diagnostic still measured 17,236,848 bytes when removing
+> debug information and 15,941,160 bytes when also removing local symbols, so
+> stripping alone is insufficient. The failed full run left 22 exact
+> fixture-bearing TempDir roots totalling approximately 0.564 GiB; later Replay
+> and score tests timed out only after the earlier Native timeout cascade. Disk
+> capacity, sustained I/O saturation, and VM throttling were not observed.
+> This supports, but does not uniquely prove, cumulative fixture materialization
+> and timeout-residue pressure as the shared infrastructure cause. No business
+> assertion failed.
+>
+> One second corrective round may reduce only the dedicated fixture's test I/O
+> weight. It may modify this plan, a new
+> `codex-rs/ai-ip-eval/build.rs`,
+> `codex-rs/ai-ip-eval/BUILD.bazel`,
+> `codex-rs/ai-ip-eval/src/bin/ai_ip_native_app_server_fixture/wire.rs`, and the
+> existing direct fixture contract in
+> `codex-rs/ai-ip-eval/src/eval_tests.rs`. `Cargo.toml` and its reqwest/toml
+> dependencies remain unchanged because production evaluator code still uses
+> them and Cargo auto-discovers `build.rs`. The round may not modify `server.rs`,
+> `runner.rs`, `app_server.rs`, the locator/copy helper, shared Bazel macros,
+> nextest configuration, any timeout/retry/thread/quiet-window value, any
+> production binary, or any proof/security/provider/schema/output/business
+> behavior. The evaluator and every non-fixture target retain their normal
+> debug/link settings.
+>
+> Cargo may add one package build script which emits only
+> `rustc-link-arg-bin=ai-ip-native-app-server-fixture=...` platform linker strip
+> arguments: Darwin may omit debug and local symbols, GNU-family linkers may
+> strip the dedicated fixture, and unsupported targets must safely no-op rather
+> than guess a linker flag. Bazel must disable that build script, because this
+> repository's rules_rust path intentionally drops per-bin build-script
+> directives, and use the existing `binary_rustc_flags_extra` map to pass
+> `-Cstrip=symbols` only to `ai-ip-native-app-server-fixture`. This follows the
+> repository's existing `windows-sandbox-rs` per-binary Cargo/Bazel pattern.
+> Removing symbols is acceptable only for this deterministic test fixture; it
+> is not a security feature and may not apply to the evaluator, product CLI,
+> library, unit-test binary, or integration-test binaries.
+>
+> The fixture may replace its reqwest call with a small `std::net::TcpStream`
+> HTTP/1.1 client only for the exact frozen broker form
+> `http://127.0.0.1:<u16>/v1`. It must reject any other scheme, host, missing
+> port, base path, query/fragment, or header control character. It appends the
+> exact `/responses` suffix to produce request target `/v1/responses`, preserves
+> the exact JSON body and proof-relevant `x-codex-window-id` plus conditional
+> `x-codex-parent-thread-id` / `x-openai-subagent` headers, and emits valid
+> `Host`, `content-type`, `Content-Length`, and `Connection: close` transport
+> headers. It must require a final HTTP/1.0 or HTTP/1.1 2xx status, reject
+> ambiguous/conflicting content-length and
+> transfer-encoding framing, and support the local broker's single valid
+> content-length or chunked SSE response including chunk extensions/trailers.
+> It may use neither a proxy nor TLS and may add no socket,
+> product, or test deadline. The existing TOML/config, stdout JSONL
+> synchronization, argv gate, App Server methods, package bytes, broker
+> accounting, receipts, poison behavior, and quiet-window behavior remain
+> byte/semantics compatible. This correction only prevents the dedicated
+> fixture binary from linking unused HTTP/TLS machinery.
+>
+> TDD order is mandatory. First tighten the direct contract so the current
+> macOS Cargo/Bazel fixture fails a local test-I/O bound of 12 MiB while all
+> other platforms retain the reviewed 64 MiB cross-platform ceiling. Weight and
+> raw-loopback behavior require independently selectable sibling REDs: one must
+> fail only because the current fixture exceeds the macOS 12 MiB bound, and one
+> must prove that the current reqwest fixture reaches a controlled host-local
+> listener through a non-loopback/unspecified address when the expected new
+> behavior is to reject before connect. The listener and address remain wholly
+> host-local and the test must never attempt an external connection. Additional
+> contract coverage freezes the exact request target, headers and body,
+> content-length and chunked SSE framing, and malformed/conflicting framing
+> rejection. No RED may fail merely because an API is missing or be masked by
+> the other size/behavior RED. Then add the smallest
+> build-script/Bazel/raw-loopback implementation. GREEN must prove the direct
+> wrong-argv/initialize/broker contract, exact Cargo and Bazel fixture sizes,
+> the production-shaped typed happy path, archive, immediate and quiet-window
+> poison, combined Replay/Native envelope, and representative Native receipt,
+> bundle, and finalizer paths under the unchanged watchdog. Each independent
+> commit remains below 800 changed lines and every source remains below 500.
+>
+> Before the next full-suite attempt, and only with no Rust test process
+> active, cleanup must first write an exact manifest containing every absolute
+> source root, fixture SHA-256, byte size, owner, and intended Trash destination.
+> Every source must be an immediate owned directory below the current user's
+> resolved TMPDIR, not a symlink, and contain the expected regular fixture plus
+> recognizable Task 7E test-root structure. Create one unique named Trash
+> directory, move only manifest-listed roots one by one with collision failure,
+> record every source-to-destination mapping and aggregate size, and verify every
+> original path is absent. No glob, broad `find | mv`, recursive deletion, or
+> unmanifested root is authorized. The corrective report and future F-0006A
+> retain the manifest, recovery destination, cleanup receipt, exact fixture
+> section/symbol diagnostics, strip measurements, and the commands/output used
+> to observe disk, I/O, and VM state. The subsequent full evaluator run must
+> start from that clean test-owned residue state and still use locked 0.9.103,
+> serial execution, zero retries, and the default 60-second watchdog. F-0006A
+> remains forbidden until that full run and every previously specified proxy,
+> Bazel, resource, lock, scope, fix/format, and independent-review gate is
+> GREEN. F-0006 itself remains immutable.
+
 > **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
 > 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
 > scoring-table tests, and their `lib.rs` mount) and **7A2**
