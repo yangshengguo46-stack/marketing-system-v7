@@ -1,4 +1,89 @@
 #[test]
+fn cost_contract_assets_expose_exact_launch_shapes() {
+    let load_schema = |name: &str| -> serde_json::Value {
+        let resource = format!("../../ai-ip-evals/schemas/{name}.schema.json");
+        let path = codex_utils_cargo_bin::find_resource!(resource).unwrap();
+        serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
+    };
+    let strict = |schema: &serde_json::Value| {
+        assert_eq!(schema["type"], "object");
+        assert_eq!(schema["additionalProperties"], false);
+    };
+
+    let rate_card = load_schema("provider-rate-card");
+    strict(&rate_card);
+    assert_eq!(rate_card["properties"]["schemaVersion"]["const"], 1);
+    assert_eq!(rate_card["properties"]["currency"]["const"], "CNY");
+    assert_eq!(
+        rate_card["properties"]["rateUnit"]["const"],
+        "fenPerMillionTokens"
+    );
+
+    let billing_policy = load_schema("billing-policy");
+    strict(&billing_policy);
+    assert_eq!(billing_policy["properties"]["currency"]["const"], "CNY");
+    assert_eq!(
+        billing_policy["properties"]["reasoningTokensBilledSeparately"]["const"],
+        false
+    );
+    assert_eq!(
+        billing_policy["properties"]["supplierActualPrecedence"]["const"],
+        "maxEstimatedOrSupplierActual"
+    );
+    assert_eq!(
+        billing_policy["properties"]["rounding"]["const"],
+        "ceilingToFen"
+    );
+
+    let fx_policy = load_schema("fx-policy");
+    strict(&fx_policy);
+    assert_eq!(fx_policy["properties"]["mode"]["const"], "notApplicable");
+    assert_eq!(fx_policy["properties"]["sourceCurrency"]["const"], "CNY");
+    assert_eq!(fx_policy["properties"]["targetCurrency"]["const"], "CNY");
+    assert_eq!(fx_policy["properties"]["numerator"]["const"], 1);
+    assert_eq!(fx_policy["properties"]["denominator"]["const"], 1);
+
+    let budget = load_schema("provider-budget-evidence");
+    strict(&budget);
+    assert_eq!(budget["properties"]["schemaVersion"]["const"], 1);
+    assert_eq!(budget["properties"]["currency"]["const"], "CNY");
+
+    let supplier_statement = load_schema("supplier-statement");
+    strict(&supplier_statement);
+    assert_eq!(supplier_statement["properties"]["schemaVersion"]["const"], 1);
+    assert_eq!(supplier_statement["properties"]["currency"]["const"], "CNY");
+
+    let receipt = load_schema("cost-receipt");
+    strict(&receipt);
+    for field in [
+        "pairId",
+        "executionContextSha256",
+        "attemptLedgerSha256",
+        "executionMode",
+        "currency",
+        "fx",
+        "ceilings",
+    ] {
+        assert!(
+            receipt["required"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|required| required == field),
+            "receipt must require {field}"
+        );
+    }
+    assert_eq!(receipt["properties"]["executionMode"]["const"], "live");
+    assert_eq!(receipt["properties"]["currency"]["const"], "CNY");
+    assert_eq!(receipt["properties"]["fx"]["additionalProperties"], false);
+    assert_eq!(
+        receipt["properties"]["fx"]["properties"]["mode"]["const"],
+        "notApplicable"
+    );
+    assert_eq!(receipt["properties"]["ceilings"]["additionalProperties"], false);
+}
+
+#[test]
 fn reviewer_contract_assets_expose_exact_behavior() {
     let path = codex_utils_cargo_bin::find_resource!(
         "../../ai-ip-evals/rubrics/content-package-blind-review.json"
@@ -182,11 +267,16 @@ fn later_work_package_schemas_have_strict_positive_and_negative_fixtures() {
             name: "cost-receipt",
             top_level_fields: &[
                 "schemaVersion",
+                "pairId",
                 "frozenRunContextSha256",
+                "executionContextSha256",
                 "executionManifestSha256",
                 "brokerReceiptSha256",
+                "pairReceiptSha256",
+                "attemptLedgerSha256",
                 "condition",
                 "runOrdinal",
+                "executionMode",
                 "attemptIndexRootSha256",
                 "attemptRange",
                 "providerLabel",
@@ -199,6 +289,10 @@ fn later_work_package_schemas_have_strict_positive_and_negative_fixtures() {
                 "providerCompletedResponseCount",
                 "usageScope",
                 "usage",
+                "currency",
+                "rateEffectiveAt",
+                "fx",
+                "ceilings",
                 "calculatedAt",
                 "calculation",
                 "estimatedFen",
@@ -223,6 +317,18 @@ fn later_work_package_schemas_have_strict_positive_and_negative_fixtures() {
                 (
                     "/calculation",
                     &["rateUnit", "rounding", "reasoningTokensBilledSeparately"],
+                ),
+                ("/fx", &["mode", "numerator", "denominator"]),
+                (
+                    "/ceilings",
+                    &[
+                        "approvedPerRunFen",
+                        "approvedTotalFen",
+                        "prepaidOrHardLimitFen",
+                        "maxProviderRequestAttempts",
+                        "maxTotalTokens",
+                        "maxElapsedSeconds",
+                    ],
                 ),
             ],
         },

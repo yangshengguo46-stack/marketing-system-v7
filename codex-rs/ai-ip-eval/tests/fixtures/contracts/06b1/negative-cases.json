@@ -1,0 +1,14 @@
+[
+  {"name":"unknown-field","mutation":"unknownTopLevel"},
+  {"name":"missing-field","mutation":"missingCurrency"},
+  {"name":"wrong-type","mutation":"wrongFenType"},
+  {"name":"byte-cap","mutation":"overByteCap"},
+  {"name":"label-pattern","mutation":"invalidLabel"},
+  {"name":"timestamp-format-order","mutation":"invalidTimestampOrder"},
+  {"name":"provider-mismatch","mutation":"providerMismatch"},
+  {"name":"non-cny","mutation":"nonCny"},
+  {"name":"non-not-applicable-fx","mutation":"nonNotApplicableFx"},
+  {"name":"supplier-condition-mismatch","mutation":"supplierConditionMismatch"},
+  {"name":"non-jcs-generated-receipt","mutation":"nonJcsReceipt"},
+  {"name":"receipt-null-pair","mutation":"receiptNullPair"}
+]
