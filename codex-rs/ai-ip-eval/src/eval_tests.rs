@@ -4846,12 +4846,13 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
             "fixture failed after stdin closed: {status}; stderr: {stderr}"
         );
         let launch: serde_json::Value = serde_json::from_slice(
-            &fs::read(home.join("app-server-launch.json")).context("read fixture launch record")?,
+            &fs::read(home.join("app-server-launch.json"))
+                .with_context(|| format!("read fixture launch record; stderr: {stderr}"))?,
         )
-        .context("parse fixture launch record")?;
+        .with_context(|| format!("parse fixture launch record; stderr: {stderr}"))?;
         anyhow::ensure!(
             launch["argv"] == json!(["app-server", "--listen", "stdio://", "--strict-config"]),
-            "fixture recorded unexpected production argv"
+            "fixture recorded unexpected production argv; stderr: {stderr}"
         );
         Ok(())
     })();
