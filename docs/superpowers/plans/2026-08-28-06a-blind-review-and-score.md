@@ -1105,6 +1105,13 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > This is a commit split only; Steps 1–5 and their exact classifications remain
 > unchanged.
 
+> **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
+> 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
+> scoring-table tests, and their `lib.rs` mount) and **7A2**
+> (`score_decision.rs`, its sibling exact-wire tests, and their `lib.rs` mount).
+> Each subcommit is independently green and below 800 changed lines; no test or
+> readable contract is compressed to manufacture compliance.
+
 > **Task 7 score authority and wire amendment (2026-08-29):** The following is
 > the exact authority missing from the original prose. Task 7 may additionally
 > create `score_authority.rs`, `score_decision.rs`, `score_transaction.rs` and
@@ -1201,6 +1208,24 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > rerun refuses without overwriting or repairing it. This narrow durable-partial
 > rule supersedes the original physically impossible blanket “any I/O failure,
 > no output” wording while preserving fail-closed business semantics.
+
+> **Task 7 shared safety-seam amendment (2026-08-29):** Task 7 may narrowly
+> modify `secure_fs.rs`, `secure_fs_retain.rs`, `secure_fs_publish.rs`, and their
+> sibling tests rather than duplicate platform code in Score. The retained-read
+> seam accepts a caller cap and a policy that may waive owner-only mode for a
+> leaf inside an already verified owner-only directory; it still requires a
+> no-follow single-link regular file, retains its handle and identity, and on
+> reverify rejects path/parent replacement or byte drift. Score uses a 64 KiB
+> cap and only the waived-leaf-mode policy for the three review leaves. The
+> no-replace publish seam gains an exact regular-file variant that reuses the
+> existing anchored parent/source identity and platform-exclusive rename
+> machinery, proves the retained staging inode became the final inode, and
+> fsyncs the parent. It never falls back to overwrite or copy. These shared
+> seams and their cross-platform/failure sibling tests may be delivered as
+> 7B0 commits before the Score continuation. Until 7C installs semantic review
+> validation, a completed 7B authority check may return the exact transitional
+> error `score review validation stage is not installed`; it creates neither
+> staging nor final decision and is removed with the first 7C consumer.
 
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/score.rs`
