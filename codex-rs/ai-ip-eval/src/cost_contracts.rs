@@ -238,10 +238,10 @@ impl FrozenCostContracts {
         let billing_policy_commitment = sha256(billing_policy);
         let fx_policy_sha256 = sha256(fx_policy);
         let provider_budget_evidence_sha256 = sha256(budget);
-        let rate_card = decode_exact(&self.rate_card, rate_card, INPUT_CAP_BYTES)?;
-        let billing_policy = decode_exact(&self.billing_policy, billing_policy, INPUT_CAP_BYTES)?;
-        let fx_policy = decode_exact(&self.fx_policy, fx_policy, INPUT_CAP_BYTES)?;
-        let budget = decode_exact(&self.budget, budget, INPUT_CAP_BYTES)?;
+        let rate_card = self.validate_rate_card(rate_card)?;
+        let billing_policy = self.validate_billing_policy(billing_policy)?;
+        let fx_policy = self.validate_fx_policy(fx_policy)?;
+        let budget = self.validate_provider_budget_evidence(budget)?;
         validate_input_semantics(&rate_card, &billing_policy, &fx_policy, &budget)?;
         Ok(VerifiedCostInputs {
             rate_card_sha256,
@@ -253,6 +253,35 @@ impl FrozenCostContracts {
             fx_policy,
             budget,
         })
+    }
+
+    pub(crate) fn validate_rate_card(&self, bytes: &[u8]) -> anyhow::Result<ProviderRateCardV1> {
+        let typed = decode_exact(&self.rate_card, bytes, INPUT_CAP_BYTES)?;
+        validate_rate_card_semantics(&typed)?;
+        Ok(typed)
+    }
+
+    pub(crate) fn validate_billing_policy(&self, bytes: &[u8]) -> anyhow::Result<BillingPolicyV1> {
+        let typed: BillingPolicyV1 = decode_exact(&self.billing_policy, bytes, INPUT_CAP_BYTES)?;
+        parse_timestamp(&typed.effective_at)?;
+        Ok(typed)
+    }
+
+    pub(crate) fn validate_fx_policy(&self, bytes: &[u8]) -> anyhow::Result<FxPolicyV1> {
+        let typed: FxPolicyV1 = decode_exact(&self.fx_policy, bytes, INPUT_CAP_BYTES)?;
+        parse_timestamp(&typed.effective_at)?;
+        Ok(typed)
+    }
+
+    pub(crate) fn validate_provider_budget_evidence(
+        &self,
+        bytes: &[u8],
+    ) -> anyhow::Result<ProviderBudgetEvidenceV1> {
+        let typed: ProviderBudgetEvidenceV1 = decode_exact(&self.budget, bytes, INPUT_CAP_BYTES)?;
+        if parse_timestamp(&typed.valid_from)? >= parse_timestamp(&typed.valid_until)? {
+            anyhow::bail!("budget validity window is not ordered")
+        }
+        Ok(typed)
     }
 
     pub(crate) fn validate_supplier_statement(
@@ -306,24 +335,23 @@ fn assert_typed_deep_equality(
 fn validate_input_semantics(
     rate_card: &ProviderRateCardV1,
     billing_policy: &BillingPolicyV1,
-    fx_policy: &FxPolicyV1,
+    _fx_policy: &FxPolicyV1,
     budget: &ProviderBudgetEvidenceV1,
 ) -> anyhow::Result<()> {
+    if rate_card.provider_label != billing_policy.provider_label
+        || rate_card.provider_label != budget.provider_label
+    {
+        anyhow::bail!("rate card, billing policy, and budget provider labels differ")
+    }
+    Ok(())
+}
+
+fn validate_rate_card_semantics(rate_card: &ProviderRateCardV1) -> anyhow::Result<()> {
     let rate_effective = parse_timestamp(&rate_card.effective_at)?;
     if let Some(expires_at) = &rate_card.expires_at
         && rate_effective >= parse_timestamp(expires_at)?
     {
         anyhow::bail!("rate card expiry must follow effective time")
-    }
-    parse_timestamp(&billing_policy.effective_at)?;
-    parse_timestamp(&fx_policy.effective_at)?;
-    if parse_timestamp(&budget.valid_from)? >= parse_timestamp(&budget.valid_until)? {
-        anyhow::bail!("budget validity window is not ordered")
-    }
-    if rate_card.provider_label != billing_policy.provider_label
-        || rate_card.provider_label != budget.provider_label
-    {
-        anyhow::bail!("rate card, billing policy, and budget provider labels differ")
     }
     Ok(())
 }

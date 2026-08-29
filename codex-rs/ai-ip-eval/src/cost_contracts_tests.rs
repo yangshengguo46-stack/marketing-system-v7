@@ -27,6 +27,24 @@ fn executable_06b1_cost_contracts_accept_only_exact_shapes() {
     let verified = contracts
         .validate_inputs(&rate, &policy, &fx, &budget)
         .unwrap();
+    assert_eq!(
+        contracts.validate_rate_card(&rate).unwrap(),
+        verified.rate_card
+    );
+    assert_eq!(
+        contracts.validate_billing_policy(&policy).unwrap(),
+        verified.billing_policy
+    );
+    assert_eq!(
+        contracts.validate_fx_policy(&fx).unwrap(),
+        verified.fx_policy
+    );
+    assert_eq!(
+        contracts
+            .validate_provider_budget_evidence(&budget)
+            .unwrap(),
+        verified.budget
+    );
     assert_eq!(verified.rate_card.provider_label, "approved-provider");
     assert_eq!(
         verified.rate_card_sha256,

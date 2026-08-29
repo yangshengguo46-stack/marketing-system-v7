@@ -12,6 +12,7 @@ mod broker_gate;
 mod catalog;
 mod contracts;
 mod cost_contracts;
+mod cost_inputs;
 mod evidence;
 mod jcs;
 mod model;
@@ -162,6 +163,10 @@ mod contracts_tests;
 #[cfg(test)]
 #[path = "cost_contracts_tests.rs"]
 mod cost_contracts_tests;
+
+#[cfg(test)]
+#[path = "cost_inputs_tests.rs"]
+mod cost_inputs_tests;
 
 #[cfg(test)]
 #[path = "jcs_tests.rs"]
