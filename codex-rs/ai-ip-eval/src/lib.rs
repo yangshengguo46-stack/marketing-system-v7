@@ -11,6 +11,7 @@ mod blind_verify;
 mod broker_gate;
 mod catalog;
 mod contracts;
+mod cost_contracts;
 mod evidence;
 mod jcs;
 mod model;
@@ -156,6 +157,10 @@ mod tests;
 #[cfg(test)]
 #[path = "contracts_tests.rs"]
 mod contracts_tests;
+
+#[cfg(test)]
+#[path = "cost_contracts_tests.rs"]
+mod cost_contracts_tests;
 
 #[cfg(test)]
 #[path = "jcs_tests.rs"]
