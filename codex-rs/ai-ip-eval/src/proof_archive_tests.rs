@@ -206,10 +206,7 @@ fn execute_native_archive_pair() -> anyhow::Result<NativeArchiveRun> {
         &serde_json::to_vec_pretty(&attestation)?,
     )?;
 
-    let mock_codex = temp.path().join("native-mock-app-server-test-harness");
-    fs::copy(std::env::current_exe()?, &mock_codex)?;
-    #[cfg(unix)]
-    fs::set_permissions(&mock_codex, fs::Permissions::from_mode(0o700))?;
+    let mock_codex = crate::native_app_server_fixture::copy_into(temp.path())?;
     let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();
     let upstream_addr = upstream.server_addr().to_ip().unwrap();
     let stop = Arc::new(AtomicBool::new(false));
