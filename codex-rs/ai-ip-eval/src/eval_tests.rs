@@ -3329,6 +3329,306 @@ fn install_retention_managed_cost_inputs(args: &mut crate::model::LiveFreezeArgs
     bind_native_attestation_to_live_args(args);
 }
 
+#[test]
+fn native_freeze_requires_retention_managed_cost_inputs() {
+    for mutation in [
+        "external",
+        "home-sibling",
+        "repo-sibling",
+        "downloads-sibling",
+        "old-frozen-inputs",
+        "equivalent-copy",
+        "wrong-leaf",
+        "extra-file",
+        "case-directory",
+        "materials-manifest",
+        "supplier-statements",
+        "duplicate-key",
+        "over-cap",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut args = native_freeze_args_for_cost_inputs(&temp, mutation != "external");
+        match mutation {
+            "external" => {}
+            "home-sibling" | "repo-sibling" | "downloads-sibling" | "old-frozen-inputs"
+            | "equivalent-copy" => {
+                let directory = temp.path().join(mutation);
+                create_owner_only_test_dir(&directory);
+                let copy = directory.join("rate-card.json");
+                fs::copy(&args.rate_card, &copy).unwrap();
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    fs::set_permissions(&copy, fs::Permissions::from_mode(0o600)).unwrap();
+                }
+                args.rate_card = copy;
+            }
+            "wrong-leaf" => {
+                let copy = args.private_root.join("inputs/rate-card-copy.json");
+                fs::copy(&args.rate_card, &copy).unwrap();
+                args.rate_card = copy;
+            }
+            "extra-file" => {
+                fs::write(args.private_root.join("inputs/foo"), b"unexpected\n").unwrap();
+            }
+            "case-directory" => {
+                create_owner_only_test_dir(&args.private_root.join("inputs/case"));
+            }
+            "materials-manifest" => {
+                fs::write(
+                    args.private_root.join("inputs/materials-manifest.json"),
+                    b"[]",
+                )
+                .unwrap();
+            }
+            "supplier-statements" => {
+                create_owner_only_test_dir(&args.private_root.join("inputs/supplier-statements"));
+            }
+            "duplicate-key" => {
+                let bytes = fs::read_to_string(&args.rate_card).unwrap();
+                fs::write(
+                    &args.rate_card,
+                    bytes.replacen(
+                        "\"schemaVersion\": 1,",
+                        "\"schemaVersion\": 1,\"schemaVersion\": 1,",
+                        1,
+                    ),
+                )
+                .unwrap();
+            }
+            "over-cap" => fs::write(&args.rate_card, vec![b' '; 64 * 1024 + 1]).unwrap(),
+            other => panic!("unknown fixed-input mutation {other}"),
+        }
+        let output = args.output.clone();
+        assert!(
+            crate::runner::freeze_live_context(args).is_err(),
+            "freeze accepted {mutation} private input drift"
+        );
+        assert!(!output.exists(), "freeze published context for {mutation}");
+    }
+
+    #[cfg(unix)]
+    for mutation in ["symlink", "hardlink"] {
+        use std::os::unix::fs::PermissionsExt;
+        use std::os::unix::fs::symlink;
+
+        let temp = tempfile::tempdir().unwrap();
+        let args = native_freeze_args_for_cost_inputs(&temp, true);
+        let retained_path = args.rate_card.clone();
+        let bytes = fs::read(&retained_path).unwrap();
+        let external = temp.path().join(format!("{mutation}-rate-card.json"));
+        fs::write(&external, bytes).unwrap();
+        fs::set_permissions(&external, fs::Permissions::from_mode(0o600)).unwrap();
+        fs::remove_file(&retained_path).unwrap();
+        match mutation {
+            "symlink" => symlink(&external, &retained_path).unwrap(),
+            "hardlink" => fs::hard_link(&external, &retained_path).unwrap(),
+            _ => unreachable!(),
+        }
+        assert!(
+            crate::runner::freeze_live_context(args).is_err(),
+            "freeze accepted {mutation} fixed input"
+        );
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = tempfile::tempdir().unwrap();
+        let args = native_freeze_args_for_cost_inputs(&temp, true);
+        let retained = crate::runner::RetainedLiveInputDirectory::retain(
+            &args.private_root,
+            &args.attestation,
+            &args.provider_budget_evidence,
+            &args.rate_card,
+            &args.billing_policy,
+            &args.fx_policy,
+        )
+        .unwrap();
+        let displaced = temp.path().join("retained-rate-card.json");
+        let bytes = fs::read(&args.rate_card).unwrap();
+        fs::rename(&args.rate_card, displaced).unwrap();
+        fs::write(&args.rate_card, bytes).unwrap();
+        fs::set_permissions(&args.rate_card, fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(retained.reverify_unchanged().is_err());
+
+        let temp = tempfile::tempdir().unwrap();
+        let args = native_freeze_args_for_cost_inputs(&temp, true);
+        let retained = crate::runner::RetainedLiveInputDirectory::retain(
+            &args.private_root,
+            &args.attestation,
+            &args.provider_budget_evidence,
+            &args.rate_card,
+            &args.billing_policy,
+            &args.fx_policy,
+        )
+        .unwrap();
+        let inputs = args.private_root.join("inputs");
+        let displaced = args.private_root.join("retained-inputs");
+        fs::rename(&inputs, displaced).unwrap();
+        create_owner_only_test_dir(&inputs);
+        assert!(retained.reverify_unchanged().is_err());
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn native_cost_input_artifacts_use_exact_names_and_bytes() {
+    use std::os::unix::fs::MetadataExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let args = native_freeze_args_for_cost_inputs(&temp, true);
+    let originals = [
+        args.attestation.clone(),
+        args.provider_budget_evidence.clone(),
+        args.rate_card.clone(),
+        args.billing_policy.clone(),
+        args.fx_policy.clone(),
+    ]
+    .map(|path| {
+        let metadata = fs::metadata(&path).unwrap();
+        (
+            path.clone(),
+            metadata.dev(),
+            metadata.ino(),
+            fs::read(path).unwrap(),
+        )
+    });
+    let output = args.output.clone();
+    let private_root = args.private_root.clone();
+    let expected_artifacts = [
+        ("attestation", args.attestation.clone()),
+        (
+            "providerBudgetEvidence",
+            args.provider_budget_evidence.clone(),
+        ),
+        ("rateCard", args.rate_card.clone()),
+        ("billingPolicy", args.billing_policy.clone()),
+        ("fxPolicy", args.fx_policy.clone()),
+    ];
+
+    crate::runner::freeze_live_context(args).unwrap();
+
+    let context: serde_json::Value = serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
+    assert_eq!(
+        context["supplierStatementPolicy"],
+        json!({
+            "directory": "inputs/supplier-statements",
+            "allowedLeaves": ["generic.json", "candidate.json"],
+            "nestedEntriesAllowed": false
+        })
+    );
+    assert!(context["artifacts"].get("providerBudgetReceipt").is_none());
+    for (name, path) in &expected_artifacts {
+        assert_eq!(context["artifacts"][*name]["path"], json!(path));
+    }
+    for (path, dev, ino, bytes) in originals {
+        let metadata = fs::metadata(&path).unwrap();
+        assert_eq!((metadata.dev(), metadata.ino()), (dev, ino));
+        assert_eq!(fs::read(path).unwrap(), bytes);
+    }
+    assert!(!private_root.join("frozen-inputs/rate-card.json").exists());
+    assert!(private_root.join("inputs/supplier-statements").is_dir());
+    assert!(private_root.join("coordinator/cost").is_dir());
+
+    let context_bytes = fs::read(&output).unwrap();
+    crate::private_inventory::bootstrap_private_inventory(
+        &private_root,
+        context["pairId"].as_str().unwrap(),
+        &test_sha256(&context_bytes),
+        "2026-08-30T10:00:00.000Z",
+    )
+    .unwrap();
+    let inventory =
+        fs::read_to_string(private_root.join("coordinator/private-inventory.jsonl")).unwrap();
+    for relative in [
+        "inputs/held-out-attestation.json",
+        "inputs/provider-budget-evidence.json",
+        "inputs/rate-card.json",
+        "inputs/billing-policy.json",
+        "inputs/fx-policy.json",
+        "inputs/supplier-statements",
+        "coordinator/cost",
+    ] {
+        assert!(inventory.contains(&format!("\"relativePath\":\"{relative}\"")));
+    }
+
+    let contracts = crate::FrozenContracts::load().unwrap();
+    for mutation in [
+        "unknown",
+        "reversed",
+        "extra-leaf",
+        "missing-leaf",
+        "directory",
+        "nested",
+        "stale-budget-key",
+        "both-budget-keys",
+    ] {
+        let mut drifted = context.clone();
+        match mutation {
+            "unknown" => drifted["supplierStatementPolicy"]["unknown"] = json!(true),
+            "reversed" => {
+                drifted["supplierStatementPolicy"]["allowedLeaves"] =
+                    json!(["candidate.json", "generic.json"])
+            }
+            "extra-leaf" => {
+                drifted["supplierStatementPolicy"]["allowedLeaves"] =
+                    json!(["generic.json", "candidate.json", "other.json"])
+            }
+            "missing-leaf" => {
+                drifted["supplierStatementPolicy"]["allowedLeaves"] = json!(["generic.json"])
+            }
+            "directory" => {
+                drifted["supplierStatementPolicy"]["directory"] = json!("inputs/statements")
+            }
+            "nested" => drifted["supplierStatementPolicy"]["nestedEntriesAllowed"] = json!(true),
+            "stale-budget-key" => {
+                let budget = drifted["artifacts"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("providerBudgetEvidence")
+                    .unwrap();
+                drifted["artifacts"]["providerBudgetReceipt"] = budget;
+            }
+            "both-budget-keys" => {
+                drifted["artifacts"]["providerBudgetReceipt"] =
+                    drifted["artifacts"]["providerBudgetEvidence"].clone()
+            }
+            other => panic!("unknown native context mutation {other}"),
+        }
+        let bytes = serde_json::to_vec(&drifted).unwrap();
+        assert!(
+            contracts.validate_native_context(&bytes).is_err(),
+            "{mutation}"
+        );
+        assert!(
+            crate::runner::encode_native_context_for_test(&bytes).is_err(),
+            "typed context accepted {mutation}"
+        );
+    }
+
+    for mutation in ["stale", "both"] {
+        let mut attestation: serde_json::Value =
+            serde_json::from_slice(&fs::read(&expected_artifacts[0].1).unwrap()).unwrap();
+        let budget = attestation
+            .as_object_mut()
+            .unwrap()
+            .remove("providerBudgetEvidenceSha256")
+            .unwrap();
+        attestation["providerBudgetReceiptSha256"] = budget.clone();
+        if mutation == "both" {
+            attestation["providerBudgetEvidenceSha256"] = budget;
+        }
+        assert!(
+            contracts
+                .validate_native_attestation(&serde_json::to_vec(&attestation).unwrap())
+                .is_err(),
+            "attestation accepted {mutation} budget key"
+        );
+    }
+}
+
 #[cfg(unix)]
 #[test]
 fn replay_fixture_read_reuses_the_verified_handle_buffer_after_path_swap() {
