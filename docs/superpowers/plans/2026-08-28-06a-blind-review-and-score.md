@@ -1107,6 +1107,18 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > This is a commit split only; Steps 1–5 and their exact classifications remain
 > unchanged.
 
+> **Task 7E interim OPEN ledger amendment (2026-08-29):** The first honest
+> scoped/full regression found that the provider-free implementation and score
+> selector are present, while the real Native test harness still exceeds the
+> repository watchdog. To preserve that negative evidence append-only, one
+> reviewed documentation commit may amend this plan and append F-0006 before
+> GREEN only if F-0006 explicitly keeps Task 7E and Work Package 6A OPEN, gives
+> exact commands/results/evidence location, makes no business or Phase 0B PASS
+> claim, and changes no runtime, timeout, profile, provider, output, or private
+> artifact. Step 5 remains incomplete. Its future closure must append F-0006A
+> with the exact corrective commits and complete GREEN Cargo/Bazel evidence;
+> F-0006 itself may never be rewritten to hide or reclassify these timeouts.
+
 > **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
 > 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
 > scoring-table tests, and their `lib.rs` mount) and **7A2**
@@ -1379,7 +1391,7 @@ git add codex-rs/ai-ip-eval/src/score.rs codex-rs/ai-ip-eval/src/score_tests.rs 
 git commit -m "test(ai-ip-eval): freeze private blind review decision"
 ```
 
-F-0006 records exact Task 1–7 commits, private/public boundary, tests, provider not-run/cost zero, parked WP8 blockers, sync risk, and reverse rollback order.
+F-0006 records exact Task 1–7 commits, private/public boundary, tests, provider not-run/cost zero, parked WP8 blockers, sync risk, and reverse rollback order. If the interim OPEN authority above is used, Step 5 remains unchecked until a later append-only F-0006A records complete GREEN evidence.
 
 ---
 
