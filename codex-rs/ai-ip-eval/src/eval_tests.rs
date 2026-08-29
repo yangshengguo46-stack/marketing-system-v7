@@ -3414,6 +3414,7 @@ fn native_freeze_requires_retention_managed_cost_inputs() {
 
         let temp = tempfile::tempdir().unwrap();
         let args = native_freeze_args_for_cost_inputs(&temp, true);
+        let output = args.output.clone();
         let retained_path = args.rate_card.clone();
         let bytes = fs::read(&retained_path).unwrap();
         let external = temp.path().join(format!("{mutation}-rate-card.json"));
@@ -3429,6 +3430,7 @@ fn native_freeze_requires_retention_managed_cost_inputs() {
             crate::runner::freeze_live_context(args).is_err(),
             "freeze accepted {mutation} fixed input"
         );
+        assert!(!output.exists(), "freeze published context for {mutation}");
     }
 
     #[cfg(unix)]
@@ -3470,6 +3472,51 @@ fn native_freeze_requires_retention_managed_cost_inputs() {
         create_owner_only_test_dir(&inputs);
         assert!(retained.reverify_unchanged().is_err());
     }
+}
+
+#[cfg(unix)]
+#[test]
+fn native_freeze_rejects_transient_retained_input_replacement() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let args = native_freeze_args_for_cost_inputs(&temp, true);
+    let output = args.output.clone();
+    let attestation = args.attestation.clone();
+    let displaced = temp.path().join("retained-attestation.json");
+    let original = fs::read(&attestation).unwrap();
+    let transient =
+        serde_json::to_vec(&serde_json::from_slice::<serde_json::Value>(&original).unwrap())
+            .unwrap();
+    assert_ne!(transient, original);
+
+    let result = crate::runner::freeze_live_context_with_hook(args, |point| {
+        match point {
+            crate::runner::LiveFreezeHookPoint::BeforeArtifactFreeze => {
+                fs::rename(&attestation, &displaced)?;
+                fs::write(&attestation, &transient)?;
+                fs::set_permissions(&attestation, fs::Permissions::from_mode(0o600))?;
+            }
+            crate::runner::LiveFreezeHookPoint::AfterArtifactFreeze => {
+                fs::remove_file(&attestation)?;
+                fs::rename(&displaced, &attestation)?;
+            }
+        }
+        Ok(())
+    });
+    if displaced.exists() {
+        let _ = fs::remove_file(&attestation);
+        fs::rename(&displaced, &attestation).unwrap();
+    }
+
+    assert!(
+        result.is_err(),
+        "freeze accepted a transient retained replacement"
+    );
+    assert!(
+        !output.exists(),
+        "freeze published a transient artifact SHA"
+    );
 }
 
 #[cfg(unix)]
@@ -4900,7 +4947,13 @@ fn run_native_mock_pair_with_marker(
     })
     .unwrap();
     if let Some(marker) = marker {
-        fs::write(live_root.join(marker), b"test behavior marker\n").unwrap();
+        let marker = live_root.join(marker);
+        fs::write(&marker, b"test behavior marker\n").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&marker, fs::Permissions::from_mode(0o600)).unwrap();
+        }
     }
     let result = crate::execute_cli(Cli {
         command: crate::EvalCommand::LivePair(crate::model::LivePairArgs {
@@ -4914,6 +4967,34 @@ fn run_native_mock_pair_with_marker(
         live_root,
         result,
     }
+}
+
+fn assert_native_initial_inventory_rejects(relative: &str) {
+    let run = run_native_mock_pair_with_marker(Some(relative), 10);
+    assert!(
+        run.result.is_err(),
+        "native pair learned pre-bootstrap entry {relative}"
+    );
+    assert!(
+        !run.live_root
+            .join("coordinator/private-inventory.jsonl")
+            .exists(),
+        "native pair published an initial inventory for {relative}"
+    );
+    assert!(
+        !run.live_root.join("coordinator/pair-marker.json").exists(),
+        "native pair published an initial marker for {relative}"
+    );
+}
+
+#[test]
+fn native_initial_inventory_rejects_prebootstrap_supplier_entry() {
+    assert_native_initial_inventory_rejects("inputs/supplier-statements/generic.json");
+}
+
+#[test]
+fn native_initial_inventory_rejects_prebootstrap_cost_entry() {
+    assert_native_initial_inventory_rejects("coordinator/cost/unexpected.json");
 }
 
 #[test]

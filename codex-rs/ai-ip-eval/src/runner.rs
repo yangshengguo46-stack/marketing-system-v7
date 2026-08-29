@@ -487,6 +487,51 @@ impl RetainedLiveInputDirectory {
     }
 }
 
+struct RetainedInitialCostNamespaces {
+    private_root: PathBuf,
+    private: File,
+    inputs: File,
+    supplier_statements: File,
+    coordinator: File,
+    cost: File,
+}
+
+impl RetainedInitialCostNamespaces {
+    fn retain(private_root: &Path) -> Result<Self> {
+        let private = open_anchored_directory(private_root)?;
+        let inputs = open_directory_at(&private, OsStr::new("inputs"))?;
+        let supplier_statements = open_directory_at(&inputs, OsStr::new("supplier-statements"))?;
+        let coordinator = open_directory_at(&private, OsStr::new("coordinator"))?;
+        let cost = open_directory_at(&coordinator, OsStr::new("cost"))?;
+        Ok(Self {
+            private_root: private_root.to_path_buf(),
+            private,
+            inputs,
+            supplier_statements,
+            coordinator,
+            cost,
+        })
+    }
+
+    fn reverify_empty(&self) -> Result<()> {
+        reverify_directory_identity(&self.private_root, &self.private)?;
+        reverify_child_directory_identity(&self.private, OsStr::new("inputs"), &self.inputs)?;
+        reverify_child_directory_identity(
+            &self.inputs,
+            OsStr::new("supplier-statements"),
+            &self.supplier_statements,
+        )?;
+        reverify_child_directory_identity(
+            &self.private,
+            OsStr::new("coordinator"),
+            &self.coordinator,
+        )?;
+        reverify_child_directory_identity(&self.coordinator, OsStr::new("cost"), &self.cost)?;
+        require_exact_directory_entries(&self.supplier_statements, std::iter::empty::<&str>())?;
+        require_exact_directory_entries(&self.cost, std::iter::empty::<&str>())
+    }
+}
+
 pub(crate) fn import_live_source_proof_into_existing_inputs(
     case_path: &Path,
     material_root: &Path,
@@ -788,6 +833,7 @@ pub(crate) fn validate_imported_source_proof(imported: &ImportedSourceProof) -> 
                 ))
             })
             .collect::<Result<BTreeMap<_, _>>>()?,
+        false,
     )
     .map(drop)
 }
@@ -835,6 +881,7 @@ fn collect_native_content_inputs(
         &attestation_bytes,
         &materials_manifest_bytes,
         &material_bytes,
+        true,
     )?;
     validate_native_attestation_context_binding(&attestation, context)?;
     let reviewers: [crate::ReviewerDeclaration; 3] = attestation
@@ -915,6 +962,7 @@ fn validate_managed_source_tree(
     attestation_bytes: &[u8],
     manifest_bytes: &[u8],
     material_bytes: &BTreeMap<PathBuf, Vec<u8>>,
+    supplier_statements_required: bool,
 ) -> Result<NativeHeldOutAttestation> {
     let attestation = FrozenContracts::load()?
         .validate_native_attestation(attestation_bytes)
@@ -936,10 +984,10 @@ fn validate_managed_source_tree(
         std::ffi::OsString::from("billing-policy.json"),
         std::ffi::OsString::from("fx-policy.json"),
     ]);
-    let actual_inputs = list_directory_entries(&inputs)?;
-    if actual_inputs.contains(OsStr::new("supplier-statements")) {
+    if supplier_statements_required {
         expected_inputs.insert(std::ffi::OsString::from("supplier-statements"));
     }
+    let actual_inputs = list_directory_entries(&inputs)?;
     if actual_inputs != expected_inputs {
         bail!("managed input directory contains missing or undeclared entries");
     }
@@ -961,7 +1009,7 @@ fn validate_managed_source_tree(
     ] {
         require_owner_only_file(&private_root.join("inputs").join(leaf))?;
     }
-    if actual_inputs.contains(OsStr::new("supplier-statements")) {
+    if supplier_statements_required {
         let statements = open_directory_at(&inputs, OsStr::new("supplier-statements"))?;
         let entries = list_directory_entries(&statements)?;
         if entries.iter().any(|entry| {
@@ -2247,6 +2295,27 @@ fn build_replay_manifest(
 
 /// Freezes the strict local-mock live context consumed by [`run_local_mock_pair`].
 pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
+    freeze_live_context_inner(args, |_: LiveFreezeHookPoint| Ok(()))
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(crate) enum LiveFreezeHookPoint {
+    BeforeArtifactFreeze,
+    AfterArtifactFreeze,
+}
+
+#[cfg(test)]
+pub(crate) fn freeze_live_context_with_hook(
+    args: LiveFreezeArgs,
+    hook: impl FnMut(LiveFreezeHookPoint) -> Result<()>,
+) -> Result<()> {
+    freeze_live_context_inner(args, hook)
+}
+
+fn freeze_live_context_inner(
+    args: LiveFreezeArgs,
+    mut hook: impl FnMut(LiveFreezeHookPoint) -> Result<()>,
+) -> Result<()> {
     validate_local_mock_upstream(&args.provider_upstream_url)?;
     if args.authorized_total_cost_fen != 0 || args.authorized_per_run_cost_fen != 0 {
         bail!("local mock evaluation must have zero authorized cost");
@@ -2344,7 +2413,6 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     let broker_source = repo_root.join("codex-rs/responses-api-proxy/src/broker.rs");
     let mut named = BTreeMap::from([
         ("source".to_string(), source_proof.case_path),
-        ("attestation".to_string(), source_proof.attestation_path),
         (
             "materials".to_string(),
             source_proof.materials_manifest_path,
@@ -2358,31 +2426,14 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         ("skill".to_string(), skill_path),
         ("threadStartRequest".to_string(), thread_path),
         ("turnStartRequest".to_string(), turn_path),
-        (
-            "providerBudgetEvidence".to_string(),
-            retained_inputs.cost_inputs.budget.path().to_path_buf(),
-        ),
-        (
-            "rateCard".to_string(),
-            retained_inputs.cost_inputs.rate_card.path().to_path_buf(),
-        ),
-        (
-            "billingPolicy".to_string(),
-            retained_inputs
-                .cost_inputs
-                .billing_policy
-                .path()
-                .to_path_buf(),
-        ),
-        (
-            "fxPolicy".to_string(),
-            retained_inputs.cost_inputs.fx_policy.path().to_path_buf(),
-        ),
     ]);
     for (material_id, path) in source_proof.material_paths {
         named.insert(format!("material:{material_id}"), path);
     }
+    hook(LiveFreezeHookPoint::BeforeArtifactFreeze)?;
     let frozen_artifacts = ArtifactCommitments::freeze(named)?;
+    retained_inputs.reverify_unchanged()?;
+    hook(LiveFreezeHookPoint::AfterArtifactFreeze)?;
     let mut artifacts = BTreeMap::new();
     for (name, artifact) in frozen_artifacts.artifacts {
         artifacts.insert(
@@ -2392,6 +2443,75 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
                 sha256: artifact.sha256,
             },
         );
+    }
+    if source_proof.attestation_path != *retained_inputs.cost_inputs.attestation.path() {
+        bail!("imported attestation path differs from its retained authority");
+    }
+    let retained_reference = |path: &Path, sha256: &str, leaf: &str| -> Result<_> {
+        let expected_path = canonical_private_root.join("inputs").join(leaf);
+        if path != expected_path {
+            bail!("retained private input path is not its canonical fixed leaf");
+        }
+        if !is_lower_hex(sha256, 64) {
+            bail!("retained private input commitment is not a SHA-256 digest");
+        }
+        Ok(FrozenArtifactReference {
+            path: path.to_path_buf(),
+            sha256: sha256.to_string(),
+        })
+    };
+    let retained_artifacts = BTreeMap::from([
+        (
+            "attestation".to_string(),
+            retained_reference(
+                retained_inputs.cost_inputs.attestation.path(),
+                retained_inputs.cost_inputs.attestation.sha256(),
+                "held-out-attestation.json",
+            )?,
+        ),
+        (
+            "providerBudgetEvidence".to_string(),
+            retained_reference(
+                retained_inputs.cost_inputs.budget.path(),
+                retained_inputs.cost_inputs.budget.sha256(),
+                "provider-budget-evidence.json",
+            )?,
+        ),
+        (
+            "rateCard".to_string(),
+            retained_reference(
+                retained_inputs.cost_inputs.rate_card.path(),
+                retained_inputs.cost_inputs.rate_card.sha256(),
+                "rate-card.json",
+            )?,
+        ),
+        (
+            "billingPolicy".to_string(),
+            retained_reference(
+                retained_inputs.cost_inputs.billing_policy.path(),
+                retained_inputs.cost_inputs.billing_policy.sha256(),
+                "billing-policy.json",
+            )?,
+        ),
+        (
+            "fxPolicy".to_string(),
+            retained_reference(
+                retained_inputs.cost_inputs.fx_policy.path(),
+                retained_inputs.cost_inputs.fx_policy.sha256(),
+                "fx-policy.json",
+            )?,
+        ),
+    ]);
+    for (name, reference) in &retained_artifacts {
+        if artifacts.insert(name.clone(), reference.clone()).is_some() {
+            bail!("retained private input artifact name is duplicated");
+        }
+    }
+    if retained_artifacts
+        .iter()
+        .any(|(name, reference)| artifacts.get(name) != Some(reference))
+    {
+        bail!("frozen context did not preserve exact retained private input references");
     }
     let pair_material = format!("{}:{}", args.fork_sha, args.model_label);
     let context = FrozenRunContext {
@@ -2780,6 +2900,9 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
     let pair_deadline = establish_pair_deadline(path, pair_started_at_instant)?;
     let broker_port = bound.addr().port();
     let frozen = run_sync_before_deadline(pair_deadline, || verify_frozen_context(path))?;
+    let initial_cost_namespaces = run_sync_before_deadline(pair_deadline, || {
+        RetainedInitialCostNamespaces::retain(&frozen.context.private_root)
+    })?;
     let max_total_tokens_per_pair = run_sync_before_deadline(pair_deadline, || {
         validate_local_mock_upstream(&frozen.context.provider_upstream_url)?;
         let verified_deadline = pair_started_at_instant
@@ -2993,6 +3116,7 @@ pub fn run_local_mock_pair(path: &Path) -> Result<()> {
             manifests.push((manifest, manifest_sha256));
             if outcomes.len() == 2 {
                 verify_live_arm_business_parity(&frozen, &homes, &outcomes)?;
+                initial_cost_namespaces.reverify_empty()?;
                 crate::private_inventory::bootstrap_private_inventory(
                     &frozen.context.private_root,
                     frozen.pair_id(),
