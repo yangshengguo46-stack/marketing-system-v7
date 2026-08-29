@@ -20,6 +20,10 @@ const MARKER: &str = "coordinator/pair-marker.json";
 const INVENTORY: &str = "coordinator/private-inventory.jsonl";
 #[path = "private_inventory_batch.rs"]
 pub(crate) mod batch;
+#[path = "private_inventory_tree.rs"]
+mod tree;
+use tree::TreeEntry;
+use tree::collect_tree;
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub(crate) struct PairMarker {
@@ -34,7 +38,10 @@ pub(crate) struct PairMarker {
 pub(crate) struct VerifiedPrivateInventory {
     canonical_private_root: PathBuf,
     inventory_root_sha256: String,
+    inventory_bytes: Vec<u8>,
     pair_marker: PairMarker,
+    allowed_unrecorded: BTreeMap<String, TreeEntry>,
+    trust_allowed_projection: bool,
 }
 impl VerifiedPrivateInventory {
     pub(crate) fn inventory_root_sha256(&self) -> &str {
@@ -60,7 +67,23 @@ impl VerifiedPrivateInventory {
         Ok(())
     }
     pub(crate) fn reverify_unchanged(&self) -> Result<()> {
-        if verify_private_inventory_state(&self.canonical_private_root)? != *self {
+        let allowed = (!self.allowed_unrecorded.is_empty()).then_some(&self.allowed_unrecorded);
+        let (records, bytes, pair_marker) = verified_state(
+            &self.canonical_private_root,
+            allowed,
+            /* supplied_bytes */ None,
+            self.trust_allowed_projection,
+        )?;
+        drop(records);
+        let current = Self {
+            canonical_private_root: self.canonical_private_root.clone(),
+            inventory_root_sha256: digest(&bytes),
+            inventory_bytes: bytes,
+            pair_marker,
+            allowed_unrecorded: self.allowed_unrecorded.clone(),
+            trust_allowed_projection: self.trust_allowed_projection,
+        };
+        if current != *self {
             bail!("private inventory changed after initial verification");
         }
         Ok(())
@@ -82,7 +105,6 @@ pub(crate) struct InventoryRecord {
     pub(crate) sha256: Option<String>,
     pub(crate) previous_record_sha256: Option<String>,
 }
-type TreeEntry = (InventoryKind, Option<String>);
 pub(crate) fn bootstrap_private_inventory(
     root: &Path,
     pair_id: &str,
@@ -94,7 +116,10 @@ pub(crate) fn bootstrap_private_inventory(
         bail!("pair marker commitments must be lowercase SHA-256");
     }
     chrono::DateTime::parse_from_rfc3339(created_at).context("parse pair marker createdAt")?;
-    collect_tree(root).context("preflight private tree before coordinator creation")?;
+    collect_tree(
+        root, /* allowed_unrecorded */ None, /* trusted_recorded */ None,
+    )
+    .context("preflight private tree before coordinator creation")?;
     let coordinator = resolve_private_relative(root, Path::new("coordinator"))?;
     if coordinator.try_exists()? {
         fsync_directory(&coordinator)?;
@@ -119,7 +144,9 @@ pub(crate) fn bootstrap_private_inventory(
         created_at: created_at.to_string(),
     };
     let marker_bytes = canonical(&marker)?;
-    let mut tree = collect_tree(root)?;
+    let mut tree = collect_tree(
+        root, /* allowed_unrecorded */ None, /* trusted_recorded */ None,
+    )?;
     let before_marker = tree.clone();
     tree.insert(
         MARKER.to_string(),
@@ -142,7 +169,10 @@ pub(crate) fn bootstrap_private_inventory(
     let inventory_bytes = encode_chain(records)?;
     parse_chain(&inventory_bytes)?;
     write_owner_only_new(&inventory_path, &inventory_bytes)?;
-    if collect_tree(root)? != before_marker {
+    if collect_tree(
+        root, /* allowed_unrecorded */ None, /* trusted_recorded */ None,
+    )? != before_marker
+    {
         bail!("private tree changed before inventory commit marker");
     }
     write_owner_only_new(&marker_path, &marker_bytes)?;
@@ -154,11 +184,17 @@ pub(crate) fn verify_private_inventory(root: &Path) -> Result<String> {
     Ok(verify_private_inventory_state(root)?.inventory_root_sha256)
 }
 pub(crate) fn verify_private_inventory_state(root: &Path) -> Result<VerifiedPrivateInventory> {
-    let (_, bytes, pair_marker) = verified_state(root, None, None)?;
+    let (_, bytes, pair_marker) = verified_state(
+        root, /* allowed_new */ None, /* supplied_bytes */ None,
+        /* trust_allowed_projection */ false,
+    )?;
     Ok(VerifiedPrivateInventory {
         canonical_private_root: root.to_path_buf(),
         inventory_root_sha256: digest(&bytes),
+        inventory_bytes: bytes,
         pair_marker,
+        allowed_unrecorded: BTreeMap::new(),
+        trust_allowed_projection: false,
     })
 }
 pub(crate) fn append_private_inventory(root: &Path, relative: &Path) -> Result<String> {
@@ -168,6 +204,7 @@ fn verified_state(
     root: &Path,
     allowed_new: Option<&BTreeMap<String, TreeEntry>>,
     supplied_bytes: Option<Vec<u8>>,
+    trust_allowed_projection: bool,
 ) -> Result<(Vec<InventoryRecord>, Vec<u8>, PairMarker)> {
     let root_string = canonical_root(root)?;
     let inventory_path = resolve_private_relative(root, Path::new(INVENTORY))?;
@@ -196,7 +233,6 @@ fn verified_state(
     {
         bail!("pair marker is not bound to this private inventory");
     }
-    let mut tree = collect_tree(root)?;
     let expected = records
         .iter()
         .map(|record| {
@@ -213,6 +249,8 @@ fn verified_state(
     {
         bail!("inventory contains a duplicate or reserved path");
     }
+    let trusted_recorded = trust_allowed_projection.then_some(&expected);
+    let mut tree = collect_tree(root, allowed_new, trusted_recorded)?;
     if let Some(allowed_new) = allowed_new {
         for (path, entry) in allowed_new {
             if expected.contains_key(path) || tree.remove(path).as_ref() != Some(entry) {
@@ -224,41 +262,6 @@ fn verified_state(
         bail!("private tree differs from its inventory records");
     }
     Ok((records, bytes, marker))
-}
-fn collect_tree(root: &Path) -> Result<BTreeMap<String, TreeEntry>> {
-    fn walk(root: &Path, relative: &Path, output: &mut BTreeMap<String, TreeEntry>) -> Result<()> {
-        let directory = root.join(relative);
-        crate::runner::validate_private_existing_directory_no_follow(&directory)?;
-        let mut children = fs::read_dir(&directory)?.collect::<std::io::Result<Vec<_>>>()?;
-        children.sort_by_key(std::fs::DirEntry::file_name);
-        for child in children {
-            let child_relative = relative.join(child.file_name());
-            let normalized = normalized(&child_relative)?;
-            if normalized == INVENTORY {
-                continue;
-            }
-            let path = root.join(&child_relative);
-            let metadata = fs::symlink_metadata(&path)?;
-            let entry = if metadata.is_dir() {
-                #[cfg(windows)]
-                crate::runner::validate_private_existing_directory_no_follow(&path)?;
-                (InventoryKind::Directory, None)
-            } else if metadata.is_file() {
-                let bytes = crate::runner::read_private_existing_no_follow(&path)?;
-                (InventoryKind::File, Some(digest(&bytes)))
-            } else {
-                bail!("private tree contains a link or special entry");
-            };
-            output.insert(normalized, entry);
-            if metadata.is_dir() {
-                walk(root, &child_relative, output)?;
-            }
-        }
-        Ok(())
-    }
-    let mut output = BTreeMap::new();
-    walk(root, Path::new(""), &mut output)?;
-    Ok(output)
 }
 fn encode_chain(mut records: Vec<InventoryRecord>) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();

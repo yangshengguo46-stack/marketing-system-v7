@@ -7,6 +7,155 @@ pub(crate) struct ExpectedInventoryEntry {
     pub(crate) sha256: Option<String>,
 }
 
+pub(crate) struct RetainedPendingReview {
+    canonical_private_root: PathBuf,
+    relative_path: String,
+    retained: crate::secure_fs_retain::RetainedBoundedFile,
+}
+
+pub(crate) struct VerifiedPendingReviewInventory {
+    inventory: VerifiedPrivateInventory,
+    pending_reviews: [RetainedPendingReview; 3],
+}
+
+impl VerifiedPendingReviewInventory {
+    pub(crate) fn inventory_root_sha256(&self) -> &str {
+        self.inventory.inventory_root_sha256()
+    }
+
+    pub(crate) fn reviews(&self) -> &[RetainedPendingReview; 3] {
+        &self.pending_reviews
+    }
+
+    pub(crate) fn verify_binding(
+        &self,
+        pair_id: &str,
+        frozen_context_sha256: &str,
+        private_root: &Path,
+    ) -> Result<()> {
+        self.inventory
+            .verify_binding(pair_id, frozen_context_sha256, private_root)
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        for review in &self.pending_reviews {
+            review.reverify_unchanged()?;
+        }
+        self.inventory.reverify_unchanged()?;
+        for review in &self.pending_reviews {
+            review.reverify_unchanged()?;
+        }
+        Ok(())
+    }
+}
+
+impl RetainedPendingReview {
+    pub(crate) fn retain(root: &Path, reviewer_id: &str) -> Result<Self> {
+        const REVIEW_CAP: u64 = 64 * 1024;
+        canonical_root(root)?;
+        let mut characters = reviewer_id.chars();
+        if !(3..=64).contains(&reviewer_id.len())
+            || !characters
+                .next()
+                .is_some_and(|value| value.is_ascii_alphanumeric())
+            || characters
+                .any(|value| !value.is_ascii_alphanumeric() && !matches!(value, '.' | '_' | '-'))
+        {
+            bail!("score continuation reviewer ID is not one safe path component");
+        }
+        let relative_path = format!("reviews/{reviewer_id}.json");
+        validate_private_relative_path(Path::new(&relative_path))?;
+        let path = root.join(&relative_path);
+        let retained = crate::secure_fs_retain::RetainedBoundedFile::retain(
+            &path,
+            REVIEW_CAP,
+            crate::secure_fs_retain::RetainedLeafPermissions::AllowNonOwnerOnlyInsidePrivateDirectory,
+        )?;
+        Ok(Self {
+            canonical_private_root: root.to_path_buf(),
+            relative_path,
+            retained,
+        })
+    }
+
+    pub(crate) fn raw_bytes(&self) -> &[u8] {
+        self.retained.raw_bytes()
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.retained.reverify_unchanged()
+    }
+
+    fn inventory_entry(&self) -> ExpectedInventoryEntry {
+        ExpectedInventoryEntry {
+            relative_path: self.relative_path.clone(),
+            kind: InventoryKind::File,
+            sha256: Some(digest(self.raw_bytes())),
+        }
+    }
+}
+
+pub(crate) fn verify_private_inventory_continuation(
+    root: &Path,
+    pending_reviews: [RetainedPendingReview; 3],
+    receipt_sha256: &str,
+    receipt_prefix_sha256: &str,
+) -> Result<VerifiedPendingReviewInventory> {
+    const RECEIPT: &str = "coordinator/blind-pack-receipt.json";
+    canonical_root(root)?;
+    if pending_reviews
+        .iter()
+        .any(|review| review.canonical_private_root != root)
+    {
+        bail!("pending review belongs to a different private root");
+    }
+    for review in &pending_reviews {
+        review.reverify_unchanged()?;
+    }
+    let mut expected_reviews = pending_reviews
+        .iter()
+        .map(RetainedPendingReview::inventory_entry)
+        .collect::<Vec<_>>();
+    expected_reviews.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+    let allowed_unrecorded = validate_expected_tree(&expected_reviews)?;
+    let (records, inventory_bytes, pair_marker) = verified_state(
+        root,
+        Some(&allowed_unrecorded),
+        /* supplied_bytes */ None,
+        /* trust_allowed_projection */ true,
+    )?;
+    let tail = records
+        .last()
+        .context("private inventory has no blind receipt tail")?;
+    let tail_bytes = canonical(tail)?;
+    let prefix_len = inventory_bytes
+        .len()
+        .checked_sub(tail_bytes.len() + 1)
+        .context("private inventory blind receipt tail bounds")?;
+    if tail.relative_path != RECEIPT
+        || tail.kind != InventoryKind::File
+        || tail.sha256.as_deref() != Some(receipt_sha256)
+        || digest(&inventory_bytes[..prefix_len]) != receipt_prefix_sha256
+    {
+        bail!("blind receipt is not the current private inventory tail");
+    }
+    for review in &pending_reviews {
+        review.reverify_unchanged()?;
+    }
+    let inventory = VerifiedPrivateInventory {
+        canonical_private_root: root.to_path_buf(),
+        inventory_root_sha256: digest(&inventory_bytes),
+        inventory_bytes,
+        pair_marker,
+        allowed_unrecorded,
+        trust_allowed_projection: true,
+    };
+    Ok(VerifiedPendingReviewInventory {
+        inventory,
+        pending_reviews,
+    })
+}
+
 pub(crate) fn append_private_inventory_batch(
     root: &Path,
     expected_new: &[ExpectedInventoryEntry],
@@ -33,7 +182,12 @@ fn append_private_inventory_batch_inner(
     if expected_old_root.is_some_and(|expected| digest(&old_bytes) != expected) {
         bail!("private inventory cursor changed before batch append");
     }
-    let (records, _, _) = verified_state(root, Some(&expected_tree), Some(old_bytes.clone()))?;
+    let (records, _, _) = verified_state(
+        root,
+        Some(&expected_tree),
+        Some(old_bytes.clone()),
+        /* trust_allowed_projection */ false,
+    )?;
     let mut previous = records.last().map(canonical).transpose()?;
     let base_sequence = u64::try_from(records.len())?;
     let mut suffix = Vec::new();
@@ -90,7 +244,9 @@ fn append_private_inventory_inner(
     if relative == INVENTORY {
         bail!("inventory path is reserved");
     }
-    let tree = collect_tree(root)?;
+    let tree = collect_tree(
+        root, /* allowed_unrecorded */ None, /* trusted_recorded */ None,
+    )?;
     let entry = tree
         .get(&relative)
         .context("inventory append target is absent")?;
@@ -100,7 +256,12 @@ fn append_private_inventory_inner(
     if expected_old_root.is_some_and(|expected| digest(&old_bytes) != expected) {
         bail!("private inventory cursor changed before append");
     }
-    let (records, _, _) = verified_state(root, Some(&allowed_new), Some(old_bytes.clone()))?;
+    let (records, _, _) = verified_state(
+        root,
+        Some(&allowed_new),
+        Some(old_bytes.clone()),
+        /* trust_allowed_projection */ false,
+    )?;
     let previous = records.last().map(canonical).transpose()?;
     let record = InventoryRecord {
         schema_version: 1,

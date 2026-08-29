@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::Write;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
@@ -10,14 +11,17 @@ use sha2::Digest;
 use crate::private_inventory::InventoryKind;
 use crate::private_inventory::InventoryRecord;
 use crate::private_inventory::batch::ExpectedInventoryEntry;
+use crate::private_inventory::batch::RetainedPendingReview;
 use crate::private_inventory::batch::append_private_inventory_batch;
 use crate::private_inventory::batch::append_private_inventory_batch_from_root;
 use crate::private_inventory::batch::append_private_inventory_from_root;
+use crate::private_inventory::batch::verify_private_inventory_continuation;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const FROZEN_SHA: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 const CREATED_AT: &str = "2026-08-28T12:00:00Z";
 const INVENTORY: &str = "coordinator/private-inventory.jsonl";
+const BLIND_RECEIPT: &str = "coordinator/blind-pack-receipt.json";
 
 fn digest(bytes: &[u8]) -> String {
     format!("{:x}", sha2::Sha256::digest(bytes))
@@ -77,6 +81,35 @@ fn inventory(root: &Path) -> (Vec<Vec<u8>>, Vec<InventoryRecord>) {
         .map(|line| serde_json::from_slice(line).unwrap())
         .collect();
     (lines, records)
+}
+
+fn write_review_leaf(path: &Path, bytes: &[u8]) {
+    #[cfg(unix)]
+    fs::write(path, bytes).unwrap();
+    #[cfg(windows)]
+    crate::secure_fs::write_owner_only_new(path, bytes).unwrap();
+}
+
+fn append_recorded_file_for_test(root: &Path, relative_path: &str, bytes: &[u8]) {
+    crate::secure_fs::write_owner_only_new(&root.join(relative_path), bytes).unwrap();
+    let (lines, records) = inventory(root);
+    let record = InventoryRecord {
+        schema_version: 1,
+        sequence: u64::try_from(records.len() + 1).unwrap(),
+        relative_path: relative_path.to_string(),
+        kind: InventoryKind::File,
+        sha256: Some(digest(bytes)),
+        previous_record_sha256: lines.last().map(|line| digest(line)),
+    };
+    let mut encoded =
+        crate::jcs::canonicalize_value(&serde_json::to_value(record).unwrap()).unwrap();
+    encoded.push(b'\n');
+    let mut inventory_file = fs::OpenOptions::new()
+        .append(true)
+        .open(root.join(INVENTORY))
+        .unwrap();
+    inventory_file.write_all(&encoded).unwrap();
+    inventory_file.sync_all().unwrap();
 }
 
 fn reject_without_append(setup: impl FnOnce(&Path), expected: Vec<ExpectedInventoryEntry>) {
@@ -193,6 +226,182 @@ fn private_inventory_checked_appends_require_the_retained_old_root() {
     assert_eq!(error.to_string(), "private inventory cursor changed before append");
     assert_eq!(inventory_bytes(&root), before_receipt);
     append_private_inventory_from_root(&root, &next_root, Path::new("receipt.json")).unwrap();
+}
+
+fn pending_review_inventory(
+    add_record_after_receipt: bool,
+) -> (
+    tempfile::TempDir,
+    PathBuf,
+    String,
+    Vec<u8>,
+    [RetainedPendingReview; 3],
+) {
+    let (temp, root) = sealed_root();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("reviews")).unwrap();
+    let receipt_prefix =
+        crate::private_inventory::append_private_inventory(&root, Path::new("reviews")).unwrap();
+    let receipt_bytes = br#"{"schemaVersion":1}"#.to_vec();
+    crate::secure_fs::write_owner_only_new(
+        &root.join("coordinator/blind-pack-receipt.json"),
+        &receipt_bytes,
+    )
+    .unwrap();
+    let receipt_root =
+        append_private_inventory_from_root(&root, &receipt_prefix, Path::new(BLIND_RECEIPT))
+            .unwrap();
+    if add_record_after_receipt {
+        crate::secure_fs::write_owner_only_new(&root.join("later.bin"), b"later").unwrap();
+        append_private_inventory_from_root(&root, &receipt_root, Path::new("later.bin")).unwrap();
+    }
+    let reviews = [
+        ("reviewer-1", b"one".as_slice()),
+        ("reviewer-2", b"two".as_slice()),
+        ("reviewer-3", b"three".as_slice()),
+    ];
+    for (reviewer, bytes) in reviews {
+        let path = root.join(format!("reviews/{reviewer}.json"));
+        write_review_leaf(&path, bytes);
+    }
+    let pending = ["reviewer-1", "reviewer-2", "reviewer-3"]
+        .map(|reviewer| RetainedPendingReview::retain(&root, reviewer).unwrap());
+    (temp, root, receipt_prefix, receipt_bytes, pending)
+}
+
+#[test]
+fn private_inventory_continuation_allows_only_exact_pending_reviews_at_receipt_tail() {
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    assert!(crate::private_inventory::verify_private_inventory(&root).is_err());
+    let [reviewer_1, reviewer_2, reviewer_3] = pending;
+
+    let continuation = verify_private_inventory_continuation(
+        &root,
+        [reviewer_3, reviewer_1, reviewer_2],
+        &digest(&receipt_bytes),
+        &receipt_prefix,
+    )
+    .unwrap();
+
+    continuation
+        .verify_binding(PAIR_ID, FROZEN_SHA, &root)
+        .unwrap();
+    continuation.reverify_unchanged().unwrap();
+    assert_eq!(
+        continuation.inventory_root_sha256(),
+        digest(&inventory_bytes(&root))
+    );
+}
+
+#[test]
+fn private_inventory_continuation_rejects_set_tail_and_cursor_drift() {
+    let (_temp, root, receipt_prefix, _receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    assert!(
+        verify_private_inventory_continuation(&root, pending, &digest(b"wrong"), &receipt_prefix,)
+            .is_err()
+    );
+
+    let (_temp, root, _receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    assert!(
+        verify_private_inventory_continuation(
+            &root,
+            pending,
+            &digest(&receipt_bytes),
+            &"f".repeat(64),
+        )
+        .is_err()
+    );
+
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    write_review_leaf(
+        &root.join("reviews/reviewer-4.json"),
+        &vec![b'x'; 2 * 1024 * 1024],
+    );
+    assert_eq!(
+        verify_private_inventory_continuation(
+            &root,
+            pending,
+            &digest(&receipt_bytes),
+            &receipt_prefix,
+        )
+        .err()
+        .expect("unexpected review path must fail before content read")
+        .to_string(),
+        "trusted inventory continuation contains an unexpected path"
+    );
+
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    let continuation = verify_private_inventory_continuation(
+        &root,
+        pending,
+        &digest(&receipt_bytes),
+        &receipt_prefix,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        fs::write(root.join("reviews/reviewer-1.json"), b"changed").unwrap();
+        assert!(continuation.reverify_unchanged().is_err());
+    }
+    #[cfg(windows)]
+    {
+        assert!(fs::write(root.join("reviews/reviewer-1.json"), b"changed").is_err());
+        continuation.reverify_unchanged().unwrap();
+    }
+
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ true);
+    assert!(
+        verify_private_inventory_continuation(
+            &root,
+            pending,
+            &digest(&receipt_bytes),
+            &receipt_prefix,
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn private_inventory_continuation_retains_its_inventory_cursor_independently() {
+    let (_temp, root, receipt_prefix, receipt_bytes, pending) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    let continuation = verify_private_inventory_continuation(
+        &root,
+        pending,
+        &digest(&receipt_bytes),
+        &receipt_prefix,
+    )
+    .unwrap();
+    append_recorded_file_for_test(&root, "later.bin", b"later");
+    for review in continuation.reviews() {
+        review.reverify_unchanged().unwrap();
+    }
+
+    assert_eq!(
+        continuation.reverify_unchanged().unwrap_err().to_string(),
+        "private inventory changed after initial verification"
+    );
+}
+
+#[test]
+fn private_inventory_continuation_rejects_pending_reviews_retained_from_another_root() {
+    let (_temp_a, _root_a, _prefix_a, _receipt_a, pending_a) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+    let (_temp_b, root_b, prefix_b, receipt_b, _pending_b) =
+        pending_review_inventory(/* add_record_after_receipt */ false);
+
+    assert_eq!(
+        verify_private_inventory_continuation(&root_b, pending_a, &digest(&receipt_b), &prefix_b,)
+            .err()
+            .expect("cross-root continuation must fail")
+            .to_string(),
+        "pending review belongs to a different private root"
+    );
 }
 
 #[test]
