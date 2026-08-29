@@ -75,6 +75,8 @@ pub(crate) fn fsync_directory(path: &Path) -> Result<()> {
 pub(crate) use platform::open_read as windows_open_read_for_test;
 #[cfg(windows)]
 pub(crate) use platform::validate_directory_handle as validate_private_directory_handle;
+#[cfg(windows)]
+pub(crate) use platform::validate_file_handle as validate_private_file_handle;
 
 #[derive(Clone, Copy)]
 enum EntryKind {
@@ -430,6 +432,14 @@ mod platform {
         let info = checked_info(file)?;
         if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 {
             bail!("private Windows entry is not a directory");
+        }
+        verify_dacl(file)
+    }
+
+    pub(crate) fn validate_file_handle(file: &File) -> Result<()> {
+        let info = checked_info(file)?;
+        if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0 {
+            bail!("private Windows entry is not a regular file");
         }
         verify_dacl(file)
     }

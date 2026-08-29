@@ -180,6 +180,10 @@ mod secure_fs_tests;
 mod secure_fs_publish_tests;
 
 #[cfg(test)]
+#[path = "secure_fs_retain_tests.rs"]
+mod secure_fs_retain_tests;
+
+#[cfg(test)]
 #[path = "app_server_tests.rs"]
 mod app_server_tests;
 
