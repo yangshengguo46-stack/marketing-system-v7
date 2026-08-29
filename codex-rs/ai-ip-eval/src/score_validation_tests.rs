@@ -54,6 +54,53 @@ fn score_validation_maps_candidate_from_different_physical_arms_into_one_valid_o
 }
 
 #[test]
+fn score_validation_returns_the_complete_ordered_unique_invalid_failure_set() {
+    let mut fixture = ValidationFixture::valid();
+    let mut bundle: Value =
+        crate::jcs::parse_json(&fixture.reviewers[0].review_bundle_raw).unwrap();
+    bundle["caseSha256"] = Value::String("8".repeat(64));
+    fixture.reviewers[0].review_bundle_raw = crate::jcs::canonicalize_value(&bundle).unwrap();
+    let changed_bundle_sha256 = sha256(&fixture.reviewers[0].review_bundle_raw);
+    let mut receipt: Value = crate::jcs::parse_json(&fixture.blind_pack_receipt_raw).unwrap();
+    receipt["reviewerMappings"][0]["reviewBundleSha256"] =
+        Value::String(changed_bundle_sha256.clone());
+    fixture.blind_pack_receipt_raw = crate::jcs::canonicalize_value(&receipt).unwrap();
+
+    let mut mapping: Value = crate::jcs::parse_json(&fixture.reviewers[0].mapping_raw).unwrap();
+    mapping["reviewBundleSha256"] = Value::String(changed_bundle_sha256.clone());
+    mapping["seedCommitment"] = Value::String("9".repeat(64));
+    mapping["reviewerId"] = Value::String("changed-reviewer".to_string());
+    fixture.reviewers[0].mapping_raw = crate::jcs::canonicalize_value(&mapping).unwrap();
+
+    let mut submission: Value =
+        crate::jcs::parse_json(&fixture.reviewers[0].submission_raw).unwrap();
+    submission["reviewBundleSha256"] = Value::String(changed_bundle_sha256);
+    submission["rubricSha256"] = Value::String("6".repeat(64));
+    submission["qualification"]["qualificationClass"] =
+        Value::String("changed-qualification".to_string());
+    submission["qualification"]["experiencedOperatorOrDirector"] = Value::Bool(false);
+    fixture.reviewers[0].submission_raw = resign_submission(submission);
+    fixture.assert_submission_contracts_valid();
+
+    let validated = crate::score_validation::validate_score_reviews(fixture.input()).unwrap();
+    let ScoreValidationOutcome::Invalid(failures) = validated.outcome else {
+        panic!("invalid score evidence was treated as valid");
+    };
+    assert_eq!(
+        failures,
+        vec![
+            BlindDecisionFailure::ReviewerIdSetMismatch,
+            BlindDecisionFailure::ReviewerQualificationMismatch,
+            BlindDecisionFailure::ReviewMappingCommitmentMismatch,
+            BlindDecisionFailure::ReviewBundleCommitmentMismatch,
+            BlindDecisionFailure::ReviewSeedCommitmentMismatch,
+            BlindDecisionFailure::ReviewRubricCommitmentMismatch,
+            BlindDecisionFailure::InsufficientExperiencedReviewers,
+        ]
+    );
+}
+
+#[test]
 fn score_validation_commits_malformed_review_bytes_before_invalid_proof() {
     let mut fixture = ValidationFixture::valid();
     fixture.reviewers[1].submission_raw = b"{".to_vec();
