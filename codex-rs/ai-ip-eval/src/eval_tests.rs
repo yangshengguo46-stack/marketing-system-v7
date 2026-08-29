@@ -4693,6 +4693,89 @@ fn mock_manifest_binds_actual_additional_context_not_turn_request() {
 }
 
 #[test]
+fn native_app_server_fixture_uses_production_argv_and_stdout() {
+    use std::io::BufRead;
+    use std::io::BufReader;
+    use std::io::Write;
+    use std::process::Command;
+    use std::process::Stdio;
+
+    let fixture = crate::native_app_server_fixture::locate()
+        .expect("native App Server fixture target must be available to this test");
+    let evaluator = std::env::current_exe().unwrap().canonicalize().unwrap();
+    assert_ne!(fixture, evaluator);
+    assert!(
+        fixture.metadata().unwrap().len() <= 64 * 1024 * 1024,
+        "native App Server fixture exceeds the 64 MiB test-infrastructure I/O budget"
+    );
+
+    let wrong_argv = Command::new(&fixture)
+        .arg("not-app-server")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap();
+    assert!(
+        !wrong_argv.status.success(),
+        "native App Server fixture accepted wrong argv; stderr: {}",
+        String::from_utf8_lossy(&wrong_argv.stderr)
+    );
+
+    let temp = tempfile::tempdir().unwrap();
+    let home = temp.path().join("home");
+    let codex_home = home.join(".codex");
+    create_owner_only_test_dir(&home);
+    create_owner_only_test_dir(&codex_home);
+    fs::write(codex_home.join("config.toml"), "model = \"fixture-test\"\n").unwrap();
+
+    let mut child = Command::new(&fixture)
+        .args(["app-server", "--listen", "stdio://", "--strict-config"])
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let request_id = 7;
+    let request = json!({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "method": "initialize",
+        "params": crate::initialize_params()
+    });
+    let mut stdin = child.stdin.take().unwrap();
+    writeln!(stdin, "{}", serde_json::to_string(&request).unwrap()).unwrap();
+    stdin.flush().unwrap();
+
+    let mut stdout = BufReader::new(child.stdout.take().unwrap());
+    let mut line = String::new();
+    assert_ne!(stdout.read_line(&mut line).unwrap(), 0, "fixture emitted no JSONL response");
+    let response: serde_json::Value = serde_json::from_str(&line).unwrap();
+    assert_eq!(
+        json!({
+            "id": response["id"],
+            "result": {"userAgent": response["result"]["userAgent"]}
+        }),
+        json!({"id": request_id, "result": {"userAgent": "mock-app-server"}})
+    );
+
+    drop(stdin);
+    drop(stdout);
+    let status = child.wait().unwrap();
+    assert!(status.success(), "fixture failed after stdin closed: {status}");
+    let launch: serde_json::Value = serde_json::from_slice(
+        &fs::read(home.join("app-server-launch.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        launch["argv"],
+        json!(["app-server", "--listen", "stdio://", "--strict-config"])
+    );
+}
+
+#[test]
 fn native_app_server_fixture() {
     use std::fs::OpenOptions;
     use std::io::BufRead;

@@ -14,6 +14,8 @@ mod contracts;
 mod evidence;
 mod jcs;
 mod model;
+#[cfg(test)]
+mod native_app_server_fixture;
 mod private_inventory;
 mod proof_archive;
 mod proof_archive_seal;
