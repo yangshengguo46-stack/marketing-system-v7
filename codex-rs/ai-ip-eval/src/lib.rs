@@ -20,6 +20,7 @@ mod proof_archive_seal;
 mod proof_ledger;
 mod runner;
 mod score;
+mod score_decision;
 mod secure_fs;
 mod secure_fs_publish;
 mod secure_fs_retain;
@@ -110,6 +111,8 @@ pub use runner::verify_isolated_home_parity;
 pub use score::BusinessDecision;
 pub use score::CandidateSevereFlagCounts;
 pub use score::DecisionMetrics;
+pub use score_decision::BlindDecision;
+pub use score_decision::BlindDecisionFailure;
 
 pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
@@ -187,6 +190,10 @@ mod blind_tests;
 #[cfg(test)]
 #[path = "score_tests.rs"]
 mod score_tests;
+
+#[cfg(test)]
+#[path = "score_decision_tests.rs"]
+mod score_decision_tests;
 
 #[cfg(test)]
 #[path = "catalog_tests.rs"]
