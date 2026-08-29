@@ -1993,21 +1993,31 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
     let frozen_inputs = temp.path().join("frozen-inputs");
     let imported_inputs = temp.path().join("inputs");
     let case_root = imported_inputs.join("case");
+    let supplier_statements = imported_inputs.join("supplier-statements");
     fs::create_dir(&artifacts_dir).unwrap();
     fs::create_dir(&frozen_inputs).unwrap();
     fs::create_dir_all(&case_root).unwrap();
+    fs::create_dir(&supplier_statements).unwrap();
+    fs::create_dir_all(temp.path().join("coordinator/cost")).unwrap();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&frozen_inputs, fs::Permissions::from_mode(0o700)).unwrap();
         fs::set_permissions(&imported_inputs, fs::Permissions::from_mode(0o700)).unwrap();
         fs::set_permissions(&case_root, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&supplier_statements, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(
+            temp.path().join("coordinator"),
+            fs::Permissions::from_mode(0o700),
+        )
+        .unwrap();
+        fs::set_permissions(
+            temp.path().join("coordinator/cost"),
+            fs::Permissions::from_mode(0o700),
+        )
+        .unwrap();
     }
     let private_leaf = |name: &str| match name {
-        "providerBudgetReceipt" => Some("provider-budget-receipt.json"),
-        "rateCard" => Some("rate-card.json"),
-        "billingPolicy" => Some("billing-policy.json"),
-        "fxPolicy" => Some("fx-policy.json"),
         "skill" => Some("lead-skill.md"),
         "schema" => Some("content-package-schema.json"),
         "prompt" => Some("root-prompt.txt"),
@@ -2024,7 +2034,7 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
     attestation["maxTotalTokensPerRun"] = json!(100);
     attestation["maxElapsedSecondsPerRun"] = json!(5);
     attestation["maxOutputTokensPerRequest"] = json!(321);
-    attestation["providerBudgetEvidenceSha256"] = json!(test_sha256(b"providerBudgetReceipt\n"));
+    attestation["providerBudgetEvidenceSha256"] = json!(test_sha256(b"providerBudgetEvidence\n"));
     attestation["rateCardSha256"] = json!(test_sha256(b"rateCard\n"));
     attestation["billingPolicyCommitment"] = json!(test_sha256(b"billingPolicy\n"));
     attestation["fxPolicySha256"] = json!(test_sha256(b"fxPolicy\n"));
@@ -2054,6 +2064,16 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
                 "materials" => (
                     imported_inputs.join("materials-manifest.json"),
                     materials_bytes.clone(),
+                ),
+                "providerBudgetEvidence" | "rateCard" | "billingPolicy" | "fxPolicy" => (
+                    imported_inputs.join(match *name {
+                        "providerBudgetEvidence" => "provider-budget-evidence.json",
+                        "rateCard" => "rate-card.json",
+                        "billingPolicy" => "billing-policy.json",
+                        "fxPolicy" => "fx-policy.json",
+                        _ => unreachable!(),
+                    }),
+                    format!("{name}\n").into_bytes(),
                 ),
                 "additionalContext" => (
                     frozen_inputs.join("additional-context.txt"),
@@ -2100,6 +2120,11 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         "maxAttemptsPerArm": 2,
         "maxTotalTokens": 100,
         "maxElapsedSeconds": 5,
+        "supplierStatementPolicy": {
+            "directory": "inputs/supplier-statements",
+            "allowedLeaves": ["generic.json", "candidate.json"],
+            "nestedEntriesAllowed": false
+        },
         "artifacts": artifacts,
     }))
     .unwrap();
@@ -2223,6 +2248,7 @@ fn native_attestation_is_cross_bound_at_the_freeze_boundary() {
             |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
         let private_root = temp.path().join(format!("native-freeze-{mutation}"));
         create_owner_only_test_dir(&private_root);
+        let private_root = private_root.canonicalize().unwrap();
         let codex_binary = temp.path().join(format!("native-codex-{mutation}"));
         fs::copy(std::env::current_exe().unwrap(), &codex_binary).unwrap();
         let (case, material_root, attestation) = write_nonempty_source_fixture(
@@ -2233,7 +2259,7 @@ fn native_attestation_is_cross_bound_at_the_freeze_boundary() {
             None,
         );
         let output = private_root.join("frozen-run-context.json");
-        let args = crate::model::LiveFreezeArgs {
+        let mut args = crate::model::LiveFreezeArgs {
             repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
             evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
             fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
@@ -2242,7 +2268,7 @@ fn native_attestation_is_cross_bound_at_the_freeze_boundary() {
             case,
             material_root,
             attestation,
-            provider_budget_evidence: artifact("providerBudgetReceipt"),
+            provider_budget_evidence: artifact("providerBudgetEvidence"),
             rate_card: artifact("rateCard"),
             billing_policy: artifact("billingPolicy"),
             fx_policy: artifact("fxPolicy"),
@@ -2259,7 +2285,7 @@ fn native_attestation_is_cross_bound_at_the_freeze_boundary() {
             max_output_tokens_per_request: 17,
             output: output.clone(),
         };
-        bind_native_attestation_to_live_args(&args);
+        install_retention_managed_cost_inputs(&mut args);
         let mut value: serde_json::Value =
             serde_json::from_slice(&fs::read(&args.attestation).unwrap()).unwrap();
         match mutation {
@@ -3043,6 +3069,69 @@ fn write_nonempty_source_fixture(
     (case_path, material_root, attestation_path)
 }
 
+fn retain_test_import_inputs(
+    private_root: &std::path::Path,
+    attestation: &std::path::Path,
+) -> anyhow::Result<crate::runner::RetainedLiveInputDirectory> {
+    let private_root = private_root.canonicalize()?;
+    let inputs = private_root.join("inputs");
+    if !inputs.exists() {
+        create_owner_only_test_dir(&inputs);
+    }
+    let fixed_attestation = inputs.join("held-out-attestation.json");
+    fs::copy(attestation, &fixed_attestation)?;
+    let mut paths = BTreeMap::new();
+    for (name, leaf, fixture) in [
+        (
+            "budget",
+            "provider-budget-evidence.json",
+            "provider-budget-evidence.canonical.json",
+        ),
+        (
+            "rate",
+            "rate-card.json",
+            "provider-rate-card.canonical.json",
+        ),
+        (
+            "billing",
+            "billing-policy.json",
+            "billing-policy.canonical.json",
+        ),
+        ("fx", "fx-policy.json", "fx-policy.canonical.json"),
+    ] {
+        let resource = format!("tests/fixtures/contracts/06b1/{fixture}");
+        let source = codex_utils_cargo_bin::find_resource!(resource).unwrap();
+        let destination = inputs.join(leaf);
+        fs::copy(source, &destination)?;
+        paths.insert(name, destination);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        for path in paths.values().chain([&fixed_attestation]) {
+            fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+        }
+    }
+    crate::runner::RetainedLiveInputDirectory::retain(
+        &private_root,
+        &fixed_attestation,
+        &paths["budget"],
+        &paths["rate"],
+        &paths["billing"],
+        &paths["fx"],
+    )
+}
+
+fn import_test_source(
+    case: &std::path::Path,
+    material_root: &std::path::Path,
+    attestation: &std::path::Path,
+    private_root: &std::path::Path,
+) -> anyhow::Result<crate::runner::ImportedSourceProof> {
+    let retained = retain_test_import_inputs(private_root, attestation)?;
+    crate::runner::import_live_source_proof_into_existing_inputs(case, material_root, &retained)
+}
+
 fn complete_native_attestation_value(
     case_bytes: &[u8],
     private_root: &std::path::Path,
@@ -3129,6 +3218,117 @@ fn bind_native_attestation_to_live_args(args: &crate::model::LiveFreezeArgs) {
     .unwrap();
 }
 
+fn native_freeze_args_for_cost_inputs(
+    temp: &tempfile::TempDir,
+    retention_managed: bool,
+) -> crate::model::LiveFreezeArgs {
+    let seed_context = strict_live_context(temp);
+    let seed: serde_json::Value = serde_json::from_slice(&fs::read(seed_context).unwrap()).unwrap();
+    let artifacts = seed["artifacts"].as_object().unwrap();
+    let artifact = |name: &str| std::path::PathBuf::from(artifacts[name]["path"].as_str().unwrap());
+    let private_root = temp.path().join(if retention_managed {
+        "retention-managed-private"
+    } else {
+        "arbitrary-source-private"
+    });
+    create_owner_only_test_dir(&private_root);
+    let private_root = private_root.canonicalize().unwrap();
+    let codex_binary = temp.path().join(if retention_managed {
+        "retention-managed-codex"
+    } else {
+        "arbitrary-source-codex"
+    });
+    fs::copy(std::env::current_exe().unwrap(), &codex_binary).unwrap();
+    let (case, material_root, external_attestation) =
+        write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
+    let mut args = crate::model::LiveFreezeArgs {
+        repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
+        fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
+        private_root: private_root.clone(),
+        codex_bin: codex_binary,
+        case,
+        material_root,
+        attestation: external_attestation,
+        provider_budget_evidence: artifact("providerBudgetEvidence"),
+        rate_card: artifact("rateCard"),
+        billing_policy: artifact("billingPolicy"),
+        fx_policy: artifact("fxPolicy"),
+        lead_skill: artifact("skill"),
+        model_label: "local-mock".to_string(),
+        provider_label: "local-mock".to_string(),
+        provider_role: ProviderRole::ApprovedReference,
+        provider_upstream_url: "http://127.0.0.1:1/v1/responses".to_string(),
+        authorized_total_cost_fen: 0,
+        authorized_per_run_cost_fen: 0,
+        max_provider_request_attempts_per_run: 2,
+        max_total_tokens_per_run: 10,
+        max_elapsed_seconds_per_run: 180,
+        max_output_tokens_per_request: 17,
+        output: private_root.join("frozen-run-context.json"),
+    };
+    if retention_managed {
+        install_retention_managed_cost_inputs(&mut args);
+    } else {
+        bind_native_attestation_to_live_args(&args);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&args.attestation, fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    args
+}
+
+fn install_retention_managed_cost_inputs(args: &mut crate::model::LiveFreezeArgs) {
+    let inputs = args.private_root.join("inputs");
+    create_owner_only_test_dir(&inputs);
+    let attestation = inputs.join("held-out-attestation.json");
+    fs::rename(&args.attestation, &attestation).unwrap();
+    args.attestation = attestation;
+    for (field, leaf, fixture) in [
+        (
+            "budget",
+            "provider-budget-evidence.json",
+            "provider-budget-evidence.canonical.json",
+        ),
+        (
+            "rate",
+            "rate-card.json",
+            "provider-rate-card.canonical.json",
+        ),
+        (
+            "billing",
+            "billing-policy.json",
+            "billing-policy.canonical.json",
+        ),
+        ("fx", "fx-policy.json", "fx-policy.canonical.json"),
+    ] {
+        let resource = format!("tests/fixtures/contracts/06b1/{fixture}");
+        let source = codex_utils_cargo_bin::find_resource!(resource).unwrap();
+        let destination = inputs.join(leaf);
+        fs::copy(source, &destination).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&destination, fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        match field {
+            "budget" => args.provider_budget_evidence = destination,
+            "rate" => args.rate_card = destination,
+            "billing" => args.billing_policy = destination,
+            "fx" => args.fx_policy = destination,
+            other => panic!("unknown cost input field {other}"),
+        }
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&args.attestation, fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    bind_native_attestation_to_live_args(args);
+}
+
 #[cfg(unix)]
 #[test]
 fn replay_fixture_read_reuses_the_verified_handle_buffer_after_path_swap() {
@@ -3165,9 +3365,7 @@ fn live_freeze_imports_nonempty_case_attestation_and_declared_materials() {
     let (case, material_root, attestation) =
         write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
-    let imported =
-        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
-            .unwrap();
+    let imported = import_test_source(&case, &material_root, &attestation, &private_root).unwrap();
 
     assert_eq!(
         imported.case_path,
@@ -3224,15 +3422,7 @@ fn live_freeze_imports_nonempty_case_attestation_and_declared_materials() {
         .unwrap(),
     )
     .unwrap();
-    assert!(
-        crate::runner::import_live_source_proof(
-            &case,
-            &material_root,
-            &attestation,
-            &legacy_private,
-        )
-        .is_err()
-    );
+    assert!(import_test_source(&case, &material_root, &attestation, &legacy_private).is_err());
 }
 
 #[test]
@@ -3269,13 +3459,7 @@ fn live_freeze_rejects_material_digest_path_type_and_attestation_drift() {
         }
 
         assert!(
-            crate::runner::import_live_source_proof(
-                &case,
-                &material_root,
-                &attestation,
-                &private_root,
-            )
-            .is_err(),
+            import_test_source(&case, &material_root, &attestation, &private_root).is_err(),
             "mutation {mutation}"
         );
         assert!(!private_root.join("inputs/case/case.json").exists());
@@ -3306,15 +3490,7 @@ fn live_freeze_rejects_a_prepopulated_managed_case_tree() {
     let (case, material_root, attestation) =
         write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
-    assert!(
-        crate::runner::import_live_source_proof(
-            &case,
-            &material_root,
-            &attestation,
-            &private_root,
-        )
-        .is_err()
-    );
+    assert!(import_test_source(&case, &material_root, &attestation, &private_root).is_err());
 }
 
 #[test]
@@ -3334,16 +3510,8 @@ fn live_freeze_rejects_unknown_attestation_fields() {
     value["unapprovedField"] = json!(true);
     fs::write(&attestation, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
-    assert!(
-        crate::runner::import_live_source_proof(
-            &case,
-            &material_root,
-            &attestation,
-            &private_root,
-        )
-        .is_err()
-    );
-    assert!(!private_root.join("inputs").exists());
+    assert!(import_test_source(&case, &material_root, &attestation, &private_root).is_err());
+    assert!(!private_root.join("inputs/case").exists());
 }
 
 #[cfg(unix)]
@@ -3361,11 +3529,11 @@ fn live_freeze_import_is_anchored_against_parent_directory_substitution() {
     let (case, material_root, attestation) =
         write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
 
-    let result = crate::runner::import_live_source_proof_with_hook(
+    let retained = retain_test_import_inputs(&private_root, &attestation).unwrap();
+    let result = crate::runner::import_live_source_proof_into_existing_inputs_with_hook(
         &case,
         &material_root,
-        &attestation,
-        &private_root,
+        &retained,
         |case_root| {
             fs::rename(case_root.join("notes"), case_root.join("retained-notes"))?;
             symlink(&external, case_root.join("notes"))?;
@@ -3389,9 +3557,7 @@ fn managed_source_tree_rejects_every_undeclared_entry() {
     }
     let (case, material_root, attestation) =
         write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
-    let imported =
-        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
-            .unwrap();
+    let imported = import_test_source(&case, &material_root, &attestation, &private_root).unwrap();
     fs::write(
         private_root.join("inputs/case/extra-file"),
         b"attacker bytes\n",
@@ -3413,9 +3579,7 @@ fn between_arm_managed_tree_mutation_poisons_without_a_pair_receipt() {
     }
     let (case, material_root, attestation) =
         write_nonempty_source_fixture(temp.path(), &private_root, "notes/evidence.txt", None, None);
-    let imported =
-        crate::runner::import_live_source_proof(&case, &material_root, &attestation, &private_root)
-            .unwrap();
+    let imported = import_test_source(&case, &material_root, &attestation, &private_root).unwrap();
     let gate = coordinator(&temp, 1);
     activate_first(&gate, "root-1", Duration::from_secs(5));
     let first = gate
@@ -4398,10 +4562,11 @@ fn run_native_mock_pair_with_marker(
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
+    let live_root = live_root.canonicalize().unwrap();
     let (live_case, live_material_root, live_attestation) =
         write_nonempty_source_fixture(temp.path(), &live_root, "notes/evidence.txt", None, None);
     let output = live_root.join("frozen-run-context.json");
-    let live_args = crate::model::LiveFreezeArgs {
+    let mut live_args = crate::model::LiveFreezeArgs {
         repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
         evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
         fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
@@ -4410,7 +4575,7 @@ fn run_native_mock_pair_with_marker(
         case: live_case,
         material_root: live_material_root,
         attestation: live_attestation,
-        provider_budget_evidence: artifact("providerBudgetReceipt"),
+        provider_budget_evidence: artifact("providerBudgetEvidence"),
         rate_card: artifact("rateCard"),
         billing_policy: artifact("billingPolicy"),
         fx_policy: artifact("fxPolicy"),
@@ -4427,7 +4592,7 @@ fn run_native_mock_pair_with_marker(
         max_output_tokens_per_request: 17,
         output: output.clone(),
     };
-    bind_native_attestation_to_live_args(&live_args);
+    install_retention_managed_cost_inputs(&mut live_args);
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
             mode: crate::FreezeRunContextArgs::Live(live_args),
@@ -5770,10 +5935,11 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&live_root, fs::Permissions::from_mode(0o700)).unwrap();
     }
+    let live_root = live_root.canonicalize().unwrap();
     let (live_case, live_material_root, live_attestation) =
         write_nonempty_source_fixture(temp.path(), &live_root, "notes/evidence.txt", None, None);
     let output = live_root.join("frozen-run-context.json");
-    let live_args = crate::model::LiveFreezeArgs {
+    let mut live_args = crate::model::LiveFreezeArgs {
         repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
         evidence_repo_root: std::path::PathBuf::from(seed["repoRoot"].as_str().unwrap()),
         fork_sha: seed["repoHead"].as_str().unwrap().to_string(),
@@ -5782,7 +5948,7 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         case: live_case,
         material_root: live_material_root,
         attestation: live_attestation,
-        provider_budget_evidence: artifact("providerBudgetReceipt"),
+        provider_budget_evidence: artifact("providerBudgetEvidence"),
         rate_card: artifact("rateCard"),
         billing_policy: artifact("billingPolicy"),
         fx_policy: artifact("fxPolicy"),
@@ -5799,7 +5965,7 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         max_output_tokens_per_request: 17,
         output: output.clone(),
     };
-    bind_native_attestation_to_live_args(&live_args);
+    install_retention_managed_cost_inputs(&mut live_args);
     crate::execute_cli(Cli {
         command: crate::EvalCommand::FreezeRunContext(crate::model::FreezeRunContextCommand {
             mode: crate::FreezeRunContextArgs::Live(live_args),
@@ -5814,10 +5980,13 @@ fn typed_live_freeze_and_cli_pair_execute_both_mock_arms_atomically() {
         ("attestation", "inputs/held-out-attestation.json"),
         ("materials", "inputs/materials-manifest.json"),
         ("material:evidence-1", "inputs/case/notes/evidence.txt"),
-        ("providerBudgetReceipt", "provider-budget-receipt.json"),
-        ("rateCard", "rate-card.json"),
-        ("billingPolicy", "billing-policy.json"),
-        ("fxPolicy", "fx-policy.json"),
+        (
+            "providerBudgetEvidence",
+            "inputs/provider-budget-evidence.json",
+        ),
+        ("rateCard", "inputs/rate-card.json"),
+        ("billingPolicy", "inputs/billing-policy.json"),
+        ("fxPolicy", "inputs/fx-policy.json"),
         ("skill", "lead-skill.md"),
     ] {
         assert_eq!(

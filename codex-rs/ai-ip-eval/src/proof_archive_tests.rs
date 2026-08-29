@@ -123,6 +123,10 @@ fn execute_native_archive_pair() -> anyhow::Result<NativeArchiveRun> {
     #[cfg(unix)]
     fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
     let private_root = private_root.canonicalize()?;
+    let retained_inputs = private_root.join("inputs");
+    fs::create_dir(&retained_inputs)?;
+    #[cfg(unix)]
+    fs::set_permissions(&retained_inputs, fs::Permissions::from_mode(0o700))?;
     let mission: codex_ai_ip_domain::HeldOutMissionCase = serde_json::from_value(json!({
         "caseId": "native-archive-case",
         "objective": "Produce one native archive pair",
@@ -144,10 +148,22 @@ fn execute_native_archive_pair() -> anyhow::Result<NativeArchiveRun> {
         fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
         Ok(path)
     };
-    let provider_budget = named_input("provider-budget.json", b"provider budget\n")?;
-    let rate_card = named_input("rate-card.json", b"rate card\n")?;
-    let billing_policy = named_input("billing-policy.json", b"billing policy\n")?;
-    let fx_policy = named_input("fx-policy.json", b"fx policy\n")?;
+    let retained_cost_input = |leaf: &str, fixture: &str| -> anyhow::Result<PathBuf> {
+        let resource = format!("tests/fixtures/contracts/06b1/{fixture}");
+        let path = retained_inputs.join(leaf);
+        fs::copy(codex_utils_cargo_bin::find_resource!(resource)?, &path)?;
+        #[cfg(unix)]
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
+        Ok(path)
+    };
+    let provider_budget = retained_cost_input(
+        "provider-budget-evidence.json",
+        "provider-budget-evidence.canonical.json",
+    )?;
+    let rate_card = retained_cost_input("rate-card.json", "provider-rate-card.canonical.json")?;
+    let billing_policy =
+        retained_cost_input("billing-policy.json", "billing-policy.canonical.json")?;
+    let fx_policy = retained_cost_input("fx-policy.json", "fx-policy.canonical.json")?;
     let skill = named_input("lead-skill.md", b"synthetic skill\n")?;
     let mut attestation: Value =
         serde_json::from_slice(&fs::read(codex_utils_cargo_bin::find_resource!(
@@ -201,10 +217,10 @@ fn execute_native_archive_pair() -> anyhow::Result<NativeArchiveRun> {
             .sha256
         );
     }
-    let attestation_path = named_input(
-        "attestation.json",
-        &serde_json::to_vec_pretty(&attestation)?,
-    )?;
+    let attestation_path = retained_inputs.join("held-out-attestation.json");
+    fs::write(&attestation_path, serde_json::to_vec_pretty(&attestation)?)?;
+    #[cfg(unix)]
+    fs::set_permissions(&attestation_path, fs::Permissions::from_mode(0o600))?;
 
     let mock_codex = crate::native_app_server_fixture::copy_into(temp.path())?;
     let upstream = tiny_http::Server::http("127.0.0.1:0").unwrap();

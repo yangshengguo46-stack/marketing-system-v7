@@ -152,7 +152,16 @@ struct FrozenRunContext {
     max_attempts_per_arm: u64,
     max_total_tokens: u64,
     max_elapsed_seconds: u64,
+    supplier_statement_policy: SupplierStatementPolicy,
     artifacts: BTreeMap<String, FrozenArtifactReference>,
+}
+
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct SupplierStatementPolicy {
+    directory: String,
+    allowed_leaves: [String; 2],
+    nested_entries_allowed: bool,
 }
 
 impl VerifiedFrozenContext {
@@ -420,45 +429,102 @@ pub(crate) struct ImportedSourceProof {
     material_bytes: BTreeMap<String, Vec<u8>>,
 }
 
-pub(crate) fn import_live_source_proof(
+pub(crate) struct RetainedLiveInputDirectory {
+    private_root: PathBuf,
+    private_handle: File,
+    inputs_handle: File,
+    cost_inputs: crate::cost_inputs::RetainedPrivateCostInputs,
+}
+
+impl RetainedLiveInputDirectory {
+    pub(crate) fn retain(
+        private_root: &Path,
+        attestation: &Path,
+        budget: &Path,
+        rate_card: &Path,
+        billing_policy: &Path,
+        fx_policy: &Path,
+    ) -> Result<Self> {
+        let private_handle = open_anchored_directory(private_root)?;
+        let inputs_handle = open_directory_at(&private_handle, OsStr::new("inputs"))
+            .context("open retention-managed private inputs")?;
+        require_exact_directory_entries(
+            &inputs_handle,
+            [
+                "held-out-attestation.json",
+                "provider-budget-evidence.json",
+                "rate-card.json",
+                "billing-policy.json",
+                "fx-policy.json",
+            ],
+        )?;
+        let cost_inputs = crate::cost_inputs::RetainedPrivateCostInputs::retain(
+            private_root,
+            attestation,
+            budget,
+            rate_card,
+            billing_policy,
+            fx_policy,
+        )?;
+        let retained = Self {
+            private_root: private_root.to_path_buf(),
+            private_handle,
+            inputs_handle,
+            cost_inputs,
+        };
+        retained.reverify_unchanged()?;
+        Ok(retained)
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.cost_inputs.reverify_unchanged()?;
+        reverify_directory_identity(&self.private_root, &self.private_handle)?;
+        reverify_child_directory_identity(
+            &self.private_handle,
+            OsStr::new("inputs"),
+            &self.inputs_handle,
+        )
+    }
+}
+
+pub(crate) fn import_live_source_proof_into_existing_inputs(
     case_path: &Path,
     material_root: &Path,
-    attestation_path: &Path,
-    private_root: &Path,
+    retained_inputs: &RetainedLiveInputDirectory,
 ) -> Result<ImportedSourceProof> {
-    import_live_source_proof_inner(
+    import_live_source_proof_into_existing_inputs_inner(
         case_path,
         material_root,
-        attestation_path,
-        private_root,
+        retained_inputs,
         |_| Ok(()),
     )
 }
 
 #[cfg(test)]
-pub(crate) fn import_live_source_proof_with_hook(
+pub(crate) fn import_live_source_proof_into_existing_inputs_with_hook(
     case_path: &Path,
     material_root: &Path,
-    attestation_path: &Path,
-    private_root: &Path,
+    retained_inputs: &RetainedLiveInputDirectory,
     hook: impl FnOnce(&Path) -> Result<()>,
 ) -> Result<ImportedSourceProof> {
-    import_live_source_proof_inner(
+    import_live_source_proof_into_existing_inputs_inner(
         case_path,
         material_root,
-        attestation_path,
-        private_root,
+        retained_inputs,
         hook,
     )
 }
 
-fn import_live_source_proof_inner(
+fn import_live_source_proof_into_existing_inputs_inner(
     case_path: &Path,
     material_root: &Path,
-    attestation_path: &Path,
-    private_root: &Path,
+    retained_inputs: &RetainedLiveInputDirectory,
     hook: impl FnOnce(&Path) -> Result<()>,
 ) -> Result<ImportedSourceProof> {
+    let private_root = &retained_inputs.private_root;
+    let private_handle = &retained_inputs.private_handle;
+    let inputs_handle = &retained_inputs.inputs_handle;
+    let attestation = &retained_inputs.cost_inputs.attestation;
     let case_bytes = read_supplied_regular(case_path).context("read held-out case")?;
     let mission_case: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(&case_bytes).context("parse held-out case")?;
@@ -506,26 +572,17 @@ fn import_live_source_proof_inner(
         validated_materials.push((material, bytes));
     }
     let materials_manifest_bytes = serde_json::to_vec(&mission_case.materials)?;
-    let attestation_bytes =
-        read_supplied_regular(attestation_path).context("read held-out attestation")?;
-    let attestation = FrozenContracts::load()?
-        .validate_native_attestation(&attestation_bytes)
-        .context("validate complete native held-out attestation")?;
     validate_native_attestation_source_binding(
-        &attestation,
+        attestation.typed(),
         &case_bytes,
         &materials_manifest_bytes,
         &private_root,
     )?;
-    let private_handle = open_anchored_directory(&private_root)?;
-    let inputs_handle = create_fresh_directory_at(&private_handle, OsStr::new("inputs"))
-        .context("create fresh managed proof input tree")?;
     let case_handle = create_fresh_directory_at(&inputs_handle, OsStr::new("case"))
         .context("create fresh managed case tree")?;
     let inputs = private_root.join("inputs");
     let imported_case_root = inputs.join("case");
     let imported_case = imported_case_root.join("case.json");
-    let imported_attestation = inputs.join("held-out-attestation.json");
     let imported_manifest = inputs.join("materials-manifest.json");
     let mut directory_handles = BTreeMap::<PathBuf, Arc<File>>::new();
     directory_handles.insert(PathBuf::new(), Arc::new(case_handle));
@@ -556,11 +613,6 @@ fn import_live_source_proof_inner(
         directory_handles[&PathBuf::new()].as_ref(),
         OsStr::new("case.json"),
         &case_bytes,
-    )?;
-    create_owner_only_file_at(
-        &inputs_handle,
-        OsStr::new("held-out-attestation.json"),
-        &attestation_bytes,
     )?;
     create_owner_only_file_at(
         &inputs_handle,
@@ -602,12 +654,12 @@ fn import_live_source_proof_inner(
     let imported = ImportedSourceProof {
         mission_case,
         case_path: imported_case,
-        attestation_path: imported_attestation,
+        attestation_path: attestation.path().to_path_buf(),
         materials_manifest_path: imported_manifest,
         material_paths,
         case_bytes,
-        attestation_bytes,
-        attestation,
+        attestation_bytes: attestation.raw_bytes().to_vec(),
+        attestation: attestation.typed().clone(),
         material_bytes,
     };
     validate_imported_source_proof(&imported)?;
@@ -663,15 +715,8 @@ fn validate_native_attestation_freeze_binding(
     attestation: &NativeHeldOutAttestation,
     args: &LiveFreezeArgs,
     private_root: &Path,
-    imported_paths: &BTreeMap<String, PathBuf>,
+    cost_inputs: &crate::cost_inputs::RetainedPrivateCostInputs,
 ) -> Result<()> {
-    let artifact_sha256 = |name: &str| -> Result<String> {
-        Ok(sha256(&read_regular_file_no_follow(
-            imported_paths
-                .get(name)
-                .with_context(|| format!("missing imported native {name}"))?,
-        )?))
-    };
     if attestation.candidate_sha != args.fork_sha
         || Path::new(&attestation.private_root) != private_root
         || attestation.provider_role != provider_role_wire(args.provider_role)
@@ -682,10 +727,10 @@ fn validate_native_attestation_freeze_binding(
         || attestation.max_total_tokens_per_run != args.max_total_tokens_per_run
         || attestation.max_elapsed_seconds_per_run != args.max_elapsed_seconds_per_run
         || attestation.max_output_tokens_per_request != args.max_output_tokens_per_request
-        || attestation.provider_budget_evidence_sha256 != artifact_sha256("providerBudgetReceipt")?
-        || attestation.rate_card_sha256 != artifact_sha256("rateCard")?
-        || attestation.billing_policy_commitment != artifact_sha256("billingPolicy")?
-        || attestation.fx_policy_sha256 != artifact_sha256("fxPolicy")?
+        || attestation.provider_budget_evidence_sha256 != cost_inputs.budget.sha256()
+        || attestation.rate_card_sha256 != cost_inputs.rate_card.sha256()
+        || attestation.billing_policy_commitment != cost_inputs.billing_policy.sha256()
+        || attestation.fx_policy_sha256 != cost_inputs.fx_policy.sha256()
     {
         bail!("native attestation differs from the live freeze inputs");
     }
@@ -706,7 +751,7 @@ fn validate_native_attestation_context_binding(
         || attestation.max_elapsed_seconds_per_run != context.max_elapsed_seconds
         || attestation.max_output_tokens_per_request != context.max_output_tokens
         || attestation.provider_budget_evidence_sha256
-            != context.artifacts["providerBudgetReceipt"].sha256
+            != context.artifacts["providerBudgetEvidence"].sha256
         || attestation.rate_card_sha256 != context.artifacts["rateCard"].sha256
         || attestation.billing_policy_commitment != context.artifacts["billingPolicy"].sha256
         || attestation.fx_policy_sha256 != context.artifacts["fxPolicy"].sha256
@@ -882,14 +927,22 @@ fn validate_managed_source_tree(
     )?;
     let private = open_anchored_directory(private_root)?;
     let inputs = open_directory_at(&private, OsStr::new("inputs"))?;
-    require_exact_directory_entries(
-        &inputs,
-        [
-            "case",
-            "held-out-attestation.json",
-            "materials-manifest.json",
-        ],
-    )?;
+    let mut expected_inputs = BTreeSet::from([
+        std::ffi::OsString::from("case"),
+        std::ffi::OsString::from("held-out-attestation.json"),
+        std::ffi::OsString::from("materials-manifest.json"),
+        std::ffi::OsString::from("provider-budget-evidence.json"),
+        std::ffi::OsString::from("rate-card.json"),
+        std::ffi::OsString::from("billing-policy.json"),
+        std::ffi::OsString::from("fx-policy.json"),
+    ]);
+    let actual_inputs = list_directory_entries(&inputs)?;
+    if actual_inputs.contains(OsStr::new("supplier-statements")) {
+        expected_inputs.insert(std::ffi::OsString::from("supplier-statements"));
+    }
+    if actual_inputs != expected_inputs {
+        bail!("managed input directory contains missing or undeclared entries");
+    }
     require_exact_file_at(
         &inputs,
         OsStr::new("held-out-attestation.json"),
@@ -900,6 +953,26 @@ fn validate_managed_source_tree(
         OsStr::new("materials-manifest.json"),
         manifest_bytes,
     )?;
+    for leaf in [
+        "provider-budget-evidence.json",
+        "rate-card.json",
+        "billing-policy.json",
+        "fx-policy.json",
+    ] {
+        require_owner_only_file(&private_root.join("inputs").join(leaf))?;
+    }
+    if actual_inputs.contains(OsStr::new("supplier-statements")) {
+        let statements = open_directory_at(&inputs, OsStr::new("supplier-statements"))?;
+        let entries = list_directory_entries(&statements)?;
+        if entries.iter().any(|entry| {
+            entry != OsStr::new("generic.json") && entry != OsStr::new("candidate.json")
+        }) {
+            bail!("supplier statement directory contains an undeclared entry");
+        }
+        for entry in entries {
+            require_owner_only_file(&private_root.join("inputs/supplier-statements").join(entry))?;
+        }
+    }
     let case = open_directory_at(&inputs, OsStr::new("case"))?;
     let mut expected = BTreeMap::from([(PathBuf::from("case.json"), case_bytes.to_vec())]);
     expected.extend(material_bytes.clone());
@@ -2200,42 +2273,42 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
     {
         bail!("live frozen context must use the canonical private-root filename");
     }
-    let generated_dir = canonical_private_root.join("frozen-inputs");
-    create_owner_only_dir(&generated_dir)?;
-    let source_proof = import_live_source_proof(
+    let retained_inputs = RetainedLiveInputDirectory::retain(
+        &canonical_private_root,
+        &args.attestation,
+        &args.provider_budget_evidence,
+        &args.rate_card,
+        &args.billing_policy,
+        &args.fx_policy,
+    )?;
+    let source_proof = import_live_source_proof_into_existing_inputs(
         &args.case,
         &args.material_root,
-        &args.attestation,
-        &canonical_private_root,
+        &retained_inputs,
     )?;
-    let imported = BTreeMap::from([
-        (
-            "providerBudgetReceipt",
-            (
-                args.provider_budget_evidence.as_path(),
-                "provider-budget-receipt.json",
-            ),
-        ),
-        ("rateCard", (args.rate_card.as_path(), "rate-card.json")),
-        (
-            "billingPolicy",
-            (args.billing_policy.as_path(), "billing-policy.json"),
-        ),
-        ("fxPolicy", (args.fx_policy.as_path(), "fx-policy.json")),
-        ("skill", (args.lead_skill.as_path(), "lead-skill.md")),
-    ]);
-    let mut imported_paths = BTreeMap::new();
-    for (name, (source, leaf)) in imported {
-        let destination = generated_dir.join(leaf);
-        write_owner_only_new(&destination, &read_regular_file_no_follow(source)?)?;
-        imported_paths.insert(name.to_string(), destination);
-    }
     validate_native_attestation_freeze_binding(
         &source_proof.attestation,
         &args,
         &canonical_private_root,
-        &imported_paths,
+        &retained_inputs.cost_inputs,
     )?;
+    let supplier_statements = create_fresh_directory_at(
+        &retained_inputs.inputs_handle,
+        OsStr::new("supplier-statements"),
+    )
+    .context("create supplier statement policy directory")?;
+    supplier_statements.sync_all()?;
+    let coordinator =
+        create_fresh_directory_at(&retained_inputs.private_handle, OsStr::new("coordinator"))
+            .context("create coordinator directory")?;
+    let cost_directory = create_fresh_directory_at(&coordinator, OsStr::new("cost"))
+        .context("create coordinator cost directory")?;
+    cost_directory.sync_all()?;
+    coordinator.sync_all()?;
+    let generated_dir = canonical_private_root.join("frozen-inputs");
+    create_owner_only_dir(&generated_dir)?;
+    let skill_path = generated_dir.join("lead-skill.md");
+    write_owner_only_new(&skill_path, &read_regular_file_no_follow(&args.lead_skill)?)?;
     let mission_case = source_proof.mission_case;
     let schema_path = generated_dir.join("content-package-schema.json");
     write_owner_only_new(
@@ -2282,19 +2355,29 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         ("schema".to_string(), schema_path),
         ("prompt".to_string(), prompt_path),
         ("additionalContext".to_string(), additional_context_path),
-        ("skill".to_string(), imported_paths["skill"].clone()),
+        ("skill".to_string(), skill_path),
         ("threadStartRequest".to_string(), thread_path),
         ("turnStartRequest".to_string(), turn_path),
         (
-            "providerBudgetReceipt".to_string(),
-            imported_paths["providerBudgetReceipt"].clone(),
+            "providerBudgetEvidence".to_string(),
+            retained_inputs.cost_inputs.budget.path().to_path_buf(),
         ),
-        ("rateCard".to_string(), imported_paths["rateCard"].clone()),
+        (
+            "rateCard".to_string(),
+            retained_inputs.cost_inputs.rate_card.path().to_path_buf(),
+        ),
         (
             "billingPolicy".to_string(),
-            imported_paths["billingPolicy"].clone(),
+            retained_inputs
+                .cost_inputs
+                .billing_policy
+                .path()
+                .to_path_buf(),
         ),
-        ("fxPolicy".to_string(), imported_paths["fxPolicy"].clone()),
+        (
+            "fxPolicy".to_string(),
+            retained_inputs.cost_inputs.fx_policy.path().to_path_buf(),
+        ),
     ]);
     for (material_id, path) in source_proof.material_paths {
         named.insert(format!("material:{material_id}"), path);
@@ -2318,7 +2401,7 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         pair_id: sha256(pair_material.as_bytes()),
         public_run_id: sha256(args.provider_label.as_bytes()),
         candidate_sha: args.fork_sha.clone(),
-        private_root: canonical_private_root,
+        private_root: canonical_private_root.clone(),
         repo_root,
         repo_head: args.fork_sha,
         provider_upstream_url: args.provider_upstream_url,
@@ -2327,11 +2410,28 @@ pub fn freeze_live_context(args: LiveFreezeArgs) -> Result<()> {
         max_attempts_per_arm: args.max_provider_request_attempts_per_run,
         max_total_tokens: args.max_total_tokens_per_run,
         max_elapsed_seconds: args.max_elapsed_seconds_per_run,
+        supplier_statement_policy: SupplierStatementPolicy {
+            directory: "inputs/supplier-statements".to_string(),
+            allowed_leaves: ["generic.json".to_string(), "candidate.json".to_string()],
+            nested_entries_allowed: false,
+        },
         artifacts,
     };
     validate_frozen_context(&context)?;
     let context_bytes = serde_json::to_vec_pretty(&context)?;
     FrozenContracts::load()?.validate_native_context(&context_bytes)?;
+    retained_inputs.reverify_unchanged()?;
+    reverify_child_directory_identity(
+        &retained_inputs.inputs_handle,
+        OsStr::new("supplier-statements"),
+        &supplier_statements,
+    )?;
+    reverify_child_directory_identity(
+        &retained_inputs.private_handle,
+        OsStr::new("coordinator"),
+        &coordinator,
+    )?;
+    reverify_child_directory_identity(&coordinator, OsStr::new("cost"), &cost_directory)?;
     write_owner_only_new(&args.output, &context_bytes)
 }
 
@@ -4366,7 +4466,7 @@ pub const REQUIRED_EXECUTION_ARTIFACTS: &[&str] = &[
     "skill",
     "threadStartRequest",
     "turnStartRequest",
-    "providerBudgetReceipt",
+    "providerBudgetEvidence",
     "rateCard",
     "billingPolicy",
     "fxPolicy",
@@ -4774,6 +4874,15 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     {
         bail!("strict live frozen context has invalid required fields");
     }
+    if context.supplier_statement_policy
+        != (SupplierStatementPolicy {
+            directory: "inputs/supplier-statements".to_string(),
+            allowed_leaves: ["generic.json".to_string(), "candidate.json".to_string()],
+            nested_entries_allowed: false,
+        })
+    {
+        bail!("strict live frozen context has invalid supplier statement policy");
+    }
     if context.candidate_sha != context.repo_head {
         bail!("candidate SHA must equal the frozen repository HEAD");
     }
@@ -4834,10 +4943,6 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     let frozen_inputs = context.private_root.join("frozen-inputs");
     require_owner_only_directory(&frozen_inputs)?;
     let expected_private_inputs = [
-        ("providerBudgetReceipt", "provider-budget-receipt.json"),
-        ("rateCard", "rate-card.json"),
-        ("billingPolicy", "billing-policy.json"),
-        ("fxPolicy", "fx-policy.json"),
         ("skill", "lead-skill.md"),
         ("schema", "content-package-schema.json"),
         ("prompt", "root-prompt.txt"),
@@ -4859,6 +4964,20 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     let case_root = imported_inputs.join("case");
     require_owner_only_directory(&imported_inputs)?;
     require_owner_only_directory(&case_root)?;
+    require_owner_only_directory(&imported_inputs.join("supplier-statements"))?;
+    require_owner_only_directory(&context.private_root.join("coordinator/cost"))?;
+    for (name, leaf) in [
+        ("providerBudgetEvidence", "provider-budget-evidence.json"),
+        ("rateCard", "rate-card.json"),
+        ("billingPolicy", "billing-policy.json"),
+        ("fxPolicy", "fx-policy.json"),
+    ] {
+        let expected = imported_inputs.join(leaf).canonicalize()?;
+        if context.artifacts[name].path != expected {
+            bail!("frozen {name} reference is outside its fixed private input slot");
+        }
+        require_owner_only_file(&expected)?;
+    }
     for (name, path) in [
         ("source", case_root.join("case.json")),
         (
@@ -5559,6 +5678,24 @@ where
         bail!("managed input directory contains missing or undeclared entries");
     }
     Ok(())
+}
+
+fn reverify_directory_identity(path: &Path, retained: &File) -> Result<()> {
+    let current = open_anchored_directory(path)?;
+    if !same_file(&retained.metadata()?, &current.metadata()?) {
+        bail!("retained private directory identity changed");
+    }
+    require_owner_only_directory_handle(retained)?;
+    require_owner_only_directory_handle(&current)
+}
+
+fn reverify_child_directory_identity(parent: &File, name: &OsStr, retained: &File) -> Result<()> {
+    let current = open_directory_at(parent, name)?;
+    if !same_file(&retained.metadata()?, &current.metadata()?) {
+        bail!("retained private child directory identity changed");
+    }
+    require_owner_only_directory_handle(retained)?;
+    require_owner_only_directory_handle(&current)
 }
 
 fn create_owner_only_dir(path: &Path) -> Result<()> {
