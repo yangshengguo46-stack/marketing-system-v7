@@ -1119,6 +1119,95 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > with the exact corrective commits and complete GREEN Cargo/Bazel evidence;
 > F-0006 itself may never be rewritten to hide or reclassify these timeouts.
 
+> **Task 7E lightweight Native App Server fixture corrective authority
+> (2026-08-29):** Systematic diagnosis of the default-60-second Native
+> failures found no business-logic deadlock. The test harness copies the
+> approximately 103 MiB `codex-ai-ip-eval` unit-test executable and then uses
+> that copy as the App Server input to every retained-handle, artifact-rehash,
+> private-image, `fsync`, immutable-vnode, spawn, and close verification. A
+> successful pair consequently performs about 3.1 GiB of equivalent reads and
+> 318 MiB of writes before the fixed quiet scans complete; watchdog termination
+> also bypasses normal temporary-image cleanup and makes later selectors
+> progressively slower. Task 7E may correct only this test-infrastructure root
+> cause by adding one dedicated small App Server fixture binary. The production
+> LivePair path and all proof/security semantics remain unchanged.
+>
+> The fixture target is named exactly `ai-ip-native-app-server-fixture`. Its
+> basename deliberately differs from the legacy
+> `native-mock-app-server-test-harness` sentinel, so the unmodified App Server
+> launcher must execute the normal production-shaped command
+> `app-server --listen stdio:// --strict-config`, use stdin for requests and
+> stdout JSONL for responses/notifications, and must not set or consume
+> `AI_IP_NATIVE_APP_SERVER_FIXTURE`, libtest `--exact` arguments, or protocol
+> fd 3. The fixture must fail closed on any other argv, record the exact argv in
+> each isolated arm's `app-server-launch.json`, and preserve the existing
+> initialize/config/Skill catalog/thread/raw-response/child-thread/quiet-window
+> behavior. It may contact only the already frozen loopback proof broker from
+> isolated `config.toml`; it adds no provider endpoint, key, paid request, or
+> external network behavior.
+>
+> Cargo and Bazel must locate the same built target. Cargo/nextest uses
+> `codex_utils_cargo_bin::cargo_bin("ai-ip-native-app-server-fixture")`.
+> Bazel adds that same target to this package's `test_data_extra` and resolves
+> the package-local runfile with `find_resource!` when runfiles are available;
+> no shared Bazel macro may change. A crate-private `#[cfg(test)]` helper may
+> locate and copy the fixture with owner-only executable mode. Its first real
+> contract test must fail before the binary exists, then prove that the
+> dedicated binary is a different file from the evaluator, is at most 64 MiB,
+> rejects wrong argv, accepts the exact production argv, answers a real
+> initialize request over stdout JSONL, and records that argv. The 64 MiB bound
+> is a test-infrastructure I/O budget, not a product or business limit.
+>
+> The three Native execution copy points in `eval_tests.rs` and
+> `proof_archive_tests.rs` must switch from `std::env::current_exe()` to the
+> dedicated fixture. The old embedded `native_app_server_fixture` libtest may
+> then be deleted in a separate mechanical commit. The actual evaluator
+> commitment remains the current test executable; fixture and evaluator
+> commitments stay distinct. Every Native test still performs an independent
+> freeze, creates a fresh private executable image for each arm, retains and
+> re-verifies its descriptor, validates the kernel-loaded vnode, runs both
+> quiet scans, and re-reads ledger, manifests, arm/pair receipts, archive, and
+> inventory. No pair result, private image, receipt, manifest, inventory, or
+> verification result may be cached or shared across tests or arms.
+>
+> The first corrective round may modify only this plan plus
+> `codex-rs/ai-ip-eval/Cargo.toml`, `codex-rs/ai-ip-eval/BUILD.bazel`, new
+> sources below
+> `codex-rs/ai-ip-eval/src/bin/ai_ip_native_app_server_fixture/`, one optional
+> `codex-rs/ai-ip-eval/src/native_app_server_fixture.rs` test helper,
+> `codex-rs/ai-ip-eval/src/lib.rs` solely to mount that helper,
+> `codex-rs/ai-ip-eval/src/eval_tests.rs`, and
+> `codex-rs/ai-ip-eval/src/proof_archive_tests.rs`. Cargo or Bazel lock files
+> may change only when their own required tooling generates a necessary
+> update. Every new source file remains below 500 lines and each independent
+> non-mechanical commit remains below 800 changed lines. The required order is:
+> (1) this authority-only commit; (2) a behavioral RED that fails because the
+> dedicated target is absent; (3) the smallest fixture/Cargo/Bazel/helper
+> GREEN; (4) switch all three execution copy points and remove the embedded
+> fixture; (5) focused/default-60/full regression evidence; (6) append-only
+> F-0006A if and only if all closure checks are GREEN.
+>
+> This authority explicitly forbids changes to `runner.rs`, `app_server.rs`,
+> `.config/nextest.toml`, CLI/wire/schema/provider/output/security policy,
+> deadlines, retries, test-thread settings, quiet windows, artifact rehashes,
+> SHA checks, `fsync`, immutable/private-image/vnode validation, Replay
+> fixtures, private evidence, and existing F-0006 bytes. If the dedicated
+> production-argv/stdout fixture cannot be integrated without modifying either
+> forbidden Rust module, stop and obtain a new reviewed authority rather than
+> using the legacy test-only launcher branch. Moving the evaluator commitment
+> to the fixture, stripping the old test executable, or widening the watchdog
+> are not authorized fallbacks.
+>
+> F-0006A may close Task 7E only after clean serial `retries=0` runs under the
+> unchanged default 60-second watchdog pass the formerly timing-out combined
+> exact-envelope selector, immediate generic Skill poison, late quiet-window
+> generic Skill poison, the full evaluator suite, the proxy suite, all four
+> planned evaluator Bazel targets, schemas/rubrics builds, and lock checks.
+> It records exact commands/counts/timings, corrective commits, fixture launch
+> contract and size, rollback order, and `providerMode=not-run`, paid cost zero,
+> loopback-only/no-key/no-customer-material disposition. F-0006A still leaves
+> G0/G1/G2 and `PASS_TO_PHASE_0B` open unless their separate gates are met.
+
 > **Task 7A measured split amendment (2026-08-29):** The reviewed 7A diff is
 > 919 changed lines, so 7A is committed as **7A1** (`score.rs`, its sibling
 > scoring-table tests, and their `lib.rs` mount) and **7A2**
