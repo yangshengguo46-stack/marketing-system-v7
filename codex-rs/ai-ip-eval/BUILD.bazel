@@ -13,6 +13,7 @@ codex_rust_crate(
     ],
     crate_name = "codex_ai_ip_eval",
     test_data_extra = [
+        ":ai-ip-native-app-server-fixture",
         ":ai-ip-eval-unit-test-fixtures",
         "//ai-ip-assets/skills/deliver-ai-ip-content-package:skill",
         "//ai-ip-evals/rubrics:rubrics",
