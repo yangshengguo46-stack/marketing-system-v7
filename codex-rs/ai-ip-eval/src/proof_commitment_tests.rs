@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+#[cfg(unix)]
 use std::fs;
 use std::path::PathBuf;
 
@@ -58,6 +59,19 @@ fn proof_commitment_vectors_match_normative_framing() {
         crate::proof_commitment::proof_merkle_root(&single_leaves).unwrap(),
         single["expectedHex"].as_str().unwrap(),
     );
+    let even_node = merkle["evenNode"].as_object().unwrap();
+    assert_eq!(
+        crate::proof_commitment::proof_merkle_root(&single_leaves).unwrap(),
+        even_node["leftHex"].as_str().unwrap(),
+    );
+    let right_single_leaves = BTreeMap::from([(
+        "é".to_owned(),
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".to_owned(),
+    )]);
+    assert_eq!(
+        crate::proof_commitment::proof_merkle_root(&right_single_leaves).unwrap(),
+        even_node["rightHex"].as_str().unwrap(),
+    );
     let even_leaves = BTreeMap::from([
         ("z".to_owned(), single["value"].as_str().unwrap().to_owned()),
         (
@@ -67,7 +81,7 @@ fn proof_commitment_vectors_match_normative_framing() {
     ]);
     assert_eq!(
         crate::proof_commitment::proof_merkle_root(&even_leaves).unwrap(),
-        merkle["evenNode"]["expectedHex"].as_str().unwrap(),
+        even_node["expectedHex"].as_str().unwrap(),
     );
     let odd_leaves = merkle["oddDuplicationLeaves"]
         .as_object()
@@ -121,10 +135,11 @@ fn proof_commitment_rejects_invalid_public_inputs_and_preserves_length_prefixes(
 fn private_root() -> (tempfile::TempDir, PathBuf) {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().join("private");
-    fs::create_dir(&root).unwrap();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
+
+        fs::create_dir(&root).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
     }
     #[cfg(windows)]

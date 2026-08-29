@@ -130,6 +130,17 @@ def test_proof_commitment_vectors_match_normative_framing() -> None:
         )
         == single["expectedHex"]
     )
+    even_node = merkle["evenNode"]
+    assert isinstance(even_node, dict)
+    assert (
+        verifier.proof_merkle_root_vector(
+            {str(single["name"]): str(single["value"])}
+        )
+        == even_node["leftHex"]
+    )
+    assert verifier.proof_merkle_root_vector({"é": "b" * 64}) == even_node[
+        "rightHex"
+    ]
     assert (
         verifier.proof_merkle_root_vector(
             {
@@ -137,7 +148,7 @@ def test_proof_commitment_vectors_match_normative_framing() -> None:
                 "é": "b" * 64,
             }
         )
-        == merkle["evenNode"]["expectedHex"]
+        == even_node["expectedHex"]
     )
     odd_leaves = merkle["oddDuplicationLeaves"]
     assert isinstance(odd_leaves, dict)
