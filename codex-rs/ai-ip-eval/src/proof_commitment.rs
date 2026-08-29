@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
+use std::fmt;
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Context;
 use anyhow::bail;
@@ -11,8 +13,115 @@ use sha2::Sha256;
 
 const DOMAIN: &[u8] = b"AI-IP-PROOF-V1\0";
 const SHA256_HEX_LENGTH: usize = 64;
+const COMMITMENT_KEY_RELATIVE_PATH: &str = "coordinator/commitment-key.bin";
 
 pub(crate) struct ProofCommitmentKey([u8; 32]);
+
+#[derive(Clone)]
+pub(crate) struct RetainedProofCommitmentKey {
+    retained: Arc<crate::secure_fs_retain::RetainedBoundedFile>,
+    key_sha256: String,
+}
+
+impl fmt::Debug for RetainedProofCommitmentKey {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("RetainedProofCommitmentKey")
+            .field("key_sha256", &self.key_sha256)
+            .finish_non_exhaustive()
+    }
+}
+
+impl RetainedProofCommitmentKey {
+    pub(crate) fn create_fixed(private_root: &Path) -> anyhow::Result<Self> {
+        let coordinator = private_root.join("coordinator");
+        match std::fs::symlink_metadata(&coordinator) {
+            Ok(_) => {
+                let resolved = crate::secure_fs::resolve_private_relative(
+                    private_root,
+                    Path::new("coordinator"),
+                )?;
+                if resolved.canonicalize()? != coordinator {
+                    bail!("proof commitment coordinator is not the exact fixed directory");
+                }
+                crate::secure_fs::fsync_directory(&coordinator)?;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                crate::secure_fs::create_owner_only_dir_new(&coordinator)?;
+            }
+            Err(error) => return Err(error).context("inspect proof commitment coordinator"),
+        }
+        let key = ProofCommitmentKey::generate()?;
+        key.publish_owner_only_new(&private_root.join(COMMITMENT_KEY_RELATIVE_PATH))?;
+        Self::read_fixed(private_root)
+    }
+
+    pub(crate) fn read_fixed(private_root: &Path) -> anyhow::Result<Self> {
+        let path = crate::secure_fs::resolve_private_relative(
+            private_root,
+            Path::new(COMMITMENT_KEY_RELATIVE_PATH),
+        )?;
+        if path != private_root.join(COMMITMENT_KEY_RELATIVE_PATH) {
+            bail!("proof commitment key is not the exact fixed leaf");
+        }
+        let retained = crate::secure_fs_retain::RetainedBoundedFile::retain(
+            &path,
+            32,
+            crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
+        )?;
+        if retained.raw_bytes().len() != 32 {
+            bail!("proof commitment key must be exactly 32 bytes");
+        }
+        let key_sha256 = format!("{:x}", Sha256::digest(retained.raw_bytes()));
+        Ok(Self {
+            retained: Arc::new(retained),
+            key_sha256,
+        })
+    }
+
+    pub(crate) fn key_sha256(&self) -> &str {
+        &self.key_sha256
+    }
+
+    pub(crate) fn derive_public_run_id(&self, pair_id: &str) -> anyhow::Result<String> {
+        self.retained.reverify_unchanged()?;
+        let bytes: [u8; 32] = self
+            .retained
+            .raw_bytes()
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("proof commitment key must be exactly 32 bytes"))?;
+        derive_public_run_id(&ProofCommitmentKey(bytes), pair_id)
+    }
+
+    pub(crate) fn reverify_binding(
+        &self,
+        expected_key_sha256: &str,
+        pair_id: &str,
+        expected_public_run_id: &str,
+    ) -> anyhow::Result<()> {
+        self.retained.reverify_unchanged()?;
+        let bytes: [u8; 32] = self
+            .retained
+            .raw_bytes()
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("proof commitment key must be exactly 32 bytes"))?;
+        let observed_key_sha256 = format!("{:x}", Sha256::digest(bytes));
+        if observed_key_sha256 != self.key_sha256 || observed_key_sha256 != expected_key_sha256 {
+            bail!("proof commitment key SHA-256 differs from frozen context");
+        }
+        if derive_public_run_id(&ProofCommitmentKey(bytes), pair_id)? != expected_public_run_id {
+            bail!("public run ID differs from retained proof commitment key and pair ID");
+        }
+        Ok(())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn raw_key_occurs_in(&self, bytes: &[u8]) -> bool {
+        bytes
+            .windows(self.retained.raw_bytes().len())
+            .any(|window| window == self.retained.raw_bytes())
+    }
+}
 
 impl ProofCommitmentKey {
     pub(crate) fn generate() -> anyhow::Result<Self> {

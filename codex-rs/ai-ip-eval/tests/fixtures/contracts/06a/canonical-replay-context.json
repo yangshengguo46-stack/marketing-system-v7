@@ -3,6 +3,8 @@
   "executionMode": "replay",
   "providerMode": "not-run",
   "pairId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "publicRunId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "commitmentKeySha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "repoRoot": "/repo/ai-ip",
   "forkSha": "synthetic-replay-fork",
   "privateRoot": "/private/ai-ip-run",

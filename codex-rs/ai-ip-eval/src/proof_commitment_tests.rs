@@ -193,3 +193,42 @@ fn proof_commitment_key_uses_create_new_owner_only_exact_single_link_files() {
         );
     }
 }
+
+#[test]
+fn proof_commitment_retained_key_accepts_only_the_fixed_exact_leaf() {
+    let (_wrong_leaf_temp, wrong_leaf_root) = private_root();
+    crate::secure_fs::create_owner_only_dir_new(&wrong_leaf_root.join("coordinator")).unwrap();
+    crate::secure_fs::write_owner_only_new(
+        &wrong_leaf_root.join("coordinator/caller-selected-key.bin"),
+        &[0x3c; 32],
+    )
+    .unwrap();
+    assert!(
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&wrong_leaf_root).is_err()
+    );
+
+    let (_short_temp, short_root) = private_root();
+    crate::secure_fs::create_owner_only_dir_new(&short_root.join("coordinator")).unwrap();
+    crate::secure_fs::write_owner_only_new(
+        &short_root.join("coordinator/commitment-key.bin"),
+        &[0x3c; 31],
+    )
+    .unwrap();
+    assert!(crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&short_root).is_err());
+
+    let (_exact_temp, exact_root) = private_root();
+    crate::secure_fs::create_owner_only_dir_new(&exact_root.join("coordinator")).unwrap();
+    let bytes = [0x3c; 32];
+    crate::secure_fs::write_owner_only_new(
+        &exact_root.join("coordinator/commitment-key.bin"),
+        &bytes,
+    )
+    .unwrap();
+    let retained =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&exact_root).unwrap();
+    assert!(!retained.raw_key_occurs_in(format!("{retained:?}").as_bytes()));
+    let public_run_id = retained.derive_public_run_id(&"a".repeat(64)).unwrap();
+    retained
+        .reverify_binding(retained.key_sha256(), &"a".repeat(64), &public_run_id)
+        .unwrap();
+}

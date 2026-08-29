@@ -45,13 +45,14 @@
     "nativeContext": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "executionMode", "providerMode", "pairId", "publicRunId", "candidateSha", "privateRoot", "repoRoot", "repoHead", "providerUpstreamUrl", "modelLabel", "maxOutputTokens", "maxAttemptsPerArm", "maxTotalTokens", "maxElapsedSeconds", "supplierStatementPolicy", "artifacts"],
+      "required": ["schemaVersion", "executionMode", "providerMode", "pairId", "publicRunId", "commitmentKeySha256", "candidateSha", "privateRoot", "repoRoot", "repoHead", "providerUpstreamUrl", "modelLabel", "maxOutputTokens", "maxAttemptsPerArm", "maxTotalTokens", "maxElapsedSeconds", "supplierStatementPolicy", "artifacts"],
       "properties": {
         "schemaVersion": {"const": 1},
         "executionMode": {"const": "live"},
         "providerMode": {"const": "not-run"},
         "pairId": {"$ref": "#/$defs/sha256"},
         "publicRunId": {"$ref": "#/$defs/sha256"},
+        "commitmentKeySha256": {"$ref": "#/$defs/sha256"},
         "candidateSha": {"type": "string", "minLength": 1},
         "privateRoot": {"type": "string", "minLength": 1},
         "repoRoot": {"type": "string", "minLength": 1},
@@ -101,12 +102,14 @@
     "replayContext": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "executionMode", "providerMode", "pairId", "repoRoot", "forkSha", "privateRoot", "codexBinary", "evaluatorBinary", "fixtureSetManifest", "fixtures"],
+      "required": ["schemaVersion", "executionMode", "providerMode", "pairId", "publicRunId", "commitmentKeySha256", "repoRoot", "forkSha", "privateRoot", "codexBinary", "evaluatorBinary", "fixtureSetManifest", "fixtures"],
       "properties": {
         "schemaVersion": {"const": 1},
         "executionMode": {"const": "replay"},
         "providerMode": {"const": "not-run"},
         "pairId": {"$ref": "#/$defs/sha256"},
+        "publicRunId": {"$ref": "#/$defs/sha256"},
+        "commitmentKeySha256": {"$ref": "#/$defs/sha256"},
         "repoRoot": {"type": "string", "minLength": 1},
         "forkSha": {"type": "string", "minLength": 1},
         "privateRoot": {"type": "string", "minLength": 1},

@@ -64,6 +64,7 @@ pub struct VerifiedFrozenContext {
     context: FrozenRunContext,
     frozen_file: ArtifactCommitment,
     artifacts: ArtifactCommitments,
+    commitment_key: crate::proof_commitment::RetainedProofCommitmentKey,
 }
 
 const NATIVE_PROVIDER_LABEL: &str = "synthetic-loopback-mock";
@@ -142,6 +143,7 @@ struct FrozenRunContext {
     provider_mode: String,
     pair_id: String,
     public_run_id: String,
+    commitment_key_sha256: String,
     candidate_sha: String,
     private_root: PathBuf,
     repo_root: PathBuf,
@@ -235,6 +237,17 @@ impl VerifiedFrozenContext {
         self.frozen_file
             .verify_context_bytes(&self.raw_bytes)
             .context("reverify native frozen context identity")?;
+        if sha256(
+            format!("{}:{}", self.context.repo_head, self.context.model_label).as_bytes(),
+        ) != self.context.pair_id
+        {
+            bail!("native pair ID changed from its frozen repository and model inputs");
+        }
+        self.commitment_key.reverify_binding(
+            &self.context.commitment_key_sha256,
+            &self.context.pair_id,
+            &self.context.public_run_id,
+        )?;
         self.artifacts.verify()?;
         validate_managed_source_artifacts(self).map(drop)
     }
@@ -251,6 +264,8 @@ struct ReplayFrozenContext {
     execution_mode: String,
     provider_mode: String,
     pair_id: String,
+    public_run_id: String,
+    commitment_key_sha256: String,
     repo_root: PathBuf,
     fork_sha: String,
     private_root: PathBuf,
@@ -287,6 +302,7 @@ pub(crate) struct VerifiedReplayFrozenContext {
     raw_sha256: String,
     frozen_file: ArtifactCommitment,
     context: ReplayFrozenContext,
+    commitment_key: crate::proof_commitment::RetainedProofCommitmentKey,
     fixture_set: ArtifactCommitment,
     fixtures: BTreeMap<String, VerifiedReplayReference>,
     materials: Vec<VerifiedReplayMaterial>,
@@ -375,6 +391,14 @@ impl VerifiedReplayFrozenContext {
         self.frozen_file
             .verify_context_bytes(&self.raw_bytes)
             .context("reverify Replay frozen context identity")?;
+        if replay_pair_id(&self.context.fork_sha, &self.context.fixtures)? != self.context.pair_id {
+            bail!("Replay pair ID changed from its frozen execution inputs");
+        }
+        self.commitment_key.reverify_binding(
+            &self.context.commitment_key_sha256,
+            &self.context.pair_id,
+            &self.context.public_run_id,
+        )?;
         self.fixture_set.read_verified()?;
         self.codex_binary.read_verified()?;
         self.evaluator_binary.read_verified()?;
@@ -1224,6 +1248,10 @@ fn freeze_replay_context_inner(
         path: evaluator_path,
     };
     let pair_id = replay_pair_id(&args.fork_sha, &fixtures)?;
+    let commitment_key =
+        crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(&private_root)?;
+    let commitment_key_sha256 = commitment_key.key_sha256().to_string();
+    let public_run_id = commitment_key.derive_public_run_id(&pair_id)?;
     let case_bytes = &verified_fixtures["case"].bytes;
     let mission: codex_ai_ip_domain::HeldOutMissionCase =
         serde_json::from_slice(case_bytes).context("parse frozen replay case")?;
@@ -1251,6 +1279,8 @@ fn freeze_replay_context_inner(
         execution_mode: "replay".to_string(),
         provider_mode: "not-run".to_string(),
         pair_id,
+        public_run_id,
+        commitment_key_sha256,
         repo_root,
         fork_sha: args.fork_sha,
         private_root,
@@ -1264,6 +1294,11 @@ fn freeze_replay_context_inner(
     };
     let record_bytes = serde_json::to_vec_pretty(&record)?;
     FrozenContracts::load()?.validate_replay_context(&record_bytes)?;
+    commitment_key.reverify_binding(
+        &record.commitment_key_sha256,
+        &record.pair_id,
+        &record.public_run_id,
+    )?;
     write_owner_only_new(&args.output, &record_bytes)
 }
 
@@ -1532,11 +1567,20 @@ fn verify_retained_replay_frozen_context(
         || context.execution_mode != "replay"
         || context.provider_mode != "not-run"
         || !is_lower_hex(&context.pair_id, 64)
+        || !is_lower_hex(&context.public_run_id, 64)
+        || !is_lower_hex(&context.commitment_key_sha256, 64)
         || canonical_path != context.private_root.join("frozen-run-context.json")
     {
         bail!("frozen replay context violates its exact typed contract");
     }
     require_owner_only_directory(&context.private_root)?;
+    let commitment_key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&context.private_root)?;
+    commitment_key.reverify_binding(
+        &context.commitment_key_sha256,
+        &context.pair_id,
+        &context.public_run_id,
+    )?;
     let codex_binary = retain_replay_reference(&context.codex_binary, "Codex binary")?;
     let evaluator_binary = retain_replay_reference(&context.evaluator_binary, "evaluator binary")?;
     if std::env::current_exe()?.canonicalize()? != context.evaluator_binary.path {
@@ -1649,6 +1693,7 @@ fn verify_retained_replay_frozen_context(
         raw_sha256: sha256(raw_context_bytes),
         frozen_file,
         context,
+        commitment_key,
         fixture_set,
         fixtures,
         materials,
@@ -2342,6 +2387,15 @@ fn freeze_live_context_inner(
     {
         bail!("live frozen context must use the canonical private-root filename");
     }
+    let pair_material = format!("{}:{}", args.fork_sha, args.model_label);
+    let pair_id = sha256(pair_material.as_bytes());
+    let commitment_key = if canonical_private_root.join("coordinator").try_exists()? {
+        Some(crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(
+            &canonical_private_root,
+        )?)
+    } else {
+        None
+    };
     let retained_inputs = RetainedLiveInputDirectory::retain(
         &canonical_private_root,
         &args.attestation,
@@ -2350,6 +2404,16 @@ fn freeze_live_context_inner(
         &args.billing_policy,
         &args.fx_policy,
     )?;
+    let commitment_key = match commitment_key {
+        Some(commitment_key) => commitment_key,
+        None => crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(
+            &canonical_private_root,
+        )?,
+    };
+    let commitment_key_sha256 = commitment_key.key_sha256().to_string();
+    let public_run_id = commitment_key.derive_public_run_id(&pair_id)?;
+    let coordinator = open_directory_at(&retained_inputs.private_handle, OsStr::new("coordinator"))
+        .context("open proof commitment coordinator directory")?;
     let source_proof = import_live_source_proof_into_existing_inputs(
         &args.case,
         &args.material_root,
@@ -2367,9 +2431,6 @@ fn freeze_live_context_inner(
     )
     .context("create supplier statement policy directory")?;
     supplier_statements.sync_all()?;
-    let coordinator =
-        create_fresh_directory_at(&retained_inputs.private_handle, OsStr::new("coordinator"))
-            .context("create coordinator directory")?;
     let cost_directory = create_fresh_directory_at(&coordinator, OsStr::new("cost"))
         .context("create coordinator cost directory")?;
     cost_directory.sync_all()?;
@@ -2515,13 +2576,13 @@ fn freeze_live_context_inner(
     {
         bail!("frozen context did not preserve exact retained private input references");
     }
-    let pair_material = format!("{}:{}", args.fork_sha, args.model_label);
     let context = FrozenRunContext {
         schema_version: 1,
         execution_mode: "live".to_string(),
         provider_mode: "not-run".to_string(),
-        pair_id: sha256(pair_material.as_bytes()),
-        public_run_id: sha256(args.provider_label.as_bytes()),
+        pair_id,
+        public_run_id,
+        commitment_key_sha256,
         candidate_sha: args.fork_sha.clone(),
         private_root: canonical_private_root.clone(),
         repo_root,
@@ -2542,6 +2603,11 @@ fn freeze_live_context_inner(
     validate_frozen_context(&context)?;
     let context_bytes = serde_json::to_vec_pretty(&context)?;
     FrozenContracts::load()?.validate_native_context(&context_bytes)?;
+    commitment_key.reverify_binding(
+        &context.commitment_key_sha256,
+        &context.pair_id,
+        &context.public_run_id,
+    )?;
     retained_inputs.reverify_unchanged()?;
     reverify_child_directory_identity(
         &retained_inputs.inputs_handle,
@@ -4304,6 +4370,13 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
     }
     require_owner_only_file(&canonical_path)?;
     validate_frozen_context(&context)?;
+    let commitment_key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&context.private_root)?;
+    commitment_key.reverify_binding(
+        &context.commitment_key_sha256,
+        &context.pair_id,
+        &context.public_run_id,
+    )?;
     let artifacts = ArtifactCommitments::from_references(&context.artifacts)?;
     Ok(VerifiedFrozenContext {
         canonical_path,
@@ -4312,6 +4385,7 @@ pub fn verify_frozen_context(path: &Path) -> Result<VerifiedFrozenContext> {
         context,
         frozen_file,
         artifacts,
+        commitment_key,
     })
 }
 
@@ -4991,6 +5065,7 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
         || context.provider_mode != "not-run"
         || !is_lower_hex(&context.pair_id, 64)
         || !is_lower_hex(&context.public_run_id, 64)
+        || !is_lower_hex(&context.commitment_key_sha256, 64)
         || context.candidate_sha.is_empty()
         || context.max_output_tokens == 0
         || context.max_attempts_per_arm == 0
@@ -5011,6 +5086,12 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     }
     if context.candidate_sha != context.repo_head {
         bail!("candidate SHA must equal the frozen repository HEAD");
+    }
+    let expected_pair_id = sha256(
+        format!("{}:{}", context.repo_head, context.model_label).as_bytes(),
+    );
+    if context.pair_id != expected_pair_id {
+        bail!("strict live pair ID differs from its frozen repository and model inputs");
     }
     validate_local_mock_upstream(&context.provider_upstream_url)?;
     require_artifact_names(context.artifacts.keys().map(String::as_str))?;

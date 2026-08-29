@@ -247,6 +247,13 @@ fn apply_negative_mutation(value: &mut serde_json::Value, mutation: &str) {
         "wrongPaidProviderCost" => value["paidProviderCostFen"] = serde_json::json!(1),
         "wrongSyntheticOnly" => value["syntheticOnly"] = serde_json::json!(false),
         "badDigest" => value["caseSha256"] = serde_json::json!("ABC"),
+        "badCommitmentKeyDigest" => value["commitmentKeySha256"] = serde_json::json!("ABC"),
+        "missingCommitmentKeyDigest" => {
+            value.as_object_mut().unwrap().remove("commitmentKeySha256");
+        }
+        "missingPublicRunId" => {
+            value.as_object_mut().unwrap().remove("publicRunId");
+        }
         "zeroRange" => value["maxOutputTokens"] = serde_json::json!(0),
         "nativeFieldInReplay" => value["modelLabel"] = serde_json::json!("forbidden"),
         "replayFieldInNative" => value["fixtureSetManifest"] = serde_json::json!({}),

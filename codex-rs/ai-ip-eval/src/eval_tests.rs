@@ -1032,6 +1032,406 @@ fn replay_verified_context_rejects_raw_path_sha_and_reference_drift() {
     }
 }
 
+fn assert_generated_commitment_identity(
+    private_root: &std::path::Path,
+    context: &serde_json::Value,
+) {
+    let key_path = private_root.join("coordinator/commitment-key.bin");
+    let key = crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(private_root).unwrap();
+    assert_eq!(context["commitmentKeySha256"], key.key_sha256());
+    assert_eq!(
+        context["publicRunId"],
+        key.derive_public_run_id(context["pairId"].as_str().unwrap())
+            .unwrap()
+    );
+    let context_bytes = serde_json::to_vec(context).unwrap();
+    assert!(!key.raw_key_occurs_in(&context_bytes));
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        use std::os::unix::fs::PermissionsExt;
+
+        let metadata = fs::metadata(key_path).unwrap();
+        assert_eq!(metadata.permissions().mode() & 0o777, 0o600);
+        assert_eq!(metadata.nlink(), 1);
+    }
+}
+
+fn freeze_native_commitment_context()
+-> (tempfile::TempDir, std::path::PathBuf, serde_json::Value) {
+    let temp = tempfile::tempdir().unwrap();
+    let args = native_freeze_args_for_cost_inputs(&temp, true);
+    let private_root = args.private_root.clone();
+    let output = args.output.clone();
+    crate::freeze_live_context(args).unwrap();
+    let context = serde_json::from_slice(&fs::read(output).unwrap()).unwrap();
+    (temp, private_root, context)
+}
+
+#[test]
+fn freeze_derives_public_run_id_from_private_commitment_key() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let replay_a = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let replay_b = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let (_native_temp_a, native_root_a, native_a) = freeze_native_commitment_context();
+    let (_native_temp_b, native_root_b, native_b) = freeze_native_commitment_context();
+
+    for (private_root, context) in [
+        (&replay_a.private_root, &replay_a.frozen_json),
+        (&replay_b.private_root, &replay_b.frozen_json),
+        (&native_root_a, &native_a),
+        (&native_root_b, &native_b),
+    ] {
+        assert_generated_commitment_identity(private_root, context);
+    }
+    assert_ne!(
+        replay_a.frozen_json["publicRunId"],
+        replay_b.frozen_json["publicRunId"]
+    );
+    assert_ne!(native_a["publicRunId"], native_b["publicRunId"]);
+}
+
+fn write_existing_commitment_key(private_root: &std::path::Path) -> Vec<u8> {
+    let coordinator = private_root.join("coordinator");
+    if !coordinator.exists() {
+        crate::secure_fs::create_owner_only_dir_new(&coordinator).unwrap();
+    }
+    let key_bytes = vec![0xa5; 32];
+    crate::secure_fs::write_owner_only_new(
+        &coordinator.join("commitment-key.bin"),
+        &key_bytes,
+    )
+    .unwrap();
+    key_bytes
+}
+
+fn clone_live_freeze_args(
+    args: &crate::model::LiveFreezeArgs,
+) -> crate::model::LiveFreezeArgs {
+    crate::model::LiveFreezeArgs {
+        repo_root: args.repo_root.clone(),
+        evidence_repo_root: args.evidence_repo_root.clone(),
+        fork_sha: args.fork_sha.clone(),
+        private_root: args.private_root.clone(),
+        codex_bin: args.codex_bin.clone(),
+        case: args.case.clone(),
+        material_root: args.material_root.clone(),
+        attestation: args.attestation.clone(),
+        provider_budget_evidence: args.provider_budget_evidence.clone(),
+        rate_card: args.rate_card.clone(),
+        billing_policy: args.billing_policy.clone(),
+        fx_policy: args.fx_policy.clone(),
+        lead_skill: args.lead_skill.clone(),
+        model_label: args.model_label.clone(),
+        provider_label: args.provider_label.clone(),
+        provider_role: args.provider_role,
+        provider_upstream_url: args.provider_upstream_url.clone(),
+        authorized_total_cost_fen: args.authorized_total_cost_fen,
+        authorized_per_run_cost_fen: args.authorized_per_run_cost_fen,
+        max_provider_request_attempts_per_run: args.max_provider_request_attempts_per_run,
+        max_total_tokens_per_run: args.max_total_tokens_per_run,
+        max_elapsed_seconds_per_run: args.max_elapsed_seconds_per_run,
+        max_output_tokens_per_request: args.max_output_tokens_per_request,
+        output: args.output.clone(),
+    }
+}
+
+#[test]
+fn freeze_refuses_existing_commitment_key() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let replay_temp = tempfile::tempdir().unwrap();
+    let replay_root = replay_temp.path().join("replay-private");
+    create_owner_only_test_dir(&replay_root);
+    let replay_root = replay_root.canonicalize().unwrap();
+    let replay_binary = replay_root.join("synthetic-codex-binary");
+    fs::write(&replay_binary, b"synthetic replay binary\n").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&replay_binary, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let replay_output = replay_root.join("frozen-run-context.json");
+    let replay_key = write_existing_commitment_key(&replay_root);
+    let replay_error = crate::runner::freeze_replay_context_with_hook(
+        crate::model::ReplayFreezeArgs {
+            repo_root: fixture_set.parent().unwrap().to_path_buf(),
+            fork_sha: "synthetic-replay-fork".to_string(),
+            private_root: replay_root.clone(),
+            codex_bin: replay_binary,
+            case: fixture_set.parent().unwrap().join("replay-case.json"),
+            transcript: fixture_set.parent().unwrap().join("replay-transcript.jsonl"),
+            fixture_set_manifest: fixture_set.clone(),
+            output: replay_output.clone(),
+        },
+        || Ok(()),
+    )
+    .unwrap_err();
+    assert!(format!("{replay_error:#}").contains("create private file"));
+    assert!(!replay_output.exists());
+    assert_eq!(
+        fs::read(replay_root.join("coordinator/commitment-key.bin")).unwrap(),
+        replay_key
+    );
+
+    let native_temp = tempfile::tempdir().unwrap();
+    let native_args = native_freeze_args_for_cost_inputs(&native_temp, true);
+    let native_root = native_args.private_root.clone();
+    let native_output = native_args.output.clone();
+    let native_key = write_existing_commitment_key(&native_root);
+    let native_error = crate::freeze_live_context(native_args).unwrap_err();
+    assert!(format!("{native_error:#}").contains("create private file"));
+    assert!(!native_output.exists());
+    assert_eq!(
+        fs::read(native_root.join("coordinator/commitment-key.bin")).unwrap(),
+        native_key
+    );
+
+    let partial_replay_temp = tempfile::tempdir().unwrap();
+    let partial_replay_root = partial_replay_temp.path().join("replay-private");
+    create_owner_only_test_dir(&partial_replay_root);
+    let partial_replay_root = partial_replay_root.canonicalize().unwrap();
+    let partial_replay_binary = partial_replay_root.join("synthetic-codex-binary");
+    fs::write(&partial_replay_binary, b"synthetic replay binary\n").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(
+            &partial_replay_binary,
+            fs::Permissions::from_mode(0o700),
+        )
+        .unwrap();
+    }
+    let fixture_root = fixture_set.parent().unwrap().to_path_buf();
+    let partial_replay_output = partial_replay_root.join("frozen-run-context.json");
+    let partial_replay_args = || crate::model::ReplayFreezeArgs {
+        repo_root: fixture_root.clone(),
+        fork_sha: "different-replay-fork".to_string(),
+        private_root: partial_replay_root.clone(),
+        codex_bin: partial_replay_binary.clone(),
+        case: fixture_root.join("replay-case.json"),
+        transcript: fixture_root.join("replay-transcript.jsonl"),
+        fixture_set_manifest: fixture_root.join("replay-fixture-set.json"),
+        output: partial_replay_output.clone(),
+    };
+    let first_replay_error = crate::freeze_replay_context(partial_replay_args()).unwrap_err();
+    assert!(format!("{first_replay_error:#}").contains("attestation"));
+    assert!(!partial_replay_output.exists());
+    let partial_replay_key =
+        fs::read(partial_replay_root.join("coordinator/commitment-key.bin")).unwrap();
+    let retry_replay_error = crate::freeze_replay_context(partial_replay_args()).unwrap_err();
+    assert!(format!("{retry_replay_error:#}").contains("create private file"));
+    assert_eq!(
+        fs::read(partial_replay_root.join("coordinator/commitment-key.bin")).unwrap(),
+        partial_replay_key
+    );
+
+    let partial_native_temp = tempfile::tempdir().unwrap();
+    let partial_native_args = native_freeze_args_for_cost_inputs(&partial_native_temp, true);
+    let retry_native_args = clone_live_freeze_args(&partial_native_args);
+    fs::write(
+        partial_native_args
+            .material_root
+            .join("notes/evidence.txt"),
+        b"changed after declaration\n",
+    )
+    .unwrap();
+    let partial_native_root = partial_native_args.private_root.clone();
+    let partial_native_output = partial_native_args.output.clone();
+    let first_native_error = crate::freeze_live_context(partial_native_args).unwrap_err();
+    assert!(format!("{first_native_error:#}").contains("digest mismatch"));
+    assert!(!partial_native_output.exists());
+    let partial_native_key =
+        fs::read(partial_native_root.join("coordinator/commitment-key.bin")).unwrap();
+    let retry_native_error = crate::freeze_live_context(retry_native_args).unwrap_err();
+    assert!(format!("{retry_native_error:#}").contains("create private file"));
+    assert_eq!(
+        fs::read(partial_native_root.join("coordinator/commitment-key.bin")).unwrap(),
+        partial_native_key
+    );
+}
+
+fn replace_commitment_key_with_bytes(private_root: &std::path::Path, bytes: &[u8; 32]) {
+    let path = private_root.join("coordinator/commitment-key.bin");
+    let replacement = private_root.join("coordinator/replacement-key.bin");
+    let displaced = private_root.join("coordinator/displaced-key.bin");
+    crate::secure_fs::write_owner_only_new(&replacement, bytes).unwrap();
+    fs::rename(&path, &displaced).unwrap();
+    fs::rename(&replacement, &path).unwrap();
+}
+
+fn mutate_context_field(context: &mut serde_json::Value, field: &str) {
+    let current = context[field].as_str().unwrap();
+    let first = if current.starts_with('0') { "1" } else { "0" };
+    context[field] = json!(format!("{first}{}", &current[1..]));
+}
+
+#[test]
+fn proof_commitment_key_mutations_are_rejected_for_replay_and_native() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let replay_bit = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let replay_replacement = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let (_native_bit_temp, native_bit_root, native_bit_context) =
+        freeze_native_commitment_context();
+    let (_native_replacement_temp, native_replacement_root, native_replacement_context) =
+        freeze_native_commitment_context();
+
+    for (private_root, context, replacement) in [
+        (&replay_bit.private_root, &replay_bit.frozen_json, false),
+        (
+            &replay_replacement.private_root,
+            &replay_replacement.frozen_json,
+            true,
+        ),
+        (&native_bit_root, &native_bit_context, false),
+        (
+            &native_replacement_root,
+            &native_replacement_context,
+            true,
+        ),
+    ] {
+        let context_path = private_root.join("frozen-run-context.json");
+        let raw = fs::read(&context_path).unwrap();
+        let replay = context["executionMode"] == "replay";
+        if replay {
+            let verified =
+                crate::runner::verify_replay_frozen_context(&context_path, &raw).unwrap();
+            if replacement {
+                replace_commitment_key_with_bytes(private_root, &[0x7e; 32]);
+            } else {
+                let key_path = private_root.join("coordinator/commitment-key.bin");
+                let mut bytes = fs::read(&key_path).unwrap();
+                bytes[0] ^= 1;
+                fs::write(key_path, bytes).unwrap();
+            }
+            assert!(
+                crate::runner::verify_replay_frozen_context(&context_path, &raw).is_err(),
+                "Replay accepted commitment key mutation, replacement={replacement}"
+            );
+            assert!(verified.reverify_all().is_err());
+        } else {
+            let verified = verify_frozen_context(&context_path).unwrap();
+            if replacement {
+                replace_commitment_key_with_bytes(private_root, &[0x7e; 32]);
+            } else {
+                let key_path = private_root.join("coordinator/commitment-key.bin");
+                let mut bytes = fs::read(&key_path).unwrap();
+                bytes[0] ^= 1;
+                fs::write(key_path, bytes).unwrap();
+            }
+            assert!(
+                verify_frozen_context(&context_path).is_err(),
+                "Native accepted commitment key mutation, replacement={replacement}"
+            );
+            assert!(verified.reverify_all().is_err());
+        }
+    }
+}
+
+#[test]
+fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json").unwrap();
+    let replay = prepare_replay_test_context(fixture_set.parent().unwrap()).unwrap();
+    let replay_raw = fs::read(&replay.frozen).unwrap();
+    let replay_verified =
+        crate::runner::verify_replay_frozen_context(&replay.frozen, &replay_raw).unwrap();
+    let replay_key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&replay.private_root)
+            .unwrap();
+    assert!(!replay_key.raw_key_occurs_in(format!("{replay_verified:?}").as_bytes()));
+    replay_verified.clone().reverify_all().unwrap();
+    for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
+        let mut context: serde_json::Value = serde_json::from_slice(&replay_raw).unwrap();
+        mutate_context_field(&mut context, field);
+        let mutated = serde_json::to_vec_pretty(&context).unwrap();
+        fs::write(&replay.frozen, &mutated).unwrap();
+        assert!(
+            crate::runner::verify_replay_frozen_context(&replay.frozen, &mutated).is_err(),
+            "Replay accepted {field} mutation"
+        );
+        assert!(replay_verified.reverify_all().is_err());
+        fs::write(&replay.frozen, &replay_raw).unwrap();
+        replay_verified.reverify_all().unwrap();
+    }
+
+    let (_native_temp, native_root, _) = freeze_native_commitment_context();
+    let native_path = native_root.join("frozen-run-context.json");
+    let native_raw = fs::read(&native_path).unwrap();
+    let native_verified = verify_frozen_context(&native_path).unwrap();
+    let native_key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&native_root).unwrap();
+    assert!(!native_key.raw_key_occurs_in(format!("{native_verified:?}").as_bytes()));
+    native_verified.clone().reverify_all().unwrap();
+    for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
+        let mut context: serde_json::Value = serde_json::from_slice(&native_raw).unwrap();
+        mutate_context_field(&mut context, field);
+        fs::write(&native_path, serde_json::to_vec_pretty(&context).unwrap()).unwrap();
+        assert!(
+            verify_frozen_context(&native_path).is_err(),
+            "Native accepted {field} mutation"
+        );
+        assert!(native_verified.reverify_all().is_err());
+        fs::write(&native_path, &native_raw).unwrap();
+        native_verified.reverify_all().unwrap();
+    }
+}
+
+fn assert_inventory_covers_commitment_key(private_root: &std::path::Path) {
+    let context: serde_json::Value = serde_json::from_slice(
+        &fs::read(private_root.join("frozen-run-context.json")).unwrap(),
+    )
+    .unwrap();
+    let inventory = fs::read_to_string(private_root.join("coordinator/private-inventory.jsonl"))
+        .unwrap();
+    let record = inventory
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|record| record["relativePath"] == "coordinator/commitment-key.bin")
+        .expect("commitment key missing from private inventory");
+    assert_eq!(record["kind"], "file");
+    assert_eq!(record["sha256"], context["commitmentKeySha256"]);
+    crate::private_inventory::verify_private_inventory(private_root).unwrap();
+
+    let key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(private_root).unwrap();
+    fn inspect(
+        key: &crate::proof_commitment::RetainedProofCommitmentKey,
+        root: &std::path::Path,
+        path: &std::path::Path,
+    ) {
+        for entry in fs::read_dir(path).unwrap() {
+            let entry = entry.unwrap();
+            let entry_path = entry.path();
+            if entry.file_type().unwrap().is_dir() {
+                inspect(key, root, &entry_path);
+            } else if entry_path != root.join("coordinator/commitment-key.bin") {
+                let bytes = fs::read(&entry_path).unwrap();
+                assert!(
+                    !key.raw_key_occurs_in(&bytes),
+                    "raw key leaked into {}",
+                    entry_path.display()
+                );
+            }
+        }
+    }
+    inspect(&key, private_root, private_root);
+}
+
+#[test]
+fn proof_commitment_inventory_covers_replay_and_native_without_key_disclosure() {
+    let replay = run_frozen_replay_pair().unwrap();
+    assert_inventory_covers_commitment_key(&replay.private_root);
+
+    let native = run_native_mock_pair_with_marker(
+        /*marker*/ None, /*max_total_tokens_per_run*/ 10,
+    );
+    native.result.unwrap();
+    assert_inventory_covers_commitment_key(&native.live_root);
+}
+
 struct ExpectedReplayRequestEvidence {
     generic_raw: String,
     generic_normalized: String,
@@ -1828,6 +2228,7 @@ fn absolute_pair_deadline_is_committed_before_full_context_verification() {
         "providerMode": "not-run",
         "pairId": "a".repeat(64),
         "publicRunId": "b".repeat(64),
+        "commitmentKeySha256": "c".repeat(64),
         "candidateSha": "candidate",
         "privateRoot": temp.path(),
         "repoRoot": temp.path(),
@@ -2104,12 +2505,29 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         })
         .collect();
     let path = temp.path().join("frozen-run-context.json");
+    let pair_id = test_sha256(format!("{head}:local-mock").as_bytes());
+    let commitment_key_bytes = [0x5a; 32];
+    crate::secure_fs::write_owner_only_new(
+        &temp
+            .path()
+            .canonicalize()
+            .unwrap()
+            .join("coordinator/commitment-key.bin"),
+        &commitment_key_bytes,
+    )
+    .unwrap();
+    let commitment_key =
+        crate::proof_commitment::ProofCommitmentKey::from_test_bytes(commitment_key_bytes);
     let unordered_context = serde_json::to_vec(&json!({
         "schemaVersion": 1,
         "executionMode": "live",
         "providerMode": "not-run",
-        "pairId": "a".repeat(64),
-        "publicRunId": "b".repeat(64),
+        "pairId": pair_id.clone(),
+        "publicRunId": crate::proof_commitment::derive_public_run_id(
+            &commitment_key,
+            &pair_id,
+        ).unwrap(),
+        "commitmentKeySha256": test_sha256(&commitment_key_bytes),
         "candidateSha": head,
         "privateRoot": temp.path().canonicalize().unwrap(),
         "repoRoot": repository.canonicalize().unwrap(),
