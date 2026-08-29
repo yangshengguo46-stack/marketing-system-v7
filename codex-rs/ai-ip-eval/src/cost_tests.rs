@@ -114,15 +114,16 @@ fn cost_arithmetic_rounds_once_after_partitioning_and_does_not_double_charge_rea
             1,
         ),
         (
-            "cached and cache-write subtract from uncached",
+            "all partitions round once after aggregation",
             Usage {
-                total_tokens: 1_000_000,
-                input_tokens: 1_000_000,
-                cached_input_tokens: 200_000,
-                cache_write_input_tokens: 300_000,
-                ..Usage::default()
+                total_tokens: 4,
+                input_tokens: 3,
+                cached_input_tokens: 1,
+                cache_write_input_tokens: 1,
+                output_tokens: 1,
+                reasoning_output_tokens: 0,
             },
-            9,
+            1,
         ),
         (
             "reasoning remains within output",
