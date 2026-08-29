@@ -138,6 +138,8 @@ fn commit_cost_receipt(
 
 `VerifiedLiveCostAuthority` owns the verified core/projection and retained frozen cost inputs needed for reverify. Its production constructor requires core/context/both manifests to say exact Live, both typed Live mode-evidence values to agree on the endpoint/order/rate/billing/FX/budget commitments, and `provider_endpoint_commitment=Some(exact_live_value)`. Mock/Replay never fabricate one. A `#[cfg(test)] pub(crate)` constructor inside `cost_authority.rs` is the only synthetic Live seam; `cost_authority_tests.rs` is mounted by `lib.rs` as a sibling unit-test module. No integration crate can see it. `cost_binding` in Task 6 consumes this same authority and never creates a second verifier.
 
+Task 5C rejects a supplier statement whose valid wire condition, pair, provider, or model does not match the selected arm authority. Before publishing a generated exact-JCS `CostReceiptV1`, it rejects every nonnegative emitted integer above `9_007_199_254_740_991`; Rust/source values remain `u64` and are never rounded.
+
 - [ ] **Step 1: Freeze the authority and hard-gate RED matrix**
 
 Use these exact test names, each failing before authority/receipt publication with destinations absent and inventory bytes unchanged:

@@ -1354,6 +1354,8 @@ just test -p codex-ai-ip-eval
 
 私有 `cost-receipt.json` 只能由 `make-cost-receipt` 生成，必须包含：`frozenRunContextSha256`、`executionManifestSha256`、broker receipt SHA、condition/run ordinal、attempt-index root/range、供应商/实际模型 revision、事前冻结 rate-card SHA、billing-policy/source commitment、如需换汇时的 FX-policy/evidence SHA、供应商预算上限证据 SHA、attempt/completion counts、`usageScope=rootSessionTree`、完整 usage、计算时间、计算式、`estimatedFen`、可选的运行后 `supplierStatementSha256/supplierActualFen`、`chargedFen=max(estimatedFen,supplierActualFen)` 和 `withinCeilings`。两臂必须使用 frozen context/attestation/broker 事前绑定的同一 rate card/billing policy/FX policy，事后不得换价。最终供应商账单只能运行后进 receipt，不可能在 attestation 中预先写它的 SHA。
 
+Rust 与 source input 可保留 `u64`，但所有写入 exact RFC 8785/JCS `CostReceiptV1` 的非负整数必须在 `0..=9_007_199_254_740_991`；超界在 publication 前失败，禁止取整或静默变更 wire 值。供应商 statement 的 arm/pair/provider/model 不一致由 receipt authority 依据预期执行臂拒绝，不能仅因其自身 JSON wire 有效而接受。
+
 冻结费率单位为“每百万 token 的人民币分”：`uncachedInput`、`cachedInput`、`cacheWriteInput`、`output`。reasoning token 只做诊断；若供应商已把它包含在 output，不得二次计费。计算：
 
 ```rust

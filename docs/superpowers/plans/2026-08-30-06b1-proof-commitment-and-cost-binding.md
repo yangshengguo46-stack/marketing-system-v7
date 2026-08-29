@@ -97,12 +97,15 @@ No implementation task may start before this commit exists.
 - `codex-rs/ai-ip-eval/tests/cost_cli.rs` — real binary/Clap coverage for both commands and exact Replay/Native-Mock refusal.
 - `codex-rs/ai-ip-eval/tests/fixtures/contracts/06b1/**` — canonical and one-field-negative private pricing/budget/statement/receipt fixtures plus shared HMAC/Merkle vectors.
 - `scripts/ai_ip/foundation/verify_evidence.py` / `test_verify_evidence.py` — public-vector-only Python cross-check; no private-root/key input.
-- `codex-rs/ai-ip-eval/src/model.rs`, `lib.rs`, `runner.rs` — narrow typed CLI, module wiring, and key/public-ID freeze hook; the existing crate Bazel glob discovers new Rust and integration-test files without a BUILD edit.
+- `codex-rs/ai-ip-eval/src/model.rs`, `lib.rs`, `runner.rs` — narrow typed CLI, module wiring, and key/public-ID freeze hook.
+- `codex-rs/ai-ip-eval/BUILD.bazel` — exact compile-time inputs for embedded canonical cost fixtures; test fixture runfiles remain separate.
 - `docs/architecture/codex-fork-patch-ledger.md` — append-only implementation result after complete review.
 
 ## Frozen Private Wire Contracts
 
 All five input documents are compact or pretty JSON values accepted by duplicate-key-safe parse + JSON Schema + typed deep equality. Their original file bytes/SHA remain the authority bound by the held-out attestation and frozen context. Each input and optional supplier statement has a `64 * 1024` byte cap; a generated cost receipt has a `128 * 1024` cap and a generated binding has a `16 * 1024` cap. Generated receipt/binding bytes must equal RFC 8785/JCS exactly; validators reject a semantically equal pretty or differently ordered encoding.
+
+Rust and source-input arithmetic may retain `u64`, but every nonnegative integer emitted on the exact-JCS `CostReceiptV1` wire is restricted to `0..=9_007_199_254_740_991`. A larger calculated value fails before receipt publication; it is never rounded or silently changed for JCS.
 
 Every provider/model/revision label uses the exact ASCII schema pattern `^[A-Za-z0-9][A-Za-z0-9._:+/@() -]{0,199}$`; no controls, line breaks, leading whitespace, or non-ASCII lookalikes are allowed. Every timestamp in this child (`effectiveAt`, `expiresAt`, `validFrom`, `validUntil`, `issuedAt`, `calculatedAt`, and `boundAt`) is UTC with exactly millisecond precision, matching `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$`, and must round-trip through `DateTime::parse_from_rfc3339` plus `to_rfc3339_opts(SecondsFormat::Millis, true)` unchanged.
 
@@ -161,6 +164,8 @@ SupplierStatementV1
   statementReferenceCommitment: lowercase SHA-256
 ```
 
+The supplier-condition-mismatch fixture is a concrete syntactically valid opposite-arm statement. Task 1 loads it as an exact wire fixture; Task 5C alone rejects it against the expected selected arm/pair/provider/model authority.
+
 `CostReceiptV1` is the exact amended `cost-receipt.schema.json` wire:
 
 ```text
@@ -208,6 +213,7 @@ Hard gates and post-run validity ceilings are disjoint. Attempt cap, request dea
 - Create: `ai-ip-evals/schemas/supplier-statement.schema.json`
 - Modify: `ai-ip-evals/schemas/cost-receipt.schema.json`
 - Modify: `ai-ip-evals/schemas/BUILD.bazel`
+- Modify: `codex-rs/ai-ip-eval/BUILD.bazel`
 - Create: `codex-rs/ai-ip-eval/src/cost_contracts.rs`
 - Create: `codex-rs/ai-ip-eval/src/cost_contracts_tests.rs`
 - Create: `codex-rs/ai-ip-eval/tests/fixtures/contracts/06b1/**`
@@ -569,6 +575,8 @@ pub(crate) struct CalculatedCost {
 
 pub(crate) fn calculate_cost(input: &CostCalculationInput<'_>) -> anyhow::Result<CalculatedCost>;
 ```
+
+Arithmetic and source inputs may retain `u64`; Task 5C rejects any nonnegative value above `9_007_199_254_740_991` before exact-JCS `CostReceiptV1` publication, without rounding.
 
 - [ ] **Step 1: Add table-driven arithmetic REDs**
 
