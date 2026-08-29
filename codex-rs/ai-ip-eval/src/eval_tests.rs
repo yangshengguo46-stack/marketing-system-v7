@@ -5240,6 +5240,34 @@ fn native_app_server_fixture_accepts_chunked_sse_extensions_and_trailers() {
 }
 
 #[test]
+fn native_app_server_fixture_accepts_chunked_bws_and_quoted_extensions() {
+    let responses = [
+        ("quoted-root", " \t; fixture = \"quoted;semicolon\""),
+        (
+            "quoted-child",
+            "\t; first=token; second=\"escaped\\\"quote;still-quoted\"",
+        ),
+    ]
+    .map(|(response_id, extensions)| {
+        let body = completed_sse(response_id);
+        format!(
+            "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}{extensions}\r\n{body}\r\n0\r\n\r\n",
+            body.len()
+        )
+        .into_bytes()
+    })
+    .to_vec();
+    let run = run_native_fixture_broker_contract(responses).unwrap();
+    assert!(
+        run.status.success(),
+        "fixture rejected valid chunk extensions with BWS/quotes: {}",
+        run.stderr
+    );
+    assert!(run.stdout.contains("quoted-root"));
+    assert!(run.stdout.contains("quoted-child"));
+}
+
+#[test]
 fn native_app_server_fixture_rejects_malformed_or_ambiguous_broker_framing() {
     let completed = completed_sse("must-not-complete");
     let malformed = [
@@ -5264,15 +5292,80 @@ fn native_app_server_fixture_rejects_malformed_or_ambiguous_broker_framing() {
             )
             .into_bytes(),
         ),
+        (
+            "obfuscated Transfer-Encoding with Content-Length",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nTransfer-Encoding : chunked\r\nConnection: close\r\n\r\n{completed}",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "obfuscated Content-Length with Transfer-Encoding",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length : {}\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}\r\n{completed}\r\n0\r\n\r\n",
+                completed.len(),
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "non-digit Content-Length token",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: +{}\r\nConnection: close\r\n\r\n{completed}",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "malformed chunk extension",
+            format!(
+                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x};=bad\r\n{completed}\r\n0\r\n\r\n",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "malformed trailer name",
+            format!(
+                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}\r\n{completed}\r\n0\r\nbad trailer: done\r\n\r\n",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "response header value control",
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nX-Bad: bad\x01value\r\nConnection: close\r\n\r\n{completed}",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "leading OWS before a data chunk size",
+            format!(
+                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n {:x};foo=bar\r\n{completed}\r\n0\r\n\r\n",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
+        (
+            "trailing OWS on a last chunk without extensions",
+            format!(
+                "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}\r\n{completed}\r\n0 \r\n\r\n",
+                completed.len()
+            )
+            .into_bytes(),
+        ),
     ];
+    let mut accepted = Vec::new();
     for (description, response) in malformed {
         let run = run_native_fixture_broker_contract(vec![response]).unwrap();
-        assert!(!run.status.success(), "fixture accepted {description}");
-        assert!(
-            !run.stdout.contains("rawResponse/completed"),
-            "fixture emitted a completion for {description}"
-        );
+        if run.status.success() || run.stdout.contains("rawResponse/completed") {
+            accepted.push(description);
+        }
     }
+    assert!(accepted.is_empty(), "fixture accepted {accepted:?}");
 }
 
 #[test]
