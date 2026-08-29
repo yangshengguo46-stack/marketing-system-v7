@@ -1238,6 +1238,30 @@ git commit -m "test(ai-ip-eval): harden blind bundle transaction failures"
 > Task 7C behavior. Every production module remains below 500 lines and the
 > independent 7B commit remains below 800 changed lines.
 
+> **Task 7C measured semantic/transaction split (2026-08-29):** Read-only
+> preflight measured 630–785 changed lines before the complete classification
+> matrix and found that the required post-staging authority recheck cannot use
+> the old inventory token: the exact staging file is intentionally present but
+> not yet recorded. 7C is therefore delivered in two dependency-ordered commits.
+> 7C1, `feat(ai-ip-eval): verify blind review semantics`, may add
+> `score_validation.rs` and its sibling tests and narrowly add `Deserialize`
+> support to the existing Task 6 mapping/bundle wire types. It is a pure
+> consumer: it validates retained raw mapping, bundle, seed and submission
+> evidence, returns either mapped reviews or the ordered INVALID failure set,
+> and writes no file. 7C2, `feat(ai-ip-eval): publish immutable blind decisions`,
+> may add `score_transaction.rs` and sibling tests and narrowly modify
+> `score_authority.rs`, `blind_finalize.rs`, `private_inventory_batch.rs`,
+> `lib.rs`, and the existing `tests/blind_cli.rs` smoke test. Its inventory seam
+> may accept only one exact retained staging leaf and digest while rechecking
+> every prior recorded entry and the three retained reviews; it must not expose
+> a general ignored-path API. 7C2 removes the transitional sentinel and proves
+> the current schema-invalid Replay placeholders produce an immutable private
+> INVALID_PROOF. 7D alone replaces the committed review fixtures and owns the
+> real valid Replay and complete mutation matrix. Neither 7C commit changes Task
+> 6 producer bytes, provider behavior, public reporting, or F-0006. Every new
+> production module remains below 500 lines and each commit below 800 changed
+> lines.
+
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/score.rs`
 - Create: `codex-rs/ai-ip-eval/src/score_tests.rs`
