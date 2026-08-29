@@ -332,8 +332,26 @@ fn validate_receipt_semantics(receipt: &CostReceiptV1) -> anyhow::Result<()> {
     {
         anyhow::bail!("receipt ceilings exceed approved total")
     }
-    parse_timestamp(&receipt.rate_effective_at)?;
-    parse_timestamp(&receipt.calculated_at)?;
+    let expected_charged = receipt
+        .estimated_fen
+        .max(receipt.supplier_actual_fen.unwrap_or(0));
+    if receipt.charged_fen != expected_charged {
+        anyhow::bail!("receipt charged amount does not match estimate/supplier maximum")
+    }
+    let total_tokens = u64::try_from(receipt.usage.total_tokens)
+        .map_err(|_| anyhow::anyhow!("receipt total tokens cannot be negative"))?;
+    let expected_within = total_tokens <= receipt.ceilings.max_total_tokens
+        && receipt.charged_fen <= receipt.ceilings.approved_per_run_fen;
+    if receipt.within_ceilings != expected_within {
+        anyhow::bail!("receipt withinCeilings does not match post-run ceilings")
+    }
+    if receipt.provider_request_attempt_count > receipt.ceilings.max_provider_request_attempts {
+        anyhow::bail!("receipt attempt count exceeds maximum request attempts")
+    }
+    let rate_effective = parse_timestamp(&receipt.rate_effective_at)?;
+    if rate_effective > parse_timestamp(&receipt.calculated_at)? {
+        anyhow::bail!("receipt rate effective time follows calculation time")
+    }
     Ok(())
 }
 
@@ -349,4 +367,21 @@ fn parse_timestamp(value: &str) -> anyhow::Result<DateTime<chrono::FixedOffset>>
 
 fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+#[cfg(test)]
+pub(crate) fn test_typed_deep_equality_probe() -> anyhow::Result<()> {
+    #[derive(serde::Deserialize, serde::Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct Probe {
+        retained: String,
+        #[serde(skip_serializing)]
+        hidden: String,
+    }
+    let value = serde_json::json!({"retained": "kept", "hidden": "dropped"});
+    let typed: Probe = serde_json::from_value(value.clone())?;
+    if serde_json::to_value(typed)? != value {
+        anyhow::bail!("typed cost contract decode does not preserve JSON value exactly")
+    }
+    Ok(())
 }

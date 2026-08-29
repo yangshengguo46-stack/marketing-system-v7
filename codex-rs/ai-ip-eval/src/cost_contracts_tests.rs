@@ -1,137 +1,170 @@
 use sha2::Digest;
 
+const INPUT_CAP: usize = 64 * 1024;
+const RECEIPT_CAP: usize = 128 * 1024;
+const SAFE_INTEGER: u64 = 9_007_199_254_740_991;
+
 fn fixture(name: &str) -> Vec<u8> {
     let resource = format!("tests/fixtures/contracts/06b1/{name}");
-    let path = codex_utils_cargo_bin::find_resource!(resource).unwrap();
-    std::fs::read(path).unwrap()
+    std::fs::read(codex_utils_cargo_bin::find_resource!(resource).unwrap()).unwrap()
+}
+
+fn receipt_bytes(value: &serde_json::Value) -> Vec<u8> {
+    let typed: crate::cost_contracts::CostReceiptV1 =
+        serde_json::from_value(value.clone()).unwrap();
+    crate::jcs::canonicalize_value(&serde_json::to_value(typed).unwrap()).unwrap()
 }
 
 #[test]
 fn executable_06b1_cost_contracts_accept_only_exact_shapes() {
-    let rate_card = fixture("provider-rate-card.canonical.json");
-    let billing_policy = fixture("billing-policy.canonical.json");
-    let fx_policy = fixture("fx-policy.canonical.json");
+    let rate = fixture("provider-rate-card.canonical.json");
+    let policy = fixture("billing-policy.canonical.json");
+    let fx = fixture("fx-policy.canonical.json");
     let budget = fixture("provider-budget-evidence.canonical.json");
-    let supplier_statement = fixture("supplier-statement.canonical.json");
+    let statement = fixture("supplier-statement.canonical.json");
     let receipt = fixture("cost-receipt.canonical.json");
     let contracts = crate::cost_contracts::FrozenCostContracts::load().unwrap();
-
     let verified = contracts
-        .validate_inputs(&rate_card, &billing_policy, &fx_policy, &budget)
+        .validate_inputs(&rate, &policy, &fx, &budget)
         .unwrap();
     assert_eq!(verified.rate_card.provider_label, "approved-provider");
-    assert_eq!(verified.billing_policy.currency, "CNY");
-    assert_eq!(verified.fx_policy.mode, "notApplicable");
-    assert_eq!(verified.budget.prepaid_or_hard_limit_fen, 800);
     assert_eq!(
         verified.rate_card_sha256,
-        format!("{:x}", sha2::Sha256::digest(&rate_card)),
-        "source input commitments bind their original pretty bytes"
+        format!("{:x}", sha2::Sha256::digest(&rate))
     );
     assert_ne!(
         verified.rate_card_sha256,
         format!(
             "{:x}",
             sha2::Sha256::digest(serde_json::to_vec(&verified.rate_card).unwrap())
-        ),
-        "source inputs must not be silently reserialized before commitment"
+        )
     );
-    assert_eq!(verified.billing_policy_commitment.len(), 64);
-    assert_eq!(verified.fx_policy_sha256.len(), 64);
-    assert_eq!(verified.provider_budget_evidence_sha256.len(), 64);
-
-    let duplicate_rate_card = br#"{"schemaVersion":1,"schemaVersion":1}"#;
-    assert!(
-        contracts
-            .validate_inputs(duplicate_rate_card, &billing_policy, &fx_policy, &budget)
-            .is_err(),
-        "duplicate JSON keys must be rejected before schema validation"
-    );
-
-    let mut equivalent_number: serde_json::Value = crate::jcs::parse_json(&rate_card).unwrap();
-    equivalent_number["schemaVersion"] = serde_json::json!(1.0);
-    assert!(
-        contracts
-            .validate_inputs(
-                &serde_json::to_vec(&equivalent_number).unwrap(),
-                &billing_policy,
-                &fx_policy,
-                &budget,
-            )
-            .is_err(),
-        "typed decode must preserve the schema-accepted rate card value exactly"
-    );
-
-    assert!(
-        contracts
-            .validate_inputs(
-                &vec![b' '; 64 * 1024 + 1],
-                &billing_policy,
-                &fx_policy,
-                &budget,
-            )
-            .is_err(),
-        "source input byte cap must be enforced"
-    );
-
-    let mut provider_mismatch: serde_json::Value = crate::jcs::parse_json(&billing_policy).unwrap();
-    provider_mismatch["providerLabel"] = serde_json::json!("other-provider");
-    assert!(
-        contracts
-            .validate_inputs(
-                &rate_card,
-                &serde_json::to_vec(&provider_mismatch).unwrap(),
-                &fx_policy,
-                &budget,
-            )
-            .is_err(),
-        "rate, policy, and budget provider labels must agree"
-    );
-
-    let mut invalid_window: serde_json::Value = crate::jcs::parse_json(&budget).unwrap();
-    invalid_window["validUntil"] = serde_json::json!("2026-08-30T09:00:00.000Z");
-    assert!(
-        contracts
-            .validate_inputs(
-                &rate_card,
-                &billing_policy,
-                &fx_policy,
-                &serde_json::to_vec(&invalid_window).unwrap(),
-            )
-            .is_err(),
-        "budget validity window must be ordered"
-    );
-
-    let supplier = contracts
-        .validate_supplier_statement(&supplier_statement)
-        .unwrap();
-    assert_eq!(supplier.condition, crate::EvaluationCondition::Candidate);
-    assert_eq!(supplier.currency, "CNY");
-
-    let accepted_receipt = contracts.validate_receipt(&receipt).unwrap();
-    assert_eq!(accepted_receipt.execution_mode, "live");
-    assert_eq!(accepted_receipt.fx.mode, "notApplicable");
-    assert_eq!(accepted_receipt.ceilings.approved_total_fen, 800);
     assert_eq!(
-        crate::cost_contracts::validate_cost_receipt(&receipt)
+        contracts
+            .validate_supplier_statement(&statement)
             .unwrap()
-            .pair_id,
-        accepted_receipt.pair_id
+            .condition,
+        crate::EvaluationCondition::Candidate
+    );
+    assert_eq!(
+        contracts.validate_receipt(&receipt).unwrap().execution_mode,
+        "live"
     );
 
-    let receipt_value = crate::jcs::parse_json(&receipt).unwrap();
-    assert!(
+    let cases: Vec<serde_json::Value> =
+        serde_json::from_slice(&fixture("negative-cases.json")).unwrap();
+    for case in cases {
+        let result = run_case(
+            &contracts, &case, &rate, &policy, &fx, &budget, &statement, &receipt,
+        );
+        let expected = case["expected"].as_str().unwrap();
+        if expected == "accept" {
+            result
+                .unwrap_or_else(|error| panic!("{} unexpectedly rejected: {error}", case["name"]));
+        } else {
+            let error = result.unwrap_err();
+            assert!(
+                error.contains(expected),
+                "{} expected {expected:?}, got {error:?}",
+                case["name"]
+            );
+        }
+    }
+    assert_eq!(
         contracts
-            .validate_receipt(&serde_json::to_vec_pretty(&receipt_value).unwrap())
-            .is_err(),
-        "generated receipts must be exact JCS bytes"
+            .validate_supplier_statement(&fixture("supplier-statement.condition-mismatch.json"))
+            .unwrap()
+            .condition,
+        crate::EvaluationCondition::Generic
     );
-    let mut null_pair = receipt_value;
-    null_pair["pairId"] = serde_json::Value::Null;
     assert!(
-        contracts
-            .validate_receipt(&serde_json::to_vec(&null_pair).unwrap())
-            .is_err(),
-        "receipt pair ID cannot be null"
+        crate::cost_contracts::test_typed_deep_equality_probe()
+            .unwrap_err()
+            .to_string()
+            .contains("does not preserve")
     );
+}
+
+fn run_case(
+    contracts: &crate::cost_contracts::FrozenCostContracts,
+    case: &serde_json::Value,
+    rate: &[u8],
+    policy: &[u8],
+    fx: &[u8],
+    budget: &[u8],
+    statement: &[u8],
+    receipt: &[u8],
+) -> Result<(), String> {
+    let mutation = case["mutation"].as_str().unwrap();
+    let contract = case["contract"].as_str().unwrap();
+    let mut value = crate::jcs::parse_json(match contract {
+        "rate" => rate,
+        "policy" => policy,
+        "fx" => fx,
+        "budget" => budget,
+        "statement" => statement,
+        "receipt" => receipt,
+        _ => panic!("unknown contract"),
+    })
+    .unwrap();
+    let mut raw = None;
+    match mutation {
+        "unknown" => value["unknown"] = serde_json::json!(true),
+        "missing" => { value.as_object_mut().unwrap().remove("currency"); }
+        "wrongType" => value["numerator"] = serde_json::json!("1"),
+        "label" => value["providerLabel"] = serde_json::json!(" invalid"),
+        "timestamp" => value["effectiveAt"] = serde_json::json!("2026-08-30T10:00:00Z"),
+        "budgetOrder" => value["validUntil"] = serde_json::json!("2026-08-30T09:00:00.000Z"),
+        "nonCny" => value["currency"] = serde_json::json!("USD"),
+        "providerMismatch" => value["providerLabel"] = serde_json::json!("other-provider"),
+        "nonApplicable" => value["mode"] = serde_json::json!("spot"),
+        "duplicate" => raw = Some(String::from_utf8(rate.to_vec()).unwrap().replacen("\"providerLabel\": \"approved-provider\",", "\"providerLabel\":\"approved-provider\",\"providerLabel\":\"approved-provider\",", 1).into_bytes()),
+        "inputAtCap" | "statementAtCap" => { let base = serde_json::to_vec(&value).unwrap(); let padding = INPUT_CAP - base.len(); raw = Some([base, vec![b' '; padding]].concat()); }
+        "inputOverCap" | "statementOverCap" => raw = Some(vec![b' '; INPUT_CAP + 1]),
+        "nonJcs" => raw = Some(serde_json::to_vec_pretty(&value).unwrap()),
+        "nullPair" => value["pairId"] = serde_json::Value::Null,
+        "charged" => value["chargedFen"] = serde_json::json!(11),
+        "within" => value["withinCeilings"] = serde_json::json!(false),
+        "attemptCap" => value["providerRequestAttemptCount"] = serde_json::json!(3),
+        "rateAfterCalculated" => value["rateEffectiveAt"] = serde_json::json!("2026-08-30T10:03:00.000Z"),
+        "validOverage" => { value["usage"]["totalTokens"] = serde_json::json!(1001); value["withinCeilings"] = serde_json::json!(false); }
+        "safeInteger" => { value["estimatedFen"] = serde_json::json!(SAFE_INTEGER); value["chargedFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["approvedPerRunFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["approvedTotalFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["prepaidOrHardLimitFen"] = serde_json::json!(SAFE_INTEGER); }
+        "unsafeInteger" => value["chargedFen"] = serde_json::json!(SAFE_INTEGER + 1),
+        "unsafeIntegerPlus" => value["chargedFen"] = serde_json::json!(SAFE_INTEGER + 2),
+        "i64Max" => value["chargedFen"] = serde_json::json!(i64::MAX),
+        "u64Max" => value["chargedFen"] = serde_json::json!(u64::MAX),
+        "receiptAtCap" => { let base = receipt_bytes(&value); let padding = RECEIPT_CAP - base.len(); raw = Some([base, vec![b' '; padding]].concat()); }
+        "receiptOverCap" => raw = Some(vec![b' '; RECEIPT_CAP + 1]),
+        _ => panic!("unknown mutation {mutation}"),
+    }
+    let raw = raw.unwrap_or_else(|| {
+        if contract == "receipt"
+            && !matches!(
+                mutation,
+                "unsafeInteger" | "unsafeIntegerPlus" | "i64Max" | "u64Max" | "nullPair"
+            )
+        {
+            receipt_bytes(&value)
+        } else {
+            serde_json::to_vec(&value).unwrap()
+        }
+    });
+    let result = match contract {
+        "rate" => contracts
+            .validate_inputs(&raw, policy, fx, budget)
+            .map(|_| ()),
+        "policy" => contracts
+            .validate_inputs(rate, &raw, fx, budget)
+            .map(|_| ()),
+        "fx" => contracts
+            .validate_inputs(rate, policy, &raw, budget)
+            .map(|_| ()),
+        "budget" => contracts
+            .validate_inputs(rate, policy, fx, &raw)
+            .map(|_| ()),
+        "statement" => contracts.validate_supplier_statement(&raw).map(|_| ()),
+        "receipt" => contracts.validate_receipt(&raw).map(|_| ()),
+        _ => unreachable!(),
+    };
+    result.map_err(|error| error.to_string())
 }

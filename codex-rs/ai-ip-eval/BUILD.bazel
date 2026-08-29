@@ -5,6 +5,18 @@ filegroup(
     srcs = glob(["tests/fixtures/**"]),
 )
 
+filegroup(
+    name = "cost-contract-canonical-fixtures",
+    srcs = [
+        "tests/fixtures/contracts/06b1/provider-rate-card.canonical.json",
+        "tests/fixtures/contracts/06b1/billing-policy.canonical.json",
+        "tests/fixtures/contracts/06b1/fx-policy.canonical.json",
+        "tests/fixtures/contracts/06b1/provider-budget-evidence.canonical.json",
+        "tests/fixtures/contracts/06b1/supplier-statement.canonical.json",
+        "tests/fixtures/contracts/06b1/cost-receipt.canonical.json",
+    ],
+)
+
 codex_rust_crate(
     name = "ai-ip-eval",
     binary_rustc_flags_extra = {
@@ -12,6 +24,7 @@ codex_rust_crate(
     },
     build_script_enabled = False,
     compile_data = glob(["tests/fixtures/blind/treatment-markers.json"]) + [
+        ":cost-contract-canonical-fixtures",
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",
     ],
