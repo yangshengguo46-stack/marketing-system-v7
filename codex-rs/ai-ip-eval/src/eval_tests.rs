@@ -4686,89 +4686,108 @@ fn mock_manifest_binds_actual_additional_context_not_turn_request() {
     );
 }
 
+fn wait_for_native_fixture_child(
+    child: &mut std::process::Child,
+    description: &str,
+) -> anyhow::Result<std::process::ExitStatus> {
+    use anyhow::Context as _;
+
+    let timeout = Duration::from_secs(5);
+    let deadline = Instant::now() + timeout;
+    loop {
+        if let Some(status) = child
+            .try_wait()
+            .with_context(|| format!("check {description} fixture status"))?
+        {
+            return Ok(status);
+        }
+        if Instant::now() >= deadline {
+            child
+                .kill()
+                .with_context(|| format!("kill timed-out {description} fixture"))?;
+            let status = child
+                .wait()
+                .with_context(|| format!("reap timed-out {description} fixture"))?;
+            anyhow::bail!(
+                "{description} fixture timed out after {} seconds and was killed with {status}",
+                timeout.as_secs()
+            );
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
+fn read_native_fixture_stderr(child: &mut std::process::Child) -> anyhow::Result<String> {
+    use anyhow::Context as _;
+    use std::io::Read;
+
+    let mut stderr = child
+        .stderr
+        .take()
+        .context("fixture stderr was not captured")?;
+    let mut bytes = Vec::new();
+    stderr
+        .read_to_end(&mut bytes)
+        .context("read fixture stderr")?;
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+fn terminate_native_fixture_child(child: &mut std::process::Child) -> String {
+    let status = match child.try_wait() {
+        Ok(Some(status)) => format!("already exited with {status}"),
+        Ok(None) => match child.kill().and_then(|()| child.wait()) {
+            Ok(status) => format!("killed and reaped with {status}"),
+            Err(error) => format!("cleanup failed: {error}"),
+        },
+        Err(error) => match child.kill().and_then(|()| child.wait()) {
+            Ok(status) => {
+                format!(
+                    "could not inspect child before cleanup: {error}; killed and reaped with {status}"
+                )
+            }
+            Err(cleanup_error) => {
+                format!(
+                    "could not inspect child before cleanup: {error}; cleanup failed: {cleanup_error}"
+                )
+            }
+        },
+    };
+    let stderr =
+        read_native_fixture_stderr(child).unwrap_or_else(|error| format!("unavailable: {error:#}"));
+    format!("{status}; stderr: {stderr}")
+}
+
+#[test]
+fn native_app_server_fixture_stays_within_test_io_budget() {
+    let fixture = crate::native_app_server_fixture::locate()
+        .expect("native App Server fixture target must be available to this test");
+    let actual_bytes = fixture.metadata().unwrap().len();
+    let maximum_bytes = if cfg!(target_os = "macos") {
+        12 * 1024 * 1024
+    } else {
+        64 * 1024 * 1024
+    };
+
+    assert!(
+        actual_bytes <= maximum_bytes,
+        "native App Server fixture actual size is {actual_bytes} bytes; maximum test-infrastructure I/O budget is {maximum_bytes} bytes"
+    );
+}
+
 #[test]
 fn native_app_server_fixture_uses_production_argv_and_stdout() {
     use anyhow::Context as _;
     use std::io::BufRead;
     use std::io::BufReader;
-    use std::io::Read;
     use std::io::Write;
-    use std::process::Child;
     use std::process::Command;
-    use std::process::ExitStatus;
     use std::process::Stdio;
     use std::sync::mpsc;
-
-    fn wait_for_child(child: &mut Child, description: &str) -> anyhow::Result<ExitStatus> {
-        let timeout = Duration::from_secs(5);
-        let deadline = Instant::now() + timeout;
-        loop {
-            if let Some(status) = child
-                .try_wait()
-                .with_context(|| format!("check {description} fixture status"))?
-            {
-                return Ok(status);
-            }
-            if Instant::now() >= deadline {
-                child
-                    .kill()
-                    .with_context(|| format!("kill timed-out {description} fixture"))?;
-                let status = child
-                    .wait()
-                    .with_context(|| format!("reap timed-out {description} fixture"))?;
-                anyhow::bail!(
-                    "{description} fixture timed out after {} seconds and was killed with {status}",
-                    timeout.as_secs()
-                );
-            }
-            std::thread::sleep(Duration::from_millis(10));
-        }
-    }
-
-    fn read_stderr(child: &mut Child) -> anyhow::Result<String> {
-        let mut stderr = child
-            .stderr
-            .take()
-            .context("fixture stderr was not captured")?;
-        let mut bytes = Vec::new();
-        stderr
-            .read_to_end(&mut bytes)
-            .context("read fixture stderr")?;
-        Ok(String::from_utf8_lossy(&bytes).into_owned())
-    }
-
-    fn terminate_child(child: &mut Child) -> String {
-        let status = match child.try_wait() {
-            Ok(Some(status)) => format!("already exited with {status}"),
-            Ok(None) => match child.kill().and_then(|()| child.wait()) {
-                Ok(status) => format!("killed and reaped with {status}"),
-                Err(error) => format!("cleanup failed: {error}"),
-            },
-            Err(error) => match child.kill().and_then(|()| child.wait()) {
-                Ok(status) => {
-                    format!(
-                        "could not inspect child before cleanup: {error}; killed and reaped with {status}"
-                    )
-                }
-                Err(cleanup_error) => {
-                    format!(
-                        "could not inspect child before cleanup: {error}; cleanup failed: {cleanup_error}"
-                    )
-                }
-            },
-        };
-        let stderr = read_stderr(child).unwrap_or_else(|error| format!("unavailable: {error:#}"));
-        format!("{status}; stderr: {stderr}")
-    }
 
     let fixture = crate::native_app_server_fixture::locate()
         .expect("native App Server fixture target must be available to this test");
     let evaluator = std::env::current_exe().unwrap().canonicalize().unwrap();
     assert_ne!(fixture, evaluator);
-    assert!(
-        fixture.metadata().unwrap().len() <= 64 * 1024 * 1024,
-        "native App Server fixture exceeds the 64 MiB test-infrastructure I/O budget"
-    );
 
     let mut wrong_argv = Command::new(&fixture)
         .arg("not-app-server")
@@ -4777,13 +4796,14 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    let wrong_status = wait_for_child(&mut wrong_argv, "wrong-argv").unwrap_or_else(|error| {
-        panic!(
-            "wrong-argv fixture failed: {error:#}; {}",
-            terminate_child(&mut wrong_argv)
-        )
-    });
-    let wrong_stderr = read_stderr(&mut wrong_argv).unwrap();
+    let wrong_status =
+        wait_for_native_fixture_child(&mut wrong_argv, "wrong-argv").unwrap_or_else(|error| {
+            panic!(
+                "wrong-argv fixture failed: {error:#}; {}",
+                terminate_native_fixture_child(&mut wrong_argv)
+            )
+        });
+    let wrong_stderr = read_native_fixture_stderr(&mut wrong_argv).unwrap();
     assert!(
         !wrong_status.success(),
         "native App Server fixture accepted wrong argv; stderr: {wrong_stderr}"
@@ -4846,8 +4866,8 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
         );
 
         drop(child.stdin.take());
-        let status = wait_for_child(&mut child, "production-argv")?;
-        let stderr = read_stderr(&mut child)?;
+        let status = wait_for_native_fixture_child(&mut child, "production-argv")?;
+        let stderr = read_native_fixture_stderr(&mut child)?;
         anyhow::ensure!(
             status.success(),
             "fixture failed after stdin closed: {status}; stderr: {stderr}"
@@ -4864,11 +4884,246 @@ fn native_app_server_fixture_uses_production_argv_and_stdout() {
         Ok(())
     })();
     if let Err(error) = production_result {
-        let diagnostic = terminate_child(&mut child);
+        let diagnostic = terminate_native_fixture_child(&mut child);
         let _ = stdout_reader.join();
         panic!("production-argv fixture failed: {error:#}; {diagnostic}");
     }
     stdout_reader.join().unwrap();
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn native_app_server_fixture_rejects_non_loopback_before_connect() {
+    use anyhow::Context as _;
+    use std::io::Write;
+    use std::net::TcpListener;
+    use std::process::Command;
+    use std::process::Stdio;
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::Ordering;
+    use std::sync::mpsc;
+
+    fn stop_and_join_listener(
+        stop: &AtomicBool,
+        worker: std::thread::JoinHandle<std::io::Result<()>>,
+    ) -> anyhow::Result<()> {
+        stop.store(true, Ordering::Release);
+        worker
+            .join()
+            .map_err(|_| anyhow::anyhow!("controlled non-loopback listener thread panicked"))??;
+        Ok(())
+    }
+
+    let fixture = crate::native_app_server_fixture::locate()
+        .expect("native App Server fixture target must be available to this test");
+    let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let listener_address = listener.local_addr().unwrap();
+    let port = listener_address.port();
+    let temp = tempfile::tempdir().unwrap();
+    let home = temp.path().join("home");
+    let codex_home = home.join(".codex");
+    create_owner_only_test_dir(&home);
+    create_owner_only_test_dir(&codex_home);
+    fs::write(
+        codex_home.join("config.toml"),
+        format!(
+            concat!(
+                "model = \"fixture-test\"\n",
+                "model_provider = \"ai-ip-proof-broker\"\n",
+                "[model_providers.ai-ip-proof-broker]\n",
+                "name = \"OpenAI\"\n",
+                "base_url = \"http://0.0.0.0:{}/v1\"\n",
+                "wire_api = \"responses\"\n",
+                "requires_openai_auth = false\n",
+                "request_max_retries = 0\n",
+                "stream_max_retries = 0\n",
+                "supports_websockets = false\n"
+            ),
+            port,
+        ),
+    )
+    .unwrap();
+
+    let (accepted_sender, accepted_receiver) = mpsc::sync_channel(1);
+    let listener_stop = Arc::new(AtomicBool::new(false));
+    let worker_stop = Arc::clone(&listener_stop);
+    let listener_worker = std::thread::spawn(move || {
+        loop {
+            match listener.accept() {
+                Ok((stream, peer_address)) => {
+                    accepted_sender.send(peer_address).map_err(|_| {
+                        std::io::Error::new(
+                            std::io::ErrorKind::BrokenPipe,
+                            "non-loopback listener observer was dropped",
+                        )
+                    })?;
+                    drop(stream);
+                    return Ok(());
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    if worker_stop.load(Ordering::Acquire) {
+                        return Ok(());
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => return Err(error),
+            }
+        }
+    });
+    let mut child = match Command::new(&fixture)
+        .args(["app-server", "--listen", "stdio://", "--strict-config"])
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(error) => {
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            panic!("launch non-loopback fixture: {error}; listener cleanup: {listener_cleanup:?}");
+        }
+    };
+
+    let write_result = (|| -> anyhow::Result<()> {
+        let requests = [
+            json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": crate::initialize_params()
+            }),
+            json!({"jsonrpc": "2.0", "method": "initialized"}),
+            json!({
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "thread/start",
+                "params": {"cwd": temp.path()}
+            }),
+            json!({
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "turn/start",
+                "params": {}
+            }),
+        ];
+        let stdin = child
+            .stdin
+            .as_mut()
+            .context("fixture stdin was not captured")?;
+        for request in requests {
+            writeln!(stdin, "{}", serde_json::to_string(&request)?)
+                .context("write fixture JSONL request")?;
+        }
+        stdin.flush().context("flush fixture JSONL requests")?;
+        drop(child.stdin.take());
+        Ok(())
+    })();
+    if let Err(error) = write_result {
+        let child_cleanup = terminate_native_fixture_child(&mut child);
+        let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+        panic!(
+            "write non-loopback fixture requests: {error:#}; child: {child_cleanup}; listener cleanup: {listener_cleanup:?}"
+        );
+    }
+
+    enum Observation {
+        Accepted(std::net::SocketAddr),
+        ChildExited(std::process::ExitStatus),
+        ChildStatusError(std::io::Error),
+        ListenerDisconnected,
+        Deadline,
+    }
+
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let observation = loop {
+        match accepted_receiver.try_recv() {
+            Ok(peer_address) => break Observation::Accepted(peer_address),
+            Err(mpsc::TryRecvError::Empty) => {}
+            Err(mpsc::TryRecvError::Disconnected) => {
+                break Observation::ListenerDisconnected;
+            }
+        }
+        match child.try_wait() {
+            Ok(Some(status)) => break Observation::ChildExited(status),
+            Ok(None) => {}
+            Err(error) => break Observation::ChildStatusError(error),
+        }
+        if Instant::now() >= deadline {
+            break Observation::Deadline;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    };
+
+    match observation {
+        Observation::Accepted(peer_address) => {
+            let child_cleanup = terminate_native_fixture_child(&mut child);
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            panic!(
+                "native App Server fixture reached the controlled non-loopback listener at {listener_address} from {peer_address}; it must reject the broker URL before connect; child: {child_cleanup}; listener cleanup: {listener_cleanup:?}"
+            );
+        }
+        Observation::ChildExited(status) => {
+            let stderr = read_native_fixture_stderr(&mut child)
+                .unwrap_or_else(|error| format!("unavailable: {error:#}"));
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            match accepted_receiver.try_recv() {
+                Ok(peer_address) => {
+                    panic!(
+                        "native App Server fixture reached the controlled non-loopback listener at {listener_address} from late peer {peer_address} before rejection; child exited with {status}; stderr: {stderr}; listener cleanup: {listener_cleanup:?}"
+                    );
+                }
+                Err(mpsc::TryRecvError::Disconnected) if listener_cleanup.is_err() => {
+                    panic!(
+                        "controlled non-loopback listener stopped unexpectedly; child exited with {status}; stderr: {stderr}; listener cleanup: {listener_cleanup:?}"
+                    );
+                }
+                Err(mpsc::TryRecvError::Empty | mpsc::TryRecvError::Disconnected) => {}
+            }
+            listener_cleanup.unwrap();
+            assert!(
+                !status.success(),
+                "native App Server fixture accepted the non-loopback broker URL without connecting; stderr: {stderr}"
+            );
+            let lower_stderr = stderr.to_ascii_lowercase();
+            assert!(
+                stderr.contains(&format!("0.0.0.0:{port}")) || lower_stderr.contains("loopback"),
+                "native App Server fixture exited nonzero without the expected URL rejection diagnostic; stderr: {stderr}"
+            );
+        }
+        Observation::Deadline => {
+            let child_cleanup = terminate_native_fixture_child(&mut child);
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            let late_peer = accepted_receiver.try_recv();
+            if let Ok(peer_address) = late_peer {
+                panic!(
+                    "native App Server fixture reached the controlled non-loopback listener at {listener_address} from late peer {peer_address} at the five-second boundary; child: {child_cleanup}; listener cleanup: {listener_cleanup:?}"
+                );
+            }
+            panic!(
+                "native App Server fixture did not reject the non-loopback broker URL with a nonzero exit within five seconds; child: {child_cleanup}; late peer: {late_peer:?}; listener cleanup: {listener_cleanup:?}"
+            );
+        }
+        Observation::ChildStatusError(error) => {
+            let child_cleanup = terminate_native_fixture_child(&mut child);
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            let late_peer = accepted_receiver.try_recv();
+            panic!(
+                "inspect non-loopback fixture status: {error}; child: {child_cleanup}; late peer: {late_peer:?}; listener cleanup: {listener_cleanup:?}"
+            );
+        }
+        Observation::ListenerDisconnected => {
+            let child_cleanup = terminate_native_fixture_child(&mut child);
+            let listener_cleanup = stop_and_join_listener(&listener_stop, listener_worker);
+            let late_peer = accepted_receiver.try_recv();
+            panic!(
+                "controlled non-loopback listener disconnected before observation; child: {child_cleanup}; late peer: {late_peer:?}; listener cleanup: {listener_cleanup:?}"
+            );
+        }
+    };
 }
 
 #[test]
