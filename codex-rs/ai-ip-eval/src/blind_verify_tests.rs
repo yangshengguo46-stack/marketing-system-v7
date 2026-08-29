@@ -80,8 +80,12 @@ fn blind_snapshot_rejects_same_bytes_new_inode_before_pair_verification() {
     assert_no_blind_outputs(&replay.private_root);
 }
 
-fn rebuild_native_inventory(private_root: &Path) {
+fn rebuild_inventory(private_root: &Path) {
     let private_root = private_root.canonicalize().unwrap();
+    let marker: crate::private_inventory::PairMarker = serde_json::from_slice(
+        &fs::read(private_root.join("coordinator/pair-marker.json")).unwrap(),
+    )
+    .unwrap();
     for relative in [
         "coordinator/pair-marker.json",
         "coordinator/private-inventory.jsonl",
@@ -94,7 +98,7 @@ fn rebuild_native_inventory(private_root: &Path) {
         &private_root,
         context["pairId"].as_str().unwrap(),
         &test_sha256(&frozen),
-        "2026-08-29T00:00:00Z",
+        &marker.created_at,
     )
     .unwrap();
 }
@@ -134,7 +138,7 @@ fn blind_native_pair_rejects_fully_resigned_live_manifest_mode() {
     };
     pair[link] = json!(test_sha256(&manifest_bytes));
     fs::write(&pair_path, serde_json::to_vec_pretty(&pair).unwrap()).unwrap();
-    rebuild_native_inventory(&native.live_root);
+    rebuild_inventory(&native.live_root);
 
     let args = native_blind_args(&native.live_root);
     let snapshot = crate::blind::read_context_snapshot(&args.frozen_run_context).unwrap();
@@ -252,6 +256,7 @@ fn assert_mutated_file_rejected(
 ) {
     let original = fs::read(path).unwrap();
     fs::write(path, mutation).unwrap();
+    rebuild_inventory(private_root);
     let error = parse_pair_evidence(snapshot).unwrap_err();
     let report = format!("{error:#}");
     assert!(
@@ -260,6 +265,7 @@ fn assert_mutated_file_rejected(
     );
     assert_no_blind_outputs(private_root);
     fs::write(path, original).unwrap();
+    rebuild_inventory(private_root);
 }
 
 fn assert_missing_file_rejected(
@@ -270,7 +276,10 @@ fn assert_missing_file_rejected(
     let backup = path.with_extension("blind-missing-backup");
     fs::rename(path, &backup).unwrap();
     let error = parse_pair_evidence(snapshot).unwrap_err();
-    assert!(format!("{error:#}").contains("read bounded"));
+    assert_eq!(
+        error.to_string(),
+        "private tree differs from its inventory records"
+    );
     assert_no_blind_outputs(private_root);
     fs::rename(backup, path).unwrap();
 }
@@ -318,6 +327,7 @@ fn assert_resigned_execution_rejected<T>(
     }
     let typed_pair: T = serde_json::from_value(pair).unwrap();
     fs::write(&pair_path, serde_json::to_vec_pretty(&typed_pair).unwrap()).unwrap();
+    rebuild_inventory(private_root);
 
     let error = parse_pair_evidence(snapshot).unwrap_err();
     let report = format!("{error:#}");
@@ -332,6 +342,7 @@ fn assert_resigned_execution_rejected<T>(
         fs::write(path, bytes).unwrap();
     }
     fs::write(pair_path, original_pair).unwrap();
+    rebuild_inventory(private_root);
 }
 
 #[test]
@@ -418,7 +429,9 @@ fn blind_envelope_rejects_missing_and_linked_fixed_paths() {
     let report = format!("{error:#}");
     assert!(
         report.contains("unsafe type, links, or permissions")
-            || report.contains("reparse point or hardlink"),
+            || report.contains("reparse point or hardlink")
+            || report.contains("reparse point, hardlink, or wrong type")
+            || report.contains("anchored artifact has the wrong type or multiple links"),
         "{report}"
     );
     assert_no_blind_outputs(&replay.private_root);
@@ -434,12 +447,9 @@ fn blind_envelope_rejects_missing_and_linked_fixed_paths() {
         fs::rename(&manifest, &manifest_backup).unwrap();
         symlink(&manifest_backup, &manifest).unwrap();
         let error = parse_pair_evidence(&snapshot).unwrap_err();
-        let report = format!("{error:#}");
-        assert!(
-            report.contains("open no-follow path")
-                || report.contains("unsafe type, links, or permissions")
-                || report.contains("private path contains a link"),
-            "{report}"
+        assert_eq!(
+            error.to_string(),
+            "private tree contains a link or special entry"
         );
         assert_no_blind_outputs(&replay.private_root);
         fs::remove_file(&manifest).unwrap();
