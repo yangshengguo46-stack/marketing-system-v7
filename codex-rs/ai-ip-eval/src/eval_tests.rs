@@ -2931,6 +2931,64 @@ fn cli_freeze_modes_are_disjoint_and_live_pair_has_no_override_or_single_arm() {
     assert!(Cli::try_parse_from(["codex-ai-ip-eval", "run"]).is_err());
 }
 
+#[test]
+fn score_cli_has_one_exact_four_path_argument_shape() {
+    let cli = Cli::try_parse_from([
+        "codex-ai-ip-eval",
+        "score",
+        "--mapping-dir",
+        "coordinator/mappings",
+        "--reviews-dir",
+        "reviews",
+        "--output",
+        "coordinator/decision.private.json",
+        "--frozen-run-context",
+        "/private/frozen-run-context.json",
+    ])
+    .unwrap();
+    let crate::EvalCommand::Score(args) = cli.command else {
+        panic!("score command parsed as the wrong variant");
+    };
+    assert_eq!(
+        args.mapping_dir,
+        std::path::PathBuf::from("coordinator/mappings")
+    );
+    assert_eq!(args.reviews_dir, std::path::PathBuf::from("reviews"));
+    assert_eq!(
+        args.output,
+        std::path::PathBuf::from("coordinator/decision.private.json")
+    );
+    assert_eq!(
+        args.frozen_run_context,
+        std::path::PathBuf::from("/private/frozen-run-context.json")
+    );
+
+    for missing in [
+        "--mapping-dir",
+        "--reviews-dir",
+        "--output",
+        "--frozen-run-context",
+    ] {
+        let arguments = [
+            ("--mapping-dir", "coordinator/mappings"),
+            ("--reviews-dir", "reviews"),
+            ("--output", "coordinator/decision.private.json"),
+            ("--frozen-run-context", "/private/frozen-run-context.json"),
+        ];
+        let mut command = vec!["codex-ai-ip-eval", "score"];
+        for (name, value) in arguments {
+            if name != missing {
+                command.extend([name, value]);
+            }
+        }
+        assert!(
+            Cli::try_parse_from(command).is_err(),
+            "accepted missing {missing}"
+        );
+    }
+    assert!(Cli::try_parse_from(["codex-ai-ip-eval", "score", "--input", "legacy.json",]).is_err());
+}
+
 fn write_nonempty_source_fixture(
     root: &std::path::Path,
     private_root: &std::path::Path,

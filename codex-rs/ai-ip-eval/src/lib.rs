@@ -85,6 +85,7 @@ pub use model::ProofBrokerCompatibilityName;
 pub use model::ProviderRole;
 pub use model::ReplayPairArgs;
 pub use model::RunManifest;
+pub use model::ScoreArgs;
 pub use model::Usage;
 pub use proof_archive::ArchiveEvidenceSource;
 pub use proof_archive::ArmPostprocessIndex;

@@ -153,7 +153,7 @@ pub enum EvalCommand {
     FreezeRunContext(FreezeRunContextCommand),
     LivePair(LivePairArgs),
     BlindPack(BlindPackArgs),
-    Score(PathInputArgs),
+    Score(ScoreArgs),
     MakeCostReceipt(PathInputArgs),
     AnnotateCost(PathInputArgs),
     Summarize(PathInputArgs),
@@ -271,6 +271,18 @@ pub struct LiveFreezeArgs {
 
 #[derive(Debug, Args)]
 pub struct LivePairArgs {
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct ScoreArgs {
+    #[arg(long)]
+    pub mapping_dir: PathBuf,
+    #[arg(long)]
+    pub reviews_dir: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
     #[arg(long)]
     pub frozen_run_context: PathBuf,
 }
