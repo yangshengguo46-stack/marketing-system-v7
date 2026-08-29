@@ -30,8 +30,8 @@ pub(crate) struct ReviewerMappingCommitment {
     pub(crate) seed_commitment: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub(crate) struct ReviewerQualificationCommitment {
     pub(crate) qualification_class: String,
     pub(crate) experienced_operator_or_director: bool,
@@ -39,8 +39,8 @@ pub(crate) struct ReviewerQualificationCommitment {
     pub(crate) attestation_signature_evidence_sha256: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub(crate) struct ReviewBundleManifest {
     pub(crate) schema_version: u32,
     pub(crate) pair_id: String,
@@ -55,8 +55,8 @@ pub(crate) struct ReviewBundleManifest {
     pub(crate) reviewer_submission_schema_sha256: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub(crate) struct ReviewerMapping {
     pub(crate) schema_version: u32,
     pub(crate) pair_id: String,

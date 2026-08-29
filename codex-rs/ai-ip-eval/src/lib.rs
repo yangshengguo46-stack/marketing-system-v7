@@ -22,6 +22,7 @@ mod runner;
 mod score;
 mod score_authority;
 mod score_decision;
+mod score_validation;
 mod secure_fs;
 mod secure_fs_publish;
 mod secure_fs_retain;
@@ -204,6 +205,10 @@ mod score_authority_tests;
 #[cfg(test)]
 #[path = "score_decision_tests.rs"]
 mod score_decision_tests;
+
+#[cfg(test)]
+#[path = "score_validation_tests.rs"]
+mod score_validation_tests;
 
 #[cfg(test)]
 #[path = "catalog_tests.rs"]
