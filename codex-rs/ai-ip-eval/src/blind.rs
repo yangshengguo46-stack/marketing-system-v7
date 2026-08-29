@@ -74,6 +74,14 @@ pub(crate) enum FrozenInputToken {
     },
 }
 
+pub(crate) struct ScoreFrozenInputProjection<'a> {
+    pub(crate) mode: ExecutionMode,
+    pub(crate) private_root: &'a Path,
+    pub(crate) pair_id: &'a str,
+    pub(crate) frozen_run_context_sha256: &'a str,
+    pub(crate) reviewers: [&'a crate::ReviewerDeclaration; 3],
+}
+
 impl FrozenInputToken {
     pub(crate) fn expected_manifest_mode(&self) -> Result<ExecutionMode> {
         match self {
@@ -88,6 +96,34 @@ impl FrozenInputToken {
                 }
                 Ok(ExecutionMode::Mock)
             }
+        }
+    }
+
+    pub(crate) fn score_projection(&self) -> Result<ScoreFrozenInputProjection<'_>> {
+        match self {
+            Self::Replay(verified) => {
+                let projection = verified.projection();
+                let reviewers: &[crate::ReviewerDeclaration; 3] = projection
+                    .attestation
+                    .reviewers
+                    .as_slice()
+                    .try_into()
+                    .context("score requires exactly three frozen Replay reviewers")?;
+                Ok(ScoreFrozenInputProjection {
+                    mode: ExecutionMode::Replay,
+                    private_root: projection.private_root,
+                    pair_id: projection.pair_id,
+                    frozen_run_context_sha256: projection.raw_sha256,
+                    reviewers: reviewers.each_ref(),
+                })
+            }
+            Self::Native { frozen, content } => Ok(ScoreFrozenInputProjection {
+                mode: ExecutionMode::Mock,
+                private_root: frozen.private_root(),
+                pair_id: frozen.pair_id(),
+                frozen_run_context_sha256: frozen.sha256(),
+                reviewers: content.projection().reviewers.each_ref(),
+            }),
         }
     }
 }
@@ -135,6 +171,10 @@ impl FrozenContextSnapshot {
             .reverify_unchanged()
             .context("reverify retained blind-pack frozen context identity")?;
         Ok(inputs)
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.retained_file.reverify_unchanged()
     }
 }
 

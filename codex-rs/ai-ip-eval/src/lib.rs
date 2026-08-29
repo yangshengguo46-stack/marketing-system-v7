@@ -125,8 +125,8 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
         EvalCommand::ReplayPair(args) => run_replay_pair(args),
         EvalCommand::LivePair(args) => run_local_mock_pair(&args.frozen_run_context),
         EvalCommand::BlindPack(args) => blind::run_blind_pack(args),
-        EvalCommand::Score(_)
-        | EvalCommand::MakeCostReceipt(_)
+        EvalCommand::Score(args) => score_authority::run_score_authority(args),
+        EvalCommand::MakeCostReceipt(_)
         | EvalCommand::AnnotateCost(_)
         | EvalCommand::Summarize(_)
         | EvalCommand::VerifyReport(_)

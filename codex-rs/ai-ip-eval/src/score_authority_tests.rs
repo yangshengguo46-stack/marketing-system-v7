@@ -1,7 +1,15 @@
 use std::path::Path;
 use std::path::PathBuf;
 
+use pretty_assertions::assert_eq;
+use sha2::Digest;
+
+use crate::ExecutionMode;
+use crate::FrozenContracts;
 use crate::ScoreArgs;
+use crate::blind_bundle_model::BlindPackReceipt;
+use crate::blind_bundle_model::ReviewerMappingCommitment;
+use crate::score_authority::ReceiptAuthorityBinding;
 
 fn score_root() -> (tempfile::TempDir, PathBuf) {
     let temp = tempfile::tempdir().unwrap();
@@ -47,6 +55,77 @@ fn assert_no_score_outputs(root: &Path) {
             std::io::ErrorKind::NotFound
         );
     }
+}
+
+#[test]
+fn score_authority_accepts_native_receipt_binding_and_requires_its_pair_receipt() {
+    let contracts = FrozenContracts::load()
+        .unwrap()
+        .blind_review_contracts()
+        .unwrap();
+    let sha = format!("{:x}", sha2::Sha256::digest(b"score authority test"));
+    let reviewer_ids = [
+        "native-reviewer-1",
+        "native-reviewer-2",
+        "native-reviewer-3",
+    ];
+    let commitment_shas = ["reviewer one", "reviewer two", "reviewer three"]
+        .map(|label| format!("{:x}", sha2::Sha256::digest(label.as_bytes())));
+    let receipt = BlindPackReceipt {
+        schema_version: 1,
+        pair_id: "native-pair".to_string(),
+        frozen_run_context_sha256: sha.clone(),
+        pair_receipt_sha256: Some(sha.clone()),
+        pair_verification_sha256: sha.clone(),
+        rubric_sha256: contracts.rubric_sha256,
+        decision_policy_sha256: contracts.decision_policy_sha256,
+        reviewer_submission_schema_sha256: contracts.reviewer_submission_schema_sha256,
+        reviewer_mappings: reviewer_ids
+            .iter()
+            .zip(&commitment_shas)
+            .map(|(reviewer_id, commitment_sha)| ReviewerMappingCommitment {
+                reviewer_id: reviewer_id.to_string(),
+                review_bundle_sha256: commitment_sha.clone(),
+                mapping_sha256: commitment_sha.clone(),
+                seed_commitment: commitment_sha.clone(),
+            })
+            .collect(),
+        inventory_root_sha256: sha.clone(),
+        reviews_drop_sha256: format!("{:x}", sha2::Sha256::digest(br#"{"entries":[]}"#)),
+        generated_at: "2026-08-29T12:34:56.789Z".to_string(),
+    };
+    let binding = ReceiptAuthorityBinding {
+        mode: ExecutionMode::Mock,
+        pair_id: "native-pair",
+        frozen_run_context_sha256: &sha,
+        pair_receipt_sha256: Some(&sha),
+        pair_verification_sha256: &sha,
+        reviewer_ids,
+    };
+    crate::score_authority::verify_receipt(&receipt, &binding).unwrap();
+
+    let mut duplicate_commitment = receipt.clone();
+    duplicate_commitment.reviewer_mappings[1].review_bundle_sha256 = duplicate_commitment
+        .reviewer_mappings[0]
+        .review_bundle_sha256
+        .clone();
+    assert_eq!(
+        crate::score_authority::verify_receipt(&duplicate_commitment, &binding)
+            .unwrap_err()
+            .to_string(),
+        "blind pack receipt differs from the sealed score authority"
+    );
+
+    let without_native_pair_receipt = BlindPackReceipt {
+        pair_receipt_sha256: None,
+        ..receipt
+    };
+    assert_eq!(
+        crate::score_authority::verify_receipt(&without_native_pair_receipt, &binding)
+            .unwrap_err()
+            .to_string(),
+        "blind pack receipt differs from the sealed score authority"
+    );
 }
 
 #[test]

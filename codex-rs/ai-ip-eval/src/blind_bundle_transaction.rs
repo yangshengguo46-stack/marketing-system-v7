@@ -13,7 +13,9 @@ use sha2::Digest;
 use sha2::Sha256;
 
 use crate::ExecutionMode;
+use crate::blind_bundle_model::BlindPackReceipt;
 use crate::blind_bundle_model::PreparedBlindBundles;
+use crate::blind_bundle_model::ReviewerMappingCommitment;
 use crate::blind_finalize::BlindBundleTransactionCursor;
 use crate::blind_finalize::VerifiedBlindPair;
 use crate::private_inventory::InventoryKind;
@@ -54,32 +56,6 @@ pub(crate) enum BlindBundleCheckpoint {
     AfterReviewsPublish,
     BeforeReceiptCreate,
     AfterReceiptCreateBeforeInventoryAppend,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct BlindPackReceipt {
-    schema_version: u32,
-    pair_id: String,
-    frozen_run_context_sha256: String,
-    pair_receipt_sha256: Option<String>,
-    pair_verification_sha256: String,
-    rubric_sha256: String,
-    decision_policy_sha256: String,
-    reviewer_submission_schema_sha256: String,
-    reviewer_mappings: Vec<ReviewerMappingCommitment>,
-    inventory_root_sha256: String,
-    reviews_drop_sha256: String,
-    generated_at: String,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ReviewerMappingCommitment {
-    reviewer_id: String,
-    review_bundle_sha256: String,
-    mapping_sha256: String,
-    seed_commitment: String,
 }
 
 pub(crate) fn commit_blind_bundles(

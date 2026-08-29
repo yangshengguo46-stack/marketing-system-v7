@@ -1,7 +1,34 @@
+use serde::Deserialize;
 use serde::Serialize;
 
 use crate::EvaluationCondition;
 use crate::ExecutionMode;
+
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct BlindPackReceipt {
+    pub(crate) schema_version: u32,
+    pub(crate) pair_id: String,
+    pub(crate) frozen_run_context_sha256: String,
+    pub(crate) pair_receipt_sha256: Option<String>,
+    pub(crate) pair_verification_sha256: String,
+    pub(crate) rubric_sha256: String,
+    pub(crate) decision_policy_sha256: String,
+    pub(crate) reviewer_submission_schema_sha256: String,
+    pub(crate) reviewer_mappings: Vec<ReviewerMappingCommitment>,
+    pub(crate) inventory_root_sha256: String,
+    pub(crate) reviews_drop_sha256: String,
+    pub(crate) generated_at: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub(crate) struct ReviewerMappingCommitment {
+    pub(crate) reviewer_id: String,
+    pub(crate) review_bundle_sha256: String,
+    pub(crate) mapping_sha256: String,
+    pub(crate) seed_commitment: String,
+}
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]

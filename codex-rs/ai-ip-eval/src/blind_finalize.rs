@@ -113,6 +113,11 @@ pub(crate) fn finalize_blind_pair(core: PairEvidenceCore) -> Result<VerifiedBlin
 }
 
 fn reverify_core(core: &PairEvidenceCore) -> Result<()> {
+    reverify_sealed_pair_authority(core)?;
+    crate::blind::ensure_destinations_absent(&core.private_root)
+}
+
+pub(crate) fn reverify_sealed_pair_authority(core: &PairEvidenceCore) -> Result<()> {
     verify_treatment_and_skill(core)?;
     match &core.inputs {
         FrozenInputToken::Replay(inputs) => inputs.reverify_all()?,
@@ -122,7 +127,6 @@ fn reverify_core(core: &PairEvidenceCore) -> Result<()> {
         }
     }
     core.inventory.reverify_unchanged()?;
-    crate::blind::ensure_destinations_absent(&core.private_root)?;
     Ok(())
 }
 

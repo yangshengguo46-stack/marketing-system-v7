@@ -47,6 +47,10 @@ impl VerifiedPendingReviewInventory {
         }
         Ok(())
     }
+
+    pub(crate) fn into_parts(self) -> (VerifiedPrivateInventory, [RetainedPendingReview; 3]) {
+        (self.inventory, self.pending_reviews)
+    }
 }
 
 impl RetainedPendingReview {

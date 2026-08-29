@@ -26,8 +26,6 @@ mod semantics;
 mod semantics_bindings;
 pub(crate) use semantics::PairEvidenceCore;
 
-const EVIDENCE_FILE_CAP: u64 = 1024 * 1024;
-
 #[derive(Debug)]
 pub(crate) struct ParsedPairEvidence {
     pub(crate) inputs: FrozenInputToken,
@@ -73,6 +71,14 @@ pub(crate) fn verify_pair_evidence_core(
     semantics::verify_parsed_pair_evidence(parse_pair_evidence(snapshot)?)
 }
 
+pub(crate) fn verify_pair_evidence_core_from(
+    snapshot: &FrozenContextSnapshot,
+    inputs: FrozenInputToken,
+    inventory: VerifiedPrivateInventory,
+) -> Result<PairEvidenceCore> {
+    semantics::verify_parsed_pair_evidence(parse_pair_evidence_from(snapshot, inputs, inventory)?)
+}
+
 #[cfg(test)]
 pub(crate) fn verify_with_native_path_commitment_for_test(
     mut parsed: ParsedPairEvidence,
@@ -87,6 +93,16 @@ pub(crate) fn verify_with_native_path_commitment_for_test(
 
 pub(crate) fn parse_pair_evidence(snapshot: &FrozenContextSnapshot) -> Result<ParsedPairEvidence> {
     let inputs = snapshot.verified_inputs()?;
+    let binding = PairBinding::from_snapshot(snapshot, &inputs)?;
+    let inventory = verify_private_inventory_state(&binding.private_root)?;
+    parse_pair_evidence_from(snapshot, inputs, inventory)
+}
+
+fn parse_pair_evidence_from(
+    snapshot: &FrozenContextSnapshot,
+    inputs: FrozenInputToken,
+    inventory: VerifiedPrivateInventory,
+) -> Result<ParsedPairEvidence> {
     let binding = PairBinding::from_snapshot(snapshot, &inputs)?;
     let coordinator = match binding.mode {
         ExecutionMode::Replay => "replay-coordinator",
@@ -129,7 +145,6 @@ pub(crate) fn parse_pair_evidence(snapshot: &FrozenContextSnapshot) -> Result<Pa
         }
     };
     validate_structural_links(&binding, &execution_context, &arms, &pair_verification)?;
-    let inventory = verify_private_inventory_state(&binding.private_root)?;
     inventory.verify_binding(
         &binding.pair_id,
         &binding.frozen_run_context_sha256,
@@ -206,7 +221,7 @@ impl<T> ExactDocument<T> {
     where
         T: DeserializeOwned + Serialize,
     {
-        let raw_bytes = read_single_link_regular_bounded(path, EVIDENCE_FILE_CAP)
+        let raw_bytes = read_single_link_regular_bounded(path, /*cap*/ 1024 * 1024)
             .with_context(|| format!("read bounded {label}"))?;
         let typed: T = serde_json::from_value(crate::jcs::parse_json(&raw_bytes)?)
             .with_context(|| format!("parse typed {label}"))?;

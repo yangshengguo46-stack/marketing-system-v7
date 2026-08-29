@@ -29,7 +29,7 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
     let private_root = temp.path().join("private");
     fs::create_dir(&private_root)?;
     #[cfg(unix)]
-    fs::set_permissions(&private_root, fs::Permissions::from_mode(0o700))?;
+    fs::set_permissions(&private_root, fs::Permissions::from_mode(/*mode*/ 0o700))?;
     let private_root = private_root.canonicalize()?;
     let frozen_context = run_replay_pair(&binary, &fixture_root, &fixture_set, &private_root)?;
     assert!(
@@ -71,6 +71,56 @@ fn blind_cli_accepts_authoritative_replay_surface() -> Result<()> {
         deterministic_outputs(&private_root)?,
         deterministic_outputs(&second_root)?
     );
+    Ok(())
+}
+
+#[test]
+fn score_cli_verified_replay_authority_reaches_exact_validation_sentinel_without_output()
+-> Result<()> {
+    let binary = cargo_bin("codex-ai-ip-eval")?;
+    let fixture_set =
+        codex_utils_cargo_bin::find_resource!("tests/fixtures/replay-fixture-set.json")?;
+    let fixture_root = fixture_set.parent().unwrap().canonicalize()?;
+    let temp = TempDir::new()?;
+    let private_root = temp.path().join("private");
+    fs::create_dir(&private_root)?;
+    #[cfg(unix)]
+    fs::set_permissions(&private_root, fs::Permissions::from_mode(/*mode*/ 0o700))?;
+    let private_root = private_root.canonicalize()?;
+    let frozen_context = run_replay_pair(&binary, &fixture_root, &fixture_set, &private_root)?;
+    let blind = blind_command(&binary, &frozen_context).output()?;
+    assert_success("blind-pack before score", &blind);
+    for ordinal in 1..=3 {
+        fs::copy(
+            fixture_root.join(format!("replay-review-{ordinal}.json")),
+            private_root
+                .join("reviews")
+                .join(format!("reviewer-{ordinal}.json")),
+        )?;
+    }
+    let before = tree_snapshot(&private_root)?;
+
+    let score = score_command(&binary, &private_root, &frozen_context).output()?;
+    assert!(!score.status.success());
+    assert!(score.stdout.is_empty());
+    assert_eq!(
+        String::from_utf8(score.stderr)?.trim_end(),
+        "Error: score review validation stage is not installed"
+    );
+    assert_score_outputs_absent(&private_root);
+    assert_eq!(tree_snapshot(&private_root)?, before);
+
+    fs::remove_file(private_root.join("coordinator/blind-pack-receipt.json"))?;
+    let before_missing_receipt = tree_snapshot(&private_root)?;
+    let missing_receipt = score_command(&binary, &private_root, &frozen_context).output()?;
+    assert!(!missing_receipt.status.success());
+    assert!(missing_receipt.stdout.is_empty());
+    assert_ne!(
+        String::from_utf8(missing_receipt.stderr)?.trim_end(),
+        "Error: score review validation stage is not installed"
+    );
+    assert_score_outputs_absent(&private_root);
+    assert_eq!(tree_snapshot(&private_root)?, before_missing_receipt);
     Ok(())
 }
 
@@ -467,6 +517,33 @@ fn blind_command(binary: &Path, frozen_context: &Path) -> Command {
         ])
         .arg(frozen_context);
     command
+}
+
+fn score_command(binary: &Path, private_root: &Path, frozen_context: &Path) -> Command {
+    let mut command = Command::new(binary);
+    command
+        .args(["score", "--mapping-dir", "coordinator/mappings"])
+        .arg("--reviews-dir")
+        .arg(private_root.join("reviews"))
+        .arg("--output")
+        .arg(private_root.join("coordinator/decision.private.json"))
+        .arg("--frozen-run-context")
+        .arg(frozen_context);
+    command
+}
+
+fn assert_score_outputs_absent(private_root: &Path) {
+    for relative in [
+        "coordinator/.decision.private.json.staging",
+        "coordinator/decision.private.json",
+    ] {
+        assert_eq!(
+            fs::symlink_metadata(private_root.join(relative))
+                .unwrap_err()
+                .kind(),
+            std::io::ErrorKind::NotFound
+        );
+    }
 }
 
 fn assert_success(stage: &str, output: &Output) {
