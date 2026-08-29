@@ -14,33 +14,58 @@ pub(crate) enum PublishCheckpoint {
     SourceOpened,
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum EntryKind {
+    Tree,
+    File,
+}
+
 pub(crate) fn publish_private_tree_no_replace(
     private_root: &Path,
     staging_relative: &Path,
     final_relative: &Path,
 ) -> Result<()> {
-    publish_private_tree_no_replace_with_hook(
+    publish_entry(
         private_root,
         staging_relative,
         final_relative,
+        EntryKind::Tree,
+    )
+}
+
+pub(crate) fn publish_private_file_no_replace(
+    private_root: &Path,
+    staging_relative: &Path,
+    final_relative: &Path,
+) -> Result<()> {
+    publish_entry(
+        private_root,
+        staging_relative,
+        final_relative,
+        EntryKind::File,
+    )
+}
+
+fn publish_entry(
+    private_root: &Path,
+    staging_relative: &Path,
+    final_relative: &Path,
+    kind: EntryKind,
+) -> Result<()> {
+    publish_entry_with_hook(
+        private_root,
+        staging_relative,
+        final_relative,
+        kind,
         &mut |_| Ok(()),
     )
 }
 
-#[cfg(test)]
-pub(crate) fn publish_private_tree_no_replace_for_test(
+pub(crate) fn publish_entry_with_hook(
     private_root: &Path,
     staging_relative: &Path,
     final_relative: &Path,
-    hook: &mut dyn FnMut(PublishCheckpoint) -> Result<()>,
-) -> Result<()> {
-    publish_private_tree_no_replace_with_hook(private_root, staging_relative, final_relative, hook)
-}
-
-fn publish_private_tree_no_replace_with_hook(
-    private_root: &Path,
-    staging_relative: &Path,
-    final_relative: &Path,
+    kind: EntryKind,
     hook: &mut dyn FnMut(PublishCheckpoint) -> Result<()>,
 ) -> Result<()> {
     if staging_relative.parent() != final_relative.parent() {
@@ -55,9 +80,9 @@ fn publish_private_tree_no_replace_with_hook(
         Err(error) => return Err(error).context("inspect private publication destination"),
     }
     let destination = resolve_private_relative(private_root, final_relative)?;
-    let expected = platform::capture_identities(&staging)?;
+    let expected = platform::capture_identities(&staging, kind)?;
     hook(PublishCheckpoint::IdentitiesCaptured)?;
-    platform::publish(&staging, &destination, expected, hook)
+    platform::publish(&staging, &destination, kind, expected, hook)
 }
 
 #[cfg(unix)]
@@ -127,22 +152,35 @@ mod platform {
         Ok((metadata.dev(), metadata.ino()))
     }
 
-    fn open_child_directory(parent: &File, name: &CString) -> Result<File> {
-        let flags = libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW;
+    fn open_child(parent: &File, name: &CString, kind: EntryKind) -> Result<File> {
+        let flags = libc::O_RDONLY
+            | libc::O_CLOEXEC
+            | libc::O_NOFOLLOW
+            | match kind {
+                EntryKind::Tree => libc::O_DIRECTORY,
+                EntryKind::File => libc::O_NONBLOCK,
+            };
         let child = owned(unsafe { libc::openat(parent.as_raw_fd(), name.as_ptr(), flags) })?;
         let metadata = child.metadata()?;
-        if !metadata.is_dir() || metadata.mode() & 0o077 != 0 {
+        let type_and_links_safe = match kind {
+            EntryKind::Tree => metadata.is_dir(),
+            EntryKind::File => metadata.is_file() && metadata.nlink() == 1,
+        };
+        if !type_and_links_safe || metadata.mode() & 0o077 != 0 {
             bail!("private staging entry has unsafe type or permissions");
         }
         Ok(child)
     }
 
-    pub(super) fn capture_identities(staging: &Path) -> Result<ExpectedIdentities> {
+    pub(super) fn capture_identities(
+        staging: &Path,
+        kind: EntryKind,
+    ) -> Result<ExpectedIdentities> {
         let parent_path = staging
             .parent()
             .context("private staging entry has no parent")?;
         let parent = open_directory(parent_path)?;
-        let source = open_child_directory(&parent, &leaf(staging)?)
+        let source = open_child(&parent, &leaf(staging)?, kind)
             .context("capture private staging entry identity")?;
         Ok(ExpectedIdentities {
             parent: identity(&parent)?,
@@ -153,6 +191,7 @@ mod platform {
     pub(super) fn publish(
         staging: &Path,
         destination: &Path,
+        kind: EntryKind,
         expected: ExpectedIdentities,
         hook: &mut dyn FnMut(PublishCheckpoint) -> Result<()>,
     ) -> Result<()> {
@@ -173,17 +212,17 @@ mod platform {
         }
         let staging_name = leaf(staging)?;
         let destination_name = leaf(destination)?;
-        let retained_staging = open_child_directory(&parent, &staging_name)
+        let retained_staging = open_child(&parent, &staging_name, kind)
             .context("inspect private staging entry before publication")?;
         if identity(&retained_staging)? != expected.source {
             bail!("private staging identity changed before publication");
         }
         retained_staging
             .sync_all()
-            .context("fsync private staging tree")?;
+            .context("fsync private staging entry")?;
         hook(PublishCheckpoint::SourceOpened)?;
         rename_no_replace(&parent, &staging_name, &destination_name)?;
-        let published = open_child_directory(&parent, &destination_name)?;
+        let published = open_child(&parent, &destination_name, kind)?;
         if !same_identity(&retained_staging, &published)? {
             bail!("private staging identity changed during publication");
         }
@@ -193,7 +232,7 @@ mod platform {
         }
         published
             .sync_all()
-            .context("fsync published private tree")?;
+            .context("fsync published private entry")?;
         parent.sync_all().context("fsync private publish parent")
     }
 
@@ -324,7 +363,20 @@ mod platform {
         ))
     }
 
-    pub(super) fn capture_identities(staging: &Path) -> Result<ExpectedIdentities> {
+    fn validate_entry(file: &File, kind: EntryKind) -> Result<()> {
+        match kind {
+            EntryKind::Tree => crate::secure_fs::validate_private_directory_handle(file),
+            EntryKind::File => {
+                crate::runner::private_existing_windows::info(file, false)?;
+                crate::secure_fs::validate_private_file_handle(file)
+            }
+        }
+    }
+
+    pub(super) fn capture_identities(
+        staging: &Path,
+        kind: EntryKind,
+    ) -> Result<ExpectedIdentities> {
         let parent_path = staging
             .parent()
             .context("private staging entry has no parent")?;
@@ -337,7 +389,7 @@ mod platform {
             staging,
             DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE | READ_CONTROL,
         )?;
-        crate::secure_fs::validate_private_directory_handle(&source)?;
+        validate_entry(&source, kind)?;
         let parent_after = open_observer(parent_path, FILE_READ_ATTRIBUTES | READ_CONTROL)?;
         crate::secure_fs::validate_private_directory_handle(&parent_after)?;
         let expected = ExpectedIdentities {
@@ -353,6 +405,7 @@ mod platform {
     pub(super) fn publish(
         staging: &Path,
         destination: &Path,
+        kind: EntryKind,
         expected: ExpectedIdentities,
         hook: &mut dyn FnMut(PublishCheckpoint) -> Result<()>,
     ) -> Result<()> {
@@ -376,7 +429,7 @@ mod platform {
             staging,
             DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE | READ_CONTROL,
         )?;
-        crate::secure_fs::validate_private_directory_handle(&staging_file)?;
+        validate_entry(&staging_file, kind)?;
         let retained_staging = identity(&staging_file)?;
         if retained_staging != expected.source {
             bail!("private staging identity changed before publication");
@@ -427,7 +480,7 @@ mod platform {
             destination,
             FILE_GENERIC_READ | FILE_GENERIC_WRITE | READ_CONTROL,
         )?;
-        crate::secure_fs::validate_private_directory_handle(&published)?;
+        validate_entry(&published, kind)?;
         if identity(&published)? != retained_staging {
             bail!("private staging identity changed during publication");
         }
@@ -438,7 +491,7 @@ mod platform {
         }
         published
             .sync_all()
-            .context("fsync published private tree")?;
+            .context("fsync published private entry")?;
         parent.sync_all().context("fsync private publish parent")
     }
 }
