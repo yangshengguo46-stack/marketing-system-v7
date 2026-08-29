@@ -862,6 +862,12 @@ source-byte, mapping/bundle/receipt, privacy, inventory-chain, rerun, and cross-
 oracle as `test(ai-ip-eval): verify bound blind review CLI contract`. No success assertion moves to
 Task 6E, and both commits remain independently below 800 changed lines.
 
+**Task 6E failure sibling amendment (2026-08-29):** the formatted success transaction sibling is
+already 368 lines. Keep the fault matrix independently reviewable in
+`blind_bundle_transaction_failure_tests.rs`, mounted only from `eval_tests.rs`; it owns staging
+preflight, injected checkpoint states, read-only rerun, receipt replacement, clock failure, and
+retained-root replacement tests, while reusing the already verified transaction production seam.
+
 The exact Task 6 wire and bytes are frozen as follows:
 
 ```rust
