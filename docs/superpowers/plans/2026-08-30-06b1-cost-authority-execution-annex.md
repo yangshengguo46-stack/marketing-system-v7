@@ -142,6 +142,8 @@ fn commit_cost_receipt(
 
 `VerifiedLiveCostAuthority` owns the verified core/projection and retained frozen cost inputs needed for reverify. Its production constructor requires core/context/both manifests to say exact Live, both typed Live mode-evidence values to agree on the endpoint/order/rate/billing/FX/budget commitments, and `provider_endpoint_commitment=Some(exact_live_value)`. Mock/Replay never fabricate one. A `#[cfg(test)] pub(crate)` constructor inside `cost_authority.rs` is the only synthetic Live seam; `cost_authority_tests.rs` is mounted by `lib.rs` as a sibling unit-test module. No integration crate can see it. `cost_binding` in Task 6 consumes this same authority and never creates a second verifier.
 
+Task 5C review-repair authority correction: the committed arm array preserves either CSPRNG-committed permutation and must contain exactly one `generic` and one `candidate`; it must not hard-code `generic` first. Bind the top-level complete attempt-ledger SHA to the final ordered arm prefix. For this cohesive security-critical verifier, auditability takes precedence over the original soft 500-line target: `cost_authority.rs` may remain below 620 lines while the other new production modules remain below 500. Use named predicates/helpers and avoid audit-hostile long-line compression; do not add another production file for this repair.
+
 Task 5C rejects a supplier statement whose valid wire condition, pair, provider, or model does not match the selected arm authority. Before publishing a generated exact-JCS `CostReceiptV1`, it rejects every nonnegative emitted integer above `9_007_199_254_740_991`; Rust/source values remain `u64` and are never rounded.
 
 - [ ] **Step 1: Freeze the authority and hard-gate RED matrix**
@@ -349,15 +351,16 @@ if git diff --name-only eb64199a6..HEAD | rg -n '(^|/)(report\.json|index\.json|
   echo 'unauthorized public/retention output path in 06B-1 diff' >&2
   false
 fi
-wc -l codex-rs/ai-ip-eval/src/{cost_contracts,cost_inputs,proof_commitment,cost,cost_authority,cost_binding}.rs \
+wc -l codex-rs/ai-ip-eval/src/{cost_contracts,cost_inputs,proof_commitment,cost,cost_binding}.rs \
   | awk '$2 != "total" && $1 >= 500 { print; bad=1 } END { exit bad }'
+test "$(wc -l < codex-rs/ai-ip-eval/src/cost_authority.rs)" -lt 620
 for commit in $(git rev-list --reverse eb64199a6..HEAD); do
   git show --numstat --format= "$commit" \
     | awk -v commit="$commit" '$1 ~ /^[0-9]+$/ { changed += $1 + $2 } END { print commit, changed; exit(changed >= 800) }' || exit 1
 done
 ```
 
-Expected: the one stale-code search is empty, while the separate ledger disposition search returns the required nonempty lines. Locks are unchanged because this child uses already locked dependencies/globs; each new production module is below 500 lines and every commit below 800 changed lines. The ledger records provider not run and cost zero, both blockers open, 06B-1 complete, 06B-2 next, `G0/G1/G2=OPEN`, and `PASS_TO_PHASE_0B=false`. The executable scans reject a real key file, credential-like diff, or unauthorized public/retention output. Existing contract fixtures remain permitted; the one fixed synthetic 32-byte key in `proof-commitment-vectors.json` is the explicit exception and its Rust/Python vector tests prove exact reviewed bytes.
+Expected: the one stale-code search is empty, while the separate ledger disposition search returns the required nonempty lines. Locks are unchanged because this child uses already locked dependencies/globs; `cost_authority.rs` is below its explicit 620-line auditability exception, every other new production module is below 500 lines, and every commit is below 800 changed lines. The ledger records provider not run and cost zero, both blockers open, 06B-1 complete, 06B-2 next, `G0/G1/G2=OPEN`, and `PASS_TO_PHASE_0B=false`. The executable scans reject a real key file, credential-like diff, or unauthorized public/retention output. Existing contract fixtures remain permitted; the one fixed synthetic 32-byte key in `proof-commitment-vectors.json` is the explicit exception and its Rust/Python vector tests prove exact reviewed bytes.
 
 - [ ] **Step 4: Run final review, fixer, and formatter**
 
