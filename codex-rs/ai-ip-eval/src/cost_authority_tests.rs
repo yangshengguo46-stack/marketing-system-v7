@@ -276,6 +276,52 @@ fn synthetic_input_with_order(
     input
 }
 
+fn synthetic_manifest_bytes(input: &SyntheticLiveCostAuthority) -> [Vec<u8>; 2] {
+    input.data.arms.each_ref().map(|arm| {
+        crate::jcs::canonicalize_value(&serde_json::to_value(crate::RunManifest {
+            schema_version: 1, pair_id: input.data.pair_id.clone(),
+            frozen_run_context_sha256: input.data.frozen_sha256.clone(),
+            execution_context_sha256: input.data.execution_context_sha256.clone(),
+            run_ordinal: arm.run_ordinal, condition: arm.condition,
+            fork_sha: input.data.fork_sha.clone(), case_sha256: arm.manifest_case_sha256.clone(),
+            source_materials_sha256: hex('0'), prompt_sha256: hex('0'), additional_context_sha256: hex('0'),
+            output_schema_sha256: hex('0'), thread_start_request_sha256: hex('0'), turn_start_request_sha256: hex('0'),
+            shared_config_sha256: hex('0'), effective_config_sha256: hex('0'), config_layers_sha256: hex('0'),
+            native_skill_sha256: Some(hex('0')), pre_skill_catalog_sha256: hex('0'), post_skill_catalog_sha256: hex('0'),
+            normalized_base_catalog_sha256: hex('0'), skill_use_evidence_sha256: (arm.condition == EvaluationCondition::Candidate).then(|| hex('0')),
+            codex_binary_sha256: hex('0'), evaluator_binary_sha256: hex('0'), broker_component_sha256: hex('0'),
+            first_root_provider_request_commitment: hex('0'), normalized_first_root_request_commitment: hex('0'),
+            normalized_first_root_base_commitment: hex('0'), first_root_treatment_diff_commitment: (arm.condition == EvaluationCondition::Candidate).then(|| hex('0')),
+            app_server_transcript_sha256: hex('0'), broker_attempt_ledger_sha256: arm.manifest_attempt_ledger_sha256.clone(),
+            attempt_index_root_sha256: arm.manifest_attempt_index_root_sha256.clone(), postprocess_evidence_index_sha256: hex('0'),
+            content_package_sha256: hex('0'), root_thread_id: format!("root-thread-{}", arm.run_ordinal),
+            root_turn_id: format!("root-turn-{}", arm.run_ordinal), session_id: format!("session-{}", arm.run_ordinal),
+            provider_request_attempt_count: arm.provider_request_attempt_count,
+            provider_completed_response_count: arm.provider_completed_response_count,
+            raw_response_count: arm.raw_response_count, usage_scope: arm.usage_scope.clone(), usage: arm.usage.clone(),
+            model_label: arm.model_label.clone(), actual_model_revision: arm.actual_model_revision.clone(),
+            deployment_or_fingerprint_commitment: input.data.provider_endpoint_commitment.clone(), provider_label: arm.provider_label.clone(),
+            provider_compatibility_name: crate::ProofBrokerCompatibilityName::OpenAi,
+            authorized_evaluation_run_cost_fen: arm.authorized_per_run_fen,
+            max_provider_request_attempts: arm.max_provider_request_attempts, max_total_tokens: arm.max_total_tokens,
+            max_elapsed_seconds: arm.max_elapsed_seconds, elapsed_ms: arm.elapsed_ms, tree_closed: true,
+            execution_mode: crate::ExecutionMode::Live, mode_evidence: arm.mode_evidence.clone(),
+        }).unwrap()).unwrap()
+    })
+}
+
+fn bind_synthetic_manifest_hashes(input: &mut SyntheticLiveCostAuthority, bytes: &[Vec<u8>; 2]) {
+    let hashes = bytes.each_ref().map(|bytes| sha256(bytes));
+    for (arm, hash) in input.data.arms.iter_mut().zip(&hashes) {
+        arm.core_manifest_sha256 = hash.clone();
+        arm.manifest_sha256 = hash.clone();
+        arm.ledger.run_manifest_sha256 = hash.clone();
+        arm.receipt.run_manifest_sha256 = Some(hash.clone());
+    }
+    input.data.pair_receipt.first_run_manifest_sha256 = Some(hashes[0].clone());
+    input.data.pair_receipt.second_run_manifest_sha256 = Some(hashes[1].clone());
+}
+
 #[derive(Clone, Copy)]
 enum Mutation {
     UsageDrift,
@@ -508,7 +554,7 @@ fn cost_authority_rejects_policy_effective_after_run_start() {
     }
 }
 
-struct FixedClock {
+pub(crate) struct FixedClock {
     value: anyhow::Result<DateTime<Utc>>,
     calls: Cell<u8>,
 }
@@ -517,6 +563,12 @@ impl CostClock for FixedClock {
     fn now(&self) -> anyhow::Result<DateTime<Utc>> {
         self.calls.set(self.calls.get() + 1);
         self.value.as_ref().map(Clone::clone).map_err(|error| anyhow::anyhow!(error.to_string()))
+    }
+}
+
+impl FixedClock {
+    pub(crate) fn calls(&self) -> u8 {
+        self.calls.get()
     }
 }
 
@@ -689,11 +741,21 @@ fn cost_authority_builds_exact_happy_receipt_with_over_ceiling_supplier_actual()
     assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
 }
 
-struct CostTransactionWorld {
+pub(crate) struct CostTransactionWorld {
     _temp: tempfile::TempDir,
     root: PathBuf,
     supplier_path: PathBuf,
     receipt_path: PathBuf,
+}
+
+impl CostTransactionWorld {
+    pub(crate) fn root(&self) -> &Path {
+        &self.root
+    }
+
+    pub(crate) fn receipt_path(&self) -> &Path {
+        &self.receipt_path
+    }
 }
 
 fn transaction_root() -> (tempfile::TempDir, PathBuf) {
@@ -726,6 +788,14 @@ fn transaction_world(supplier: Option<&[u8]>, covered: bool) -> CostTransactionW
     let (_temp, root) = transaction_root();
     for relative in ["inputs", "inputs/supplier-statements", "coordinator", "coordinator/cost"] {
         crate::secure_fs::create_owner_only_dir_new(&root.join(relative)).unwrap();
+    }
+    let (_, manifest_bytes) = transaction_synthetic_input(&root);
+    for (ordinal, bytes) in [1_u8, 2].into_iter().zip(manifest_bytes) {
+        crate::secure_fs::write_owner_only_new(
+            &root.join(format!("coordinator/run-{ordinal}-manifest.json")),
+            &bytes,
+        )
+        .unwrap();
     }
     crate::private_inventory::bootstrap_private_inventory(
         &root,
@@ -763,11 +833,39 @@ fn transaction_world(supplier: Option<&[u8]>, covered: bool) -> CostTransactionW
 }
 
 fn transaction_authority(root: &Path) -> VerifiedLiveCostAuthority {
+    let (input, _) = transaction_synthetic_input(root);
+    prepare_synthetic_live_cost_authority(input).unwrap()
+}
+
+fn transaction_synthetic_input(root: &Path) -> (SyntheticLiveCostAuthority, [Vec<u8>; 2]) {
     let mut input = synthetic_input();
     input.data.private_root = root.to_str().unwrap().to_string();
     input.data.attestation.private_root = input.data.private_root.clone();
     rebind(&mut input);
-    prepare_synthetic_live_cost_authority(input).unwrap()
+    let manifest_bytes = synthetic_manifest_bytes(&input);
+    bind_synthetic_manifest_hashes(&mut input, &manifest_bytes);
+    (input, manifest_bytes)
+}
+
+pub(crate) fn cost_binding_world(with_over_ceiling_supplier: bool) -> CostTransactionWorld {
+    let supplier = with_over_ceiling_supplier.then(|| supplier_raw(|value| value["actualFen"] = 450.into()));
+    let world = transaction_world(supplier.as_deref(), false);
+    run_transaction(
+        &world,
+        with_over_ceiling_supplier,
+        &transaction_clock(),
+        &mut |_| Ok(()),
+    )
+    .unwrap();
+    world
+}
+
+pub(crate) fn cost_binding_authority(root: &Path) -> VerifiedLiveCostAuthority {
+    transaction_authority(root)
+}
+
+pub(crate) fn cost_binding_clock() -> FixedClock {
+    clock("2026-08-30T10:01:00.000Z")
 }
 
 fn run_transaction(

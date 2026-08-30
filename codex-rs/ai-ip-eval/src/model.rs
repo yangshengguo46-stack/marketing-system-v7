@@ -157,7 +157,7 @@ pub enum EvalCommand {
     BlindPack(BlindPackArgs),
     Score(ScoreArgs),
     MakeCostReceipt(MakeCostReceiptArgs),
-    AnnotateCost(PathInputArgs),
+    AnnotateCost(AnnotateCostArgs),
     Summarize(PathInputArgs),
     VerifyReport(PathInputArgs),
     PublishReport(PathInputArgs),
@@ -295,6 +295,14 @@ pub struct MakeCostReceiptArgs {
     pub condition: EvaluationCondition,
     #[arg(long)]
     pub supplier_statement: Option<PathBuf>,
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct AnnotateCostArgs {
+    #[arg(long, value_enum)]
+    pub condition: EvaluationCondition,
     #[arg(long)]
     pub frozen_run_context: PathBuf,
 }

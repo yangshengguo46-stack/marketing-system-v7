@@ -95,6 +95,34 @@ fn cost_cli_refuses_native_mock_evidence() -> Result<()> {
 }
 
 #[test]
+fn cost_cli_annotate_refuses_replay_evidence() -> Result<()> {
+    let world = CostWorld::replay()?;
+    let output = Command::new(eval_binary()?)
+        .args(["annotate-cost", "--condition", "generic", "--frozen-run-context"])
+        .arg(world.private_root().join("frozen-run-context.json"))
+        .output()?;
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    assert_eq!(output.stderr, b"Error: annotate-cost requires verified Native Live evidence; Replay is refused\n");
+    assert!(!world.private_root().join("coordinator/cost/generic-binding.json").exists());
+    Ok(())
+}
+
+#[test]
+fn cost_cli_annotate_refuses_native_mock_evidence() -> Result<()> {
+    let world = CostWorld::native_mock()?;
+    let output = Command::new(eval_binary()?)
+        .args(["annotate-cost", "--condition", "candidate", "--frozen-run-context"])
+        .arg(world.private_root().join("frozen-run-context.json"))
+        .output()?;
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    assert_eq!(output.stderr, b"Error: annotate-cost requires executionMode=live; mock evidence is refused\n");
+    assert!(!world.private_root().join("coordinator/cost/candidate-binding.json").exists());
+    Ok(())
+}
+
+#[test]
 fn cost_cli_refuses_omitted_pending_supplier_in_replay() -> Result<()> {
     let world = CostWorld::replay()?;
     world.add_pending_candidate_supplier()?;

@@ -15,6 +15,7 @@ mod catalog;
 mod contracts;
 mod cost;
 mod cost_authority;
+mod cost_binding;
 mod cost_contracts;
 mod cost_inputs;
 mod evidence;
@@ -92,6 +93,7 @@ pub use model::EvaluationCondition;
 pub use model::ExecutionMode;
 pub use model::FreezeRunContextArgs;
 pub use model::MakeCostReceiptArgs;
+pub use model::AnnotateCostArgs;
 pub use model::MockProviderMode;
 pub use model::ModeEvidence;
 pub use model::ProofBrokerCompatibilityName;
@@ -283,8 +285,8 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
         EvalCommand::BlindPack(args) => blind::run_blind_pack(args),
         EvalCommand::Score(args) => score_authority::run_score_authority(args),
         EvalCommand::MakeCostReceipt(args) => run_make_cost_receipt(args),
-        EvalCommand::AnnotateCost(_)
-        | EvalCommand::Summarize(_)
+        EvalCommand::AnnotateCost(args) => run_annotate_cost(args),
+        EvalCommand::Summarize(_)
         | EvalCommand::VerifyReport(_)
         | EvalCommand::PublishReport(_)
         | EvalCommand::VerifyLiveProof(_)
@@ -292,6 +294,26 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
         | EvalCommand::RetentionCloseout(_) => {
             anyhow::bail!("selected evaluator workflow is not implemented in this work package")
         }
+    }
+}
+
+fn run_annotate_cost(args: AnnotateCostArgs) -> anyhow::Result<()> {
+    let snapshot = blind::read_context_snapshot(&args.frozen_run_context)?;
+    let inventory = private_inventory::verify_private_inventory_state(snapshot.private_root())?;
+    let inputs = snapshot.verified_inputs()?;
+    let core = blind_verify::verify_pair_evidence_core_from(&snapshot, inputs, inventory)?;
+    match core.mode {
+        ExecutionMode::Replay => anyhow::bail!(
+            "annotate-cost requires verified Native Live evidence; Replay is refused"
+        ),
+        ExecutionMode::Mock => anyhow::bail!(
+            "annotate-cost requires executionMode=live; mock evidence is refused"
+        ),
+        ExecutionMode::Live => cost_binding::publish_cost_binding(
+            cost_authority::prepare_live_cost_authority(core)?,
+            args.condition,
+            &ProductionCostClock,
+        ),
     }
 }
 
@@ -324,6 +346,10 @@ mod cost_contracts_tests;
 #[cfg(test)]
 #[path = "cost_inputs_tests.rs"]
 mod cost_inputs_tests;
+
+#[cfg(test)]
+#[path = "cost_binding_tests.rs"]
+mod cost_binding_tests;
 
 #[cfg(test)]
 #[path = "jcs_tests.rs"]
