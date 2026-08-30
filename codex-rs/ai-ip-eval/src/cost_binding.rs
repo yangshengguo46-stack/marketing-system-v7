@@ -31,6 +31,41 @@ pub(crate) fn publish_cost_binding(
     condition: crate::EvaluationCondition,
     clock: &dyn crate::cost_authority::CostClock,
 ) -> Result<()> {
+    publish_cost_binding_with_checkpoint(authority, condition, clock, &mut |_| Ok(()))
+}
+
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum CostBindingCheckpoint {
+    AfterCreate,
+    BeforeAppend,
+    AfterFreshInventory,
+}
+
+#[cfg(test)]
+pub(crate) fn publish_cost_binding_for_test(
+    authority: crate::cost_authority::VerifiedLiveCostAuthority,
+    condition: crate::EvaluationCondition,
+    clock: &dyn crate::cost_authority::CostClock,
+    checkpoint: &mut dyn FnMut(CostBindingCheckpoint) -> Result<()>,
+) -> Result<()> {
+    publish_cost_binding_with_checkpoint(authority, condition, clock, checkpoint)
+}
+
+#[cfg(not(test))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CostBindingCheckpoint {
+    AfterCreate,
+    BeforeAppend,
+    AfterFreshInventory,
+}
+
+fn publish_cost_binding_with_checkpoint(
+    authority: crate::cost_authority::VerifiedLiveCostAuthority,
+    condition: crate::EvaluationCondition,
+    clock: &dyn crate::cost_authority::CostClock,
+    checkpoint: &mut dyn FnMut(CostBindingCheckpoint) -> Result<()>,
+) -> Result<()> {
     const BINDING_CAP: u64 = 16 * 1024;
 
     let root = Path::new(authority.transaction_binding().2).to_path_buf();
@@ -53,7 +88,7 @@ pub(crate) fn publish_cost_binding(
         created,
         BINDING_CAP,
         crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
-        || prepared.reverify(&authority),
+        || prepared.reverify_sources(),
     )?;
     if retained.raw_bytes() != prepared.bytes
         || serde_json::from_slice::<CostBindingV1>(retained.raw_bytes())? != prepared.binding
@@ -62,22 +97,41 @@ pub(crate) fn publish_cost_binding(
     }
     crate::secure_fs::fsync_directory(output.parent().context("cost binding parent is absent")?)?;
     retained.reverify_unchanged()?;
-    prepared.reverify(&authority)?;
+    checkpoint(CostBindingCheckpoint::AfterCreate)?;
+    prepared.reverify_sources()?;
+    let expected_entry = crate::private_inventory::batch::ExpectedInventoryEntry {
+        relative_path: binding_relative_path(condition).to_string(),
+        kind: crate::private_inventory::InventoryKind::File,
+        sha256: Some(sha256(retained.raw_bytes())),
+    };
+    let pending = crate::private_inventory::batch::verify_pending_cost_binding_inventory(
+        &root,
+        &expected_entry,
+    )?;
+    let pending_authority = authority.rebuild(pending)?;
+    retained.reverify_unchanged()?;
+    prepared.reverify(&pending_authority)?;
+    checkpoint(CostBindingCheckpoint::BeforeAppend)?;
     let new_root = crate::private_inventory::batch::append_private_inventory_batch_from_root(
         &root,
         &old_root,
-        &[crate::private_inventory::batch::ExpectedInventoryEntry {
-            relative_path: binding_relative_path(condition).to_string(),
-            kind: crate::private_inventory::InventoryKind::File,
-            sha256: Some(sha256(retained.raw_bytes())),
-        }],
+        &[expected_entry],
     )?;
     let fresh = crate::private_inventory::verify_private_inventory_state(&root)?;
     if fresh.inventory_root_sha256() != new_root {
         bail!("fresh inventory root differs from cost binding append result");
     }
-    let rebuilt = authority.rebuild(fresh)?;
+    let rebuilt = pending_authority.rebuild(fresh)?;
+    checkpoint(CostBindingCheckpoint::AfterFreshInventory)?;
     retained.reverify_unchanged()?;
+    if retained.raw_bytes() != prepared.bytes
+        || serde_json::from_slice::<CostBindingV1>(retained.raw_bytes())? != prepared.binding
+    {
+        bail!("retained cost binding changed after private inventory append");
+    }
+    if manifest_snapshots(&root)? != manifests_before {
+        bail!("run manifest bytes changed during cost binding transaction");
+    }
     prepared.reverify(&rebuilt)?;
     if manifest_snapshots(&root)? != manifests_before {
         bail!("run manifest bytes changed during cost binding transaction");
@@ -90,18 +144,46 @@ struct PreparedBinding {
     bytes: Vec<u8>,
     receipt: crate::secure_fs_retain::RetainedBoundedFile,
     expected_receipt: crate::cost_contracts::CostReceiptV1,
-    supplier: Option<crate::cost_authority::RetainedSupplierStatement>,
+    supplier: Option<RetainedSelectedSupplier>,
+}
+
+struct RetainedSelectedSupplier {
+    retained: crate::secure_fs_retain::RetainedBoundedFile,
+    statement: crate::cost_authority::RetainedSupplierStatement,
+    expected_sha256: String,
+}
+
+impl RetainedSelectedSupplier {
+    fn reverify_unchanged(&self) -> Result<()> {
+        self.retained.reverify_unchanged()?;
+        if sha256(self.retained.raw_bytes()) != self.expected_sha256 {
+            bail!("retained supplier SHA-256 differs from cost receipt commitment");
+        }
+        Ok(())
+    }
+
+    fn statement(&self) -> &crate::cost_authority::RetainedSupplierStatement {
+        &self.statement
+    }
 }
 
 impl PreparedBinding {
     fn reverify(&self, authority: &crate::cost_authority::VerifiedLiveCostAuthority) -> Result<()> {
-        self.receipt.reverify_unchanged()?;
+        self.reverify_sources()?;
         authority.reverify()?;
         crate::cost_authority::revalidate_cost_receipt(
             authority,
-            self.supplier.as_ref(),
+            self.supplier.as_ref().map(RetainedSelectedSupplier::statement),
             &self.expected_receipt,
         )
+    }
+
+    fn reverify_sources(&self) -> Result<()> {
+        self.receipt.reverify_unchanged()?;
+        if let Some(supplier) = &self.supplier {
+            supplier.reverify_unchanged()?;
+        }
+        Ok(())
     }
 }
 
@@ -143,11 +225,15 @@ fn prepare_binding(
     }
     let supplier = retain_selected_supplier(root, condition, &expected_receipt)?;
     authority.reverify()?;
-    crate::cost_authority::revalidate_cost_receipt(authority, supplier.as_ref(), &expected_receipt)?;
+    crate::cost_authority::revalidate_cost_receipt(
+        authority,
+        supplier.as_ref().map(RetainedSelectedSupplier::statement),
+        &expected_receipt,
+    )?;
     let prospective = crate::cost_authority::commit_cost_receipt(
         authority,
         condition,
-        supplier.as_ref(),
+        supplier.as_ref().map(RetainedSelectedSupplier::statement),
         clock,
     )?;
     if parse_millis(&prospective.calculated_at)? < parse_millis(&expected_receipt.calculated_at)? {
@@ -174,7 +260,7 @@ fn retain_selected_supplier(
     root: &Path,
     condition: crate::EvaluationCondition,
     receipt: &crate::cost_contracts::CostReceiptV1,
-) -> Result<Option<crate::cost_authority::RetainedSupplierStatement>> {
+) -> Result<Option<RetainedSelectedSupplier>> {
     let Some(expected_sha256) = receipt.supplier_statement_sha256.as_deref() else {
         return Ok(None);
     };
@@ -186,9 +272,13 @@ fn retain_selected_supplier(
     if sha256(retained.raw_bytes()) != expected_sha256 {
         bail!("retained supplier SHA-256 differs from cost receipt commitment");
     }
-    let selected = crate::cost_authority::retain_supplier_statement(retained.raw_bytes())?;
+    let statement = crate::cost_authority::retain_supplier_statement(retained.raw_bytes())?;
     retained.reverify_unchanged()?;
-    Ok(Some(selected))
+    Ok(Some(RetainedSelectedSupplier {
+        retained,
+        statement,
+        expected_sha256: expected_sha256.to_string(),
+    }))
 }
 
 fn receipt_relative_path(condition: crate::EvaluationCondition) -> &'static str {

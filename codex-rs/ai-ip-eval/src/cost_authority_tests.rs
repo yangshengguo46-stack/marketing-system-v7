@@ -834,6 +834,14 @@ fn transaction_world(supplier: Option<&[u8]>, covered: bool) -> CostTransactionW
 
 fn transaction_authority(root: &Path) -> VerifiedLiveCostAuthority {
     let (input, _) = transaction_synthetic_input(root);
+    prepare_synthetic_live_cost_authority(input)
+        .unwrap()
+        .rebuild(crate::private_inventory::verify_private_inventory_state(root).unwrap())
+        .unwrap()
+}
+
+fn receipt_transaction_authority(root: &Path) -> VerifiedLiveCostAuthority {
+    let (input, _) = transaction_synthetic_input(root);
     prepare_synthetic_live_cost_authority(input).unwrap()
 }
 
@@ -848,10 +856,26 @@ fn transaction_synthetic_input(root: &Path) -> (SyntheticLiveCostAuthority, [Vec
 }
 
 pub(crate) fn cost_binding_world(with_over_ceiling_supplier: bool) -> CostTransactionWorld {
+    cost_binding_world_for(EvaluationCondition::Candidate, with_over_ceiling_supplier)
+}
+
+pub(crate) fn generic_cost_binding_world() -> CostTransactionWorld {
+    cost_binding_world_for(EvaluationCondition::Generic, false)
+}
+
+fn cost_binding_world_for(
+    condition: EvaluationCondition,
+    with_over_ceiling_supplier: bool,
+) -> CostTransactionWorld {
     let supplier = with_over_ceiling_supplier.then(|| supplier_raw(|value| value["actualFen"] = 450.into()));
-    let world = transaction_world(supplier.as_deref(), false);
-    run_transaction(
+    let mut world = transaction_world(supplier.as_deref(), false);
+    world.receipt_path = world.root.join(match condition {
+        EvaluationCondition::Generic => "coordinator/cost/generic-receipt.json",
+        EvaluationCondition::Candidate => "coordinator/cost/candidate-receipt.json",
+    });
+    run_transaction_for_condition(
         &world,
+        condition,
         with_over_ceiling_supplier,
         &transaction_clock(),
         &mut |_| Ok(()),
@@ -874,9 +898,25 @@ fn run_transaction(
     clock: &FixedClock,
     hook: &mut dyn FnMut(CostReceiptCheckpoint) -> anyhow::Result<()>,
 ) -> anyhow::Result<()> {
-    publish_cost_receipt_for_test(
-        transaction_authority(&world.root),
+    run_transaction_for_condition(
+        world,
         EvaluationCondition::Candidate,
+        supplier,
+        clock,
+        hook,
+    )
+}
+
+fn run_transaction_for_condition(
+    world: &CostTransactionWorld,
+    condition: EvaluationCondition,
+    supplier: bool,
+    clock: &FixedClock,
+    hook: &mut dyn FnMut(CostReceiptCheckpoint) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    publish_cost_receipt_for_test(
+        receipt_transaction_authority(&world.root),
+        condition,
         supplier.then_some(world.supplier_path.as_path()),
         clock,
         hook,

@@ -17,6 +17,7 @@ use crate::private_inventory::batch::append_private_inventory_batch;
 use crate::private_inventory::batch::append_private_inventory_batch_from_root;
 use crate::private_inventory::batch::append_private_inventory_from_root;
 use crate::private_inventory::batch::reverify_score_inventory_with_staging;
+use crate::private_inventory::batch::verify_pending_cost_binding_inventory;
 use crate::private_inventory::batch::verify_pending_supplier_inventory;
 use crate::private_inventory::batch::verify_private_inventory_continuation;
 
@@ -62,6 +63,31 @@ fn pending_supplier_root() -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntr
     let relative = "inputs/supplier-statements/candidate.json";
     crate::secure_fs::write_owner_only_new(&root.join(relative), b"supplier").unwrap();
     (temp, root, file(relative, b"supplier"))
+}
+
+fn pending_binding_root(
+    relative: &str,
+) -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntry) {
+    let (temp, root) = owner_root();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("coordinator")).unwrap();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("coordinator/cost")).unwrap();
+    crate::private_inventory::bootstrap_private_inventory(&root, PAIR_ID, FROZEN_SHA, CREATED_AT)
+        .unwrap();
+    crate::secure_fs::write_owner_only_new(&root.join(relative), b"binding").unwrap();
+    (temp, root, file(relative, b"binding"))
+}
+
+fn pending_binding_error(
+    setup: impl FnOnce(&Path, &mut ExpectedInventoryEntry),
+    expected_message: &str,
+) {
+    let (_temp, root, mut expected) =
+        pending_binding_root("coordinator/cost/candidate-binding.json");
+    setup(&root, &mut expected);
+    let error = verify_pending_cost_binding_inventory(&root, &expected)
+        .err()
+        .expect("pending binding inventory must be rejected");
+    assert!(error.to_string().contains(expected_message), "{error:#}");
 }
 
 fn pending_supplier_error(
@@ -389,6 +415,95 @@ fn pending_supplier_inventory_reverify_rejects_replacement() {
     fs::write(root.join(&expected.relative_path), b"replaced").unwrap();
 
     assert!(verified.reverify_unchanged().is_err());
+}
+
+#[test]
+fn pending_cost_binding_inventory_accepts_only_each_fixed_unrecorded_binding_leaf() {
+    for relative in [
+        "coordinator/cost/generic-binding.json",
+        "coordinator/cost/candidate-binding.json",
+    ] {
+        let (_temp, root, expected) = pending_binding_root(relative);
+        let cursor = inventory_bytes(&root);
+        let verified = verify_pending_cost_binding_inventory(&root, &expected).unwrap();
+        assert_eq!(verified.inventory_root_sha256(), digest(&cursor));
+        assert_eq!(inventory_bytes(&root), cursor);
+        verified.verify_binding(PAIR_ID, FROZEN_SHA, &root).unwrap();
+        verified.reverify_unchanged().unwrap();
+        assert_eq!(inventory_bytes(&root), cursor);
+    }
+}
+
+#[test]
+fn pending_cost_binding_inventory_rejects_recorded_arbitrary_or_extra_leaf() {
+    pending_binding_error(
+        |root, expected| {
+            let cursor = digest(&inventory_bytes(root));
+            append_private_inventory_batch_from_root(root, &cursor, std::slice::from_ref(expected))
+                .unwrap();
+        },
+        "already recorded",
+    );
+    pending_binding_error(
+        |root, expected| {
+            crate::secure_fs::write_owner_only_new(&root.join("arbitrary.json"), b"binding")
+                .unwrap();
+            expected.relative_path = "arbitrary.json".to_string();
+        },
+        "fixed cost binding",
+    );
+    pending_binding_error(
+        |root, _| {
+            crate::secure_fs::write_owner_only_new(&root.join("unexpected.bin"), b"extra")
+                .unwrap();
+        },
+        "unexpected path",
+    );
+}
+
+#[test]
+fn pending_cost_binding_inventory_rejects_invalid_or_replaced_expected_leaf() {
+    pending_binding_error(
+        |_, expected| {
+            expected.kind = InventoryKind::Directory;
+            expected.sha256 = None;
+        },
+        "regular file",
+    );
+    pending_binding_error(
+        |_, expected| expected.sha256 = Some("F".repeat(64)),
+        "lowercase SHA-256",
+    );
+    pending_binding_error(
+        |_, expected| expected.sha256 = Some("f".repeat(64)),
+        "SHA-256",
+    );
+
+    let (_temp, root, expected) = pending_binding_root("coordinator/cost/candidate-binding.json");
+    let verified = verify_pending_cost_binding_inventory(&root, &expected).unwrap();
+    fs::write(root.join(&expected.relative_path), b"replaced").unwrap();
+    let error = verified.reverify_unchanged().unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("inventory append target is absent, recorded, or mismatched"),
+        "{error:#}"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn pending_cost_binding_inventory_rejects_unsafe_leaf_permissions() {
+    let (_temp, root, expected) = pending_binding_root("coordinator/cost/candidate-binding.json");
+    fs::set_permissions(
+        root.join(&expected.relative_path),
+        fs::Permissions::from_mode(0o644),
+    )
+    .unwrap();
+    let error = verify_pending_cost_binding_inventory(&root, &expected)
+        .err()
+        .expect("unsafe binding leaf must be rejected");
+    assert!(error.to_string().contains("unsafe type, links, or permissions"), "{error:#}");
 }
 
 #[test]

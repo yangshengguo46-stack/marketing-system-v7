@@ -255,30 +255,50 @@ pub(crate) fn verify_pending_supplier_inventory(
     root: &Path,
     expected: &ExpectedInventoryEntry,
 ) -> Result<VerifiedPrivateInventory> {
-    const SUPPLIER_CAP: u64 = 64 * 1024;
     const ALLOWED: [&str; 2] = [
         "inputs/supplier-statements/generic.json",
         "inputs/supplier-statements/candidate.json",
     ];
+    verify_pending_fixed_file_inventory(root, expected, &ALLOWED, 64 * 1024, "supplier")
+}
+
+pub(crate) fn verify_pending_cost_binding_inventory(
+    root: &Path,
+    expected: &ExpectedInventoryEntry,
+) -> Result<VerifiedPrivateInventory> {
+    const ALLOWED: [&str; 2] = [
+        "coordinator/cost/generic-binding.json",
+        "coordinator/cost/candidate-binding.json",
+    ];
+    verify_pending_fixed_file_inventory(root, expected, &ALLOWED, 16 * 1024, "cost binding")
+}
+
+fn verify_pending_fixed_file_inventory(
+    root: &Path,
+    expected: &ExpectedInventoryEntry,
+    allowed_paths: &[&str],
+    cap: u64,
+    label: &str,
+) -> Result<VerifiedPrivateInventory> {
     canonical_root(root)?;
-    if !ALLOWED.contains(&expected.relative_path.as_str()) {
-        bail!("pending inventory entry is not one fixed supplier leaf");
+    if !allowed_paths.contains(&expected.relative_path.as_str()) {
+        bail!("pending inventory entry is not one fixed {label} leaf");
     }
     if expected.kind != InventoryKind::File {
-        bail!("pending supplier inventory entry must be one regular file");
+        bail!("pending {label} inventory entry must be one regular file");
     }
     let expected_sha = expected
         .sha256
         .as_deref()
         .filter(|value| lower_hex(value))
-        .context("pending supplier inventory entry requires lowercase SHA-256")?;
+        .with_context(|| format!("pending {label} inventory entry requires lowercase SHA-256"))?;
     let retained = crate::secure_fs_retain::RetainedBoundedFile::retain(
         &root.join(&expected.relative_path),
-        SUPPLIER_CAP,
+        cap,
         crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
     )?;
     if digest(retained.raw_bytes()) != expected_sha {
-        bail!("pending supplier filesystem SHA-256 differs from the expected entry");
+        bail!("pending {label} filesystem SHA-256 differs from the expected entry");
     }
     if let Ok((records, _, _)) = verified_state(
         root,
@@ -289,7 +309,7 @@ pub(crate) fn verify_pending_supplier_inventory(
         .iter()
         .any(|record| record.relative_path == expected.relative_path)
     {
-        bail!("pending supplier inventory leaf is already recorded");
+        bail!("pending {label} inventory leaf is already recorded");
     }
     let allowed_unrecorded = validate_expected_tree(std::slice::from_ref(expected))?;
     let (records, inventory_bytes, pair_marker) = verified_state(
@@ -298,7 +318,7 @@ pub(crate) fn verify_pending_supplier_inventory(
         /* supplied_bytes */ None,
         /* trust_allowed_projection */ false,
     )
-    .context("pending supplier inventory contains an unexpected path or changed state")?;
+    .with_context(|| format!("pending {label} inventory contains an unexpected path or changed state"))?;
     drop(records);
     retained.reverify_unchanged()?;
     Ok(VerifiedPrivateInventory {
