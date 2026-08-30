@@ -245,6 +245,8 @@ git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 - Create: `codex-rs/ai-ip-eval/src/cost_binding.rs`
 - Create: `codex-rs/ai-ip-eval/src/cost_binding_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/cost_authority_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch.rs`
+- Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/model.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
 - Modify: `codex-rs/ai-ip-eval/tests/cost_cli.rs`
@@ -254,6 +256,8 @@ git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 - Produces: `AnnotateCostArgs` and a dormant Live-only transaction for `coordinator/cost/{generic|candidate}-binding.json`.
 
 Task 6 controller test-fixture authority correction: the only reviewed synthetic Live authority and real receipt-transaction world are private in `cost_authority_tests.rs`, while positive binding tests must consume that exact sibling-test seam. Authorize only minimal `pub(crate)` test visibility/accessors or one thin test-world constructor in `cost_authority_tests.rs` so `cost_binding_tests.rs` can reuse the existing real tempfile inventory/receipt world. Do not copy the fixture, add a second synthetic boundary, change any production item, move tests into production code, or alter existing Task 5C/5D assertions.
+
+Task 6 review-fix authority correction: a production Live authority carries the strict pre-append inventory, so revalidating it after binding create must not reject the one exact not-yet-recorded binding leaf. Authorize one specialized fixed-binding pending projection in `private_inventory_batch.rs` with focused real-filesystem tests in `private_inventory_batch_tests.rs`, analogous to but not generalized from the pending-supplier gate. It accepts exactly one unrecorded `coordinator/cost/{generic|candidate}-binding.json` regular owner-only single-link leaf with the caller's precomputed lowercase SHA, preserves the old inventory cursor, rechecks the full tree plus that exact leaf, and rejects recorded/arbitrary/extra/replaced/unsafe state. Prefer a small named private common helper with the existing pending-supplier verifier; do not expose a general arbitrary allowed-unrecorded API. Preserve auditability and keep `private_inventory_batch.rs` below 540 lines rather than compressing the checks to meet a cosmetic target.
 
 - [ ] **Step 1: Add CLI and sidecar mutation REDs**
 
@@ -296,6 +300,8 @@ Run the selector. Expected: both sidecars pass; all mutation rows fail with no n
 git add codex-rs/ai-ip-eval/src/cost_binding.rs \
   codex-rs/ai-ip-eval/src/cost_binding_tests.rs \
   codex-rs/ai-ip-eval/src/cost_authority_tests.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_batch.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs \
   codex-rs/ai-ip-eval/src/model.rs \
   codex-rs/ai-ip-eval/src/lib.rs \
   codex-rs/ai-ip-eval/tests/cost_cli.rs
