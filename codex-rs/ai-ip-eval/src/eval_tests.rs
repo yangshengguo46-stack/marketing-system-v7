@@ -965,6 +965,117 @@ fn replace_with_same_owner_only_bytes(path: &std::path::Path) {
     fs::rename(&replacement, &path).unwrap();
 }
 
+fn replay_binary_read_count(reads: &[std::path::PathBuf], path: &std::path::Path) -> usize {
+    reads.iter().filter(|observed| observed == &path).count()
+}
+
+#[test]
+fn replay_same_artifact_performs_one_retention_and_reverification_read() {
+    let temp = tempfile::tempdir().unwrap();
+    let binary = temp.path().join("shared-replay-binary");
+    fs::write(&binary, b"shared replay binary\n").unwrap();
+    let binary = binary.canonicalize().unwrap();
+    let sha256 = test_sha256(&fs::read(&binary).unwrap());
+
+    let (result, reads) = crate::runner::observe_artifact_reads(|| {
+        crate::runner::retain_and_reverify_replay_binaries_with_hook(
+            &binary,
+            &sha256,
+            &binary,
+            &sha256,
+            || Ok(()),
+        )
+    });
+
+    result.unwrap();
+    assert_eq!(replay_binary_read_count(&reads, &binary), 2);
+}
+
+#[test]
+fn replay_shared_binary_byte_drift_and_same_bytes_inode_replacement_fail_closed() {
+    for mutation in ["bytes", "inode"] {
+        let temp = tempfile::tempdir().unwrap();
+        let binary = temp.path().join("shared-replay-binary");
+        fs::write(&binary, b"shared replay binary\n").unwrap();
+        let binary = binary.canonicalize().unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(
+                binary.parent().unwrap(),
+                fs::Permissions::from_mode(0o700),
+            )
+            .unwrap();
+        }
+        let sha256 = test_sha256(&fs::read(&binary).unwrap());
+
+        let result = crate::runner::retain_and_reverify_replay_binaries_with_hook(
+            &binary,
+            &sha256,
+            &binary,
+            &sha256,
+            || {
+                match mutation {
+                    "bytes" => fs::write(&binary, b"changed replay binary\n").unwrap(),
+                    "inode" => replace_with_same_owner_only_bytes(&binary),
+                    _ => unreachable!(),
+                }
+                Ok(())
+            },
+        );
+
+        assert!(result.is_err(), "accepted shared Replay {mutation} drift");
+    }
+}
+
+#[test]
+fn replay_distinct_binary_roles_perform_independent_reads_and_reject_second_role_drift() {
+    let temp = tempfile::tempdir().unwrap();
+    let codex = temp.path().join("codex-replay-binary");
+    let evaluator = temp.path().join("evaluator-replay-binary");
+    fs::write(&codex, b"codex replay binary\n").unwrap();
+    fs::write(&evaluator, b"evaluator replay binary\n").unwrap();
+    let codex = codex.canonicalize().unwrap();
+    let evaluator = evaluator.canonicalize().unwrap();
+    let codex_sha256 = test_sha256(&fs::read(&codex).unwrap());
+    let evaluator_sha256 = test_sha256(&fs::read(&evaluator).unwrap());
+
+    let (result, reads) = crate::runner::observe_artifact_reads(|| {
+        crate::runner::retain_and_reverify_replay_binaries_with_hook(
+            &codex,
+            &codex_sha256,
+            &evaluator,
+            &evaluator_sha256,
+            || {
+                fs::write(&evaluator, b"changed evaluator replay binary\n").unwrap();
+                Ok(())
+            },
+        )
+    });
+
+    assert!(result.is_err(), "accepted second-role Replay binary drift");
+    assert_eq!(replay_binary_read_count(&reads, &codex), 2);
+    assert_eq!(replay_binary_read_count(&reads, &evaluator), 2);
+}
+
+#[test]
+fn replay_same_path_with_different_commitment_fails_closed() {
+    let temp = tempfile::tempdir().unwrap();
+    let binary = temp.path().join("shared-replay-binary");
+    fs::write(&binary, b"shared replay binary\n").unwrap();
+    let binary = binary.canonicalize().unwrap();
+
+    let result = crate::runner::retain_and_reverify_replay_binaries_with_hook(
+        &binary,
+        &test_sha256(&fs::read(&binary).unwrap()),
+        &binary,
+        &"0".repeat(64),
+        || Ok(()),
+    );
+
+    assert!(result.is_err(), "accepted unequal commitments for one Replay path");
+}
+
 #[test]
 fn frozen_context_identity_replacement_replay_is_rejected() {
     let fixture_set =

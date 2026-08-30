@@ -296,6 +296,73 @@ struct VerifiedReplayMaterial {
 }
 
 #[derive(Debug, Clone)]
+enum ReplayBinaryCommitments {
+    Shared(ArtifactCommitment),
+    Distinct {
+        codex: ArtifactCommitment,
+        evaluator: ArtifactCommitment,
+    },
+}
+
+impl ReplayBinaryCommitments {
+    fn retain(
+        codex_reference: &FrozenArtifactReference,
+        evaluator_reference: &FrozenArtifactReference,
+    ) -> Result<Self> {
+        let codex_path = canonical_replay_reference(codex_reference, "Codex binary")?;
+        let evaluator_path = canonical_replay_reference(evaluator_reference, "evaluator binary")?;
+        if codex_reference.path == evaluator_reference.path
+            && codex_reference.sha256 == evaluator_reference.sha256
+        {
+            return Ok(Self::Shared(retain_canonical_replay_reference(
+                &codex_path,
+                codex_reference,
+                "Codex binary",
+            )?));
+        }
+        Ok(Self::Distinct {
+            codex: retain_canonical_replay_reference(
+                &codex_path,
+                codex_reference,
+                "Codex binary",
+            )?,
+            evaluator: retain_canonical_replay_reference(
+                &evaluator_path,
+                evaluator_reference,
+                "evaluator binary",
+            )?,
+        })
+    }
+
+    fn codex_sha256(&self) -> &str {
+        match self {
+            Self::Shared(commitment) => &commitment.sha256,
+            Self::Distinct { codex, .. } => &codex.sha256,
+        }
+    }
+
+    fn evaluator_sha256(&self) -> &str {
+        match self {
+            Self::Shared(commitment) => &commitment.sha256,
+            Self::Distinct { evaluator, .. } => &evaluator.sha256,
+        }
+    }
+
+    fn reverify_all(&self) -> Result<()> {
+        match self {
+            Self::Shared(commitment) => {
+                commitment.read_verified()?;
+            }
+            Self::Distinct { codex, evaluator } => {
+                codex.read_verified()?;
+                evaluator.read_verified()?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
 pub(crate) struct VerifiedReplayFrozenContext {
     canonical_path: PathBuf,
     raw_bytes: Vec<u8>,
@@ -306,8 +373,7 @@ pub(crate) struct VerifiedReplayFrozenContext {
     fixture_set: ArtifactCommitment,
     fixtures: BTreeMap<String, VerifiedReplayReference>,
     materials: Vec<VerifiedReplayMaterial>,
-    codex_binary: ArtifactCommitment,
-    evaluator_binary: ArtifactCommitment,
+    binaries: ReplayBinaryCommitments,
     mission_case: codex_ai_ip_domain::HeldOutMissionCase,
     attestation: crate::ReplayReviewAttestation,
     materials_manifest_bytes: Vec<u8>,
@@ -368,8 +434,8 @@ impl VerifiedReplayFrozenContext {
             schema_bytes: &self.schema_bytes,
             thread_start_bytes: &self.thread_start_bytes,
             turn_start_bytes: &self.turn_start_bytes,
-            codex_binary_sha256: &self.codex_binary.sha256,
-            evaluator_binary_sha256: &self.evaluator_binary.sha256,
+            codex_binary_sha256: self.binaries.codex_sha256(),
+            evaluator_binary_sha256: self.binaries.evaluator_sha256(),
             broker_component_sha256: sha256(b"replay:no-broker-component"),
             model_label: "replay-fixture",
             provider_label: "not-run",
@@ -400,8 +466,7 @@ impl VerifiedReplayFrozenContext {
             &self.context.public_run_id,
         )?;
         self.fixture_set.read_verified()?;
-        self.codex_binary.read_verified()?;
-        self.evaluator_binary.read_verified()?;
+        self.binaries.reverify_all()?;
         for (name, fixture) in &self.fixtures {
             if fixture.commitment.read_verified()? != fixture.bytes {
                 bail!("verified replay fixture changed after verification: {name}");
@@ -1581,8 +1646,10 @@ fn verify_retained_replay_frozen_context(
         &context.pair_id,
         &context.public_run_id,
     )?;
-    let codex_binary = retain_replay_reference(&context.codex_binary, "Codex binary")?;
-    let evaluator_binary = retain_replay_reference(&context.evaluator_binary, "evaluator binary")?;
+    let binaries = ReplayBinaryCommitments::retain(
+        &context.codex_binary,
+        &context.evaluator_binary,
+    )?;
     if std::env::current_exe()?.canonicalize()? != context.evaluator_binary.path {
         bail!("replay evaluator executable differs from the frozen binary");
     }
@@ -1697,8 +1764,7 @@ fn verify_retained_replay_frozen_context(
         fixture_set,
         fixtures,
         materials,
-        codex_binary,
-        evaluator_binary,
+        binaries,
         prompt_bytes,
         additional_context_bytes,
         schema_bytes,
@@ -1722,6 +1788,14 @@ fn retain_replay_reference(
     reference: &FrozenArtifactReference,
     label: &str,
 ) -> Result<ArtifactCommitment> {
+    let canonical = canonical_replay_reference(reference, label)?;
+    retain_canonical_replay_reference(&canonical, reference, label)
+}
+
+fn canonical_replay_reference(
+    reference: &FrozenArtifactReference,
+    label: &str,
+) -> Result<PathBuf> {
     if !reference.path.is_absolute() || !is_lower_hex(&reference.sha256, 64) {
         bail!("frozen replay {label} reference is not canonical");
     }
@@ -1732,6 +1806,14 @@ fn retain_replay_reference(
     if canonical != reference.path {
         bail!("frozen replay {label} bytes or identity changed");
     }
+    Ok(canonical)
+}
+
+fn retain_canonical_replay_reference(
+    canonical: &Path,
+    reference: &FrozenArtifactReference,
+    label: &str,
+) -> Result<ArtifactCommitment> {
     let commitment = ArtifactCommitment::freeze(&canonical)?;
     if commitment.sha256 != reference.sha256 {
         bail!("frozen replay {label} bytes or identity changed");
@@ -1808,6 +1890,55 @@ fn read_verified_replay_reference(
     label: &str,
 ) -> Result<Vec<u8>> {
     retain_replay_reference(reference, label)?.read_verified()
+}
+
+#[cfg(test)]
+static ARTIFACT_READ_OBSERVER: Mutex<Option<Arc<Mutex<Vec<PathBuf>>>>> = Mutex::new(None);
+
+#[cfg(test)]
+static ARTIFACT_READ_OBSERVER_GATE: Mutex<()> = Mutex::new(());
+
+#[cfg(test)]
+fn observe_artifact_read(path: &Path) {
+    let observer = ARTIFACT_READ_OBSERVER.lock().unwrap().clone();
+    if let Some(observer) = observer {
+        observer.lock().unwrap().push(path.to_path_buf());
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn observe_artifact_reads<T>(
+    operation: impl FnOnce() -> Result<T>,
+) -> (Result<T>, Vec<PathBuf>) {
+    let _gate = ARTIFACT_READ_OBSERVER_GATE.lock().unwrap();
+    let observed = Arc::new(Mutex::new(Vec::new()));
+    *ARTIFACT_READ_OBSERVER.lock().unwrap() = Some(Arc::clone(&observed));
+    let result = operation();
+    *ARTIFACT_READ_OBSERVER.lock().unwrap() = None;
+    let reads = std::mem::take(&mut *observed.lock().unwrap());
+    (result, reads)
+}
+
+#[cfg(test)]
+pub(crate) fn retain_and_reverify_replay_binaries_with_hook(
+    codex_path: &Path,
+    codex_sha256: &str,
+    evaluator_path: &Path,
+    evaluator_sha256: &str,
+    hook: impl FnOnce() -> Result<()>,
+) -> Result<()> {
+    let binaries = ReplayBinaryCommitments::retain(
+        &FrozenArtifactReference {
+            path: codex_path.to_path_buf(),
+            sha256: codex_sha256.to_string(),
+        },
+        &FrozenArtifactReference {
+            path: evaluator_path.to_path_buf(),
+            sha256: evaluator_sha256.to_string(),
+        },
+    )?;
+    hook()?;
+    binaries.reverify_all()
 }
 
 #[cfg(test)]
@@ -4910,6 +5041,8 @@ impl ArtifactCommitment {
             .canonicalize()
             .with_context(|| format!("canonicalize artifact {}", path.display()))?;
         let handle = Arc::new(open_anchored_regular(&canonical_path)?);
+        #[cfg(test)]
+        observe_artifact_read(&canonical_path);
         let bytes = read_handle(&handle)?;
         Ok(Self {
             canonical_path,
@@ -4945,6 +5078,8 @@ impl ArtifactCommitment {
         if !same_file(&self.handle.metadata()?, &current.metadata()?) {
             bail!("artifact path identity changed after freeze");
         }
+        #[cfg(test)]
+        observe_artifact_read(&self.canonical_path);
         let bytes = read_handle(&self.handle)?;
         if sha256(&bytes) != self.sha256 {
             bail!("artifact bytes changed after freeze");
