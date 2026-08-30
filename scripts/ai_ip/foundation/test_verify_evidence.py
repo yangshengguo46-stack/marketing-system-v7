@@ -225,8 +225,47 @@ def _load_recorder(path: Path) -> ModuleType:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    spec.loader.exec_module(module)
+    prior_dont_write_bytecode = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = prior_dont_write_bytecode
     return module
+
+
+def test_load_recorder_keeps_temporary_tools_repository_clean(tmp_path: Path) -> None:
+    tools = tmp_path / "tools"
+    foundation = tools / "scripts/ai_ip/foundation"
+    foundation.mkdir(parents=True)
+    recorder_path = foundation / "capture_command.py"
+    shutil.copyfile(CAPTURE_SCRIPT, recorder_path)
+    _git(tools, "init", "-q")
+    _git(tools, "config", "user.name", "Evidence Test")
+    _git(tools, "config", "user.email", "evidence@example.invalid")
+    _commit(tools, "tools fixture")
+    _git(tools, "switch", "--detach", "-q")
+
+    prior_dont_write_bytecode = sys.dont_write_bytecode
+    recorder = _load_recorder(recorder_path)
+
+    assert recorder._resolve_request
+    assert sys.dont_write_bytecode == prior_dont_write_bytecode
+    assert _git(tools, "status", "--porcelain") == ""
+    assert not list(foundation.rglob("__pycache__"))
+
+
+def test_load_recorder_restores_bytecode_setting_when_module_execution_fails(
+    tmp_path: Path,
+) -> None:
+    recorder_path = tmp_path / "failing_recorder.py"
+    recorder_path.write_text('raise RuntimeError("fixture failure")\n', encoding="utf-8")
+    prior_dont_write_bytecode = sys.dont_write_bytecode
+
+    with pytest.raises(RuntimeError, match="fixture failure"):
+        _load_recorder(recorder_path)
+
+    assert sys.dont_write_bytecode == prior_dont_write_bytecode
 
 
 def _install_tool_path(tool_bin: Path) -> None:
