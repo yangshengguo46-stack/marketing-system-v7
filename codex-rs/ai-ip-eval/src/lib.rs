@@ -1,5 +1,7 @@
 #![recursion_limit = "256"]
 
+use anyhow::Context;
+
 mod app_server;
 mod blind;
 mod blind_bundle;
@@ -126,9 +128,117 @@ pub use score::DecisionMetrics;
 pub use score_decision::BlindDecision;
 pub use score_decision::BlindDecisionFailure;
 
+enum PreparedCostReceiptAuthority {
+    Replay,
+    Mock,
+    Live(cost_authority::VerifiedLiveCostAuthority),
+}
+
+fn prepare_cost_receipt_authority(
+    snapshot: &blind::FrozenContextSnapshot,
+    condition: EvaluationCondition,
+    supplier_path: Option<&std::path::Path>,
+) -> anyhow::Result<PreparedCostReceiptAuthority> {
+    preflight_cost_receipt_absent(snapshot.private_root(), condition)?;
+    let supplier_exists = match supplier_path.map(std::fs::symlink_metadata).transpose() {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(error) => return Err(error).context("inspect fixed supplier statement before pair verification"),
+    };
+    let mut transaction = None;
+    let inventory = if supplier_exists {
+        let (inventory, prepared) = cost_inputs::prepare_transaction_context(
+            snapshot.private_root(), condition, supplier_path, &mut |_| Ok(()),
+        )?;
+        transaction = Some(prepared);
+        inventory
+    } else {
+        private_inventory::verify_private_inventory_state(snapshot.private_root())?
+    };
+    let verified_root = inventory.inventory_root_sha256().to_string();
+    let inputs = snapshot.verified_inputs()?;
+    let core = blind_verify::verify_pair_evidence_core_from(snapshot, inputs, inventory)?;
+    match core.mode {
+        ExecutionMode::Replay => Ok(PreparedCostReceiptAuthority::Replay),
+        ExecutionMode::Mock => Ok(PreparedCostReceiptAuthority::Mock),
+        ExecutionMode::Live => {
+            let transaction = match transaction {
+                Some(transaction) => transaction,
+                None => {
+                    let (inventory, transaction) = cost_inputs::prepare_transaction_context(
+                        snapshot.private_root(), condition, supplier_path, &mut |_| Ok(()),
+                    )?;
+                    if inventory.inventory_root_sha256() != verified_root {
+                        anyhow::bail!("supplier absence inventory changed after pair verification");
+                    }
+                    transaction
+                }
+            };
+            let mut authority = cost_authority::prepare_live_cost_authority(core)?;
+            authority.transaction = Some(transaction);
+            Ok(PreparedCostReceiptAuthority::Live(authority))
+        }
+    }
+}
+
+fn cost_receipt_relative_path(condition: EvaluationCondition) -> &'static str {
+    match condition {
+        EvaluationCondition::Generic => "coordinator/cost/generic-receipt.json",
+        EvaluationCondition::Candidate => "coordinator/cost/candidate-receipt.json",
+    }
+}
+
+fn preflight_cost_receipt_absent(
+    root: &std::path::Path,
+    condition: EvaluationCondition,
+) -> anyhow::Result<()> {
+    match std::fs::symlink_metadata(root.join(cost_receipt_relative_path(condition))) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Ok(_) => anyhow::bail!("cost receipt destination already exists"),
+        Err(error) => Err(error).context("inspect fixed cost receipt destination"),
+    }
+}
+
+fn canonical_cost_receipt_bytes(
+    receipt: &cost_contracts::CostReceiptV1,
+) -> anyhow::Result<Vec<u8>> {
+    let bytes = jcs::canonicalize_value(&serde_json::to_value(receipt)?)?;
+    if bytes.len() > 128 * 1024 {
+        anyhow::bail!("canonical cost receipt exceeds private receipt cap");
+    }
+    if cost_contracts::validate_cost_receipt(&bytes)? != *receipt {
+        anyhow::bail!("canonical cost receipt changed its typed value");
+    }
+    Ok(bytes)
+}
+
+fn verify_prepared_cost_receipt_arguments(
+    root: &std::path::Path,
+    condition: EvaluationCondition,
+    supplied: Option<&std::path::Path>,
+    transaction: &cost_inputs::PreparedCostReceiptContext,
+) -> anyhow::Result<()> {
+    let expected = root.join(cost_inputs::supplier_statement_relative_path(condition));
+    let supplier_matches = matches!((&transaction.supplier, supplied),
+        (Some(_), Some(path)) if path == expected)
+        || transaction.supplier.is_none() && supplied.is_none();
+    if transaction.condition != condition || !supplier_matches {
+        anyhow::bail!("prepared supplier transaction differs from requested condition or path");
+    }
+    Ok(())
+}
+
+struct ProductionCostClock;
+impl cost_authority::CostClock for ProductionCostClock {
+    fn now(&self) -> anyhow::Result<chrono::DateTime<chrono::Utc>> {
+        Ok(chrono::Utc::now())
+    }
+}
+
 fn run_make_cost_receipt(args: MakeCostReceiptArgs) -> anyhow::Result<()> {
     let snapshot = blind::read_context_snapshot(&args.frozen_run_context)?;
-    if let Some(supplier_statement) = args.supplier_statement {
+    if let Some(supplier_statement) = args.supplier_statement.as_deref() {
         let leaf = match args.condition {
             EvaluationCondition::Generic => "generic.json",
             EvaluationCondition::Candidate => "candidate.json",
@@ -143,17 +253,17 @@ fn run_make_cost_receipt(args: MakeCostReceiptArgs) -> anyhow::Result<()> {
             );
         }
     }
-    let core = blind_verify::verify_pair_evidence_core(&snapshot)?;
-    match core.mode {
-        ExecutionMode::Replay => anyhow::bail!(
+    let supplier = args.supplier_statement.as_deref();
+    match prepare_cost_receipt_authority(&snapshot, args.condition, supplier)? {
+        PreparedCostReceiptAuthority::Replay => anyhow::bail!(
             "make-cost-receipt requires verified Native Live evidence; Replay is refused"
         ),
-        ExecutionMode::Mock => anyhow::bail!(
+        PreparedCostReceiptAuthority::Mock => anyhow::bail!(
             "make-cost-receipt requires executionMode=live; mock evidence is refused"
         ),
-        ExecutionMode::Live => {
-            anyhow::bail!("make-cost-receipt verified Live authority is not implemented")
-        }
+        PreparedCostReceiptAuthority::Live(authority) => cost_inputs::publish_cost_receipt(
+            authority, args.condition, supplier, &ProductionCostClock,
+        ),
     }
 }
 

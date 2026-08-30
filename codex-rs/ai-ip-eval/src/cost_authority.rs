@@ -124,20 +124,23 @@ pub(crate) struct SyntheticLiveCostAuthority {
 enum LiveAuthoritySource {
     Production(Box<PairEvidenceCore>),
     #[cfg(test)]
-    Synthetic(std::rc::Rc<dyn SyntheticAuthorityBoundary>),
+    Synthetic(
+        std::rc::Rc<dyn SyntheticAuthorityBoundary>,
+        Option<crate::private_inventory::VerifiedPrivateInventory>,
+    ),
 }
 pub(crate) struct VerifiedLiveCostAuthority {
     data: LiveAuthorityData,
     inputs: VerifiedCostInputs,
     source: LiveAuthoritySource,
+    pub(crate) transaction: Option<crate::cost_inputs::PreparedCostReceiptContext>,
 }
 pub(crate) struct RetainedSupplierStatement {
     statement: SupplierStatementV1,
     sha256: String,
 }
 
-#[cfg(test)]
-pub(crate) fn retain_synthetic_supplier_statement(
+pub(crate) fn retain_supplier_statement(
     bytes: &[u8],
 ) -> Result<RetainedSupplierStatement> {
     use sha2::Digest;
@@ -163,7 +166,7 @@ pub(crate) fn prepare_synthetic_live_cost_authority(
     input: SyntheticLiveCostAuthority,
 ) -> Result<VerifiedLiveCostAuthority> {
     let SyntheticLiveCostAuthority { data, boundary } = input;
-    let source = LiveAuthoritySource::Synthetic(boundary.clone());
+    let source = LiveAuthoritySource::Synthetic(boundary.clone(), None);
     boundary.validate_usage(&data)?;
     let documents = boundary.documents();
     prepare_authority(data, &documents[0], [&documents[1], &documents[2], &documents[3], &documents[4]].map(Vec::as_slice), source)
@@ -175,14 +178,29 @@ pub(crate) fn commit_cost_receipt(
     clock: &dyn CostClock,
 ) -> Result<CostReceiptV1> {
     authority.reverify()?;
-    let mut selected = authority.data.arms.iter().filter(|arm| arm.condition == condition);
-    let arm = selected.next().ok_or_else(|| anyhow::anyhow!("selected receipt condition is absent"))?;
-    if selected.next().is_some() { bail!("selected receipt condition is ambiguous") }
     let now = clock.now()?;
     let calculated_at = now.with_nanosecond(now.nanosecond() / 1_000_000 * 1_000_000)
         .ok_or_else(|| anyhow::anyhow!("normalize calculation clock"))?
         .to_rfc3339_opts(SecondsFormat::Millis, true);
-    let calculated = parse_millis(&calculated_at)?;
+    let receipt =
+        calculate_cost_receipt_at(authority, condition, statement, &calculated_at)?;
+    #[cfg(test)]
+    if let LiveAuthoritySource::Synthetic(boundary, _) = &authority.source {
+        boundary.publish_receipt(&receipt)?;
+    }
+    Ok(receipt)
+}
+
+fn calculate_cost_receipt_at(
+    authority: &VerifiedLiveCostAuthority,
+    condition: crate::EvaluationCondition,
+    statement: Option<&RetainedSupplierStatement>,
+    calculated_at: &str,
+) -> Result<CostReceiptV1> {
+    let mut selected = authority.data.arms.iter().filter(|arm| arm.condition == condition);
+    let arm = selected.next().ok_or_else(|| anyhow::anyhow!("selected receipt condition is absent"))?;
+    if selected.next().is_some() { bail!("selected receipt condition is ambiguous") }
+    let calculated = parse_millis(calculated_at)?;
     if calculated < parse_millis(&authority.data.pair_receipt.finished_at)? {
         bail!("calculation is before finish")
     }
@@ -232,7 +250,8 @@ pub(crate) fn commit_cost_receipt(
             prepaid_or_hard_limit_fen: authority.inputs.budget.prepaid_or_hard_limit_fen,
             max_provider_request_attempts: attestation.max_provider_request_attempts_per_run,
             max_total_tokens: attestation.max_total_tokens_per_run, max_elapsed_seconds: attestation.max_elapsed_seconds_per_run },
-        calculated_at, calculation: CostCalculationV1 { rate_unit: "fenPerMillionTokens".into(),
+        calculated_at: calculated_at.to_string(),
+        calculation: CostCalculationV1 { rate_unit: "fenPerMillionTokens".into(),
             rounding: "ceilingToFen".into(), reasoning_tokens_billed_separately: false },
         estimated_fen: calculated.estimated_fen, supplier_statement_sha256: statement.map(|value| value.sha256.clone()),
         supplier_actual_fen: calculated.supplier_actual_fen, charged_fen: calculated.charged_fen, within_ceilings: calculated.within_ceilings,
@@ -242,11 +261,20 @@ pub(crate) fn commit_cost_receipt(
     let bytes = crate::jcs::canonicalize_value(&value)?;
     let validated = crate::cost_contracts::validate_cost_receipt(&bytes)?;
     if validated != receipt { bail!("canonical receipt validator changed the typed value") }
-    #[cfg(test)]
-    if let LiveAuthoritySource::Synthetic(boundary) = &authority.source {
-        boundary.publish_receipt(&validated)?;
-    }
     Ok(validated)
+}
+
+pub(crate) fn revalidate_cost_receipt(
+    authority: &VerifiedLiveCostAuthority,
+    statement: Option<&RetainedSupplierStatement>,
+    expected: &CostReceiptV1,
+) -> Result<()> {
+    authority.reverify()?;
+    let actual = calculate_cost_receipt_at(
+        authority, expected.condition, statement, &expected.calculated_at,
+    )?;
+    if actual == *expected { return Ok(()) }
+    bail!("fresh authority changed the whole prospective cost receipt")
 }
 
 fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, Vec<u8>, [Vec<u8>; 4])> {
@@ -300,7 +328,7 @@ fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, Vec<u
 }
 fn prepare_authority(data: LiveAuthorityData, attestation_raw: &[u8], raw: [&[u8]; 4], source: LiveAuthoritySource) -> Result<VerifiedLiveCostAuthority> {
     let inputs = validate_parts(&data, attestation_raw, raw)?;
-    Ok(VerifiedLiveCostAuthority { data, inputs, source })
+    Ok(VerifiedLiveCostAuthority { data, inputs, source, transaction: None })
 }
 fn validate_parts(data: &LiveAuthorityData, attestation_raw: &[u8], raw: [&[u8]; 4]) -> Result<VerifiedCostInputs> {
     let attestation = crate::contracts::FrozenContracts::load()?.validate_native_attestation(attestation_raw)
@@ -312,7 +340,7 @@ fn validate_parts(data: &LiveAuthorityData, attestation_raw: &[u8], raw: [&[u8];
 }
 
 impl VerifiedLiveCostAuthority {
-    fn reverify(&self) -> Result<()> {
+    pub(crate) fn reverify(&self) -> Result<()> {
         let inputs = match &self.source {
             LiveAuthoritySource::Production(core) => {
                 crate::blind_finalize::reverify_sealed_pair_authority(core)?;
@@ -321,7 +349,10 @@ impl VerifiedLiveCostAuthority {
                 validate_parts(&data, &attestation, raw.each_ref().map(Vec::as_slice))?
             }
             #[cfg(test)]
-            LiveAuthoritySource::Synthetic(boundary) => {
+            LiveAuthoritySource::Synthetic(boundary, inventory) => {
+                if let Some(inventory) = inventory {
+                    inventory.reverify_unchanged()?;
+                }
                 boundary.validate_usage(&self.data)?;
                 let documents = boundary.documents();
                 validate_parts(&self.data, &documents[0], [&documents[1], &documents[2], &documents[3], &documents[4]].map(Vec::as_slice))?
@@ -329,6 +360,37 @@ impl VerifiedLiveCostAuthority {
         };
         if !same_inputs(&inputs, &self.inputs)? { bail!("Live cost inputs changed during reverify") }
         Ok(())
+    }
+
+    pub(crate) fn transaction_binding(&self) -> (&str, &str, &str) {
+        (&self.data.pair_id, &self.data.frozen_sha256, &self.data.private_root)
+    }
+
+    pub(crate) fn rebuild(
+        self,
+        inventory: crate::private_inventory::VerifiedPrivateInventory,
+    ) -> Result<Self> {
+        let root = std::path::Path::new(&self.data.private_root).to_path_buf();
+        inventory.verify_binding(&self.data.pair_id, &self.data.frozen_sha256, &root)?;
+        match self.source {
+            LiveAuthoritySource::Production(_) => {
+                let path = root.join("frozen-run-context.json");
+                let snapshot = crate::blind::read_context_snapshot(&path)?;
+                let inputs = snapshot.verified_inputs()?;
+                let core = crate::blind_verify::verify_pair_evidence_core_from(
+                    &snapshot, inputs, inventory,
+                )?;
+                prepare_live_cost_authority(core)
+            }
+            #[cfg(test)]
+            LiveAuthoritySource::Synthetic(boundary, _) => {
+                boundary.validate_usage(&self.data)?;
+                let documents = boundary.documents();
+                let raw = [&documents[1], &documents[2], &documents[3], &documents[4]];
+                let source = LiveAuthoritySource::Synthetic(boundary, Some(inventory));
+                prepare_authority(self.data, &documents[0], raw.map(Vec::as_slice), source)
+            }
+        }
     }
 }
 

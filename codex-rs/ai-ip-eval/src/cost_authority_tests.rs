@@ -1,4 +1,9 @@
 use std::cell::Cell;
+use std::fs;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::path::PathBuf;
 
 use chrono::DateTime;
 use chrono::Utc;
@@ -12,6 +17,11 @@ use crate::ModeEvidence;
 use crate::ProviderRole;
 use crate::Usage;
 use crate::cost_authority::*;
+use crate::cost_inputs::CostReceiptCheckpoint;
+use crate::cost_inputs::publish_cost_receipt_for_test;
+use crate::private_inventory::InventoryKind;
+use crate::private_inventory::batch::ExpectedInventoryEntry;
+use crate::private_inventory::batch::append_private_inventory_batch_from_root;
 
 const STARTED: &str = "2026-08-30T09:30:00.000Z";
 const FINISHED: &str = "2026-08-30T10:00:00.000Z";
@@ -551,7 +561,7 @@ fn supplier(edits: impl FnOnce(&mut Value)) -> RetainedSupplierStatement {
             edits(value);
         },
     );
-    retain_synthetic_supplier_statement(&bytes).unwrap()
+    retain_supplier_statement(&bytes).unwrap()
 }
 
 #[test]
@@ -676,4 +686,330 @@ fn cost_authority_builds_exact_happy_receipt_with_over_ceiling_supplier_actual()
     assert!(!receipt.within_ceilings);
     assert_eq!(receipt_sha(&receipt), "e4197bede0a13e2df6609b80e77b08e3bc7d6627d0f178e783151881a678a210");
     assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
+}
+
+struct CostTransactionWorld {
+    _temp: tempfile::TempDir,
+    root: PathBuf,
+    supplier_path: PathBuf,
+    receipt_path: PathBuf,
+}
+
+fn transaction_root() -> (tempfile::TempDir, PathBuf) {
+    let temp = tempfile::tempdir().unwrap();
+    #[cfg(unix)]
+    fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o700)).unwrap();
+    #[cfg(unix)]
+    let root = temp.path().canonicalize().unwrap();
+    #[cfg(windows)]
+    let root = {
+        let root = temp.path().join("private");
+        crate::secure_fs::create_owner_only_dir_new(&root).unwrap();
+        root.canonicalize().unwrap()
+    };
+    (temp, root)
+}
+
+fn supplier_raw(edits: impl FnOnce(&mut Value)) -> Vec<u8> {
+    json_bytes(
+        include_bytes!("../tests/fixtures/contracts/06b1/supplier-statement.canonical.json"),
+        |value| {
+            value["pairId"] = Value::String(hex('c'));
+            value["issuedAt"] = Value::String("2026-08-30T10:00:30.000Z".into());
+            edits(value);
+        },
+    )
+}
+
+fn transaction_world(supplier: Option<&[u8]>, covered: bool) -> CostTransactionWorld {
+    let (_temp, root) = transaction_root();
+    for relative in ["inputs", "inputs/supplier-statements", "coordinator", "coordinator/cost"] {
+        crate::secure_fs::create_owner_only_dir_new(&root.join(relative)).unwrap();
+    }
+    crate::private_inventory::bootstrap_private_inventory(
+        &root,
+        &hex('c'),
+        &hex('1'),
+        "2026-08-30T09:00:00.000Z",
+    )
+    .unwrap();
+    let supplier_path = root.join("inputs/supplier-statements/candidate.json");
+    if let Some(bytes) = supplier {
+        crate::secure_fs::write_owner_only_new(&supplier_path, bytes).unwrap();
+        if covered {
+            let old_root = crate::private_inventory::verify_private_inventory(&root)
+                .unwrap_err();
+            assert!(old_root.to_string().contains("inventory"));
+            let inventory_bytes = fs::read(root.join("coordinator/private-inventory.jsonl")).unwrap();
+            append_private_inventory_batch_from_root(
+                &root,
+                &sha256(&inventory_bytes),
+                &[ExpectedInventoryEntry {
+                    relative_path: "inputs/supplier-statements/candidate.json".into(),
+                    kind: InventoryKind::File,
+                    sha256: Some(sha256(bytes)),
+                }],
+            )
+            .unwrap();
+        }
+    }
+    CostTransactionWorld {
+        _temp,
+        supplier_path,
+        receipt_path: root.join("coordinator/cost/candidate-receipt.json"),
+        root,
+    }
+}
+
+fn transaction_authority(root: &Path) -> VerifiedLiveCostAuthority {
+    let mut input = synthetic_input();
+    input.data.private_root = root.to_str().unwrap().to_string();
+    input.data.attestation.private_root = input.data.private_root.clone();
+    rebind(&mut input);
+    prepare_synthetic_live_cost_authority(input).unwrap()
+}
+
+fn run_transaction(
+    world: &CostTransactionWorld,
+    supplier: bool,
+    clock: &FixedClock,
+    hook: &mut dyn FnMut(CostReceiptCheckpoint) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    publish_cost_receipt_for_test(
+        transaction_authority(&world.root),
+        EvaluationCondition::Candidate,
+        supplier.then_some(world.supplier_path.as_path()),
+        clock,
+        hook,
+    )
+}
+
+fn transaction_clock() -> FixedClock {
+    clock("2026-08-30T10:01:00.000Z")
+}
+
+fn inventory_bytes(root: &Path) -> Vec<u8> {
+    fs::read(root.join("coordinator/private-inventory.jsonl")).unwrap()
+}
+
+fn assert_transaction_error_contains(error: anyhow::Error, expected: &str) {
+    assert!(error.to_string().contains(expected), "{error:#}");
+}
+
+fn receipt(world: &CostTransactionWorld) -> crate::cost_contracts::CostReceiptV1 {
+    let bytes = fs::read(&world.receipt_path).unwrap();
+    assert_eq!(
+        bytes,
+        crate::jcs::canonicalize_value(&crate::jcs::parse_json(&bytes).unwrap()).unwrap()
+    );
+    crate::cost_contracts::validate_cost_receipt(&bytes).unwrap()
+}
+
+#[test]
+fn cost_receipt_transaction_publishes_exact_no_supplier_receipt() {
+    let world = transaction_world(None, false);
+    run_transaction(&world, false, &transaction_clock(), &mut |_| Ok(())).unwrap();
+    let receipt = receipt(&world);
+    assert_eq!(receipt.supplier_statement_sha256, None);
+    assert_eq!(receipt.supplier_actual_fen, None);
+    crate::private_inventory::verify_private_inventory(&world.root).unwrap();
+}
+
+#[test]
+fn cost_receipt_transaction_publishes_pending_supplier_state_a() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap();
+    assert_eq!(receipt(&world).supplier_statement_sha256, Some(sha256(&bytes)));
+    crate::private_inventory::verify_private_inventory(&world.root).unwrap();
+}
+
+#[test]
+fn cost_receipt_transaction_resumes_covered_supplier_state_b() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), true);
+    let before = inventory_bytes(&world.root);
+    run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap();
+    assert!(inventory_bytes(&world.root).starts_with(&before));
+    assert_eq!(receipt(&world).supplier_statement_sha256, Some(sha256(&bytes)));
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_omitted_pending_supplier() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    let before = inventory_bytes(&world.root);
+    let error = run_transaction(&world, false, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "omitted supplier");
+    assert_eq!(inventory_bytes(&world.root), before);
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_omitted_covered_supplier() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), true);
+    let before = inventory_bytes(&world.root);
+    let error = run_transaction(&world, false, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "omitted supplier");
+    assert_eq!(inventory_bytes(&world.root), before);
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_missing_inventory_covered_supplier() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), true);
+    fs::remove_file(&world.supplier_path).unwrap();
+    let error = run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "supplier");
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_changed_or_wrong_identity_supplier_before_append() {
+    for field in ["pairId", "providerLabel"] {
+        let bytes = supplier_raw(|value| value[field] = Value::String(
+            if field == "pairId" { hex('e') } else { "wrong-authority".into() },
+        ));
+        let world = transaction_world(Some(&bytes), false);
+        let before = inventory_bytes(&world.root);
+        let error = run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+        assert_transaction_error_contains(error, "supplier authority");
+        assert_eq!(inventory_bytes(&world.root), before);
+        assert!(!world.receipt_path.exists());
+    }
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_wrong_leaf_or_extra_pending_leaf() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    crate::secure_fs::write_owner_only_new(
+        &world.root.join("inputs/supplier-statements/generic.json"),
+        &bytes,
+    )
+    .unwrap();
+    let error = run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "unexpected path");
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_existing_receipt_before_supplier_append() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    crate::secure_fs::write_owner_only_new(&world.receipt_path, b"existing").unwrap();
+    let before = inventory_bytes(&world.root);
+    let error = run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "receipt destination already exists");
+    assert_eq!(inventory_bytes(&world.root), before);
+}
+
+#[test]
+fn cost_receipt_transaction_rejects_supplier_replacement_after_retain() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    let mut hook = |checkpoint| {
+        if checkpoint == CostReceiptCheckpoint::AfterSupplierRetainBeforePairVerify {
+            fs::write(&world.supplier_path, vec![b' '; bytes.len()])?;
+        }
+        Ok(())
+    };
+    let error = run_transaction(&world, true, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "retained private file");
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_before_supplier_append_leaves_pending_state() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    let before = inventory_bytes(&world.root);
+    let mut hook = |checkpoint| match checkpoint {
+        CostReceiptCheckpoint::BeforeSupplierInventoryAppend => anyhow::bail!("stop before supplier append"),
+        _ => Ok(()),
+    };
+    let error = run_transaction(&world, true, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "stop before supplier append");
+    assert_eq!(inventory_bytes(&world.root), before);
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_after_supplier_append_resumes_as_state_b() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    let mut hook = |checkpoint| match checkpoint {
+        CostReceiptCheckpoint::AfterSupplierInventoryAppend => anyhow::bail!("stop after supplier append"),
+        _ => Ok(()),
+    };
+    let error = run_transaction(&world, true, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "stop after supplier append");
+    crate::private_inventory::verify_private_inventory(&world.root).unwrap();
+    run_transaction(&world, true, &transaction_clock(), &mut |_| Ok(())).unwrap();
+    assert_eq!(receipt(&world).supplier_statement_sha256, Some(sha256(&bytes)));
+}
+
+#[test]
+fn cost_receipt_transaction_before_receipt_create_leaves_no_receipt() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), true);
+    let mut hook = |checkpoint| match checkpoint {
+        CostReceiptCheckpoint::BeforeReceiptCreate => anyhow::bail!("stop before receipt create"),
+        _ => Ok(()),
+    };
+    let error = run_transaction(&world, true, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "stop before receipt create");
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
+fn cost_receipt_transaction_receipt_replacement_fails_expected_sha_append() {
+    let world = transaction_world(None, false);
+    let mut hook = |checkpoint| {
+        if checkpoint == CostReceiptCheckpoint::BeforeReceiptInventoryAppend {
+            let length = fs::metadata(&world.receipt_path)?.len();
+            fs::write(&world.receipt_path, vec![b' '; usize::try_from(length)?])?;
+        }
+        Ok(())
+    };
+    let error = run_transaction(&world, false, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "retained private file");
+    assert!(crate::private_inventory::verify_private_inventory(&world.root).is_err());
+}
+
+#[test]
+fn cost_receipt_transaction_after_receipt_create_rerun_fails_closed() {
+    let world = transaction_world(None, false);
+    let mut hook = |checkpoint| match checkpoint {
+        CostReceiptCheckpoint::AfterReceiptCreateBeforeInventoryAppend => anyhow::bail!("stop after receipt create"),
+        _ => Ok(()),
+    };
+    let error = run_transaction(&world, false, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "stop after receipt create");
+    assert!(world.receipt_path.exists());
+    let error = run_transaction(&world, false, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
+    assert_transaction_error_contains(error, "receipt destination already exists");
+}
+
+#[test]
+fn cost_receipt_transaction_after_receipt_append_has_valid_inventory() {
+    let world = transaction_world(None, false);
+    let mut hook = |checkpoint| match checkpoint {
+        CostReceiptCheckpoint::AfterReceiptInventoryAppend => anyhow::bail!("stop after receipt append"),
+        _ => Ok(()),
+    };
+    let error = run_transaction(&world, false, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(error, "stop after receipt append");
+    receipt(&world);
+    crate::private_inventory::verify_private_inventory(&world.root).unwrap();
+}
+
+#[test]
+fn cost_receipt_transaction_calls_user_clock_exactly_once() {
+    let world = transaction_world(None, false);
+    let clock = transaction_clock();
+    run_transaction(&world, false, &clock, &mut |_| Ok(())).unwrap();
+    assert_eq!(clock.calls.get(), 1);
 }
