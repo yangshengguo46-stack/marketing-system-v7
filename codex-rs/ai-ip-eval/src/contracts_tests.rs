@@ -865,7 +865,7 @@ fn assert_cost_receipt_semantics(
             "/properties/supplierActualFen/maximum",
             "/properties/chargedFen/maximum",
         ],
-        u64::MAX,
+        9_007_199_254_740_991,
     );
     assert_schema_integer_maxima(
         schema,
@@ -877,7 +877,7 @@ fn assert_cost_receipt_semantics(
             "/$defs/usage/properties/outputTokens/maximum",
             "/$defs/usage/properties/reasoningOutputTokens/maximum",
         ],
-        i64::MAX as u64,
+        9_007_199_254_740_991,
     );
 
     let mut supplier = canonical.clone();

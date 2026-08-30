@@ -2247,6 +2247,11 @@ fn absolute_pair_deadline_is_committed_before_full_context_verification() {
         "maxAttemptsPerArm": 1,
         "maxTotalTokens": 1,
         "maxElapsedSeconds": 1,
+        "supplierStatementPolicy": {
+            "directory": "inputs/supplier-statements",
+            "allowedLeaves": ["generic.json", "candidate.json"],
+            "nestedEntriesAllowed": false
+        },
         "artifacts": {}
     });
     fs::write(&context, serde_json::to_vec(&value).unwrap()).unwrap();
@@ -4870,7 +4875,7 @@ fn hand_authored_external_upstream_and_identity_drift_fail_before_activation() {
         }
         fs::write(&path, serde_json::to_vec_pretty(&context).unwrap()).unwrap();
         assert!(verify_frozen_context(&path).is_err(), "mutation {mutation}");
-        assert!(!temp.path().join("coordinator").exists());
+        assert_only_freeze_coordinator_prerequisites(temp.path());
     }
 }
 
@@ -5306,6 +5311,38 @@ struct NativeMockPairTestRun {
     result: anyhow::Result<()>,
 }
 
+fn assert_only_freeze_coordinator_prerequisites(private_root: &std::path::Path) {
+    let coordinator = private_root.join("coordinator");
+    let mut entries = fs::read_dir(&coordinator)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<Vec<_>>();
+    entries.sort();
+    assert_eq!(
+        entries,
+        vec![
+            std::ffi::OsString::from("commitment-key.bin"),
+            std::ffi::OsString::from("cost"),
+        ]
+    );
+
+    let commitment_key = fs::symlink_metadata(coordinator.join("commitment-key.bin")).unwrap();
+    assert!(commitment_key.file_type().is_file());
+    let cost = coordinator.join("cost");
+    assert!(fs::symlink_metadata(&cost).unwrap().file_type().is_dir());
+    assert!(fs::read_dir(&cost).unwrap().next().is_none());
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+
+        assert_eq!(commitment_key.mode() & 0o777, 0o600);
+        assert_eq!(commitment_key.nlink(), 1);
+        assert_eq!(fs::metadata(&coordinator).unwrap().mode() & 0o777, 0o700);
+        assert_eq!(fs::metadata(&cost).unwrap().mode() & 0o777, 0o700);
+    }
+}
+
 fn run_native_mock_pair_with_marker(
     marker: Option<&str>,
     max_total_tokens_per_run: u64,
@@ -5560,7 +5597,7 @@ fn native_pair_token_cap_overflow_fails_before_coordinator_evidence() {
             .contains("native pair token ceiling is not representable"),
         "unexpected error: {error:#}"
     );
-    assert!(!run.live_root.join("coordinator").exists());
+    assert_only_freeze_coordinator_prerequisites(&run.live_root);
 }
 
 #[test]
