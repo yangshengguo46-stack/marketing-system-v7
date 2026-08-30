@@ -118,7 +118,11 @@ git commit -m "feat(ai-ip-eval): refuse unverified proof cost commands"
 **Files:**
 - Modify: `codex-rs/ai-ip-eval/src/cost_authority.rs`
 - Modify: `codex-rs/ai-ip-eval/src/cost_authority_tests.rs`
+- Create: `codex-rs/ai-ip-eval/src/blind_verify_cost_projection_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/blind_verify_semantics_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+
+Before the Task 5C behavioral RED, make one test-only GREEN migration commit: move the two Task 5A real Native/Replay projection tests from `cost_authority_tests.rs` into the new `blind_verify_cost_projection_tests.rs`, switch the existing child mount in `blind_verify_semantics_tests.rs` to that file, and mount the now-available `cost_authority_tests.rs` from `lib.rs` as the sibling unit-test module required below. Preserve the two test names and assertions byte-for-byte except for imports required by the module move. This corrects the previously omitted mount-migration file authority; it may not change production behavior or weaken Task 5A coverage. Commit the independently GREEN migration as `test(ai-ip-eval): preserve verified cost projection coverage`, then begin the uncommitted Task 5C scaffold RED from that commit.
 
 **Interfaces:**
 
