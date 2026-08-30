@@ -360,6 +360,15 @@ fn validate_receipt_semantics(receipt: &CostReceiptV1) -> anyhow::Result<()> {
     if receipt.attempt_range.start_inclusive >= receipt.attempt_range.end_exclusive {
         anyhow::bail!("receipt attempt range is not ordered")
     }
+    let attempt_range_length = receipt
+        .attempt_range
+        .end_exclusive
+        .checked_sub(receipt.attempt_range.start_inclusive)
+        .ok_or_else(|| anyhow::anyhow!("receipt attempt range is not ordered"))?;
+    if attempt_range_length != receipt.provider_request_attempt_count {
+        anyhow::bail!("receipt attempt range length does not match request attempt count")
+    }
+    crate::cost::validate_usage_semantics(&receipt.usage)?;
     if receipt.provider_completed_response_count > receipt.provider_request_attempt_count {
         anyhow::bail!("completed response count exceeds request attempt count")
     }

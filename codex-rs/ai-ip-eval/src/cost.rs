@@ -17,8 +17,7 @@ pub(crate) struct CalculatedCost {
     pub(crate) within_ceilings: bool,
 }
 
-pub(crate) fn calculate_cost(input: &CostCalculationInput<'_>) -> anyhow::Result<CalculatedCost> {
-    let usage = input.usage;
+pub(crate) fn validate_usage_semantics(usage: &Usage) -> anyhow::Result<i64> {
     for (field, value) in [
         ("total_tokens", usage.total_tokens),
         ("input_tokens", usage.input_tokens),
@@ -54,6 +53,13 @@ pub(crate) fn calculate_cost(input: &CostCalculationInput<'_>) -> anyhow::Result
     if uncached_input_tokens < 0 {
         anyhow::bail!("cached and cache-write tokens cannot exceed input_tokens")
     }
+
+    Ok(uncached_input_tokens)
+}
+
+pub(crate) fn calculate_cost(input: &CostCalculationInput<'_>) -> anyhow::Result<CalculatedCost> {
+    let usage = input.usage;
+    let uncached_input_tokens = validate_usage_semantics(usage)?;
 
     let uncached = u128::try_from(uncached_input_tokens)
         .map_err(|_| anyhow::anyhow!("uncached input token conversion failed"))?;

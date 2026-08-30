@@ -103,6 +103,95 @@ fn executable_06b1_cost_contracts_accept_only_exact_shapes() {
     );
 }
 
+#[test]
+fn exact_jcs_receipt_semantic_mutations_are_rejected() {
+    let rate = fixture("provider-rate-card.canonical.json");
+    let policy = fixture("billing-policy.canonical.json");
+    let fx = fixture("fx-policy.canonical.json");
+    let budget = fixture("provider-budget-evidence.canonical.json");
+    let receipt = fixture("cost-receipt.canonical.json");
+    let contracts = crate::cost_contracts::FrozenCostContracts::load().unwrap();
+    let inputs = contracts
+        .validate_inputs(&rate, &policy, &fx, &budget)
+        .unwrap();
+    let receipt_value = crate::jcs::parse_json(&receipt).unwrap();
+
+    for field in [
+        "totalTokens",
+        "inputTokens",
+        "cachedInputTokens",
+        "cacheWriteInputTokens",
+        "outputTokens",
+        "reasoningOutputTokens",
+    ] {
+        let mut value = receipt_value.clone();
+        value["usage"][field] = serde_json::json!(-1);
+        let bytes = receipt_bytes(&value);
+        let typed: crate::cost_contracts::CostReceiptV1 = serde_json::from_slice(&bytes).unwrap();
+        assert!(
+            crate::cost::calculate_cost(&crate::cost::CostCalculationInput {
+                inputs: &inputs,
+                usage: &typed.usage,
+                supplier_actual_fen: None,
+                approved_per_run_fen: typed.ceilings.approved_per_run_fen,
+                max_total_tokens: typed.ceilings.max_total_tokens,
+            })
+            .is_err(),
+            "{field} must be rejected by the typed usage layer"
+        );
+        assert!(
+            contracts.validate_receipt(&bytes).is_err(),
+            "{field} exact-JCS receipt must be rejected"
+        );
+    }
+
+    for (mutate, expected) in [
+        (
+            Box::new(|value: &mut serde_json::Value| {
+                value["usage"]["inputTokens"] = serde_json::json!(99);
+            }) as Box<dyn Fn(&mut serde_json::Value)>,
+            "total_tokens must equal input_tokens plus output_tokens",
+        ),
+        (
+            Box::new(|value: &mut serde_json::Value| {
+                value["usage"]["cachedInputTokens"] = serde_json::json!(91);
+            }) as Box<dyn Fn(&mut serde_json::Value)>,
+            "cached and cache-write tokens cannot exceed input_tokens",
+        ),
+        (
+            Box::new(|value: &mut serde_json::Value| {
+                value["usage"]["reasoningOutputTokens"] = serde_json::json!(51);
+            }) as Box<dyn Fn(&mut serde_json::Value)>,
+            "reasoning_output_tokens cannot exceed output_tokens",
+        ),
+        (
+            Box::new(|value: &mut serde_json::Value| {
+                value["attemptRange"]["endExclusive"] = serde_json::json!(4);
+            }) as Box<dyn Fn(&mut serde_json::Value)>,
+            "receipt attempt range length does not match request attempt count",
+        ),
+    ] {
+        let mut value = receipt_value.clone();
+        mutate(&mut value);
+        let error = contracts.validate_receipt(&receipt_bytes(&value)).unwrap_err();
+        assert!(error.to_string().contains(expected));
+    }
+
+    let mut empty_attempt_range = receipt_value.clone();
+    empty_attempt_range["attemptRange"]["endExclusive"] = serde_json::json!(1);
+    empty_attempt_range["providerRequestAttemptCount"] = serde_json::json!(0);
+    let error = contracts
+        .validate_receipt(&receipt_bytes(&empty_attempt_range))
+        .unwrap_err();
+    assert!(error.to_string().contains("receipt attempt range is not ordered"));
+
+    let mut valid_overage = receipt_value;
+    valid_overage["usage"]["inputTokens"] = serde_json::json!(951);
+    valid_overage["usage"]["totalTokens"] = serde_json::json!(1001);
+    valid_overage["withinCeilings"] = serde_json::json!(false);
+    contracts.validate_receipt(&receipt_bytes(&valid_overage)).unwrap();
+}
+
 fn run_case(
     contracts: &crate::cost_contracts::FrozenCostContracts,
     case: &serde_json::Value,
@@ -145,7 +234,7 @@ fn run_case(
         "within" => value["withinCeilings"] = serde_json::json!(false),
         "attemptCap" => value["providerRequestAttemptCount"] = serde_json::json!(3),
         "rateAfterCalculated" => value["rateEffectiveAt"] = serde_json::json!("2026-08-30T10:03:00.000Z"),
-        "validOverage" => { value["usage"]["totalTokens"] = serde_json::json!(1001); value["withinCeilings"] = serde_json::json!(false); }
+        "validOverage" => { value["usage"]["inputTokens"] = serde_json::json!(951); value["usage"]["totalTokens"] = serde_json::json!(1001); value["withinCeilings"] = serde_json::json!(false); }
         "safeInteger" => { value["estimatedFen"] = serde_json::json!(SAFE_INTEGER); value["chargedFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["approvedPerRunFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["approvedTotalFen"] = serde_json::json!(SAFE_INTEGER); value["ceilings"]["prepaidOrHardLimitFen"] = serde_json::json!(SAFE_INTEGER); }
         "unsafeInteger" => value["chargedFen"] = serde_json::json!(SAFE_INTEGER + 1),
         "unsafeIntegerPlus" => value["chargedFen"] = serde_json::json!(SAFE_INTEGER + 2),
