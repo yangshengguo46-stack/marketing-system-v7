@@ -251,6 +251,66 @@ pub(crate) fn verify_private_inventory_continuation(
     })
 }
 
+pub(crate) fn verify_pending_supplier_inventory(
+    root: &Path,
+    expected: &ExpectedInventoryEntry,
+) -> Result<VerifiedPrivateInventory> {
+    const SUPPLIER_CAP: u64 = 64 * 1024;
+    const ALLOWED: [&str; 2] = [
+        "inputs/supplier-statements/generic.json",
+        "inputs/supplier-statements/candidate.json",
+    ];
+    canonical_root(root)?;
+    if !ALLOWED.contains(&expected.relative_path.as_str()) {
+        bail!("pending inventory entry is not one fixed supplier leaf");
+    }
+    if expected.kind != InventoryKind::File {
+        bail!("pending supplier inventory entry must be one regular file");
+    }
+    let expected_sha = expected
+        .sha256
+        .as_deref()
+        .filter(|value| lower_hex(value))
+        .context("pending supplier inventory entry requires lowercase SHA-256")?;
+    let retained = crate::secure_fs_retain::RetainedBoundedFile::retain(
+        &root.join(&expected.relative_path),
+        SUPPLIER_CAP,
+        crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
+    )?;
+    if digest(retained.raw_bytes()) != expected_sha {
+        bail!("pending supplier filesystem SHA-256 differs from the expected entry");
+    }
+    if let Ok((records, _, _)) = verified_state(
+        root,
+        /* allowed_new */ None,
+        /* supplied_bytes */ None,
+        /* trust_allowed_projection */ false,
+    ) && records
+        .iter()
+        .any(|record| record.relative_path == expected.relative_path)
+    {
+        bail!("pending supplier inventory leaf is already recorded");
+    }
+    let allowed_unrecorded = validate_expected_tree(std::slice::from_ref(expected))?;
+    let (records, inventory_bytes, pair_marker) = verified_state(
+        root,
+        Some(&allowed_unrecorded),
+        /* supplied_bytes */ None,
+        /* trust_allowed_projection */ false,
+    )
+    .context("pending supplier inventory contains an unexpected path or changed state")?;
+    drop(records);
+    retained.reverify_unchanged()?;
+    Ok(VerifiedPrivateInventory {
+        canonical_private_root: root.to_path_buf(),
+        inventory_root_sha256: digest(&inventory_bytes),
+        inventory_bytes,
+        pair_marker,
+        allowed_unrecorded,
+        trust_allowed_projection: false,
+    })
+}
+
 pub(crate) fn append_private_inventory_batch(
     root: &Path,
     expected_new: &[ExpectedInventoryEntry],

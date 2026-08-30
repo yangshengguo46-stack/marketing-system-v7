@@ -15,6 +15,9 @@ use crate::cost_contracts::FrozenCostContracts;
 use crate::cost_contracts::FxPolicyV1;
 use crate::cost_contracts::ProviderBudgetEvidenceV1;
 use crate::cost_contracts::ProviderRateCardV1;
+use crate::cost_contracts::SupplierStatementV1;
+use crate::private_inventory::InventoryKind;
+use crate::private_inventory::batch::ExpectedInventoryEntry;
 use crate::secure_fs_retain::RetainedBoundedFile;
 use crate::secure_fs_retain::RetainedLeafPermissions;
 
@@ -25,6 +28,103 @@ pub(crate) struct RetainedExactPrivateInput<T> {
     sha256: String,
     typed: T,
     retained: RetainedBoundedFile,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum SupplierInventoryState {
+    Pending,
+    Covered,
+}
+
+pub(crate) struct RetainedPendingSupplierStatement {
+    canonical_private_root: PathBuf,
+    relative_path: String,
+    retained: RetainedExactPrivateInput<SupplierStatementV1>,
+    state: SupplierInventoryState,
+}
+
+impl RetainedPendingSupplierStatement {
+    pub(crate) fn retain(
+        private_root: &Path,
+        condition: crate::EvaluationCondition,
+        supplied: &Path,
+    ) -> Result<Self> {
+        let canonical_private_root = private_root
+            .canonicalize()
+            .context("canonicalize pending supplier private root")?;
+        if !private_root.is_absolute() || canonical_private_root != private_root {
+            bail!("pending supplier private root is not exact canonical bytes");
+        }
+        let relative_path = supplier_statement_relative_path(condition).to_string();
+        let expected = private_root.join(&relative_path);
+        if supplied != expected {
+            bail!("pending supplier path is not the exact condition-bound supplier leaf");
+        }
+        let contracts = FrozenCostContracts::load()?;
+        let retained = RetainedExactPrivateInput::retain(supplied, &expected, |bytes| {
+            contracts.validate_supplier_statement(bytes)
+        })?;
+        if retained.typed().condition != condition {
+            bail!("pending supplier typed condition differs from its condition-bound supplier leaf");
+        }
+        retained.reverify_unchanged()?;
+        Ok(Self {
+            canonical_private_root,
+            relative_path,
+            retained,
+            state: SupplierInventoryState::Pending,
+        })
+    }
+
+    pub(crate) fn relative_path(&self) -> &str {
+        &self.relative_path
+    }
+
+    pub(crate) fn raw_bytes(&self) -> &[u8] {
+        self.retained.raw_bytes()
+    }
+
+    pub(crate) fn sha256(&self) -> &str {
+        self.retained.sha256()
+    }
+
+    pub(crate) fn typed(&self) -> &SupplierStatementV1 {
+        self.retained.typed()
+    }
+
+    pub(crate) fn inventory_entry(&self) -> ExpectedInventoryEntry {
+        ExpectedInventoryEntry {
+            relative_path: self.relative_path.clone(),
+            kind: InventoryKind::File,
+            sha256: Some(self.sha256().to_string()),
+        }
+    }
+
+    pub(crate) fn is_pending(&self) -> bool {
+        self.state == SupplierInventoryState::Pending
+    }
+
+    pub(crate) fn into_covered(mut self) -> Self {
+        self.state = SupplierInventoryState::Covered;
+        self
+    }
+
+    pub(crate) fn private_root(&self) -> &Path {
+        &self.canonical_private_root
+    }
+
+    pub(crate) fn reverify_unchanged(&self) -> Result<()> {
+        self.retained.reverify_unchanged()
+    }
+}
+
+pub(crate) fn supplier_statement_relative_path(
+    condition: crate::EvaluationCondition,
+) -> &'static str {
+    match condition {
+        crate::EvaluationCondition::Generic => "inputs/supplier-statements/generic.json",
+        crate::EvaluationCondition::Candidate => "inputs/supplier-statements/candidate.json",
+    }
 }
 
 impl<T> RetainedExactPrivateInput<T>

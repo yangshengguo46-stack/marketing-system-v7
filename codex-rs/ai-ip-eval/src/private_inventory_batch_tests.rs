@@ -17,6 +17,7 @@ use crate::private_inventory::batch::append_private_inventory_batch;
 use crate::private_inventory::batch::append_private_inventory_batch_from_root;
 use crate::private_inventory::batch::append_private_inventory_from_root;
 use crate::private_inventory::batch::reverify_score_inventory_with_staging;
+use crate::private_inventory::batch::verify_pending_supplier_inventory;
 use crate::private_inventory::batch::verify_private_inventory_continuation;
 
 const PAIR_ID: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -50,6 +51,29 @@ fn sealed_root() -> (tempfile::TempDir, PathBuf) {
     crate::private_inventory::bootstrap_private_inventory(&root, PAIR_ID, FROZEN_SHA, CREATED_AT)
         .unwrap();
     (temp, root)
+}
+
+fn pending_supplier_root() -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntry) {
+    let (temp, root) = owner_root();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("inputs")).unwrap();
+    crate::secure_fs::create_owner_only_dir_new(&root.join("inputs/supplier-statements")).unwrap();
+    crate::private_inventory::bootstrap_private_inventory(&root, PAIR_ID, FROZEN_SHA, CREATED_AT)
+        .unwrap();
+    let relative = "inputs/supplier-statements/candidate.json";
+    crate::secure_fs::write_owner_only_new(&root.join(relative), b"supplier").unwrap();
+    (temp, root, file(relative, b"supplier"))
+}
+
+fn pending_supplier_error(
+    setup: impl FnOnce(&Path, &mut ExpectedInventoryEntry),
+    expected_message: &str,
+) {
+    let (_temp, root, mut expected) = pending_supplier_root();
+    setup(&root, &mut expected);
+    let error = verify_pending_supplier_inventory(&root, &expected)
+        .err()
+        .expect("pending supplier inventory must be rejected");
+    assert!(error.to_string().contains(expected_message), "{error:#}");
 }
 
 fn inventory_bytes(root: &Path) -> Vec<u8> {
@@ -293,6 +317,78 @@ fn private_inventory_continuation_allows_only_exact_pending_reviews_at_receipt_t
         continuation.inventory_root_sha256(),
         digest(&inventory_bytes(&root))
     );
+}
+
+#[test]
+fn pending_supplier_inventory_accepts_one_exact_unrecorded_leaf() {
+    let (_temp, root, expected) = pending_supplier_root();
+    let old_root = digest(&inventory_bytes(&root));
+    assert!(crate::private_inventory::verify_private_inventory_state(&root).is_err());
+
+    let verified = verify_pending_supplier_inventory(&root, &expected).unwrap();
+
+    assert_eq!(verified.inventory_root_sha256(), old_root);
+    verified.verify_binding(PAIR_ID, FROZEN_SHA, &root).unwrap();
+    verified.reverify_unchanged().unwrap();
+}
+
+#[test]
+fn pending_supplier_inventory_rejects_recorded_or_arbitrary_leaf() {
+    pending_supplier_error(
+        |root, expected| {
+            let old_root = digest(&inventory_bytes(root));
+            append_private_inventory_batch_from_root(root, &old_root, std::slice::from_ref(expected))
+                .unwrap();
+        },
+        "already recorded",
+    );
+    pending_supplier_error(
+        |root, expected| {
+            crate::secure_fs::write_owner_only_new(&root.join("arbitrary.json"), b"supplier")
+                .unwrap();
+            expected.relative_path = "arbitrary.json".to_string();
+        },
+        "fixed supplier",
+    );
+}
+
+#[test]
+fn pending_supplier_inventory_rejects_wrong_kind_missing_or_wrong_sha() {
+    pending_supplier_error(
+        |_, expected| {
+            expected.kind = InventoryKind::Directory;
+            expected.sha256 = None;
+        },
+        "regular file",
+    );
+    pending_supplier_error(
+        |_, expected| expected.sha256 = None,
+        "lowercase SHA-256",
+    );
+    pending_supplier_error(
+        |_, expected| expected.sha256 = Some("f".repeat(64)),
+        "SHA-256",
+    );
+}
+
+#[test]
+fn pending_supplier_inventory_rejects_extra_unrecorded_entry() {
+    pending_supplier_error(
+        |root, _| {
+            crate::secure_fs::write_owner_only_new(&root.join("unexpected.bin"), b"unexpected")
+                .unwrap();
+        },
+        "unexpected path",
+    );
+}
+
+#[test]
+fn pending_supplier_inventory_reverify_rejects_replacement() {
+    let (_temp, root, expected) = pending_supplier_root();
+    let verified = verify_pending_supplier_inventory(&root, &expected).unwrap();
+    fs::write(root.join(&expected.relative_path), b"replaced").unwrap();
+
+    assert!(verified.reverify_unchanged().is_err());
 }
 
 #[test]
