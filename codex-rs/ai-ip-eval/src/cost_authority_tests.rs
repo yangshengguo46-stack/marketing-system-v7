@@ -162,6 +162,15 @@ fn signed_usage(response_id: &str, usage: &Usage) -> SyntheticSignedUsage {
 }
 
 fn synthetic_input() -> SyntheticLiveCostAuthority {
+    synthetic_input_with_order([
+        EvaluationCondition::Generic,
+        EvaluationCondition::Candidate,
+    ])
+}
+
+fn synthetic_input_with_order(
+    conditions: [EvaluationCondition; 2],
+) -> SyntheticLiveCostAuthority {
     let effective = |value: &mut Value| value["effectiveAt"] = Value::String("2026-08-30T09:00:00.000Z".into());
     let rate_card = json_bytes(include_bytes!("../tests/fixtures/contracts/06b1/provider-rate-card.canonical.json"), effective);
     let billing_policy = json_bytes(include_bytes!("../tests/fixtures/contracts/06b1/billing-policy.canonical.json"), effective);
@@ -187,7 +196,12 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
     attestation.provider_role = "targetVolcengine".into();
     attestation.target_provider_model_evidence_commitment = hex('3');
     let pair_id = hex('c'); let frozen_sha256 = hex('1'); let execution_context_sha256 = hex('e');
-    let arm_order_commitment = hex('4'); let attempt_ledger_sha256 = hex('b');
+    let arm_order_commitment = match conditions {
+        [EvaluationCondition::Generic, EvaluationCondition::Candidate] => hex('4'),
+        [EvaluationCondition::Candidate, EvaluationCondition::Generic] => hex('2'),
+        _ => panic!("synthetic authority requires distinct conditions"),
+    };
+    let attempt_ledger_sha256 = hex('9');
     let roots = [hex('8'), hex('a')];
     let manifest_shas = [hex('5'), hex('f')];
     let receipt_shas = [hex('6'), hex('d')];
@@ -197,7 +211,6 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
         let side = signed_usage(&format!("response-{index}"), &usage);
         [side.clone(), side]
     });
-    let conditions = [EvaluationCondition::Generic, EvaluationCondition::Candidate];
     let arms = [0_usize, 1].map(|index| {
         let start = u64::try_from(index).unwrap();
         let ordinal = u8::try_from(index + 1).unwrap();
@@ -211,7 +224,7 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
         let receipt = crate::ArmReceipt {
             schema_version: 1, pair_id: pair_id.clone(), frozen_run_context_sha256: frozen_sha256.clone(),
             execution_context_sha256: execution_context_sha256.clone(), run_ordinal: ordinal, condition,
-            first_condition: EvaluationCondition::Generic, second_condition: EvaluationCondition::Candidate,
+            first_condition: conditions[0], second_condition: conditions[1],
             attempt_index_file_sha256: ledger.attempt_index_prefix_sha256.clone(), attempt_index_merkle_root: roots[index].clone(),
             global_attempt_start_inclusive: start, global_attempt_end_exclusive: start + 1,
             attempt_count: 1, completion_count: 1, failure_count: 0, timeout_count: 0, in_flight: 0,
@@ -264,6 +277,7 @@ enum Mutation {
     ManifestLedger,
     ManifestRoot,
     PairFinalRoot,
+    FullLedger,
     InFlight,
     DuplicateCandidate,
     MissingCandidate,
@@ -316,6 +330,7 @@ fn mutate(mut input: SyntheticLiveCostAuthority, mutation: Mutation) -> Syntheti
             input.data.attempt_index_root_sha256 = hex('0');
             input.data.pair_receipt.final_attempt_index_root = hex('0');
         }
+        Mutation::FullLedger => input.data.attempt_ledger_sha256 = hex('b'),
         Mutation::InFlight => input.data.arms[0].receipt.in_flight = 1,
         Mutation::DuplicateCandidate | Mutation::MissingCandidate => {
             let condition = if matches!(mutation, Mutation::DuplicateCandidate) { EvaluationCondition::Candidate } else { EvaluationCondition::Generic };
@@ -444,6 +459,11 @@ fn cost_authority_rejects_manifest_attempt_or_pair_final_root_drift() {
     for mutation in [Mutation::ManifestLedger, Mutation::ManifestRoot, Mutation::PairFinalRoot] {
         rejected(mutation, "attempt commitment");
     }
+}
+
+#[test]
+fn cost_authority_rejects_full_ledger_final_prefix_drift() {
+    rejected(Mutation::FullLedger, "full attempt ledger");
 }
 
 #[test]
@@ -609,8 +629,40 @@ fn cost_authority_builds_exact_happy_receipt_without_supplier() {
     assert_eq!(receipt.pair_receipt_sha256, hex('4'));
     assert_eq!(receipt.supplier_actual_fen, None);
     assert!(receipt.within_ceilings);
-    assert_eq!(receipt_sha(&receipt), "8301aeceb7bbaf03e744d1a6da46543ee646ef8276b9cdc9dd32622cb538fbd6");
+    assert_eq!(receipt_sha(&receipt), "738400372f6cbba6d70e076b6db9eb669304e3e66da79180b99d2b5d1049109d");
     assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
+}
+
+#[test]
+fn cost_authority_builds_candidate_first_committed_receipt() {
+    let input = synthetic_input_with_order([
+        EvaluationCondition::Candidate,
+        EvaluationCondition::Generic,
+    ]);
+    let boundary = input.boundary.clone();
+    let before = state(boundary.as_ref()).borrow().clone();
+    let authority = prepare_synthetic_live_cost_authority(input).unwrap();
+    assert_eq!(*state(boundary.as_ref()).borrow(), before);
+
+    let receipt = commit_cost_receipt(
+        &authority,
+        EvaluationCondition::Candidate,
+        None,
+        &clock("2026-08-30T10:01:00.000Z"),
+    )
+    .unwrap();
+    assert_eq!(receipt.condition, EvaluationCondition::Candidate);
+    assert_eq!(receipt.run_ordinal, 1);
+    assert_eq!(receipt.execution_manifest_sha256, hex('5'));
+    assert_eq!(receipt.broker_receipt_sha256, hex('6'));
+    assert_eq!(receipt.attempt_ledger_sha256, hex('9'));
+    assert_eq!(receipt.attempt_index_root_sha256, hex('8'));
+    assert_eq!(receipt.attempt_range.start_inclusive, 0);
+    assert_eq!(receipt.attempt_range.end_exclusive, 1);
+    assert_eq!(
+        state(boundary.as_ref()).borrow().published_receipt.as_ref(),
+        Some(&receipt),
+    );
 }
 
 #[test]
@@ -622,6 +674,6 @@ fn cost_authority_builds_exact_happy_receipt_with_over_ceiling_supplier_actual()
     assert_eq!(receipt.supplier_actual_fen, Some(450));
     assert_eq!(receipt.charged_fen, 450);
     assert!(!receipt.within_ceilings);
-    assert_eq!(receipt_sha(&receipt), "5ccbf2ee5c4f6c10298767a060230a732f08caa2271abd73df3a589d6c0d14eb");
+    assert_eq!(receipt_sha(&receipt), "e4197bede0a13e2df6609b80e77b08e3bc7d6627d0f178e783151881a678a210");
     assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
 }

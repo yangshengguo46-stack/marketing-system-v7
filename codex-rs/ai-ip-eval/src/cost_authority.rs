@@ -1,7 +1,10 @@
 use anyhow::{Result, bail};
 use chrono::{DateTime, SecondsFormat, Timelike, Utc};
 
-use crate::{ArmReceipt, ExecutionMode, ModeEvidence, NativeHeldOutAttestation, PairReceipt, RunManifest};
+use crate::{
+    ArmReceipt, EvaluationCondition, ExecutionMode, ModeEvidence, NativeHeldOutAttestation,
+    PairReceipt, RunManifest,
+};
 use crate::blind_verify::{ExactDocument, PairEvidenceCore};
 use crate::cost_contracts::{AttemptRangeV1, CostCalculationV1, CostCeilingsV1, CostReceiptV1};
 use crate::cost_contracts::{FxReceiptV1, SupplierStatementV1, VerifiedCostInputs};
@@ -226,9 +229,11 @@ pub(crate) fn commit_cost_receipt(
         usage_scope: "rootSessionTree".into(), usage: arm.usage.clone(), currency: "CNY".into(),
         rate_effective_at: authority.inputs.rate_card.effective_at.clone(), fx: FxReceiptV1 { mode: "notApplicable".into(), numerator: 1, denominator: 1 },
         ceilings: CostCeilingsV1 { approved_per_run_fen: attestation.approved_per_run_fen, approved_total_fen: attestation.approved_total_fen,
-            prepaid_or_hard_limit_fen: authority.inputs.budget.prepaid_or_hard_limit_fen, max_provider_request_attempts: attestation.max_provider_request_attempts_per_run,
+            prepaid_or_hard_limit_fen: authority.inputs.budget.prepaid_or_hard_limit_fen,
+            max_provider_request_attempts: attestation.max_provider_request_attempts_per_run,
             max_total_tokens: attestation.max_total_tokens_per_run, max_elapsed_seconds: attestation.max_elapsed_seconds_per_run },
-        calculated_at, calculation: CostCalculationV1 { rate_unit: "fenPerMillionTokens".into(), rounding: "ceilingToFen".into(), reasoning_tokens_billed_separately: false },
+        calculated_at, calculation: CostCalculationV1 { rate_unit: "fenPerMillionTokens".into(),
+            rounding: "ceilingToFen".into(), reasoning_tokens_billed_separately: false },
         estimated_fen: calculated.estimated_fen, supplier_statement_sha256: statement.map(|value| value.sha256.clone()),
         supplier_actual_fen: calculated.supplier_actual_fen, charged_fen: calculated.charged_fen, within_ceilings: calculated.within_ceilings,
     };
@@ -258,25 +263,34 @@ fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, Vec<u
         LiveArmAuthority {
             run_ordinal: manifest.run_ordinal, condition: manifest.condition,
             core_run_ordinal: core_arm.run_ordinal, core_condition: core_arm.condition,
-            core_manifest_sha256: core_arm.run_manifest_raw_sha256.clone(), core_usage: core_arm.usage.clone(), core_raw_response_count: core_arm.raw_response_count,
-            manifest_sha256: projected.manifest_sha256.clone(), manifest_pair_id: manifest.pair_id.clone(), manifest_frozen_sha256: manifest.frozen_run_context_sha256.clone(),
+            core_manifest_sha256: core_arm.run_manifest_raw_sha256.clone(), core_usage: core_arm.usage.clone(),
+            core_raw_response_count: core_arm.raw_response_count,
+            manifest_sha256: projected.manifest_sha256.clone(), manifest_pair_id: manifest.pair_id.clone(),
+            manifest_frozen_sha256: manifest.frozen_run_context_sha256.clone(),
             manifest_execution_sha256: manifest.execution_context_sha256.clone(), manifest_execution_mode: manifest.execution_mode,
-            manifest_attempt_ledger_sha256: manifest.broker_attempt_ledger_sha256.clone(), manifest_attempt_index_root_sha256: manifest.attempt_index_root_sha256.clone(), manifest_fork_sha: manifest.fork_sha.clone(), manifest_case_sha256: manifest.case_sha256.clone(),
-            provider_label: manifest.provider_label.clone(), model_label: manifest.model_label.clone(), actual_model_revision: manifest.actual_model_revision.clone(),
+            manifest_attempt_ledger_sha256: manifest.broker_attempt_ledger_sha256.clone(),
+            manifest_attempt_index_root_sha256: manifest.attempt_index_root_sha256.clone(),
+            manifest_fork_sha: manifest.fork_sha.clone(), manifest_case_sha256: manifest.case_sha256.clone(),
+            provider_label: manifest.provider_label.clone(), model_label: manifest.model_label.clone(),
+            actual_model_revision: manifest.actual_model_revision.clone(),
             usage_scope: manifest.usage_scope.clone(), usage: manifest.usage.clone(), provider_request_attempt_count: manifest.provider_request_attempt_count,
             provider_completed_response_count: manifest.provider_completed_response_count, raw_response_count: manifest.raw_response_count,
             authorized_per_run_fen: manifest.authorized_evaluation_run_cost_fen, max_provider_request_attempts: manifest.max_provider_request_attempts,
             max_total_tokens: manifest.max_total_tokens, max_elapsed_seconds: manifest.max_elapsed_seconds, elapsed_ms: manifest.elapsed_ms,
-            mode_evidence: projected.mode_evidence.clone(), ledger: projected.ledger.clone(), receipt: projected.arm_receipt.clone(), receipt_sha256: projected.arm_receipt_sha256.clone(),
+            mode_evidence: projected.mode_evidence.clone(), ledger: projected.ledger.clone(),
+            receipt: projected.arm_receipt.clone(), receipt_sha256: projected.arm_receipt_sha256.clone(),
         }
     });
     let data = LiveAuthorityData {
         private_root: core.private_root.to_str().ok_or_else(|| anyhow::anyhow!("private root is not UTF-8"))?.into(),
-        pair_id: core.pair_id.clone(), fork_sha: core.fork_sha.clone(), frozen_sha256: core.frozen_run_context_sha256.clone(), execution_mode: projection.execution_mode,
+        pair_id: core.pair_id.clone(), fork_sha: core.fork_sha.clone(),
+        frozen_sha256: core.frozen_run_context_sha256.clone(), execution_mode: projection.execution_mode,
         execution_context_sha256: projection.execution_context_sha256.clone(), started_at: projection.started_at.clone(), deadline: projection.deadline.clone(),
         arm_order_commitment: projection.arm_order_commitment.clone(), provider_endpoint_commitment: projection.provider_endpoint_commitment.clone(),
-        pair_receipt: projection.pair_receipt.clone(), pair_receipt_sha256: projection.pair_receipt_sha256.clone(), attempt_ledger_sha256: projection.attempt_ledger_sha256.clone(),
-        attempt_index_root_sha256: projection.attempt_index_root_sha256.clone(), attestation: retained.attestation.clone(), fixed_max_output_tokens: frozen.max_output_tokens(),
+        pair_receipt: projection.pair_receipt.clone(), pair_receipt_sha256: projection.pair_receipt_sha256.clone(),
+        attempt_ledger_sha256: projection.attempt_ledger_sha256.clone(),
+        attempt_index_root_sha256: projection.attempt_index_root_sha256.clone(),
+        attestation: retained.attestation.clone(), fixed_max_output_tokens: frozen.max_output_tokens(),
         fixed_max_provider_request_attempts: frozen.max_attempts_per_arm(), fixed_max_total_tokens: frozen.max_total_tokens_per_run(),
         fixed_max_elapsed_seconds: frozen.max_elapsed_seconds_per_run(), arms,
     };
@@ -330,94 +344,200 @@ fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", sha2::Sha256::digest(bytes))
 }
 
-fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs, exact_attestation_sha256: &str) -> Result<()> {
+fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs,
+    exact_attestation_sha256: &str) -> Result<()> {
     let attestation = &data.attestation;
     let [first, second] = &data.arms;
-    if data.execution_mode != ExecutionMode::Live || attestation.execution_mode != "live" || first.mode_evidence != second.mode_evidence { bail!("Live mode evidence is inconsistent") }
-    let ModeEvidence::Live { attestation_sha256, provider_budget_evidence_sha256, approval_commitment, provider_endpoint_commitment,
-        provider_role, arm_order_commitment, rate_card_sha256, billing_policy_sha256, fx_policy_sha256, authorized_pair_cost_fen, retention_deadline } = &first.mode_evidence else {
-        bail!("Live authority requires exact Live mode evidence")
-    };
-    if data.provider_endpoint_commitment.as_deref() != Some(provider_endpoint_commitment) || attestation.target_provider_model_evidence_commitment != *provider_endpoint_commitment {
-        bail!("provider endpoint differs from target provider evidence")
-    }
-    if serde_json::to_value(provider_role)? != serde_json::Value::String(attestation.provider_role.clone()) { bail!("provider role differs from attestation") }
-    if attestation_sha256 != exact_attestation_sha256 || provider_budget_evidence_sha256 != &inputs.provider_budget_evidence_sha256
-        || approval_commitment != &attestation.approval_id || rate_card_sha256 != &inputs.rate_card_sha256
-        || billing_policy_sha256 != &inputs.billing_policy_commitment || fx_policy_sha256.as_deref() != Some(&inputs.fx_policy_sha256)
-        || attestation.rate_card_sha256 != inputs.rate_card_sha256 || attestation.billing_policy_commitment != inputs.billing_policy_commitment
-        || attestation.fx_policy_sha256 != inputs.fx_policy_sha256 || attestation.provider_budget_evidence_sha256 != inputs.provider_budget_evidence_sha256
-        || *authorized_pair_cost_fen != attestation.approved_total_fen || retention_deadline != &attestation.retention_deadline { bail!("attestation cost input commitments differ") }
-    if data.arm_order_commitment != *arm_order_commitment || data.pair_receipt.arm_order_commitment != data.arm_order_commitment { bail!("arm order commitment differs") }
-    if [first.condition, second.condition] != [crate::EvaluationCondition::Generic, crate::EvaluationCondition::Candidate] { bail!("authority does not contain exact ordered conditions") }
-    let candidate_frozen = parse_millis(&attestation.candidate_frozen_at)?; let case_selected = parse_millis(&attestation.case_selected_at)?;
-    let signed = parse_millis(&attestation.signed_at)?; let started = parse_millis(&data.started_at)?; let finished = parse_millis(&data.pair_receipt.finished_at)?;
-    let deadline = parse_millis(&data.deadline)?; let retention = parse_millis(&attestation.retention_deadline)?;
-    if candidate_frozen >= case_selected || case_selected > signed || signed > started { bail!("attestation signedAt timeline is invalid") }
+    let live_mode_matches = data.execution_mode == ExecutionMode::Live
+        && attestation.execution_mode == "live"
+        && first.mode_evidence == second.mode_evidence;
+    if !live_mode_matches { bail!("Live mode evidence is inconsistent") }
+    let ModeEvidence::Live {
+        attestation_sha256, provider_budget_evidence_sha256, approval_commitment,
+        provider_endpoint_commitment, provider_role, arm_order_commitment, rate_card_sha256,
+        billing_policy_sha256, fx_policy_sha256, authorized_pair_cost_fen, retention_deadline,
+    } = &first.mode_evidence else { bail!("Live authority requires exact Live mode evidence") };
+    let endpoint_matches = data.provider_endpoint_commitment.as_deref()
+        == Some(provider_endpoint_commitment)
+        && attestation.target_provider_model_evidence_commitment == *provider_endpoint_commitment;
+    if !endpoint_matches { bail!("provider endpoint differs from target provider evidence") }
+    let provider_role_matches = serde_json::to_value(provider_role)?
+        == serde_json::Value::String(attestation.provider_role.clone());
+    if !provider_role_matches { bail!("provider role differs from attestation") }
+    let cost_commitments_match = attestation_sha256 == exact_attestation_sha256
+        && provider_budget_evidence_sha256 == &inputs.provider_budget_evidence_sha256
+        && approval_commitment == &attestation.approval_id
+        && rate_card_sha256 == &inputs.rate_card_sha256
+        && billing_policy_sha256 == &inputs.billing_policy_commitment
+        && fx_policy_sha256.as_deref() == Some(&inputs.fx_policy_sha256)
+        && attestation.rate_card_sha256 == inputs.rate_card_sha256
+        && attestation.billing_policy_commitment == inputs.billing_policy_commitment
+        && attestation.fx_policy_sha256 == inputs.fx_policy_sha256
+        && attestation.provider_budget_evidence_sha256 == inputs.provider_budget_evidence_sha256
+        && *authorized_pair_cost_fen == attestation.approved_total_fen
+        && retention_deadline == &attestation.retention_deadline;
+    if !cost_commitments_match { bail!("attestation cost input commitments differ") }
+    let order_matches = data.arm_order_commitment == *arm_order_commitment
+        && data.pair_receipt.arm_order_commitment == data.arm_order_commitment;
+    if !order_matches { bail!("arm order commitment differs") }
+    if !has_exact_condition_set(first.condition, second.condition) { bail!("authority does not contain exact ordered conditions") }
+    let candidate_frozen = parse_millis(&attestation.candidate_frozen_at)?;
+    let case_selected = parse_millis(&attestation.case_selected_at)?;
+    let signed = parse_millis(&attestation.signed_at)?; let started = parse_millis(&data.started_at)?;
+    let finished = parse_millis(&data.pair_receipt.finished_at)?; let deadline = parse_millis(&data.deadline)?;
+    let retention = parse_millis(&attestation.retention_deadline)?;
+    let attestation_timeline_valid = candidate_frozen < case_selected
+        && case_selected <= signed && signed <= started;
+    if !attestation_timeline_valid { bail!("attestation signedAt timeline is invalid") }
     if started >= finished || finished > deadline { bail!("execution deadline timeline is invalid") }
     if finished >= retention { bail!("retention timeline is inverted or expired") }
     if inputs.rate_card.effective_at != attestation.rate_effective_at { bail!("rate effective time differs from attestation") }
-    for effective in [&inputs.rate_card.effective_at, &inputs.billing_policy.effective_at, &inputs.fx_policy.effective_at] {
+    for effective in [&inputs.rate_card.effective_at, &inputs.billing_policy.effective_at,
+        &inputs.fx_policy.effective_at] {
         if parse_millis(effective)? > started { bail!("cost policy is effective after run start") }
     }
-    if inputs.rate_card.expires_at.as_ref().is_some_and(|value| parse_millis(value).map(|time| time <= finished).unwrap_or(true)) { bail!("rate expiry does not strictly follow finish") }
-    if parse_millis(&inputs.budget.valid_from)? > started || parse_millis(&inputs.budget.valid_until)? <= finished { bail!("budget validity window does not cover the run") }
-    if attestation.candidate_sha != data.fork_sha || attestation.private_root != data.private_root || attestation.approved_per_run_fen > attestation.approved_total_fen
-        || inputs.budget.approval_id != attestation.approval_id || inputs.budget.prepaid_or_hard_limit_fen > attestation.approved_total_fen { bail!("candidate, private root, or approved total authority differs") }
+    let rate_expired = inputs.rate_card.expires_at.as_ref().is_some_and(|value|
+        parse_millis(value).map(|time| time <= finished).unwrap_or(true));
+    if rate_expired { bail!("rate expiry does not strictly follow finish") }
+    if parse_millis(&inputs.budget.valid_from)? > started
+        || parse_millis(&inputs.budget.valid_until)? <= finished
+    { bail!("budget validity window does not cover the run") }
+    let approval_matches = attestation.candidate_sha == data.fork_sha
+        && attestation.private_root == data.private_root
+        && attestation.approved_per_run_fen <= attestation.approved_total_fen
+        && inputs.budget.approval_id == attestation.approval_id
+        && inputs.budget.prepaid_or_hard_limit_fen <= attestation.approved_total_fen;
+    if !approval_matches { bail!("candidate, private root, or approved total authority differs") }
     if data.fixed_max_output_tokens != attestation.max_output_tokens_per_request { bail!("fixed max output tokens differ") }
-    if data.fixed_max_provider_request_attempts != attestation.max_provider_request_attempts_per_run || data.fixed_max_total_tokens != attestation.max_total_tokens_per_run
-        || data.fixed_max_elapsed_seconds != attestation.max_elapsed_seconds_per_run { bail!("frozen hard gates differ from attestation") }
-    if first.provider_label != second.provider_label || first.model_label != second.model_label || first.actual_model_revision != second.actual_model_revision
-        || inputs.rate_card.provider_label != first.provider_label || inputs.rate_card.model_label != first.model_label
-        || inputs.billing_policy.provider_label != first.provider_label || inputs.budget.provider_label != first.provider_label { bail!("provider or model identity differs") }
-    if (inputs.rate_card.currency.as_str(), inputs.billing_policy.currency.as_str(), inputs.budget.currency.as_str(), attestation.rate_currency.as_str()) != ("CNY", "CNY", "CNY", "CNY")
-        || (inputs.fx_policy.mode.as_str(), inputs.fx_policy.source_currency.as_str(), inputs.fx_policy.target_currency.as_str(), inputs.fx_policy.numerator, inputs.fx_policy.denominator) != ("notApplicable", "CNY", "CNY", 1, 1) { bail!("cost currency or FX authority differs") }
-    if data.pair_receipt.final_attempt_index_root != second.ledger.attempt_index_prefix_root_sha256 || data.pair_receipt.final_attempt_index_root != second.receipt.attempt_index_merkle_root { bail!("pair final attempt commitment differs from ordered second arm") }
-    if data.pair_receipt.pair_id != data.pair_id || data.pair_receipt.frozen_run_context_sha256 != data.frozen_sha256
-        || data.pair_receipt.execution_context_sha256 != data.execution_context_sha256 || data.pair_receipt.final_attempt_index_root != data.attempt_index_root_sha256
-        || data.pair_receipt.first_arm_receipt_sha256 != first.receipt_sha256 || data.pair_receipt.second_arm_receipt_sha256 != second.receipt_sha256
-        || data.pair_receipt.first_run_manifest_sha256.as_deref() != Some(&first.manifest_sha256) || data.pair_receipt.second_run_manifest_sha256.as_deref() != Some(&second.manifest_sha256)
-        || first.receipt.attempt_count.checked_add(second.receipt.attempt_count) != Some(data.pair_receipt.total_attempt_count)
-        || first.receipt.completion_count.checked_add(second.receipt.completion_count) != Some(data.pair_receipt.total_completion_count) || first.receipt.failure_count.checked_add(second.receipt.failure_count) != Some(data.pair_receipt.total_failure_count) || first.receipt.timeout_count.checked_add(second.receipt.timeout_count) != Some(data.pair_receipt.total_timeout_count) { bail!("pair receipt identity or counts differ") }
+    let frozen_limits_match = data.fixed_max_provider_request_attempts
+        == attestation.max_provider_request_attempts_per_run
+        && data.fixed_max_total_tokens == attestation.max_total_tokens_per_run
+        && data.fixed_max_elapsed_seconds == attestation.max_elapsed_seconds_per_run;
+    if !frozen_limits_match { bail!("frozen hard gates differ from attestation") }
+    let provider_matches = first.provider_label == second.provider_label
+        && first.model_label == second.model_label
+        && first.actual_model_revision == second.actual_model_revision
+        && inputs.rate_card.provider_label == first.provider_label
+        && inputs.rate_card.model_label == first.model_label
+        && inputs.billing_policy.provider_label == first.provider_label
+        && inputs.budget.provider_label == first.provider_label;
+    if !provider_matches { bail!("provider or model identity differs") }
+    let currencies = (inputs.rate_card.currency.as_str(), inputs.billing_policy.currency.as_str(),
+        inputs.budget.currency.as_str(), attestation.rate_currency.as_str());
+    let fx = (
+        inputs.fx_policy.mode.as_str(), inputs.fx_policy.source_currency.as_str(),
+        inputs.fx_policy.target_currency.as_str(), inputs.fx_policy.numerator,
+        inputs.fx_policy.denominator,
+    );
+    if currencies != ("CNY", "CNY", "CNY", "CNY") || fx != ("notApplicable", "CNY", "CNY", 1, 1) { bail!("cost currency or FX authority differs") }
+    let final_root_matches = data.pair_receipt.final_attempt_index_root
+        == second.ledger.attempt_index_prefix_root_sha256
+        && data.pair_receipt.final_attempt_index_root == second.receipt.attempt_index_merkle_root;
+    if !final_root_matches { bail!("pair final attempt commitment differs from ordered second arm") }
+    if data.attempt_ledger_sha256 != second.ledger.attempt_index_prefix_sha256 { bail!("full attempt ledger commitment differs from ordered second arm") }
+    let pair_identity_matches = data.pair_receipt.pair_id == data.pair_id
+        && data.pair_receipt.frozen_run_context_sha256 == data.frozen_sha256
+        && data.pair_receipt.execution_context_sha256 == data.execution_context_sha256
+        && data.pair_receipt.final_attempt_index_root == data.attempt_index_root_sha256
+        && data.pair_receipt.first_arm_receipt_sha256 == first.receipt_sha256
+        && data.pair_receipt.second_arm_receipt_sha256 == second.receipt_sha256
+        && data.pair_receipt.first_run_manifest_sha256.as_deref() == Some(&first.manifest_sha256)
+        && data.pair_receipt.second_run_manifest_sha256.as_deref() == Some(&second.manifest_sha256);
+    let pair_counts_match = first.receipt.attempt_count.checked_add(second.receipt.attempt_count)
+        == Some(data.pair_receipt.total_attempt_count)
+        && first.receipt.completion_count.checked_add(second.receipt.completion_count)
+            == Some(data.pair_receipt.total_completion_count)
+        && first.receipt.failure_count.checked_add(second.receipt.failure_count)
+            == Some(data.pair_receipt.total_failure_count)
+        && first.receipt.timeout_count.checked_add(second.receipt.timeout_count)
+            == Some(data.pair_receipt.total_timeout_count);
+    if !pair_identity_matches || !pair_counts_match { bail!("pair receipt identity or counts differ") }
     for (index, arm) in data.arms.iter().enumerate() {
         let ordinal = u8::try_from(index + 1)?;
-        if arm.run_ordinal != ordinal || arm.core_run_ordinal != ordinal || arm.receipt.run_ordinal != ordinal
-            || arm.condition != arm.core_condition || arm.condition != arm.ledger.condition || arm.condition != arm.receipt.condition { bail!("arm ordinal or condition differs") }
-        if arm.receipt.pair_id != data.pair_id || arm.receipt.frozen_run_context_sha256 != data.frozen_sha256 || arm.receipt.execution_context_sha256 != data.execution_context_sha256
-            || arm.receipt.first_condition != first.condition || arm.receipt.second_condition != second.condition || (index == 0 && arm.receipt.previous_arm_receipt_sha256.is_some()) || (index == 1 && arm.receipt.previous_arm_receipt_sha256.as_deref() != Some(&first.receipt_sha256)) { bail!("arm receipt pair or order identity differs") }
-        if arm.manifest_pair_id != data.pair_id || arm.manifest_frozen_sha256 != data.frozen_sha256 || arm.manifest_execution_sha256 != data.execution_context_sha256 || arm.manifest_execution_mode != ExecutionMode::Live
-            || arm.manifest_fork_sha != data.fork_sha || arm.manifest_case_sha256 != attestation.case_sha256 { bail!("manifest pair or candidate identity differs") }
-        if arm.usage_scope != "completeNativeThreadTree" || arm.usage != arm.core_usage || arm.usage != arm.ledger.usage { bail!("broker/App Server response usage multiset differs") }
-        if arm.manifest_sha256 != arm.core_manifest_sha256 || arm.manifest_sha256 != arm.ledger.run_manifest_sha256 || arm.receipt.run_manifest_sha256.as_deref() != Some(&arm.manifest_sha256)
-            || arm.receipt_sha256 != arm.receipt.receipt_sha256 { bail!("manifest or arm receipt SHA differs") }
-        if arm.manifest_attempt_ledger_sha256 != arm.ledger.attempt_index_prefix_sha256 || arm.manifest_attempt_ledger_sha256 != arm.receipt.attempt_index_file_sha256
-            || arm.manifest_attempt_index_root_sha256 != arm.ledger.attempt_index_prefix_root_sha256 || arm.manifest_attempt_index_root_sha256 != arm.receipt.attempt_index_merkle_root { bail!("manifest attempt commitment differs from ledger or receipt") }
-        if arm.provider_request_attempt_count != arm.ledger.provider_request_attempt_count || arm.provider_completed_response_count != arm.ledger.provider_completed_response_count
-            || arm.raw_response_count != arm.core_raw_response_count || arm.raw_response_count != arm.ledger.raw_response_count
-            || arm.receipt.attempt_count != arm.ledger.provider_request_attempt_count || arm.receipt.completion_count != arm.ledger.provider_completed_response_count { bail!("arm response counts differ") }
-        if arm.receipt.in_flight != 0 || arm.receipt.failure_count != 0 || arm.receipt.timeout_count != 0
-            || arm.receipt.global_attempt_end_exclusive.checked_sub(arm.receipt.global_attempt_start_inclusive) != Some(arm.receipt.attempt_count) { bail!("sealed receipt invariants differ") }
-        if arm.receipt.global_attempt_start_inclusive != arm.ledger.global_start_inclusive || arm.receipt.global_attempt_end_exclusive != arm.ledger.global_end_exclusive
-            || arm.receipt.attempt_index_file_sha256 != arm.ledger.attempt_index_prefix_sha256 || arm.receipt.attempt_index_merkle_root != arm.ledger.attempt_index_prefix_root_sha256 { bail!("attempt range or root differs") }
-        if arm.authorized_per_run_fen != attestation.approved_per_run_fen || arm.max_provider_request_attempts != attestation.max_provider_request_attempts_per_run
-            || u64::try_from(arm.max_total_tokens)? != attestation.max_total_tokens_per_run || arm.max_elapsed_seconds != attestation.max_elapsed_seconds_per_run { bail!("manifest hard gates differ") }
+        let ordinal_matches = arm.run_ordinal == ordinal && arm.core_run_ordinal == ordinal
+            && arm.receipt.run_ordinal == ordinal && arm.condition == arm.core_condition
+            && arm.condition == arm.ledger.condition && arm.condition == arm.receipt.condition;
+        if !ordinal_matches { bail!("arm ordinal or condition differs") }
+        let previous_receipt_matches = (index == 0 && arm.receipt.previous_arm_receipt_sha256.is_none())
+            || (index == 1 && arm.receipt.previous_arm_receipt_sha256.as_deref() == Some(&first.receipt_sha256));
+        let receipt_identity_matches = arm.receipt.pair_id == data.pair_id
+            && arm.receipt.frozen_run_context_sha256 == data.frozen_sha256
+            && arm.receipt.execution_context_sha256 == data.execution_context_sha256
+            && arm.receipt.first_condition == first.condition
+            && arm.receipt.second_condition == second.condition && previous_receipt_matches;
+        if !receipt_identity_matches { bail!("arm receipt pair or order identity differs") }
+        let manifest_identity_matches = arm.manifest_pair_id == data.pair_id
+            && arm.manifest_frozen_sha256 == data.frozen_sha256
+            && arm.manifest_execution_sha256 == data.execution_context_sha256
+            && arm.manifest_execution_mode == ExecutionMode::Live
+            && arm.manifest_fork_sha == data.fork_sha
+            && arm.manifest_case_sha256 == attestation.case_sha256;
+        if !manifest_identity_matches { bail!("manifest pair or candidate identity differs") }
+        let usage_matches = arm.usage_scope == "completeNativeThreadTree"
+            && arm.usage == arm.core_usage && arm.usage == arm.ledger.usage;
+        if !usage_matches { bail!("broker/App Server response usage multiset differs") }
+        let document_sha_matches = arm.manifest_sha256 == arm.core_manifest_sha256
+            && arm.manifest_sha256 == arm.ledger.run_manifest_sha256
+            && arm.receipt.run_manifest_sha256.as_deref() == Some(&arm.manifest_sha256)
+            && arm.receipt_sha256 == arm.receipt.receipt_sha256;
+        if !document_sha_matches { bail!("manifest or arm receipt SHA differs") }
+        let attempt_commitments_match = arm.manifest_attempt_ledger_sha256
+            == arm.ledger.attempt_index_prefix_sha256
+            && arm.manifest_attempt_ledger_sha256 == arm.receipt.attempt_index_file_sha256
+            && arm.manifest_attempt_index_root_sha256 == arm.ledger.attempt_index_prefix_root_sha256
+            && arm.manifest_attempt_index_root_sha256 == arm.receipt.attempt_index_merkle_root;
+        if !attempt_commitments_match { bail!("manifest attempt commitment differs from ledger or receipt") }
+        let response_counts_match = arm.provider_request_attempt_count
+            == arm.ledger.provider_request_attempt_count
+            && arm.provider_completed_response_count == arm.ledger.provider_completed_response_count
+            && arm.raw_response_count == arm.core_raw_response_count
+            && arm.raw_response_count == arm.ledger.raw_response_count
+            && arm.receipt.attempt_count == arm.ledger.provider_request_attempt_count
+            && arm.receipt.completion_count == arm.ledger.provider_completed_response_count;
+        if !response_counts_match { bail!("arm response counts differ") }
+        let sealed_counts_match = arm.receipt.in_flight == 0 && arm.receipt.failure_count == 0
+            && arm.receipt.timeout_count == 0
+            && arm.receipt.global_attempt_end_exclusive
+                .checked_sub(arm.receipt.global_attempt_start_inclusive)
+                == Some(arm.receipt.attempt_count);
+        if !sealed_counts_match { bail!("sealed receipt invariants differ") }
+        let range_matches = arm.receipt.global_attempt_start_inclusive == arm.ledger.global_start_inclusive
+            && arm.receipt.global_attempt_end_exclusive == arm.ledger.global_end_exclusive
+            && arm.receipt.attempt_index_file_sha256 == arm.ledger.attempt_index_prefix_sha256
+            && arm.receipt.attempt_index_merkle_root == arm.ledger.attempt_index_prefix_root_sha256;
+        if !range_matches { bail!("attempt range or root differs") }
+        let hard_gates_match = arm.authorized_per_run_fen == attestation.approved_per_run_fen
+            && arm.max_provider_request_attempts == attestation.max_provider_request_attempts_per_run
+            && u64::try_from(arm.max_total_tokens)? == attestation.max_total_tokens_per_run
+            && arm.max_elapsed_seconds == attestation.max_elapsed_seconds_per_run;
+        if !hard_gates_match { bail!("manifest hard gates differ") }
         if arm.provider_request_attempt_count > attestation.max_provider_request_attempts_per_run { bail!("provider request attempt cap exceeded") }
-        if arm.elapsed_ms > u128::from(attestation.max_elapsed_seconds_per_run).checked_mul(1_000).ok_or_else(|| anyhow::anyhow!("elapsed hard gate overflow"))?
-            || parse_millis(&arm.receipt.sealed_at)? > deadline { bail!("arm deadline or elapsed hard gate exceeded") }
+        let elapsed_limit = u128::from(attestation.max_elapsed_seconds_per_run)
+            .checked_mul(1_000).ok_or_else(|| anyhow::anyhow!("elapsed hard gate overflow"))?;
+        if arm.elapsed_ms > elapsed_limit || parse_millis(&arm.receipt.sealed_at)? > deadline { bail!("arm deadline or elapsed hard gate exceeded") }
     }
-    if parse_millis(&first.receipt.sealed_at)? > parse_millis(&second.receipt.sealed_at)? || parse_millis(&second.receipt.sealed_at)? > finished { bail!("sealed receipt timestamp order differs") }
+    if parse_millis(&first.receipt.sealed_at)? > parse_millis(&second.receipt.sealed_at)?
+        || parse_millis(&second.receipt.sealed_at)? > finished { bail!("sealed receipt timestamp order differs") }
     Ok(())
 }
 
+fn has_exact_condition_set(first: EvaluationCondition, second: EvaluationCondition) -> bool {
+    matches!([first, second], [EvaluationCondition::Generic, EvaluationCondition::Candidate]
+        | [EvaluationCondition::Candidate, EvaluationCondition::Generic])
+}
 fn parse_millis(value: &str) -> Result<DateTime<Utc>> {
     let parsed = DateTime::parse_from_rfc3339(value)?;
-    if parsed.offset().local_minus_utc() != 0 || parsed.to_rfc3339_opts(SecondsFormat::Millis, true) != value { bail!("timestamp is not exact UTC milliseconds") }
+    if parsed.offset().local_minus_utc() != 0
+        || parsed.to_rfc3339_opts(SecondsFormat::Millis, true) != value
+    { bail!("timestamp is not exact UTC milliseconds") }
     Ok(parsed.with_timezone(&Utc))
 }
 
 fn reject_unsafe_integers(value: &serde_json::Value) -> Result<()> {
     match value {
-        serde_json::Value::Number(number) if number.as_u64().is_some_and(|value| value > 9_007_199_254_740_991) => bail!("receipt integer exceeds the JCS safe integer boundary"),
+        serde_json::Value::Number(number)
+            if number.as_u64().is_some_and(|value| value > 9_007_199_254_740_991) =>
+                bail!("receipt integer exceeds the JCS safe integer boundary"),
         serde_json::Value::Array(values) => for value in values { reject_unsafe_integers(value)? },
         serde_json::Value::Object(values) => for value in values.values() { reject_unsafe_integers(value)? },
         _ => {}
