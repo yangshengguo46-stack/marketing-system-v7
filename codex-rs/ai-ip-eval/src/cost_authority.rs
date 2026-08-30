@@ -1,12 +1,25 @@
 use anyhow::Result;
 use anyhow::bail;
+use chrono::DateTime;
+use chrono::SecondsFormat;
+use chrono::Timelike;
+use chrono::Utc;
 
 use crate::ArmReceipt;
 use crate::ExecutionMode;
 use crate::ModeEvidence;
+use crate::NativeHeldOutAttestation;
 use crate::PairReceipt;
 use crate::RunManifest;
+use crate::blind_verify::PairEvidenceCore;
 use crate::blind_verify::ExactDocument;
+use crate::cost_contracts::CostReceiptV1;
+use crate::cost_contracts::AttemptRangeV1;
+use crate::cost_contracts::CostCalculationV1;
+use crate::cost_contracts::CostCeilingsV1;
+use crate::cost_contracts::FxReceiptV1;
+use crate::cost_contracts::SupplierStatementV1;
+use crate::cost_contracts::VerifiedCostInputs;
 use crate::proof_ledger::VerifiedLedgerArm;
 use crate::proof_ledger::VerifiedNativeLedger;
 
@@ -45,6 +58,354 @@ pub(crate) struct NativeCostProjectionInput<'a> {
     pub(crate) arm_order_commitment: &'a str,
     pub(crate) manifests: &'a [ExactDocument<RunManifest>; 2],
     pub(crate) ledger: VerifiedNativeLedger,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct LiveArmAuthority {
+    pub(crate) run_ordinal: u8,
+    pub(crate) condition: crate::EvaluationCondition,
+    pub(crate) core_run_ordinal: u8,
+    pub(crate) core_condition: crate::EvaluationCondition,
+    pub(crate) core_manifest_sha256: String,
+    pub(crate) core_usage: crate::Usage,
+    pub(crate) core_raw_response_count: u64,
+    pub(crate) manifest_sha256: String,
+    pub(crate) manifest_pair_id: String,
+    pub(crate) manifest_frozen_sha256: String,
+    pub(crate) manifest_execution_sha256: String,
+    pub(crate) manifest_execution_mode: ExecutionMode,
+    pub(crate) manifest_fork_sha: String,
+    pub(crate) manifest_case_sha256: String,
+    pub(crate) provider_label: String,
+    pub(crate) model_label: String,
+    pub(crate) actual_model_revision: String,
+    pub(crate) usage_scope: String,
+    pub(crate) usage: crate::Usage,
+    pub(crate) provider_request_attempt_count: u64,
+    pub(crate) provider_completed_response_count: u64,
+    pub(crate) raw_response_count: u64,
+    pub(crate) authorized_per_run_fen: u64,
+    pub(crate) max_provider_request_attempts: u64,
+    pub(crate) max_total_tokens: i64,
+    pub(crate) max_elapsed_seconds: u64,
+    pub(crate) elapsed_ms: u128,
+    pub(crate) mode_evidence: ModeEvidence,
+    pub(crate) ledger: VerifiedLedgerArm,
+    pub(crate) receipt: ArmReceipt,
+    pub(crate) receipt_sha256: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct LiveAuthorityData {
+    pub(crate) private_root: String,
+    pub(crate) pair_id: String,
+    pub(crate) fork_sha: String,
+    pub(crate) frozen_sha256: String,
+    pub(crate) execution_mode: ExecutionMode,
+    pub(crate) execution_context_sha256: String,
+    pub(crate) started_at: String,
+    pub(crate) deadline: String,
+    pub(crate) arm_order_commitment: String,
+    pub(crate) provider_endpoint_commitment: Option<String>,
+    pub(crate) pair_receipt: PairReceipt,
+    pub(crate) pair_receipt_sha256: String,
+    pub(crate) attempt_ledger_sha256: String,
+    pub(crate) attempt_index_root_sha256: String,
+    pub(crate) attestation: NativeHeldOutAttestation,
+    pub(crate) attestation_sha256: String,
+    pub(crate) fixed_max_output_tokens: u64,
+    pub(crate) fixed_max_provider_request_attempts: u64,
+    pub(crate) fixed_max_total_tokens: u64,
+    pub(crate) fixed_max_elapsed_seconds: u64,
+    pub(crate) arms: [LiveArmAuthority; 2],
+}
+
+#[cfg(test)]
+pub(crate) struct SyntheticLiveCostAuthority {
+    pub(crate) data: LiveAuthorityData,
+    pub(crate) rate_card: Vec<u8>,
+    pub(crate) billing_policy: Vec<u8>,
+    pub(crate) fx_policy: Vec<u8>,
+    pub(crate) budget: Vec<u8>,
+}
+
+enum LiveAuthoritySource {
+    Production(Box<PairEvidenceCore>),
+    #[cfg(test)]
+    Synthetic,
+}
+
+pub(crate) struct VerifiedLiveCostAuthority {
+    data: LiveAuthorityData,
+    inputs: VerifiedCostInputs,
+    source: LiveAuthoritySource,
+}
+
+pub(crate) struct RetainedSupplierStatement {
+    statement: SupplierStatementV1,
+    sha256: String,
+}
+
+#[cfg(test)]
+pub(crate) fn retain_synthetic_supplier_statement(
+    bytes: &[u8],
+) -> Result<RetainedSupplierStatement> {
+    use sha2::Digest;
+
+    Ok(RetainedSupplierStatement {
+        statement: crate::cost_contracts::FrozenCostContracts::load()?
+            .validate_supplier_statement(bytes)?,
+        sha256: format!("{:x}", sha2::Sha256::digest(bytes)),
+    })
+}
+pub(crate) trait CostClock {
+    fn now(&self) -> Result<DateTime<Utc>>;
+}
+pub(crate) fn prepare_live_cost_authority(
+    core: PairEvidenceCore,
+) -> Result<VerifiedLiveCostAuthority> {
+    crate::blind_finalize::reverify_sealed_pair_authority(&core)?;
+    let (data, raw) = production_parts(&core)?;
+    prepare_authority(data, raw.each_ref().map(Vec::as_slice), LiveAuthoritySource::Production(Box::new(core)))
+}
+#[cfg(test)]
+pub(crate) fn prepare_synthetic_live_cost_authority(
+    input: SyntheticLiveCostAuthority,
+) -> Result<VerifiedLiveCostAuthority> {
+    prepare_authority(
+        input.data,
+        [&input.rate_card, &input.billing_policy, &input.fx_policy, &input.budget].map(Vec::as_slice),
+        LiveAuthoritySource::Synthetic,
+    )
+}
+pub(crate) fn commit_cost_receipt(
+    authority: &VerifiedLiveCostAuthority,
+    condition: crate::EvaluationCondition,
+    statement: Option<&RetainedSupplierStatement>,
+    clock: &dyn CostClock,
+) -> Result<CostReceiptV1> {
+    authority.reverify()?;
+    let arm = authority.data.arms.iter().find(|arm| arm.condition == condition)
+        .ok_or_else(|| anyhow::anyhow!("selected receipt condition is absent"))?;
+    let now = clock.now()?;
+    let calculated_at = now.with_nanosecond(now.nanosecond() / 1_000_000 * 1_000_000)
+        .ok_or_else(|| anyhow::anyhow!("normalize calculation clock"))?
+        .to_rfc3339_opts(SecondsFormat::Millis, true);
+    let calculated = parse_millis(&calculated_at)?;
+    if calculated < parse_millis(&authority.data.pair_receipt.finished_at)? {
+        bail!("calculation is before finish")
+    }
+    if calculated >= parse_millis(&authority.data.attestation.retention_deadline)? {
+        bail!("calculation is at or after retention deadline")
+    }
+    let supplier_actual_fen = if let Some(retained) = statement {
+        let issued = parse_millis(&retained.statement.issued_at)?;
+        if issued < parse_millis(&arm.receipt.sealed_at)? || issued > calculated {
+            bail!("supplier issue time is outside the selected calculation interval")
+        }
+        if retained.statement.condition != condition
+            || retained.statement.pair_id != authority.data.pair_id
+            || retained.statement.provider_label != arm.provider_label
+            || retained.statement.actual_model_revision != arm.actual_model_revision
+        {
+            bail!("supplier authority differs from the selected arm")
+        }
+        Some(retained.statement.actual_fen)
+    } else {
+        None
+    };
+    let attestation = &authority.data.attestation;
+    let calculated = crate::cost::calculate_cost(&crate::cost::CostCalculationInput {
+        inputs: &authority.inputs,
+        usage: &arm.usage,
+        supplier_actual_fen,
+        approved_per_run_fen: attestation.approved_per_run_fen,
+        max_total_tokens: attestation.max_total_tokens_per_run,
+    })?;
+    let receipt = CostReceiptV1 {
+        schema_version: 1, pair_id: authority.data.pair_id.clone(),
+        frozen_run_context_sha256: authority.data.frozen_sha256.clone(),
+        execution_context_sha256: authority.data.execution_context_sha256.clone(),
+        execution_manifest_sha256: arm.manifest_sha256.clone(), broker_receipt_sha256: arm.receipt_sha256.clone(),
+        pair_receipt_sha256: authority.data.pair_receipt_sha256.clone(), attempt_ledger_sha256: authority.data.attempt_ledger_sha256.clone(),
+        condition, run_ordinal: arm.run_ordinal, execution_mode: "live".into(),
+        attempt_index_root_sha256: arm.ledger.attempt_index_prefix_root_sha256.clone(),
+        attempt_range: AttemptRangeV1 { start_inclusive: arm.ledger.global_start_inclusive, end_exclusive: arm.ledger.global_end_exclusive },
+        provider_label: arm.provider_label.clone(), actual_model_revision: arm.actual_model_revision.clone(),
+        rate_card_sha256: authority.inputs.rate_card_sha256.clone(), billing_policy_commitment: authority.inputs.billing_policy_commitment.clone(),
+        fx_policy_sha256: authority.inputs.fx_policy_sha256.clone(), provider_budget_evidence_sha256: authority.inputs.provider_budget_evidence_sha256.clone(),
+        provider_request_attempt_count: arm.provider_request_attempt_count, provider_completed_response_count: arm.provider_completed_response_count,
+        usage_scope: "rootSessionTree".into(), usage: arm.usage.clone(), currency: "CNY".into(),
+        rate_effective_at: authority.inputs.rate_card.effective_at.clone(), fx: FxReceiptV1 { mode: "notApplicable".into(), numerator: 1, denominator: 1 },
+        ceilings: CostCeilingsV1 { approved_per_run_fen: attestation.approved_per_run_fen, approved_total_fen: attestation.approved_total_fen,
+            prepaid_or_hard_limit_fen: authority.inputs.budget.prepaid_or_hard_limit_fen, max_provider_request_attempts: attestation.max_provider_request_attempts_per_run,
+            max_total_tokens: attestation.max_total_tokens_per_run, max_elapsed_seconds: attestation.max_elapsed_seconds_per_run },
+        calculated_at, calculation: CostCalculationV1 { rate_unit: "fenPerMillionTokens".into(), rounding: "ceilingToFen".into(), reasoning_tokens_billed_separately: false },
+        estimated_fen: calculated.estimated_fen, supplier_statement_sha256: statement.map(|value| value.sha256.clone()),
+        supplier_actual_fen: calculated.supplier_actual_fen, charged_fen: calculated.charged_fen, within_ceilings: calculated.within_ceilings,
+    };
+    let value = serde_json::to_value(&receipt)?;
+    reject_unsafe_integers(&value)?;
+    let bytes = crate::jcs::canonicalize_value(&value)?;
+    let validated = crate::cost_contracts::validate_cost_receipt(&bytes)?;
+    if validated != receipt { bail!("canonical receipt validator changed the typed value") }
+    Ok(validated)
+}
+
+fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, [Vec<u8>; 4])> {
+    let crate::blind::FrozenInputToken::Native { frozen, content } = &core.inputs else {
+        bail!("Replay cannot construct a Live cost authority")
+    };
+    let projection = core.cost_projection.as_ref().ok_or_else(|| anyhow::anyhow!("Live cost projection is absent"))?;
+    if core.mode != projection.execution_mode { bail!("core and cost projection modes differ") }
+    let retained = content.projection();
+    let arms = [0_usize, 1].map(|index| {
+        let projected = &projection.arms[index];
+        let manifest = &projected.manifest;
+        let core_arm = &core.arms[index];
+        LiveArmAuthority {
+            run_ordinal: manifest.run_ordinal, condition: manifest.condition,
+            core_run_ordinal: core_arm.run_ordinal, core_condition: core_arm.condition,
+            core_manifest_sha256: core_arm.run_manifest_raw_sha256.clone(), core_usage: core_arm.usage.clone(), core_raw_response_count: core_arm.raw_response_count,
+            manifest_sha256: projected.manifest_sha256.clone(), manifest_pair_id: manifest.pair_id.clone(), manifest_frozen_sha256: manifest.frozen_run_context_sha256.clone(),
+            manifest_execution_sha256: manifest.execution_context_sha256.clone(), manifest_execution_mode: manifest.execution_mode, manifest_fork_sha: manifest.fork_sha.clone(), manifest_case_sha256: manifest.case_sha256.clone(),
+            provider_label: manifest.provider_label.clone(), model_label: manifest.model_label.clone(), actual_model_revision: manifest.actual_model_revision.clone(),
+            usage_scope: manifest.usage_scope.clone(), usage: manifest.usage.clone(), provider_request_attempt_count: manifest.provider_request_attempt_count,
+            provider_completed_response_count: manifest.provider_completed_response_count, raw_response_count: manifest.raw_response_count,
+            authorized_per_run_fen: manifest.authorized_evaluation_run_cost_fen, max_provider_request_attempts: manifest.max_provider_request_attempts,
+            max_total_tokens: manifest.max_total_tokens, max_elapsed_seconds: manifest.max_elapsed_seconds, elapsed_ms: manifest.elapsed_ms,
+            mode_evidence: projected.mode_evidence.clone(), ledger: projected.ledger.clone(), receipt: projected.arm_receipt.clone(), receipt_sha256: projected.arm_receipt_sha256.clone(),
+        }
+    });
+    use sha2::Digest;
+    let data = LiveAuthorityData {
+        private_root: core.private_root.to_str().ok_or_else(|| anyhow::anyhow!("private root is not UTF-8"))?.into(),
+        pair_id: core.pair_id.clone(), fork_sha: core.fork_sha.clone(), frozen_sha256: core.frozen_run_context_sha256.clone(), execution_mode: projection.execution_mode,
+        execution_context_sha256: projection.execution_context_sha256.clone(), started_at: projection.started_at.clone(), deadline: projection.deadline.clone(),
+        arm_order_commitment: projection.arm_order_commitment.clone(), provider_endpoint_commitment: projection.provider_endpoint_commitment.clone(),
+        pair_receipt: projection.pair_receipt.clone(), pair_receipt_sha256: projection.pair_receipt_sha256.clone(), attempt_ledger_sha256: projection.attempt_ledger_sha256.clone(),
+        attempt_index_root_sha256: projection.attempt_index_root_sha256.clone(), attestation: retained.attestation.clone(),
+        attestation_sha256: format!("{:x}", sha2::Sha256::digest(&retained.attestation_bytes)), fixed_max_output_tokens: frozen.max_output_tokens(),
+        fixed_max_provider_request_attempts: frozen.max_attempts_per_arm(), fixed_max_total_tokens: frozen.max_total_tokens_per_run(),
+        fixed_max_elapsed_seconds: frozen.max_elapsed_seconds_per_run(), arms,
+    };
+    let raw: [Vec<u8>; 4] = ["rateCard", "billingPolicy", "fxPolicy", "providerBudgetEvidence"].into_iter()
+        .map(|name| frozen.artifact_bytes(name)).collect::<Result<Vec<_>>>()?.try_into().map_err(|_| anyhow::anyhow!("missing frozen cost input"))?;
+    Ok((data, raw))
+}
+fn prepare_authority(data: LiveAuthorityData, raw: [&[u8]; 4], source: LiveAuthoritySource) -> Result<VerifiedLiveCostAuthority> {
+    let inputs = crate::cost_contracts::FrozenCostContracts::load()?.validate_inputs(raw[0], raw[1], raw[2], raw[3])?;
+    validate_authority(&data, &inputs)?;
+    Ok(VerifiedLiveCostAuthority { data, inputs, source })
+}
+
+impl VerifiedLiveCostAuthority {
+    fn reverify(&self) -> Result<()> {
+        match &self.source {
+            LiveAuthoritySource::Production(core) => {
+                crate::blind_finalize::reverify_sealed_pair_authority(core)?;
+                let (data, raw) = production_parts(core)?;
+                let inputs = crate::cost_contracts::FrozenCostContracts::load()?.validate_inputs(&raw[0], &raw[1], &raw[2], &raw[3])?;
+                if data != self.data || !same_inputs(&inputs, &self.inputs)? { bail!("Live cost authority changed during reverify") }
+            }
+            #[cfg(test)]
+            LiveAuthoritySource::Synthetic => {}
+        }
+        validate_authority(&self.data, &self.inputs)
+    }
+}
+
+fn same_inputs(left: &VerifiedCostInputs, right: &VerifiedCostInputs) -> Result<bool> {
+    Ok(left.rate_card_sha256 == right.rate_card_sha256 && left.billing_policy_commitment == right.billing_policy_commitment
+        && left.fx_policy_sha256 == right.fx_policy_sha256 && left.provider_budget_evidence_sha256 == right.provider_budget_evidence_sha256
+        && serde_json::to_value((&left.rate_card, &left.billing_policy, &left.fx_policy, &left.budget))?
+            == serde_json::to_value((&right.rate_card, &right.billing_policy, &right.fx_policy, &right.budget))?)
+}
+
+fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> Result<()> {
+    let attestation = &data.attestation;
+    let [first, second] = &data.arms;
+    if data.execution_mode != ExecutionMode::Live || attestation.execution_mode != "live" || first.mode_evidence != second.mode_evidence { bail!("Live mode evidence is inconsistent") }
+    let ModeEvidence::Live { attestation_sha256, provider_budget_evidence_sha256, approval_commitment, provider_endpoint_commitment,
+        provider_role, arm_order_commitment, rate_card_sha256, billing_policy_sha256, fx_policy_sha256, authorized_pair_cost_fen, retention_deadline } = &first.mode_evidence else {
+        bail!("Live authority requires exact Live mode evidence")
+    };
+    if data.provider_endpoint_commitment.as_deref() != Some(provider_endpoint_commitment) || attestation.target_provider_model_evidence_commitment != *provider_endpoint_commitment {
+        bail!("provider endpoint differs from target provider evidence")
+    }
+    if serde_json::to_value(provider_role)? != serde_json::Value::String(attestation.provider_role.clone()) { bail!("provider role differs from attestation") }
+    if attestation_sha256 != &data.attestation_sha256 || provider_budget_evidence_sha256 != &inputs.provider_budget_evidence_sha256
+        || approval_commitment != &attestation.approval_id || rate_card_sha256 != &inputs.rate_card_sha256
+        || billing_policy_sha256 != &inputs.billing_policy_commitment || fx_policy_sha256.as_deref() != Some(&inputs.fx_policy_sha256)
+        || *authorized_pair_cost_fen != attestation.approved_total_fen || retention_deadline != &attestation.retention_deadline { bail!("Live cost input commitments differ") }
+    if data.arm_order_commitment != *arm_order_commitment || data.pair_receipt.arm_order_commitment != data.arm_order_commitment { bail!("arm order commitment differs") }
+    let candidate_frozen = parse_millis(&attestation.candidate_frozen_at)?; let case_selected = parse_millis(&attestation.case_selected_at)?;
+    let signed = parse_millis(&attestation.signed_at)?; let started = parse_millis(&data.started_at)?; let finished = parse_millis(&data.pair_receipt.finished_at)?;
+    let deadline = parse_millis(&data.deadline)?; let retention = parse_millis(&attestation.retention_deadline)?;
+    if candidate_frozen >= case_selected || case_selected > signed || signed > started { bail!("attestation signedAt timeline is invalid") }
+    if started >= finished || finished > deadline { bail!("execution deadline timeline is invalid") }
+    if finished >= retention { bail!("retention timeline is inverted or expired") }
+    if inputs.rate_card.effective_at != attestation.rate_effective_at { bail!("rate effective time differs from attestation") }
+    for effective in [&inputs.rate_card.effective_at, &inputs.billing_policy.effective_at, &inputs.fx_policy.effective_at] {
+        if parse_millis(effective)? > started { bail!("cost policy is effective after run start") }
+    }
+    if inputs.rate_card.expires_at.as_ref().is_some_and(|value| parse_millis(value).map(|time| time <= finished).unwrap_or(true)) { bail!("rate expiry does not strictly follow finish") }
+    if parse_millis(&inputs.budget.valid_from)? > started || parse_millis(&inputs.budget.valid_until)? <= finished { bail!("budget validity window does not cover the run") }
+    if attestation.candidate_sha != data.fork_sha || attestation.private_root != data.private_root || attestation.approved_per_run_fen > attestation.approved_total_fen
+        || inputs.budget.approval_id != attestation.approval_id || inputs.budget.prepaid_or_hard_limit_fen > attestation.approved_total_fen { bail!("candidate, private root, or approved total authority differs") }
+    if data.fixed_max_output_tokens != attestation.max_output_tokens_per_request { bail!("fixed max output tokens differ") }
+    if data.fixed_max_provider_request_attempts != attestation.max_provider_request_attempts_per_run || data.fixed_max_total_tokens != attestation.max_total_tokens_per_run
+        || data.fixed_max_elapsed_seconds != attestation.max_elapsed_seconds_per_run { bail!("frozen hard gates differ from attestation") }
+    if first.provider_label != second.provider_label || first.model_label != second.model_label || first.actual_model_revision != second.actual_model_revision
+        || inputs.rate_card.provider_label != first.provider_label || inputs.rate_card.model_label != first.model_label
+        || inputs.billing_policy.provider_label != first.provider_label || inputs.budget.provider_label != first.provider_label { bail!("provider or model identity differs") }
+    if (inputs.rate_card.currency.as_str(), inputs.billing_policy.currency.as_str(), inputs.budget.currency.as_str(), attestation.rate_currency.as_str()) != ("CNY", "CNY", "CNY", "CNY")
+        || (inputs.fx_policy.mode.as_str(), inputs.fx_policy.source_currency.as_str(), inputs.fx_policy.target_currency.as_str(), inputs.fx_policy.numerator, inputs.fx_policy.denominator) != ("notApplicable", "CNY", "CNY", 1, 1) { bail!("cost currency or FX authority differs") }
+    if data.pair_receipt.pair_id != data.pair_id || data.pair_receipt.frozen_run_context_sha256 != data.frozen_sha256
+        || data.pair_receipt.execution_context_sha256 != data.execution_context_sha256 || data.pair_receipt.final_attempt_index_root != data.attempt_index_root_sha256
+        || data.pair_receipt.first_arm_receipt_sha256 != first.receipt_sha256 || data.pair_receipt.second_arm_receipt_sha256 != second.receipt_sha256
+        || data.pair_receipt.first_run_manifest_sha256.as_deref() != Some(&first.manifest_sha256) || data.pair_receipt.second_run_manifest_sha256.as_deref() != Some(&second.manifest_sha256)
+        || first.receipt.attempt_count.checked_add(second.receipt.attempt_count) != Some(data.pair_receipt.total_attempt_count)
+        || first.receipt.completion_count.checked_add(second.receipt.completion_count) != Some(data.pair_receipt.total_completion_count) || first.receipt.failure_count.checked_add(second.receipt.failure_count) != Some(data.pair_receipt.total_failure_count) || first.receipt.timeout_count.checked_add(second.receipt.timeout_count) != Some(data.pair_receipt.total_timeout_count) { bail!("pair receipt identity or counts differ") }
+    for (index, arm) in data.arms.iter().enumerate() {
+        let ordinal = u8::try_from(index + 1)?;
+        if arm.run_ordinal != ordinal || arm.core_run_ordinal != ordinal || arm.receipt.run_ordinal != ordinal
+            || arm.condition != arm.core_condition || arm.condition != arm.ledger.condition || arm.condition != arm.receipt.condition { bail!("arm ordinal or condition differs") }
+        if arm.receipt.pair_id != data.pair_id || arm.receipt.frozen_run_context_sha256 != data.frozen_sha256 || arm.receipt.execution_context_sha256 != data.execution_context_sha256
+            || arm.receipt.first_condition != first.condition || arm.receipt.second_condition != second.condition || (index == 0 && arm.receipt.previous_arm_receipt_sha256.is_some()) || (index == 1 && arm.receipt.previous_arm_receipt_sha256.as_deref() != Some(&first.receipt_sha256)) { bail!("arm receipt pair or order identity differs") }
+        if arm.manifest_pair_id != data.pair_id || arm.manifest_frozen_sha256 != data.frozen_sha256 || arm.manifest_execution_sha256 != data.execution_context_sha256 || arm.manifest_execution_mode != ExecutionMode::Live
+            || arm.manifest_fork_sha != data.fork_sha || arm.manifest_case_sha256 != attestation.case_sha256 { bail!("manifest pair or candidate identity differs") }
+        if arm.usage_scope != "completeNativeThreadTree" || arm.usage != arm.core_usage || arm.usage != arm.ledger.usage { bail!("broker/App Server response usage multiset differs") }
+        if arm.manifest_sha256 != arm.core_manifest_sha256 || arm.manifest_sha256 != arm.ledger.run_manifest_sha256 || arm.receipt.run_manifest_sha256.as_deref() != Some(&arm.manifest_sha256)
+            || arm.receipt_sha256 != arm.receipt.receipt_sha256 { bail!("manifest or arm receipt SHA differs") }
+        if arm.provider_request_attempt_count != arm.ledger.provider_request_attempt_count || arm.provider_completed_response_count != arm.ledger.provider_completed_response_count
+            || arm.raw_response_count != arm.core_raw_response_count || arm.raw_response_count != arm.ledger.raw_response_count
+            || arm.receipt.attempt_count != arm.ledger.provider_request_attempt_count || arm.receipt.completion_count != arm.ledger.provider_completed_response_count { bail!("arm response counts differ") }
+        if arm.receipt.global_attempt_start_inclusive != arm.ledger.global_start_inclusive || arm.receipt.global_attempt_end_exclusive != arm.ledger.global_end_exclusive
+            || arm.receipt.attempt_index_file_sha256 != arm.ledger.attempt_index_prefix_sha256 || arm.receipt.attempt_index_merkle_root != arm.ledger.attempt_index_prefix_root_sha256 { bail!("attempt range or root differs") }
+        if arm.authorized_per_run_fen != attestation.approved_per_run_fen || arm.max_provider_request_attempts != attestation.max_provider_request_attempts_per_run
+            || u64::try_from(arm.max_total_tokens)? != attestation.max_total_tokens_per_run || arm.max_elapsed_seconds != attestation.max_elapsed_seconds_per_run { bail!("manifest hard gates differ") }
+        if arm.provider_request_attempt_count > attestation.max_provider_request_attempts_per_run { bail!("provider request attempt cap exceeded") }
+        if arm.elapsed_ms > u128::from(attestation.max_elapsed_seconds_per_run).checked_mul(1_000).ok_or_else(|| anyhow::anyhow!("elapsed hard gate overflow"))?
+            || parse_millis(&arm.receipt.sealed_at)? > deadline { bail!("arm deadline or elapsed hard gate exceeded") }
+    }
+    Ok(())
+}
+
+fn parse_millis(value: &str) -> Result<DateTime<Utc>> {
+    let parsed = DateTime::parse_from_rfc3339(value)?;
+    if parsed.offset().local_minus_utc() != 0 || parsed.to_rfc3339_opts(SecondsFormat::Millis, true) != value { bail!("timestamp is not exact UTC milliseconds") }
+    Ok(parsed.with_timezone(&Utc))
+}
+
+fn reject_unsafe_integers(value: &serde_json::Value) -> Result<()> {
+    match value {
+        serde_json::Value::Number(number) if number.as_u64().is_some_and(|value| value > 9_007_199_254_740_991) => bail!("receipt integer exceeds the JCS safe integer boundary"),
+        serde_json::Value::Array(values) => for value in values { reject_unsafe_integers(value)? },
+        serde_json::Value::Object(values) => for value in values.values() { reject_unsafe_integers(value)? },
+        _ => {}
+    }
+    Ok(())
 }
 
 pub(crate) fn project_verified_native_cost(
