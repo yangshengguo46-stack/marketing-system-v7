@@ -11,6 +11,8 @@ use crate::ReviewerDeclaration;
 use crate::SkillUseOutcome;
 use crate::Usage;
 use crate::blind::FrozenInputToken;
+use crate::cost_authority::CostPairProjection;
+use crate::cost_authority::NativeCostProjectionInput;
 use crate::private_inventory::VerifiedPrivateInventory;
 use crate::proof_archive::VerifiedPostprocessSummary;
 use crate::proof_ledger::BoundRunManifest;
@@ -46,6 +48,7 @@ pub(crate) struct PairEvidenceCore {
     pub(crate) initial_inventory_root_sha256: String,
     pub(crate) pair_verification_raw_sha256: String,
     pub(crate) native_pair_receipt_raw_sha256: Option<String>,
+    pub(crate) cost_projection: Option<CostPairProjection>,
     pub(crate) reviewers: [ReviewerDeclaration; 3],
     pub(crate) mission_case: codex_ai_ip_domain::HeldOutMissionCase,
     pub(crate) case_bytes: Vec<u8>,
@@ -94,8 +97,10 @@ pub(super) fn verify_parsed_pair_evidence(parsed: ParsedPairEvidence) -> Result<
     )?;
     let summaries = [first, second];
     verify_archive_projections(&arms, &summaries)?;
-    let native_pair_receipt_raw_sha256 =
-        verify_proof_ledger(&content, &execution_context, &arms, &summaries)?;
+    let cost_projection = verify_proof_ledger(&content, &execution_context, &arms, &summaries)?;
+    let native_pair_receipt_raw_sha256 = cost_projection
+        .as_ref()
+        .map(|projection| projection.pair_receipt_sha256.clone());
     let [first_arm, second_arm] = arms;
     let [first_summary, second_summary] = summaries;
     let core_arms = [
@@ -113,6 +118,7 @@ pub(super) fn verify_parsed_pair_evidence(parsed: ParsedPairEvidence) -> Result<
         initial_inventory_root_sha256: inventory_binding.inventory_root_sha256,
         pair_verification_raw_sha256: pair_verification.sha256,
         native_pair_receipt_raw_sha256,
+        cost_projection,
         reviewers: content.reviewers,
         materials_manifest: content.mission_case.materials.clone(),
         mission_case: content.mission_case,
@@ -172,7 +178,7 @@ fn verify_proof_ledger(
     execution: &super::ExactDocument<ExecutionContext>,
     arms: &[super::ExactDocument<crate::RunManifest>; 2],
     summaries: &[VerifiedPostprocessSummary; 2],
-) -> Result<Option<String>> {
+) -> Result<Option<CostPairProjection>> {
     match &execution.typed {
         ExecutionContext::Replay(_) => {
             crate::proof_ledger::verify_replay_proof_ledger_absence(&content.private_root)?;
@@ -197,7 +203,16 @@ fn verify_proof_ledger(
             let ledger =
                 crate::proof_ledger::verify_native_proof_ledger(&content.private_root, &binding)?;
             verify_native_ledger_projection(&ledger, arms, summaries)?;
-            Ok(Some(ledger.pair_receipt_sha256))
+            crate::cost_authority::project_verified_native_cost(NativeCostProjectionInput {
+                execution_mode: content.mode,
+                execution_context_sha256: &execution.sha256,
+                started_at: &context.started_at,
+                deadline: &context.deadline,
+                arm_order_commitment: &context.arm_order_commitment,
+                manifests: arms,
+                ledger,
+            })
+            .map(Some)
         }
     }
 }

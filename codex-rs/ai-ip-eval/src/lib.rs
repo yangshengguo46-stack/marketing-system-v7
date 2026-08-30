@@ -12,6 +12,7 @@ mod broker_gate;
 mod catalog;
 mod contracts;
 mod cost;
+mod cost_authority;
 mod cost_contracts;
 mod cost_inputs;
 mod evidence;

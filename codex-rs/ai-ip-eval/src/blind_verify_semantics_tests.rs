@@ -8,6 +8,9 @@ use sha2::{Digest, Sha256};
 
 use super::*;
 
+#[path = "cost_authority_tests.rs"]
+mod cost_authority_tests;
+
 fn replay_blind_args(private_root: &Path) -> crate::BlindPackArgs {
     crate::BlindPackArgs {
         reviewer_root: PathBuf::from("reviewer"),
