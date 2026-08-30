@@ -140,16 +140,18 @@ fn prepare_cost_receipt_authority(
     supplier_path: Option<&std::path::Path>,
 ) -> anyhow::Result<PreparedCostReceiptAuthority> {
     preflight_cost_receipt_absent(snapshot.private_root(), condition)?;
-    let supplier_exists = match supplier_path.map(std::fs::symlink_metadata).transpose() {
-        Ok(Some(_)) => true,
-        Ok(None) => false,
+    let selected_supplier = snapshot
+        .private_root()
+        .join(cost_inputs::supplier_statement_relative_path(condition));
+    let selected_supplier_exists = match std::fs::symlink_metadata(&selected_supplier) {
+        Ok(_) => true,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
         Err(error) => return Err(error).context("inspect fixed supplier statement before pair verification"),
     };
     let mut transaction = None;
-    let inventory = if supplier_exists {
+    let inventory = if selected_supplier_exists {
         let (inventory, prepared) = cost_inputs::prepare_transaction_context(
-            snapshot.private_root(), condition, supplier_path, &mut |_| Ok(()),
+            snapshot.private_root(), condition, Some(&selected_supplier), &mut |_| Ok(()),
         )?;
         transaction = Some(prepared);
         inventory
@@ -163,6 +165,9 @@ fn prepare_cost_receipt_authority(
         ExecutionMode::Replay => Ok(PreparedCostReceiptAuthority::Replay),
         ExecutionMode::Mock => Ok(PreparedCostReceiptAuthority::Mock),
         ExecutionMode::Live => {
+            if supplier_path.is_none() && selected_supplier_exists {
+                anyhow::bail!("omitted supplier statement exists at the selected fixed leaf");
+            }
             let transaction = match transaction {
                 Some(transaction) => transaction,
                 None => {

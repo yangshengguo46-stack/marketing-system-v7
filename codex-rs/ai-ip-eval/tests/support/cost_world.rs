@@ -67,6 +67,8 @@ impl CostWorld {
             .arg(&frozen_context)
             .output()?;
         assert_success("freeze-run-context replay", &freeze);
+        let inputs = owner_only_dir(&private_root.join("inputs"))?;
+        owner_only_dir(&inputs.join("supplier-statements"))?;
         let pair = Command::new(&binary)
             .args(["replay-pair", "--frozen-run-context"])
             .arg(&frozen_context)
@@ -215,6 +217,17 @@ impl CostWorld {
         self.private_root
             .join("inputs/supplier-statements")
             .join(format!("{condition}.json"))
+    }
+
+    pub fn add_pending_candidate_supplier(&self) -> Result<()> {
+        let path = self.supplier_statement("candidate");
+        fs::write(
+            &path,
+            fs::read(codex_utils_cargo_bin::find_resource!(
+                "tests/fixtures/contracts/06b1/supplier-statement.canonical.json"
+            )?)?,
+        )?;
+        set_owner_file_mode(&path, /*mode*/ 0o600)
     }
 
     pub fn assert_refusal(

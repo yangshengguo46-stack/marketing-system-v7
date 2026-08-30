@@ -155,6 +155,7 @@ pub(crate) fn publish_cost_receipt(
 ) -> Result<()> {
     publish_cost_receipt_with_hook(
         authority, condition, supplier_path, clock, &mut |_| Ok(()),
+        &mut crate::secure_fs::fsync_directory,
     )
 }
 
@@ -166,7 +167,24 @@ pub(crate) fn publish_cost_receipt_for_test(
     clock: &dyn crate::cost_authority::CostClock,
     hook: &mut dyn FnMut(CostReceiptCheckpoint) -> Result<()>,
 ) -> Result<()> {
-    publish_cost_receipt_with_hook(authority, condition, supplier_path, clock, hook)
+    publish_cost_receipt_with_hook(
+        authority, condition, supplier_path, clock, hook,
+        &mut crate::secure_fs::fsync_directory,
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn publish_cost_receipt_with_sync_for_test(
+    authority: crate::cost_authority::VerifiedLiveCostAuthority,
+    condition: crate::EvaluationCondition,
+    supplier_path: Option<&Path>,
+    clock: &dyn crate::cost_authority::CostClock,
+    hook: &mut dyn FnMut(CostReceiptCheckpoint) -> Result<()>,
+    sync_parent: &mut dyn FnMut(&Path) -> Result<()>,
+) -> Result<()> {
+    publish_cost_receipt_with_hook(
+        authority, condition, supplier_path, clock, hook, sync_parent,
+    )
 }
 
 fn publish_cost_receipt_with_hook(
@@ -175,6 +193,7 @@ fn publish_cost_receipt_with_hook(
     supplier_path: Option<&Path>,
     clock: &dyn crate::cost_authority::CostClock,
     hook: &mut dyn FnMut(CostReceiptCheckpoint) -> Result<()>,
+    sync_parent: &mut dyn FnMut(&Path) -> Result<()>,
 ) -> Result<()> {
     let (_, _, root) = authority.transaction_binding();
     let root = PathBuf::from(root);
@@ -190,7 +209,7 @@ fn publish_cost_receipt_with_hook(
     crate::verify_prepared_cost_receipt_arguments(
         &root, condition, supplier_path, &transaction,
     )?;
-    publish_prepared_receipt(authority, transaction, clock, hook)
+    publish_prepared_receipt(authority, transaction, clock, hook, sync_parent)
 }
 
 fn publish_prepared_receipt(
@@ -198,6 +217,7 @@ fn publish_prepared_receipt(
     mut transaction: PreparedCostReceiptContext,
     clock: &dyn crate::cost_authority::CostClock,
     hook: &mut dyn FnMut(CostReceiptCheckpoint) -> Result<()>,
+    sync_parent: &mut dyn FnMut(&Path) -> Result<()>,
 ) -> Result<()> {
     let root = PathBuf::from(authority.transaction_binding().2);
     let supplier = transaction.supplier.as_ref()
@@ -211,11 +231,11 @@ fn publish_prepared_receipt(
 
     if transaction.supplier.as_ref().is_some_and(|value| value.is_pending()) {
         verify_sources(&authority, &transaction)?;
-        hook(CostReceiptCheckpoint::BeforeSupplierInventoryAppend)?;
-        verify_sources(&authority, &transaction)?;
         let statement = transaction.supplier.as_ref().context("pending supplier is absent")?;
+        let statement_entry = statement.inventory_entry();
+        hook(CostReceiptCheckpoint::BeforeSupplierInventoryAppend)?;
         let new_root = crate::private_inventory::batch::append_private_inventory_batch_from_root(
-            &root, &transaction.old_inventory_root, &[statement.inventory_entry()],
+            &root, &transaction.old_inventory_root, &[statement_entry],
         )?;
         let fresh = fresh_inventory(&authority, &root, &new_root)?;
         hook(CostReceiptCheckpoint::AfterSupplierInventoryAppend)?;
@@ -246,16 +266,19 @@ fn publish_prepared_receipt(
     {
         bail!("retained receipt differs from the prospective exact receipt");
     }
+    sync_parent(
+        receipt_path.parent().context("cost receipt path has no parent")?,
+    )
+    .context("sync retained cost receipt parent")?;
     hook(CostReceiptCheckpoint::AfterReceiptCreateBeforeInventoryAppend)?;
     retained.reverify_unchanged()?;
     verify_supplier_context(&root, &transaction)?;
-    hook(CostReceiptCheckpoint::BeforeReceiptInventoryAppend)?;
-    retained.reverify_unchanged()?;
     let receipt_entry = ExpectedInventoryEntry {
         relative_path: relative.to_string(),
         kind: InventoryKind::File,
         sha256: Some(format!("{:x}", Sha256::digest(retained.raw_bytes()))),
     };
+    hook(CostReceiptCheckpoint::BeforeReceiptInventoryAppend)?;
     let final_root = crate::private_inventory::batch::append_private_inventory_batch_from_root(
         &root, &transaction.old_inventory_root, &[receipt_entry],
     )?;

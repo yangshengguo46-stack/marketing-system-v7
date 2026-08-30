@@ -19,6 +19,7 @@ use crate::Usage;
 use crate::cost_authority::*;
 use crate::cost_inputs::CostReceiptCheckpoint;
 use crate::cost_inputs::publish_cost_receipt_for_test;
+use crate::cost_inputs::publish_cost_receipt_with_sync_for_test;
 use crate::private_inventory::InventoryKind;
 use crate::private_inventory::batch::ExpectedInventoryEntry;
 use crate::private_inventory::batch::append_private_inventory_batch_from_root;
@@ -937,6 +938,26 @@ fn cost_receipt_transaction_before_supplier_append_leaves_pending_state() {
 }
 
 #[test]
+fn cost_receipt_transaction_supplier_replacement_fails_expected_sha_append() {
+    let bytes = supplier_raw(|_| {});
+    let world = transaction_world(Some(&bytes), false);
+    let before = inventory_bytes(&world.root);
+    let mut hook = |checkpoint| {
+        if checkpoint == CostReceiptCheckpoint::BeforeSupplierInventoryAppend {
+            fs::write(&world.supplier_path, vec![b' '; bytes.len()])?;
+        }
+        Ok(())
+    };
+    let error = run_transaction(&world, true, &transaction_clock(), &mut hook).unwrap_err();
+    assert_transaction_error_contains(
+        error,
+        "inventory append target is absent, recorded, or mismatched",
+    );
+    assert_eq!(inventory_bytes(&world.root), before);
+    assert!(!world.receipt_path.exists());
+}
+
+#[test]
 fn cost_receipt_transaction_after_supplier_append_resumes_as_state_b() {
     let bytes = supplier_raw(|_| {});
     let world = transaction_world(Some(&bytes), false);
@@ -975,7 +996,10 @@ fn cost_receipt_transaction_receipt_replacement_fails_expected_sha_append() {
         Ok(())
     };
     let error = run_transaction(&world, false, &transaction_clock(), &mut hook).unwrap_err();
-    assert_transaction_error_contains(error, "retained private file");
+    assert_transaction_error_contains(
+        error,
+        "inventory append target is absent, recorded, or mismatched",
+    );
     assert!(crate::private_inventory::verify_private_inventory(&world.root).is_err());
 }
 
@@ -991,6 +1015,38 @@ fn cost_receipt_transaction_after_receipt_create_rerun_fails_closed() {
     assert!(world.receipt_path.exists());
     let error = run_transaction(&world, false, &transaction_clock(), &mut |_| Ok(())).unwrap_err();
     assert_transaction_error_contains(error, "receipt destination already exists");
+}
+
+#[test]
+fn cost_receipt_transaction_parent_sync_failure_precedes_post_create_checkpoint() {
+    let world = transaction_world(None, false);
+    let before = inventory_bytes(&world.root);
+    let sync_seen = Cell::new(false);
+    let post_create_seen = Cell::new(false);
+    let mut hook = |checkpoint| {
+        if checkpoint == CostReceiptCheckpoint::AfterReceiptCreateBeforeInventoryAppend {
+            post_create_seen.set(true);
+        }
+        Ok(())
+    };
+    let mut sync_parent = |parent: &Path| {
+        assert_eq!(parent, world.root.join("coordinator/cost"));
+        sync_seen.set(true);
+        anyhow::bail!("injected receipt parent sync failure")
+    };
+    let result = publish_cost_receipt_with_sync_for_test(
+        transaction_authority(&world.root),
+        EvaluationCondition::Candidate,
+        None,
+        &transaction_clock(),
+        &mut hook,
+        &mut sync_parent,
+    );
+    assert!(sync_seen.get(), "receipt parent sync seam was not consumed");
+    assert_transaction_error_contains(result.unwrap_err(), "sync retained cost receipt parent");
+    assert!(!post_create_seen.get());
+    assert_eq!(inventory_bytes(&world.root), before);
+    assert!(world.receipt_path.exists());
 }
 
 #[test]

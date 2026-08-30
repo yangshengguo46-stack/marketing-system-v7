@@ -95,6 +95,28 @@ fn cost_cli_refuses_native_mock_evidence() -> Result<()> {
 }
 
 #[test]
+fn cost_cli_refuses_omitted_pending_supplier_in_replay() -> Result<()> {
+    let world = CostWorld::replay()?;
+    world.add_pending_candidate_supplier()?;
+    world.assert_refusal(
+        "candidate",
+        None,
+        b"Error: make-cost-receipt requires verified Native Live evidence; Replay is refused\n",
+    )
+}
+
+#[test]
+fn cost_cli_refuses_omitted_pending_supplier_in_native_mock() -> Result<()> {
+    let world = CostWorld::native_mock()?;
+    world.add_pending_candidate_supplier()?;
+    world.assert_refusal(
+        "candidate",
+        None,
+        b"Error: make-cost-receipt requires executionMode=live; mock evidence is refused\n",
+    )
+}
+
+#[test]
 fn cost_cli_rejects_noncanonical_supplier_path() -> Result<()> {
     let world = CostWorld::replay()?;
     let private_root = world.private_root();
