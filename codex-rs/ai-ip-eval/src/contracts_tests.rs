@@ -50,7 +50,10 @@ fn cost_contract_assets_expose_exact_launch_shapes() {
 
     let supplier_statement = load_schema("supplier-statement");
     strict(&supplier_statement);
-    assert_eq!(supplier_statement["properties"]["schemaVersion"]["const"], 1);
+    assert_eq!(
+        supplier_statement["properties"]["schemaVersion"]["const"],
+        1
+    );
     assert_eq!(supplier_statement["properties"]["currency"]["const"], "CNY");
 
     let receipt = load_schema("cost-receipt");
@@ -80,7 +83,10 @@ fn cost_contract_assets_expose_exact_launch_shapes() {
         receipt["properties"]["fx"]["properties"]["mode"]["const"],
         "notApplicable"
     );
-    assert_eq!(receipt["properties"]["ceilings"]["additionalProperties"], false);
+    assert_eq!(
+        receipt["properties"]["ceilings"]["additionalProperties"],
+        false
+    );
 }
 
 #[test]

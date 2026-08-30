@@ -98,13 +98,26 @@ fn cost_cli_refuses_native_mock_evidence() -> Result<()> {
 fn cost_cli_annotate_refuses_replay_evidence() -> Result<()> {
     let world = CostWorld::replay()?;
     let output = Command::new(eval_binary()?)
-        .args(["annotate-cost", "--condition", "generic", "--frozen-run-context"])
+        .args([
+            "annotate-cost",
+            "--condition",
+            "generic",
+            "--frozen-run-context",
+        ])
         .arg(world.private_root().join("frozen-run-context.json"))
         .output()?;
     assert_eq!(output.status.code(), Some(1));
     assert!(output.stdout.is_empty());
-    assert_eq!(output.stderr, b"Error: annotate-cost requires verified Native Live evidence; Replay is refused\n");
-    assert!(!world.private_root().join("coordinator/cost/generic-binding.json").exists());
+    assert_eq!(
+        output.stderr,
+        b"Error: annotate-cost requires verified Native Live evidence; Replay is refused\n"
+    );
+    assert!(
+        !world
+            .private_root()
+            .join("coordinator/cost/generic-binding.json")
+            .exists()
+    );
     Ok(())
 }
 
@@ -112,13 +125,26 @@ fn cost_cli_annotate_refuses_replay_evidence() -> Result<()> {
 fn cost_cli_annotate_refuses_native_mock_evidence() -> Result<()> {
     let world = CostWorld::native_mock()?;
     let output = Command::new(eval_binary()?)
-        .args(["annotate-cost", "--condition", "candidate", "--frozen-run-context"])
+        .args([
+            "annotate-cost",
+            "--condition",
+            "candidate",
+            "--frozen-run-context",
+        ])
         .arg(world.private_root().join("frozen-run-context.json"))
         .output()?;
     assert_eq!(output.status.code(), Some(1));
     assert!(output.stdout.is_empty());
-    assert_eq!(output.stderr, b"Error: annotate-cost requires executionMode=live; mock evidence is refused\n");
-    assert!(!world.private_root().join("coordinator/cost/candidate-binding.json").exists());
+    assert_eq!(
+        output.stderr,
+        b"Error: annotate-cost requires executionMode=live; mock evidence is refused\n"
+    );
+    assert!(
+        !world
+            .private_root()
+            .join("coordinator/cost/candidate-binding.json")
+            .exists()
+    );
     Ok(())
 }
 
@@ -174,5 +200,8 @@ fn assert_clap_rejection(output: &std::process::Output, needle: &str) {
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains(needle), "stderr did not contain {needle:?}:\n{stderr}");
+    assert!(
+        stderr.contains(needle),
+        "stderr did not contain {needle:?}:\n{stderr}"
+    );
 }

@@ -1001,11 +1001,8 @@ fn replay_shared_binary_byte_drift_and_same_bytes_inode_replacement_fail_closed(
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(
-                binary.parent().unwrap(),
-                fs::Permissions::from_mode(0o700),
-            )
-            .unwrap();
+            fs::set_permissions(binary.parent().unwrap(), fs::Permissions::from_mode(0o700))
+                .unwrap();
         }
         let sha256 = test_sha256(&fs::read(&binary).unwrap());
 
@@ -1073,7 +1070,10 @@ fn replay_same_path_with_different_commitment_fails_closed() {
         || Ok(()),
     );
 
-    assert!(result.is_err(), "accepted unequal commitments for one Replay path");
+    assert!(
+        result.is_err(),
+        "accepted unequal commitments for one Replay path"
+    );
 }
 
 #[test]
@@ -1148,7 +1148,8 @@ fn assert_generated_commitment_identity(
     context: &serde_json::Value,
 ) {
     let key_path = private_root.join("coordinator/commitment-key.bin");
-    let key = crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(private_root).unwrap();
+    let key =
+        crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(private_root).unwrap();
     assert_eq!(context["commitmentKeySha256"], key.key_sha256());
     assert_eq!(
         context["publicRunId"],
@@ -1168,8 +1169,8 @@ fn assert_generated_commitment_identity(
     }
 }
 
-fn freeze_native_commitment_context()
--> (tempfile::TempDir, std::path::PathBuf, serde_json::Value) {
+fn freeze_native_commitment_context() -> (tempfile::TempDir, std::path::PathBuf, serde_json::Value)
+{
     let temp = tempfile::tempdir().unwrap();
     let args = native_freeze_args_for_cost_inputs(&temp, true);
     let private_root = args.private_root.clone();
@@ -1209,17 +1210,12 @@ fn write_existing_commitment_key(private_root: &std::path::Path) -> Vec<u8> {
         crate::secure_fs::create_owner_only_dir_new(&coordinator).unwrap();
     }
     let key_bytes = vec![0xa5; 32];
-    crate::secure_fs::write_owner_only_new(
-        &coordinator.join("commitment-key.bin"),
-        &key_bytes,
-    )
-    .unwrap();
+    crate::secure_fs::write_owner_only_new(&coordinator.join("commitment-key.bin"), &key_bytes)
+        .unwrap();
     key_bytes
 }
 
-fn clone_live_freeze_args(
-    args: &crate::model::LiveFreezeArgs,
-) -> crate::model::LiveFreezeArgs {
+fn clone_live_freeze_args(args: &crate::model::LiveFreezeArgs) -> crate::model::LiveFreezeArgs {
     crate::model::LiveFreezeArgs {
         repo_root: args.repo_root.clone(),
         evidence_repo_root: args.evidence_repo_root.clone(),
@@ -1272,7 +1268,10 @@ fn freeze_refuses_existing_commitment_key() {
             private_root: replay_root.clone(),
             codex_bin: replay_binary,
             case: fixture_set.parent().unwrap().join("replay-case.json"),
-            transcript: fixture_set.parent().unwrap().join("replay-transcript.jsonl"),
+            transcript: fixture_set
+                .parent()
+                .unwrap()
+                .join("replay-transcript.jsonl"),
             fixture_set_manifest: fixture_set.clone(),
             output: replay_output.clone(),
         },
@@ -1308,11 +1307,7 @@ fn freeze_refuses_existing_commitment_key() {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(
-            &partial_replay_binary,
-            fs::Permissions::from_mode(0o700),
-        )
-        .unwrap();
+        fs::set_permissions(&partial_replay_binary, fs::Permissions::from_mode(0o700)).unwrap();
     }
     let fixture_root = fixture_set.parent().unwrap().to_path_buf();
     let partial_replay_output = partial_replay_root.join("frozen-run-context.json");
@@ -1342,9 +1337,7 @@ fn freeze_refuses_existing_commitment_key() {
     let partial_native_args = native_freeze_args_for_cost_inputs(&partial_native_temp, true);
     let retry_native_args = clone_live_freeze_args(&partial_native_args);
     fs::write(
-        partial_native_args
-            .material_root
-            .join("notes/evidence.txt"),
+        partial_native_args.material_root.join("notes/evidence.txt"),
         b"changed after declaration\n",
     )
     .unwrap();
@@ -1397,11 +1390,7 @@ fn proof_commitment_key_mutations_are_rejected_for_replay_and_native() {
             true,
         ),
         (&native_bit_root, &native_bit_context, false),
-        (
-            &native_replacement_root,
-            &native_replacement_context,
-            true,
-        ),
+        (&native_replacement_root, &native_replacement_context, true),
     ] {
         let context_path = private_root.join("frozen-run-context.json");
         let raw = fs::read(&context_path).unwrap();
@@ -1453,7 +1442,7 @@ fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&replay.private_root)
             .unwrap();
     assert!(!replay_key.key_material_occurs_in(format!("{replay_verified:?}").as_bytes()));
-    replay_verified.clone().reverify_all().unwrap();
+    replay_verified.reverify_all().unwrap();
     for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
         let mut context: serde_json::Value = serde_json::from_slice(&replay_raw).unwrap();
         mutate_context_field(&mut context, field);
@@ -1475,7 +1464,7 @@ fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
     let native_key =
         crate::proof_commitment::RetainedProofCommitmentKey::read_fixed(&native_root).unwrap();
     assert!(!native_key.key_material_occurs_in(format!("{native_verified:?}").as_bytes()));
-    native_verified.clone().reverify_all().unwrap();
+    native_verified.reverify_all().unwrap();
     for field in ["commitmentKeySha256", "pairId", "publicRunId"] {
         let mut context: serde_json::Value = serde_json::from_slice(&native_raw).unwrap();
         mutate_context_field(&mut context, field);
@@ -1490,12 +1479,11 @@ fn proof_commitment_context_mutations_are_rejected_for_replay_and_native() {
 }
 
 fn assert_inventory_covers_commitment_key(private_root: &std::path::Path) {
-    let context: serde_json::Value = serde_json::from_slice(
-        &fs::read(private_root.join("frozen-run-context.json")).unwrap(),
-    )
-    .unwrap();
-    let inventory = fs::read_to_string(private_root.join("coordinator/private-inventory.jsonl"))
-        .unwrap();
+    let context: serde_json::Value =
+        serde_json::from_slice(&fs::read(private_root.join("frozen-run-context.json")).unwrap())
+            .unwrap();
+    let inventory =
+        fs::read_to_string(private_root.join("coordinator/private-inventory.jsonl")).unwrap();
     let record = inventory
         .lines()
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
@@ -2646,7 +2634,7 @@ fn strict_live_context(temp: &tempfile::TempDir) -> std::path::PathBuf {
         "schemaVersion": 1,
         "executionMode": "live",
         "providerMode": "not-run",
-        "pairId": pair_id.clone(),
+        "pairId": pair_id,
         "publicRunId": crate::proof_commitment::derive_public_run_id(
             &commitment_key,
             &pair_id,

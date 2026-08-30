@@ -108,7 +108,10 @@ impl CostWorld {
             "ai-ip-native-app-server-fixture{}",
             std::env::consts::EXE_SUFFIX
         ));
-        fs::copy(cargo_bin("ai-ip-native-app-server-fixture")?, &fixture_binary)?;
+        fs::copy(
+            cargo_bin("ai-ip-native-app-server-fixture")?,
+            &fixture_binary,
+        )?;
         set_owner_file_mode(&fixture_binary, /*mode*/ 0o700)?;
 
         let upstream = tiny_http::Server::http("127.0.0.1:0")
@@ -128,10 +131,12 @@ impl CostWorld {
                 let body = format!(
                     "data: {{\"type\":\"response.completed\",\"response\":{{\"id\":\"cost-cli-response-{index}\",\"model\":\"mock-revision\",\"usage\":{{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2}}}}}}\n\n"
                 );
-                request.respond(tiny_http::Response::from_string(body).with_header(
-                    tiny_http::Header::from_bytes("content-type", "text/event-stream")
-                        .expect("static header is valid"),
-                ))?;
+                request.respond(
+                    tiny_http::Response::from_string(body).with_header(
+                        tiny_http::Header::from_bytes("content-type", "text/event-stream")
+                            .expect("static header is valid"),
+                    ),
+                )?;
                 index += 1;
             }
             Ok(())
@@ -341,7 +346,10 @@ fn copy_cost_inputs(inputs: &Path) -> Result<CostInputs> {
     let copy = |leaf: &str, fixture: &str| -> Result<PathBuf> {
         let resource = format!("tests/fixtures/contracts/06b1/{fixture}");
         let destination = inputs.join(leaf);
-        fs::copy(codex_utils_cargo_bin::find_resource!(resource)?, &destination)?;
+        fs::copy(
+            codex_utils_cargo_bin::find_resource!(resource)?,
+            &destination,
+        )?;
         set_owner_file_mode(&destination, /*mode*/ 0o600)?;
         Ok(destination)
     };

@@ -170,7 +170,9 @@ fn cost_arithmetic_rejects_every_negative_usage_field_before_conversion() {
 
         let error = calculate_cost(&calculation_input(&inputs, &usage)).unwrap_err();
         assert!(
-            error.to_string().contains(&format!("{field} cannot be negative")),
+            error
+                .to_string()
+                .contains(&format!("{field} cannot be negative")),
             "{field}: {error:#}"
         );
     }

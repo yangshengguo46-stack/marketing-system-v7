@@ -237,9 +237,8 @@ impl VerifiedFrozenContext {
         self.frozen_file
             .verify_context_bytes(&self.raw_bytes)
             .context("reverify native frozen context identity")?;
-        if sha256(
-            format!("{}:{}", self.context.repo_head, self.context.model_label).as_bytes(),
-        ) != self.context.pair_id
+        if sha256(format!("{}:{}", self.context.repo_head, self.context.model_label).as_bytes())
+            != self.context.pair_id
         {
             bail!("native pair ID changed from its frozen repository and model inputs");
         }
@@ -321,11 +320,7 @@ impl ReplayBinaryCommitments {
             )?));
         }
         Ok(Self::Distinct {
-            codex: retain_canonical_replay_reference(
-                &codex_path,
-                codex_reference,
-                "Codex binary",
-            )?,
+            codex: retain_canonical_replay_reference(&codex_path, codex_reference, "Codex binary")?,
             evaluator: retain_canonical_replay_reference(
                 &evaluator_path,
                 evaluator_reference,
@@ -712,7 +707,7 @@ fn import_live_source_proof_into_existing_inputs_inner(
         &materials_manifest_bytes,
         &private_root,
     )?;
-    let case_handle = create_fresh_directory_at(&inputs_handle, OsStr::new("case"))
+    let case_handle = create_fresh_directory_at(inputs_handle, OsStr::new("case"))
         .context("create fresh managed case tree")?;
     let inputs = private_root.join("inputs");
     let imported_case_root = inputs.join("case");
@@ -749,7 +744,7 @@ fn import_live_source_proof_into_existing_inputs_inner(
         &case_bytes,
     )?;
     create_owner_only_file_at(
-        &inputs_handle,
+        inputs_handle,
         OsStr::new("materials-manifest.json"),
         &materials_manifest_bytes,
     )?;
@@ -1646,10 +1641,8 @@ fn verify_retained_replay_frozen_context(
         &context.pair_id,
         &context.public_run_id,
     )?;
-    let binaries = ReplayBinaryCommitments::retain(
-        &context.codex_binary,
-        &context.evaluator_binary,
-    )?;
+    let binaries =
+        ReplayBinaryCommitments::retain(&context.codex_binary, &context.evaluator_binary)?;
     if std::env::current_exe()?.canonicalize()? != context.evaluator_binary.path {
         bail!("replay evaluator executable differs from the frozen binary");
     }
@@ -1792,10 +1785,7 @@ fn retain_replay_reference(
     retain_canonical_replay_reference(&canonical, reference, label)
 }
 
-fn canonical_replay_reference(
-    reference: &FrozenArtifactReference,
-    label: &str,
-) -> Result<PathBuf> {
+fn canonical_replay_reference(reference: &FrozenArtifactReference, label: &str) -> Result<PathBuf> {
     if !reference.path.is_absolute() || !is_lower_hex(&reference.sha256, 64) {
         bail!("frozen replay {label} reference is not canonical");
     }
@@ -1814,7 +1804,7 @@ fn retain_canonical_replay_reference(
     reference: &FrozenArtifactReference,
     label: &str,
 ) -> Result<ArtifactCommitment> {
-    let commitment = ArtifactCommitment::freeze(&canonical)?;
+    let commitment = ArtifactCommitment::freeze(canonical)?;
     if commitment.sha256 != reference.sha256 {
         bail!("frozen replay {label} bytes or identity changed");
     }
@@ -2521,9 +2511,11 @@ fn freeze_live_context_inner(
     let pair_material = format!("{}:{}", args.fork_sha, args.model_label);
     let pair_id = sha256(pair_material.as_bytes());
     let commitment_key = if canonical_private_root.join("coordinator").try_exists()? {
-        Some(crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(
-            &canonical_private_root,
-        )?)
+        Some(
+            crate::proof_commitment::RetainedProofCommitmentKey::create_fixed(
+                &canonical_private_root,
+            )?,
+        )
     } else {
         None
     };
@@ -5222,9 +5214,8 @@ fn validate_frozen_context(context: &FrozenRunContext) -> Result<()> {
     if context.candidate_sha != context.repo_head {
         bail!("candidate SHA must equal the frozen repository HEAD");
     }
-    let expected_pair_id = sha256(
-        format!("{}:{}", context.repo_head, context.model_label).as_bytes(),
-    );
+    let expected_pair_id =
+        sha256(format!("{}:{}", context.repo_head, context.model_label).as_bytes());
     if context.pair_id != expected_pair_id {
         bail!("strict live pair ID differs from its frozen repository and model inputs");
     }

@@ -173,7 +173,9 @@ impl PreparedBinding {
         authority.reverify()?;
         crate::cost_authority::revalidate_cost_receipt(
             authority,
-            self.supplier.as_ref().map(RetainedSelectedSupplier::statement),
+            self.supplier
+                .as_ref()
+                .map(RetainedSelectedSupplier::statement),
             &self.expected_receipt,
         )
     }
@@ -253,7 +255,13 @@ fn prepare_binding(
     if serde_json::from_slice::<CostBindingV1>(&bytes)? != binding {
         bail!("canonical cost binding changed its typed value");
     }
-    Ok(PreparedBinding { binding, bytes, receipt, expected_receipt, supplier })
+    Ok(PreparedBinding {
+        binding,
+        bytes,
+        receipt,
+        expected_receipt,
+        supplier,
+    })
 }
 
 fn retain_selected_supplier(
@@ -265,7 +273,9 @@ fn retain_selected_supplier(
         return Ok(None);
     };
     let retained = crate::secure_fs_retain::RetainedBoundedFile::retain(
-        &root.join(crate::cost_inputs::supplier_statement_relative_path(condition)),
+        &root.join(crate::cost_inputs::supplier_statement_relative_path(
+            condition,
+        )),
         64 * 1024,
         crate::secure_fs_retain::RetainedLeafPermissions::RequireOwnerOnly,
     )?;

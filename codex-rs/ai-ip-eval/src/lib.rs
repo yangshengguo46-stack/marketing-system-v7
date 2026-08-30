@@ -26,8 +26,8 @@ mod native_app_server_fixture;
 mod private_inventory;
 mod proof_archive;
 mod proof_archive_seal;
-mod proof_ledger;
 mod proof_commitment;
+mod proof_ledger;
 mod runner;
 mod score;
 mod score_authority;
@@ -86,6 +86,7 @@ pub use evidence::TreeEventCollector;
 pub use evidence::TreeEvidence;
 pub use evidence::TreeScan;
 pub use evidence::validate_case_boundary;
+pub use model::AnnotateCostArgs;
 pub use model::BlindPackArgs;
 pub use model::Cli;
 pub use model::EvalCommand;
@@ -93,7 +94,6 @@ pub use model::EvaluationCondition;
 pub use model::ExecutionMode;
 pub use model::FreezeRunContextArgs;
 pub use model::MakeCostReceiptArgs;
-pub use model::AnnotateCostArgs;
 pub use model::MockProviderMode;
 pub use model::ModeEvidence;
 pub use model::ProofBrokerCompatibilityName;
@@ -148,12 +148,17 @@ fn prepare_cost_receipt_authority(
     let selected_supplier_exists = match std::fs::symlink_metadata(&selected_supplier) {
         Ok(_) => true,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
-        Err(error) => return Err(error).context("inspect fixed supplier statement before pair verification"),
+        Err(error) => {
+            return Err(error).context("inspect fixed supplier statement before pair verification");
+        }
     };
     let mut transaction = None;
     let inventory = if selected_supplier_exists {
         let (inventory, prepared) = cost_inputs::prepare_transaction_context(
-            snapshot.private_root(), condition, Some(&selected_supplier), &mut |_| Ok(()),
+            snapshot.private_root(),
+            condition,
+            Some(&selected_supplier),
+            &mut |_| Ok(()),
         )?;
         transaction = Some(prepared);
         inventory
@@ -174,7 +179,10 @@ fn prepare_cost_receipt_authority(
                 Some(transaction) => transaction,
                 None => {
                     let (inventory, transaction) = cost_inputs::prepare_transaction_context(
-                        snapshot.private_root(), condition, supplier_path, &mut |_| Ok(()),
+                        snapshot.private_root(),
+                        condition,
+                        supplier_path,
+                        &mut |_| Ok(()),
                     )?;
                     if inventory.inventory_root_sha256() != verified_root {
                         anyhow::bail!("supplier absence inventory changed after pair verification");
@@ -265,11 +273,14 @@ fn run_make_cost_receipt(args: MakeCostReceiptArgs) -> anyhow::Result<()> {
         PreparedCostReceiptAuthority::Replay => anyhow::bail!(
             "make-cost-receipt requires verified Native Live evidence; Replay is refused"
         ),
-        PreparedCostReceiptAuthority::Mock => anyhow::bail!(
-            "make-cost-receipt requires executionMode=live; mock evidence is refused"
-        ),
+        PreparedCostReceiptAuthority::Mock => {
+            anyhow::bail!("make-cost-receipt requires executionMode=live; mock evidence is refused")
+        }
         PreparedCostReceiptAuthority::Live(authority) => cost_inputs::publish_cost_receipt(
-            authority, args.condition, supplier, &ProductionCostClock,
+            authority,
+            args.condition,
+            supplier,
+            &ProductionCostClock,
         ),
     }
 }
@@ -303,12 +314,12 @@ fn run_annotate_cost(args: AnnotateCostArgs) -> anyhow::Result<()> {
     let inputs = snapshot.verified_inputs()?;
     let core = blind_verify::verify_pair_evidence_core_from(&snapshot, inputs, inventory)?;
     match core.mode {
-        ExecutionMode::Replay => anyhow::bail!(
-            "annotate-cost requires verified Native Live evidence; Replay is refused"
-        ),
-        ExecutionMode::Mock => anyhow::bail!(
-            "annotate-cost requires executionMode=live; mock evidence is refused"
-        ),
+        ExecutionMode::Replay => {
+            anyhow::bail!("annotate-cost requires verified Native Live evidence; Replay is refused")
+        }
+        ExecutionMode::Mock => {
+            anyhow::bail!("annotate-cost requires executionMode=live; mock evidence is refused")
+        }
         ExecutionMode::Live => cost_binding::publish_cost_binding(
             cost_authority::prepare_live_cost_authority(core)?,
             args.condition,

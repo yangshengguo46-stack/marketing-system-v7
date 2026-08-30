@@ -15,7 +15,7 @@ fn key_from_fixture(vector: &serde_json::Value) -> crate::proof_commitment::Proo
 }
 
 fn hex_bytes(input: &str) -> Vec<u8> {
-    assert!(input.len() % 2 == 0);
+    assert!(input.len().is_multiple_of(2));
     (0..input.len())
         .step_by(2)
         .map(|index| u8::from_str_radix(&input[index..index + 2], 16).unwrap())
@@ -280,7 +280,10 @@ fn proof_commitment_sync_failure_preserves_key_and_forces_retry_collision() {
             &root,
             |_| Ok(()),
             |directory| {
-                assert!(key_path.exists(), "directory sync ran before key publication");
+                assert!(
+                    key_path.exists(),
+                    "directory sync ran before key publication"
+                );
                 calls.borrow_mut().push(directory.to_path_buf());
                 if directory == failed_directory {
                     anyhow::bail!("synthetic directory sync failure");
@@ -290,9 +293,7 @@ fn proof_commitment_sync_failure_preserves_key_and_forces_retry_collision() {
         )
         .and_then(|_| crate::secure_fs::write_owner_only_new(&context, b"{}"));
 
-        assert!(
-            format!("{:#}", result.unwrap_err()).contains("synthetic directory sync failure")
-        );
+        assert!(format!("{:#}", result.unwrap_err()).contains("synthetic directory sync failure"));
         let expected_calls = if fail_at_coordinator {
             vec![root.clone(), coordinator]
         } else {

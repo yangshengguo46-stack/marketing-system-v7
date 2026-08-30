@@ -173,7 +173,9 @@ fn exact_jcs_receipt_semantic_mutations_are_rejected() {
     ] {
         let mut value = receipt_value.clone();
         mutate(&mut value);
-        let error = contracts.validate_receipt(&receipt_bytes(&value)).unwrap_err();
+        let error = contracts
+            .validate_receipt(&receipt_bytes(&value))
+            .unwrap_err();
         assert!(error.to_string().contains(expected));
     }
 
@@ -183,13 +185,19 @@ fn exact_jcs_receipt_semantic_mutations_are_rejected() {
     let error = contracts
         .validate_receipt(&receipt_bytes(&empty_attempt_range))
         .unwrap_err();
-    assert!(error.to_string().contains("receipt attempt range is not ordered"));
+    assert!(
+        error
+            .to_string()
+            .contains("receipt attempt range is not ordered")
+    );
 
     let mut valid_overage = receipt_value;
     valid_overage["usage"]["inputTokens"] = serde_json::json!(951);
     valid_overage["usage"]["totalTokens"] = serde_json::json!(1001);
     valid_overage["withinCeilings"] = serde_json::json!(false);
-    contracts.validate_receipt(&receipt_bytes(&valid_overage)).unwrap();
+    contracts
+        .validate_receipt(&receipt_bytes(&valid_overage))
+        .unwrap();
 }
 
 fn run_case(

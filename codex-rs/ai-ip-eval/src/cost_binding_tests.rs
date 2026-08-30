@@ -64,7 +64,11 @@ impl crate::cost_authority::CostClock for BindingClock {
 }
 
 fn binding_clock(value: &str) -> BindingClock {
-    BindingClock(DateTime::parse_from_rfc3339(value).unwrap().with_timezone(&Utc))
+    BindingClock(
+        DateTime::parse_from_rfc3339(value)
+            .unwrap()
+            .with_timezone(&Utc),
+    )
 }
 
 #[test]
@@ -81,16 +85,29 @@ fn cost_binding_transaction_publishes_exact_inventory_covered_sidecar() {
     .unwrap();
 
     let binding_bytes = fs::read(binding_path(&world)).unwrap();
-    let binding: crate::cost_binding::CostBindingV1 = serde_json::from_slice(&binding_bytes).unwrap();
+    let binding: crate::cost_binding::CostBindingV1 =
+        serde_json::from_slice(&binding_bytes).unwrap();
     let receipt = crate::cost_contracts::validate_cost_receipt(&receipt_before).unwrap();
-    assert_eq!(binding.execution_manifest_sha256, receipt.execution_manifest_sha256);
+    assert_eq!(
+        binding.execution_manifest_sha256,
+        receipt.execution_manifest_sha256
+    );
     assert_eq!(binding.broker_receipt_sha256, receipt.broker_receipt_sha256);
-    assert_eq!(binding.cost_receipt_sha256, format!("{:x}", sha2::Sha256::digest(&receipt_before)));
+    assert_eq!(
+        binding.cost_receipt_sha256,
+        format!("{:x}", sha2::Sha256::digest(&receipt_before))
+    );
     assert_eq!(binding.condition, EvaluationCondition::Candidate);
     assert_eq!(binding.bound_at, "2026-08-30T10:01:00.000Z");
-    assert_eq!(binding_bytes, crate::jcs::canonicalize_value(&crate::jcs::parse_json(&binding_bytes).unwrap()).unwrap());
+    assert_eq!(
+        binding_bytes,
+        crate::jcs::canonicalize_value(&crate::jcs::parse_json(&binding_bytes).unwrap()).unwrap()
+    );
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     crate::private_inventory::verify_private_inventory(world.root()).unwrap();
     assert_eq!(clock.calls(), 1);
 }
@@ -109,11 +126,18 @@ fn cost_binding_transaction_publishes_generic_inventory_covered_sidecar() {
     .unwrap();
 
     let binding_bytes = fs::read(binding_path_for(&world, EvaluationCondition::Generic)).unwrap();
-    let binding: crate::cost_binding::CostBindingV1 = serde_json::from_slice(&binding_bytes).unwrap();
+    let binding: crate::cost_binding::CostBindingV1 =
+        serde_json::from_slice(&binding_bytes).unwrap();
     assert_eq!(binding.condition, EvaluationCondition::Generic);
-    assert_eq!(binding.cost_receipt_sha256, format!("{:x}", sha2::Sha256::digest(&receipt_before)));
+    assert_eq!(
+        binding.cost_receipt_sha256,
+        format!("{:x}", sha2::Sha256::digest(&receipt_before))
+    );
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     crate::private_inventory::verify_private_inventory(world.root()).unwrap();
     assert_eq!(clock.calls(), 1);
 }
@@ -136,7 +160,11 @@ fn cost_binding_transaction_refuses_existing_sidecar_without_overwriting() {
         &rejected_clock,
     )
     .unwrap_err();
-    assert!(error.to_string().contains("cost binding destination already exists"));
+    assert!(
+        error
+            .to_string()
+            .contains("cost binding destination already exists")
+    );
     assert_eq!(fs::read(binding_path(&world)).unwrap(), before);
     assert_eq!(rejected_clock.calls(), 0);
 }
@@ -208,7 +236,11 @@ fn cost_binding_transaction_rejects_absent_and_noncanonical_receipts() {
     let malformed = crate::cost_authority_tests::cost_binding_world(false);
     let malformed_authority = crate::cost_authority_tests::cost_binding_authority(malformed.root());
     let receipt = fs::read(malformed.receipt_path()).unwrap();
-    fs::write(malformed.receipt_path(), [b" ".as_slice(), receipt.as_slice()].concat()).unwrap();
+    fs::write(
+        malformed.receipt_path(),
+        [b" ".as_slice(), receipt.as_slice()].concat(),
+    )
+    .unwrap();
     let error = crate::cost_binding::publish_cost_binding(
         malformed_authority,
         EvaluationCondition::Candidate,
@@ -230,7 +262,10 @@ fn cost_binding_transaction_rejects_manifest_bytes_drifting_from_receipt_commitm
         &crate::cost_authority_tests::cost_binding_clock(),
     )
     .unwrap_err();
-    assert!(error.to_string().contains("execution manifest SHA-256"), "{error:#}");
+    assert!(
+        error.to_string().contains("execution manifest SHA-256"),
+        "{error:#}"
+    );
     assert!(!binding_path(&world).exists());
 }
 
@@ -265,7 +300,9 @@ fn cost_binding_transaction_rejects_supplier_replacement_after_retain_before_app
         &clock,
         &mut |checkpoint| {
             if checkpoint == crate::cost_binding::CostBindingCheckpoint::AfterCreate {
-                let path = world.root().join("inputs/supplier-statements/candidate.json");
+                let path = world
+                    .root()
+                    .join("inputs/supplier-statements/candidate.json");
                 fs::remove_file(&path)?;
                 crate::secure_fs::write_owner_only_new(&path, b"replacement")?;
             }
@@ -273,11 +310,17 @@ fn cost_binding_transaction_rejects_supplier_replacement_after_retain_before_app
         },
     )
     .unwrap_err();
-    assert!(error.to_string().contains("retained private file"), "{error:#}");
+    assert!(
+        error.to_string().contains("retained private file"),
+        "{error:#}"
+    );
     assert!(binding_path(&world).exists());
     assert_eq!(inventory_bytes(&world), inventory_before);
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     assert_eq!(clock.calls(), 1);
 }
 
@@ -302,10 +345,18 @@ fn cost_binding_transaction_rejects_changed_binding_before_expected_sha_append()
         },
     )
     .unwrap_err();
-    assert!(error.to_string().contains("inventory append target is absent, recorded, or mismatched"), "{error:#}");
+    assert!(
+        error
+            .to_string()
+            .contains("inventory append target is absent, recorded, or mismatched"),
+        "{error:#}"
+    );
     assert_eq!(inventory_bytes(&world), inventory_before);
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     assert_eq!(clock.calls(), 1);
 }
 
@@ -314,18 +365,25 @@ fn cost_binding_transaction_rejects_extra_pending_leaf_and_retained_binding_byte
     for (name, inject, expected) in [
         (
             "extra leaf",
-            Box::new(|world: &crate::cost_authority_tests::CostTransactionWorld| {
-                write_new_owner_only(&world.root().join("coordinator/cost/unexpected.json"), b"extra");
-            }) as Box<dyn Fn(&crate::cost_authority_tests::CostTransactionWorld)>,
+            Box::new(
+                |world: &crate::cost_authority_tests::CostTransactionWorld| {
+                    write_new_owner_only(
+                        &world.root().join("coordinator/cost/unexpected.json"),
+                        b"extra",
+                    );
+                },
+            ) as Box<dyn Fn(&crate::cost_authority_tests::CostTransactionWorld)>,
             "pending cost binding inventory contains an unexpected path or changed state",
         ),
         (
             "changed binding bytes",
-            Box::new(|world: &crate::cost_authority_tests::CostTransactionWorld| {
-                let path = binding_path(world);
-                fs::remove_file(&path).unwrap();
-                write_new_owner_only(&path, b"different binding bytes");
-            }),
+            Box::new(
+                |world: &crate::cost_authority_tests::CostTransactionWorld| {
+                    let path = binding_path(world);
+                    fs::remove_file(&path).unwrap();
+                    write_new_owner_only(&path, b"different binding bytes");
+                },
+            ),
             "pending cost binding filesystem SHA-256 differs",
         ),
     ] {
@@ -348,8 +406,16 @@ fn cost_binding_transaction_rejects_extra_pending_leaf_and_retained_binding_byte
         .unwrap_err();
         assert!(error.to_string().contains(expected), "{name}: {error:#}");
         assert_eq!(inventory_bytes(&world), inventory_before, "{name}");
-        assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before, "{name}");
-        assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before, "{name}");
+        assert_eq!(
+            fs::read(world.receipt_path()).unwrap(),
+            receipt_before,
+            "{name}"
+        );
+        assert_eq!(
+            manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+            manifests_before,
+            "{name}"
+        );
         assert_eq!(clock.calls(), 1, "{name}");
     }
 }
@@ -365,12 +431,17 @@ fn cost_binding_transaction_rejects_after_create_failure_without_rerun_overwrite
         EvaluationCondition::Candidate,
         &first_clock,
         &mut |checkpoint| match checkpoint {
-            crate::cost_binding::CostBindingCheckpoint::AfterCreate => anyhow::bail!("injected after-create failure"),
+            crate::cost_binding::CostBindingCheckpoint::AfterCreate => {
+                anyhow::bail!("injected after-create failure")
+            }
             _ => Ok(()),
         },
     )
     .unwrap_err();
-    assert!(error.to_string().contains("injected after-create failure"), "{error:#}");
+    assert!(
+        error.to_string().contains("injected after-create failure"),
+        "{error:#}"
+    );
     let binding_before = fs::read(binding_path(&world)).unwrap();
     let rerun_clock = crate::cost_authority_tests::cost_binding_clock();
     let rerun = crate::cost_binding::publish_cost_binding(
@@ -379,7 +450,12 @@ fn cost_binding_transaction_rejects_after_create_failure_without_rerun_overwrite
         &rerun_clock,
     )
     .unwrap_err();
-    assert!(rerun.to_string().contains("cost binding destination already exists"), "{rerun:#}");
+    assert!(
+        rerun
+            .to_string()
+            .contains("cost binding destination already exists"),
+        "{rerun:#}"
+    );
     assert_eq!(fs::read(binding_path(&world)).unwrap(), binding_before);
     assert_eq!(inventory_bytes(&world), inventory_before);
     assert_eq!(first_clock.calls(), 1);
@@ -404,7 +480,12 @@ fn cost_binding_transaction_rejects_manifest_mutation_after_fresh_rebuild() {
         },
     )
     .unwrap_err();
-    assert!(error.to_string().contains("run manifest bytes changed during cost binding transaction"), "{error:#}");
+    assert!(
+        error
+            .to_string()
+            .contains("run manifest bytes changed during cost binding transaction"),
+        "{error:#}"
+    );
     assert!(binding_path(&world).exists());
     assert_ne!(inventory_bytes(&world), inventory_before);
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
@@ -429,9 +510,15 @@ fn cost_binding_transaction_rejects_receipt_mutation_after_fresh_rebuild() {
         },
     )
     .unwrap_err();
-    assert!(error.to_string().contains("retained private file"), "{error:#}");
+    assert!(
+        error.to_string().contains("retained private file"),
+        "{error:#}"
+    );
     assert!(binding_path(&world).exists());
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     crate::private_inventory::verify_private_inventory(world.root()).unwrap_err();
     assert_eq!(clock.calls(), 1);
 }
@@ -462,7 +549,10 @@ fn cost_binding_transaction_rejects_binding_replacement_after_fresh_rebuild() {
     assert_eq!(fs::read(binding_path(&world)).unwrap(), replacement);
     assert_ne!(inventory_bytes(&world), inventory_before);
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     crate::private_inventory::verify_private_inventory(world.root()).unwrap_err();
     assert_eq!(clock.calls(), 1);
 }
@@ -481,7 +571,9 @@ fn cost_binding_transaction_rejects_supplier_replacement_after_fresh_rebuild() {
         &clock,
         &mut |checkpoint| {
             if checkpoint == crate::cost_binding::CostBindingCheckpoint::AfterFreshInventory {
-                let path = world.root().join("inputs/supplier-statements/candidate.json");
+                let path = world
+                    .root()
+                    .join("inputs/supplier-statements/candidate.json");
                 fs::remove_file(&path)?;
                 crate::secure_fs::write_owner_only_new(&path, replacement)?;
             }
@@ -491,10 +583,21 @@ fn cost_binding_transaction_rejects_supplier_replacement_after_fresh_rebuild() {
     .unwrap_err();
     assert_error_contains(error, "retained private file");
     assert!(binding_path(&world).exists());
-    assert_eq!(fs::read(world.root().join("inputs/supplier-statements/candidate.json")).unwrap(), replacement);
+    assert_eq!(
+        fs::read(
+            world
+                .root()
+                .join("inputs/supplier-statements/candidate.json")
+        )
+        .unwrap(),
+        replacement
+    );
     assert_ne!(inventory_bytes(&world), inventory_before);
     assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
-    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    assert_eq!(
+        manifest_paths(&world).map(|path| fs::read(path).unwrap()),
+        manifests_before
+    );
     crate::private_inventory::verify_private_inventory(world.root()).unwrap_err();
     assert_eq!(clock.calls(), 1);
 }
@@ -519,7 +622,10 @@ fn cost_binding_calculation_uses_one_clock_value_without_publication() {
 fn cost_binding_calculation_rejects_invalid_bound_timeline_without_publication() {
     let cases = [
         ("2026-08-30T09:59:59.999Z", "calculation is before finish"),
-        ("2026-08-30T10:00:59.999Z", "before retained receipt calculation"),
+        (
+            "2026-08-30T10:00:59.999Z",
+            "before retained receipt calculation",
+        ),
         ("2026-08-30T11:00:00.000Z", "retention"),
     ];
     for (time, expected) in cases {

@@ -1,10 +1,10 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::fs;
+use std::path::Path;
+use std::path::PathBuf;
 
 use pretty_assertions::assert_eq;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
+use sha2::Sha256;
 
 use super::*;
 

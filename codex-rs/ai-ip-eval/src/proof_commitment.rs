@@ -34,11 +34,7 @@ impl fmt::Debug for RetainedProofCommitmentKey {
 
 impl RetainedProofCommitmentKey {
     pub(crate) fn create_fixed(private_root: &Path) -> anyhow::Result<Self> {
-        Self::create_fixed_inner(
-            private_root,
-            |_| Ok(()),
-            crate::secure_fs::fsync_directory,
-        )
+        Self::create_fixed_inner(private_root, |_| Ok(()), crate::secure_fs::fsync_directory)
     }
 
     #[cfg(test)]
@@ -176,11 +172,7 @@ impl RetainedProofCommitmentKey {
         let uppercase = lowercase.to_ascii_uppercase();
         [raw, lowercase.as_bytes(), uppercase.as_bytes()]
             .into_iter()
-            .any(|needle| {
-                bytes
-                    .windows(needle.len())
-                    .any(|window| window == needle)
-            })
+            .any(|needle| bytes.windows(needle.len()).any(|window| window == needle))
     }
 }
 

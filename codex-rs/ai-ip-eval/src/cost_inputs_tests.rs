@@ -82,18 +82,21 @@ fn retained_pending_supplier_binds_condition_root_bytes_type_and_sha() {
     let (_temp, root) = owner_root();
     let bytes = supplier_bytes();
     let path = supplier_leaf(&root, &bytes);
-    let retained = RetainedPendingSupplierStatement::retain(
-        &root,
-        EvaluationCondition::Candidate,
-        &path,
-    )
-    .unwrap();
+    let retained =
+        RetainedPendingSupplierStatement::retain(&root, EvaluationCondition::Candidate, &path)
+            .unwrap();
 
-    assert_eq!(retained.relative_path(), "inputs/supplier-statements/candidate.json");
+    assert_eq!(
+        retained.relative_path(),
+        "inputs/supplier-statements/candidate.json"
+    );
     assert_eq!(retained.raw_bytes(), bytes);
     assert_eq!(retained.typed().condition, EvaluationCondition::Candidate);
     assert_eq!(retained.sha256(), format!("{:x}", Sha256::digest(&bytes)));
-    assert_eq!(retained.inventory_entry().sha256.as_deref(), Some(retained.sha256()));
+    assert_eq!(
+        retained.inventory_entry().sha256.as_deref(),
+        Some(retained.sha256())
+    );
     assert!(retained.is_pending());
     retained.reverify_unchanged().unwrap();
 
@@ -106,7 +109,10 @@ fn retained_pending_supplier_binds_condition_root_bytes_type_and_sha() {
     )
     .err()
     .expect("wrong condition leaf must be rejected");
-    assert!(error.to_string().contains("condition-bound supplier"), "{error:#}");
+    assert!(
+        error.to_string().contains("condition-bound supplier"),
+        "{error:#}"
+    );
 
     let (_other_temp, other_root) = owner_root();
     let error = RetainedPendingSupplierStatement::retain(
@@ -116,7 +122,10 @@ fn retained_pending_supplier_binds_condition_root_bytes_type_and_sha() {
     )
     .err()
     .expect("supplier retained from another root must be rejected");
-    assert!(error.to_string().contains("condition-bound supplier"), "{error:#}");
+    assert!(
+        error.to_string().contains("condition-bound supplier"),
+        "{error:#}"
+    );
 }
 
 #[test]
@@ -124,12 +133,9 @@ fn retained_pending_supplier_reverify_rejects_same_length_replacement() {
     let (_temp, root) = owner_root();
     let bytes = supplier_bytes();
     let path = supplier_leaf(&root, &bytes);
-    let retained = RetainedPendingSupplierStatement::retain(
-        &root,
-        EvaluationCondition::Candidate,
-        &path,
-    )
-    .unwrap();
+    let retained =
+        RetainedPendingSupplierStatement::retain(&root, EvaluationCondition::Candidate, &path)
+            .unwrap();
 
     let replacement = vec![b' '; bytes.len()];
     fs::write(&path, replacement).unwrap();
