@@ -199,6 +199,10 @@ mod contracts_tests;
 mod cost_tests;
 
 #[cfg(test)]
+#[path = "cost_authority_tests.rs"]
+mod cost_authority_tests;
+
+#[cfg(test)]
 #[path = "cost_contracts_tests.rs"]
 mod cost_contracts_tests;
 
