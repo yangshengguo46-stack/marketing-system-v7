@@ -1,27 +1,11 @@
-use anyhow::Result;
-use anyhow::bail;
-use chrono::DateTime;
-use chrono::SecondsFormat;
-use chrono::Timelike;
-use chrono::Utc;
+use anyhow::{Result, bail};
+use chrono::{DateTime, SecondsFormat, Timelike, Utc};
 
-use crate::ArmReceipt;
-use crate::ExecutionMode;
-use crate::ModeEvidence;
-use crate::NativeHeldOutAttestation;
-use crate::PairReceipt;
-use crate::RunManifest;
-use crate::blind_verify::PairEvidenceCore;
-use crate::blind_verify::ExactDocument;
-use crate::cost_contracts::CostReceiptV1;
-use crate::cost_contracts::AttemptRangeV1;
-use crate::cost_contracts::CostCalculationV1;
-use crate::cost_contracts::CostCeilingsV1;
-use crate::cost_contracts::FxReceiptV1;
-use crate::cost_contracts::SupplierStatementV1;
-use crate::cost_contracts::VerifiedCostInputs;
-use crate::proof_ledger::VerifiedLedgerArm;
-use crate::proof_ledger::VerifiedNativeLedger;
+use crate::{ArmReceipt, ExecutionMode, ModeEvidence, NativeHeldOutAttestation, PairReceipt, RunManifest};
+use crate::blind_verify::{ExactDocument, PairEvidenceCore};
+use crate::cost_contracts::{AttemptRangeV1, CostCalculationV1, CostCeilingsV1, CostReceiptV1};
+use crate::cost_contracts::{FxReceiptV1, SupplierStatementV1, VerifiedCostInputs};
+use crate::proof_ledger::{VerifiedLedgerArm, VerifiedNativeLedger};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct CostArmProjection {
@@ -74,6 +58,8 @@ pub(crate) struct LiveArmAuthority {
     pub(crate) manifest_frozen_sha256: String,
     pub(crate) manifest_execution_sha256: String,
     pub(crate) manifest_execution_mode: ExecutionMode,
+    pub(crate) manifest_attempt_ledger_sha256: String,
+    pub(crate) manifest_attempt_index_root_sha256: String,
     pub(crate) manifest_fork_sha: String,
     pub(crate) manifest_case_sha256: String,
     pub(crate) provider_label: String,
@@ -112,7 +98,6 @@ pub(crate) struct LiveAuthorityData {
     pub(crate) attempt_ledger_sha256: String,
     pub(crate) attempt_index_root_sha256: String,
     pub(crate) attestation: NativeHeldOutAttestation,
-    pub(crate) attestation_sha256: String,
     pub(crate) fixed_max_output_tokens: u64,
     pub(crate) fixed_max_provider_request_attempts: u64,
     pub(crate) fixed_max_total_tokens: u64,
@@ -120,27 +105,29 @@ pub(crate) struct LiveAuthorityData {
     pub(crate) arms: [LiveArmAuthority; 2],
 }
 
+/// Test-only observable source/sink used to exercise the production semantic gate without I/O.
+#[cfg(test)]
+pub(crate) trait SyntheticAuthorityBoundary {
+    fn documents(&self) -> [Vec<u8>; 5];
+    fn validate_usage(&self, data: &LiveAuthorityData) -> Result<()>;
+    fn publish_receipt(&self, receipt: &CostReceiptV1) -> Result<()>;
+    fn as_any(&self) -> &dyn std::any::Any;
+}
 #[cfg(test)]
 pub(crate) struct SyntheticLiveCostAuthority {
     pub(crate) data: LiveAuthorityData,
-    pub(crate) rate_card: Vec<u8>,
-    pub(crate) billing_policy: Vec<u8>,
-    pub(crate) fx_policy: Vec<u8>,
-    pub(crate) budget: Vec<u8>,
+    pub(crate) boundary: std::rc::Rc<dyn SyntheticAuthorityBoundary>,
 }
-
 enum LiveAuthoritySource {
     Production(Box<PairEvidenceCore>),
     #[cfg(test)]
-    Synthetic,
+    Synthetic(std::rc::Rc<dyn SyntheticAuthorityBoundary>),
 }
-
 pub(crate) struct VerifiedLiveCostAuthority {
     data: LiveAuthorityData,
     inputs: VerifiedCostInputs,
     source: LiveAuthoritySource,
 }
-
 pub(crate) struct RetainedSupplierStatement {
     statement: SupplierStatementV1,
     sha256: String,
@@ -165,18 +152,18 @@ pub(crate) fn prepare_live_cost_authority(
     core: PairEvidenceCore,
 ) -> Result<VerifiedLiveCostAuthority> {
     crate::blind_finalize::reverify_sealed_pair_authority(&core)?;
-    let (data, raw) = production_parts(&core)?;
-    prepare_authority(data, raw.each_ref().map(Vec::as_slice), LiveAuthoritySource::Production(Box::new(core)))
+    let (data, attestation, raw) = production_parts(&core)?;
+    prepare_authority(data, &attestation, raw.each_ref().map(Vec::as_slice), LiveAuthoritySource::Production(Box::new(core)))
 }
 #[cfg(test)]
 pub(crate) fn prepare_synthetic_live_cost_authority(
     input: SyntheticLiveCostAuthority,
 ) -> Result<VerifiedLiveCostAuthority> {
-    prepare_authority(
-        input.data,
-        [&input.rate_card, &input.billing_policy, &input.fx_policy, &input.budget].map(Vec::as_slice),
-        LiveAuthoritySource::Synthetic,
-    )
+    let SyntheticLiveCostAuthority { data, boundary } = input;
+    let source = LiveAuthoritySource::Synthetic(boundary.clone());
+    boundary.validate_usage(&data)?;
+    let documents = boundary.documents();
+    prepare_authority(data, &documents[0], [&documents[1], &documents[2], &documents[3], &documents[4]].map(Vec::as_slice), source)
 }
 pub(crate) fn commit_cost_receipt(
     authority: &VerifiedLiveCostAuthority,
@@ -185,8 +172,9 @@ pub(crate) fn commit_cost_receipt(
     clock: &dyn CostClock,
 ) -> Result<CostReceiptV1> {
     authority.reverify()?;
-    let arm = authority.data.arms.iter().find(|arm| arm.condition == condition)
-        .ok_or_else(|| anyhow::anyhow!("selected receipt condition is absent"))?;
+    let mut selected = authority.data.arms.iter().filter(|arm| arm.condition == condition);
+    let arm = selected.next().ok_or_else(|| anyhow::anyhow!("selected receipt condition is absent"))?;
+    if selected.next().is_some() { bail!("selected receipt condition is ambiguous") }
     let now = clock.now()?;
     let calculated_at = now.with_nanosecond(now.nanosecond() / 1_000_000 * 1_000_000)
         .ok_or_else(|| anyhow::anyhow!("normalize calculation clock"))?
@@ -249,10 +237,14 @@ pub(crate) fn commit_cost_receipt(
     let bytes = crate::jcs::canonicalize_value(&value)?;
     let validated = crate::cost_contracts::validate_cost_receipt(&bytes)?;
     if validated != receipt { bail!("canonical receipt validator changed the typed value") }
+    #[cfg(test)]
+    if let LiveAuthoritySource::Synthetic(boundary) = &authority.source {
+        boundary.publish_receipt(&validated)?;
+    }
     Ok(validated)
 }
 
-fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, [Vec<u8>; 4])> {
+fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, Vec<u8>, [Vec<u8>; 4])> {
     let crate::blind::FrozenInputToken::Native { frozen, content } = &core.inputs else {
         bail!("Replay cannot construct a Live cost authority")
     };
@@ -268,7 +260,8 @@ fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, [Vec<
             core_run_ordinal: core_arm.run_ordinal, core_condition: core_arm.condition,
             core_manifest_sha256: core_arm.run_manifest_raw_sha256.clone(), core_usage: core_arm.usage.clone(), core_raw_response_count: core_arm.raw_response_count,
             manifest_sha256: projected.manifest_sha256.clone(), manifest_pair_id: manifest.pair_id.clone(), manifest_frozen_sha256: manifest.frozen_run_context_sha256.clone(),
-            manifest_execution_sha256: manifest.execution_context_sha256.clone(), manifest_execution_mode: manifest.execution_mode, manifest_fork_sha: manifest.fork_sha.clone(), manifest_case_sha256: manifest.case_sha256.clone(),
+            manifest_execution_sha256: manifest.execution_context_sha256.clone(), manifest_execution_mode: manifest.execution_mode,
+            manifest_attempt_ledger_sha256: manifest.broker_attempt_ledger_sha256.clone(), manifest_attempt_index_root_sha256: manifest.attempt_index_root_sha256.clone(), manifest_fork_sha: manifest.fork_sha.clone(), manifest_case_sha256: manifest.case_sha256.clone(),
             provider_label: manifest.provider_label.clone(), model_label: manifest.model_label.clone(), actual_model_revision: manifest.actual_model_revision.clone(),
             usage_scope: manifest.usage_scope.clone(), usage: manifest.usage.clone(), provider_request_attempt_count: manifest.provider_request_attempt_count,
             provider_completed_response_count: manifest.provider_completed_response_count, raw_response_count: manifest.raw_response_count,
@@ -277,41 +270,51 @@ fn production_parts(core: &PairEvidenceCore) -> Result<(LiveAuthorityData, [Vec<
             mode_evidence: projected.mode_evidence.clone(), ledger: projected.ledger.clone(), receipt: projected.arm_receipt.clone(), receipt_sha256: projected.arm_receipt_sha256.clone(),
         }
     });
-    use sha2::Digest;
     let data = LiveAuthorityData {
         private_root: core.private_root.to_str().ok_or_else(|| anyhow::anyhow!("private root is not UTF-8"))?.into(),
         pair_id: core.pair_id.clone(), fork_sha: core.fork_sha.clone(), frozen_sha256: core.frozen_run_context_sha256.clone(), execution_mode: projection.execution_mode,
         execution_context_sha256: projection.execution_context_sha256.clone(), started_at: projection.started_at.clone(), deadline: projection.deadline.clone(),
         arm_order_commitment: projection.arm_order_commitment.clone(), provider_endpoint_commitment: projection.provider_endpoint_commitment.clone(),
         pair_receipt: projection.pair_receipt.clone(), pair_receipt_sha256: projection.pair_receipt_sha256.clone(), attempt_ledger_sha256: projection.attempt_ledger_sha256.clone(),
-        attempt_index_root_sha256: projection.attempt_index_root_sha256.clone(), attestation: retained.attestation.clone(),
-        attestation_sha256: format!("{:x}", sha2::Sha256::digest(&retained.attestation_bytes)), fixed_max_output_tokens: frozen.max_output_tokens(),
+        attempt_index_root_sha256: projection.attempt_index_root_sha256.clone(), attestation: retained.attestation.clone(), fixed_max_output_tokens: frozen.max_output_tokens(),
         fixed_max_provider_request_attempts: frozen.max_attempts_per_arm(), fixed_max_total_tokens: frozen.max_total_tokens_per_run(),
         fixed_max_elapsed_seconds: frozen.max_elapsed_seconds_per_run(), arms,
     };
     let raw: [Vec<u8>; 4] = ["rateCard", "billingPolicy", "fxPolicy", "providerBudgetEvidence"].into_iter()
         .map(|name| frozen.artifact_bytes(name)).collect::<Result<Vec<_>>>()?.try_into().map_err(|_| anyhow::anyhow!("missing frozen cost input"))?;
-    Ok((data, raw))
+    Ok((data, retained.attestation_bytes.clone(), raw))
 }
-fn prepare_authority(data: LiveAuthorityData, raw: [&[u8]; 4], source: LiveAuthoritySource) -> Result<VerifiedLiveCostAuthority> {
-    let inputs = crate::cost_contracts::FrozenCostContracts::load()?.validate_inputs(raw[0], raw[1], raw[2], raw[3])?;
-    validate_authority(&data, &inputs)?;
+fn prepare_authority(data: LiveAuthorityData, attestation_raw: &[u8], raw: [&[u8]; 4], source: LiveAuthoritySource) -> Result<VerifiedLiveCostAuthority> {
+    let inputs = validate_parts(&data, attestation_raw, raw)?;
     Ok(VerifiedLiveCostAuthority { data, inputs, source })
+}
+fn validate_parts(data: &LiveAuthorityData, attestation_raw: &[u8], raw: [&[u8]; 4]) -> Result<VerifiedCostInputs> {
+    let attestation = crate::contracts::FrozenContracts::load()?.validate_native_attestation(attestation_raw)
+        .map_err(|error| anyhow::anyhow!("attestation contract rejected exact bytes: {error}"))?;
+    if attestation != data.attestation { bail!("attestation raw bytes differ from typed authority") }
+    let inputs = crate::cost_contracts::FrozenCostContracts::load()?.validate_inputs(raw[0], raw[1], raw[2], raw[3])?;
+    validate_authority(data, &inputs, &sha256(attestation_raw))?;
+    Ok(inputs)
 }
 
 impl VerifiedLiveCostAuthority {
     fn reverify(&self) -> Result<()> {
-        match &self.source {
+        let inputs = match &self.source {
             LiveAuthoritySource::Production(core) => {
                 crate::blind_finalize::reverify_sealed_pair_authority(core)?;
-                let (data, raw) = production_parts(core)?;
-                let inputs = crate::cost_contracts::FrozenCostContracts::load()?.validate_inputs(&raw[0], &raw[1], &raw[2], &raw[3])?;
-                if data != self.data || !same_inputs(&inputs, &self.inputs)? { bail!("Live cost authority changed during reverify") }
+                let (data, attestation, raw) = production_parts(core)?;
+                if data != self.data { bail!("Live cost authority changed during reverify") }
+                validate_parts(&data, &attestation, raw.each_ref().map(Vec::as_slice))?
             }
             #[cfg(test)]
-            LiveAuthoritySource::Synthetic => {}
-        }
-        validate_authority(&self.data, &self.inputs)
+            LiveAuthoritySource::Synthetic(boundary) => {
+                boundary.validate_usage(&self.data)?;
+                let documents = boundary.documents();
+                validate_parts(&self.data, &documents[0], [&documents[1], &documents[2], &documents[3], &documents[4]].map(Vec::as_slice))?
+            }
+        };
+        if !same_inputs(&inputs, &self.inputs)? { bail!("Live cost inputs changed during reverify") }
+        Ok(())
     }
 }
 
@@ -322,7 +325,12 @@ fn same_inputs(left: &VerifiedCostInputs, right: &VerifiedCostInputs) -> Result<
             == serde_json::to_value((&right.rate_card, &right.billing_policy, &right.fx_policy, &right.budget))?)
 }
 
-fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> Result<()> {
+fn sha256(bytes: &[u8]) -> String {
+    use sha2::Digest;
+    format!("{:x}", sha2::Sha256::digest(bytes))
+}
+
+fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs, exact_attestation_sha256: &str) -> Result<()> {
     let attestation = &data.attestation;
     let [first, second] = &data.arms;
     if data.execution_mode != ExecutionMode::Live || attestation.execution_mode != "live" || first.mode_evidence != second.mode_evidence { bail!("Live mode evidence is inconsistent") }
@@ -334,11 +342,14 @@ fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> 
         bail!("provider endpoint differs from target provider evidence")
     }
     if serde_json::to_value(provider_role)? != serde_json::Value::String(attestation.provider_role.clone()) { bail!("provider role differs from attestation") }
-    if attestation_sha256 != &data.attestation_sha256 || provider_budget_evidence_sha256 != &inputs.provider_budget_evidence_sha256
+    if attestation_sha256 != exact_attestation_sha256 || provider_budget_evidence_sha256 != &inputs.provider_budget_evidence_sha256
         || approval_commitment != &attestation.approval_id || rate_card_sha256 != &inputs.rate_card_sha256
         || billing_policy_sha256 != &inputs.billing_policy_commitment || fx_policy_sha256.as_deref() != Some(&inputs.fx_policy_sha256)
-        || *authorized_pair_cost_fen != attestation.approved_total_fen || retention_deadline != &attestation.retention_deadline { bail!("Live cost input commitments differ") }
+        || attestation.rate_card_sha256 != inputs.rate_card_sha256 || attestation.billing_policy_commitment != inputs.billing_policy_commitment
+        || attestation.fx_policy_sha256 != inputs.fx_policy_sha256 || attestation.provider_budget_evidence_sha256 != inputs.provider_budget_evidence_sha256
+        || *authorized_pair_cost_fen != attestation.approved_total_fen || retention_deadline != &attestation.retention_deadline { bail!("attestation cost input commitments differ") }
     if data.arm_order_commitment != *arm_order_commitment || data.pair_receipt.arm_order_commitment != data.arm_order_commitment { bail!("arm order commitment differs") }
+    if [first.condition, second.condition] != [crate::EvaluationCondition::Generic, crate::EvaluationCondition::Candidate] { bail!("authority does not contain exact ordered conditions") }
     let candidate_frozen = parse_millis(&attestation.candidate_frozen_at)?; let case_selected = parse_millis(&attestation.case_selected_at)?;
     let signed = parse_millis(&attestation.signed_at)?; let started = parse_millis(&data.started_at)?; let finished = parse_millis(&data.pair_receipt.finished_at)?;
     let deadline = parse_millis(&data.deadline)?; let retention = parse_millis(&attestation.retention_deadline)?;
@@ -361,6 +372,7 @@ fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> 
         || inputs.billing_policy.provider_label != first.provider_label || inputs.budget.provider_label != first.provider_label { bail!("provider or model identity differs") }
     if (inputs.rate_card.currency.as_str(), inputs.billing_policy.currency.as_str(), inputs.budget.currency.as_str(), attestation.rate_currency.as_str()) != ("CNY", "CNY", "CNY", "CNY")
         || (inputs.fx_policy.mode.as_str(), inputs.fx_policy.source_currency.as_str(), inputs.fx_policy.target_currency.as_str(), inputs.fx_policy.numerator, inputs.fx_policy.denominator) != ("notApplicable", "CNY", "CNY", 1, 1) { bail!("cost currency or FX authority differs") }
+    if data.pair_receipt.final_attempt_index_root != second.ledger.attempt_index_prefix_root_sha256 || data.pair_receipt.final_attempt_index_root != second.receipt.attempt_index_merkle_root { bail!("pair final attempt commitment differs from ordered second arm") }
     if data.pair_receipt.pair_id != data.pair_id || data.pair_receipt.frozen_run_context_sha256 != data.frozen_sha256
         || data.pair_receipt.execution_context_sha256 != data.execution_context_sha256 || data.pair_receipt.final_attempt_index_root != data.attempt_index_root_sha256
         || data.pair_receipt.first_arm_receipt_sha256 != first.receipt_sha256 || data.pair_receipt.second_arm_receipt_sha256 != second.receipt_sha256
@@ -378,9 +390,13 @@ fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> 
         if arm.usage_scope != "completeNativeThreadTree" || arm.usage != arm.core_usage || arm.usage != arm.ledger.usage { bail!("broker/App Server response usage multiset differs") }
         if arm.manifest_sha256 != arm.core_manifest_sha256 || arm.manifest_sha256 != arm.ledger.run_manifest_sha256 || arm.receipt.run_manifest_sha256.as_deref() != Some(&arm.manifest_sha256)
             || arm.receipt_sha256 != arm.receipt.receipt_sha256 { bail!("manifest or arm receipt SHA differs") }
+        if arm.manifest_attempt_ledger_sha256 != arm.ledger.attempt_index_prefix_sha256 || arm.manifest_attempt_ledger_sha256 != arm.receipt.attempt_index_file_sha256
+            || arm.manifest_attempt_index_root_sha256 != arm.ledger.attempt_index_prefix_root_sha256 || arm.manifest_attempt_index_root_sha256 != arm.receipt.attempt_index_merkle_root { bail!("manifest attempt commitment differs from ledger or receipt") }
         if arm.provider_request_attempt_count != arm.ledger.provider_request_attempt_count || arm.provider_completed_response_count != arm.ledger.provider_completed_response_count
             || arm.raw_response_count != arm.core_raw_response_count || arm.raw_response_count != arm.ledger.raw_response_count
             || arm.receipt.attempt_count != arm.ledger.provider_request_attempt_count || arm.receipt.completion_count != arm.ledger.provider_completed_response_count { bail!("arm response counts differ") }
+        if arm.receipt.in_flight != 0 || arm.receipt.failure_count != 0 || arm.receipt.timeout_count != 0
+            || arm.receipt.global_attempt_end_exclusive.checked_sub(arm.receipt.global_attempt_start_inclusive) != Some(arm.receipt.attempt_count) { bail!("sealed receipt invariants differ") }
         if arm.receipt.global_attempt_start_inclusive != arm.ledger.global_start_inclusive || arm.receipt.global_attempt_end_exclusive != arm.ledger.global_end_exclusive
             || arm.receipt.attempt_index_file_sha256 != arm.ledger.attempt_index_prefix_sha256 || arm.receipt.attempt_index_merkle_root != arm.ledger.attempt_index_prefix_root_sha256 { bail!("attempt range or root differs") }
         if arm.authorized_per_run_fen != attestation.approved_per_run_fen || arm.max_provider_request_attempts != attestation.max_provider_request_attempts_per_run
@@ -389,6 +405,7 @@ fn validate_authority(data: &LiveAuthorityData, inputs: &VerifiedCostInputs) -> 
         if arm.elapsed_ms > u128::from(attestation.max_elapsed_seconds_per_run).checked_mul(1_000).ok_or_else(|| anyhow::anyhow!("elapsed hard gate overflow"))?
             || parse_millis(&arm.receipt.sealed_at)? > deadline { bail!("arm deadline or elapsed hard gate exceeded") }
     }
+    if parse_millis(&first.receipt.sealed_at)? > parse_millis(&second.receipt.sealed_at)? || parse_millis(&second.receipt.sealed_at)? > finished { bail!("sealed receipt timestamp order differs") }
     Ok(())
 }
 
@@ -411,19 +428,10 @@ fn reject_unsafe_integers(value: &serde_json::Value) -> Result<()> {
 pub(crate) fn project_verified_native_cost(
     input: NativeCostProjectionInput<'_>,
 ) -> Result<CostPairProjection> {
-    let NativeCostProjectionInput {
-        execution_mode,
-        execution_context_sha256,
-        started_at,
-        deadline,
-        arm_order_commitment,
-        manifests,
-        ledger,
-    } = input;
     let provider_endpoint_commitment = match (
-        execution_mode,
-        &manifests[0].typed.mode_evidence,
-        &manifests[1].typed.mode_evidence,
+        input.execution_mode,
+        &input.manifests[0].typed.mode_evidence,
+        &input.manifests[1].typed.mode_evidence,
     ) {
         (
             ExecutionMode::Mock,
@@ -448,7 +456,7 @@ pub(crate) fn project_verified_native_cost(
         arm_receipts,
         pair_receipt,
         pair_receipt_sha256,
-    } = ledger;
+    } = input.ledger;
     let crate::proof_ledger::VerifiedAttemptLedger {
         attempt_index_sha256,
         attempt_index_root_sha256,
@@ -456,7 +464,7 @@ pub(crate) fn project_verified_native_cost(
         ..
     } = attempt_ledger;
     let [first_receipt, second_receipt] = arm_receipts;
-    let [first_manifest, second_manifest] = manifests;
+    let [first_manifest, second_manifest] = input.manifests;
     let project_arm =
         |manifest: &ExactDocument<RunManifest>, ledger, arm_receipt: ArmReceipt| {
             CostArmProjection {
@@ -472,11 +480,11 @@ pub(crate) fn project_verified_native_cost(
     let finished_at = pair_receipt.finished_at.clone();
 
     Ok(CostPairProjection {
-        execution_mode,
-        execution_context_sha256: execution_context_sha256.to_string(),
-        started_at: started_at.to_string(),
-        deadline: deadline.to_string(),
-        arm_order_commitment: arm_order_commitment.to_string(),
+        execution_mode: input.execution_mode,
+        execution_context_sha256: input.execution_context_sha256.to_string(),
+        started_at: input.started_at.to_string(),
+        deadline: input.deadline.to_string(),
+        arm_order_commitment: input.arm_order_commitment.to_string(),
         provider_endpoint_commitment,
         pair_receipt,
         pair_receipt_sha256,

@@ -17,6 +17,76 @@ const STARTED: &str = "2026-08-30T09:30:00.000Z";
 const FINISHED: &str = "2026-08-30T10:00:00.000Z";
 const DEADLINE: &str = "2026-08-30T10:30:00.000Z";
 const RETENTION: &str = "2026-08-30T11:00:00.000Z";
+const ATTESTATION: usize = 0;
+const RATE: usize = 1;
+const BILLING: usize = 2;
+const FX: usize = 3;
+const BUDGET: usize = 4;
+
+#[derive(Debug, Clone, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct SyntheticResponseUsage {
+    response_id: String,
+    usage: Usage,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct SyntheticSignedUsage {
+    bytes: Vec<u8>,
+    sha256: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct SyntheticCostBoundary {
+    documents: [Vec<u8>; 5],
+    response_usage: [[SyntheticSignedUsage; 2]; 2],
+    published_receipt: Option<crate::cost_contracts::CostReceiptV1>,
+}
+
+fn state(boundary: &dyn SyntheticAuthorityBoundary) -> &std::cell::RefCell<SyntheticCostBoundary> {
+    boundary.as_any().downcast_ref().unwrap()
+}
+
+fn input_state(input: &SyntheticLiveCostAuthority) -> &std::cell::RefCell<SyntheticCostBoundary> {
+    state(input.boundary.as_ref())
+}
+
+fn usage_parts(usage: &Usage) -> [i64; 6] {
+    [usage.total_tokens, usage.input_tokens, usage.cached_input_tokens, usage.cache_write_input_tokens, usage.output_tokens, usage.reasoning_output_tokens]
+}
+
+fn signed_usage_rows(side: &SyntheticSignedUsage) -> anyhow::Result<Vec<SyntheticResponseUsage>> {
+    anyhow::ensure!(side.sha256 == sha256(&side.bytes), "response usage side commitment differs");
+    let mut rows: Vec<SyntheticResponseUsage> = serde_json::from_slice(&side.bytes)?;
+    rows.sort_by(|left, right| left.response_id.cmp(&right.response_id));
+    anyhow::ensure!(!rows.is_empty() && rows.iter().all(|row| !row.response_id.is_empty())
+        && !rows.windows(2).any(|pair| pair[0].response_id == pair[1].response_id), "response usage side is not a unique nonempty multiset");
+    Ok(rows)
+}
+
+impl SyntheticAuthorityBoundary for std::cell::RefCell<SyntheticCostBoundary> {
+    fn documents(&self) -> [Vec<u8>; 5] { self.borrow().documents.clone() }
+
+    fn validate_usage(&self, data: &LiveAuthorityData) -> anyhow::Result<()> {
+        for (arm, sides) in data.arms.iter().zip(&self.borrow().response_usage) {
+            let broker = signed_usage_rows(&sides[0])?; let app_server = signed_usage_rows(&sides[1])?;
+            anyhow::ensure!(broker == app_server, "broker/App Server response usage multiset differs");
+            let mut total = [0_i64; 6];
+            for row in &broker { for (sum, value) in total.iter_mut().zip(usage_parts(&row.usage)) { *sum = sum.checked_add(value).ok_or_else(|| anyhow::anyhow!("response usage sum overflow"))?; } }
+            anyhow::ensure!(total == usage_parts(&arm.usage), "response usage multiset aggregate differs");
+        }
+        Ok(())
+    }
+
+    fn publish_receipt(&self, receipt: &crate::cost_contracts::CostReceiptV1) -> anyhow::Result<()> {
+        let mut state = self.borrow_mut();
+        anyhow::ensure!(state.published_receipt.is_none(), "synthetic receipt sink is already occupied");
+        state.published_receipt = Some(receipt.clone());
+        Ok(())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any { self }
+}
 
 fn hex(byte: char) -> String {
     byte.to_string().repeat(64)
@@ -37,9 +107,10 @@ fn json_bytes(source: &[u8], edits: impl FnOnce(&mut Value)) -> Vec<u8> {
 }
 
 fn mode_evidence(input: &SyntheticLiveCostAuthority) -> ModeEvidence {
+    let state = input_state(input).borrow();
     ModeEvidence::Live {
-        attestation_sha256: input.data.attestation_sha256.clone(),
-        provider_budget_evidence_sha256: sha256(&input.budget),
+        attestation_sha256: sha256(&state.documents[ATTESTATION]),
+        provider_budget_evidence_sha256: sha256(&state.documents[BUDGET]),
         approval_commitment: input.data.attestation.approval_id.clone(),
         provider_endpoint_commitment: input
             .data
@@ -48,25 +119,46 @@ fn mode_evidence(input: &SyntheticLiveCostAuthority) -> ModeEvidence {
             .unwrap(),
         provider_role: ProviderRole::TargetVolcengine,
         arm_order_commitment: input.data.arm_order_commitment.clone(),
-        rate_card_sha256: sha256(&input.rate_card),
-        billing_policy_sha256: sha256(&input.billing_policy),
-        fx_policy_sha256: Some(sha256(&input.fx_policy)),
+        rate_card_sha256: sha256(&state.documents[RATE]),
+        billing_policy_sha256: sha256(&state.documents[BILLING]),
+        fx_policy_sha256: Some(sha256(&state.documents[FX])),
         authorized_pair_cost_fen: input.data.attestation.approved_total_fen,
         retention_deadline: input.data.attestation.retention_deadline.clone(),
     }
 }
 
 fn rebind(input: &mut SyntheticLiveCostAuthority) {
-    input.data.attestation.rate_card_sha256 = sha256(&input.rate_card);
-    input.data.attestation.billing_policy_commitment = sha256(&input.billing_policy);
-    input.data.attestation.fx_policy_sha256 = sha256(&input.fx_policy);
-    input.data.attestation.provider_budget_evidence_sha256 = sha256(&input.budget);
-    input.data.attestation_sha256 =
-        sha256(&serde_json::to_vec(&input.data.attestation).unwrap());
+    let commitments = {
+        let documents = &input_state(input).borrow().documents;
+        [RATE, BILLING, FX, BUDGET].map(|index| sha256(&documents[index]))
+    };
+    input.data.attestation.rate_card_sha256 = commitments[0].clone();
+    input.data.attestation.billing_policy_commitment = commitments[1].clone();
+    input.data.attestation.fx_policy_sha256 = commitments[2].clone();
+    input.data.attestation.provider_budget_evidence_sha256 = commitments[3].clone();
+    resign_attestation(input);
+}
+
+fn resign_attestation(input: &mut SyntheticLiveCostAuthority) {
+    input_state(input).borrow_mut().documents[ATTESTATION] = serde_json::to_vec(&input.data.attestation).unwrap();
+    refresh_evidence(input);
+}
+
+fn refresh_evidence(input: &mut SyntheticLiveCostAuthority) {
     let evidence = mode_evidence(input);
     for arm in &mut input.data.arms {
         arm.mode_evidence = evidence.clone();
     }
+}
+
+fn edit_document(input: &SyntheticLiveCostAuthority, index: usize, edits: impl FnOnce(&mut Value)) {
+    let bytes = input_state(input).borrow().documents[index].clone();
+    input_state(input).borrow_mut().documents[index] = json_bytes(&bytes, edits);
+}
+
+fn signed_usage(response_id: &str, usage: &Usage) -> SyntheticSignedUsage {
+    let bytes = serde_json::to_vec(&vec![SyntheticResponseUsage { response_id: response_id.into(), usage: usage.clone() }]).unwrap();
+    SyntheticSignedUsage { sha256: sha256(&bytes), bytes }
 }
 
 fn synthetic_input() -> SyntheticLiveCostAuthority {
@@ -101,6 +193,10 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
     let receipt_shas = [hex('6'), hex('d')];
     let usage = Usage { total_tokens: 150, input_tokens: 100, cached_input_tokens: 20,
         cache_write_input_tokens: 10, output_tokens: 50, reasoning_output_tokens: 15 };
+    let response_usage = [0_usize, 1].map(|index| {
+        let side = signed_usage(&format!("response-{index}"), &usage);
+        [side.clone(), side]
+    });
     let conditions = [EvaluationCondition::Generic, EvaluationCondition::Candidate];
     let arms = [0_usize, 1].map(|index| {
         let start = u64::try_from(index).unwrap();
@@ -128,6 +224,7 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
             core_manifest_sha256: manifest_shas[index].clone(), core_usage: usage.clone(), core_raw_response_count: 1,
             manifest_sha256: manifest_shas[index].clone(), manifest_pair_id: pair_id.clone(), manifest_frozen_sha256: frozen_sha256.clone(),
             manifest_execution_sha256: execution_context_sha256.clone(), manifest_execution_mode: ExecutionMode::Live, manifest_fork_sha: "a".repeat(40), manifest_case_sha256: hex('1'),
+            manifest_attempt_ledger_sha256: ledger.attempt_index_prefix_sha256.clone(), manifest_attempt_index_root_sha256: ledger.attempt_index_prefix_root_sha256.clone(),
             provider_label: "approved-provider".into(), model_label: "approved-model".into(), actual_model_revision: "approved-model-revision".into(),
             usage_scope: "completeNativeThreadTree".into(), usage: usage.clone(), provider_request_attempt_count: 1,
             provider_completed_response_count: 1, raw_response_count: 1, authorized_per_run_fen: 400,
@@ -146,10 +243,11 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
         private_root: "/synthetic/private".into(), pair_id, fork_sha: "a".repeat(40), frozen_sha256, execution_mode: ExecutionMode::Live,
         execution_context_sha256, started_at: STARTED.into(), deadline: DEADLINE.into(), arm_order_commitment,
         provider_endpoint_commitment: Some(hex('3')), pair_receipt, pair_receipt_sha256: hex('4'), attempt_ledger_sha256,
-        attempt_index_root_sha256: roots[1].clone(), attestation, attestation_sha256: String::new(), fixed_max_output_tokens: 4_096,
+        attempt_index_root_sha256: roots[1].clone(), attestation, fixed_max_output_tokens: 4_096,
         fixed_max_provider_request_attempts: 2, fixed_max_total_tokens: 1_000, fixed_max_elapsed_seconds: 60, arms,
     };
-    let mut input = SyntheticLiveCostAuthority { data, rate_card, billing_policy, fx_policy, budget };
+    let boundary = SyntheticCostBoundary { documents: [Vec::new(), rate_card, billing_policy, fx_policy, budget], response_usage, published_receipt: None };
+    let mut input = SyntheticLiveCostAuthority { data, boundary: std::rc::Rc::new(std::cell::RefCell::new(boundary)) };
     rebind(&mut input);
     input
 }
@@ -157,6 +255,18 @@ fn synthetic_input() -> SyntheticLiveCostAuthority {
 #[derive(Clone, Copy)]
 enum Mutation {
     UsageDrift,
+    AttestationRawUnknown,
+    AttestationTypedMismatch,
+    AttestationRateCommitment,
+    AttestationBillingCommitment,
+    AttestationFxCommitment,
+    AttestationBudgetCommitment,
+    ManifestLedger,
+    ManifestRoot,
+    PairFinalRoot,
+    InFlight,
+    DuplicateCandidate,
+    MissingCandidate,
     Endpoint,
     Order,
     FutureSigned,
@@ -176,11 +286,44 @@ enum Mutation {
     RateExpired,
     BudgetWindow,
     UnsafeInteger,
+    SafeIntegerMaximum,
 }
 
 fn mutate(mut input: SyntheticLiveCostAuthority, mutation: Mutation) -> SyntheticLiveCostAuthority {
     match mutation {
-        Mutation::UsageDrift => input.data.arms[0].core_usage.total_tokens += 1,
+        Mutation::UsageDrift => {
+            let mut state = input_state(&input).borrow_mut();
+            let side = &mut state.response_usage[0][0];
+            let mut records: Vec<SyntheticResponseUsage> = serde_json::from_slice(&side.bytes).unwrap();
+            records[0].usage.total_tokens += 1;
+            side.bytes = serde_json::to_vec(&records).unwrap(); side.sha256 = sha256(&side.bytes);
+        }
+        Mutation::AttestationRawUnknown => {
+            edit_document(&input, ATTESTATION, |value| value["unknown"] = true.into());
+            refresh_evidence(&mut input); return input;
+        }
+        Mutation::AttestationTypedMismatch => {
+            input.data.attestation.source_materials_sha256 = hex('0');
+            refresh_evidence(&mut input); return input;
+        }
+        Mutation::AttestationRateCommitment => input.data.attestation.rate_card_sha256 = hex('0'),
+        Mutation::AttestationBillingCommitment => input.data.attestation.billing_policy_commitment = hex('0'),
+        Mutation::AttestationFxCommitment => input.data.attestation.fx_policy_sha256 = hex('0'),
+        Mutation::AttestationBudgetCommitment => input.data.attestation.provider_budget_evidence_sha256 = hex('0'),
+        Mutation::ManifestLedger => input.data.arms[0].manifest_attempt_ledger_sha256 = hex('0'),
+        Mutation::ManifestRoot => input.data.arms[0].manifest_attempt_index_root_sha256 = hex('0'),
+        Mutation::PairFinalRoot => {
+            input.data.attempt_index_root_sha256 = hex('0');
+            input.data.pair_receipt.final_attempt_index_root = hex('0');
+        }
+        Mutation::InFlight => input.data.arms[0].receipt.in_flight = 1,
+        Mutation::DuplicateCandidate | Mutation::MissingCandidate => {
+            let condition = if matches!(mutation, Mutation::DuplicateCandidate) { EvaluationCondition::Candidate } else { EvaluationCondition::Generic };
+            for arm in &mut input.data.arms {
+                arm.condition = condition; arm.core_condition = condition; arm.ledger.condition = condition; arm.receipt.condition = condition;
+                arm.receipt.first_condition = condition; arm.receipt.second_condition = condition;
+            }
+        }
         Mutation::Endpoint => input.data.provider_endpoint_commitment = Some(hex('2')),
         Mutation::Order => input.data.arm_order_commitment = hex('2'),
         Mutation::FutureSigned => input.data.attestation.signed_at = "2026-08-30T09:31:00.000Z".into(),
@@ -192,37 +335,41 @@ fn mutate(mut input: SyntheticLiveCostAuthority, mutation: Mutation) -> Syntheti
         }
         Mutation::MaxOutput => input.data.fixed_max_output_tokens += 1,
         Mutation::AttemptCap => {
-            input.data.attestation.max_provider_request_attempts_per_run = 0;
-            input.data.fixed_max_provider_request_attempts = 0;
+            input.data.attestation.max_provider_request_attempts_per_run = 1;
+            input.data.fixed_max_provider_request_attempts = 1;
             for arm in &mut input.data.arms {
-                arm.max_provider_request_attempts = 0;
+                arm.max_provider_request_attempts = 1;
             }
+            let arm = &mut input.data.arms[0];
+            arm.provider_request_attempt_count = 2; arm.ledger.provider_request_attempt_count = 2; arm.receipt.attempt_count = 2;
+            arm.ledger.global_end_exclusive = 2; arm.receipt.global_attempt_end_exclusive = 2;
+            input.data.pair_receipt.total_attempt_count = 3;
         }
         Mutation::Deadline => input.data.arms[1].receipt.sealed_at = "2026-08-30T10:31:00.000Z".into(),
         Mutation::BudgetAbove => {
-            input.budget = json_bytes(&input.budget, |value| value["prepaidOrHardLimitFen"] = 801.into());
+            edit_document(&input, BUDGET, |value| value["prepaidOrHardLimitFen"] = 801.into());
         }
         Mutation::RateEffectiveMismatch => {
             input.data.attestation.rate_effective_at = "2026-08-30T09:01:00.000Z".into();
         }
         Mutation::RateAfterStart => {
-            input.rate_card = json_bytes(&input.rate_card, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
+            edit_document(&input, RATE, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
             input.data.attestation.rate_effective_at = "2026-08-30T09:31:00.000Z".into();
         }
         Mutation::BillingAfterStart => {
-            input.billing_policy = json_bytes(&input.billing_policy, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
+            edit_document(&input, BILLING, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
         }
         Mutation::FxAfterStart => {
-            input.fx_policy = json_bytes(&input.fx_policy, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
+            edit_document(&input, FX, |value| value["effectiveAt"] = Value::String("2026-08-30T09:31:00.000Z".into()));
         }
         Mutation::RateExpiryEqual => {
-            input.rate_card = json_bytes(&input.rate_card, |value| value["expiresAt"] = Value::String(FINISHED.into()));
+            edit_document(&input, RATE, |value| value["expiresAt"] = Value::String(FINISHED.into()));
         }
         Mutation::RateExpired => {
-            input.rate_card = json_bytes(&input.rate_card, |value| value["expiresAt"] = Value::String("2026-08-30T09:59:00.000Z".into()));
+            edit_document(&input, RATE, |value| value["expiresAt"] = Value::String("2026-08-30T09:59:00.000Z".into()));
         }
         Mutation::BudgetWindow => {
-            input.budget = json_bytes(&input.budget, |value| value["validFrom"] = Value::String("2026-08-30T09:31:00.000Z".into()));
+            edit_document(&input, BUDGET, |value| value["validFrom"] = Value::String("2026-08-30T09:31:00.000Z".into()));
         }
         Mutation::UnsafeInteger => {
             let unsafe_value = 9_007_199_254_740_992_u64;
@@ -232,20 +379,29 @@ fn mutate(mut input: SyntheticLiveCostAuthority, mutation: Mutation) -> Syntheti
                 arm.max_total_tokens = i64::try_from(unsafe_value).unwrap();
             }
         }
+        Mutation::SafeIntegerMaximum => {
+            input.data.attestation.approved_total_fen = 9_007_199_254_740_991;
+            edit_document(&input, BUDGET, |value| value["prepaidOrHardLimitFen"] = 9_007_199_254_740_991_u64.into());
+        }
     }
-    rebind(&mut input);
+    if matches!(mutation, Mutation::AttestationRateCommitment | Mutation::AttestationBillingCommitment | Mutation::AttestationFxCommitment | Mutation::AttestationBudgetCommitment) {
+        resign_attestation(&mut input);
+    } else {
+        rebind(&mut input);
+    }
     input
 }
 
 fn rejected(mutation: Mutation, expected: &str) {
-    let sentinel = b"inventory-sentinel".to_vec();
-    let before = sentinel.clone();
-    let error = match prepare_synthetic_live_cost_authority(mutate(synthetic_input(), mutation)) {
+    let input = mutate(synthetic_input(), mutation);
+    let boundary = input.boundary.clone();
+    let before = state(boundary.as_ref()).borrow().clone();
+    let error = match prepare_synthetic_live_cost_authority(input) {
         Ok(_) => panic!("mutated authority unexpectedly verified"),
         Err(error) => error,
     };
     assert!(error.to_string().contains(expected), "{error:#}");
-    assert_eq!(sentinel, before);
+    assert_eq!(*state(boundary.as_ref()).borrow(), before);
 }
 
 macro_rules! rejection_test {
@@ -271,6 +427,37 @@ rejection_test!(cost_authority_rejects_rate_expired_during_run, RateExpired, "ra
 rejection_test!(cost_authority_rejects_invalid_budget_validity_window, BudgetWindow, "budget validity");
 
 #[test]
+fn cost_authority_rejects_unvalidated_or_typed_mismatched_attestation() {
+    rejected(Mutation::AttestationRawUnknown, "attestation");
+    rejected(Mutation::AttestationTypedMismatch, "attestation");
+}
+
+#[test]
+fn cost_authority_rejects_attestation_cost_input_commitment_drift() {
+    for mutation in [Mutation::AttestationRateCommitment, Mutation::AttestationBillingCommitment, Mutation::AttestationFxCommitment, Mutation::AttestationBudgetCommitment] {
+        rejected(mutation, "attestation cost");
+    }
+}
+
+#[test]
+fn cost_authority_rejects_manifest_attempt_or_pair_final_root_drift() {
+    for mutation in [Mutation::ManifestLedger, Mutation::ManifestRoot, Mutation::PairFinalRoot] {
+        rejected(mutation, "attempt commitment");
+    }
+}
+
+#[test]
+fn cost_authority_rejects_unsealed_arm_receipt_state() {
+    rejected(Mutation::InFlight, "sealed receipt");
+}
+
+#[test]
+fn cost_authority_rejects_duplicate_or_missing_condition() {
+    rejected(Mutation::DuplicateCandidate, "ordered conditions");
+    rejected(Mutation::MissingCandidate, "ordered conditions");
+}
+
+#[test]
 fn cost_authority_rejects_provider_role_or_target_evidence_drift() {
     rejected(Mutation::ProviderRole, "provider role");
     rejected(Mutation::TargetEvidence, "target provider");
@@ -284,7 +471,8 @@ fn cost_authority_rejects_attempt_cap_or_deadline_hard_gate_violation() {
 
 #[test]
 fn cost_authority_rejects_policy_effective_after_run_start() {
-    for mutation in [Mutation::RateAfterStart, Mutation::BillingAfterStart, Mutation::FxAfterStart] {
+    rejected(Mutation::RateAfterStart, "attestation contract");
+    for mutation in [Mutation::BillingAfterStart, Mutation::FxAfterStart] {
         rejected(mutation, "effective after run start");
     }
 }
@@ -309,11 +497,15 @@ fn clock(value: &str) -> FixedClock {
 }
 
 fn commit_error(input: SyntheticLiveCostAuthority, statement: Option<&RetainedSupplierStatement>, clock: &FixedClock) -> anyhow::Error {
+    let boundary = input.boundary.clone();
+    let before = state(boundary.as_ref()).borrow().clone();
     let authority = prepare_synthetic_live_cost_authority(input).unwrap_or_else(|error| panic!("{error:#}"));
-    match commit_cost_receipt(&authority, EvaluationCondition::Candidate, statement, clock) {
+    let error = match commit_cost_receipt(&authority, EvaluationCondition::Candidate, statement, clock) {
         Ok(_) => panic!("receipt unexpectedly committed"),
         Err(error) => error,
-    }
+    };
+    assert_eq!(*state(boundary.as_ref()).borrow(), before);
+    error
 }
 
 #[test]
@@ -350,6 +542,13 @@ fn cost_authority_rejects_supplier_issue_time_after_calculation() {
 }
 
 #[test]
+fn cost_authority_rejects_supplier_issue_time_before_selected_seal() {
+    let statement = supplier(|value| value["issuedAt"] = Value::String("2026-08-30T09:49:59.999Z".into()));
+    let clock = clock("2026-08-30T10:01:00.000Z");
+    assert!(commit_error(synthetic_input(), Some(&statement), &clock).to_string().contains("supplier issue"));
+}
+
+#[test]
 fn cost_authority_rejects_supplier_authority_mismatch() {
     for field in ["condition", "pairId", "providerLabel", "actualModelRevision"] {
         let statement = supplier(|value| value[field] = Value::String(match field {
@@ -366,6 +565,17 @@ fn cost_authority_rejects_supplier_authority_mismatch() {
 fn cost_authority_rejects_emitted_integer_above_jcs_safe_boundary() {
     let clock = clock("2026-08-30T10:01:00.000Z");
     assert!(commit_error(mutate(synthetic_input(), Mutation::UnsafeInteger), None, &clock).to_string().contains("safe integer"));
+}
+
+#[test]
+fn cost_authority_accepts_exact_jcs_safe_integer_boundary() {
+    let input = mutate(synthetic_input(), Mutation::SafeIntegerMaximum);
+    let boundary = input.boundary.clone();
+    let authority = prepare_synthetic_live_cost_authority(input).unwrap();
+    let receipt = commit_cost_receipt(&authority, EvaluationCondition::Candidate, None, &clock("2026-08-30T10:01:00.000Z")).unwrap();
+    assert_eq!(receipt.ceilings.approved_total_fen, 9_007_199_254_740_991);
+    assert_eq!(receipt.ceilings.prepaid_or_hard_limit_fen, 9_007_199_254_740_991);
+    assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
 }
 
 #[test]
@@ -390,7 +600,8 @@ fn cost_authority_normalizes_submillisecond_clock_exactly_once() {
 
 #[test]
 fn cost_authority_builds_exact_happy_receipt_without_supplier() {
-    let authority = prepare_synthetic_live_cost_authority(synthetic_input()).unwrap();
+    let input = synthetic_input(); let boundary = input.boundary.clone();
+    let authority = prepare_synthetic_live_cost_authority(input).unwrap();
     let receipt = commit_cost_receipt(&authority, EvaluationCondition::Candidate, None, &clock("2026-08-30T10:01:00.000Z")).unwrap();
     assert_eq!(receipt.condition, EvaluationCondition::Candidate);
     assert_eq!(receipt.run_ordinal, 2);
@@ -399,15 +610,18 @@ fn cost_authority_builds_exact_happy_receipt_without_supplier() {
     assert_eq!(receipt.supplier_actual_fen, None);
     assert!(receipt.within_ceilings);
     assert_eq!(receipt_sha(&receipt), "8301aeceb7bbaf03e744d1a6da46543ee646ef8276b9cdc9dd32622cb538fbd6");
+    assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
 }
 
 #[test]
 fn cost_authority_builds_exact_happy_receipt_with_over_ceiling_supplier_actual() {
     let statement = supplier(|value| value["actualFen"] = 450.into());
-    let authority = prepare_synthetic_live_cost_authority(synthetic_input()).unwrap();
+    let input = synthetic_input(); let boundary = input.boundary.clone();
+    let authority = prepare_synthetic_live_cost_authority(input).unwrap();
     let receipt = commit_cost_receipt(&authority, EvaluationCondition::Candidate, Some(&statement), &clock("2026-08-30T10:01:00.000Z")).unwrap();
     assert_eq!(receipt.supplier_actual_fen, Some(450));
     assert_eq!(receipt.charged_fen, 450);
     assert!(!receipt.within_ceilings);
     assert_eq!(receipt_sha(&receipt), "5ccbf2ee5c4f6c10298767a060230a732f08caa2271abd73df3a589d6c0d14eb");
+    assert_eq!(state(boundary.as_ref()).borrow().published_receipt.as_ref(), Some(&receipt));
 }
