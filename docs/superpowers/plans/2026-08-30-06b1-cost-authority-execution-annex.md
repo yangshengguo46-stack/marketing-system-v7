@@ -244,6 +244,7 @@ git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 **Files:**
 - Create: `codex-rs/ai-ip-eval/src/cost_binding.rs`
 - Create: `codex-rs/ai-ip-eval/src/cost_binding_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/cost_authority_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/model.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
 - Modify: `codex-rs/ai-ip-eval/tests/cost_cli.rs`
@@ -251,6 +252,8 @@ git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 **Interfaces:**
 - Consumes: the same `VerifiedLiveCostAuthority`, exact selected receipt/manifest/arm receipt, `CostClock`, and current private inventory.
 - Produces: `AnnotateCostArgs` and a dormant Live-only transaction for `coordinator/cost/{generic|candidate}-binding.json`.
+
+Task 6 controller test-fixture authority correction: the only reviewed synthetic Live authority and real receipt-transaction world are private in `cost_authority_tests.rs`, while positive binding tests must consume that exact sibling-test seam. Authorize only minimal `pub(crate)` test visibility/accessors or one thin test-world constructor in `cost_authority_tests.rs` so `cost_binding_tests.rs` can reuse the existing real tempfile inventory/receipt world. Do not copy the fixture, add a second synthetic boundary, change any production item, move tests into production code, or alter existing Task 5C/5D assertions.
 
 - [ ] **Step 1: Add CLI and sidecar mutation REDs**
 
@@ -292,6 +295,7 @@ Run the selector. Expected: both sidecars pass; all mutation rows fail with no n
 ```bash
 git add codex-rs/ai-ip-eval/src/cost_binding.rs \
   codex-rs/ai-ip-eval/src/cost_binding_tests.rs \
+  codex-rs/ai-ip-eval/src/cost_authority_tests.rs \
   codex-rs/ai-ip-eval/src/model.rs \
   codex-rs/ai-ip-eval/src/lib.rs \
   codex-rs/ai-ip-eval/tests/cost_cli.rs
