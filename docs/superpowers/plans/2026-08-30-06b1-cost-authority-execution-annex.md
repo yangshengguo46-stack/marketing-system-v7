@@ -184,8 +184,12 @@ git commit -m "feat(ai-ip-eval): verify private proof cost authority"
 - Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch.rs`
 - Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+- Modify: `codex-rs/ai-ip-eval/tests/cost_cli.rs`
+- Modify: `codex-rs/ai-ip-eval/tests/support/cost_world.rs`
 
 Task 5D controller authority correction: the pending supplier proof needs the private-inventory module's internal `verified_state` and trusted allowed-unrecorded projection; neither is accessible from the sibling `cost_inputs` module, and the existing score continuation is fixed to three reviewer leaves plus a blind-receipt tail. Authorize one specialized exact-one pending-entry projection in `private_inventory_batch.rs` with focused tests in `private_inventory_batch_tests.rs`. Commit that fully GREEN, CLI-dormant support slice before the transaction RED as `feat(ai-ip-eval): verify pending supplier inventory`; do not generalize it into an arbitrary public bypass. The transaction remains in `cost_inputs.rs`; `cost_authority.rs` may add only the minimal owned-token/rebuild/receipt-reverification interface and must remain below 700 lines with the Task 5C auditability improvements preserved.
+
+Task 5D review-fix authority correction: the independent review requires production-path Replay and Native/Mock rows for an omitted selected supplier leaf that exists but is not yet inventory-recorded. Authorize only the two existing test files `tests/cost_cli.rs` and `tests/support/cost_world.rs` for those real CLI worlds and their minimum reusable pending-leaf helper. They may not add a Live success seam, alter production dispatch, weaken exact refusal strings, touch provider/network/key behavior, or introduce Task 6 `annotate-cost` behavior. No new tracked file is authorized.
 
 - [ ] **Step 1: Record the pending-supplier/output transaction RED**
 
@@ -227,7 +231,9 @@ git add codex-rs/ai-ip-eval/src/cost_inputs.rs \
   codex-rs/ai-ip-eval/src/cost_authority_tests.rs \
   codex-rs/ai-ip-eval/src/private_inventory_batch.rs \
   codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs \
-  codex-rs/ai-ip-eval/src/lib.rs
+  codex-rs/ai-ip-eval/src/lib.rs \
+  codex-rs/ai-ip-eval/tests/cost_cli.rs \
+  codex-rs/ai-ip-eval/tests/support/cost_world.rs
 git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 ```
 
