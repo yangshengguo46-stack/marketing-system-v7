@@ -89,6 +89,7 @@ pub use model::EvalCommand;
 pub use model::EvaluationCondition;
 pub use model::ExecutionMode;
 pub use model::FreezeRunContextArgs;
+pub use model::MakeCostReceiptArgs;
 pub use model::MockProviderMode;
 pub use model::ModeEvidence;
 pub use model::ProofBrokerCompatibilityName;
@@ -125,6 +126,37 @@ pub use score::DecisionMetrics;
 pub use score_decision::BlindDecision;
 pub use score_decision::BlindDecisionFailure;
 
+fn run_make_cost_receipt(args: MakeCostReceiptArgs) -> anyhow::Result<()> {
+    let snapshot = blind::read_context_snapshot(&args.frozen_run_context)?;
+    if let Some(supplier_statement) = args.supplier_statement {
+        let leaf = match args.condition {
+            EvaluationCondition::Generic => "generic.json",
+            EvaluationCondition::Candidate => "candidate.json",
+        };
+        let expected = snapshot
+            .private_root()
+            .join("inputs/supplier-statements")
+            .join(leaf);
+        if supplier_statement.as_os_str() != expected.as_os_str() {
+            anyhow::bail!(
+                "make-cost-receipt supplier statement must use the exact condition-bound private input path"
+            );
+        }
+    }
+    let core = blind_verify::verify_pair_evidence_core(&snapshot)?;
+    match core.mode {
+        ExecutionMode::Replay => anyhow::bail!(
+            "make-cost-receipt requires verified Native Live evidence; Replay is refused"
+        ),
+        ExecutionMode::Mock => anyhow::bail!(
+            "make-cost-receipt requires executionMode=live; mock evidence is refused"
+        ),
+        ExecutionMode::Live => {
+            anyhow::bail!("make-cost-receipt verified Live authority is not implemented")
+        }
+    }
+}
+
 pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
         EvalCommand::FreezeRunContext(command) => match command.mode {
@@ -135,8 +167,8 @@ pub fn execute_cli(cli: Cli) -> anyhow::Result<()> {
         EvalCommand::LivePair(args) => run_local_mock_pair(&args.frozen_run_context),
         EvalCommand::BlindPack(args) => blind::run_blind_pack(args),
         EvalCommand::Score(args) => score_authority::run_score_authority(args),
-        EvalCommand::MakeCostReceipt(_)
-        | EvalCommand::AnnotateCost(_)
+        EvalCommand::MakeCostReceipt(args) => run_make_cost_receipt(args),
+        EvalCommand::AnnotateCost(_)
         | EvalCommand::Summarize(_)
         | EvalCommand::VerifyReport(_)
         | EvalCommand::PublishReport(_)

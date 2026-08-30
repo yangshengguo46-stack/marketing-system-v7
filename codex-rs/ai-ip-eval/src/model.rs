@@ -17,10 +17,12 @@ use codex_app_server_protocol::ThreadReadResponse;
 use codex_app_server_protocol::ThreadStartResponse;
 use codex_app_server_protocol::TurnStartResponse;
 
-#[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Eq, PartialEq, Serialize, ValueEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum EvaluationCondition {
+    #[value(name = "generic")]
     Generic,
+    #[value(name = "candidate")]
     Candidate,
 }
 
@@ -154,7 +156,7 @@ pub enum EvalCommand {
     LivePair(LivePairArgs),
     BlindPack(BlindPackArgs),
     Score(ScoreArgs),
-    MakeCostReceipt(PathInputArgs),
+    MakeCostReceipt(MakeCostReceiptArgs),
     AnnotateCost(PathInputArgs),
     Summarize(PathInputArgs),
     VerifyReport(PathInputArgs),
@@ -283,6 +285,16 @@ pub struct ScoreArgs {
     pub reviews_dir: PathBuf,
     #[arg(long)]
     pub output: PathBuf,
+    #[arg(long)]
+    pub frozen_run_context: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct MakeCostReceiptArgs {
+    #[arg(long, value_enum)]
+    pub condition: EvaluationCondition,
+    #[arg(long)]
+    pub supplier_statement: Option<PathBuf>,
     #[arg(long)]
     pub frozen_run_context: PathBuf,
 }
