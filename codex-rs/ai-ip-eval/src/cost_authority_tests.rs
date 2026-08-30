@@ -114,7 +114,17 @@ fn receipt_sha(receipt: &crate::cost_contracts::CostReceiptV1) -> String {
 fn json_bytes(source: &[u8], edits: impl FnOnce(&mut Value)) -> Vec<u8> {
     let mut value: Value = serde_json::from_slice(source).unwrap();
     edits(&mut value);
-    serde_json::to_vec(&value).unwrap()
+    crate::jcs::canonicalize_value(&value).unwrap()
+}
+
+#[test]
+fn cost_authority_json_bytes_canonicalizes_equivalent_source_order_after_edit() {
+    let first = json_bytes(br#"{"\uE000":1,"\uD800\uDC00":2}"#, |value| value["m"] = Value::String("changed".into()));
+    let second = json_bytes(br#"{"\uD800\uDC00":2,"\uE000":1}"#, |value| value["m"] = Value::String("changed".into()));
+    let expected = b"{\"m\":\"changed\",\"\xF0\x90\x80\x80\":2,\"\xEE\x80\x80\":1}";
+
+    assert_eq!(first, second);
+    assert_eq!(first, expected);
 }
 
 fn mode_evidence(input: &SyntheticLiveCostAuthority) -> ModeEvidence {

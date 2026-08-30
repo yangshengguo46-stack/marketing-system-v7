@@ -24,6 +24,7 @@ codex_rust_crate(
     },
     build_script_enabled = False,
     compile_data = glob(["tests/fixtures/blind/treatment-markers.json"]) + [
+        "tests/fixtures/contracts/06a/canonical-native-attestation.json",
         ":cost-contract-canonical-fixtures",
         "//ai-ip-evals/rubrics:rubrics",
         "//ai-ip-evals/schemas:schemas",
