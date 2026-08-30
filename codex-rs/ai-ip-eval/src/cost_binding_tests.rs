@@ -437,6 +437,69 @@ fn cost_binding_transaction_rejects_receipt_mutation_after_fresh_rebuild() {
 }
 
 #[test]
+fn cost_binding_transaction_rejects_binding_replacement_after_fresh_rebuild() {
+    let world = crate::cost_authority_tests::cost_binding_world(false);
+    let receipt_before = fs::read(world.receipt_path()).unwrap();
+    let manifests_before = manifest_paths(&world).map(|path| fs::read(path).unwrap());
+    let inventory_before = inventory_bytes(&world);
+    let clock = crate::cost_authority_tests::cost_binding_clock();
+    let replacement = b"post-fresh binding replacement";
+    let error = crate::cost_binding::publish_cost_binding_for_test(
+        crate::cost_authority_tests::cost_binding_authority(world.root()),
+        EvaluationCondition::Candidate,
+        &clock,
+        &mut |checkpoint| {
+            if checkpoint == crate::cost_binding::CostBindingCheckpoint::AfterFreshInventory {
+                let path = binding_path(&world);
+                fs::remove_file(&path)?;
+                crate::secure_fs::write_owner_only_new(&path, replacement)?;
+            }
+            Ok(())
+        },
+    )
+    .unwrap_err();
+    assert_error_contains(error, "retained private file");
+    assert_eq!(fs::read(binding_path(&world)).unwrap(), replacement);
+    assert_ne!(inventory_bytes(&world), inventory_before);
+    assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
+    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    crate::private_inventory::verify_private_inventory(world.root()).unwrap_err();
+    assert_eq!(clock.calls(), 1);
+}
+
+#[test]
+fn cost_binding_transaction_rejects_supplier_replacement_after_fresh_rebuild() {
+    let world = crate::cost_authority_tests::cost_binding_world(true);
+    let receipt_before = fs::read(world.receipt_path()).unwrap();
+    let manifests_before = manifest_paths(&world).map(|path| fs::read(path).unwrap());
+    let inventory_before = inventory_bytes(&world);
+    let clock = crate::cost_authority_tests::cost_binding_clock();
+    let replacement = b"post-fresh supplier replacement";
+    let error = crate::cost_binding::publish_cost_binding_for_test(
+        crate::cost_authority_tests::cost_binding_authority(world.root()),
+        EvaluationCondition::Candidate,
+        &clock,
+        &mut |checkpoint| {
+            if checkpoint == crate::cost_binding::CostBindingCheckpoint::AfterFreshInventory {
+                let path = world.root().join("inputs/supplier-statements/candidate.json");
+                fs::remove_file(&path)?;
+                crate::secure_fs::write_owner_only_new(&path, replacement)?;
+            }
+            Ok(())
+        },
+    )
+    .unwrap_err();
+    assert_error_contains(error, "retained private file");
+    assert!(binding_path(&world).exists());
+    assert_eq!(fs::read(world.root().join("inputs/supplier-statements/candidate.json")).unwrap(), replacement);
+    assert_ne!(inventory_bytes(&world), inventory_before);
+    assert_eq!(fs::read(world.receipt_path()).unwrap(), receipt_before);
+    assert_eq!(manifest_paths(&world).map(|path| fs::read(path).unwrap()), manifests_before);
+    crate::private_inventory::verify_private_inventory(world.root()).unwrap_err();
+    assert_eq!(clock.calls(), 1);
+}
+
+#[test]
 fn cost_binding_calculation_uses_one_clock_value_without_publication() {
     let world = crate::cost_authority_tests::cost_binding_world(false);
     let clock = crate::cost_authority_tests::cost_binding_clock();
