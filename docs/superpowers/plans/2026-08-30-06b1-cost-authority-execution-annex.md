@@ -181,7 +181,11 @@ git commit -m "feat(ai-ip-eval): verify private proof cost authority"
 - Modify: `codex-rs/ai-ip-eval/src/cost_inputs_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/cost_authority.rs`
 - Modify: `codex-rs/ai-ip-eval/src/cost_authority_tests.rs`
+- Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch.rs`
+- Modify: `codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs`
 - Modify: `codex-rs/ai-ip-eval/src/lib.rs`
+
+Task 5D controller authority correction: the pending supplier proof needs the private-inventory module's internal `verified_state` and trusted allowed-unrecorded projection; neither is accessible from the sibling `cost_inputs` module, and the existing score continuation is fixed to three reviewer leaves plus a blind-receipt tail. Authorize one specialized exact-one pending-entry projection in `private_inventory_batch.rs` with focused tests in `private_inventory_batch_tests.rs`. Commit that fully GREEN, CLI-dormant support slice before the transaction RED as `feat(ai-ip-eval): verify pending supplier inventory`; do not generalize it into an arbitrary public bypass. The transaction remains in `cost_inputs.rs`; `cost_authority.rs` may add only the minimal owned-token/rebuild/receipt-reverification interface and must remain below 700 lines with the Task 5C auditability improvements preserved.
 
 - [ ] **Step 1: Record the pending-supplier/output transaction RED**
 
@@ -221,6 +225,8 @@ git add codex-rs/ai-ip-eval/src/cost_inputs.rs \
   codex-rs/ai-ip-eval/src/cost_inputs_tests.rs \
   codex-rs/ai-ip-eval/src/cost_authority.rs \
   codex-rs/ai-ip-eval/src/cost_authority_tests.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_batch.rs \
+  codex-rs/ai-ip-eval/src/private_inventory_batch_tests.rs \
   codex-rs/ai-ip-eval/src/lib.rs
 git commit -m "feat(ai-ip-eval): seal private proof cost receipts"
 ```
@@ -351,16 +357,16 @@ if git diff --name-only eb64199a6..HEAD | rg -n '(^|/)(report\.json|index\.json|
   echo 'unauthorized public/retention output path in 06B-1 diff' >&2
   false
 fi
-wc -l codex-rs/ai-ip-eval/src/{cost_contracts,cost_inputs,proof_commitment,cost,cost_binding}.rs \
+wc -l codex-rs/ai-ip-eval/src/{cost_contracts,cost_inputs,proof_commitment,cost,cost_binding,private_inventory_batch}.rs \
   | awk '$2 != "total" && $1 >= 500 { print; bad=1 } END { exit bad }'
-test "$(wc -l < codex-rs/ai-ip-eval/src/cost_authority.rs)" -lt 620
+test "$(wc -l < codex-rs/ai-ip-eval/src/cost_authority.rs)" -lt 700
 for commit in $(git rev-list --reverse eb64199a6..HEAD); do
   git show --numstat --format= "$commit" \
     | awk -v commit="$commit" '$1 ~ /^[0-9]+$/ { changed += $1 + $2 } END { print commit, changed; exit(changed >= 800) }' || exit 1
 done
 ```
 
-Expected: the one stale-code search is empty, while the separate ledger disposition search returns the required nonempty lines. Locks are unchanged because this child uses already locked dependencies/globs; `cost_authority.rs` is below its explicit 620-line auditability exception, every other new production module is below 500 lines, and every commit is below 800 changed lines. The ledger records provider not run and cost zero, both blockers open, 06B-1 complete, 06B-2 next, `G0/G1/G2=OPEN`, and `PASS_TO_PHASE_0B=false`. The executable scans reject a real key file, credential-like diff, or unauthorized public/retention output. Existing contract fixtures remain permitted; the one fixed synthetic 32-byte key in `proof-commitment-vectors.json` is the explicit exception and its Rust/Python vector tests prove exact reviewed bytes.
+Expected: the one stale-code search is empty, while the separate ledger disposition search returns the required nonempty lines. Locks are unchanged because this child uses already locked dependencies/globs; `cost_authority.rs` is below its explicit 700-line auditability exception, every other new or transaction-modified production module is below 500 lines, and every commit is below 800 changed lines. The ledger records provider not run and cost zero, both blockers open, 06B-1 complete, 06B-2 next, `G0/G1/G2=OPEN`, and `PASS_TO_PHASE_0B=false`. The executable scans reject a real key file, credential-like diff, or unauthorized public/retention output. Existing contract fixtures remain permitted; the one fixed synthetic 32-byte key in `proof-commitment-vectors.json` is the explicit exception and its Rust/Python vector tests prove exact reviewed bytes.
 
 - [ ] **Step 4: Run final review, fixer, and formatter**
 
