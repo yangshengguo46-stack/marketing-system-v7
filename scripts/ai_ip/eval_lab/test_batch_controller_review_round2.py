@@ -11,7 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import batch_controller  # noqa: E402
 import batch_isolation  # noqa: E402
 from batch_contracts import seal_self_commitment  # noqa: E402
-from batch_controller import BatchControllerError, run_candidate_pair  # noqa: E402
+from batch_controller import (  # noqa: E402
+    AttemptAttestation,
+    AttemptTelemetry,
+    BatchControllerError,
+    run_candidate_pair,
+)
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file, sha256_tree  # noqa: E402
 from batch_receipts import BatchReceiptError, verify_paired_run_receipt  # noqa: E402
 from contracts import canonical_json_bytes, load_exact_json, sha256_json  # noqa: E402
@@ -286,6 +291,68 @@ def test_deep_structured_output_is_bounded_before_canonicalization(
 
     assert receipt["pairValidity"] == "invalid"
     assert receipt["invalidReason"] in {"budgetFailure", "evidenceFailure"}
+
+
+def test_result_attestation_substitution_is_rejected(world: World) -> None:
+    wrong = AttemptAttestation(*(["f" * 64] * 7))
+    first = _result("substituted")
+    first = type(first)(
+        first.exit_code,
+        first.started_at,
+        first.finished_at,
+        first.output,
+        first.metadata,
+        first.stdout,
+        first.stderr,
+        wrong,
+    )
+
+    executor = ScriptedExecutor([first, _result("other")])
+    with pytest.raises(BatchControllerError, match="attestation|evidence"):
+        run_candidate_pair(
+            world.plan,
+            world.bindings,
+            executor,
+            world.private_root,
+            seed=b"a" * 32,
+        )
+    assert executor.calls == 2
+
+
+def test_candidate_metadata_cannot_forge_supervisor_telemetry(world: World) -> None:
+    result = _result("bounded")
+    result.metadata["requestCount"] = 999
+    result.metadata["usage"] = {
+        "inputTokens": 999_999,
+        "outputTokens": 999_999,
+        "totalTokens": 1_999_998,
+    }
+
+    class TrustedAdapter(ScriptedExecutor):
+        def start(self, request):
+            raw = self.execute(request)
+
+            class Handle:
+                def poll(self):
+                    return raw
+
+                def telemetry(self):
+                    return AttemptTelemetry(1, 1, 2, 0)
+
+                def terminate(self):
+                    return True
+
+            return Handle()
+
+    receipt = run_candidate_pair(
+        world.plan,
+        world.bindings,
+        TrustedAdapter([result, _result("other")]),
+        world.private_root,
+        seed=b"b" * 32,
+    )
+
+    assert receipt["pairValidity"] == "valid"
 
 
 def test_supervisor_deadline_terminates_sleeping_execution(
