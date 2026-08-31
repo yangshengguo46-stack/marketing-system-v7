@@ -80,6 +80,7 @@ def _write_exact(path: Path, payload: bytes, mode: int) -> str:
 class PreparedProcess:
     request: object
     spec: FrozenLaunchSpec
+    request_identity: dict[str, str]
     launcher_path: Path
     artifact_paths: dict[str, Path]
     written_sha256: dict[str, str]
@@ -87,6 +88,7 @@ class PreparedProcess:
 
 def prepare_process(request: object, spec: FrozenLaunchSpec) -> PreparedProcess:
     """Write every admitted byte into the exact controller-owned cell."""
+    request_identity = measure_request_identity(request)
     runtime = request.cell.home / ".runtime"
     launch_root = runtime / "launch"
     launch_root.mkdir(mode=0o700)
@@ -114,7 +116,7 @@ def prepare_process(request: object, spec: FrozenLaunchSpec) -> PreparedProcess:
         )
     if written["executable"] != spec.executable_sha256:
         raise ProcessLaunchError("copied launch executable identity differs")
-    return PreparedProcess(request, spec, launcher, paths, written)
+    return PreparedProcess(request, spec, request_identity, launcher, paths, written)
 
 
 def _expand(argument: str, prepared: PreparedProcess) -> str:
@@ -231,9 +233,7 @@ def spawn(prepared: PreparedProcess, limit: int) -> OwnedProcess:
     record = {
         "argv": argv,
         "artifactSha256": dict(sorted(prepared.written_sha256.items())),
-        "candidateBinarySha256": measure_request_identity(prepared.request)[
-            "binary_sha256"
-        ],
+        "candidateBinarySha256": prepared.request_identity["binary_sha256"],
         "copiedExecutableSha256": prepared.written_sha256["executable"],
         "environment": dict(sorted(environment.items())),
         "environmentSha256": sha256_json(dict(sorted(environment.items()))),

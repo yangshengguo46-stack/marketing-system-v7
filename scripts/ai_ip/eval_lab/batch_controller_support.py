@@ -367,10 +367,10 @@ def classify_attempt_result(
 ) -> tuple[str, str | None]:
     if any(size > max_output_bytes for size in artifact_sizes):
         return "budgetFailure", "candidate exceeded the sealed output budget"
-    if forced_evidence_failure:
-        return "evidenceFailure", "candidate raw evidence is malformed"
     if type(metadata) is dict and metadata.get("supervisorTimedOut") is True:
         return "budgetFailure", "candidate exceeded the supervisor deadline"
+    if forced_evidence_failure:
+        return "evidenceFailure", "candidate raw evidence is malformed"
     if type(exit_code) is not int or exit_code != 0:
         return "executionFailure", "candidate process did not exit successfully"
     if type(metadata) is dict and metadata.get("timedOut") is True:
