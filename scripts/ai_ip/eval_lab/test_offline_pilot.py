@@ -471,20 +471,27 @@ def test_legacy_sources_compile_with_exact_approved_digests():
     if source_root_value is None:
         pytest.skip("AI_IP_V6_EVIDENCE_ROOT is not configured")
     source_root = Path(source_root_value).resolve(strict=True)
+    source_payloads = {
+        name: (source_root / name).read_bytes() for name in SOURCE_DIGESTS
+    }
     assert {
-        name: hashlib.sha256((source_root / name).read_bytes()).hexdigest()
-        for name in SOURCE_DIGESTS
+        name: hashlib.sha256(payload).hexdigest()
+        for name, payload in source_payloads.items()
     } == SOURCE_DIGESTS
 
     with tempfile.TemporaryDirectory() as temporary:
         temporary_path = Path(temporary)
+        source_copy = temporary_path / "source"
+        source_copy.mkdir()
+        for name, payload in source_payloads.items():
+            (source_copy / name).write_bytes(payload)
         private_root = temporary_path / "private-root"
         assert (
             main(
                 [
                     "compile-golden-gift",
                     "--source-root",
-                    str(source_root),
+                    str(source_copy),
                     "--source-manifest",
                     str(LAB_ROOT / f"fixtures/{CASE_ID}/source-import.json"),
                     "--blueprint",
