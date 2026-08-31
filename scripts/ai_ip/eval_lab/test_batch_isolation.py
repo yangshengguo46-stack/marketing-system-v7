@@ -9,8 +9,10 @@ import pytest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import batch_isolation  # noqa: E402
 from batch_isolation import (  # noqa: E402
     IsolationError,
+    UnsupportedIsolationPlatformError,
     cleanup_attempt_cell,
     create_attempt_cell,
     mark_receipts_sealed,
@@ -20,6 +22,28 @@ from batch_isolation import (  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROOT = REPO_ROOT / "ai-ip-evals" / "lab" / "fixtures" / "batch-runner"
+
+
+def test_create_attempt_cell_fails_closed_on_injected_windows_platform(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Catches supported execution entering the experimental Windows backend."""
+    monkeypatch.setattr(batch_isolation, "_platform_name", lambda: "Windows")
+
+    with pytest.raises(
+        UnsupportedIsolationPlatformError,
+        match="separate Windows redesign and native CI",
+    ):
+        create_attempt_cell(
+            tmp_path / "missing-base",
+            "pair-windows-gate",
+            "attempt-windows-gate",
+            tmp_path / "missing-home",
+            tmp_path / "missing-workspace",
+            {},
+            {},
+        )
 
 
 @pytest.fixture

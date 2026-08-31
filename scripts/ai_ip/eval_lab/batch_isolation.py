@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import os
+import platform
 import re
 import secrets
 import subprocess
@@ -91,6 +92,22 @@ _RECEIPT_NAME = ".receipts-sealed"
 
 class IsolationError(ValueError):
     pass
+
+
+class UnsupportedIsolationPlatformError(IsolationError):
+    """Raised when supported execution would enter an unverified backend."""
+
+
+def _platform_name() -> str:
+    return platform.system()
+
+
+def require_supported_isolation_platform() -> None:
+    """Fail closed until the Windows backend has a separate redesign and native CI."""
+    if _platform_name() == "Windows":
+        raise UnsupportedIsolationPlatformError(
+            "the 07B isolated runner requires a separate Windows redesign and native CI"
+        )
 
 
 @dataclass(frozen=True)
@@ -290,6 +307,7 @@ def create_attempt_cell(
     source_environment: Mapping[str, str],
 ) -> AttemptCell:
     """Create one candidate attempt with independent bytes and retained capabilities."""
+    require_supported_isolation_platform()
     _retry_orphans()
     pair = _validate_identifier("pair ID", pair_id)
     attempt = _validate_identifier("attempt ID", attempt_id)
