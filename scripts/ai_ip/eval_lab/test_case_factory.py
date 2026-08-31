@@ -349,6 +349,36 @@ def test_mutation_fails_before_creating_any_case_subtree(tmp_path, mutation):
     assert (fixture[3].path / ".ai-ip-private-root-v1.json").is_file()
 
 
+@pytest.mark.parametrize(
+    ("mutation", "error"),
+    [
+        ("cardinality_preserving_unknown", "unexpected source identity"),
+        ("missing_entry_only", "exactly three sources"),
+    ],
+)
+def test_manifest_identity_and_cardinality_fail_independently(
+    tmp_path, mutation, error
+):
+    fixture = _fixture(tmp_path)
+    manifest = load_exact_json(fixture[2])
+    if mutation == "cardinality_preserving_unknown":
+        manifest["sources"][2] = {
+            "sourceId": "unexpected-source",
+            "relativePath": "unexpected.json",
+            "sha256": "0" * 64,
+            "packetRoles": ["referenceEvidence"],
+        }
+    else:
+        manifest["sources"].pop()
+    _write_json(fixture[2], manifest)
+
+    with pytest.raises(CaseFactoryError, match=error):
+        _compile(fixture)
+
+    assert not (fixture[3].path / "cases" / CASE_ID).exists()
+    assert (fixture[3].path / ".ai-ip-private-root-v1.json").is_file()
+
+
 def test_compiled_at_before_inclusive_source_day_fails_without_partial_case(tmp_path):
     fixture = _fixture(tmp_path)
 
