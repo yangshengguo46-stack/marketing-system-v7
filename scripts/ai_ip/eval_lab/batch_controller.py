@@ -1,22 +1,21 @@
 """Randomized two-arm controller for sealed 07B candidate plans."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping, Protocol
 
 try:
-    from .batch_controller_artifacts import (
-        ArtifactMaterializationError,
-        materialize_neutral_binary,
+    from .batch_controller_attempt import (
+        capture_arm,
+        prepare_arm,
+        seal_arm,
+        seal_arm_failure,
     )
+    from .batch_controller_types import AttemptRequest, CandidateExecutor, RawAttemptResult
+    from .batch_receipt_storage import seal_failure_tombstone
     from .batch_controller_support import (
-        ArmBinding,
         ControllerSupportError,
         ValidatedBindings,
-        classify_attempt_result,
         derive,
-        freeze_json,
         identities,
         pair_seed,
         require_mapping,
@@ -24,13 +23,11 @@ try:
         validate_bindings,
     )
     from .batch_isolation import (
-        AttemptCell,
         create_attempt_cell,
-        mark_receipts_sealed,
         require_supported_isolation_platform,
         verify_attempt_cells_disjoint,
     )
-    from .batch_plan import sha256_tree, verify_effective_condition_parity
+    from .batch_plan import verify_effective_condition_parity
     from .batch_plan_authority import (
         PlanAuthorityError,
         release_unstarted,
@@ -40,24 +37,25 @@ try:
         BatchReceiptError,
         assert_private_layout_available,
         prepare_private_layout,
-        seal_arm_attempt_receipt,
+        seal_pair_context,
         seal_paired_run_receipt,
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from .contracts import LabContractError, canonical_json_bytes, sha256_json
+    from .contracts import sha256_json
 except ImportError:
-    from batch_controller_artifacts import (
-        ArtifactMaterializationError,
-        materialize_neutral_binary,
+    from batch_controller_attempt import (
+        capture_arm,
+        prepare_arm,
+        seal_arm,
+        seal_arm_failure,
     )
+    from batch_controller_types import AttemptRequest, CandidateExecutor, RawAttemptResult
+    from batch_receipt_storage import seal_failure_tombstone
     from batch_controller_support import (
-        ArmBinding,
         ControllerSupportError,
         ValidatedBindings,
-        classify_attempt_result,
         derive,
-        freeze_json,
         identities,
         pair_seed,
         require_mapping,
@@ -65,13 +63,11 @@ except ImportError:
         validate_bindings,
     )
     from batch_isolation import (
-        AttemptCell,
         create_attempt_cell,
-        mark_receipts_sealed,
         require_supported_isolation_platform,
         verify_attempt_cells_disjoint,
     )
-    from batch_plan import sha256_tree, verify_effective_condition_parity
+    from batch_plan import verify_effective_condition_parity
     from batch_plan_authority import (
         PlanAuthorityError,
         release_unstarted,
@@ -81,47 +77,16 @@ except ImportError:
         BatchReceiptError,
         assert_private_layout_available,
         prepare_private_layout,
-        seal_arm_attempt_receipt,
+        seal_pair_context,
         seal_paired_run_receipt,
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from contracts import LabContractError, canonical_json_bytes, sha256_json
+    from contracts import sha256_json
 
 
 class BatchControllerError(ValueError):
     pass
-
-
-@dataclass(frozen=True)
-class AttemptRequest:
-    cell: AttemptCell
-    binary_path: Path
-    case_bundle: object
-    case_answer_schema: object
-    model_route: Mapping[str, object]
-    execution_profile: object
-    timeout_seconds: int
-    token_budget: int
-    request_budget: int
-    cost_budget_cny: int
-
-
-@dataclass(frozen=True)
-class RawAttemptResult:
-    exit_code: int
-    started_at: str
-    finished_at: str
-    output: object | None
-    metadata: object | None
-    stdout: bytes
-    stderr: bytes
-
-
-class CandidateExecutor(Protocol):
-    """Execute one isolated request exactly once and return its complete raw evidence."""
-
-    def execute(self, request: AttemptRequest) -> RawAttemptResult: ...
 
 
 @dataclass
@@ -132,99 +97,6 @@ class _CountingExecutor:
     def execute(self, request: AttemptRequest) -> RawAttemptResult:
         self.calls += 1
         return self.executor.execute(request)
-
-
-def _failure_result(error: BaseException) -> RawAttemptResult:
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    timed_out = isinstance(error, TimeoutError)
-    metadata = {
-        "costEvidence": {
-            "costCny": 0,
-            "sourceSha256": sha256_json(type(error).__name__),
-        },
-        "executorError": type(error).__name__,
-        "threadId": None,
-        "timedOut": timed_out,
-        "trajectory": None,
-        "turnId": None,
-        "usage": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0},
-    }
-    return RawAttemptResult(-1, now, now, None, metadata, b"", str(error).encode())
-
-
-def _execute_arm(
-    *,
-    arm: ArmBinding,
-    cell: AttemptCell,
-    directory: Path,
-    plan: dict[str, object],
-    bindings: ValidatedBindings,
-    executor: CandidateExecutor,
-) -> tuple[dict[str, object], object, bytes]:
-    before = sha256_tree(cell.workspace)
-    try:
-        binary_path = materialize_neutral_binary(
-            cell.home, arm.binary_path, str(arm.binary_manifest["binarySha256"])
-        )
-    except ArtifactMaterializationError as error:
-        raise BatchControllerError(str(error)) from error
-    request = AttemptRequest(
-        cell,
-        binary_path,
-        freeze_json(bindings.case_bundle),
-        freeze_json(bindings.case_answer_schema),
-        dict(bindings.model_route),
-        freeze_json(bindings.execution_profile),
-        int(plan["timeoutBudget"]),
-        int(plan["tokenBudget"]),
-        int(plan["requestBudget"]),
-        int(plan["costBudgetCny"]),
-    )
-    try:
-        raw = executor.execute(request)
-        if not isinstance(raw, RawAttemptResult):
-            raise TypeError("executor returned an invalid result")
-    except BaseException as error:
-        raw = _failure_result(error)
-    try:
-        output = freeze_json(raw.output)
-    except (LabContractError, TypeError, ValueError):
-        output = {"unserializableOutputType": type(raw.output).__name__}
-    try:
-        metadata = freeze_json(raw.metadata)
-    except (LabContractError, TypeError, ValueError):
-        metadata = {"unserializableMetadataType": type(raw.metadata).__name__}
-    after = sha256_tree(cell.workspace)
-    classification, details = classify_attempt_result(
-        raw.exit_code, output, metadata, plan, bindings.case_answer_schema_path
-    )
-    receipt = seal_arm_attempt_receipt(
-        directory,
-        attempt_id=cell.attempt_id,
-        pair_id=cell.pair_id,
-        private_arm_id=arm.private_arm_id,
-        treatment_manifest_sha256=str(
-            arm.treatment_manifest["treatmentManifestSha256"]
-        ),
-        binary_manifest_sha256=arm.binary_manifest_sha256,
-        effective_config_sha256=arm.effective_config_sha256,
-        input_sha256=str(plan["caseBundleSha256"]),
-        workspace_before_sha256=before,
-        workspace_after_sha256=after,
-        workspace_path=cell.workspace,
-        app_server_protocol_schema_sha256=bindings.protocol_sha256,
-        promptfoo_config_sha256=bindings.promptfoo_config_sha256,
-        started_at=raw.started_at,
-        finished_at=raw.finished_at,
-        output=output,
-        metadata=metadata,
-        stdout=bytes(raw.stdout),
-        stderr=bytes(raw.stderr),
-        exit_classification=classification,
-        failure_details=details,
-    )
-    mark_receipts_sealed(cell)
-    return receipt, output, canonical_json_bytes(output)
 
 
 def _run_candidate_pair(
@@ -245,26 +117,36 @@ def _run_candidate_pair(
         )
     except BatchReceiptError as error:
         raise BatchControllerError(str(error)) from error
-    cells = {
-        "stock": create_attempt_cell(
-            validated.attempt_base,
-            pair_id,
-            stock_attempt_id,
-            validated.stock.codex_home_seed,
-            validated.workspace_seed,
-            validated.execution_profile,
-            validated.source_environment,
-        ),
-        "modified": create_attempt_cell(
-            validated.attempt_base,
-            pair_id,
-            modified_attempt_id,
-            validated.modified.codex_home_seed,
-            validated.workspace_seed,
-            validated.execution_profile,
-            validated.source_environment,
-        ),
-    }
+    try:
+        seal_pair_context(
+            pair_directory,
+            plan=plan_value,
+            execution_profile=validated.execution_profile,
+            case_answer_schema_path=validated.case_answer_schema_path,
+        )
+        cells = {
+            "stock": create_attempt_cell(
+                validated.attempt_base,
+                pair_id,
+                stock_attempt_id,
+                validated.stock.codex_home_seed,
+                validated.workspace_seed,
+                validated.execution_profile,
+                validated.source_environment,
+            ),
+            "modified": create_attempt_cell(
+                validated.attempt_base,
+                pair_id,
+                modified_attempt_id,
+                validated.modified.codex_home_seed,
+                validated.workspace_seed,
+                validated.execution_profile,
+                validated.source_environment,
+            ),
+        }
+    except BaseException as error:
+        seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
+        raise BatchControllerError("pair cell creation or context sealing failed") from error
     verify_attempt_cells_disjoint(cells["stock"], cells["modified"])
     order_secret = derive(active_seed, b"execution-order")
     order = ("stock", "modified") if order_secret[0] % 2 == 0 else ("modified", "stock")
@@ -272,17 +154,49 @@ def _run_candidate_pair(
     directories = {"stock": attempt_directories[0], "modified": attempt_directories[1]}
     arm_receipts: dict[str, dict[str, object]] = {}
     outputs: dict[str, tuple[object, bytes]] = {}
-    for name in order:
-        arm_receipt, output, output_bytes = _execute_arm(
-            arm=arms[name],
-            cell=cells[name],
-            directory=directories[name],
-            plan=plan_value,
-            bindings=validated,
-            executor=executor,
+    prepared = {
+        name: prepare_arm(
+            arms[name],
+            cells[name],
+            plan_value,
+            validated,
         )
-        arm_receipts[name] = arm_receipt
-        outputs[name] = (output, output_bytes)
+        for name in ("stock", "modified")
+    }
+    captured = {
+        name: capture_arm(executor, prepared[name][1]) for name in order
+    }
+    sealing_errors: list[BaseException] = []
+    for name in order:
+        try:
+            arm_receipt, output, output_bytes = seal_arm(
+                arms[name],
+                cells[name],
+                directories[name],
+                plan_value,
+                validated,
+                prepared[name][0],
+                captured[name],
+            )
+            arm_receipts[name] = arm_receipt
+            outputs[name] = (output, output_bytes)
+        except BaseException as error:
+            sealing_errors.append(error)
+            try:
+                seal_arm_failure(
+                    directories[name],
+                    cells[name],
+                    captured[name],
+                    int(validated.execution_profile["maxOutputBytes"]),
+                    error,
+                )
+            except BaseException:
+                pass
+    if sealing_errors:
+        seal_failure_tombstone(
+            pair_directory, pair_id, "armEvidenceSealing", sealing_errors[0]
+        )
+        raise BatchControllerError("one or more arm evidence records failed to seal")
     for receipt in arm_receipts.values():
         verify_arm_attempt_receipt(receipt, private_root)
     failures = [
@@ -356,11 +270,13 @@ def run_candidate_pair(
         active_seed = pair_seed(
             require_seed(seed), Path(private_root), plan_value["planSha256"]
         )
-        pair_id = identities(active_seed)[0]
+        identity = identities(active_seed)
+        pair_id = identity[0]
+        assert_private_layout_available(Path(private_root), (identity,))
         reservation = reserve_plan(
             Path(private_root), str(plan_value["planSha256"]), 1, (pair_id,)
         )
-    except (ControllerSupportError, PlanAuthorityError) as error:
+    except (BatchReceiptError, ControllerSupportError, PlanAuthorityError) as error:
         raise BatchControllerError(str(error)) from error
     counted = _CountingExecutor(executor)
     try:
@@ -371,6 +287,13 @@ def run_candidate_pair(
             Path(private_root),
             active_seed=active_seed,
         )
+    except BatchReceiptError as error:
+        if counted.calls == 0:
+            try:
+                release_unstarted(reservation)
+            except PlanAuthorityError:
+                pass
+        raise BatchControllerError(str(error)) from error
     except BaseException:
         if counted.calls == 0:
             try:
@@ -409,13 +332,13 @@ def run_candidate_batch(
     )
     batch_identities = tuple(identities(active_seed) for active_seed in pair_seeds)
     try:
+        assert_private_layout_available(Path(private_root), batch_identities)
         reservation = reserve_plan(
             Path(private_root),
             str(plan_value["planSha256"]),
             replication_count,
             tuple(value[0] for value in batch_identities),
         )
-        assert_private_layout_available(Path(private_root), batch_identities)
     except (BatchReceiptError, PlanAuthorityError) as error:
         raise BatchControllerError(str(error)) from error
     counted = _CountingExecutor(executor)
@@ -430,6 +353,13 @@ def run_candidate_batch(
             )
             for active_seed in pair_seeds
         ]
+    except BatchReceiptError as error:
+        if counted.calls == 0:
+            try:
+                release_unstarted(reservation)
+            except PlanAuthorityError:
+                pass
+        raise BatchControllerError(str(error)) from error
     except BaseException:
         if counted.calls == 0:
             try:

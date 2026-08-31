@@ -1,9 +1,6 @@
 """Private evidence sealing and public 07B receipt verification."""
 
 import hashlib
-import os
-import re
-import stat
 from pathlib import Path
 
 try:
@@ -13,11 +10,25 @@ try:
         validate_named_contract,
         verify_self_commitment,
     )
-    from .batch_plan import BatchPlanError, sha256_tree
+    from .batch_receipt_verification import (
+        verify_arm_attempt_receipt,
+        verify_paired_run_receipt,
+    )
+    from .batch_receipt_storage import (
+        MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
+        MAX_PRIVATE_FILE_BYTES as _MAX_PRIVATE_FILE_BYTES,
+        SecureStorageError as BatchReceiptError,
+        child_directory as _child_directory,
+        entry_exists as _entry_exists,
+        identifier as _identifier,
+        load_canonical as _load_canonical,
+        private_directory as _private_directory,
+        read_bounded as _read_bounded,
+        write_exclusive as _write_exclusive,
+    )
     from .contracts import (
         LabContractError,
         canonical_json_bytes,
-        load_exact_json,
         sha256_json,
     )
 except ImportError:
@@ -27,50 +38,27 @@ except ImportError:
         validate_named_contract,
         verify_self_commitment,
     )
-    from batch_plan import BatchPlanError, sha256_tree
+    from batch_receipt_verification import (
+        verify_arm_attempt_receipt,
+        verify_paired_run_receipt,
+    )
+    from batch_receipt_storage import (
+        MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
+        MAX_PRIVATE_FILE_BYTES as _MAX_PRIVATE_FILE_BYTES,
+        SecureStorageError as BatchReceiptError,
+        child_directory as _child_directory,
+        entry_exists as _entry_exists,
+        identifier as _identifier,
+        load_canonical as _load_canonical,
+        private_directory as _private_directory,
+        read_bounded as _read_bounded,
+        write_exclusive as _write_exclusive,
+    )
     from contracts import (
         LabContractError,
         canonical_json_bytes,
-        load_exact_json,
         sha256_json,
     )
-
-
-_IDENTIFIER = re.compile(r"[0-9a-f]{64}\Z")
-
-
-class BatchReceiptError(ValueError):
-    pass
-
-
-def _identifier(value: object, name: str) -> str:
-    if type(value) is not str or _IDENTIFIER.fullmatch(value) is None:
-        raise BatchReceiptError(f"invalid {name}")
-    return value
-
-
-def _private_directory(path: Path, *, create: bool = False) -> Path:
-    target = Path(path)
-    if not target.is_absolute():
-        raise BatchReceiptError("private root must be absolute")
-    if create:
-        target.mkdir(parents=True, mode=0o700, exist_ok=True)
-    try:
-        metadata = target.lstat()
-    except OSError as error:
-        raise BatchReceiptError("private evidence directory is unavailable") from error
-    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
-        raise BatchReceiptError("private evidence directory must not be a link")
-    return target
-
-
-def _child_directory(parent: Path, name: str, *, exclusive: bool) -> Path:
-    target = parent / name
-    try:
-        target.mkdir(mode=0o700, exist_ok=not exclusive)
-    except FileExistsError as error:
-        raise BatchReceiptError(f"{name} already exists") from error
-    return _private_directory(target)
 
 
 def prepare_private_layout(
@@ -83,10 +71,10 @@ def prepare_private_layout(
     pairs_root = _child_directory(root, "pairs", exclusive=False)
     attempts_root = _child_directory(root, "attempts", exclusive=False)
     pair_path = pairs_root / pair
-    if pair_path.exists():
+    if _entry_exists(pairs_root, pair):
         raise BatchReceiptError("pair already exists")
     for attempt in attempts:
-        if (attempts_root / attempt).exists():
+        if _entry_exists(attempts_root, attempt):
             raise BatchReceiptError("attempt already exists")
     pair_path = _child_directory(pairs_root, pair, exclusive=True)
     created: list[Path] = []
@@ -114,30 +102,14 @@ def assert_private_layout_available(
             _identifier(left_id, "attempt ID"),
             _identifier(right_id, "attempt ID"),
         )
-        if (root / "pairs" / pair).exists():
+        pairs = root / "pairs"
+        attempts_root = root / "attempts"
+        if pairs.exists() and _entry_exists(pairs, pair):
             raise BatchReceiptError("pair already exists")
-        if any((root / "attempts" / attempt).exists() for attempt in attempts):
+        if attempts_root.exists() and any(
+            _entry_exists(attempts_root, attempt) for attempt in attempts
+        ):
             raise BatchReceiptError("attempt already exists")
-
-
-def _write_exclusive(path: Path, payload: bytes) -> None:
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-    try:
-        descriptor = os.open(path, flags, 0o600)
-    except OSError as error:
-        raise BatchReceiptError(
-            f"private evidence write collision: {path.name}"
-        ) from error
-    try:
-        view = memoryview(payload)
-        while view:
-            written = os.write(descriptor, view)
-            if written <= 0:
-                raise BatchReceiptError("private evidence write failed")
-            view = view[written:]
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
 
 
 def _json_bytes(value: object) -> bytes:
@@ -163,6 +135,26 @@ def _metadata_parts(metadata: object) -> tuple[object, object, object, object, o
     )
 
 
+def seal_pair_context(
+    pair_directory: Path,
+    *,
+    plan: dict[str, object],
+    execution_profile: dict[str, object],
+    case_answer_schema_path: Path,
+) -> None:
+    """Seal the immutable semantic inputs needed for offline receipt verification."""
+    directory = _private_directory(Path(pair_directory))
+    try:
+        schema_bytes = Path(case_answer_schema_path).read_bytes()
+    except OSError as error:
+        raise BatchReceiptError("CaseAnswer schema is unavailable") from error
+    if len(schema_bytes) > _MAX_CONTEXT_BYTES:
+        raise BatchReceiptError("CaseAnswer schema exceeds the context bound")
+    _write_exclusive(directory / "plan.json", _json_bytes(plan))
+    _write_exclusive(directory / "execution-profile.json", _json_bytes(execution_profile))
+    _write_exclusive(directory / "case-answer-schema.json", schema_bytes)
+
+
 def seal_arm_attempt_receipt(
     attempt_directory: Path,
     *,
@@ -186,6 +178,7 @@ def seal_arm_attempt_receipt(
     stderr: bytes,
     exit_classification: str,
     failure_details: str | None,
+    raw_evidence: dict[str, object],
 ) -> dict[str, object]:
     """Seal raw private evidence, then seal its schema-valid arm receipt."""
     directory = _private_directory(Path(attempt_directory))
@@ -201,6 +194,7 @@ def seal_arm_attempt_receipt(
         "stdoutSha256": _sha256_bytes(stdout),
         "trajectory": trajectory,
         "workspacePath": str(Path(workspace_path)),
+        "rawEvidence": raw_evidence,
     }
     evidence_bytes = _json_bytes(evidence)
     _write_exclusive(directory / "evidence.json", evidence_bytes)
@@ -240,61 +234,6 @@ def seal_arm_attempt_receipt(
         raise BatchReceiptError(f"arm receipt is invalid: {error}") from error
     _write_exclusive(directory / "receipt.json", _json_bytes(receipt))
     return receipt
-
-
-def _load_canonical(path: Path) -> object:
-    try:
-        payload = path.read_bytes()
-        value = load_exact_json(path)
-    except (OSError, LabContractError) as error:
-        raise BatchReceiptError("private evidence is unavailable or invalid") from error
-    if payload != _json_bytes(value):
-        raise BatchReceiptError("private evidence bytes are not canonical")
-    return value
-
-
-def verify_arm_attempt_receipt(receipt: object, private_root: Path) -> None:
-    """Reverify an arm receipt and every private artifact it commits."""
-    try:
-        validate_named_contract("arm-attempt-receipt", receipt)
-        verify_self_commitment(receipt, "receiptSha256")
-    except BatchContractError as error:
-        raise BatchReceiptError(f"arm receipt verification failed: {error}") from error
-    assert type(receipt) is dict
-    attempt_id = _identifier(receipt["attemptId"], "attempt ID")
-    directory = _private_directory(Path(private_root) / "attempts" / attempt_id)
-    stored = _load_canonical(directory / "receipt.json")
-    if stored != receipt:
-        raise BatchReceiptError("arm receipt differs from sealed private receipt")
-    output = _load_canonical(directory / "output.json")
-    metadata = _load_canonical(directory / "metadata.json")
-    evidence = _load_canonical(directory / "evidence.json")
-    if type(evidence) is not dict:
-        raise BatchReceiptError("private evidence envelope is invalid")
-    try:
-        stdout = (directory / "stdout.bin").read_bytes()
-        stderr = (directory / "stderr.bin").read_bytes()
-    except OSError as error:
-        raise BatchReceiptError("private attempt stream is unavailable") from error
-    expected = {
-        "metadataSha256": _sha256_bytes(_json_bytes(metadata)),
-        "stderrSha256": _sha256_bytes(stderr),
-        "stdoutSha256": _sha256_bytes(stdout),
-        "trajectory": _metadata_parts(metadata)[2],
-        "workspacePath": evidence.get("workspacePath"),
-    }
-    if evidence != expected or sha256_json(evidence) != receipt["trajectorySha256"]:
-        raise BatchReceiptError("evidence commitment mismatch")
-    if sha256_json(output) != receipt["outputSha256"]:
-        raise BatchReceiptError("evidence commitment mismatch")
-    workspace = Path(str(evidence["workspacePath"]))
-    try:
-        workspace_digest = sha256_tree(workspace)
-    except BatchPlanError as error:
-        raise BatchReceiptError("sealed workspace cannot be verified") from error
-    if workspace_digest != receipt["workspaceAfterSha256"]:
-        raise BatchReceiptError("evidence commitment mismatch")
-
 
 def seal_paired_run_receipt(
     pair_directory: Path,
@@ -337,48 +276,3 @@ def seal_paired_run_receipt(
         raise BatchReceiptError(f"pair receipt is invalid: {error}") from error
     _write_exclusive(directory / "receipt.json", _json_bytes(receipt))
     return receipt
-
-
-def _receipt_by_commitment(
-    private_root: Path, pair_id: str, commitment: object
-) -> dict[str, object]:
-    matches: list[dict[str, object]] = []
-    attempts_root = _private_directory(Path(private_root) / "attempts")
-    for directory in attempts_root.iterdir():
-        if not directory.is_dir() or directory.is_symlink():
-            raise BatchReceiptError("unexpected private attempt entry")
-        value = _load_canonical(directory / "receipt.json")
-        if type(value) is dict and value.get("receiptSha256") == commitment:
-            matches.append(value)
-    if len(matches) != 1 or matches[0].get("pairId") != pair_id:
-        raise BatchReceiptError(
-            "pair arm receipt commitment is unavailable or ambiguous"
-        )
-    return matches[0]
-
-
-def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
-    """Reverify a pair receipt, both arm receipts, and all committed private evidence."""
-    try:
-        validate_named_contract("paired-run-receipt", receipt)
-        verify_self_commitment(receipt, "receiptSha256")
-    except BatchContractError as error:
-        raise BatchReceiptError(f"pair receipt verification failed: {error}") from error
-    assert type(receipt) is dict
-    pair_id = _identifier(receipt["pairId"], "pair ID")
-    directory = _private_directory(Path(private_root) / "pairs" / pair_id)
-    if _load_canonical(directory / "receipt.json") != receipt:
-        raise BatchReceiptError("pair receipt differs from sealed private receipt")
-    order = _load_canonical(directory / "order.json")
-    if sha256_json(order) != receipt["orderRandomizationCommitment"]:
-        raise BatchReceiptError("pair order commitment mismatch")
-    mapping_path = directory / "mapping.json"
-    if "anonymousMappingCommitment" in receipt:
-        mapping = _load_canonical(mapping_path)
-        if sha256_json(mapping) != receipt["anonymousMappingCommitment"]:
-            raise BatchReceiptError("anonymous mapping commitment mismatch")
-    elif mapping_path.exists():
-        raise BatchReceiptError("identical or invalid pair has a mapping artifact")
-    for field in ("stockArmAttemptReceiptSha256", "modifiedArmAttemptReceiptSha256"):
-        arm_receipt = _receipt_by_commitment(private_root, pair_id, receipt[field])
-        verify_arm_attempt_receipt(arm_receipt, private_root)

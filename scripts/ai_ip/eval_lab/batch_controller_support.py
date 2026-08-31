@@ -5,6 +5,7 @@ import hmac
 import json
 import secrets
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Mapping
 
@@ -277,6 +278,13 @@ def classify_attempt_result(
     metadata: object,
     plan: dict[str, object],
     schema_path: Path,
+    *,
+    started_at: object,
+    finished_at: object,
+    request_count: object,
+    artifact_sizes: tuple[int, ...],
+    max_output_bytes: int,
+    forced_evidence_failure: bool = False,
 ) -> tuple[str, str | None]:
     if type(exit_code) is not int or exit_code != 0:
         return "executionFailure", "candidate process did not exit successfully"
@@ -294,6 +302,19 @@ def classify_attempt_result(
         )
     if type(metadata) is not dict:
         return "evidenceFailure", "candidate metadata is missing"
+    if forced_evidence_failure:
+        return "evidenceFailure", "candidate raw evidence is malformed"
+    try:
+        if type(started_at) is not str or type(finished_at) is not str:
+            raise ValueError
+        started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        finished = datetime.fromisoformat(finished_at.replace("Z", "+00:00"))
+        if started.tzinfo is None or finished.tzinfo is None or finished < started:
+            raise ValueError
+    except ValueError:
+        return "evidenceFailure", "candidate timestamps are invalid"
+    if (finished - started).total_seconds() > plan["timeoutBudget"]:
+        return "budgetFailure", "candidate exceeded the sealed wall-clock budget"
     if (
         type(metadata.get("threadId")) is not str
         or type(metadata.get("turnId")) is not str
@@ -317,6 +338,12 @@ def classify_attempt_result(
         return "evidenceFailure", "usage evidence is invalid"
     if type(cost.get("costCny")) is not int or cost["costCny"] < 0:
         return "evidenceFailure", "cost evidence is invalid"
+    if type(request_count) is not int or request_count < 0:
+        return "evidenceFailure", "request-count evidence is invalid"
+    if request_count > plan["requestBudget"]:
+        return "budgetFailure", "candidate exceeded the sealed request budget"
+    if any(size > max_output_bytes for size in artifact_sizes):
+        return "budgetFailure", "candidate exceeded the sealed output budget"
     if values[2] > plan["tokenBudget"] or cost["costCny"] > plan["costBudgetCny"]:
         return "budgetFailure", "candidate exceeded a sealed budget"
     return "completed", None
