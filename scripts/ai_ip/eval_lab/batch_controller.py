@@ -11,11 +11,14 @@ try:
         seal_arm_failure,
     )
     from .batch_controller_types import (
+        AttemptAttestation,
         AttemptRequest,
+        AttemptTelemetry,
         CandidateExecutor,
         RawAttemptResult,
     )
     from .batch_receipt_storage import seal_failure_tombstone
+    from .batch_controller_staging import stage_inputs
     from .batch_controller_support import (
         ControllerSupportError,
         ValidatedBindings,
@@ -28,6 +31,8 @@ try:
     )
     from .batch_isolation import (
         create_attempt_cell,
+        cleanup_attempt_cell,
+        mark_receipts_sealed,
         require_supported_isolation_platform,
         verify_attempt_cells_disjoint,
     )
@@ -54,11 +59,14 @@ except ImportError:
         seal_arm_failure,
     )
     from batch_controller_types import (
+        AttemptAttestation,
         AttemptRequest,
+        AttemptTelemetry,
         CandidateExecutor,
         RawAttemptResult,
     )
     from batch_receipt_storage import seal_failure_tombstone
+    from batch_controller_staging import stage_inputs
     from batch_controller_support import (
         ControllerSupportError,
         ValidatedBindings,
@@ -71,6 +79,8 @@ except ImportError:
     )
     from batch_isolation import (
         create_attempt_cell,
+        cleanup_attempt_cell,
+        mark_receipts_sealed,
         require_supported_isolation_platform,
         verify_attempt_cells_disjoint,
     )
@@ -100,9 +110,9 @@ class _CountingExecutor:
     executor: CandidateExecutor
     calls: int = 0
 
-    def execute(self, request: AttemptRequest) -> RawAttemptResult:
+    def start(self, request: AttemptRequest):
         self.calls += 1
-        return self.executor.execute(request)
+        return self.executor.start(request)
 
 
 def _run_candidate_pair(
@@ -118,40 +128,77 @@ def _run_candidate_pair(
         assert_private_layout_available(
             Path(private_root), ((pair_id, stock_attempt_id, modified_attempt_id),)
         )
-        pair_directory, attempt_directories = prepare_private_layout(
+        layout = prepare_private_layout(
             Path(private_root), pair_id, (stock_attempt_id, modified_attempt_id)
         )
+        pair_directory = layout.pair_directory
+        attempt_directories = layout.attempt_directories
     except BatchReceiptError as error:
         raise BatchControllerError(str(error)) from error
+    cells: dict[str, object] = {}
+    staged = None
     try:
+        layout.verify()
+        staged = stage_inputs(validated, pair_id)
         seal_pair_context(
             pair_directory,
             plan=plan_value,
             execution_profile=validated.execution_profile,
-            case_answer_schema_path=validated.case_answer_schema_path,
+            case_answer_schema_path=staged.schema_path,
+            identity_context={
+                "stock": {
+                    "privateArmId": validated.stock.private_arm_id,
+                    "treatmentManifestSha256": validated.stock.treatment_manifest["treatmentManifestSha256"],
+                    "binaryManifestSha256": validated.stock.binary_manifest_sha256,
+                    "binarySha256": validated.stock.binary.sha256,
+                    "codexHomeSeedSha256": validated.stock.codex_home_seed.digest,
+                    "effectiveConfigSha256": validated.stock.effective_config_sha256,
+                },
+                "modified": {
+                    "privateArmId": validated.modified.private_arm_id,
+                    "treatmentManifestSha256": validated.modified.treatment_manifest["treatmentManifestSha256"],
+                    "binaryManifestSha256": validated.modified.binary_manifest_sha256,
+                    "binarySha256": validated.modified.binary.sha256,
+                    "codexHomeSeedSha256": validated.modified.codex_home_seed.digest,
+                    "effectiveConfigSha256": validated.modified.effective_config_sha256,
+                },
+                "inputSha256": plan_value["caseBundleSha256"],
+                "workspaceBeforeSha256": validated.workspace_seed.cell_digest(),
+                "appServerProtocolSchemaSha256": validated.protocol_sha256,
+                "promptfooConfigSha256": validated.promptfoo_config_sha256,
+                "executionProfileSha256": plan_value["executionProfileRef"],
+                "modelRouteSha256": plan_value["modelRouteRef"],
+            },
         )
-        cells = {
-            "stock": create_attempt_cell(
+        cells["stock"] = create_attempt_cell(
                 validated.attempt_base,
                 pair_id,
                 stock_attempt_id,
-                validated.stock.codex_home_seed,
-                validated.workspace_seed,
+                staged.stock_seed,
+                staged.workspace_seed,
                 validated.execution_profile,
                 validated.source_environment,
-            ),
-            "modified": create_attempt_cell(
+            )
+        cells["modified"] = create_attempt_cell(
                 validated.attempt_base,
                 pair_id,
                 modified_attempt_id,
-                validated.modified.codex_home_seed,
-                validated.workspace_seed,
+                staged.modified_seed,
+                staged.workspace_seed,
                 validated.execution_profile,
                 validated.source_environment,
-            ),
-        }
+            )
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
+        for cell in cells.values():
+            try:
+                mark_receipts_sealed(cell)
+                cleanup_attempt_cell(cell)
+            except BaseException:
+                pass
+        if staged is not None:
+            staged.cleanup()
+        layout.close()
         raise BatchControllerError(
             "pair cell creation or context sealing failed"
         ) from error
@@ -172,9 +219,17 @@ def _run_candidate_pair(
         for name in ("stock", "modified")
     }
     captured = {name: capture_arm(executor, prepared[name][1]) for name in order}
+    try:
+        layout.verify()
+    except BaseException as error:
+        seal_failure_tombstone(pair_directory, pair_id, "directoryIdentity", error)
+        staged.cleanup()
+        layout.close()
+        raise BatchControllerError("private evidence directory identity was replaced") from error
     sealing_errors: list[BaseException] = []
     for name in order:
         try:
+            layout.verify()
             arm_receipt, output, output_bytes = seal_arm(
                 arms[name],
                 cells[name],
@@ -183,6 +238,7 @@ def _run_candidate_pair(
                 validated,
                 prepared[name][0],
                 captured[name],
+                staged.schema_path,
             )
             arm_receipts[name] = arm_receipt
             outputs[name] = (output, output_bytes)
@@ -253,6 +309,8 @@ def _run_candidate_pair(
         mapping_record=mapping,
     )
     verify_paired_run_receipt(pair_receipt, private_root)
+    staged.cleanup()
+    layout.close()
     return pair_receipt
 
 
@@ -269,6 +327,7 @@ def run_candidate_pair(
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
+        plan_value = validated.plan
         if plan_value.get("replicationCount") != 1:
             raise ControllerSupportError(
                 "standalone pair requires sealed replication count 1"
@@ -294,18 +353,8 @@ def run_candidate_pair(
             active_seed=active_seed,
         )
     except BatchReceiptError as error:
-        if counted.calls == 0:
-            try:
-                release_unstarted(reservation)
-            except PlanAuthorityError:
-                pass
         raise BatchControllerError(str(error)) from error
     except BaseException:
-        if counted.calls == 0:
-            try:
-                release_unstarted(reservation)
-            except PlanAuthorityError:
-                pass
         raise
 
 
@@ -322,6 +371,7 @@ def run_candidate_batch(
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
+        plan_value = validated.plan
         master_seed = require_seed(seed)
     except ControllerSupportError as error:
         raise BatchControllerError(str(error)) from error
@@ -360,16 +410,6 @@ def run_candidate_batch(
             for active_seed in pair_seeds
         ]
     except BatchReceiptError as error:
-        if counted.calls == 0:
-            try:
-                release_unstarted(reservation)
-            except PlanAuthorityError:
-                pass
         raise BatchControllerError(str(error)) from error
     except BaseException:
-        if counted.calls == 0:
-            try:
-                release_unstarted(reservation)
-            except PlanAuthorityError:
-                pass
         raise

@@ -22,6 +22,48 @@ class AttemptRequest:
     token_budget: int
     request_budget: int
     cost_budget_cny: int
+    codex_home_seed_sha256: str
+    effective_config_sha256: str
+    workspace_seed_sha256: str
+    execution_profile_sha256: str
+    model_route_sha256: str
+    app_server_protocol_schema: bytes
+    app_server_protocol_schema_sha256: str
+    promptfoo_config: bytes
+    promptfoo_config_sha256: str
+
+
+@dataclass(frozen=True)
+class AttemptAttestation:
+    binary_sha256: str
+    codex_home_seed_sha256: str
+    effective_config_sha256: str
+    execution_profile_sha256: str
+    model_route_sha256: str
+    app_server_protocol_schema_sha256: str
+    promptfoo_config_sha256: str
+
+    @classmethod
+    def from_request(cls, request: AttemptRequest) -> "AttemptAttestation":
+        import hashlib
+
+        return cls(
+            hashlib.sha256(request.binary_path.read_bytes()).hexdigest(),
+            request.codex_home_seed_sha256,
+            request.effective_config_sha256,
+            request.execution_profile_sha256,
+            request.model_route_sha256,
+            hashlib.sha256(request.app_server_protocol_schema).hexdigest(),
+            hashlib.sha256(request.promptfoo_config).hexdigest(),
+        )
+
+
+@dataclass(frozen=True)
+class AttemptTelemetry:
+    request_count: int
+    input_tokens: int
+    output_tokens: int
+    cost_cny: int
 
 
 @dataclass(frozen=True)
@@ -33,9 +75,20 @@ class RawAttemptResult:
     metadata: object | None
     stdout: bytes
     stderr: bytes
+    attestation: AttemptAttestation | None = None
+
+
+class RunningAttempt(Protocol):
+    """Trusted adapter handle whose polling is nonblocking and termination synchronous."""
+
+    def poll(self) -> RawAttemptResult | None: ...
+
+    def telemetry(self) -> AttemptTelemetry: ...
+
+    def terminate(self) -> bool: ...
 
 
 class CandidateExecutor(Protocol):
-    """Execute one isolated request exactly once and return its complete raw evidence."""
+    """Start one bounded attempt through a trusted supervisor adapter."""
 
-    def execute(self, request: AttemptRequest) -> RawAttemptResult: ...
+    def start(self, request: AttemptRequest) -> RunningAttempt: ...

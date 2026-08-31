@@ -60,3 +60,35 @@ def materialize_neutral_binary(
     if digest.hexdigest() != expected_sha256:
         raise ArtifactMaterializationError("candidate binary commitment mismatch")
     return destination
+
+
+def materialize_neutral_binary_bytes(
+    cell_home: Path, payload: bytes, expected_sha256: str
+) -> Path:
+    """Write already-validated immutable bytes to the neutral cell path."""
+    runtime = Path(cell_home) / ".runtime"
+    try:
+        runtime.mkdir(mode=0o700)
+        destination = runtime / "codex"
+        descriptor = os.open(
+            destination,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o700,
+        )
+        try:
+            view = memoryview(payload)
+            while view:
+                written = os.write(descriptor, view)
+                if written <= 0:
+                    raise ArtifactMaterializationError("candidate binary write failed")
+                view = view[written:]
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    except OSError as error:
+        raise ArtifactMaterializationError(
+            "cannot materialize neutral candidate binary"
+        ) from error
+    if hashlib.sha256(payload).hexdigest() != expected_sha256:
+        raise ArtifactMaterializationError("candidate binary commitment mismatch")
+    return destination

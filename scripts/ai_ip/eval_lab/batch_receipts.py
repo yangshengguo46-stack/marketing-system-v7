@@ -1,6 +1,8 @@
 """Private evidence sealing and public 07B receipt verification."""
 
 import hashlib
+import os
+from dataclasses import dataclass
 from pathlib import Path
 
 try:
@@ -53,9 +55,30 @@ except ImportError:
     )
 
 
+@dataclass
+class EvidenceLayout:
+    pair_directory: Path
+    attempt_directories: tuple[Path, Path]
+    _entries: tuple[tuple[Path, int, tuple[int, int]], ...]
+
+    def verify(self) -> None:
+        for path, descriptor, identity in self._entries:
+            state = path.lstat()
+            bound = os.fstat(descriptor)
+            if (state.st_dev, state.st_ino) != identity or (
+                bound.st_dev,
+                bound.st_ino,
+            ) != identity:
+                raise BatchReceiptError("private evidence directory identity was replaced")
+
+    def close(self) -> None:
+        for _, descriptor, _ in self._entries:
+            os.close(descriptor)
+
+
 def prepare_private_layout(
     private_root: Path, pair_id: str, attempt_ids: tuple[str, str]
-) -> tuple[Path, tuple[Path, Path]]:
+) -> EvidenceLayout:
     """Reserve collision-free pair and attempt evidence directories before execution."""
     pair = _identifier(pair_id, "pair ID")
     attempts = tuple(_identifier(value, "attempt ID") for value in attempt_ids)
@@ -78,7 +101,30 @@ def prepare_private_layout(
             target.rmdir()
         pair_path.rmdir()
         raise
-    return pair_path, (created[0], created[1])
+    paths = (root, pairs_root, attempts_root, pair_path, created[0], created[1])
+    entries = []
+    for path in paths:
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0),
+        )
+        state = os.fstat(descriptor)
+        entries.append((path, descriptor, (state.st_dev, state.st_ino)))
+    layout = EvidenceLayout(pair_path, (created[0], created[1]), tuple(entries))
+    layout.verify()
+    _write_exclusive(
+        root / f"layout-{pair}.json",
+        _json_bytes(
+            {
+                "entries": [
+                    {"device": identity[0], "inode": identity[1], "path": str(path.relative_to(root))}
+                    for path, _, identity in entries
+                ],
+                "pairId": pair,
+            }
+        ),
+    )
+    return layout
 
 
 def assert_private_layout_available(
@@ -133,6 +179,7 @@ def seal_pair_context(
     plan: dict[str, object],
     execution_profile: dict[str, object],
     case_answer_schema_path: Path,
+    identity_context: dict[str, object],
 ) -> None:
     """Seal the immutable semantic inputs needed for offline receipt verification."""
     directory = _private_directory(Path(pair_directory))
@@ -147,6 +194,7 @@ def seal_pair_context(
         directory / "execution-profile.json", _json_bytes(execution_profile)
     )
     _write_exclusive(directory / "case-answer-schema.json", schema_bytes)
+    _write_exclusive(directory / "identity-context.json", _json_bytes(identity_context))
 
 
 def seal_arm_attempt_receipt(

@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import json
 import shutil
 import sys
@@ -11,7 +12,9 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import batch_isolation  # noqa: E402
 from batch_controller import (  # noqa: E402
+    AttemptAttestation,
     AttemptRequest,
+    AttemptTelemetry,
     BatchControllerError,
     RawAttemptResult,
     run_candidate_batch,
@@ -129,7 +132,39 @@ class ScriptedExecutor:
 
     def execute(self, request: AttemptRequest) -> RawAttemptResult:
         self.requests.append(request)
-        return self.results[len(self.requests) - 1]
+        result = self.results[len(self.requests) - 1]
+        if result.attestation is None:
+            result = dataclasses.replace(
+                result, attestation=AttemptAttestation.from_request(request)
+            )
+        return result
+
+    def start(self, request: AttemptRequest):
+        result = self.execute(request)
+        metadata = result.metadata if type(result.metadata) is dict else {}
+        usage = metadata.get("usage") if type(metadata.get("usage")) is dict else {}
+        telemetry = AttemptTelemetry(
+            int(metadata.get("requestCount", 0)),
+            int(usage.get("inputTokens", 0)),
+            int(usage.get("outputTokens", 0)),
+            int(
+                metadata.get("costEvidence", {}).get("costCny", 0)
+                if type(metadata.get("costEvidence")) is dict
+                else 0
+            ),
+        )
+
+        class ImmediateHandle:
+            def poll(self):
+                return result
+
+            def telemetry(self):
+                return telemetry
+
+            def terminate(self):
+                return True
+
+        return ImmediateHandle()
 
 
 @dataclass(frozen=True)

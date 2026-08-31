@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 try:
-    from .batch_controller_artifacts import materialize_neutral_binary
+    from .batch_controller_artifacts import materialize_neutral_binary_bytes
     from .batch_controller_capture import capture, normalize
     from .batch_controller_support import (
         ArmBinding,
@@ -19,7 +19,7 @@ try:
     from .batch_receipt_storage import write_exclusive
     from .contracts import LabContractError, canonical_json_bytes, sha256_json
 except ImportError:
-    from batch_controller_artifacts import materialize_neutral_binary
+    from batch_controller_artifacts import materialize_neutral_binary_bytes
     from batch_controller_capture import capture, normalize
     from batch_controller_support import (
         ArmBinding,
@@ -60,8 +60,8 @@ def prepare_arm(
     bindings: ValidatedBindings,
 ) -> tuple[str, AttemptRequest]:
     before = sha256_tree(cell.workspace)
-    binary_path = materialize_neutral_binary(
-        cell.home, arm.binary_path, str(arm.binary_manifest["binarySha256"])
+    binary_path = materialize_neutral_binary_bytes(
+        cell.home, arm.binary.payload, str(arm.binary_manifest["binarySha256"])
     )
     request = AttemptRequest(
         cell,
@@ -74,6 +74,15 @@ def prepare_arm(
         int(plan["tokenBudget"]),
         int(plan["requestBudget"]),
         int(plan["costBudgetCny"]),
+        arm.codex_home_seed.digest,
+        arm.effective_config_sha256,
+        bindings.workspace_seed.digest,
+        sha256_json(bindings.execution_profile),
+        sha256_json(bindings.model_route),
+        bindings.protocol.payload,
+        bindings.protocol_sha256,
+        bindings.promptfoo_config.payload,
+        bindings.promptfoo_config_sha256,
     )
     return before, request
 
@@ -90,6 +99,7 @@ def seal_arm(
     bindings: ValidatedBindings,
     before: str,
     captured: object,
+    schema_path: Path,
 ) -> tuple[dict[str, object], object, bytes]:
     raw = normalize(
         captured,
@@ -111,7 +121,7 @@ def seal_arm(
         output,
         metadata,
         plan,
-        bindings.case_answer_schema_path,
+        schema_path,
         started_at=raw.raw_evidence["startedAt"],
         finished_at=raw.raw_evidence["finishedAt"],
         request_count=raw.raw_evidence["requestCount"],
@@ -119,7 +129,19 @@ def seal_arm(
             int(raw.raw_evidence[field]["rawSize"]) for field in byte_fields
         ),
         max_output_bytes=int(bindings.execution_profile["maxOutputBytes"]),
-        forced_evidence_failure=raw.forced_evidence_failure,
+        forced_evidence_failure=(
+            raw.forced_evidence_failure
+            or raw.attestation
+            != {
+                "appServerProtocolSchemaSha256": bindings.protocol_sha256,
+                "binarySha256": arm.binary.sha256,
+                "codexHomeSeedSha256": arm.codex_home_seed.digest,
+                "effectiveConfigSha256": arm.effective_config_sha256,
+                "executionProfileSha256": sha256_json(bindings.execution_profile),
+                "modelRouteSha256": sha256_json(bindings.model_route),
+                "promptfooConfigSha256": bindings.promptfoo_config_sha256,
+            }
+        ),
     )
     raw_evidence = {
         **raw.raw_evidence,

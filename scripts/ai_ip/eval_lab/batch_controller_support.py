@@ -16,9 +16,11 @@ try:
         sha256_file,
         sha256_tree,
         verify_treatment_manifest,
+        verify_binary_manifest,
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
+    from .batch_controller_snapshots import FrozenFile, FrozenJson, FrozenTree, SnapshotError
     from .contracts import (
         LabContractError,
         canonical_json_bytes,
@@ -33,9 +35,11 @@ except ImportError:
         sha256_file,
         sha256_tree,
         verify_treatment_manifest,
+        verify_binary_manifest,
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
+    from batch_controller_snapshots import FrozenFile, FrozenJson, FrozenTree, SnapshotError
     from contracts import (
         LabContractError,
         canonical_json_bytes,
@@ -52,35 +56,32 @@ class ControllerSupportError(ValueError):
 @dataclass(frozen=True)
 class ArmBinding:
     private_arm_id: str
+    arm_class: str
     treatment_manifest: dict[str, object]
     binary_manifest: dict[str, object]
     binary_manifest_sha256: str
-    binary_path: Path
-    codex_home_seed: Path
-    system_instruction: Path
-    capability_bundle: Path
-    effective_config: Path
+    binary: FrozenFile
+    codex_home_seed: FrozenTree
     effective_config_sha256: str
     effective_conditions: dict[str, object]
 
 
 @dataclass(frozen=True)
 class ValidatedBindings:
+    plan: dict[str, object]
     stock: ArmBinding
     modified: ArmBinding
     attempt_base: Path
-    workspace_seed: Path
+    workspace_seed: FrozenTree
     execution_profile: dict[str, object]
-    execution_profile_path: Path
-    source_environment: Mapping[str, str]
+    source_environment: dict[str, str]
     case_bundle: object
     case_answer_schema: object
-    case_answer_schema_path: Path
+    case_answer_schema_file: FrozenFile
     model_route: Mapping[str, object]
-    model_route_path: Path
-    protocol_path: Path
+    protocol: FrozenFile
     protocol_sha256: str
-    promptfoo_config_path: Path
+    promptfoo_config: FrozenFile
     promptfoo_config_sha256: str
 
 
@@ -111,36 +112,59 @@ def _path(value: object, name: str) -> Path:
     return value
 
 
-def _arm_binding(value: object, name: str) -> ArmBinding:
+def _arm_binding(value: object, name: str, arm_class: str) -> ArmBinding:
     arm = require_mapping(value, f"{name} binding")
     private_arm_id = _text(arm.get("privateArmId"), "private arm ID")
     if any(
         token in private_arm_id.casefold() for token in ("stock", "modified", "/", "\\")
     ):
         raise ControllerSupportError("private arm ID must be opaque")
+    treatment = freeze_json(require_mapping(arm.get("treatmentManifest"), "treatment manifest"))
+    binary_manifest = freeze_json(require_mapping(arm.get("binaryManifest"), "binary manifest"))
+    conditions = freeze_json(require_mapping(arm.get("effectiveConditions"), "effective conditions"))
+    binary_path = _path(arm.get("binaryPath"), "binary path")
+    seed_path = _path(arm.get("codexHomeSeed"), "Codex home seed")
+    system_path = _path(arm.get("systemInstruction"), "system instruction")
+    capability_path = _path(arm.get("capabilityBundle"), "capability bundle")
+    config_path = _path(arm.get("effectiveConfig"), "effective config")
+    try:
+        verify_binary_manifest(binary_manifest, binary_path)
+        verify_treatment_manifest(
+            treatment,
+            codex_home_seed=seed_path,
+            system_instruction=system_path,
+            capability_bundle=capability_path,
+            effective_config=config_path,
+            binary_manifest=binary_manifest,
+            binary_path=binary_path,
+        )
+        binary = FrozenFile.capture(binary_path)
+        seed = FrozenTree.capture(seed_path)
+    except (BatchPlanError, SnapshotError) as error:
+        raise ControllerSupportError(str(error)) from error
     return ArmBinding(
         private_arm_id,
-        require_mapping(arm.get("treatmentManifest"), "treatment manifest"),
-        require_mapping(arm.get("binaryManifest"), "binary manifest"),
+        arm_class,
+        treatment,
+        binary_manifest,
         _sha256(arm.get("binaryManifestSha256"), "binary manifest SHA-256"),
-        _path(arm.get("binaryPath"), "binary path"),
-        _path(arm.get("codexHomeSeed"), "Codex home seed"),
-        _path(arm.get("systemInstruction"), "system instruction"),
-        _path(arm.get("capabilityBundle"), "capability bundle"),
-        _path(arm.get("effectiveConfig"), "effective config"),
+        binary,
+        seed,
         _sha256(arm.get("effectiveConfigSha256"), "effective config SHA-256"),
-        require_mapping(arm.get("effectiveConditions"), "effective conditions"),
+        conditions,
     )
 
 
 def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindings:
+    plan = freeze_json(plan)
+    assert type(plan) is dict
     bindings = require_mapping(value, "candidate bindings")
     if bindings.get("retryPolicy") != {"maxAttemptsPerArm": 1}:
         raise ControllerSupportError("controller requires maxAttemptsPerArm=1")
     if plan.get("retryPolicy") != {"maxRetries": 0}:
         raise ControllerSupportError("sealed plan must prohibit retries")
-    stock = _arm_binding(bindings.get("stock"), "stock")
-    modified = _arm_binding(bindings.get("modified"), "modified")
+    stock = _arm_binding(bindings.get("stock"), "stock", "stock")
+    modified = _arm_binding(bindings.get("modified"), "modified", "modified")
     if stock.private_arm_id == modified.private_arm_id:
         raise ControllerSupportError("private arm IDs must differ")
     try:
@@ -157,16 +181,12 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
                 raise BatchPlanError("binary manifest commitment mismatch")
             if arm.binary_manifest.get("armClass") != arm_class:
                 raise BatchPlanError("binary manifest arm class mismatch")
-            verify_treatment_manifest(
-                arm.treatment_manifest,
-                codex_home_seed=arm.codex_home_seed,
-                system_instruction=arm.system_instruction,
-                capability_bundle=arm.capability_bundle,
-                effective_config=arm.effective_config,
-                binary_manifest=arm.binary_manifest,
-                binary_path=arm.binary_path,
-            )
-            if arm.effective_config_sha256 != sha256_file(arm.effective_config):
+            if arm.binary.sha256 != arm.binary_manifest["binarySha256"]:
+                raise BatchPlanError("binary snapshot commitment mismatch")
+            if arm.codex_home_seed.digest != arm.treatment_manifest["codexHomeSeedSha256"]:
+                raise BatchPlanError("seed snapshot commitment mismatch")
+            config_path = _path(bindings[arm_class].get("effectiveConfig"), "effective config")
+            if arm.effective_config_sha256 != sha256_file(config_path):
                 raise BatchPlanError("effective config commitment mismatch")
     except BatchPlanError as error:
         raise ControllerSupportError(str(error)) from error
@@ -175,13 +195,18 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
     schema_path = _path(bindings.get("caseAnswerSchemaPath"), "CaseAnswer schema path")
     if sha256_file(schema_path) != plan["caseAnswerSchemaSha256"]:
         raise ControllerSupportError("CaseAnswer schema commitment mismatch")
-    case_answer_schema = bindings.get("caseAnswerSchema")
+    case_answer_schema = freeze_json(bindings.get("caseAnswerSchema"))
     if case_answer_schema != load_exact_json(schema_path):
         raise ControllerSupportError("CaseAnswer schema bytes were substituted")
-    workspace_seed = _path(bindings.get("workspaceSeed"), "workspace seed")
-    if sha256_tree(workspace_seed) != plan["workspaceTemplateSha256"]:
+    try:
+        workspace_seed = FrozenTree.capture(_path(bindings.get("workspaceSeed"), "workspace seed"))
+        schema_file = FrozenFile.capture(schema_path)
+    except SnapshotError as error:
+        raise ControllerSupportError(str(error)) from error
+    if workspace_seed.digest != plan["workspaceTemplateSha256"]:
         raise ControllerSupportError("workspace template commitment mismatch")
-    profile = require_mapping(bindings.get("executionProfile"), "execution profile")
+    profile = freeze_json(require_mapping(bindings.get("executionProfile"), "execution profile"))
+    assert type(profile) is dict
     profile_path = _path(bindings.get("executionProfilePath"), "execution profile path")
     try:
         validate_named_contract("execution-profile", profile)
@@ -198,10 +223,8 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
             "execution profile wall clock differs from plan timeout"
         )
     source_environment = bindings.get("sourceEnvironment")
-    model_route = bindings.get("modelRoute")
-    if not isinstance(source_environment, Mapping) or not isinstance(
-        model_route, Mapping
-    ):
+    model_route = freeze_json(bindings.get("modelRoute"))
+    if not isinstance(source_environment, Mapping) or type(model_route) is not dict:
         raise ControllerSupportError(
             "source environment and model route must be mappings"
         )
@@ -216,30 +239,37 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
     protocol_sha256 = _sha256(
         bindings.get("appServerProtocolSchemaSha256"), "protocol schema SHA-256"
     )
-    if sha256_file(protocol_path) != protocol_sha256:
+    try:
+        protocol = FrozenFile.capture(protocol_path)
+    except SnapshotError as error:
+        raise ControllerSupportError(str(error)) from error
+    if protocol.sha256 != protocol_sha256:
         raise ControllerSupportError("protocol schema bytes were substituted")
     promptfoo_path = _path(bindings.get("promptfooConfigPath"), "Promptfoo config path")
     promptfoo_sha256 = _sha256(
         bindings.get("promptfooConfigSha256"), "Promptfoo config SHA-256"
     )
-    if sha256_file(promptfoo_path) != promptfoo_sha256:
+    try:
+        promptfoo = FrozenFile.capture(promptfoo_path)
+    except SnapshotError as error:
+        raise ControllerSupportError(str(error)) from error
+    if promptfoo.sha256 != promptfoo_sha256:
         raise ControllerSupportError("Promptfoo config bytes were substituted")
     return ValidatedBindings(
+        plan,
         stock,
         modified,
         _path(bindings.get("attemptBase"), "attempt base"),
         workspace_seed,
         profile,
-        profile_path,
-        source_environment,
-        bindings.get("caseBundle"),
+        {str(key): str(item) for key, item in source_environment.items()},
+        freeze_json(bindings.get("caseBundle")),
         case_answer_schema,
-        schema_path,
+        schema_file,
         model_route,
-        model_route_path,
-        protocol_path,
+        protocol,
         protocol_sha256,
-        promptfoo_path,
+        promptfoo,
         promptfoo_sha256,
     )
 
