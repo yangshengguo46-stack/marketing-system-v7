@@ -72,7 +72,7 @@ class FileInformation(ctypes.Structure):
 
 
 class Disposition(ctypes.Structure):
-    _fields_ = [("DeleteFile", wintypes.BOOL)]
+    _fields_ = [("DeleteFile", ctypes.c_ubyte)]
 
 
 class SidAndAttributes(ctypes.Structure):
