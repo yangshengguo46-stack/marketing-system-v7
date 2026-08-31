@@ -1,4 +1,5 @@
 import importlib.util
+import ast
 import os
 import sys
 import types
@@ -285,3 +286,125 @@ def test_construction_records_live_probe_before_identity_query() -> None:
     _assert_unknown_owned(operations.observed, 30)
     assert journal.creator_pid == os.getpid()
     assert journal.probes[0].handle == 30
+
+
+class _LedgerOperations:
+    def __init__(self) -> None:
+        self.identities = {40: (7, 40)}
+        self.observed = []
+        self.closed = []
+        self.ledger = None
+
+    def duplicate(self, handle: int) -> int:
+        duplicate = handle + 1_000
+        self.identities[duplicate] = self.identities[handle]
+        return duplicate
+
+    def identity(self, handle: int) -> tuple[int, int]:
+        source = handle - 1_000 if handle >= 1_000 else handle
+        if source == 40 and not self.observed:
+            self.observed.append(
+                [
+                    (record.handle, record.identity, record.state)
+                    for record in self.ledger.records
+                ]
+            )
+        return self.identities[handle]
+
+    def close(self, handle: int) -> None:
+        self.closed.append(handle)
+        self.identities.pop(handle, None)
+
+
+def test_handle_ledger_registers_raw_and_duplicate_before_identity_query() -> None:
+    from batch_isolation_windows_handle_ledger import WindowsHandleLedger
+
+    operations = _LedgerOperations()
+    ledger = WindowsHandleLedger(operations)
+    operations.ledger = ledger
+
+    ledger.acquire(40)
+
+    assert operations.observed == [[(40, None, "identity_unknown")]]
+    assert ledger.records[0].identity == (7, 40)
+    assert ledger.records[0].proof_handle is None
+
+
+def _called_attributes(function: ast.FunctionDef) -> list[str]:
+    return [
+        node.func.attr
+        for node in ast.walk(function)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    ]
+
+
+@pytest.mark.parametrize("function_name", ["open_path", "duplicate"])
+def test_win32_public_acquisitions_route_through_the_handle_ledger(
+    function_name: str,
+) -> None:
+    path = Path(__file__).with_name("batch_isolation_win32.py")
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    function = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == function_name
+    )
+
+    assert "acquire" in _called_attributes(function)
+
+
+class _RotationWin32Error(OSError):
+    pass
+
+
+def _load_windows_for_rotation(monkeypatch: pytest.MonkeyPatch):
+    closes = []
+    fake = types.ModuleType("batch_isolation_win32")
+    fake.Win32SecurityError = _RotationWin32Error
+    fake.open_path = lambda *args, **kwargs: 1
+    fake.open_child = lambda *args, **kwargs: 2
+    fake.duplicate = lambda handle: 1
+
+    def close(handle: int) -> None:
+        closes.append(handle)
+        if handle == 1 and closes.count(1) == 1:
+            raise _RotationWin32Error("injected old-handle close uncertainty")
+
+    fake.close = close
+    fake.identity = lambda handle: (7, handle)
+    fake.final_path = lambda handle: Path("C:/base")
+    fake.require_private_acl = lambda handle: None
+    monkeypatch.setitem(sys.modules, "batch_isolation_win32", fake)
+    path = Path(__file__).with_name("batch_isolation_windows.py")
+    name = f"_round5_windows_rotation_{id(closes)}"
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, name, module)
+    spec.loader.exec_module(module)
+    return module, closes
+
+
+def test_open_directory_closes_new_child_when_old_close_is_uncertain(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    windows, closes = _load_windows_for_rotation(monkeypatch)
+
+    with pytest.raises(windows.SecureFilesystemError, match="close"):
+        windows.open_directory(Path("/base/child"))
+
+    assert 2 in closes
+
+
+def test_open_relative_closes_new_child_when_old_close_is_uncertain(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    windows, closes = _load_windows_for_rotation(monkeypatch)
+    filesystem = object.__new__(windows.WindowsCellFilesystem)
+    filesystem.root_fd = 10
+    filesystem.directories = {}
+
+    with pytest.raises(windows.SecureFilesystemError, match="close"):
+        filesystem._open_relative(("child",))
+
+    assert 2 in closes
