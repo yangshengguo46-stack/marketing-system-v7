@@ -44,7 +44,9 @@ def _hash_regular(path: Path) -> str:
             raise ExecutionIdentityError("execution identity file changed")
         return digest.hexdigest()
     except OSError as error:
-        raise ExecutionIdentityError("execution identity file is unavailable") from error
+        raise ExecutionIdentityError(
+            "execution identity file is unavailable"
+        ) from error
     finally:
         if descriptor >= 0:
             os.close(descriptor)
@@ -66,7 +68,9 @@ def _verify_tree(root: Path, expected: FrozenTree, *, allow_runtime: bool) -> st
             if path.is_dir():
                 continue
             if relative not in expected_files or not stat.S_ISREG(state.st_mode):
-                raise ExecutionIdentityError("materialized cell tree contains extra data")
+                raise ExecutionIdentityError(
+                    "materialized cell tree contains extra data"
+                )
             if path.read_bytes() != expected_files[relative]:
                 raise ExecutionIdentityError("materialized cell tree bytes changed")
             if stat.S_IMODE(state.st_mode) != 0o600:

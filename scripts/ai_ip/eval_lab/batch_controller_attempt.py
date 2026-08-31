@@ -5,7 +5,12 @@ from pathlib import Path
 
 try:
     from .batch_controller_artifacts import materialize_neutral_binary_bytes
-    from .batch_controller_capture import capture, capture_start_failure, normalize, start
+    from .batch_controller_capture import (
+        capture,
+        capture_start_failure,
+        normalize,
+        start,
+    )
     from .batch_controller_support import (
         ArmBinding,
         ValidatedBindings,
@@ -24,7 +29,12 @@ try:
     from .contracts import LabContractError, canonical_json_bytes, sha256_json
 except ImportError:
     from batch_controller_artifacts import materialize_neutral_binary_bytes
-    from batch_controller_capture import capture, capture_start_failure, normalize, start
+    from batch_controller_capture import (
+        capture,
+        capture_start_failure,
+        normalize,
+        start,
+    )
     from batch_controller_support import (
         ArmBinding,
         ValidatedBindings,

@@ -158,7 +158,9 @@ class ScriptedExecutor(CandidateExecutor):
     def start(self, request: AttemptRequest):
         result = self.execute(request)
         metadata = json.loads(
-            getattr(result.metadata, "_payload", getattr(result.metadata, "payload", b"{}"))
+            getattr(
+                result.metadata, "_payload", getattr(result.metadata, "payload", b"{}")
+            )
         )
         usage = metadata.get("usage") if type(metadata.get("usage")) is dict else {}
         telemetry = AttemptTelemetry(

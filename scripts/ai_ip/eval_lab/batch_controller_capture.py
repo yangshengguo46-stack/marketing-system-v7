@@ -94,7 +94,9 @@ def capture(handle: object, request: object, failure_factory: object) -> Capture
         return CapturedResult(failure_factory(error), _zero_telemetry())
 
 
-def capture_start_failure(error: BaseException, failure_factory: object) -> CapturedResult:
+def capture_start_failure(
+    error: BaseException, failure_factory: object
+) -> CapturedResult:
     return CapturedResult(failure_factory(error), _zero_telemetry())
 
 
@@ -226,13 +228,17 @@ def _attestation(value: object) -> dict[str, object] | None:
     }
 
 
-def normalize(captured: CapturedResult, result_type: type, limit: int) -> NormalizedResult:
+def normalize(
+    captured: CapturedResult, result_type: type, limit: int
+) -> NormalizedResult:
     raw = captured.raw
     invalid_result = not isinstance(raw, result_type)
     if invalid_result:
         now = _now()
         empty = lambda value: MemoryAttemptByteSource(value)
-        raw = result_type(-1, now, now, empty(b"null"), empty(b"null"), empty(b""), empty(b""))
+        raw = result_type(
+            -1, now, now, empty(b"null"), empty(b"null"), empty(b""), empty(b"")
+        )
     output, output_evidence, bad_output = _bounded_json(raw.output, limit, "output")
     metadata, metadata_evidence, bad_metadata = _bounded_json(
         raw.metadata, limit, "metadata"

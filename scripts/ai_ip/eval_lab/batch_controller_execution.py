@@ -15,9 +15,17 @@ try:
         validate_executor,
     )
 except ImportError:
-    from batch_controller_attempt import capture_arm, capture_arm_start_failure, start_arm
+    from batch_controller_attempt import (
+        capture_arm,
+        capture_arm_start_failure,
+        start_arm,
+    )
     from batch_controller_identity import ExecutionIdentityError
-    from batch_controller_types import AttemptRequest, CandidateExecutor, validate_executor
+    from batch_controller_types import (
+        AttemptRequest,
+        CandidateExecutor,
+        validate_executor,
+    )
 
 
 @dataclass

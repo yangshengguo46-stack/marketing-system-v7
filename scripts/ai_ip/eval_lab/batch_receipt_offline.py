@@ -72,9 +72,7 @@ class OfflineEvidence:
                 raise SecureStorageError("private root layout identity differs")
             self.pairs = self._child(self.root, "pairs", records["pairs"])
             self.attempts = self._child(self.root, "attempts", records["attempts"])
-            self.pair = self._child(
-                self.pairs, pair_id, records[f"pairs/{pair_id}"]
-            )
+            self.pair = self._child(self.pairs, pair_id, records[f"pairs/{pair_id}"])
             self._records = records
             self._attempt_caps: dict[str, BoundDirectory] = {}
             self.layout_authority = authority

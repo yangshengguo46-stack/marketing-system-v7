@@ -14,7 +14,11 @@ try:
 except ImportError:
     from batch_controller_capture import FatalSupervisorError
     from batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
-    from batch_receipt_storage import entry_exists, seal_failure_tombstone, write_exclusive
+    from batch_receipt_storage import (
+        entry_exists,
+        seal_failure_tombstone,
+        write_exclusive,
+    )
     from contracts import canonical_json_bytes
 
 
@@ -53,14 +57,17 @@ class PairLifecycle:
             seal_failure_tombstone(directory, self.pair_id, "terminal", error)
 
     def _record_orphan(self, error: BaseException) -> None:
-        payload = canonical_json_bytes(
-            {
-                "attemptIds": sorted(cell.attempt_id for cell in self.cells),
-                "errorType": type(error).__name__,
-                "pairId": self.pair_id,
-                "status": "orphaned",
-            }
-        ) + b"\n"
+        payload = (
+            canonical_json_bytes(
+                {
+                    "attemptIds": sorted(cell.attempt_id for cell in self.cells),
+                    "errorType": type(error).__name__,
+                    "pairId": self.pair_id,
+                    "status": "orphaned",
+                }
+            )
+            + b"\n"
+        )
         write_exclusive(self.private_root / f"orphan-{self.pair_id}.json", payload)
 
     def abort(self, error: BaseException) -> None:

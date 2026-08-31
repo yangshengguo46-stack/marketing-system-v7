@@ -352,9 +352,7 @@ def run_candidate_pair(
             raise ControllerSupportError(
                 "standalone pair requires sealed replication count 1"
             )
-        active_seed = reserve_single(
-            plan_value, Path(private_root), seed, reserve_plan
-        )
+        active_seed = reserve_single(plan_value, Path(private_root), seed, reserve_plan)
     except ValueError as error:
         raise BatchControllerError(str(error)) from error
     try:
@@ -391,9 +389,7 @@ def run_candidate_batch(
     except ControllerSupportError as error:
         raise BatchControllerError(str(error)) from error
     try:
-        pair_seeds = reserve_batch(
-            plan_value, Path(private_root), seed, reserve_plan
-        )
+        pair_seeds = reserve_batch(plan_value, Path(private_root), seed, reserve_plan)
     except ValueError as error:
         raise BatchControllerError(str(error)) from error
     try:

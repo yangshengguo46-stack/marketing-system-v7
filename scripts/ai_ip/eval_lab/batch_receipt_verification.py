@@ -40,7 +40,11 @@ except ImportError:
     )
     from batch_controller_support import classify_attempt_result
     from batch_receipt_offline import OfflineEvidence
-    from batch_plan import BatchPlanError, sha256_tree, verify_effective_condition_parity
+    from batch_plan import (
+        BatchPlanError,
+        sha256_tree,
+        verify_effective_condition_parity,
+    )
     from batch_receipt_storage import (
         MAX_CONTEXT_BYTES,
         MAX_PRIVATE_FILE_BYTES,
@@ -257,7 +261,9 @@ def verify_arm_attempt_receipt(receipt: object, private_root: Path) -> None:
     """Reverify an arm receipt and every private artifact it commits."""
     if type(receipt) is not dict:
         raise BatchReceiptError("arm receipt must be an object")
-    evidence = OfflineEvidence(private_root, identifier(receipt.get("pairId"), "pair ID"))
+    evidence = OfflineEvidence(
+        private_root, identifier(receipt.get("pairId"), "pair ID")
+    )
     try:
         _verify_arm_details(receipt, private_root, evidence)
         evidence.verify()
@@ -289,8 +295,7 @@ def _verify_pair_with_evidence(
         or type(order.get("attemptOrder")) is not list
         or len(order["attemptOrder"]) != 2
         or len(set(order["attemptOrder"])) != 2
-        or order.get("layoutIdentitySha256")
-        != layout_authority.get("layoutSha256")
+        or order.get("layoutIdentitySha256") != layout_authority.get("layoutSha256")
         or sha256_json(order) != receipt["orderRandomizationCommitment"]
     ):
         raise BatchReceiptError("pair order commitment mismatch")
@@ -369,7 +374,9 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
     """Reverify a pair through one descriptor-retained offline layout."""
     if type(receipt) is not dict:
         raise BatchReceiptError("pair receipt must be an object")
-    evidence = OfflineEvidence(private_root, identifier(receipt.get("pairId"), "pair ID"))
+    evidence = OfflineEvidence(
+        private_root, identifier(receipt.get("pairId"), "pair ID")
+    )
     try:
         _verify_pair_with_evidence(receipt, private_root, evidence)
         evidence.verify()
