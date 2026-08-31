@@ -233,3 +233,36 @@ The IDs below are chronological inside each bucket. Rollback uses the reverse ta
 - Gate: MARKETING_EVAL_LAB_07A=AUTHORIZED_NOT_IMPLEMENTED
 - Scope fence: this is the only executable child. It does not authorize provider calls, API-key or credential inspection, live Douyin, promptfoo installation, Label Studio, real reviewers, G2, Phase 0B, or changes to the preserved Codex proof/runtime surfaces.
 - Rollback: revert later F-0008A implementation commits first, then the F-0008 authorization commit; never rewrite F-0006 through F-0007A
+
+## F-0008A — Record provider-free Marketing Evaluation Lab Foundation 07A
+
+- Owner: Marketing Evaluation Lab Foundation 07A. This append-only entry records the completed provider-free fixture mechanism authorized by F-0008; it does not authorize or claim business-quality validation, a real reviewer cohort, a provider run, G2, or Phase 0B.
+- Completed implementation chain, in chronological dependency order:
+  - Task 0 authorization: `8844b030e`.
+  - Task 1 contracts/assets: `2dd33240a`.
+  - Task 2 exact private storage: `f35f24c82`, `41276f0f0`, `3df1c689b`, `08227f14e`, and `428183ff6`.
+  - Task 3 three-packet compiler: `7b624f99f`, `9ac857c16`, and `8ee0e94f7`.
+  - Task 4 reviewer academy: `0a65ce1b7` and `3d2f325f1`.
+  - Task 5 blind controller: `38a82dff9`, `52e53a1ee`, `9639ab0a4`, `579fe1c67`, `41bccb11a`, and `8a53eb7b9`.
+  - Task 6 blind decision seal: `8d78a1f20`, `4a19693a2`, and `d185f73e1`.
+  - Task 7 diagnostic unlock: `ff09ef0a0`.
+  - Task 8 CLI/offline pilot: `bca4cfa27`, `48b54d145`, legacy-source isolation `bf64a68b3`, and retained Task 8 formatter output `ea69217a8`. This entry itself is committed by the cohesive title `docs: record marketing eval lab foundation`; no self-referential hash is claimed.
+- Task 8 scope from BASE `ff09ef0a0`: only `scripts/ai_ip/eval_lab/{cli.py,test_cli.py,test_offline_pilot.py}` preceded this ledger append. No `codex-rs/ai-ip-eval`, App Server, provider, product-runtime, schema, rubric, fixture, API-key, or credential file changed. Task 8 commits changed 574, 506, 13, and 66 lines respectively, each below 800; `cli.py` is 277 lines and every production lab module remains below 500 lines.
+- Locked Python evidence before formatting: focused CLI/offline pilot passed `13/13` with one expected legacy-environment skip; the complete lab matrix passed `246/246` with that same one skip. The explicit approved-host legacy acceptance then passed `1/1`, with one deselected portable test and zero skips, using `AI_IP_V6_EVIDENCE_ROOT` only to read the three named sources, verifying their exact digests, copying only those validated bytes into a `TemporaryDirectory`, compiling through the CLI, verifying the retained compilation receipt, and allowing temporary source/private trees to be removed on context exit.
+- Approved legacy source digests: `douyin-community-mcp-a113-2026-08-20.json=f3171fbbad16cd5fc2d3907d619132fcf873a16225fa29eb78e59be0986ff3f9`; `a115-golden-gift-real-e2e-2026-08-20.json=4fb16c9fe54a313f51a479d60e51e7361726a36c8dd2a1a7a6a5cabcf1398c7e`; `a116-vertical-incubation-skill-live-2026-08-20.json=6b304738309195216b203dc846ee7491e430a396d69fb4001cef93f870af889c`.
+- Asset evidence: pinned offline Bazelisk invocation `b3cad2b6-26d1-4624-936d-3b8357541462` built `//ai-ip-evals/lab:lab-assets` with `--repository_disable_download`, one target and one internal action, exit 0.
+- Offline/cost boundary: `providerMode=not-run`; authorized provider cost `0`; paid provider cost `0`. The portable pilot trapped external network entry points, credential-like environment lookup and home-directory discovery while exercising all five CLI command types. No model/provider function, API key, credential, live Douyin, MediaKit cloud, promptfoo, Label Studio, or real reviewer was called, inspected, installed, or started.
+- Pilot mechanism evidence: test-local A113/A115/A116-shaped sources compiled into separated packets; two base reviewers and one arbitrator were mechanically qualified; the stock arm was the synthetic known-failure answer and the modified arm the synthetic strong answer; primary/swap reviews forced base disagreement, retained `fabricatedExistingExperience` and `notActuallyUsable` against the known-failure output despite maximum dimension scores, completed the designated arbitrator pair, sealed blind statistics without treatment access, and unlocked exactly the five-field diagnostic projection with `disposition=fixtureValid`, `diagnosticOnly=true`, `promotionEligible=false`, and `providerMode=not-run`.
+- Formatter disposition: pinned Rust toolchain `just fmt` exited 0. Fourteen Task 8-external formatter paths, including every protected `codex-rs/ai-ip-eval` path, were restored byte-for-byte with `apply_patch`; only the three Task 8 Python paths were retained in `ea69217a8`. `git diff --check` was clean, and no test ran after formatting, by plan.
+- Gate disposition:
+
+```text
+MARKETING_EVAL_LAB_07A=COMPLETE_PROVIDER_FREE_FIXTURE
+G0=OPEN
+G1=OPEN
+G2=OPEN
+PASS_TO_PHASE_0B=false
+next child=07B Codex Batch Runner, separately reviewed and authorized
+```
+
+- Reverse rollback: first revert the F-0008A ledger commit by cohesive title, then `ea69217a8`, `bf64a68b3`, `48b54d145`, and `bca4cfa27`; continue through Task 7 to Task 1 in reverse dependency order, then revert `8844b030e` only after all F-0008A implementation commits are gone. Never rewrite F-0006 through F-0008 history or retain a provider, credential, live-platform, G2, or Phase 0B bypass.
