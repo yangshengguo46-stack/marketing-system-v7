@@ -1,6 +1,7 @@
 """Randomized two-arm controller for sealed 07B candidate plans."""
 
 from dataclasses import dataclass
+from contextlib import ExitStack
 from pathlib import Path
 
 try:
@@ -115,6 +116,26 @@ def _run_candidate_pair(
     *,
     active_seed: bytes,
 ) -> dict[str, object]:
+    with ExitStack() as resources:
+        return _run_candidate_pair_scoped(
+            plan_value,
+            validated,
+            executor,
+            private_root,
+            active_seed=active_seed,
+            resources=resources,
+        )
+
+
+def _run_candidate_pair_scoped(
+    plan_value: dict[str, object],
+    validated: ValidatedBindings,
+    executor: CandidateExecutor,
+    private_root: Path,
+    *,
+    active_seed: bytes,
+    resources: ExitStack,
+) -> dict[str, object]:
     pair_id, stock_attempt_id, modified_attempt_id = identities(active_seed)
     try:
         assert_private_layout_available(
@@ -125,6 +146,7 @@ def _run_candidate_pair(
         )
         pair_directory = layout.pair_directory
         attempt_directories = layout.attempt_directories
+        resources.callback(layout.close)
     except BatchReceiptError as error:
         raise BatchControllerError(str(error)) from error
     cells: dict[str, object] = {}
@@ -132,6 +154,7 @@ def _run_candidate_pair(
     try:
         layout.verify()
         staged = stage_inputs(validated, pair_id)
+        resources.callback(staged.cleanup)
         seal_pair_context(
             pair_directory,
             plan=plan_value,
@@ -193,9 +216,6 @@ def _run_candidate_pair(
                 cleanup_attempt_cell(cell)
             except BaseException:
                 pass
-        if staged is not None:
-            staged.cleanup()
-        layout.close()
         raise BatchControllerError(
             "pair cell creation or context sealing failed"
         ) from error
@@ -220,8 +240,6 @@ def _run_candidate_pair(
         layout.verify()
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "directoryIdentity", error)
-        staged.cleanup()
-        layout.close()
         raise BatchControllerError("private evidence directory identity was replaced") from error
     sealing_errors: list[BaseException] = []
     for name in order:
@@ -306,8 +324,6 @@ def _run_candidate_pair(
         mapping_record=mapping,
     )
     verify_paired_run_receipt(pair_receipt, private_root)
-    staged.cleanup()
-    layout.close()
     return pair_receipt
 
 

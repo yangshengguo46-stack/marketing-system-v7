@@ -79,7 +79,7 @@ class RawAttemptResult:
 
 
 class RunningAttempt(Protocol):
-    """Trusted adapter handle whose polling is nonblocking and termination synchronous."""
+    """Trusted supervisor handle; poll is nonblocking and terminate confirms stop."""
 
     def poll(self) -> RawAttemptResult | None: ...
 
@@ -89,6 +89,6 @@ class RunningAttempt(Protocol):
 
 
 class CandidateExecutor(Protocol):
-    """Start one bounded attempt through a trusted supervisor adapter."""
+    """Trusted adapter whose start is nonblocking and whose telemetry is supervisor-owned."""
 
     def start(self, request: AttemptRequest) -> RunningAttempt: ...
