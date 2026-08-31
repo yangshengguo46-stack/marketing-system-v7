@@ -280,7 +280,6 @@ L1/L2 固定材料案例默认断网和最小写权限。需要实时研究、MC
 - pair 有效性
 - 无效原因
 - 匿名映射 commitment
-- 07A import receipt
 
 ### 8.7 LiveRunAuthorization
 
@@ -294,6 +293,21 @@ L1/L2 固定材料案例默认断网和最小写权限。需要实时研究、MC
 - 授权状态
 
 授权不包含密钥；使用一次后不可复用。
+
+### 8.8 CandidatePairImportReceipt
+
+导入发生在 `PairedRunReceipt` 封存之后，不能反写或替换已封存回执。独立导入回执至少包含：
+
+- `importId`
+- `pairId`
+- `pairedRunReceiptSha256`
+- `stockOutputSha256`
+- `modifiedOutputSha256`
+- `privateDestinationCommitment`
+- `importedAt`
+- `importReceiptSha256`
+
+同一个 pair 只能成功导入一次。重复导入、目标已存在或源回执验证失败都必须失败关闭。
 
 ## 9. 完全隔离规则
 
@@ -512,6 +526,7 @@ ai-ip-evals/lab/schemas/
   execution-profile.schema.json
   arm-attempt-receipt.schema.json
   paired-run-receipt.schema.json
+  candidate-pair-import-receipt.schema.json
   live-run-authorization.schema.json
 
 ai-ip-evals/lab/promptfoo/
