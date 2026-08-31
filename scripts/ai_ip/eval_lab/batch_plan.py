@@ -400,7 +400,7 @@ def verify_effective_condition_parity(
             raise BatchPlanError(f"condition parity differs: {field}")
         parity[field] = stock[field]
     allowed = {"stockTreatmentRef", "modifiedTreatmentRef", "privateArmPath", "executionOrder"}
-    for field in set(stock) | set(modified):
+    for field in sorted(set(stock) | set(modified)):
         if field not in PARITY_FIELDS and field not in allowed and (
             (field in stock) != (field in modified) or stock.get(field) != modified.get(field)
         ):

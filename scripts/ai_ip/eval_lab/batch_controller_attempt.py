@@ -46,6 +46,7 @@ def _failure_result(error: BaseException) -> RawAttemptResult:
         "requestCount": 0,
         "threadId": None,
         "timedOut": isinstance(error, TimeoutError),
+        "supervisorTimedOut": isinstance(error, TimeoutError),
         "trajectory": None,
         "turnId": None,
         "usage": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0},
@@ -131,8 +132,10 @@ def seal_arm(
         max_output_bytes=int(bindings.execution_profile["maxOutputBytes"]),
         forced_evidence_failure=(
             raw.forced_evidence_failure
-            or raw.attestation
-            != {
+            or (
+                raw.exit_code == 0
+                and raw.attestation
+                != {
                 "appServerProtocolSchemaSha256": bindings.protocol_sha256,
                 "binarySha256": arm.binary.sha256,
                 "codexHomeSeedSha256": arm.codex_home_seed.digest,
@@ -140,7 +143,8 @@ def seal_arm(
                 "executionProfileSha256": sha256_json(bindings.execution_profile),
                 "modelRouteSha256": sha256_json(bindings.model_route),
                 "promptfooConfigSha256": bindings.promptfoo_config_sha256,
-            }
+                }
+            )
         ),
     )
     raw_evidence = {

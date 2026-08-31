@@ -14,6 +14,7 @@ try:
         read_bounded,
     )
     from .contracts import canonical_json_bytes
+    from .private_fs import PrivateRoot
 except ImportError:
     from batch_receipt_storage import (
         child_directory,
@@ -22,6 +23,7 @@ except ImportError:
         read_bounded,
     )
     from contracts import canonical_json_bytes
+    from private_fs import PrivateRoot
 
 try:
     import fcntl
@@ -49,7 +51,14 @@ def reserve_plan(
     if fcntl is None:
         raise PlanAuthorityError("plan authority requires the supported POSIX backend")
     root = Path(private_root)
-    private_directory(root, create=True)
+    try:
+        authenticated = (
+            PrivateRoot.open_existing(root)
+            if root.exists()
+            else PrivateRoot.create_new(root)
+        )
+    except ValueError as error:
+        raise PlanAuthorityError("private authority root is not authenticated") from error
     authority = child_directory(root, "plan-authority", exclusive=False)
     root_fd = -1
     authority_fd = -1
@@ -57,7 +66,7 @@ def reserve_plan(
     lock_name = f"{plan_sha256}.lock"
     try:
         root_fd = open_private_directory(root)
-        authority_fd = open_private_directory(authority)
+        authority_fd = authenticated._open_root()
         root_state = os.fstat(root_fd)
         lock_fd = os.open(
             lock_name,
@@ -69,7 +78,7 @@ def reserve_plan(
         if not stat.S_ISREG(state.st_mode) or stat.S_IMODE(state.st_mode) != 0o600:
             raise PlanAuthorityError("plan authority lock is unsafe")
         state_name = f"{plan_sha256}.json"
-        state_path = authority / state_name
+        state_path = root / state_name
         payload = (
             canonical_json_bytes(
                 {

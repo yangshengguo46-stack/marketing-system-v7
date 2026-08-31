@@ -311,13 +311,29 @@ def test_supervisor_deadline_terminates_sleeping_execution(
 
     class SleepingExecutor(ScriptedExecutor):
         terminated = False
+        supervisor_started = 0.0
+        supervisor_terminated = 0.0
 
-        def execute(self, request):
-            time.sleep(2)
-            return super().execute(request)
+        def start(self, request):
+            if self.requests:
+                return super().start(request)
+            self.requests.append(request)
+            self.supervisor_started = time.monotonic()
+            owner = self
 
-        def terminate(self):
-            self.terminated = True
+            class HangingHandle:
+                def poll(self):
+                    return None
+
+                def telemetry(self):
+                    raise AssertionError("timed-out attempt has no final telemetry")
+
+                def terminate(self):
+                    owner.terminated = True
+                    owner.supervisor_terminated = time.monotonic()
+                    return True
+
+            return HangingHandle()
 
     executor = SleepingExecutor([_result("late"), _result("other")])
     started = time.monotonic()
@@ -325,7 +341,8 @@ def test_supervisor_deadline_terminates_sleeping_execution(
         plan, bindings, executor, world.private_root, seed=b"0" * 32
     )
 
-    assert time.monotonic() - started < 1.5
+    assert time.monotonic() - started < 2.5
+    assert 1 <= executor.supervisor_terminated - executor.supervisor_started < 1.2
     assert executor.terminated
     assert receipt["pairValidity"] == "invalid"
     assert receipt["invalidReason"] == "budgetFailure"

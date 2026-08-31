@@ -318,6 +318,10 @@ def classify_attempt_result(
     max_output_bytes: int,
     forced_evidence_failure: bool = False,
 ) -> tuple[str, str | None]:
+    if forced_evidence_failure:
+        return "evidenceFailure", "candidate raw evidence is malformed"
+    if type(metadata) is dict and metadata.get("supervisorTimedOut") is True:
+        return "budgetFailure", "candidate exceeded the supervisor deadline"
     if type(exit_code) is not int or exit_code != 0:
         return "executionFailure", "candidate process did not exit successfully"
     if type(metadata) is dict and metadata.get("timedOut") is True:
@@ -334,8 +338,6 @@ def classify_attempt_result(
         )
     if type(metadata) is not dict:
         return "evidenceFailure", "candidate metadata is missing"
-    if forced_evidence_failure:
-        return "evidenceFailure", "candidate raw evidence is malformed"
     try:
         if type(started_at) is not str or type(finished_at) is not str:
             raise ValueError

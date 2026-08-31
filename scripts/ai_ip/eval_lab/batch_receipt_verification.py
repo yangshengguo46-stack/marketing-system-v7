@@ -26,6 +26,7 @@ try:
         canonical_json_bytes,
         sha256_json,
     )
+    from .private_fs import PrivateRoot
 except ImportError:
     from batch_contracts import (
         BatchContractError,
@@ -48,6 +49,7 @@ except ImportError:
         canonical_json_bytes,
         sha256_json,
     )
+    from private_fs import PrivateRoot
 
 
 def _json_bytes(value: object) -> bytes:
@@ -72,12 +74,30 @@ def _metadata_parts(metadata: object) -> tuple[object, object, object, object, o
 
 def _load_pair_context(
     private_root: Path, pair_id: str
-) -> tuple[dict[str, object], dict[str, object], Path]:
-    directory = private_directory(Path(private_root) / "pairs" / pair_id)
+) -> tuple[dict[str, object], dict[str, object], Path, dict[str, object]]:
+    root = Path(private_root)
+    try:
+        PrivateRoot.open_existing(root)
+    except ValueError as error:
+        raise BatchReceiptError("private root authentication failed") from error
+    layout = load_canonical(root / f"layout-{pair_id}.json", MAX_CONTEXT_BYTES)
+    if type(layout) is not dict or layout.get("pairId") != pair_id:
+        raise BatchReceiptError("sealed evidence layout is invalid")
+    for entry in layout.get("entries", []):
+        if type(entry) is not dict or type(entry.get("path")) is not str:
+            raise BatchReceiptError("sealed evidence layout is invalid")
+        try:
+            state = (root / entry["path"]).lstat()
+        except OSError as error:
+            raise BatchReceiptError("sealed evidence layout is unavailable") from error
+        if (state.st_dev, state.st_ino) != (entry.get("device"), entry.get("inode")):
+            raise BatchReceiptError("sealed evidence directory identity was replaced")
+    directory = private_directory(root / "pairs" / pair_id)
     plan = load_canonical(directory / "plan.json", MAX_CONTEXT_BYTES)
     profile = load_canonical(directory / "execution-profile.json", MAX_CONTEXT_BYTES)
     schema_path = directory / "case-answer-schema.json"
-    if type(plan) is not dict or type(profile) is not dict:
+    identity = load_canonical(directory / "identity-context.json", MAX_CONTEXT_BYTES)
+    if type(plan) is not dict or type(profile) is not dict or type(identity) is not dict:
         raise BatchReceiptError("sealed pair context is invalid")
     try:
         validate_named_contract("candidate-run-plan", plan)
@@ -98,12 +118,12 @@ def _load_pair_context(
         raise BatchReceiptError("sealed execution profile commitment mismatch")
     if profile["maxWallClockSeconds"] != plan["timeoutBudget"]:
         raise BatchReceiptError("sealed execution timeout mismatch")
-    return plan, profile, schema_path
+    return plan, profile, schema_path, identity
 
 
 def _verify_arm_details(
     receipt: object, private_root: Path
-) -> tuple[dict[str, object], object]:
+) -> tuple[dict[str, object], object, str]:
     try:
         validate_named_contract("arm-attempt-receipt", receipt)
         verify_self_commitment(receipt, "receiptSha256")
@@ -112,7 +132,7 @@ def _verify_arm_details(
     assert type(receipt) is dict
     attempt_id = identifier(receipt["attemptId"], "attempt ID")
     pair_id = identifier(receipt["pairId"], "pair ID")
-    plan, profile, schema_path = _load_pair_context(private_root, pair_id)
+    plan, profile, schema_path, identity = _load_pair_context(private_root, pair_id)
     directory = private_directory(Path(private_root) / "attempts" / attempt_id)
     if load_canonical(directory / "receipt.json") != receipt:
         raise BatchReceiptError("arm receipt differs from sealed private receipt")
@@ -158,6 +178,48 @@ def _verify_arm_details(
         or raw["stderrBytes"].get("storedSha256") != _sha256_bytes(stderr)
     ):
         raise BatchReceiptError("raw attempt byte evidence mismatch")
+    arms = {name: identity.get(name) for name in ("stock", "modified")}
+    arm_class = next(
+        (
+            name
+            for name, expected_arm in arms.items()
+            if type(expected_arm) is dict
+            and expected_arm.get("privateArmId") == receipt["privateArmId"]
+        ),
+        None,
+    )
+    if arm_class is None:
+        raise BatchReceiptError("arm identity is absent from sealed context")
+    expected_arm = arms[arm_class]
+    assert type(expected_arm) is dict
+    expected_fields = {
+        "treatmentManifestSha256": expected_arm.get("treatmentManifestSha256"),
+        "binaryManifestSha256": expected_arm.get("binaryManifestSha256"),
+        "effectiveConfigSha256": expected_arm.get("effectiveConfigSha256"),
+        "inputSha256": identity.get("inputSha256"),
+        "workspaceBeforeSha256": identity.get("workspaceBeforeSha256"),
+        "appServerProtocolSchemaSha256": identity.get("appServerProtocolSchemaSha256"),
+        "promptfooConfigSha256": identity.get("promptfooConfigSha256"),
+    }
+    if any(receipt.get(field) != expected for field, expected in expected_fields.items()):
+        raise BatchReceiptError("arm identity differs from sealed context")
+    expected_attestation = {
+        "appServerProtocolSchemaSha256": identity.get("appServerProtocolSchemaSha256"),
+        "binarySha256": expected_arm.get("binarySha256"),
+        "codexHomeSeedSha256": expected_arm.get("codexHomeSeedSha256"),
+        "effectiveConfigSha256": expected_arm.get("effectiveConfigSha256"),
+        "executionProfileSha256": identity.get("executionProfileSha256"),
+        "modelRouteSha256": identity.get("modelRouteSha256"),
+        "promptfooConfigSha256": identity.get("promptfooConfigSha256"),
+    }
+    if (
+        receipt["exitClassification"] == "completed"
+        and raw.get("attestation") != expected_attestation
+    ) or (
+        raw.get("attestation") is not None
+        and raw.get("attestation") != expected_attestation
+    ):
+        raise BatchReceiptError("executor attestation differs from sealed context")
     try:
         artifact_sizes = tuple(
             int(raw[field].get("rawSize", -1)) for field in byte_fields
@@ -191,7 +253,7 @@ def _verify_arm_details(
         raise BatchReceiptError("sealed workspace cannot be verified") from error
     if workspace_digest != receipt["workspaceAfterSha256"]:
         raise BatchReceiptError("evidence commitment mismatch")
-    return receipt, output
+    return receipt, output, arm_class
 
 
 def verify_arm_attempt_receipt(receipt: object, private_root: Path) -> None:
@@ -209,7 +271,7 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
     assert type(receipt) is dict
     pair_id = identifier(receipt["pairId"], "pair ID")
     directory = private_directory(Path(private_root) / "pairs" / pair_id)
-    plan, _, _ = _load_pair_context(private_root, pair_id)
+    plan, _, _, _ = _load_pair_context(private_root, pair_id)
     if receipt["planSha256"] != plan["planSha256"]:
         raise BatchReceiptError("pair plan commitment mismatch")
     if load_canonical(directory / "receipt.json") != receipt:
@@ -242,17 +304,22 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
         if type(arm) is not dict or arm.get("attemptId") != attempt:
             raise BatchReceiptError("pair arm receipt is invalid")
         arm_values.append(_verify_arm_details(arm, private_root))
-    by_commitment = {arm["receiptSha256"]: (arm, output) for arm, output in arm_values}
+    by_commitment = {
+        arm["receiptSha256"]: (arm, output, arm_class)
+        for arm, output, arm_class in arm_values
+    }
     stock_hash = receipt["stockArmAttemptReceiptSha256"]
     modified_hash = receipt["modifiedArmAttemptReceiptSha256"]
     if stock_hash == modified_hash or set(by_commitment) != {stock_hash, modified_hash}:
         raise BatchReceiptError("pair must commit two distinct arm receipts")
-    stock, stock_output = by_commitment[stock_hash]
-    modified, modified_output = by_commitment[modified_hash]
+    stock, stock_output, stock_class = by_commitment[stock_hash]
+    modified, modified_output, modified_class = by_commitment[modified_hash]
     if (
         stock["pairId"] != pair_id
         or modified["pairId"] != pair_id
         or stock["privateArmId"] == modified["privateArmId"]
+        or stock_class != "stock"
+        or modified_class != "modified"
     ):
         raise BatchReceiptError("pair arm identity is false")
     failures = [
