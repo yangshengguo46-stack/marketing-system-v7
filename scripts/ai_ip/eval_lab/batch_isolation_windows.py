@@ -408,6 +408,10 @@ class WindowsCellFilesystem:
 
 class _JournalOperations:
     @staticmethod
+    def duplicate(handle: int) -> int:
+        return win32.duplicate(handle)
+
+    @staticmethod
     def identity(handle: int) -> tuple[int, int]:
         return win32.identity(handle)
 
@@ -424,11 +428,10 @@ class _JournalOperations:
         win32.close(handle)
 
     @staticmethod
-    def live_identity(
-        parent: int, name: str, *, directory: bool
-    ) -> tuple[int, int] | None:
+    def open_live(parent: int, name: str, *, directory: bool) -> int | None:
         try:
-            handle = win32.open_child(
+            open_child = getattr(win32, "open_child_raw", win32.open_child)
+            return open_child(
                 parent, name, directory=directory, deletable=False
             )
         except win32.Win32SecurityError as error:
@@ -436,7 +439,3 @@ class _JournalOperations:
             if code in {2, 3}:
                 return None
             raise
-        try:
-            return win32.identity(handle)
-        finally:
-            win32.close(handle)

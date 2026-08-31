@@ -244,9 +244,15 @@ class _JournalOperations:
         self.closed: list[int] = []
         self.live = {(10, "root"): (1, 20), (20, "child"): (1, 30)}
         self.fail_mark: set[int] = {30}
+        self.duplicates: dict[int, int] = {}
+
+    def duplicate(self, handle: int) -> int:
+        duplicate = handle + 1_000
+        self.duplicates[duplicate] = handle
+        return duplicate
 
     def identity(self, handle: int) -> tuple[int, int]:
-        return (1, handle)
+        return (1, self.duplicates.get(handle, handle))
 
     def mark_delete(self, handle: int) -> None:
         if handle in self.fail_mark:
@@ -258,14 +264,17 @@ class _JournalOperations:
 
     def close(self, handle: int) -> None:
         self.closed.append(handle)
+        if handle in self.duplicates:
+            del self.duplicates[handle]
+            return
         for key, identity in tuple(self.live.items()):
             if identity == (1, handle) and handle in self.pending:
                 del self.live[key]
 
-    def live_identity(
-        self, parent: int, name: str, *, directory: bool
-    ) -> tuple[int, int] | None:
-        return self.live.get((parent, name))
+    def open_live(self, parent: int, name: str, *, directory: bool) -> int | None:
+        del directory
+        identity = self.live.get((parent, name))
+        return None if identity is None else identity[1]
 
 
 def test_windows_construction_journal_retains_failed_rollback_for_retry() -> None:
@@ -284,7 +293,7 @@ def test_windows_construction_journal_retains_failed_rollback_for_retry() -> Non
     journal.retry_cleanup()
     assert journal.state == "cleaned"
     assert operations.live == {}
-    assert operations.closed == [30, 20, 10]
+    assert operations.closed == [1020, 1030, 30, 20, 1010, 10]
 
 
 def test_public_construction_retains_unproven_orphan_and_reservation(

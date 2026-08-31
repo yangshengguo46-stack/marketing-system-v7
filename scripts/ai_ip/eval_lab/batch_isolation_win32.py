@@ -199,11 +199,10 @@ def final_path(handle: int) -> Path:
     return Path(text)
 
 
-def open_path(
+def open_path_raw(
     path: Path,
     *,
     directory: bool,
-    allow_reparse: bool = False,
     deletable: bool = False,
     security_query: bool = False,
 ) -> int:
@@ -222,13 +221,42 @@ def open_path(
     )
     if handle == INVALID_HANDLE:  # noqa: F405
         _raise("cannot retain secure Windows handle")
+    return handle
+
+
+def validate_opened_handle(
+    handle: int, *, directory: bool, allow_reparse: bool = False
+) -> tuple[int, int]:
     info = information(handle)
     is_directory = bool(info.dwFileAttributes & ATTR_DIRECTORY)  # noqa: F405
     if (info.dwFileAttributes & ATTR_REPARSE and not allow_reparse) or (  # noqa: F405
         not allow_reparse and is_directory != directory
     ):
-        close(handle)
         raise Win32SecurityError("reparse point or wrong entry type is forbidden")
+    return info.dwVolumeSerialNumber, info.nFileIndexHigh << 32 | info.nFileIndexLow
+
+
+def open_path(
+    path: Path,
+    *,
+    directory: bool,
+    allow_reparse: bool = False,
+    deletable: bool = False,
+    security_query: bool = False,
+) -> int:
+    handle = open_path_raw(
+        path,
+        directory=directory,
+        deletable=deletable,
+        security_query=security_query,
+    )
+    try:
+        validate_opened_handle(
+            handle, directory=directory, allow_reparse=allow_reparse
+        )
+    except BaseException:
+        close(handle)
+        raise
     return handle
 
 
@@ -242,6 +270,22 @@ def open_child(
     parent: int, name: str, *, directory: bool, deletable: bool = False
 ) -> int:
     return open_path(child_path(parent, name), directory=directory, deletable=deletable)
+
+
+def open_child_raw(
+    parent: int,
+    name: str,
+    *,
+    directory: bool,
+    deletable: bool = False,
+    security_query: bool = False,
+) -> int:
+    return open_path_raw(
+        child_path(parent, name),
+        directory=directory,
+        deletable=deletable,
+        security_query=security_query,
+    )
 
 
 def create_directory(parent: int, name: str) -> int:

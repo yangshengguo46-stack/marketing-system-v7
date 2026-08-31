@@ -236,6 +236,9 @@ class _WindowsWorld:
             raise _FakeWin32Error("invalid handle")
         return self.identities[handle]
 
+    def duplicate(self, handle: int) -> int:
+        return self.allocate(self.identity(handle))
+
     def iter_directory(self, handle: int):
         identity = self.identity(handle)
         if identity == (7, 10) and self.child_present:
@@ -323,6 +326,7 @@ def _load_windows_tree(monkeypatch: pytest.MonkeyPatch, world: _WindowsWorld):
     fake.open_path = world.open_path
     fake.open_child = world.open_child
     fake.child_path = world.child_path
+    fake.duplicate = world.duplicate
     fake.identity = world.identity
     fake.mark_delete = world.mark_delete
     fake.delete_pending = world.delete_pending
