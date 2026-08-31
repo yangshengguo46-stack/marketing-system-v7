@@ -7,6 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from blind_controller import BlindControllerError, prepare_blind_batch
 from contracts import (
+    LabContractError,
     canonical_json_bytes,
     load_exact_json,
     sha256_json,
@@ -151,6 +152,23 @@ def _json_strings(value):
     return [value] if type(value) is str else []
 
 
+def _candidate_text(fixture, text):
+    value = load_exact_json(fixture["stock_answer_path"])
+    value["subject"] = text
+    _write_json(fixture["stock_answer_path"], value)
+
+
+def _staging_names(private):
+    batches = private.path / "batches"
+    return (
+        []
+        if not batches.exists()
+        else sorted(
+            path.name for path in batches.iterdir() if path.name.endswith(".staging")
+        )
+    )
+
+
 def test_prepares_deterministic_physically_separated_swapped_assignments(tmp_path):
     fixture = _fixture(tmp_path)
     calls = []
@@ -234,6 +252,46 @@ def test_prepares_deterministic_physically_separated_swapped_assignments(tmp_pat
         "modifiedOutputSha256": sha256_json(modified),
         "diagnosticOnly": True,
     }
+    ordered_labels = [
+        label
+        for label, _ in sorted(
+            assignments.items(), key=lambda item: item[1]["sequenceSlot"]
+        )
+    ]
+    mappings = [
+        private.read_json(f"{base}/coordinator/mappings/{label}.json")
+        for label in ordered_labels
+    ]
+    for label, mapping in zip(ordered_labels, mappings, strict=True):
+        assignment = assignments[label]
+        assert set(mapping) == {
+            "schemaVersion",
+            "objectKind",
+            "assignmentId",
+            "arms",
+            "diagnosticOnly",
+        }
+        assert set(mapping["arms"]) == {"A", "B"}
+        assert mapping["assignmentId"] == assignment["assignmentId"]
+        for arm in ("A", "B"):
+            assert set(mapping["arms"][arm]) == {"opaqueNonce", "outputSha256"}
+            assert (
+                mapping["arms"][arm]["outputSha256"]
+                == assignment[f"arm{arm}OutputSha256"]
+            )
+            assert mapping["arms"][arm]["opaqueNonce"].startswith("arm-")
+    assert receipt == {
+        "schemaVersion": 1,
+        "objectKind": "BlindPackReceipt",
+        "batchId": BATCH_ID,
+        "batchManifestSha256": sha256_json(manifest),
+        "armKeySha256": sha256_json(arm_key),
+        "assignmentSha256s": [
+            sha256_json(assignments[label]) for label in ordered_labels
+        ],
+        "mappingSha256s": [sha256_json(mapping) for mapping in mappings],
+        "createdAt": FROZEN_AT,
+    }
     validate_contract(manifest, LAB_ROOT / "schemas/batch.schema.json")
     validate_contract(receipt, LAB_ROOT / "schemas/blind-review.schema.json")
     assert private.read_json(f"{base}/blind-pack-receipt.json") == receipt
@@ -291,6 +349,8 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
         "answer_case_mismatch",
         "unqualified",
         "expired",
+        "missing_domains",
+        "diagnostic_false",
         "duplicate_reviewer",
         "wrong_reviewer_count",
         "duplicate_arbitrator",
@@ -299,6 +359,7 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
         "reused_seed",
         "wrong_seed_length",
         "reserved_nonce",
+        "case_binding_mismatch",
     ],
 )
 def test_rejects_invalid_authority_without_destination_batch(tmp_path, case):
@@ -317,6 +378,13 @@ def test_rejects_invalid_authority_without_destination_batch(tmp_path, case):
         value["status"] = "notQualified" if case == "unqualified" else "qualified"
         if case == "expired":
             value["expiresAt"] = FROZEN_AT
+        _write_json(fixture["base_qualification_receipt_paths"][0], value)
+    elif case in ("missing_domains", "diagnostic_false"):
+        value = load_exact_json(fixture["base_qualification_receipt_paths"][0])
+        if case == "missing_domains":
+            value["qualifiedDomains"] = ["businessIpJudgment"]
+        else:
+            value["diagnosticOnly"] = False
         _write_json(fixture["base_qualification_receipt_paths"][0], value)
     elif case == "duplicate_reviewer":
         duplicate = tmp_path / "duplicate.json"
@@ -353,6 +421,10 @@ def test_rejects_invalid_authority_without_destination_batch(tmp_path, case):
             " arm-37ec8e9fe861cd6f751b9b3a7e10fe4d4eb9aaa7f05d805d9578aeb554ac8b37"
         )
         _write_json(fixture["stock_answer_path"], value)
+    elif case == "case_binding_mismatch":
+        value = load_exact_json(fixture["case_receipt_path"])
+        value["contentPacketSha256"] = "0" * 64
+        _write_json(fixture["case_receipt_path"], value)
     fixture["seed_source"] = _seed_source(seeds)
 
     with pytest.raises(BlindControllerError):
@@ -361,14 +433,275 @@ def test_rejects_invalid_authority_without_destination_batch(tmp_path, case):
     assert not (fixture["private_root"].path / "batches" / BATCH_ID).exists()
 
 
+@pytest.mark.parametrize(
+    ("target", "timestamp"),
+    [
+        ("analysis", "2026-09-01T00:00:00+00:00"),
+        ("analysis", "2026-09-01 00:00:00Z"),
+        ("expiry", "2026-09-07T00:00:00+00:00"),
+        ("expiry", "not-a-timestamp"),
+    ],
+)
+def test_rejects_noncanonical_rfc3339_utc_timestamps(tmp_path, target, timestamp):
+    fixture = _fixture(tmp_path)
+    if target == "analysis":
+        fixture["analysis_frozen_at"] = timestamp
+    else:
+        path = fixture["base_qualification_receipt_paths"][0]
+        value = load_exact_json(path)
+        value["expiresAt"] = timestamp
+        _write_json(path, value)
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert not (fixture["private_root"].path / "batches" / BATCH_ID).exists()
+
+
+@pytest.mark.parametrize("kind", ["non_bytes", "short", "throwing"])
+def test_rejects_invalid_seed_sources_without_staging(tmp_path, kind):
+    fixture = _fixture(tmp_path)
+    if kind == "throwing":
+
+        def source(_count):
+            raise RuntimeError("injected seed failure")
+    else:
+        bad = bytearray(32) if kind == "non_bytes" else b"short"
+        source = _seed_source((SEEDS[0], SEEDS[1], bad, SEEDS[3]))
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture, seed_source=source)
+
+    assert not (fixture["private_root"].path / "batches" / BATCH_ID).exists()
+    assert _staging_names(fixture["private_root"]) == []
+
+
+@pytest.mark.parametrize(
+    "marker",
+    [
+        "Treatment: stock arm",
+        "Modified arm output",
+        "Provider: ExampleVendor",
+        "Model: private-model-v1",
+        "Binary path: answer.bin",
+        "Executable: hidden-runner",
+        "Skill: internal-writer",
+        "Cost USD: 1.25",
+        "source-root=/tmp/private-project",
+        "Generated by OpenAI GPT-5",
+        "Generated by Anthropic Claude 4",
+        "Generated by Google Gemini 2",
+        "Generated by Zhipu GLM-4",
+        "Generated by Doubao",
+        "Generated by DeepSeek",
+        "Generated by Qwen",
+        "/Users/alice/private/answer.json",
+        r"C:\private\answer.json",
+        "file:///tmp/private/answer.json",
+    ],
+)
+def test_rejects_schema_valid_candidate_provenance_leaks(tmp_path, marker):
+    fixture = _fixture(tmp_path)
+    _candidate_text(fixture, f"A valid business subject. {marker}")
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert not (fixture["private_root"].path / "batches" / BATCH_ID).exists()
+    assert _staging_names(fixture["private_root"]) == []
+
+
+def test_provenance_guard_recurses_through_candidate_values_and_keys(tmp_path):
+    from blind_artifacts import BlindArtifactError, _reject_candidate_provenance
+
+    fixture = _fixture(tmp_path)
+    value = load_exact_json(fixture["stock_answer_path"])
+    value["directionOptions"][0]["rationale"] = "Generated by OpenAI GPT-5"
+    _write_json(fixture["stock_answer_path"], value)
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+    with pytest.raises(BlindArtifactError):
+        _reject_candidate_provenance({"outer": {"MODEL_ID": "hidden"}})
+
+
+def test_allows_ordinary_chinese_business_cost_language(tmp_path):
+    fixture = _fixture(tmp_path)
+    _candidate_text(fixture, "讨论顾客的时间成本、选择风险与赠礼关系")
+
+    receipt = prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert receipt["objectKind"] == "BlindPackReceipt"
+
+
+@pytest.mark.parametrize(
+    ("contract", "mutation"),
+    [
+        ("arm_key", "extra"),
+        ("arm_key", "type"),
+        ("arm_key", "kind"),
+        ("arm_key", "binding"),
+        ("mapping", "extra"),
+        ("mapping", "type"),
+        ("mapping", "kind"),
+        ("mapping", "assignment"),
+        ("mapping", "binding"),
+    ],
+)
+def test_private_contracts_reject_exact_shape_type_kind_and_binding_mutations(
+    contract, mutation
+):
+    from blind_artifacts import (
+        BlindArtifactError,
+        _validate_arm_key,
+        _validate_assignment_mapping,
+    )
+
+    stock_hash, modified_hash = "a" * 64, "b" * 64
+    arm_key = {
+        "schemaVersion": 1,
+        "objectKind": "ArmKey",
+        "batchId": BATCH_ID,
+        "stockOutputSha256": stock_hash,
+        "modifiedOutputSha256": modified_hash,
+        "diagnosticOnly": True,
+    }
+    mapping = {
+        "schemaVersion": 1,
+        "objectKind": "BlindAssignmentMapping",
+        "assignmentId": "assignment-" + "e" * 32,
+        "arms": {
+            "A": {"opaqueNonce": "arm-" + "c" * 64, "outputSha256": stock_hash},
+            "B": {"opaqueNonce": "arm-" + "d" * 64, "outputSha256": modified_hash},
+        },
+        "diagnosticOnly": True,
+    }
+    value = json.loads(json.dumps(arm_key if contract == "arm_key" else mapping))
+    if mutation == "extra":
+        value["extra"] = "forbidden"
+    elif mutation == "type":
+        value["schemaVersion"] = True
+    elif mutation == "kind":
+        value["objectKind"] = "WrongKind"
+    elif mutation == "assignment":
+        value["assignmentId"] = "assignment-" + "f" * 32
+    elif mutation == "binding":
+        key = "stockOutputSha256" if contract == "arm_key" else "arms"
+        if key == "stockOutputSha256":
+            value[key] = "0" * 64
+        else:
+            value[key]["A"]["outputSha256"] = "0" * 64
+
+    with pytest.raises(BlindArtifactError):
+        if contract == "arm_key":
+            _validate_arm_key(
+                value,
+                batch_id=BATCH_ID,
+                stock_hash=stock_hash,
+                modified_hash=modified_hash,
+            )
+        else:
+            _validate_assignment_mapping(
+                value,
+                assignment_id=mapping["assignmentId"],
+                arm_a_hash=stock_hash,
+                arm_b_hash=modified_hash,
+            )
+
+
+@pytest.mark.parametrize("failure_point", ["write", "verify", "receipt", "publish"])
+def test_transaction_failures_remove_created_stage_and_never_publish_batch(
+    tmp_path, monkeypatch, failure_point
+):
+    import blind_artifacts
+
+    fixture = _fixture(tmp_path)
+    private = fixture["private_root"]
+    private.create_dir("batches")
+    private.create_dir("batches/unrelated")
+    private.write_new_json("batches/unrelated/sentinel.json", {"keep": True})
+    if failure_point in ("write", "receipt"):
+        original = PrivateRoot.write_new_json
+
+        def fail_write(self, relative, value):
+            name = str(relative)
+            selected = (
+                name.endswith("A.json")
+                if failure_point == "write"
+                else name.endswith("blind-pack-receipt.json")
+            )
+            if ".staging/" in name and selected:
+                raise LabContractError(f"injected {failure_point} failure")
+            return original(self, relative, value)
+
+        monkeypatch.setattr(PrivateRoot, "write_new_json", fail_write)
+    elif failure_point == "verify":
+        original = PrivateRoot.read_json
+
+        def fail_read(self, relative):
+            if ".staging/" in str(relative) and str(relative).endswith(
+                "assignment.json"
+            ):
+                raise LabContractError("injected verification failure")
+            return original(self, relative)
+
+        monkeypatch.setattr(PrivateRoot, "read_json", fail_read)
+    else:
+        monkeypatch.setattr(
+            blind_artifacts,
+            "_atomic_publish",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                blind_artifacts.BlindArtifactError("injected publish failure")
+            ),
+        )
+
+    with pytest.raises((BlindControllerError, blind_artifacts.BlindArtifactError)):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert not (private.path / "batches" / BATCH_ID).exists()
+    assert _staging_names(private) == []
+    assert private.read_json("batches/unrelated/sentinel.json") == {"keep": True}
+
+
+def test_publish_collision_preserves_colliding_destination_and_cleans_stage(
+    tmp_path, monkeypatch
+):
+    import blind_artifacts
+
+    fixture = _fixture(tmp_path)
+    private = fixture["private_root"]
+    original_publish = blind_artifacts._atomic_publish
+
+    def collide(private_root, stage_name, batch_id):
+        private_root.create_dir(f"batches/{batch_id}")
+        private_root.write_new_json(
+            f"batches/{batch_id}/collision.json", {"owner": "other"}
+        )
+        return original_publish(private_root, stage_name, batch_id)
+
+    monkeypatch.setattr(blind_artifacts, "_atomic_publish", collide)
+
+    with pytest.raises((BlindControllerError, blind_artifacts.BlindArtifactError)):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert private.read_json(f"batches/{BATCH_ID}/collision.json") == {"owner": "other"}
+    assert not (
+        private.path / "batches" / BATCH_ID / "blind-pack-receipt.json"
+    ).exists()
+    assert _staging_names(private) == []
+
+
 def test_rejects_preexisting_destination_without_overwriting_it(tmp_path):
     fixture = _fixture(tmp_path)
     private = fixture["private_root"]
     private.create_dir("batches")
     private.create_dir(f"batches/{BATCH_ID}")
     private.write_new_json(f"batches/{BATCH_ID}/sentinel.json", {"owned": "before"})
+    calls = []
 
     with pytest.raises(BlindControllerError):
-        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4], calls))
 
     assert private.read_json(f"batches/{BATCH_ID}/sentinel.json") == {"owned": "before"}
+    assert calls == []
+    assert _staging_names(private) == []
