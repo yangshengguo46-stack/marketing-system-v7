@@ -272,8 +272,8 @@ def _run_candidate_pair_scoped(
                     int(validated.execution_profile["maxOutputBytes"]),
                     16 * 1024 * 1024,
                 ),
+                lifecycle,
             )
-            lifecycle.bind_process(owned)
             processes[name] = owned
             _process.seal_launch_record(owned, directories[name])
         except BaseException as error:

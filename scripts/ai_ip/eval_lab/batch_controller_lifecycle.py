@@ -55,7 +55,7 @@ class PairLifecycle:
         self.processes.append(process)
 
     def complete(self) -> None:
-        if any(item.process.poll() is None for item in self.processes):
+        if any(not item.stopped for item in self.processes):
             raise PairLifecycleError("pair process is still live at completion")
         for cell in self.cells:
             try:
@@ -101,9 +101,9 @@ class PairLifecycle:
         orphaned = isinstance(error, FatalSupervisorError)
         if self.processes:
             try:
-                from .batch_controller_process import terminate_and_wait
+                from .batch_controller_process import close_owned, terminate_and_wait
             except ImportError:
-                from batch_controller_process import terminate_and_wait
+                from batch_controller_process import close_owned, terminate_and_wait
 
             for process in self.processes:
                 try:
@@ -111,6 +111,8 @@ class PairLifecycle:
                         orphaned = True
                 except BaseException:
                     orphaned = True
+                finally:
+                    close_owned(process)
         if orphaned:
             try:
                 self._record_orphan(error)
