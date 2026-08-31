@@ -438,6 +438,7 @@ def test_every_post_popen_failure_remains_owned_until_stop(
     process_module = batch_controller._process
     real_popen = process_module._Popen
     processes: list[object] = []
+    cells_before = set(batch_isolation._CELLS)
     state = {"returned": False, "failed": False, "write_fds": set()}
 
     def tracking_popen(*args, **kwargs):
@@ -529,6 +530,6 @@ def test_every_post_popen_failure_remains_owned_until_stop(
         assert all(process.poll() is not None for process in processes)
         assert not list(Path(bindings["attemptBase"]).glob("*"))
         assert not list(world.private_root.glob("orphan-*.json"))
-        assert set(batch_isolation._CELLS) == set()
+        assert set(batch_isolation._CELLS) == cells_before
     finally:
         _kill_test_processes(processes)
