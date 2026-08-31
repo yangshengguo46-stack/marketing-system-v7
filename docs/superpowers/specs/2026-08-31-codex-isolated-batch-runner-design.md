@@ -160,7 +160,7 @@ Promptfoo 官方 App Server provider 支持通过 `codex_path_override` 选择�
 
 ### 7.4 Receipt Gate
 
-对原始结果做 JSON Schema 校验、规范化、哈希、预算核对、同等性核对和失败分类。只有机械有效的完整 pair 才能进入匿名化。
+对原始结果做 JSON Schema 校验、规范化、哈希、预算核对、同等性核对和失败分类。机械有效且输出不同的完整 pair 才进入匿名化；机械有效但 canonical 输出相同的 pair 直接登记为平局。
 
 ### 7.5 Blind Packager
 
@@ -279,7 +279,10 @@ L1/L2 固定材料案例默认断网和最小写权限。需要实时研究、MC
 - 顺序随机化 commitment
 - pair 有效性
 - 无效原因
+- `outputRelation`: `distinct | canonicallyIdentical`
 - 匿名映射 commitment
+
+`outputRelation` 只在机械有效的 pair 上有意义。两个通过 schema 校验的 `CaseAnswer` 先规范化为 canonical JSON；只有 canonical bytes 与 SHA-256 同时一致时才记为 `canonicallyIdentical`。相同输出是有效实验结果，不得伪装成执行失败。
 
 ### 8.7 LiveRunAuthorization
 
@@ -303,6 +306,8 @@ L1/L2 固定材料案例默认断网和最小写权限。需要实时研究、MC
 - `pairedRunReceiptSha256`
 - `stockOutputSha256`
 - `modifiedOutputSha256`
+- `outputRelation`
+- `blindDisposition`: `readyForBlindReview | identicalTieNoReview`
 - `privateDestinationCommitment`
 - `importedAt`
 - `importReceiptSha256`
@@ -379,8 +384,8 @@ DRAFT
   -> RUNNING
   -> RAW_CAPTURED
   -> RECEIPTS_SEALED
-  -> ANONYMIZED
-  -> IMPORTED_TO_07A
+       |-> [distinct] ANONYMIZED -> IMPORTED_TO_07A
+       |-> [canonicallyIdentical] IDENTICAL_TIE_RECORDED -> IMPORTED_TO_07A
 ```
 
 任何阶段均可进入相应失败终态：
@@ -404,6 +409,7 @@ DRAFT
 - 任一臂超时、崩溃、被预算中止、输出不合 schema 或证据不完整，整个 pair 无效。
 - 无效 pair 不进入作品胜负统计，也不能让成功的一臂获得胜场。
 - 候选输出内容质量差不是机械失败；只要合同有效，仍应匿名交给评委。
+- 两臂 canonical 输出完全相同是有效平局，不创建供真人比较的 A/B 包，不得计为任何一臂获胜，也不得单独支撑晋级。
 - 评委不得因“工具调用多”“推理长”或“成本高”直接推断臂身份；成本与轨迹不进入普通作品包。
 
 ## 12. 运行次数
@@ -415,6 +421,8 @@ DRAFT
 ### 12.2 开发盲评
 
 默认每臂三次。replication count 在运行前封存，用于观察模型波动和结果稳定性，不能看完结果再修改样本量。
+
+07B 必须按已封存 `replicationCount` 一次性派生并执行恰好对应数量的 pair；每个 replication 有独立 pair/attempt ID、顺序随机化和回执。执行器不得因早期胜负、平局或失败自适应增减样本。
 
 ### 12.3 晋级证明
 
@@ -561,7 +569,9 @@ Promptfoo 加入现有 pnpm workspace 并使用根 lockfile；不引入第二个
 - 失败不能被成功 attempt 覆盖；
 - 未声明重试被拒绝；
 - 计划、二进制、配置、输出或回执任意一字节变化都会导致 verify 失败；
-- Promptfoo exit 0 但证据不完整仍然失败关闭。
+- Promptfoo exit 0 但证据不完整仍然失败关闭；
+- canonical 输出相同时形成有效 `identicalTieNoReview`，不进入真人 A/B 包，也不计胜场；
+- `replicationCount=3` 时恰好产生三个独立 pair，不能提前停止或追加第四个。
 
 ### 18.4 Provider-free 真实进程测试
 
@@ -594,7 +604,7 @@ Promptfoo 加入现有 pnpm workspace 并使用根 lockfile；不引入第二个
 7. 无效 pair、重试与预算规则全部失败关闭。
 8. Promptfoo 与 pnpm 依赖精确锁定，无动态 JS 配置入口。
 9. provider-free 真实进程端到端测试通过。
-10. 匿名输出无损导入 07A。
+10. distinct 匿名输出无损导入 07A；canonical identical 输出以有效平局导入私有根但不生成伪 A/B 评审包。
 11. 现有 07A 测试继续全绿。
 12. 代码审查 Critical/Important 为零，生产模块没有不必要的大文件增长。
 
