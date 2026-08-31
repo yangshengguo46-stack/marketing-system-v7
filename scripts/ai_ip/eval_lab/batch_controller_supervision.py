@@ -343,16 +343,20 @@ def _active(owned: OwnedProcess, owners: dict[int, object]) -> bool:
     )
 
 
-def _begin_terminal_drain(owned: OwnedProcess, *, timed_out: bool) -> None:
+def _begin_terminal_drain(
+    owned: OwnedProcess, *, timed_out: bool, stop_process: object
+) -> None:
     if owned.drain_deadline is not None:
         return
     owned.timed_out = owned.timed_out or timed_out
-    if not terminate_and_wait(owned, time.monotonic() + _STOP_SECONDS):
+    if not stop_process(owned, time.monotonic() + _STOP_SECONDS):
         raise FatalSupervisorError("fatal supervisor orphan: stop was not confirmed")
     owned.drain_deadline = time.monotonic() + _DRAIN_SECONDS
 
 
-def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
+def supervise_pair(
+    owned: dict[str, OwnedProcess], stop_process: object
+) -> dict[str, CapturedResult]:
     """Apply each absolute deadline until leader, group, and streams are terminal."""
     selector = selectors.DefaultSelector()
     descriptor_owner: dict[int, tuple[OwnedProcess, str]] = {}
@@ -365,9 +369,13 @@ def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
             now = time.monotonic()
             for item in owned.values():
                 if now >= item.deadline and _active(item, descriptor_owner):
-                    _begin_terminal_drain(item, timed_out=True)
+                    _begin_terminal_drain(
+                        item, timed_out=True, stop_process=stop_process
+                    )
                 if item.budget.exhausted:
-                    _begin_terminal_drain(item, timed_out=False)
+                    _begin_terminal_drain(
+                        item, timed_out=False, stop_process=stop_process
+                    )
                 if (
                     item.drain_deadline is not None
                     and now >= item.drain_deadline
@@ -397,7 +405,9 @@ def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
                 draining = item.drain_deadline is not None
                 maximum = _CHUNK_BYTES if draining else min(_CHUNK_BYTES, item.budget.remaining)
                 if maximum < 1:
-                    _begin_terminal_drain(item, timed_out=False)
+                    _begin_terminal_drain(
+                        item, timed_out=False, stop_process=stop_process
+                    )
                     continue
                 try:
                     chunk = os.read(descriptor, maximum)
@@ -418,7 +428,9 @@ def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
                     item.buffers[name].add(chunk, store=True)
                     if item.budget.exhausted:
                         item.buffers[name].truncated = True
-                        _begin_terminal_drain(item, timed_out=False)
+                        _begin_terminal_drain(
+                            item, timed_out=False, stop_process=stop_process
+                        )
             for item in owned.values():
                 if _stopped(item.process, item.group_id):
                     item.stopped = True

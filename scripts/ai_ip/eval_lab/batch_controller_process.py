@@ -14,7 +14,7 @@ try:
         OwnedProcess,
         close_owned,
         spawn as _spawn,
-        supervise_pair,
+        supervise_pair as _supervise_pair,
         terminate_and_wait,
     )
     from .batch_launch_spec import launch_spec_identity
@@ -30,7 +30,7 @@ except ImportError:
         OwnedProcess,
         close_owned,
         spawn as _spawn,
-        supervise_pair,
+        supervise_pair as _supervise_pair,
         terminate_and_wait,
     )
     from batch_launch_spec import launch_spec_identity
@@ -51,3 +51,7 @@ def spawn(prepared: PreparedProcess, limit: int, lifecycle: object) -> OwnedProc
         launch_spec_identity_fn=launch_spec_identity,
         sha256_json_fn=sha256_json,
     )
+
+
+def supervise_pair(owned: dict[str, OwnedProcess]):
+    return _supervise_pair(owned, terminate_and_wait)

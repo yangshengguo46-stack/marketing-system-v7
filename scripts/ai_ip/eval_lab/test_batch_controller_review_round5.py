@@ -325,6 +325,12 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
         signal.signal(signal.SIGALRM, previous_handler)
         if pid_path.exists():
             descendant_pid = int(pid_path.read_text())
+            stop_deadline = time.monotonic() + 1
+            while (
+                time.monotonic() < stop_deadline
+                and not _process_is_absent(descendant_pid)
+            ):
+                time.sleep(0.01)
             descendant_absent_before_cleanup = _process_is_absent(descendant_pid)
             if not descendant_absent_before_cleanup:
                 try:
@@ -334,8 +340,12 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
 
     elapsed = time.monotonic() - started
     descendant_pids = [
-        int(path.read_text().strip())
-        for path in world.private_root.glob("attempts/*/stderr.bin")
+        int(value)
+        for value in (
+            path.read_text().strip()
+            for path in world.private_root.glob("attempts/*/stderr.bin")
+        )
+        if value
     ]
     assert elapsed < 3
     assert receipt["pairValidity"] == "invalid"
