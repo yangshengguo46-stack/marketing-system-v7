@@ -384,7 +384,6 @@ def test_effective_condition_parity_compares_only_runtime_fields(
     modified = dict(valid_plan)
     modified.update(
         {
-            "planId": "plan-2",
             "stockTreatmentRef": "other-stock-treatment",
             "modifiedTreatmentRef": "other-modified-treatment",
             "privateArmPath": "/private/modified",
@@ -686,5 +685,60 @@ def test_effective_condition_parity_rejects_undeclared_runtime_differences(
     modified[field] = "e" * 64 if field == "caseAnswerSchemaSha256" else (
         2 if field == "replicationCount" else {"maxRetries": 1}
     )
+    with pytest.raises(BatchPlanError, match="undeclared condition difference"):
+        verify_effective_condition_parity(valid_plan, modified)
+
+
+def test_tree_hash_rejects_depth_two_directory_replaced_after_parent_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Catches a late replacement of an already-open depth-one child directory."""
+    root = tmp_path / "root"
+    deep = root / "one" / "two"
+    outside = tmp_path / "outside"
+    detached = tmp_path / "detached"
+    deep.mkdir(parents=True)
+    outside.mkdir()
+    (deep / "safe").write_bytes(b"safe")
+    scans = 0
+    scandir = batch_plan.os.scandir
+
+    def scan_then_replace(path: object):
+        nonlocal scans
+        entries = list(scandir(path))
+        scans += 1
+        if scans == 3:
+            deep.rename(detached)
+            deep.symlink_to(outside, target_is_directory=True)
+        return iter(entries)
+
+    monkeypatch.setattr(batch_plan.os, "scandir", scan_then_replace)
+    with pytest.raises(BatchPlanError, match="tree changed|symbolic link"):
+        sha256_tree(root)
+
+
+def test_tree_hash_fallback_backend_handles_a_regular_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Catches a platform fallback that cannot hash ordinary non-linked trees."""
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "safe").write_bytes(b"safe")
+    monkeypatch.setattr(batch_plan, "_descriptor_traversal_available", lambda: False)
+    assert sha256_tree(root) == sha256_json(
+        {"entries": [{"mode": stat.S_IMODE((root / "safe").stat().st_mode), "path": "safe", "sha256": hashlib.sha256(b"safe").hexdigest(), "size": 4}]}
+    )
+
+
+def test_effective_condition_parity_rejects_missing_key_and_plan_id_mutation(
+    valid_plan: dict[str, object]
+) -> None:
+    """Catches missing-vs-null equality and unbound plan identity changes."""
+    modified = dict(valid_plan)
+    modified["forbidden"] = None
+    with pytest.raises(BatchPlanError, match="undeclared condition difference"):
+        verify_effective_condition_parity(valid_plan, modified)
+    modified = dict(valid_plan)
+    modified["planId"] = "other-plan"
     with pytest.raises(BatchPlanError, match="undeclared condition difference"):
         verify_effective_condition_parity(valid_plan, modified)
