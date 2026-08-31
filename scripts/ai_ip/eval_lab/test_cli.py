@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cli
 from cli import main
 from contracts import canonical_json_bytes, load_exact_json
 
@@ -290,3 +291,54 @@ def test_domain_errors_are_generic_and_do_not_leak_input_body(tmp_path, capsys):
     assert captured.err == "lab command failed\n"
     assert secret not in captured.err
     assert not (output_parent / "reviewer-1").exists()
+
+
+def test_path_canonicalization_completes_before_any_domain_action(
+    monkeypatch, capsys
+):
+    calls = {
+        "create_new": 0,
+        "open_existing": 0,
+        "compile": 0,
+        "qualify": 0,
+        "prepare": 0,
+        "seal": 0,
+        "unlock": 0,
+    }
+
+    def record(name):
+        def operation(*_args, **_kwargs):
+            calls[name] += 1
+            return object()
+
+        return operation
+
+    original_resolve = Path.resolve
+
+    def fail_late(self, *, strict=False):
+        if self.name == "canonicalization-failure.json":
+            raise OSError("DO-NOT-ECHO-canonicalization-path")
+        return original_resolve(self, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", fail_late)
+    monkeypatch.setattr(cli.PrivateRoot, "create_new", record("create_new"))
+    monkeypatch.setattr(cli.PrivateRoot, "open_existing", record("open_existing"))
+    monkeypatch.setattr(cli, "compile_golden_gift_case", record("compile"))
+    monkeypatch.setattr(cli, "evaluate_calibration", record("qualify"))
+    monkeypatch.setattr(cli, "prepare_blind_batch", record("prepare"))
+    monkeypatch.setattr(cli, "seal_blind_statistics", record("seal"))
+    monkeypatch.setattr(cli, "unlock_fixture_pilot", record("unlock"))
+    arguments = _complete_arguments()[0]
+    blueprint_index = arguments.index("--blueprint") + 1
+    arguments[blueprint_index] = "canonicalization-failure.json"
+
+    try:
+        result = main(arguments)
+    except OSError:
+        result = "raw path error escaped"
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert captured.out == ""
+    assert captured.err == "lab command failed\n"
+    assert calls == {name: 0 for name in calls}

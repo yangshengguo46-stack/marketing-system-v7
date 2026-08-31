@@ -50,6 +50,42 @@ _DOMAIN_ERRORS = (
     UnlockError,
 )
 
+_SCALAR_PATH_FIELDS = {
+    "compile-golden-gift": (
+        "source_root",
+        "source_manifest",
+        "blueprint",
+        "private_root",
+    ),
+    "qualify-reviewer": ("profile", "attempt", "policy", "output_root"),
+    "prepare-blind-batch": (
+        "private_root",
+        "case_receipt",
+        "stock_answer",
+        "modified_answer",
+        "rubric",
+    ),
+    "seal-blind-statistics": ("private_root", "blind_pack_receipt"),
+    "unlock-fixture-pilot": (
+        "private_root",
+        "blind_statistics",
+        "arm_key",
+        "case_receipt",
+        "outcome_packet",
+    ),
+}
+_REPEATED_PATH_FIELDS = {
+    "prepare-blind-batch": (
+        "base_qualification_receipt",
+        "arbitrator_qualification_receipt",
+    ),
+    "seal-blind-statistics": (
+        "base_qualification_receipt",
+        "arbitrator_qualification_receipt",
+        "submission",
+    ),
+}
+
 
 def _parser() -> _SafeParser:
     parser = _SafeParser(add_help=False, allow_abbrev=False)
@@ -128,11 +164,28 @@ def _required(parser: argparse.ArgumentParser, *names: str) -> None:
 
 
 def _path(value: str) -> Path:
-    return Path(value).resolve(strict=False)
+    try:
+        return Path(value).resolve(strict=False)
+    except OSError as error:
+        raise LabContractError("path canonicalization failed") from error
 
 
-def _optional_path(values: list[str] | None) -> Path | None:
-    return None if values is None else _path(values[0])
+def _canonicalize_paths(arguments: argparse.Namespace) -> argparse.Namespace:
+    normalized: dict[str, object] = {}
+    for field in _SCALAR_PATH_FIELDS[arguments.command]:
+        normalized[field] = _path(getattr(arguments, field))
+    for field in _REPEATED_PATH_FIELDS.get(arguments.command, ()):
+        values = getattr(arguments, field)
+        normalized[field] = (
+            None if values is None else [_path(value) for value in values]
+        )
+    for field, value in normalized.items():
+        setattr(arguments, field, value)
+    return arguments
+
+
+def _optional_path(values: list[Path] | None) -> Path | None:
+    return None if values is None else values[0]
 
 
 def _load_input(path: Path) -> object:
@@ -158,11 +211,11 @@ def _check_cardinality(arguments: argparse.Namespace) -> None:
 
 
 def _compile(arguments: argparse.Namespace) -> dict[str, object]:
-    private_root = PrivateRoot.create_new(_path(arguments.private_root))
+    private_root = PrivateRoot.create_new(arguments.private_root)
     receipt = compile_golden_gift_case(
-        _path(arguments.source_root),
-        _path(arguments.blueprint),
-        _path(arguments.source_manifest),
+        arguments.source_root,
+        arguments.blueprint,
+        arguments.source_manifest,
         private_root,
         arguments.compiled_at,
     )
@@ -171,12 +224,12 @@ def _compile(arguments: argparse.Namespace) -> dict[str, object]:
 
 def _qualify(arguments: argparse.Namespace) -> dict[str, object]:
     receipt = evaluate_calibration(
-        _load_input(_path(arguments.profile)),
-        _load_input(_path(arguments.attempt)),
-        _load_input(_path(arguments.policy)),
+        _load_input(arguments.profile),
+        _load_input(arguments.attempt),
+        _load_input(arguments.policy),
         arguments.evaluated_at,
     )
-    output_root = PrivateRoot.create_new(_path(arguments.output_root))
+    output_root = PrivateRoot.create_new(arguments.output_root)
     output_root.write_new_json("qualification-receipt.json", receipt)
     return {
         "objectKind": receipt["objectKind"],
@@ -187,13 +240,13 @@ def _qualify(arguments: argparse.Namespace) -> dict[str, object]:
 
 def _prepare(arguments: argparse.Namespace) -> dict[str, object]:
     receipt = prepare_blind_batch(
-        private_root=PrivateRoot.open_existing(_path(arguments.private_root)),
-        case_receipt_path=_path(arguments.case_receipt),
-        stock_answer_path=_path(arguments.stock_answer),
-        modified_answer_path=_path(arguments.modified_answer),
-        rubric_path=_path(arguments.rubric),
+        private_root=PrivateRoot.open_existing(arguments.private_root),
+        case_receipt_path=arguments.case_receipt,
+        stock_answer_path=arguments.stock_answer,
+        modified_answer_path=arguments.modified_answer,
+        rubric_path=arguments.rubric,
         base_qualification_receipt_paths=tuple(
-            _path(value) for value in arguments.base_qualification_receipt
+            arguments.base_qualification_receipt
         ),
         arbitrator_qualification_receipt_path=_optional_path(
             arguments.arbitrator_qualification_receipt
@@ -206,15 +259,15 @@ def _prepare(arguments: argparse.Namespace) -> dict[str, object]:
 
 def _seal(arguments: argparse.Namespace) -> dict[str, object]:
     statistics = seal_blind_statistics(
-        private_root=PrivateRoot.open_existing(_path(arguments.private_root)),
-        blind_pack_receipt_path=_path(arguments.blind_pack_receipt),
+        private_root=PrivateRoot.open_existing(arguments.private_root),
+        blind_pack_receipt_path=arguments.blind_pack_receipt,
         base_qualification_receipt_paths=tuple(
-            _path(value) for value in arguments.base_qualification_receipt
+            arguments.base_qualification_receipt
         ),
         arbitrator_qualification_receipt_path=_optional_path(
             arguments.arbitrator_qualification_receipt
         ),
-        submission_paths=tuple(_path(value) for value in arguments.submission),
+        submission_paths=tuple(arguments.submission),
         sealed_at=arguments.sealed_at,
     )
     return {
@@ -227,11 +280,11 @@ def _seal(arguments: argparse.Namespace) -> dict[str, object]:
 
 def _unlock(arguments: argparse.Namespace) -> dict[str, object]:
     decision = unlock_fixture_pilot(
-        private_root=PrivateRoot.open_existing(_path(arguments.private_root)),
-        blind_statistics_path=_path(arguments.blind_statistics),
-        arm_key_path=_path(arguments.arm_key),
-        case_receipt_path=_path(arguments.case_receipt),
-        outcome_packet_path=_path(arguments.outcome_packet),
+        private_root=PrivateRoot.open_existing(arguments.private_root),
+        blind_statistics_path=arguments.blind_statistics,
+        arm_key_path=arguments.arm_key,
+        case_receipt_path=arguments.case_receipt,
+        outcome_packet_path=arguments.outcome_packet,
         unlocked_at=arguments.unlocked_at,
     )
     return {
@@ -260,6 +313,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write("invalid arguments\n")
         return 2
     try:
+        arguments = _canonicalize_paths(arguments)
         projection = _HANDLERS[arguments.command](arguments)
         payload = canonical_json_bytes(projection).decode("utf-8")
     except _DOMAIN_ERRORS:
