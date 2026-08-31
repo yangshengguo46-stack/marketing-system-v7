@@ -20,7 +20,12 @@ try:
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
-    from .batch_controller_snapshots import FrozenFile, FrozenJson, FrozenTree, SnapshotError
+    from .batch_controller_snapshots import (
+        FrozenFile,
+        FrozenJson,
+        FrozenTree,
+        SnapshotError,
+    )
     from .contracts import (
         LabContractError,
         canonical_json_bytes,
@@ -39,7 +44,12 @@ except ImportError:
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
-    from batch_controller_snapshots import FrozenFile, FrozenJson, FrozenTree, SnapshotError
+    from batch_controller_snapshots import (
+        FrozenFile,
+        FrozenJson,
+        FrozenTree,
+        SnapshotError,
+    )
     from contracts import (
         LabContractError,
         canonical_json_bytes,
@@ -119,9 +129,15 @@ def _arm_binding(value: object, name: str, arm_class: str) -> ArmBinding:
         token in private_arm_id.casefold() for token in ("stock", "modified", "/", "\\")
     ):
         raise ControllerSupportError("private arm ID must be opaque")
-    treatment = freeze_json(require_mapping(arm.get("treatmentManifest"), "treatment manifest"))
-    binary_manifest = freeze_json(require_mapping(arm.get("binaryManifest"), "binary manifest"))
-    conditions = freeze_json(require_mapping(arm.get("effectiveConditions"), "effective conditions"))
+    treatment = freeze_json(
+        require_mapping(arm.get("treatmentManifest"), "treatment manifest")
+    )
+    binary_manifest = freeze_json(
+        require_mapping(arm.get("binaryManifest"), "binary manifest")
+    )
+    conditions = freeze_json(
+        require_mapping(arm.get("effectiveConditions"), "effective conditions")
+    )
     binary_path = _path(arm.get("binaryPath"), "binary path")
     seed_path = _path(arm.get("codexHomeSeed"), "Codex home seed")
     system_path = _path(arm.get("systemInstruction"), "system instruction")
@@ -183,9 +199,14 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
                 raise BatchPlanError("binary manifest arm class mismatch")
             if arm.binary.sha256 != arm.binary_manifest["binarySha256"]:
                 raise BatchPlanError("binary snapshot commitment mismatch")
-            if arm.codex_home_seed.digest != arm.treatment_manifest["codexHomeSeedSha256"]:
+            if (
+                arm.codex_home_seed.digest
+                != arm.treatment_manifest["codexHomeSeedSha256"]
+            ):
                 raise BatchPlanError("seed snapshot commitment mismatch")
-            config_path = _path(bindings[arm_class].get("effectiveConfig"), "effective config")
+            config_path = _path(
+                bindings[arm_class].get("effectiveConfig"), "effective config"
+            )
             if arm.effective_config_sha256 != sha256_file(config_path):
                 raise BatchPlanError("effective config commitment mismatch")
     except BatchPlanError as error:
@@ -199,13 +220,17 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
     if case_answer_schema != load_exact_json(schema_path):
         raise ControllerSupportError("CaseAnswer schema bytes were substituted")
     try:
-        workspace_seed = FrozenTree.capture(_path(bindings.get("workspaceSeed"), "workspace seed"))
+        workspace_seed = FrozenTree.capture(
+            _path(bindings.get("workspaceSeed"), "workspace seed")
+        )
         schema_file = FrozenFile.capture(schema_path)
     except SnapshotError as error:
         raise ControllerSupportError(str(error)) from error
     if workspace_seed.digest != plan["workspaceTemplateSha256"]:
         raise ControllerSupportError("workspace template commitment mismatch")
-    profile = freeze_json(require_mapping(bindings.get("executionProfile"), "execution profile"))
+    profile = freeze_json(
+        require_mapping(bindings.get("executionProfile"), "execution profile")
+    )
     assert type(profile) is dict
     profile_path = _path(bindings.get("executionProfilePath"), "execution profile path")
     try:

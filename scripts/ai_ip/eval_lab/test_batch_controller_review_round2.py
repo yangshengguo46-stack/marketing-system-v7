@@ -61,7 +61,9 @@ def _localize_mutable_inputs(world: World, tmp_path: Path) -> tuple[dict, dict]:
         )
     plan = dict(world.plan)
     plan["stockTreatmentRef"] = bindings["stock"]["treatmentManifest"]["treatmentId"]
-    plan["modifiedTreatmentRef"] = bindings["modified"]["treatmentManifest"]["treatmentId"]
+    plan["modifiedTreatmentRef"] = bindings["modified"]["treatmentManifest"][
+        "treatmentId"
+    ]
     plan["workspaceTemplateSha256"] = sha256_tree(workspace)
     plan["planSha256"] = "0" * 64
     plan = seal_candidate_run_plan(
@@ -231,7 +233,9 @@ def test_real_attempt_parent_replacement_cannot_redirect_evidence(
 
     executor = ReplacingExecutor([_result("left"), _result("right")])
 
-    with pytest.raises(BatchControllerError, match="evidence|identity|replaced|private"):
+    with pytest.raises(
+        BatchControllerError, match="evidence|identity|replaced|private"
+    ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"5" * 32
         )

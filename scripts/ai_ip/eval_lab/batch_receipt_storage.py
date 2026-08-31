@@ -44,7 +44,9 @@ class BoundDirectory:
             state = self.path.lstat()
             bound = os.fstat(self.descriptor)
         except OSError as error:
-            raise SecureStorageError("private evidence capability is unavailable") from error
+            raise SecureStorageError(
+                "private evidence capability is unavailable"
+            ) from error
         if (state.st_dev, state.st_ino) != self.identity or (
             bound.st_dev,
             bound.st_ino,
@@ -189,9 +191,7 @@ def write_exclusive(path: Path, payload: bytes) -> None:
         os.close(parent_fd)
 
 
-def write_entry(
-    directory: Path | BoundDirectory, name: str, payload: bytes
-) -> None:
+def write_entry(directory: Path | BoundDirectory, name: str, payload: bytes) -> None:
     if not name or "/" in name or "\\" in name:
         raise SecureStorageError("invalid private evidence file name")
     if not isinstance(directory, BoundDirectory):

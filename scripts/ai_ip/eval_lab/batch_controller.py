@@ -163,7 +163,9 @@ def _run_candidate_pair_scoped(
             identity_context={
                 "stock": {
                     "privateArmId": validated.stock.private_arm_id,
-                    "treatmentManifestSha256": validated.stock.treatment_manifest["treatmentManifestSha256"],
+                    "treatmentManifestSha256": validated.stock.treatment_manifest[
+                        "treatmentManifestSha256"
+                    ],
                     "binaryManifestSha256": validated.stock.binary_manifest_sha256,
                     "binarySha256": validated.stock.binary.sha256,
                     "codexHomeSeedSha256": validated.stock.codex_home_seed.digest,
@@ -171,7 +173,9 @@ def _run_candidate_pair_scoped(
                 },
                 "modified": {
                     "privateArmId": validated.modified.private_arm_id,
-                    "treatmentManifestSha256": validated.modified.treatment_manifest["treatmentManifestSha256"],
+                    "treatmentManifestSha256": validated.modified.treatment_manifest[
+                        "treatmentManifestSha256"
+                    ],
                     "binaryManifestSha256": validated.modified.binary_manifest_sha256,
                     "binarySha256": validated.modified.binary.sha256,
                     "codexHomeSeedSha256": validated.modified.codex_home_seed.digest,
@@ -186,23 +190,23 @@ def _run_candidate_pair_scoped(
             },
         )
         cells["stock"] = create_attempt_cell(
-                validated.attempt_base,
-                pair_id,
-                stock_attempt_id,
-                staged.stock_seed,
-                staged.workspace_seed,
-                validated.execution_profile,
-                validated.source_environment,
-            )
+            validated.attempt_base,
+            pair_id,
+            stock_attempt_id,
+            staged.stock_seed,
+            staged.workspace_seed,
+            validated.execution_profile,
+            validated.source_environment,
+        )
         cells["modified"] = create_attempt_cell(
-                validated.attempt_base,
-                pair_id,
-                modified_attempt_id,
-                staged.modified_seed,
-                staged.workspace_seed,
-                validated.execution_profile,
-                validated.source_environment,
-            )
+            validated.attempt_base,
+            pair_id,
+            modified_attempt_id,
+            staged.modified_seed,
+            staged.workspace_seed,
+            validated.execution_profile,
+            validated.source_environment,
+        )
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
         for directory in attempt_directories:
@@ -240,7 +244,9 @@ def _run_candidate_pair_scoped(
         layout.verify()
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "directoryIdentity", error)
-        raise BatchControllerError("private evidence directory identity was replaced") from error
+        raise BatchControllerError(
+            "private evidence directory identity was replaced"
+        ) from error
     sealing_errors: list[BaseException] = []
     for name in order:
         try:

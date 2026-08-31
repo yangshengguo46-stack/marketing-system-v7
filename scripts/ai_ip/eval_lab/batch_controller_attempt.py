@@ -136,13 +136,13 @@ def seal_arm(
                 raw.exit_code == 0
                 and raw.attestation
                 != {
-                "appServerProtocolSchemaSha256": bindings.protocol_sha256,
-                "binarySha256": arm.binary.sha256,
-                "codexHomeSeedSha256": arm.codex_home_seed.digest,
-                "effectiveConfigSha256": arm.effective_config_sha256,
-                "executionProfileSha256": sha256_json(bindings.execution_profile),
-                "modelRouteSha256": sha256_json(bindings.model_route),
-                "promptfooConfigSha256": bindings.promptfoo_config_sha256,
+                    "appServerProtocolSchemaSha256": bindings.protocol_sha256,
+                    "binarySha256": arm.binary.sha256,
+                    "codexHomeSeedSha256": arm.codex_home_seed.digest,
+                    "effectiveConfigSha256": arm.effective_config_sha256,
+                    "executionProfileSha256": sha256_json(bindings.execution_profile),
+                    "modelRouteSha256": sha256_json(bindings.model_route),
+                    "promptfooConfigSha256": bindings.promptfoo_config_sha256,
                 }
             )
         ),

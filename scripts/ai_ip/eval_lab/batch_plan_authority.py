@@ -58,7 +58,9 @@ def reserve_plan(
             else PrivateRoot.create_new(root)
         )
     except ValueError as error:
-        raise PlanAuthorityError("private authority root is not authenticated") from error
+        raise PlanAuthorityError(
+            "private authority root is not authenticated"
+        ) from error
     authority = child_directory(root, "plan-authority", exclusive=False)
     root_fd = -1
     authority_fd = -1

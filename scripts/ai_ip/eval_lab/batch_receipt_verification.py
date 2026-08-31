@@ -97,7 +97,11 @@ def _load_pair_context(
     profile = load_canonical(directory / "execution-profile.json", MAX_CONTEXT_BYTES)
     schema_path = directory / "case-answer-schema.json"
     identity = load_canonical(directory / "identity-context.json", MAX_CONTEXT_BYTES)
-    if type(plan) is not dict or type(profile) is not dict or type(identity) is not dict:
+    if (
+        type(plan) is not dict
+        or type(profile) is not dict
+        or type(identity) is not dict
+    ):
         raise BatchReceiptError("sealed pair context is invalid")
     try:
         validate_named_contract("candidate-run-plan", plan)
@@ -201,7 +205,9 @@ def _verify_arm_details(
         "appServerProtocolSchemaSha256": identity.get("appServerProtocolSchemaSha256"),
         "promptfooConfigSha256": identity.get("promptfooConfigSha256"),
     }
-    if any(receipt.get(field) != expected for field, expected in expected_fields.items()):
+    if any(
+        receipt.get(field) != expected for field, expected in expected_fields.items()
+    ):
         raise BatchReceiptError("arm identity differs from sealed context")
     expected_attestation = {
         "appServerProtocolSchemaSha256": identity.get("appServerProtocolSchemaSha256"),
