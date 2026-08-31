@@ -221,3 +221,15 @@ The IDs below are chronological inside each bucket. Rollback uses the reverse ta
 - Upstream-sync risk: high around frozen Replay/Native schemas and producer order, proof key and retained filesystem identity, private inventory continuation/append roots, ledger/receipt/binding projections, `ModeEvidence`, clock/timeline semantics, exact JCS, Bazel compile/runfiles, and the formatter-resolved Rust surface. After any rebase or conflict resolution, rerun the reviewed locked provider-free Cargo/Python/Bazel matrix before trusting the seam.
 - Reverse rollback: first revert this F-0007A ledger commit, then `dcd3df253`, `80ff572f8`, `f9497f79d`, `27f72e45c`, `e3a0f5d03`, `87af793c7`, `5f81f65e9`, `c8b0a4370`, and `0ff2468a7`; then reverse Task 6 through Task 1 in the dependency order listed above, reverting later dependents before providers; finally reverse the F-0007 authority chain only after all owned implementation commits are gone. Never delete F-0006/F-0006A/F-0007 history, retain a compatibility bypass, weaken fail-closed checks, or rewrite imported ancestry.
 - Gate disposition: 06B-1 provider-free private implementation is complete; `WORK_PACKAGE_6A_REGRESSION=GREEN`; `WORK_PACKAGE_6B1=COMPLETE_PRIVATE_PROVIDER_FREE`; `G0=OPEN`; `G1=OPEN`; `G2=OPEN`; `PASS_TO_PHASE_0B=false`. 06B-2 is next and requires its own reviewed plan and authority; it is not implemented, and no provider, real held-out, G2, or Phase 0B completion is claimed here.
+
+## F-0008 — Authorize Marketing Evaluation Lab Foundation 07A
+
+- Owner: Marketing Evaluation Lab Foundation 07A
+- Consumes: approved design commit `c08a8da70`, correction `83c52f238`, and reviewed implementation plan commit `551823d99d3ec760c48635a8bddef635ce417568` for `docs/superpowers/plans/2026-08-31-07a-marketing-eval-lab-foundation.md`.
+- Classification: add external provider-free evaluation lab contracts and Python control plane
+- Preserve: codex-rs/ai-ip-eval, 06A/06B-1 private proof, App Server and product runtime
+- Park: 06B-2, live provider, promptfoo, Label Studio, real reviewers, G2 and Phase 0B
+- Provider mode: not-run
+- Gate: MARKETING_EVAL_LAB_07A=AUTHORIZED_NOT_IMPLEMENTED
+- Scope fence: this is the only executable child. It does not authorize provider calls, API-key or credential inspection, live Douyin, promptfoo installation, Label Studio, real reviewers, G2, Phase 0B, or changes to the preserved Codex proof/runtime surfaces.
+- Rollback: revert later F-0008A implementation commits first, then the F-0008 authorization commit; never rewrite F-0006 through F-0007A
