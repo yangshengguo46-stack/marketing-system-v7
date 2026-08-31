@@ -14,7 +14,12 @@ try:
         verify_self_commitment,
     )
     from .batch_plan import BatchPlanError, sha256_tree
-    from .contracts import LabContractError, canonical_json_bytes, load_exact_json, sha256_json
+    from .contracts import (
+        LabContractError,
+        canonical_json_bytes,
+        load_exact_json,
+        sha256_json,
+    )
 except ImportError:
     from batch_contracts import (
         BatchContractError,
@@ -23,7 +28,12 @@ except ImportError:
         verify_self_commitment,
     )
     from batch_plan import BatchPlanError, sha256_tree
-    from contracts import LabContractError, canonical_json_bytes, load_exact_json, sha256_json
+    from contracts import (
+        LabContractError,
+        canonical_json_bytes,
+        load_exact_json,
+        sha256_json,
+    )
 
 
 _IDENTIFIER = re.compile(r"[0-9a-f]{64}\Z")
@@ -100,7 +110,10 @@ def assert_private_layout_available(
         _private_directory(root)
     for pair_id, left_id, right_id in identities:
         pair = _identifier(pair_id, "pair ID")
-        attempts = (_identifier(left_id, "attempt ID"), _identifier(right_id, "attempt ID"))
+        attempts = (
+            _identifier(left_id, "attempt ID"),
+            _identifier(right_id, "attempt ID"),
+        )
         if (root / "pairs" / pair).exists():
             raise BatchReceiptError("pair already exists")
         if any((root / "attempts" / attempt).exists() for attempt in attempts):
@@ -112,7 +125,9 @@ def _write_exclusive(path: Path, payload: bytes) -> None:
     try:
         descriptor = os.open(path, flags, 0o600)
     except OSError as error:
-        raise BatchReceiptError(f"private evidence write collision: {path.name}") from error
+        raise BatchReceiptError(
+            f"private evidence write collision: {path.name}"
+        ) from error
     try:
         view = memoryview(payload)
         while view:
@@ -324,7 +339,9 @@ def seal_paired_run_receipt(
     return receipt
 
 
-def _receipt_by_commitment(private_root: Path, pair_id: str, commitment: object) -> dict[str, object]:
+def _receipt_by_commitment(
+    private_root: Path, pair_id: str, commitment: object
+) -> dict[str, object]:
     matches: list[dict[str, object]] = []
     attempts_root = _private_directory(Path(private_root) / "attempts")
     for directory in attempts_root.iterdir():
@@ -334,7 +351,9 @@ def _receipt_by_commitment(private_root: Path, pair_id: str, commitment: object)
         if type(value) is dict and value.get("receiptSha256") == commitment:
             matches.append(value)
     if len(matches) != 1 or matches[0].get("pairId") != pair_id:
-        raise BatchReceiptError("pair arm receipt commitment is unavailable or ambiguous")
+        raise BatchReceiptError(
+            "pair arm receipt commitment is unavailable or ambiguous"
+        )
     return matches[0]
 
 

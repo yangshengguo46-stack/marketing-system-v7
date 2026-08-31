@@ -95,15 +95,14 @@ class IsolationError(ValueError):
 
 
 class UnsupportedIsolationPlatformError(IsolationError):
-    """Raised when supported execution would enter an unverified backend."""
+    pass
 
 
-def _platform_name() -> str:
-    return platform.system()
+_platform_name = platform.system
 
 
 def require_supported_isolation_platform() -> None:
-    """Fail closed until the Windows backend has a separate redesign and native CI."""
+    """Fail closed until a separate Windows redesign has native CI proof."""
     if _platform_name() == "Windows":
         raise UnsupportedIsolationPlatformError(
             "the 07B isolated runner requires a separate Windows redesign and native CI"
