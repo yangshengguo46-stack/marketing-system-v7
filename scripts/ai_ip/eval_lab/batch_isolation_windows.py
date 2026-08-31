@@ -239,9 +239,7 @@ class WindowsCellFilesystem:
             try:
                 journal.rollback()
             except JournalRollbackError as rollback_error:
-                error = SecureFilesystemError(
-                    "Windows construction cleanup is pending"
-                )
+                error = SecureFilesystemError("Windows construction cleanup is pending")
                 error.orphan_resource = journal
                 raise error from rollback_error
             raise construction_error
@@ -299,9 +297,7 @@ class WindowsCellFilesystem:
         finally:
             close_handle(current)
 
-    def _open_relative(
-        self, parts: tuple[str, ...], *, deletable: bool = False
-    ) -> int:
+    def _open_relative(self, parts: tuple[str, ...], *, deletable: bool = False) -> int:
         retained_name = "/".join(parts)
         retained = self.directories.get(retained_name)
         current = _translate(

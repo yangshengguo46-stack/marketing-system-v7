@@ -344,9 +344,7 @@ def create_attempt_cell(
             root / _RECEIPT_NAME,
             capability,
         )
-        state = _CellState(
-            binding, filesystem, reservation, nonce, os.getpid(), cell
-        )
+        state = _CellState(binding, filesystem, reservation, nonce, os.getpid(), cell)
         _CELLS[capability] = state
         _state_for(cell)
         if not filesystem.base_is_still_bound():
@@ -376,9 +374,7 @@ def create_attempt_cell(
         if isinstance(error, AuthorityError):
             raise IsolationError(str(error)) from error
         if orphan_retained:
-            raise IsolationError(
-                "isolated cell orphan cleanup is pending"
-            ) from error
+            raise IsolationError("isolated cell orphan cleanup is pending") from error
         raise
 
 

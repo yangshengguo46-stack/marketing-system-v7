@@ -40,9 +40,7 @@ class WindowsConstructionJournal:
         self.entries: list[JournalEntry] = []
         self.state = "constructing"
 
-    def record(
-        self, handle: int, parent: int, name: str, *, directory: bool
-    ) -> None:
+    def record(self, handle: int, parent: int, name: str, *, directory: bool) -> None:
         self._require_owner()
         entry = JournalEntry(handle, parent, name, directory, None)
         self.entries.append(entry)
@@ -56,7 +54,9 @@ class WindowsConstructionJournal:
 
     def _require_owner(self) -> None:
         if self.creator_pid != os.getpid():
-            raise JournalRollbackError("construction journal belongs to another process")
+            raise JournalRollbackError(
+                "construction journal belongs to another process"
+            )
 
     def rollback(self) -> None:
         self._require_owner()
@@ -70,7 +70,9 @@ class WindowsConstructionJournal:
                         raise JournalRollbackError("rollback handle identity changed")
                     self.operations.mark_delete(entry.handle)
                     if not self.operations.delete_pending(entry.handle):
-                        raise JournalRollbackError("rollback disposition was not pending")
+                        raise JournalRollbackError(
+                            "rollback disposition was not pending"
+                        )
                     self.operations.close(entry.handle)
                     entry.handle = None
                 live = self.operations.live_identity(

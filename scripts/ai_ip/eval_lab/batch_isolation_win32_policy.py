@@ -30,10 +30,7 @@ _ACE = re.compile(r"\(([^()]*)\)")
 
 def private_sddl(user_sid: str, *, directory: bool) -> str:
     flags = "OICI" if directory else ""
-    return (
-        f"O:{user_sid}D:P"
-        f"(A;{flags};FA;;;SY)(A;{flags};FA;;;{user_sid})"
-    )
+    return f"O:{user_sid}D:P(A;{flags};FA;;;SY)(A;{flags};FA;;;{user_sid})"
 
 
 def _flags(value: str) -> frozenset[str] | None:
@@ -45,16 +42,12 @@ def _flags(value: str) -> frozenset[str] | None:
     return result
 
 
-def is_exact_private_sddl(
-    sddl: str, user_sid: str, directory: bool
-) -> bool:
+def is_exact_private_sddl(sddl: str, user_sid: str, directory: bool) -> bool:
     prefix = f"O:{user_sid}D:P"
     if not sddl.startswith(prefix):
         return False
     ace_texts = _ACE.findall(sddl[len(prefix) :])
-    if len(ace_texts) != 2 or prefix + "".join(
-        f"({ace})" for ace in ace_texts
-    ) != sddl:
+    if len(ace_texts) != 2 or prefix + "".join(f"({ace})" for ace in ace_texts) != sddl:
         return False
     expected_flags = frozenset({"OI", "CI"}) if directory else frozenset()
     principals: set[str] = set()

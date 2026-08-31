@@ -42,15 +42,10 @@ def prove_unlinked(
     with os.scandir(base_fd) as entries:
         for entry in entries:
             entries_seen += 1
-            if (
-                entries_seen > max_entries
-                or time.monotonic() - started > max_seconds
-            ):
+            if entries_seen > max_entries or time.monotonic() - started > max_seconds:
                 raise TerminalProofError(
                     "terminal cleanup proof reached its bounded progress limit"
                 )
-            metadata = os.stat(
-                entry.name, dir_fd=base_fd, follow_symlinks=False
-            )
+            metadata = os.stat(entry.name, dir_fd=base_fd, follow_symlinks=False)
             if identity(metadata) == root_identity:
                 raise TerminalProofError("cleanup did not remove the original root")

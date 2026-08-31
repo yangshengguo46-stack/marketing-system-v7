@@ -27,9 +27,7 @@ class RetainedOrphan:
 _ORPHANS: list[RetainedOrphan] = []
 
 
-def retain_orphan(
-    resource: CleanupResource, reservation: ReservationResource
-) -> None:
+def retain_orphan(resource: CleanupResource, reservation: ReservationResource) -> None:
     _ORPHANS.append(RetainedOrphan(resource, reservation, os.getpid()))
 
 
@@ -51,9 +49,7 @@ def retry_orphans() -> None:
         orphan.reservation.close()
         _ORPHANS.remove(orphan)
     if failures:
-        raise OrphanCleanupError(
-            "isolated cell orphan cleanup is still pending"
-        )
+        raise OrphanCleanupError("isolated cell orphan cleanup is still pending")
 
 
 def close_orphans_after_fork() -> None:
