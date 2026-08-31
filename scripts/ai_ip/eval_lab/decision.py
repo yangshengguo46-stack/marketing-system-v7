@@ -83,15 +83,83 @@ def _validate(value: object, schema: Path, label: str) -> dict[str, object]:
     return value
 
 
-def _external(path: Path, schema: Path, label: str) -> dict[str, object]:
+def _receipt_location(private_root: PrivateRoot, path: Path) -> tuple[str, str]:
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        raise DecisionError("blind-pack receipt path must be absolute")
     try:
-        return _validate(load_exact_json(Path(path)), schema, label)
+        relative = candidate.relative_to(private_root.path)
+    except ValueError as error:
+        raise DecisionError(
+            "blind-pack receipt is outside the trusted private root"
+        ) from error
+    parts = relative.parts
+    if (
+        len(parts) != 3
+        or parts[0] != "batches"
+        or parts[2] != "blind-pack-receipt.json"
+    ):
+        raise DecisionError("blind-pack receipt path is not authoritative")
+    return relative.as_posix(), _component(parts[1], "batchId")
+
+
+def _external_path(
+    private_root: PrivateRoot, batch_id: str, path: Path, label: str
+) -> Path:
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        raise DecisionError(f"{label} path must be absolute")
+    try:
+        candidate.relative_to(private_root.path)
+    except ValueError:
+        pass
+    else:
+        raise DecisionError(f"{label} path must be outside the private root")
+    try:
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(private_root.path)
+    except ValueError:
+        pass
+    except OSError as error:
+        raise DecisionError(f"cannot authorize {label} path") from error
+    else:
+        raise DecisionError(f"{label} path resolves inside the private root")
+    try:
+        candidate_metadata = resolved.stat()
+        arm_key_metadata = (
+            private_root.path
+            / f"batches/{batch_id}/coordinator/arm-key.json"
+        ).stat()
+    except OSError as error:
+        raise DecisionError(f"cannot authorize {label} path") from error
+    if (candidate_metadata.st_dev, candidate_metadata.st_ino) == (
+        arm_key_metadata.st_dev,
+        arm_key_metadata.st_ino,
+    ):
+        raise DecisionError(f"{label} aliases the private arm key")
+    return resolved
+
+
+def _external(
+    private_root: PrivateRoot,
+    batch_id: str,
+    path: Path,
+    schema: Path,
+    label: str,
+) -> dict[str, object]:
+    authorized = _external_path(private_root, batch_id, path, label)
+    try:
+        return _validate(load_exact_json(authorized), schema, label)
     except (LabContractError, OSError) as error:
         raise DecisionError(f"cannot load {label}") from error
 
 
-def _qualification(path: Path, sealed: datetime) -> dict[str, object]:
-    receipt = _external(path, _REVIEWER_SCHEMA, "qualification receipt")
+def _qualification(
+    private_root: PrivateRoot, batch_id: str, path: Path, sealed: datetime
+) -> dict[str, object]:
+    receipt = _external(
+        private_root, batch_id, path, _REVIEWER_SCHEMA, "qualification receipt"
+    )
     if (
         receipt.get("objectKind") != "QualificationReceipt"
         or receipt.get("diagnosticOnly") is not True
@@ -118,23 +186,19 @@ def _private_json(
 
 def _load_pack(
     private_root: PrivateRoot,
-    receipt_path: Path,
+    relative: str,
+    batch_id: str,
     reviewer_ids: list[str],
 ) -> tuple[dict[str, object], dict[str, dict[str, object]], dict[str, set[str]]]:
-    candidate = Path(receipt_path)
-    if not candidate.is_absolute():
-        raise DecisionError("blind-pack receipt path must be absolute")
     try:
-        relative = candidate.relative_to(private_root.path).as_posix()
         receipt = _validate(private_root.read_json(relative), _BLIND_SCHEMA, "blind-pack receipt")
-    except (LabContractError, OSError, ValueError) as error:
-        raise DecisionError("blind-pack receipt is outside the trusted private root") from error
+    except (LabContractError, OSError) as error:
+        raise DecisionError("cannot load blind-pack receipt") from error
     if receipt.get("objectKind") != "BlindPackReceipt":
         raise DecisionError("wrong blind-pack receipt object kind")
-    batch_id = _component(receipt.get("batchId"), "batchId")
+    if receipt.get("batchId") != batch_id:
+        raise DecisionError("blind-pack receipt path/batch binding mismatch")
     base = f"batches/{batch_id}"
-    if relative != f"{base}/blind-pack-receipt.json":
-        raise DecisionError("blind-pack receipt is outside its authoritative location")
     manifest = _private_json(
         private_root, f"{base}/coordinator/batch-manifest.json", _BATCH_SCHEMA, "batch manifest"
     )
@@ -213,12 +277,16 @@ def _load_pack(
 
 
 def _submission_value(
+    private_root: PrivateRoot,
+    batch_id: str,
     path: Path,
     assignments: dict[str, dict[str, object]],
     evidence: dict[str, set[str]],
     sealed: datetime,
 ) -> tuple[str, dict[str, object]]:
-    value = _external(path, _BLIND_SCHEMA, "review submission")
+    value = _external(
+        private_root, batch_id, path, _BLIND_SCHEMA, "review submission"
+    )
     if value.get("objectKind") != "ReviewSubmission":
         raise DecisionError("wrong review submission object kind")
     assignment_id = value.get("assignmentId")
@@ -289,9 +357,20 @@ def seal_blind_statistics(
         raise DecisionError("exactly two base qualification receipts are required")
     if type(submission_paths) is not tuple:
         raise DecisionError("submission_paths must be a tuple")
-    base_receipts = [_qualification(path, sealed) for path in base_qualification_receipt_paths]
+    receipt_relative, batch_id = _receipt_location(
+        private_root, blind_pack_receipt_path
+    )
+    base_receipts = [
+        _qualification(private_root, batch_id, path, sealed)
+        for path in base_qualification_receipt_paths
+    ]
     arbitrator = (
-        _qualification(arbitrator_qualification_receipt_path, sealed)
+        _qualification(
+            private_root,
+            batch_id,
+            arbitrator_qualification_receipt_path,
+            sealed,
+        )
         if arbitrator_qualification_receipt_path is not None
         else None
     )
@@ -301,11 +380,13 @@ def seal_blind_statistics(
     if len(reviewer_ids) != len(set(reviewer_ids)):
         raise DecisionError("reviewer identities must be distinct")
     receipt, assignments, evidence = _load_pack(
-        private_root, blind_pack_receipt_path, reviewer_ids
+        private_root, receipt_relative, batch_id, reviewer_ids
     )
     submissions: dict[str, dict[str, object]] = {}
     for path in submission_paths:
-        assignment_id, value = _submission_value(path, assignments, evidence, sealed)
+        assignment_id, value = _submission_value(
+            private_root, batch_id, path, assignments, evidence, sealed
+        )
         if assignment_id in submissions:
             raise DecisionError("duplicate review assignment")
         submissions[assignment_id] = value

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import decision
 from blind_controller import prepare_blind_batch
 from contracts import canonical_json_bytes, load_exact_json, sha256_json, validate_contract
 from decision import ArbitrationRequiredError, DecisionError, seal_blind_statistics
@@ -157,6 +158,12 @@ def _base_preferences(batch):
     return primary["armAOutputSha256"], primary["armBOutputSha256"]
 
 
+def _arm_key_path(batch):
+    return batch["private_root"].path / (
+        f"batches/{BATCH_ID}/coordinator/arm-key.json"
+    )
+
+
 def test_seals_output_hash_preferences_without_reading_arm_key(tmp_path, monkeypatch):
     batch = _prepared_batch(tmp_path)
     output_a, output_b = _base_preferences(batch)
@@ -253,6 +260,121 @@ def test_requires_then_completes_arbitration_and_retains_known_failures(tmp_path
     assert batch["private_root"].read_json(
         f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
     ) == result
+
+
+def test_severe_flags_alone_require_arbitration_and_survive_the_final_seal(tmp_path):
+    batch = _prepared_batch(tmp_path)
+    preferred_output, severe_output = _base_preferences(batch)
+    maximum_scores = {preferred_output: _scores(3), severe_output: _scores(4)}
+    severe = {severe_output: list(SEVERE)}
+    base = _submission_paths(
+        tmp_path,
+        batch,
+        {
+            "reviewer-business-1": preferred_output,
+            "reviewer-business-2": preferred_output,
+        },
+        severe=severe,
+        dimensions=maximum_scores,
+    )
+
+    with pytest.raises(ArbitrationRequiredError):
+        seal_blind_statistics(**_args(batch, base))
+    assert not _statistics_path(batch).exists()
+
+    arbitrator = _submission_paths(
+        tmp_path,
+        batch,
+        {"reviewer-arbitrator-1": preferred_output},
+        severe=severe,
+        dimensions=maximum_scores,
+    )
+    result = seal_blind_statistics(**_args(batch, base + arbitrator))
+
+    assert result["preferenceCounts"] == {
+        "A": 3,
+        "B": 0,
+        "nearTie": 0,
+        "abstain": 0,
+    }
+    assert result["arbitrationRequired"] is True
+    assert result["arbitrationCompleted"] is True
+    assert result["severeByOutputSha256"][severe_output] == list(SEVERE)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "receipt_is_arm_key",
+        "qualification_is_arm_key",
+        "submission_is_arm_key",
+        "qualification_symlink_to_arm_key",
+        "submission_hardlink_to_arm_key",
+    ],
+)
+def test_rejects_arm_key_paths_and_aliases_before_content_read(
+    tmp_path, monkeypatch, case
+):
+    batch = _prepared_batch(tmp_path)
+    output_a, _ = _base_preferences(batch)
+    submissions = list(
+        _submission_paths(
+            tmp_path,
+            batch,
+            {"reviewer-business-1": output_a, "reviewer-business-2": output_a},
+        )
+    )
+    arm_key = _arm_key_path(batch)
+    arguments = _args(batch, tuple(submissions))
+    if case == "receipt_is_arm_key":
+        arguments["blind_pack_receipt_path"] = arm_key
+    elif case == "qualification_is_arm_key":
+        arguments["base_qualification_receipt_paths"] = (
+            arm_key,
+            batch["base_qualifications"][1],
+        )
+    elif case == "submission_is_arm_key":
+        submissions[0] = arm_key
+        arguments["submission_paths"] = tuple(submissions)
+    elif case == "qualification_symlink_to_arm_key":
+        alias = tmp_path / "qualification-alias.json"
+        alias.symlink_to(arm_key)
+        arguments["base_qualification_receipt_paths"] = (
+            alias,
+            batch["base_qualifications"][1],
+        )
+    else:
+        alias = tmp_path / "submission-alias.json"
+        alias.hardlink_to(arm_key)
+        submissions[0] = alias
+        arguments["submission_paths"] = tuple(submissions)
+
+    arm_identity = (arm_key.stat().st_dev, arm_key.stat().st_ino)
+    attempted_arm_reads = []
+    original_private_read = PrivateRoot.read_json
+    original_external_read = decision.load_exact_json
+
+    def guarded_private_read(self, relative):
+        if Path(relative).name == "arm-key.json":
+            attempted_arm_reads.append(("private", str(relative)))
+            raise AssertionError("opened arm key through PrivateRoot.read_json")
+        return original_private_read(self, relative)
+
+    def guarded_external_read(path):
+        metadata = Path(path).stat()
+        if (metadata.st_dev, metadata.st_ino) == arm_identity:
+            attempted_arm_reads.append(("external", str(path)))
+            raise AssertionError("opened arm key through load_exact_json")
+        return original_external_read(path)
+
+    monkeypatch.setattr(PrivateRoot, "read_json", guarded_private_read)
+    monkeypatch.setattr(decision, "load_exact_json", guarded_external_read)
+
+    with pytest.raises(DecisionError):
+        seal_blind_statistics(**arguments)
+
+    assert attempted_arm_reads == []
+    assert not _statistics_path(batch).exists()
 
 
 def test_position_disagreement_becomes_near_tie_and_requires_arbitration(tmp_path):
