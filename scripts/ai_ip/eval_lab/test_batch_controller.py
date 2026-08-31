@@ -29,7 +29,9 @@ from contracts import load_exact_json, sha256_json  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROOT = REPO_ROOT / "ai-ip-evals" / "lab" / "fixtures" / "batch-runner"
-CASE_ANSWER_SCHEMA = REPO_ROOT / "ai-ip-evals" / "lab" / "schemas" / "case-answer.schema.json"
+CASE_ANSWER_SCHEMA = (
+    REPO_ROOT / "ai-ip-evals" / "lab" / "schemas" / "case-answer.schema.json"
+)
 
 
 def _sealed_treatment(treatment_id: str) -> dict[str, object]:
@@ -221,7 +223,9 @@ def _run(world: World, executor: ScriptedExecutor, seed: bytes = b"x" * 32):
     )
 
 
-def test_one_arm_failure_invalidates_pair_but_retains_two_attempts(world: World) -> None:
+def test_one_arm_failure_invalidates_pair_but_retains_two_attempts(
+    world: World,
+) -> None:
     executor = ScriptedExecutor([_result("stock"), _result("modified", exit_code=17)])
 
     receipt = _run(world, executor)
@@ -279,14 +283,20 @@ def test_seeded_pairs_execute_both_orders(world: World) -> None:
         if len(observed) == 2:
             break
 
-    assert observed == {("stock-codex", "modified-codex"), ("modified-codex", "stock-codex")}
+    assert observed == {
+        ("stock-codex", "modified-codex"),
+        ("modified-codex", "stock-codex"),
+    }
 
 
 @pytest.mark.parametrize(
     ("result", "classification"),
     [
         (_result(output=_answer(case_id="wrong-case")), "schemaFailure"),
-        (_result(output={"schemaVersion": 1, "objectKind": "CaseAnswer"}), "schemaFailure"),
+        (
+            _result(output={"schemaVersion": 1, "objectKind": "CaseAnswer"}),
+            "schemaFailure",
+        ),
         (_result(metadata={**_metadata(), "trajectory": None}), "evidenceFailure"),
         (_result(metadata={**_metadata(), "timedOut": True}), "executionFailure"),
         (_result(exit_code=9), "executionFailure"),
@@ -315,7 +325,9 @@ def test_post_receipt_private_evidence_mutation_is_rejected(world: World) -> Non
         verify_paired_run_receipt(receipt, world.private_root)
 
 
-def test_duplicate_attempt_and_existing_pair_are_rejected_without_new_calls(world: World) -> None:
+def test_duplicate_attempt_and_existing_pair_are_rejected_without_new_calls(
+    world: World,
+) -> None:
     first = ScriptedExecutor([_result("left"), _result("right")])
     receipt = _run(world, first)
     second = ScriptedExecutor([_result("third"), _result("fourth")])
@@ -352,7 +364,8 @@ def test_batch_executes_exactly_the_sealed_replication_count(world: World) -> No
     bindings["stock"]["effectiveConditions"] = conditions
     bindings["modified"]["effectiveConditions"] = conditions
     executor = ScriptedExecutor(
-        [_result("failed", exit_code=1)] + [_result(f"result-{index}") for index in range(5)]
+        [_result("failed", exit_code=1)]
+        + [_result(f"result-{index}") for index in range(5)]
     )
 
     receipts = run_candidate_batch(
@@ -388,5 +401,28 @@ def test_only_one_presealed_attempt_per_arm_is_accepted(world: World) -> None:
     with pytest.raises(BatchControllerError, match="maxAttemptsPerArm=1"):
         run_candidate_pair(
             world.plan, bad_bindings, executor, world.private_root, seed=b"r" * 32
+        )
+    assert executor.calls == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("caseAnswerSchema", {}, "CaseAnswer schema bytes"),
+        ("appServerProtocolSchemaSha256", "not-a-hash", "SHA-256"),
+    ],
+)
+def test_global_preflight_rejects_substituted_contracts_before_execution(
+    world: World,
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    bindings = {**world.bindings, field: value}
+    executor = ScriptedExecutor([_result("left"), _result("right")])
+
+    with pytest.raises(BatchControllerError, match=message):
+        run_candidate_pair(
+            world.plan, bindings, executor, world.private_root, seed=b"p" * 32
         )
     assert executor.calls == 0
