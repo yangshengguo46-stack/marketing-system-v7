@@ -282,7 +282,7 @@ L1/L2 固定材料案例默认断网和最小写权限。需要实时研究、MC
 - `outputRelation`: `distinct | canonicallyIdentical`
 - 匿名映射 commitment
 
-`outputRelation` 只在机械有效的 pair 上有意义。两个通过 schema 校验的 `CaseAnswer` 先规范化为 canonical JSON；只有 canonical bytes 与 SHA-256 同时一致时才记为 `canonicallyIdentical`。相同输出是有效实验结果，不得伪装成执行失败。
+`outputRelation` 只在机械有效的 pair 上有意义：有效 pair 必须包含，无效 pair 必须省略。两个通过 schema 校验的 `CaseAnswer` 先规范化为 canonical JSON；只有 canonical bytes 与 SHA-256 同时一致时才记为 `canonicallyIdentical`。相同输出是有效实验结果，不得伪装成执行失败。匿名映射 commitment 只在 `distinct` 时存在；identical pair 不制造虚假映射。
 
 ### 8.7 LiveRunAuthorization
 
