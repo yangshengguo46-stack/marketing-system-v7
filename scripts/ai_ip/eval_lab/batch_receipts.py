@@ -68,6 +68,7 @@ class EvidenceLayout:
     pair_directory: BoundDirectory
     attempt_directories: tuple[BoundDirectory, BoundDirectory]
     _entries: tuple[BoundDirectory, ...]
+    identity_sha256: str
 
     def verify(self) -> None:
         for entry in self._entries:
@@ -105,20 +106,29 @@ def prepare_private_layout(
         raise
     paths = (root, pairs_root, attempts_root, pair_path, created[0], created[1])
     entries = tuple(_bind_directory(path) for path in paths)
-    layout = EvidenceLayout(entries[3], (entries[4], entries[5]), entries)
+    layout_value = {
+        "entries": [
+            {
+                "device": entry.identity[0],
+                "inode": entry.identity[1],
+                "path": str(entry.path.relative_to(root)),
+            }
+            for entry in entries
+        ],
+        "pairId": pair,
+    }
+    layout_sha256 = sha256_json(layout_value)
+    layout = EvidenceLayout(
+        entries[3], (entries[4], entries[5]), entries, layout_sha256
+    )
     layout.verify()
+    _write_exclusive(root / f"layout-{pair}.json", _json_bytes(layout_value))
     _write_exclusive(
-        root / f"layout-{pair}.json",
+        root / f"layout-authority-{pair}.json",
         _json_bytes(
             {
-                "entries": [
-                    {
-                        "device": entry.identity[0],
-                        "inode": entry.identity[1],
-                        "path": str(entry.path.relative_to(root)),
-                    }
-                    for entry in entries
-                ],
+                "layout": layout_value,
+                "layoutSha256": layout_sha256,
                 "pairId": pair,
             }
         ),

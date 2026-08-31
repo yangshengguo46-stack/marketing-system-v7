@@ -11,6 +11,8 @@ try:
     )
     from .batch_controller_execution import counting_executor, start_and_capture_pair
     from .batch_controller_identity import ExecutionIdentityError
+    from .batch_controller_lifecycle import PairLifecycle, PairLifecycleError
+    from .batch_controller_reservation import reserve_batch, reserve_single
     from . import batch_controller_types as _types
     from .batch_receipt_storage import seal_failure_tombstone
     from .batch_controller_staging import stage_inputs
@@ -19,9 +21,7 @@ try:
         ValidatedBindings,
         derive,
         identities,
-        pair_seed,
         require_mapping,
-        require_seed,
         validate_bindings,
     )
     from .batch_isolation import (
@@ -32,7 +32,7 @@ try:
         verify_attempt_cells_disjoint,
     )
     from .batch_plan import verify_effective_condition_parity
-    from .batch_plan_authority import reserve_plan
+    from .batch_plan_authority import PlanAuthorityError, reserve_plan
     from .batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -50,6 +50,8 @@ except ImportError:
     )
     from batch_controller_execution import counting_executor, start_and_capture_pair
     from batch_controller_identity import ExecutionIdentityError
+    from batch_controller_lifecycle import PairLifecycle, PairLifecycleError
+    from batch_controller_reservation import reserve_batch, reserve_single
     import batch_controller_types as _types
     from batch_receipt_storage import seal_failure_tombstone
     from batch_controller_staging import stage_inputs
@@ -58,9 +60,7 @@ except ImportError:
         ValidatedBindings,
         derive,
         identities,
-        pair_seed,
         require_mapping,
-        require_seed,
         validate_bindings,
     )
     from batch_isolation import (
@@ -71,7 +71,7 @@ except ImportError:
         verify_attempt_cells_disjoint,
     )
     from batch_plan import verify_effective_condition_parity
-    from batch_plan_authority import reserve_plan
+    from batch_plan_authority import PlanAuthorityError, reserve_plan
     from batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -105,8 +105,8 @@ def _run_candidate_pair(
     *,
     active_seed: bytes,
 ) -> dict[str, object]:
-    resources = ExitStack()
-    try:
+    pair_id = identities(active_seed)[0]
+    with ExitStack() as resources, PairLifecycle(private_root, pair_id) as lifecycle:
         return _run_candidate_pair_scoped(
             plan_value,
             validated,
@@ -114,9 +114,8 @@ def _run_candidate_pair(
             private_root,
             active_seed=active_seed,
             resources=resources,
+            lifecycle=lifecycle,
         )
-    finally:
-        resources.close()
 
 
 def _run_candidate_pair_scoped(
@@ -127,6 +126,7 @@ def _run_candidate_pair_scoped(
     *,
     active_seed: bytes,
     resources: ExitStack,
+    lifecycle: PairLifecycle,
 ) -> dict[str, object]:
     pair_id, stock_attempt_id, modified_attempt_id = identities(active_seed)
     try:
@@ -139,7 +139,8 @@ def _run_candidate_pair_scoped(
         pair_directory = layout.pair_directory
         attempt_directories = layout.attempt_directories
         resources.callback(layout.close)
-    except (BatchReceiptError, ExecutionIdentityError) as error:
+        lifecycle.bind_layout(layout)
+    except (BatchReceiptError, ExecutionIdentityError, PairLifecycleError) as error:
         raise BatchControllerError(str(error)) from error
     cells: dict[str, object] = {}
     staged = None
@@ -162,6 +163,7 @@ def _run_candidate_pair_scoped(
                     "binarySha256": validated.stock.binary.sha256,
                     "codexHomeSeedSha256": validated.stock.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.stock.effective_config_sha256,
+                    "effectiveConditions": validated.stock.effective_conditions,
                 },
                 "modified": {
                     "privateArmId": validated.modified.private_arm_id,
@@ -172,6 +174,7 @@ def _run_candidate_pair_scoped(
                     "binarySha256": validated.modified.binary.sha256,
                     "codexHomeSeedSha256": validated.modified.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.modified.effective_config_sha256,
+                    "effectiveConditions": validated.modified.effective_conditions,
                 },
                 "inputSha256": plan_value["caseBundleSha256"],
                 "workspaceBeforeSha256": validated.workspace_seed.cell_digest(),
@@ -190,6 +193,7 @@ def _run_candidate_pair_scoped(
             validated.execution_profile,
             validated.source_environment,
         )
+        lifecycle.bind_cell(cells["stock"])
         cells["modified"] = create_attempt_cell(
             validated.attempt_base,
             pair_id,
@@ -199,6 +203,7 @@ def _run_candidate_pair_scoped(
             validated.execution_profile,
             validated.source_environment,
         )
+        lifecycle.bind_cell(cells["modified"])
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
         for directory in attempt_directories:
@@ -302,6 +307,7 @@ def _run_candidate_pair_scoped(
             }
     order_record = {
         "attemptOrder": [cells[name].attempt_id for name in order],
+        "layoutIdentitySha256": layout.identity_sha256,
         "orderNonce": order_secret.hex(),
         "pairId": pair_id,
     }
@@ -346,14 +352,8 @@ def run_candidate_pair(
             raise ControllerSupportError(
                 "standalone pair requires sealed replication count 1"
             )
-        active_seed = pair_seed(
-            require_seed(seed), Path(private_root), plan_value["planSha256"]
-        )
-        identity = identities(active_seed)
-        pair_id = identity[0]
-        assert_private_layout_available(Path(private_root), (identity,))
-        reservation = reserve_plan(
-            Path(private_root), str(plan_value["planSha256"]), 1, (pair_id,)
+        active_seed = reserve_single(
+            plan_value, Path(private_root), seed, reserve_plan
         )
     except ValueError as error:
         raise BatchControllerError(str(error)) from error
@@ -365,7 +365,7 @@ def run_candidate_pair(
             Path(private_root),
             active_seed=active_seed,
         )
-    except (BatchReceiptError, ExecutionIdentityError) as error:
+    except (BatchReceiptError, ExecutionIdentityError, PairLifecycleError) as error:
         raise BatchControllerError(str(error)) from error
     except BaseException:
         raise
@@ -388,28 +388,11 @@ def run_candidate_batch(
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
         plan_value = validated.plan
-        master_seed = require_seed(seed)
     except ControllerSupportError as error:
         raise BatchControllerError(str(error)) from error
-    replication_count = plan_value["replicationCount"]
-    if type(replication_count) is not int or replication_count < 1:
-        raise BatchControllerError("replication count must be a positive integer")
-    raw_pair_seeds = tuple(
-        derive(master_seed, b"replication:" + index.to_bytes(8, "big"))
-        for index in range(replication_count)
-    )
-    pair_seeds = tuple(
-        pair_seed(raw_seed, Path(private_root), plan_value["planSha256"])
-        for raw_seed in raw_pair_seeds
-    )
-    batch_identities = tuple(identities(active_seed) for active_seed in pair_seeds)
     try:
-        assert_private_layout_available(Path(private_root), batch_identities)
-        reservation = reserve_plan(
-            Path(private_root),
-            str(plan_value["planSha256"]),
-            replication_count,
-            tuple(value[0] for value in batch_identities),
+        pair_seeds = reserve_batch(
+            plan_value, Path(private_root), seed, reserve_plan
         )
     except ValueError as error:
         raise BatchControllerError(str(error)) from error

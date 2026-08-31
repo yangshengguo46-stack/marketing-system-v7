@@ -16,6 +16,7 @@ from batch_controller import (  # noqa: E402
     AttemptAttestation,
     AttemptTelemetry,
     BatchControllerError,
+    MemoryAttemptByteSource,
     RunningAttempt,
     run_candidate_pair,
 )
@@ -283,10 +284,16 @@ def test_second_cell_failure_cleans_first_cell_and_consumes_plan(
 def test_deep_structured_output_is_bounded_before_canonicalization(
     world: World,
 ) -> None:
-    deep: object = "leaf"
-    for _ in range(2_000):
-        deep = [deep]
-    first = _result("deep", output=deep)
+    first = _result("deep")
+    first = type(first)(
+        first.exit_code,
+        first.started_at,
+        first.finished_at,
+        MemoryAttemptByteSource(b"[" * 2_000 + b"0" + b"]" * 2_000),
+        first.metadata,
+        first.stdout,
+        first.stderr,
+    )
 
     receipt = run_candidate_pair(
         world.plan,

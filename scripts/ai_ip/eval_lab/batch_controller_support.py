@@ -328,6 +328,23 @@ def identities(seed: bytes) -> tuple[str, str, str]:
     )
 
 
+def replication_seeds(
+    plan: dict[str, object], private_root: Path, seed: bytes | None
+) -> tuple[bytes, ...]:
+    count = plan["replicationCount"]
+    if type(count) is not int or count < 1:
+        raise ControllerSupportError("replication count must be a positive integer")
+    master = require_seed(seed)
+    return tuple(
+        pair_seed(
+            derive(master, b"replication:" + index.to_bytes(8, "big")),
+            private_root,
+            plan["planSha256"],
+        )
+        for index in range(count)
+    )
+
+
 def freeze_json(value: object) -> object:
     return json.loads(canonical_json_bytes(value))
 
@@ -346,6 +363,8 @@ def classify_attempt_result(
     max_output_bytes: int,
     forced_evidence_failure: bool = False,
 ) -> tuple[str, str | None]:
+    if any(size > max_output_bytes for size in artifact_sizes):
+        return "budgetFailure", "candidate exceeded the sealed output budget"
     if forced_evidence_failure:
         return "evidenceFailure", "candidate raw evidence is malformed"
     if type(metadata) is dict and metadata.get("supervisorTimedOut") is True:
@@ -404,8 +423,6 @@ def classify_attempt_result(
         return "evidenceFailure", "request-count evidence is invalid"
     if request_count > plan["requestBudget"]:
         return "budgetFailure", "candidate exceeded the sealed request budget"
-    if any(size > max_output_bytes for size in artifact_sizes):
-        return "budgetFailure", "candidate exceeded the sealed output budget"
     if values[2] > plan["tokenBudget"] or cost["costCny"] > plan["costBudgetCny"]:
         return "budgetFailure", "candidate exceeded a sealed budget"
     return "completed", None
