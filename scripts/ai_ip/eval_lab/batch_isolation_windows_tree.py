@@ -72,7 +72,7 @@ def delete_tree(filesystem: object) -> None:
     entries = 0
     total_bytes = 0
     started = time.monotonic()
-    directory = filesystem._open_relative(())
+    directory = filesystem._open_relative((), deletable=True)
     stack: list[tuple[tuple[str, ...], int]] = [((), directory)]
     try:
         while stack:
@@ -89,6 +89,7 @@ def delete_tree(filesystem: object) -> None:
                     win32.child_path(current, entry.name),
                     directory=entry.is_directory,
                     allow_reparse=True,
+                    deletable=True,
                 )
                 try:
                     win32.mark_delete(handle)
@@ -98,7 +99,10 @@ def delete_tree(filesystem: object) -> None:
                 if len(child_directory) > MAX_DEPTH:
                     raise WindowsTreeError("cleanup exceeds Windows depth bound")
                 stack.append(
-                    (child_directory, filesystem._open_relative(child_directory))
+                    (
+                        child_directory,
+                        filesystem._open_relative(child_directory, deletable=True),
+                    )
                 )
                 continue
             stack.pop()

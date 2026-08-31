@@ -328,3 +328,49 @@ def test_public_construction_retains_unproven_orphan_and_reservation(
     batch_isolation._retry_orphans()
     assert batch_isolation._ORPHANS == []
     assert orphan.closed
+
+
+@pytest.mark.skipif(os.name != "nt", reason="native Windows journal retry")
+def test_native_windows_construction_rollback_failure_is_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import batch_isolation_windows
+
+    base = tmp_path / "native-journal-base"
+    base.mkdir()
+    base_handle = batch_isolation_windows.open_directory(base)
+    original_create = batch_isolation_windows.win32.create_directory
+    original_mark = batch_isolation_windows.win32.mark_delete
+    calls = 0
+
+    def fail_third_create(parent: int, name: str) -> int:
+        nonlocal calls
+        calls += 1
+        if calls == 3:
+            raise batch_isolation_windows.win32.Win32SecurityError(
+                "injected construction failure"
+            )
+        return original_create(parent, name)
+
+    def fail_disposition(handle: int) -> None:
+        raise batch_isolation_windows.win32.Win32SecurityError(
+            "injected disposition failure"
+        )
+
+    monkeypatch.setattr(
+        batch_isolation_windows.win32, "create_directory", fail_third_create
+    )
+    monkeypatch.setattr(batch_isolation_windows.win32, "mark_delete", fail_disposition)
+    with pytest.raises(
+        batch_isolation_windows.SecureFilesystemError,
+        match="cleanup is pending",
+    ) as caught:
+        batch_isolation_windows.WindowsCellFilesystem.create(
+            base, "native-partial", base_handle
+        )
+    orphan = caught.value.orphan_resource
+
+    monkeypatch.setattr(batch_isolation_windows.win32, "mark_delete", original_mark)
+    orphan.retry_cleanup()
+    assert orphan.state == "cleaned"
+    assert not (base / "native-partial").exists()

@@ -7,10 +7,14 @@ from typing import Iterable
 
 try:
     from . import batch_isolation_win32 as win32
+    from .batch_isolation_windows_journal import JournalRollbackError
+    from .batch_isolation_windows_journal import WindowsConstructionJournal
     from .batch_isolation_windows_tree import WindowsTreeError
     from .batch_isolation_windows_tree import delete_tree, scan_regular_identities
 except ImportError:
     import batch_isolation_win32 as win32
+    from batch_isolation_windows_journal import JournalRollbackError
+    from batch_isolation_windows_journal import WindowsConstructionJournal
     from batch_isolation_windows_tree import WindowsTreeError
     from batch_isolation_windows_tree import delete_tree, scan_regular_identities
 
@@ -37,7 +41,7 @@ def close_handle(handle: int) -> None:
     _translate("cannot close Windows capability", lambda: win32.close(handle))
 
 
-def open_directory(path: Path, *, deletable: bool = True) -> int:
+def open_directory(path: Path, *, deletable: bool = False) -> int:
     candidate = Path(path)
     if not candidate.is_absolute():
         raise SecureFilesystemError("absolute Windows directory path required")
@@ -83,13 +87,16 @@ def ancestor_identities(handle: int) -> frozenset[tuple[int, int]]:
 
 def _windows_path_has_private_acl(path: Path) -> bool:
     try:
-        handle = (
-            open_directory(path, deletable=False)
-            if Path(path).is_dir()
-            else _translate(
-                "cannot open protected Windows file",
-                lambda: win32.open_path(Path(path), directory=False, deletable=False),
-            )
+        candidate = Path(path)
+        directory = candidate.is_dir()
+        handle = _translate(
+            "cannot open protected Windows object",
+            lambda: win32.open_path(
+                candidate,
+                directory=directory,
+                deletable=False,
+                security_query=True,
+            ),
         )
         try:
             win32.require_private_acl(handle)
@@ -165,6 +172,7 @@ class WindowsCellFilesystem:
     def create(
         cls, base: Path, root_name: str, base_fd: int
     ) -> "WindowsCellFilesystem":
+        journal = WindowsConstructionJournal(_JournalOperations(), base_fd)
         root_fd = -1
         directories: dict[str, int] = {}
         try:
@@ -172,16 +180,36 @@ class WindowsCellFilesystem:
                 "cannot create protected Windows root",
                 lambda: win32.create_directory(base_fd, root_name),
             )
+            journal.record(root_fd, base_fd, root_name, directory=True)
+            _translate(
+                "protected Windows root DACL is invalid",
+                lambda: win32.require_private_acl(root_fd),
+            )
             for name in _LAYOUT:
                 directories[name] = _translate(
                     f"cannot create required layout {name}",
                     lambda name=name: win32.create_directory(root_fd, name),
                 )
+                journal.record(directories[name], root_fd, name, directory=True)
+                _translate(
+                    f"required layout {name} DACL is invalid",
+                    lambda name=name: win32.require_private_acl(directories[name]),
+                )
             directories["cache/promptfoo"] = _translate(
                 "cannot create required layout cache/promptfoo",
                 lambda: win32.create_directory(directories["cache"], "promptfoo"),
             )
-            return cls(
+            journal.record(
+                directories["cache/promptfoo"],
+                directories["cache"],
+                "promptfoo",
+                directory=True,
+            )
+            _translate(
+                "required layout cache/promptfoo DACL is invalid",
+                lambda: win32.require_private_acl(directories["cache/promptfoo"]),
+            )
+            result = cls(
                 Path(base),
                 root_name,
                 base_fd,
@@ -192,30 +220,18 @@ class WindowsCellFilesystem:
                 {name: handle_identity(fd) for name, fd in directories.items()},
                 os.getpid(),
             )
-        except BaseException:
-            for handle in reversed(tuple(directories.values())):
-                try:
-                    win32.mark_delete(handle)
-                except win32.Win32SecurityError:
-                    pass
-                try:
-                    win32.close(handle)
-                except win32.Win32SecurityError:
-                    pass
-            if root_fd >= 0:
-                try:
-                    win32.mark_delete(root_fd)
-                except win32.Win32SecurityError:
-                    pass
-                try:
-                    win32.close(root_fd)
-                except win32.Win32SecurityError:
-                    pass
+            journal.complete()
+            return result
+        except BaseException as construction_error:
             try:
-                win32.close(base_fd)
-            except win32.Win32SecurityError:
-                pass
-            raise
+                journal.rollback()
+            except JournalRollbackError as rollback_error:
+                error = SecureFilesystemError(
+                    "Windows construction cleanup is pending"
+                )
+                error.orphan_resource = journal
+                raise error from rollback_error
+            raise construction_error
 
     def _require_owner(self) -> None:
         if self.creator_pid != os.getpid():
@@ -270,7 +286,9 @@ class WindowsCellFilesystem:
         finally:
             close_handle(current)
 
-    def _open_relative(self, parts: tuple[str, ...]) -> int:
+    def _open_relative(
+        self, parts: tuple[str, ...], *, deletable: bool = False
+    ) -> int:
         retained_name = "/".join(parts)
         retained = self.directories.get(retained_name)
         current = _translate(
@@ -281,7 +299,9 @@ class WindowsCellFilesystem:
             for part in () if retained is not None else parts:
                 child = _translate(
                     "cannot open cell descendant",
-                    lambda part=part: win32.open_child(current, part, directory=True),
+                    lambda part=part: win32.open_child(
+                        current, part, directory=True, deletable=deletable
+                    ),
                 )
                 close_handle(current)
                 current = child
@@ -353,6 +373,9 @@ class WindowsCellFilesystem:
         except (WindowsTreeError, win32.Win32SecurityError) as error:
             raise SecureFilesystemError(str(error)) from error
 
+    def retry_cleanup(self) -> None:
+        self.delete_exact()
+
     def close(self) -> None:
         handles = [*self.directories.values(), self.root_fd, self.base_fd]
         if self.marker_handle is not None:
@@ -367,3 +390,39 @@ class WindowsCellFilesystem:
                     win32.close(handle)
                 except win32.Win32SecurityError:
                     pass
+
+
+class _JournalOperations:
+    @staticmethod
+    def identity(handle: int) -> tuple[int, int]:
+        return win32.identity(handle)
+
+    @staticmethod
+    def mark_delete(handle: int) -> None:
+        win32.mark_delete(handle)
+
+    @staticmethod
+    def delete_pending(handle: int) -> bool:
+        return win32.delete_pending(handle)
+
+    @staticmethod
+    def close(handle: int) -> None:
+        win32.close(handle)
+
+    @staticmethod
+    def live_identity(
+        parent: int, name: str, *, directory: bool
+    ) -> tuple[int, int] | None:
+        try:
+            handle = win32.open_child(
+                parent, name, directory=directory, deletable=False
+            )
+        except win32.Win32SecurityError as error:
+            code = getattr(error, "winerror", None) or getattr(error, "errno", None)
+            if code in {2, 3}:
+                return None
+            raise
+        try:
+            return win32.identity(handle)
+        finally:
+            win32.close(handle)

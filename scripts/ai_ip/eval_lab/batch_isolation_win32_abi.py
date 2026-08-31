@@ -3,6 +3,11 @@
 import ctypes
 from ctypes import wintypes
 
+try:
+    from .batch_isolation_win32_policy import StandardInformation
+except ImportError:
+    from batch_isolation_win32_policy import StandardInformation
+
 
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
@@ -11,6 +16,8 @@ ntdll = ctypes.WinDLL("ntdll")
 GENERIC_READ = 0x80000000
 GENERIC_WRITE = 0x40000000
 DELETE = 0x00010000
+FILE_READ_ATTRIBUTES = 0x00000080
+READ_CONTROL = 0x00020000
 SYNCHRONIZE = 0x00100000
 SHARE_READ_WRITE = 0x3
 SHARE_DELETE = 0x4
@@ -66,16 +73,6 @@ class FileInformation(ctypes.Structure):
 
 class Disposition(ctypes.Structure):
     _fields_ = [("DeleteFile", wintypes.BOOL)]
-
-
-class StandardInformation(ctypes.Structure):
-    _fields_ = [
-        ("AllocationSize", ctypes.c_longlong),
-        ("EndOfFile", ctypes.c_longlong),
-        ("NumberOfLinks", wintypes.DWORD),
-        ("DeletePending", wintypes.BOOL),
-        ("Directory", wintypes.BOOL),
-    ]
 
 
 class SidAndAttributes(ctypes.Structure):

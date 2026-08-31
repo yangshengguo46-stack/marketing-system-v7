@@ -8,8 +8,12 @@ from typing import Iterator
 
 try:
     from . import batch_isolation_win32_abi as abi
+    from .batch_isolation_win32_policy import is_exact_private_sddl
+    from .batch_isolation_win32_policy import private_sddl
 except ImportError:
     import batch_isolation_win32_abi as abi
+    from batch_isolation_win32_policy import is_exact_private_sddl
+    from batch_isolation_win32_policy import private_sddl
 
 
 advapi32 = abi.advapi32
@@ -24,6 +28,7 @@ FILE_BEGIN = abi.FILE_BEGIN
 FILE_CREATE = abi.FILE_CREATE
 FILE_DIRECTORY_FILE = abi.FILE_DIRECTORY_FILE
 FILE_DISPOSITION_INFO = abi.FILE_DISPOSITION_INFO
+FILE_READ_ATTRIBUTES = abi.FILE_READ_ATTRIBUTES
 FILE_STANDARD_INFO = abi.FILE_STANDARD_INFO
 FILE_SYNCHRONOUS_IO_NONALERT = abi.FILE_SYNCHRONOUS_IO_NONALERT
 FIND_EX_INFO_BASIC = abi.FIND_EX_INFO_BASIC
@@ -38,6 +43,7 @@ OBJ_CASE_INSENSITIVE = abi.OBJ_CASE_INSENSITIVE
 OBJ_DONT_REPARSE = abi.OBJ_DONT_REPARSE
 OWNER_SECURITY_INFORMATION = abi.OWNER_SECURITY_INFORMATION
 PROTECTED_DACL_SECURITY_INFORMATION = abi.PROTECTED_DACL_SECURITY_INFORMATION
+READ_CONTROL = abi.READ_CONTROL
 SDDL_REVISION = abi.SDDL_REVISION
 SE_FILE_OBJECT = abi.SE_FILE_OBJECT
 SHARE_DELETE = abi.SHARE_DELETE
@@ -131,13 +137,14 @@ def current_user_sid() -> str:
 
 
 USER_SID = current_user_sid()
-PRIVATE_SDDL = f"O:{USER_SID}D:P(A;;FA;;;SY)(A;;FA;;;{USER_SID})"
 
 
-def security_attributes() -> tuple[SecurityAttributes, wintypes.LPVOID]:  # noqa: F405
+def security_attributes(
+    *, directory: bool
+) -> tuple[SecurityAttributes, wintypes.LPVOID]:  # noqa: F405
     descriptor = wintypes.LPVOID()
     if not advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW(  # noqa: F405
-        PRIVATE_SDDL,
+        private_sddl(USER_SID, directory=directory),
         SDDL_REVISION,
         ctypes.byref(descriptor),
         None,  # noqa: F405
@@ -197,12 +204,16 @@ def open_path(
     *,
     directory: bool,
     allow_reparse: bool = False,
-    deletable: bool = True,
+    deletable: bool = False,
+    security_query: bool = False,
 ) -> int:
     flags = OPEN_REPARSE_POINT | (BACKUP_SEMANTICS if directory else 0)  # noqa: F405
     handle = kernel32.CreateFileW(  # noqa: F405
         str(path),
-        GENERIC_READ | SYNCHRONIZE | (DELETE if deletable else 0),  # noqa: F405
+        FILE_READ_ATTRIBUTES  # noqa: F405
+        | SYNCHRONIZE
+        | (DELETE if deletable else 0)
+        | (READ_CONTROL if security_query else 0),
         SHARE_READ_WRITE | (SHARE_DELETE if not deletable else 0),  # noqa: F405
         None,
         OPEN_EXISTING,  # noqa: F405
@@ -228,7 +239,7 @@ def child_path(parent: int, name: str) -> Path:
 
 
 def open_child(
-    parent: int, name: str, *, directory: bool, deletable: bool = True
+    parent: int, name: str, *, directory: bool, deletable: bool = False
 ) -> int:
     return open_path(child_path(parent, name), directory=directory, deletable=deletable)
 
@@ -236,7 +247,7 @@ def open_child(
 def create_directory(parent: int, name: str) -> int:
     if name in {"", ".", ".."} or "\\" in name or "/" in name:
         raise Win32SecurityError("unsafe Windows child name")
-    _, descriptor = security_attributes()
+    _, descriptor = security_attributes(directory=True)
     buffer = ctypes.create_unicode_buffer(name)
     object_name = UnicodeString(
         len(name.encode("utf-16-le")),
@@ -273,19 +284,11 @@ def create_directory(parent: int, name: str) -> int:
             )
     finally:
         kernel32.LocalFree(descriptor)  # noqa: F405
-    try:
-        require_private_acl(handle.value)
-        return handle.value
-    except BaseException:
-        try:
-            mark_delete(handle.value)
-        finally:
-            close(handle.value)
-        raise
+    return handle.value
 
 
 def create_file(parent: int, name: str, payload: bytes) -> int:
-    attributes, descriptor = security_attributes()
+    attributes, descriptor = security_attributes(directory=False)
     try:
         handle = kernel32.CreateFileW(  # noqa: F405
             str(child_path(parent, name)),
@@ -335,6 +338,7 @@ def read_file(handle: int, limit: int) -> bytes:
 
 def require_private_acl(handle: int) -> None:
     owner = wintypes.LPVOID()
+    dacl = wintypes.LPVOID()
     descriptor = wintypes.LPVOID()
     result = advapi32.GetSecurityInfo(  # noqa: F405
         handle,
@@ -342,7 +346,7 @@ def require_private_acl(handle: int) -> None:
         OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,  # noqa: F405
         ctypes.byref(owner),
         None,
-        None,
+        ctypes.byref(dacl),
         None,
         ctypes.byref(descriptor),
     )
@@ -350,28 +354,21 @@ def require_private_acl(handle: int) -> None:
         raise Win32SecurityError(result, "cannot query protected DACL")
     text = wintypes.LPWSTR()
     try:
-        if _sid_text(owner) != USER_SID:
+        if not owner or not dacl or _sid_text(owner) != USER_SID:
             raise Win32SecurityError("protected object has the wrong owner")
         if not advapi32.ConvertSecurityDescriptorToStringSecurityDescriptorW(  # noqa: F405
             descriptor,
             SDDL_REVISION,  # noqa: F405
-            DACL_SECURITY_INFORMATION  # noqa: F405
+            OWNER_SECURITY_INFORMATION  # noqa: F405
+            | DACL_SECURITY_INFORMATION  # noqa: F405
             | PROTECTED_DACL_SECURITY_INFORMATION,  # noqa: F405
             ctypes.byref(text),
             None,
         ):
             _raise("cannot serialize protected DACL")
         sddl = text.value or ""
-        principals = [
-            ace.split(";;;", 1)[1].split(")", 1)[0]
-            for ace in sddl.split("(")
-            if ace.startswith("A;") and ";;;" in ace
-        ]
-        if not (
-            "D:P" in sddl
-            and len(principals) == 2
-            and set(principals) == {"SY", USER_SID}
-        ):
+        directory = bool(information(handle).dwFileAttributes & ATTR_DIRECTORY)
+        if not is_exact_private_sddl(sddl, USER_SID, directory):
             raise Win32SecurityError("protected DACL verification failed")
     finally:
         if text:
@@ -421,14 +418,17 @@ def mark_delete(handle: int) -> None:
         ctypes.sizeof(disposition),
     ):
         _raise("handle-bound Windows deletion failed")
-    standard = StandardInformation()  # noqa: F405
-    if (
-        not kernel32.GetFileInformationByHandleEx(  # noqa: F405
-            handle,
-            FILE_STANDARD_INFO,  # noqa: F405
-            ctypes.byref(standard),
-            ctypes.sizeof(standard),
-        )
-        or not standard.DeletePending
-    ):
+    if not delete_pending(handle):
         raise Win32SecurityError("Windows deletion was not made pending")
+
+
+def delete_pending(handle: int) -> bool:
+    standard = StandardInformation()  # noqa: F405
+    if not kernel32.GetFileInformationByHandleEx(  # noqa: F405
+        handle,
+        FILE_STANDARD_INFO,  # noqa: F405
+        ctypes.byref(standard),
+        ctypes.sizeof(standard),
+    ):
+        _raise("cannot query Windows deletion disposition")
+    return bool(standard.DeletePending)
