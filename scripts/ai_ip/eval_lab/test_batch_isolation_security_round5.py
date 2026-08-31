@@ -353,6 +353,25 @@ def test_win32_public_acquisitions_route_through_the_handle_ledger(
     assert "acquire" in _called_attributes(function)
 
 
+def test_win32_duplicate_queries_source_before_acquiring_new_raw_value() -> None:
+    path = Path(__file__).with_name("batch_isolation_win32.py")
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    function = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "duplicate"
+    )
+    positions = {
+        node.func.id: (node.lineno, node.col_offset)
+        for node in ast.walk(function)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in {"identity", "duplicate_raw"}
+    }
+
+    assert positions["identity"] < positions["duplicate_raw"]
+
+
 class _RotationWin32Error(OSError):
     pass
 
