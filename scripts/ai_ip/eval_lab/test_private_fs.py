@@ -207,6 +207,103 @@ def test_open_existing_rejects_invalid_or_replaced_completion_receipt(tmp_path):
         PrivateRoot.open_existing(original_root)
 
 
+def test_open_existing_rejects_boolean_receipt_version(tmp_path):
+    root_path = tmp_path / "private"
+    PrivateRoot.create_new(root_path)
+    receipt = root_path / private_fs_module._RECEIPT_NAME
+    value = load_exact_json(receipt)
+    value["formatVersion"] = True
+    receipt.write_bytes(canonical_json_bytes(value) + b"\n")
+
+    with pytest.raises(LabContractError):
+        PrivateRoot.open_existing(root_path)
+
+
+def test_read_second_fstat_failure_closes_opened_file_descriptor(tmp_path, monkeypatch):
+    root_path = tmp_path / "private"
+    private = PrivateRoot.create_new(root_path)
+    private.write_new_json("result.json", {"a": 1})
+    target_inode = (root_path / "result.json").stat().st_ino
+    original_fstat = os.fstat
+    original_close = os.close
+    target_calls = 0
+    failed_descriptor = None
+    closed_after_failure = False
+
+    def fail_second_target_fstat(descriptor):
+        nonlocal target_calls, failed_descriptor
+        metadata = original_fstat(descriptor)
+        if metadata.st_ino == target_inode:
+            target_calls += 1
+            if target_calls == 2:
+                failed_descriptor = descriptor
+                raise OSError("injected retained-file fstat failure")
+        return metadata
+
+    def record_close(descriptor):
+        nonlocal closed_after_failure
+        if failed_descriptor == descriptor:
+            closed_after_failure = True
+        original_close(descriptor)
+
+    monkeypatch.setattr(private_fs_module.os, "fstat", fail_second_target_fstat)
+    monkeypatch.setattr(private_fs_module.os, "close", record_close)
+
+    try:
+        with pytest.raises(OSError):
+            private.read_json("result.json")
+        assert closed_after_failure
+    finally:
+        if failed_descriptor is not None and not closed_after_failure:
+            original_close(failed_descriptor)
+
+
+def test_precommit_receipt_close_failure_leaves_no_openable_root(tmp_path, monkeypatch):
+    root_path = tmp_path / "private"
+    original_close = os.close
+    injected = False
+
+    def fail_first_regular_close(descriptor):
+        nonlocal injected
+        is_regular = stat.S_ISREG(os.fstat(descriptor).st_mode)
+        original_close(descriptor)
+        if is_regular and not injected:
+            injected = True
+            raise OSError("injected precommit receipt close failure")
+
+    monkeypatch.setattr(private_fs_module.os, "close", fail_first_regular_close)
+
+    with pytest.raises((LabContractError, OSError)):
+        PrivateRoot.create_new(root_path)
+    if root_path.exists():
+        with pytest.raises(LabContractError):
+            PrivateRoot.open_existing(root_path)
+
+
+@pytest.mark.parametrize("directory_close_index", [1, 2])
+def test_postcommit_root_or_parent_close_failure_still_returns_valid_root(
+    tmp_path, monkeypatch, directory_close_index
+):
+    root_path = tmp_path / f"private-{directory_close_index}"
+    original_close = os.close
+    directory_closes = 0
+
+    def fail_selected_directory_close(descriptor):
+        nonlocal directory_closes
+        is_directory = stat.S_ISDIR(os.fstat(descriptor).st_mode)
+        original_close(descriptor)
+        if is_directory:
+            directory_closes += 1
+            if directory_closes == directory_close_index:
+                raise OSError("injected postcommit directory close failure")
+
+    monkeypatch.setattr(private_fs_module.os, "close", fail_selected_directory_close)
+
+    private = PrivateRoot.create_new(root_path)
+    assert private.path == root_path
+    assert PrivateRoot.open_existing(root_path).path == root_path
+
+
 def test_child_metadata_failure_does_not_delete_unproven_replacement(
     tmp_path, monkeypatch
 ):

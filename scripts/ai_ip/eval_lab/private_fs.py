@@ -152,6 +152,14 @@ def _write_and_fsync(descriptor: int, payload: bytes, description: str) -> None:
     os.fsync(descriptor)
 
 
+def _close_descriptor(descriptor: int, *, committed: bool) -> None:
+    try:
+        os.close(descriptor)
+    except OSError:
+        if not committed:
+            raise
+
+
 def _open_trusted_parent(root: Path) -> int:
     parent = root.parent
     _reject_symlink_ancestors(parent)
@@ -242,6 +250,7 @@ class PrivateRoot:
     def create_new(cls, path: Path) -> "PrivateRoot":
         root, repo_root, worktrees = _prepare_root_path(path)
         parent_fd = _open_trusted_parent(root)
+        committed = False
         try:
             try:
                 os.mkdir(root.name, 0o700, dir_fd=parent_fd)
@@ -260,14 +269,15 @@ class PrivateRoot:
                     expected=created,
                 )
                 instance._create_completion_receipt(descriptor, created)
+                committed = True
             except BaseException:
                 if descriptor is not None:
-                    os.close(descriptor)
-                cls._remove_created_dir(parent_fd, root.name, created)
+                    _close_descriptor(descriptor, committed=True)
+                cls._remove_if_same(parent_fd, root.name, created, directory=True)
                 raise
-            os.close(descriptor)
+            _close_descriptor(descriptor, committed=True)
         finally:
-            os.close(parent_fd)
+            _close_descriptor(parent_fd, committed=committed)
         return instance
 
     @classmethod
@@ -298,9 +308,7 @@ class PrivateRoot:
             raise
 
     @staticmethod
-    def _receipt_value(
-        root: os.stat_result, receipt: os.stat_result
-    ) -> dict[str, object]:
+    def _receipt_value(root: os.stat_result, receipt: os.stat_result) -> dict[str, int]:
         return {
             "formatVersion": 1,
             "receiptDevice": receipt.st_dev,
@@ -320,19 +328,19 @@ class PrivateRoot:
             created = _created_file_metadata(descriptor, "private root receipt")
             payload = canonical_json_bytes(self._receipt_value(root, created)) + b"\n"
             _write_and_fsync(descriptor, payload, "private root receipt")
+            _close_descriptor(descriptor, committed=False)
         except BaseException:
             try:
                 os.close(descriptor)
             except OSError:
                 pass
             if created is not None:
-                self._unlink_if_same(root_fd, _RECEIPT_NAME, created)
+                self._remove_if_same(root_fd, _RECEIPT_NAME, created)
             raise
-        os.close(descriptor)
         try:
             self._validate_completion_receipt(root_fd, root)
         except BaseException:
-            self._unlink_if_same(root_fd, _RECEIPT_NAME, created)
+            self._remove_if_same(root_fd, _RECEIPT_NAME, created)
             raise
 
     def _validate_completion_receipt(self, root_fd: int, root: os.stat_result) -> None:
@@ -343,7 +351,11 @@ class PrivateRoot:
         if not payload.endswith(b"\n"):
             raise LabContractError("private root receipt must end with one LF")
         value = _load_exact_json_bytes(payload[:-1])
-        if value != self._receipt_value(root, receipt):
+        expected = self._receipt_value(root, receipt)
+        exact_types = type(value) is dict and all(
+            type(value.get(key)) is int for key in expected
+        )
+        if value != expected or not exact_types:
             raise LabContractError("private root receipt identity mismatch")
         if canonical_json_bytes(value) + b"\n" != payload:
             raise LabContractError("private root receipt is not canonical")
@@ -383,7 +395,7 @@ class PrivateRoot:
                 )
                 os.close(descriptor)
             except BaseException:
-                self._remove_created_dir(parent_fd, name, created)
+                self._remove_if_same(parent_fd, name, created, directory=True)
                 raise
         return self.path.joinpath(*_relative_parts(relative))
 
@@ -409,12 +421,12 @@ class PrivateRoot:
                 except OSError:
                     pass
                 if created is not None:
-                    self._unlink_if_same(parent_fd, name, created)
+                    self._remove_if_same(parent_fd, name, created)
                 raise
             try:
                 os.close(descriptor)
             except OSError as error:
-                self._unlink_if_same(parent_fd, name, created)
+                self._remove_if_same(parent_fd, name, created)
                 raise LabContractError(
                     "cannot close private JSON after fsync"
                 ) from error
@@ -427,7 +439,7 @@ class PrivateRoot:
                 if sha256_json(parsed) != expected_sha:
                     raise LabContractError("retained private JSON SHA-256 mismatch")
             except BaseException:
-                self._unlink_if_same(parent_fd, name, created)
+                self._remove_if_same(parent_fd, name, created)
                 raise
 
     def _read_checked_file(
@@ -444,8 +456,8 @@ class PrivateRoot:
             directory=False,
             expected=expected,
         )
-        metadata = os.fstat(descriptor)
         try:
+            metadata = os.fstat(descriptor)
             chunks: list[bytes] = []
             while True:
                 chunk = os.read(descriptor, 1024 * 1024)
@@ -456,17 +468,12 @@ class PrivateRoot:
             os.close(descriptor)
 
     @staticmethod
-    def _unlink_if_same(parent_fd: int, name: str, expected: os.stat_result) -> None:
-        try:
-            current = _lstat_at(parent_fd, name)
-            if (current.st_dev, current.st_ino) == (expected.st_dev, expected.st_ino):
-                os.unlink(name, dir_fd=parent_fd)
-        except (FileNotFoundError, OSError):
-            pass
-
-    @staticmethod
-    def _remove_created_dir(
-        parent_fd: int, name: str, expected: os.stat_result | None
+    def _remove_if_same(
+        parent_fd: int,
+        name: str,
+        expected: os.stat_result | None,
+        *,
+        directory: bool = False,
     ) -> None:
         if expected is None:
             return
@@ -476,8 +483,8 @@ class PrivateRoot:
                 expected.st_dev,
                 expected.st_ino,
             )
-            if same_inode and stat.S_ISDIR(current.st_mode):
-                os.rmdir(name, dir_fd=parent_fd)
+            if same_inode and (not directory or stat.S_ISDIR(current.st_mode)):
+                (os.rmdir if directory else os.unlink)(name, dir_fd=parent_fd)
         except OSError:
             pass
 
