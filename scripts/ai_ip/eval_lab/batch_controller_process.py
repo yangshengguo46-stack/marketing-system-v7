@@ -161,6 +161,13 @@ class _BoundedBytes:
         if self.size > self.limit:
             self.truncated = True
 
+    def evidence(self) -> dict[str, object]:
+        return {
+            "rawSha256": self.digest.hexdigest(),
+            "rawSize": self.size,
+            "truncated": self.truncated,
+        }
+
 
 @dataclass
 class OwnedProcess:
@@ -405,7 +412,13 @@ def _captured(owned: OwnedProcess) -> CapturedResult:
         MemoryAttemptByteSource(bytes(owned.buffers["stderr"].payload)),
         attestation,
     )
-    return CapturedResult(raw, telemetry, forced, owned.launch_record)
+    return CapturedResult(
+        raw,
+        telemetry,
+        forced,
+        owned.launch_record,
+        {name: buffer.evidence() for name, buffer in owned.buffers.items()},
+    )
 
 
 def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:

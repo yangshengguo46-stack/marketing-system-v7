@@ -244,6 +244,14 @@ def test_real_child_is_deadline_and_read_bounded(world: World, mode: str) -> Non
         path.stat().st_size <= 1_048_576
         for path in world.private_root.glob("attempts/*/*.bin")
     )
+    if mode == "excessive":
+        evidence = [
+            json.loads(path.read_bytes())
+            for path in world.private_root.glob("attempts/*/evidence.json")
+        ]
+        assert max(
+            item["rawEvidence"]["stdoutBytes"]["rawSize"] for item in evidence
+        ) > 1_048_577
 
 
 def test_resealed_launch_record_identity_substitution_is_rejected(world: World) -> None:

@@ -38,6 +38,7 @@ class CapturedResult:
     telemetry: AttemptTelemetry
     forced_evidence_failure: bool = False
     launch_record: dict[str, object] | None = None
+    byte_evidence: dict[str, dict[str, object]] | None = None
 
 
 @dataclass(frozen=True)
@@ -304,6 +305,11 @@ def normalize(
         raw_evidence["launchRecordSha256"] = hashlib.sha256(
             canonical_json_bytes(captured.launch_record) + b"\n"
         ).hexdigest()
+    if captured.byte_evidence is not None:
+        for stream, field in (("stdout", "stdoutBytes"), ("stderr", "stderrBytes")):
+            raw_evidence[field].update(captured.byte_evidence[stream])
+        raw_evidence["resultEnvelopeBytes"] = captured.byte_evidence["result"]
+        raw_evidence["telemetryEnvelopeBytes"] = captured.byte_evidence["telemetry"]
     return NormalizedResult(
         exit_code,
         started_at,
