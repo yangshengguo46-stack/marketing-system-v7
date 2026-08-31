@@ -4,11 +4,9 @@ import time
 
 try:
     from . import batch_isolation_win32 as win32
-    from .batch_isolation_windows_cleanup import WindowsCleanupError
     from .batch_isolation_windows_cleanup import WindowsCleanupJournal
 except ImportError:
     import batch_isolation_win32 as win32
-    from batch_isolation_windows_cleanup import WindowsCleanupError
     from batch_isolation_windows_cleanup import WindowsCleanupJournal
 
 
@@ -150,11 +148,16 @@ def _delete_contents(filesystem: object, journal: WindowsCleanupJournal) -> None
             finally:
                 if not disposed_current:
                     journal.close(filesystem, current)
-    except BaseException:
+    except BaseException as original_error:
+        close_error: OSError | None = None
         for _, handle in stack:
             if not journal.has_handle(handle):
                 try:
                     journal.close(filesystem, handle)
-                except (OSError, win32.Win32SecurityError):
-                    continue
-        raise
+                except (OSError, win32.Win32SecurityError) as error:
+                    close_error = close_error or error
+        if close_error is not None:
+            raise WindowsTreeError(
+                "Windows traversal-handle close is pending"
+            ) from close_error
+        raise original_error

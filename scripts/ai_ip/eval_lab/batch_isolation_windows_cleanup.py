@@ -103,7 +103,12 @@ class WindowsCleanupJournal:
         for item in tuple(self.pending):
             try:
                 actual = win32.identity(item.handle)
-            except win32.Win32SecurityError:
+            except win32.Win32SecurityError as error:
+                code = getattr(error, "winerror", None) or getattr(error, "errno", None)
+                if code != 6:
+                    raise WindowsCleanupError(
+                        "Windows cleanup handle identity is uncertain"
+                    ) from error
                 actual = None
             if actual != item.identity:
                 if item.slot == "root" and not self._recover_root(filesystem, item):
