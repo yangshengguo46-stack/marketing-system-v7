@@ -1,6 +1,7 @@
 import os
 import secrets
 import stat
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -21,6 +22,8 @@ _FILE_FLAGS = (
 )
 _MAX_DELETE_ENTRIES = 100_000
 _MAX_DELETE_DEPTH = 2_048
+_MAX_SCAN_BYTES = 1024 * 1024 * 1024
+_MAX_SCAN_SECONDS = 10.0
 
 
 class SecureFilesystemError(OSError):
@@ -49,6 +52,19 @@ def _require_directory(
     if expected is not None and actual != expected:
         raise SecureFilesystemError("directory identity changed while opening")
     return actual
+
+
+def _require_private_directory(
+    fd: int, expected: tuple[int, int], description: str
+) -> None:
+    metadata = os.fstat(fd)
+    if (
+        identity(metadata) != expected
+        or not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.getuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise SecureFilesystemError(f"required layout {description} is not private")
 
 
 def open_directory(path: Path) -> int:
@@ -105,9 +121,21 @@ def _open_child(parent_fd: int, name: str) -> int:
 
 def _mkdir_child(parent_fd: int, name: str) -> int:
     os.mkdir(name, 0o700, dir_fd=parent_fd)
-    fd = _open_child(parent_fd, name)
-    os.fchmod(fd, 0o700)
-    return fd
+    fd = -1
+    try:
+        fd = _open_child(parent_fd, name)
+        os.fchmod(fd, 0o700)
+        result = fd
+        fd = -1
+        return result
+    except BaseException:
+        if fd >= 0:
+            os.close(fd)
+        try:
+            os.rmdir(name, dir_fd=parent_fd)
+        except OSError:
+            pass
+        raise
 
 
 def _write_file(parent_fd: int, name: str, payload: bytes) -> None:
@@ -138,16 +166,17 @@ class PosixCellFilesystem:
     root_identity: tuple[int, int]
     directories: dict[str, int]
     directory_identities: dict[str, tuple[int, int]]
+    creator_pid: int
     quarantine_name: str | None = None
 
     @classmethod
-    def create(cls, base: Path, root_name: str) -> "PosixCellFilesystem":
+    def create(cls, base: Path, root_name: str, base_fd: int) -> "PosixCellFilesystem":
         if not all(
             function in os.supports_dir_fd
             for function in (os.open, os.mkdir, os.stat, os.unlink, os.rmdir)
         ) or not getattr(os, "O_NOFOLLOW", 0):
             raise SecureFilesystemError("secure POSIX directory primitives unavailable")
-        base_fd = open_directory(base)
+        base_identity = handle_identity(base_fd)
         root_fd = -1
         directories: dict[str, int] = {}
         try:
@@ -166,22 +195,43 @@ class PosixCellFilesystem:
                 root_name,
                 base_fd,
                 root_fd,
-                identity(os.fstat(base_fd)),
+                base_identity,
                 identity(os.fstat(root_fd)),
                 directories,
                 identities,
+                os.getpid(),
             )
         except BaseException:
-            for fd in directories.values():
-                os.close(fd)
+            if "cache" in directories:
+                try:
+                    os.rmdir("promptfoo", dir_fd=directories["cache"])
+                except OSError:
+                    pass
             if root_fd >= 0:
-                os.close(root_fd)
-            os.close(base_fd)
+                for name in ("home", "workspace", "cache", "temp", "logs", "promptfoo"):
+                    try:
+                        os.rmdir(name, dir_fd=root_fd)
+                    except OSError:
+                        pass
+                try:
+                    os.rmdir(root_name, dir_fd=base_fd)
+                except OSError:
+                    pass
+            for fd in directories.values():
+                close_handle(fd)
+            if root_fd >= 0:
+                close_handle(root_fd)
+            close_handle(base_fd)
             raise
 
+    def _require_owner(self) -> None:
+        if self.creator_pid != os.getpid():
+            raise SecureFilesystemError("POSIX cell belongs to another process")
+
     def validate(self, *, cleanup: bool = False) -> None:
+        self._require_owner()
         _require_directory(self.base_fd, self.base_identity)
-        _require_directory(self.root_fd, self.root_identity)
+        _require_private_directory(self.root_fd, self.root_identity, "root")
         entry_name = (
             self.quarantine_name if cleanup and self.quarantine_name else self.root_name
         )
@@ -190,8 +240,17 @@ class PosixCellFilesystem:
             raise SecureFilesystemError("attempt root identity was substituted")
         if cleanup and self.quarantine_name:
             return
-        for name, expected in self.directory_identities.items():
-            _require_directory(self.directories[name], expected)
+        for name in ("home", "workspace", "cache", "temp", "logs", "promptfoo"):
+            expected = self.directory_identities[name]
+            _require_private_directory(self.directories[name], expected, name)
+            live = os.stat(name, dir_fd=self.root_fd, follow_symlinks=False)
+            if identity(live) != expected or not stat.S_ISDIR(live.st_mode):
+                raise SecureFilesystemError(f"required layout {name} identity changed")
+        _require_private_directory(
+            self.directories["cache/promptfoo"],
+            self.directory_identities["cache/promptfoo"],
+            "cache/promptfoo",
+        )
         try:
             cache_entry = os.stat(
                 "promptfoo", dir_fd=self.directories["cache"], follow_symlinks=False
@@ -210,6 +269,7 @@ class PosixCellFilesystem:
             return False
 
     def write_snapshot(self, files: Iterable[tuple[str, bytes]], target: str) -> None:
+        self._require_owner()
         target_fd = self.directories[target]
         created: dict[tuple[str, ...], int] = {(): target_fd}
         owned: list[int] = []
@@ -235,9 +295,11 @@ class PosixCellFilesystem:
                 os.close(fd)
 
     def create_file(self, name: str, payload: bytes) -> None:
+        self._require_owner()
         _write_file(self.root_fd, name, payload)
 
     def read_file(self, name: str, limit: int) -> bytes:
+        self._require_owner()
         flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
         fd = os.open(name, flags, dir_fd=self.root_fd)
         try:
@@ -252,32 +314,48 @@ class PosixCellFilesystem:
             os.close(fd)
 
     def scan_regular_identities(self) -> frozenset[tuple[int, int]]:
+        self._require_owner()
         pending: list[tuple[str, ...]] = [()]
         files: set[tuple[int, int]] = set()
         entries = 0
+        total_bytes = 0
+        started = time.monotonic()
         while pending:
             relative = pending.pop()
             if len(relative) > _MAX_DELETE_DEPTH:
                 raise SecureFilesystemError("cell traversal exceeds depth bound")
             directory_fd = self._open_relative(relative)
             try:
-                for name in os.listdir(directory_fd):
-                    entries += 1
-                    if entries > _MAX_DELETE_ENTRIES:
-                        raise SecureFilesystemError(
-                            "cell traversal exceeds entry bound"
+                with os.scandir(directory_fd) as children:
+                    for child in children:
+                        name = child.name
+                        entries += 1
+                        if entries > _MAX_DELETE_ENTRIES:
+                            raise SecureFilesystemError(
+                                "cell traversal exceeds entry bound"
+                            )
+                        if time.monotonic() - started > _MAX_SCAN_SECONDS:
+                            raise SecureFilesystemError(
+                                "cell traversal exceeds time bound"
+                            )
+                        metadata = os.stat(
+                            name, dir_fd=directory_fd, follow_symlinks=False
                         )
-                    metadata = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
-                    if stat.S_ISLNK(metadata.st_mode):
-                        raise SecureFilesystemError("cell contains a symbolic link")
-                    if stat.S_ISDIR(metadata.st_mode):
-                        pending.append((*relative, name))
-                    elif stat.S_ISREG(metadata.st_mode):
-                        if metadata.st_nlink != 1:
-                            raise SecureFilesystemError("cell contains a hard link")
-                        files.add(identity(metadata))
-                    else:
-                        raise SecureFilesystemError("cell contains an unsafe entry")
+                        total_bytes += metadata.st_size
+                        if total_bytes > _MAX_SCAN_BYTES:
+                            raise SecureFilesystemError(
+                                "cell traversal exceeds byte bound"
+                            )
+                        if stat.S_ISLNK(metadata.st_mode):
+                            raise SecureFilesystemError("cell contains a symbolic link")
+                        if stat.S_ISDIR(metadata.st_mode):
+                            pending.append((*relative, name))
+                        elif stat.S_ISREG(metadata.st_mode):
+                            if metadata.st_nlink != 1:
+                                raise SecureFilesystemError("cell contains a hard link")
+                            files.add(identity(metadata))
+                        else:
+                            raise SecureFilesystemError("cell contains an unsafe entry")
             finally:
                 os.close(directory_fd)
         return frozenset(files)
@@ -312,7 +390,28 @@ class PosixCellFilesystem:
                 os.close(fd)
             self.directories.clear()
         self._delete_contents()
+        before = os.stat(
+            self.quarantine_name, dir_fd=self.base_fd, follow_symlinks=False
+        )
+        if identity(before) != self.root_identity:
+            raise SecureFilesystemError("cleanup quarantine identity changed")
         os.rmdir(self.quarantine_name, dir_fd=self.base_fd)
+        parent_fd = os.open("..", _DIRECTORY_FLAGS, dir_fd=self.root_fd)
+        try:
+            parent_matches = handle_identity(parent_fd) == self.base_identity
+        finally:
+            os.close(parent_fd)
+        still_linked = False
+        with os.scandir(self.base_fd) as entries:
+            for entry in entries:
+                metadata = os.stat(
+                    entry.name, dir_fd=self.base_fd, follow_symlinks=False
+                )
+                if identity(metadata) == self.root_identity:
+                    still_linked = True
+                    break
+        if not parent_matches or still_linked:
+            raise SecureFilesystemError("cleanup did not remove the original root")
         os.close(self.root_fd)
         os.close(self.base_fd)
         self.root_fd = -1
@@ -320,47 +419,50 @@ class PosixCellFilesystem:
 
     def _delete_contents(self) -> None:
         pending: list[tuple[str, ...]] = [()]
-        directories: list[tuple[str, ...]] = []
         entries = 0
-        exhausted = False
+        total_bytes = 0
+        started = time.monotonic()
         while pending:
             relative = pending.pop()
             if len(relative) > _MAX_DELETE_DEPTH:
                 raise SecureFilesystemError("cleanup exceeds depth bound")
             directory_fd = self._open_relative(relative)
+            child_directory: tuple[str, ...] | None = None
             try:
-                for name in os.listdir(directory_fd):
-                    entries += 1
-                    if entries > _MAX_DELETE_ENTRIES:
-                        exhausted = True
-                        break
-                    metadata = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
-                    if stat.S_ISDIR(metadata.st_mode) and not stat.S_ISLNK(
-                        metadata.st_mode
-                    ):
-                        child = (*relative, name)
-                        pending.append(child)
-                        directories.append(child)
-                    else:
-                        os.unlink(name, dir_fd=directory_fd)
+                with os.scandir(directory_fd) as children:
+                    for child_entry in children:
+                        name = child_entry.name
+                        entries += 1
+                        metadata = os.stat(
+                            name, dir_fd=directory_fd, follow_symlinks=False
+                        )
+                        total_bytes += metadata.st_size
+                        if (
+                            entries > _MAX_DELETE_ENTRIES
+                            or total_bytes > _MAX_SCAN_BYTES
+                            or time.monotonic() - started > _MAX_SCAN_SECONDS
+                        ):
+                            raise SecureFilesystemError(
+                                "cleanup reached its bounded progress limit; retry is required"
+                            )
+                        if stat.S_ISDIR(metadata.st_mode) and not stat.S_ISLNK(
+                            metadata.st_mode
+                        ):
+                            child_directory = (*relative, name)
+                            break
+                        else:
+                            os.unlink(name, dir_fd=directory_fd)
             finally:
                 os.close(directory_fd)
-            if exhausted:
-                break
-        for relative in sorted(directories, key=len, reverse=True):
-            parent_fd = self._open_relative(relative[:-1])
-            try:
+            if child_directory is not None:
+                pending.append(relative)
+                pending.append(child_directory)
+            elif relative:
+                parent_fd = self._open_relative(relative[:-1])
                 try:
                     os.rmdir(relative[-1], dir_fd=parent_fd)
-                except OSError:
-                    if not exhausted:
-                        raise
-            finally:
-                os.close(parent_fd)
-        if exhausted:
-            raise SecureFilesystemError(
-                "cleanup reached its bounded progress limit; retry is required"
-            )
+                finally:
+                    os.close(parent_fd)
 
     def close(self) -> None:
         for fd in self.directories.values():
@@ -369,7 +471,10 @@ class PosixCellFilesystem:
             except OSError:
                 pass
         self.directories.clear()
-        for fd in (self.root_fd, self.base_fd):
+        root_fd, base_fd = self.root_fd, self.base_fd
+        self.root_fd = -1
+        self.base_fd = -1
+        for fd in (root_fd, base_fd):
             if fd >= 0:
                 try:
                     os.close(fd)
