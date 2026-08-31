@@ -70,6 +70,9 @@ def delete_tree(filesystem: object) -> None:
         journal = WindowsCleanupJournal()
         filesystem.cleanup_journal = journal
     try:
+        handle_ledger = getattr(win32, "handle_ledger", None)
+        if handle_ledger is not None:
+            handle_ledger().retry_uncertain_closes()
         journal.retry(filesystem)
         if filesystem.base_fd < 0:
             return

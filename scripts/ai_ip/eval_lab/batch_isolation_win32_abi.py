@@ -2,6 +2,7 @@
 
 import ctypes
 from ctypes import wintypes
+from dataclasses import dataclass
 
 try:
     from .batch_isolation_win32_policy import StandardInformation
@@ -46,6 +47,21 @@ FILE_DIRECTORY_FILE = 0x1
 FILE_SYNCHRONOUS_IO_NONALERT = 0x20
 OBJ_CASE_INSENSITIVE = 0x40
 OBJ_DONT_REPARSE = 0x1000
+
+
+@dataclass(frozen=True)
+class DirectoryEntry:
+    name: str
+    attributes: int
+    size: int
+
+    @property
+    def is_directory(self) -> bool:
+        return bool(self.attributes & ATTR_DIRECTORY)
+
+    @property
+    def is_reparse(self) -> bool:
+        return bool(self.attributes & ATTR_REPARSE)
 
 
 class SecurityAttributes(ctypes.Structure):

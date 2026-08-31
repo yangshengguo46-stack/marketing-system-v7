@@ -21,6 +21,23 @@ class WindowsCleanupError(OSError):
     pass
 
 
+class _HandleOperations:
+    @staticmethod
+    def duplicate(handle: int) -> int:
+        return getattr(win32, "duplicate_raw", win32.duplicate)(handle)
+
+    @staticmethod
+    def identity(handle: int) -> tuple[int, int]:
+        return win32.identity(handle)
+
+    @staticmethod
+    def close(handle: int) -> None:
+        getattr(win32, "close_raw", win32.close)(handle)
+
+
+_HANDLE_OPERATIONS = _HandleOperations()
+
+
 @dataclass
 class PendingHandle:
     handle: int | None
@@ -69,7 +86,7 @@ class WindowsCleanupJournal:
         try:
             return bind_identity(
                 item,
-                win32,
+                _HANDLE_OPERATIONS,
                 self.creator_pid,
                 expected_identity=item.expected_identity,
             )
@@ -77,7 +94,7 @@ class WindowsCleanupJournal:
             if isinstance(error, HandleOwnershipError) and "substituted" in str(error):
                 item.delete = False
                 try:
-                    close_owned(item, win32, self.creator_pid)
+                    close_owned(item, _HANDLE_OPERATIONS, self.creator_pid)
                 finally:
                     if item.handle is None and item.proof_handle is None:
                         if item in self.pending:
@@ -100,13 +117,18 @@ class WindowsCleanupJournal:
         self._require_owner()
         item = PendingHandle(handle, None, delete, slot, expected_identity)
         self.pending.append(item)
+        handle_ledger = getattr(win32, "handle_ledger", None)
+        if handle_ledger is not None:
+            transferred_identity = handle_ledger().transfer(handle)
+            if item.expected_identity is None:
+                item.expected_identity = transferred_identity
         self._bind(item)
         return item
 
     def _finish(self, filesystem: object, item: PendingHandle) -> None:
         self._bind(item)
         owned_handle = item.handle
-        if not primary_is_owned(item, win32, self.creator_pid):
+        if not primary_is_owned(item, _HANDLE_OPERATIONS, self.creator_pid):
             self._clear_slot(filesystem, item, owned_handle)
             self.pending.remove(item)
             return
@@ -115,7 +137,7 @@ class WindowsCleanupJournal:
             win32.mark_delete(item.handle)
             if not win32.delete_pending(item.handle):
                 raise WindowsCleanupError("Windows deletion disposition is uncertain")
-        close_owned(item, win32, self.creator_pid)
+        close_owned(item, _HANDLE_OPERATIONS, self.creator_pid)
         self._clear_slot(filesystem, item, owned_handle)
         self.pending.remove(item)
 
@@ -165,7 +187,7 @@ class WindowsCleanupJournal:
         for item in tuple(self.pending):
             self._bind(item)
             owned_handle = item.handle
-            if not primary_is_owned(item, win32, self.creator_pid):
+            if not primary_is_owned(item, _HANDLE_OPERATIONS, self.creator_pid):
                 if item.slot == "root" and not self._recover_root(filesystem, item):
                     pass
                 else:

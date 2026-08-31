@@ -59,7 +59,11 @@ def open_directory(path: Path, *, deletable: bool = False) -> int:
                     current, part, directory=True, deletable=deletable
                 ),
             )
-            close_handle(current)
+            try:
+                close_handle(current)
+            except BaseException:
+                close_handle(child)
+                raise
             current = child
         result = current
         current = -1
@@ -190,6 +194,12 @@ class WindowsCellFilesystem:
         root_fd = -1
         directories: dict[str, int] = {}
         try:
+            handle_ledger = getattr(win32, "handle_ledger", None)
+            if handle_ledger is not None:
+                base_identity = handle_ledger().transfer(base_fd)
+                if base_identity is not None:
+                    journal.base_ownership.identity = base_identity
+                    journal.base_ownership.state = "identity_bound"
             root_fd = _translate(
                 "cannot create protected Windows root",
                 lambda: win32.create_directory(base_fd, root_name),
@@ -315,7 +325,11 @@ class WindowsCellFilesystem:
                         current, part, directory=True, deletable=deletable
                     ),
                 )
-                close_handle(current)
+                try:
+                    close_handle(current)
+                except BaseException:
+                    close_handle(child)
+                    raise
                 current = child
             result = current
             current = -1
@@ -409,7 +423,8 @@ class WindowsCellFilesystem:
 class _JournalOperations:
     @staticmethod
     def duplicate(handle: int) -> int:
-        return win32.duplicate(handle)
+        duplicate = getattr(win32, "duplicate_raw", win32.duplicate)
+        return duplicate(handle)
 
     @staticmethod
     def identity(handle: int) -> tuple[int, int]:
@@ -425,7 +440,8 @@ class _JournalOperations:
 
     @staticmethod
     def close(handle: int) -> None:
-        win32.close(handle)
+        close = getattr(win32, "close_raw", win32.close)
+        close(handle)
 
     @staticmethod
     def open_live(parent: int, name: str, *, directory: bool) -> int | None:

@@ -2,7 +2,6 @@
 
 import ctypes
 from ctypes import wintypes
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
@@ -10,10 +9,12 @@ try:
     from . import batch_isolation_win32_abi as abi
     from .batch_isolation_win32_policy import is_exact_private_sddl
     from .batch_isolation_win32_policy import private_sddl
+    from .batch_isolation_windows_handle_ledger import WindowsHandleLedger
 except ImportError:
     import batch_isolation_win32_abi as abi
     from batch_isolation_win32_policy import is_exact_private_sddl
     from batch_isolation_win32_policy import private_sddl
+    from batch_isolation_windows_handle_ledger import WindowsHandleLedger
 
 
 advapi32 = abi.advapi32
@@ -52,6 +53,7 @@ SYNCHRONIZE = abi.SYNCHRONIZE
 TOKEN_QUERY = abi.TOKEN_QUERY
 TOKEN_USER = abi.TOKEN_USER
 Disposition = abi.Disposition
+DirectoryEntry = abi.DirectoryEntry
 FileInformation = abi.FileInformation
 FindData = abi.FindData
 SecurityAttributes = abi.SecurityAttributes
@@ -67,26 +69,11 @@ class Win32SecurityError(OSError):
     pass
 
 
-@dataclass(frozen=True)
-class DirectoryEntry:
-    name: str
-    attributes: int
-    size: int
-
-    @property
-    def is_directory(self) -> bool:
-        return bool(self.attributes & ATTR_DIRECTORY)
-
-    @property
-    def is_reparse(self) -> bool:
-        return bool(self.attributes & ATTR_REPARSE)
-
-
 def _raise(message: str) -> None:
     raise Win32SecurityError(ctypes.get_last_error(), message)
 
 
-def close(handle: int) -> None:
+def close_raw(handle: int) -> None:
     if handle not in (-1, None) and not kernel32.CloseHandle(handle):  # noqa: F405
         _raise("cannot close retained Windows handle")
 
@@ -133,7 +120,7 @@ def current_user_sid() -> str:
         ).contents.Sid
         return _sid_text(sid)
     finally:
-        close(token)
+        close_raw(token)
 
 
 USER_SID = current_user_sid()
@@ -172,7 +159,7 @@ def identity(handle: int) -> tuple[int, int]:
     return info.dwVolumeSerialNumber, info.nFileIndexHigh << 32 | info.nFileIndexLow
 
 
-def duplicate(handle: int) -> int:
+def duplicate_raw(handle: int) -> int:
     process = kernel32.GetCurrentProcess()  # noqa: F405
     result = wintypes.HANDLE()
     if not kernel32.DuplicateHandle(  # noqa: F405
@@ -180,6 +167,24 @@ def duplicate(handle: int) -> int:
     ):
         _raise("cannot duplicate retained Windows handle")
     return result.value
+
+
+_HANDLE_LEDGER = WindowsHandleLedger((duplicate_raw, identity, close_raw))
+
+
+def duplicate(handle: int) -> int:
+    _HANDLE_LEDGER.retry_uncertain_closes()
+    expected_identity = identity(handle)
+    duplicate_handle = duplicate_raw(handle)
+    return _HANDLE_LEDGER.acquire(duplicate_handle, expected_identity=expected_identity)
+
+
+def close(handle: int) -> None:
+    _HANDLE_LEDGER.close(handle)
+
+
+def handle_ledger() -> WindowsHandleLedger:
+    return _HANDLE_LEDGER
 
 
 def final_path(handle: int) -> Path:
@@ -244,11 +249,14 @@ def open_path(
     deletable: bool = False,
     security_query: bool = False,
 ) -> int:
-    handle = open_path_raw(
-        path,
-        directory=directory,
-        deletable=deletable,
-        security_query=security_query,
+    _HANDLE_LEDGER.retry_uncertain_closes()
+    handle = _HANDLE_LEDGER.acquire(
+        open_path_raw(
+            path,
+            directory=directory,
+            deletable=deletable,
+            security_query=security_query,
+        )
     )
     try:
         validate_opened_handle(

@@ -25,6 +25,7 @@ class HandleOwnership:
     state: str = "identity_unknown"
     proof_close_uncertain: bool = False
     handle_close_uncertain: bool = False
+    close_requested: bool = False
 
 
 def _error_code(error: OSError) -> int | None:
@@ -120,7 +121,11 @@ def close_owned(
 ) -> None:
     """Close a bound handle, retaining uncertainty without reusing raw values."""
     _require_owner(creator_pid)
-    _close_proof(ownership, operations, creator_pid)
+    ownership.close_requested = True
+    if ownership.identity is None:
+        bind_identity(ownership, operations, creator_pid)
+    else:
+        _close_proof(ownership, operations, creator_pid)
     if not primary_is_owned(ownership, operations, creator_pid):
         return
     assert ownership.handle is not None
