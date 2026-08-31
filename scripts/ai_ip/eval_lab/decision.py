@@ -60,9 +60,7 @@ def _time(value: object, label: str) -> datetime:
     if type(value) is not str or _RFC3339.fullmatch(value) is None:
         raise DecisionError(f"{label} must be a strict RFC3339 timestamp")
     try:
-        parsed = datetime.fromisoformat(
-            value[:-1] + "+00:00" if value.endswith("Z") else value
-        )
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00" if value.endswith("Z") else value)
     except ValueError as error:
         raise DecisionError(f"{label} must be a strict RFC3339 timestamp") from error
     return parsed.astimezone(timezone.utc)
@@ -128,7 +126,8 @@ def _external_path(
     try:
         candidate_metadata = resolved.stat()
         arm_key_metadata = (
-            private_root.path / f"batches/{batch_id}/coordinator/arm-key.json"
+            private_root.path
+            / f"batches/{batch_id}/coordinator/arm-key.json"
         ).stat()
     except OSError as error:
         raise DecisionError(f"cannot authorize {label} path") from error
@@ -191,9 +190,7 @@ def _load_pack(
     reviewer_ids: list[str],
 ) -> tuple[dict[str, object], dict[str, dict[str, object]], dict[str, set[str]]]:
     try:
-        receipt = _validate(
-            private_root.read_json(relative), _BLIND_SCHEMA, "blind-pack receipt"
-        )
+        receipt = _validate(private_root.read_json(relative), _BLIND_SCHEMA, "blind-pack receipt")
     except (LabContractError, OSError) as error:
         raise DecisionError("cannot load blind-pack receipt") from error
     if receipt.get("objectKind") != "BlindPackReceipt":
@@ -202,10 +199,7 @@ def _load_pack(
         raise DecisionError("blind-pack receipt path/batch binding mismatch")
     base = f"batches/{batch_id}"
     manifest = _private_json(
-        private_root,
-        f"{base}/coordinator/batch-manifest.json",
-        _BATCH_SCHEMA,
-        "batch manifest",
+        private_root, f"{base}/coordinator/batch-manifest.json", _BATCH_SCHEMA, "batch manifest"
     )
     if (
         manifest.get("objectKind") != "EvaluationBatch"
@@ -226,10 +220,7 @@ def _load_pack(
             label = f"{reviewer_id}-{role}"
             root = f"{base}/reviewer/{reviewer_id}/{label}"
             assignment = _private_json(
-                private_root,
-                f"{root}/assignment.json",
-                _BLIND_SCHEMA,
-                "blind assignment",
+                private_root, f"{root}/assignment.json", _BLIND_SCHEMA, "blind assignment"
             )
             expected_release = "immediate" if index < 2 else "arbitrationRequired"
             if (
@@ -238,18 +229,14 @@ def _load_pack(
                 or assignment.get("reviewerId") != reviewer_id
                 or assignment.get("sequenceSlot") != slot
                 or assignment.get("releaseCondition") != expected_release
-                or assignment.get("swapOf")
-                != (None if role == "primary" else primary_id)
+                or assignment.get("swapOf") != (None if role == "primary" else primary_id)
             ):
                 raise DecisionError("blind assignment authority mismatch")
             assignment_id = _component(assignment.get("assignmentId"), "assignmentId")
             if assignment_id in assignments:
                 raise DecisionError("duplicate blind assignment")
             packet = _private_json(
-                private_root,
-                f"{root}/content-packet.json",
-                _CASE_SCHEMA,
-                "content packet",
+                private_root, f"{root}/content-packet.json", _CASE_SCHEMA, "content packet"
             )
             refs = packet.get("sourceRefs")
             if (
@@ -296,7 +283,9 @@ def _submission_value(
     evidence: dict[str, set[str]],
     sealed: datetime,
 ) -> tuple[str, dict[str, object]]:
-    value = _external(private_root, batch_id, path, _BLIND_SCHEMA, "review submission")
+    value = _external(
+        private_root, batch_id, path, _BLIND_SCHEMA, "review submission"
+    )
     if value.get("objectKind") != "ReviewSubmission":
         raise DecisionError("wrong review submission object kind")
     assignment_id = value.get("assignmentId")
@@ -314,11 +303,10 @@ def _submission_value(
     return assignment_id, value
 
 
-def _by_output(
-    value: dict[str, object], assignment: dict[str, object], field: str
-) -> dict[str, object]:
+def _by_output(value: dict[str, object], assignment: dict[str, object], field: str) -> dict[str, object]:
     return {
-        assignment[f"arm{arm}OutputSha256"]: value[field][arm] for arm in ("A", "B")
+        assignment[f"arm{arm}OutputSha256"]: value[field][arm]
+        for arm in ("A", "B")
     }
 
 
@@ -335,15 +323,11 @@ def _pair(
         severe = _by_output(submission, assignment, "severeFlagsByArm")
         mapped.append((dimensions, severe))
         eligibility = submission["eligibility"]
-        arms = {"both": ("A", "B"), "aOnly": ("A",), "bOnly": ("B",), "neither": ()}[
-            eligibility
-        ]
+        arms = {"both": ("A", "B"), "aOnly": ("A",), "bOnly": ("B",), "neither": ()}[eligibility]
         eligible_sets.append({assignment[f"arm{arm}OutputSha256"] for arm in arms})
         preference = submission["preference"]
         judgments.append(
-            assignment[f"arm{preference}OutputSha256"]
-            if preference in ("A", "B")
-            else preference
+            assignment[f"arm{preference}OutputSha256"] if preference in ("A", "B") else preference
         )
     if mapped[0] != mapped[1]:
         raise DecisionError("primary/swap dimension or severe binding mismatch")
@@ -368,10 +352,7 @@ def seal_blind_statistics(
 ) -> BlindStatistics:
     """Validate opaque paired judgments and create one final blind-statistics seal."""
     sealed = _time(sealed_at, "sealedAt")
-    if (
-        type(base_qualification_receipt_paths) is not tuple
-        or len(base_qualification_receipt_paths) != 2
-    ):
+    if type(base_qualification_receipt_paths) is not tuple or len(base_qualification_receipt_paths) != 2:
         raise DecisionError("exactly two base qualification receipts are required")
     if type(submission_paths) is not tuple:
         raise DecisionError("submission_paths must be a tuple")
@@ -427,12 +408,7 @@ def seal_blind_statistics(
                 value
                 for value in assignments.values()
                 if value["reviewerId"] == reviewer_id
-                and value["sequenceSlot"]
-                == (
-                    reviewer_index + 1
-                    if role == "primary"
-                    else len(reviewer_ids) + reviewer_index + 1
-                )
+                and value["sequenceSlot"] == (reviewer_index + 1 if role == "primary" else len(reviewer_ids) + reviewer_index + 1)
             )
             submission = submissions.get(assignment["assignmentId"])
             if submission is None:
@@ -449,9 +425,7 @@ def seal_blind_statistics(
             preferences.append(preference)
             consistent_count += int(consistent)
     except KeyError as error:
-        raise DecisionError(
-            "exactly four base primary/swap submissions are required"
-        ) from error
+        raise DecisionError("exactly four base primary/swap submissions are required") from error
 
     arbitration_required = (
         preferences[0] != preferences[1]
@@ -467,9 +441,7 @@ def seal_blind_statistics(
         except KeyError as error:
             raise ArbitrationRequiredError() from error
         if not consistent or preference not in ("A", "B"):
-            raise DecisionError(
-                "arbitrator primary/swap judgments must resolve to one output"
-            )
+            raise DecisionError("arbitrator primary/swap judgments must resolve to one output")
         preferences.append(preference)
         consistent_count += 1
         arbitration_completed = True
@@ -480,9 +452,7 @@ def seal_blind_statistics(
             if assignment["reviewerId"] in reviewer_ids[:2]
         }
         if set(submissions) != base_assignment_ids:
-            raise DecisionError(
-                "arbitrator submissions cannot be counted without arbitration"
-            )
+            raise DecisionError("arbitrator submissions cannot be counted without arbitration")
 
     expected_submission_count = 6 if arbitration_completed else 4
     if len(submissions) != expected_submission_count:
