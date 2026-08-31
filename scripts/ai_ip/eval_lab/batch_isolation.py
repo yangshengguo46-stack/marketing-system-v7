@@ -6,18 +6,25 @@ import secrets
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from types import MappingProxyType
 from typing import Mapping
 
 try:
     from .batch_isolation_authority import AuthorityError, Reservation
     from .batch_isolation_authority import creator_signature, reserve_attempt
     from .batch_contracts import BatchContractError, validate_named_contract
+    from .batch_isolation_environment import APPROVED_PROFILE_NAMES
+    from .batch_isolation_environment import EnvironmentPolicyError
+    from .batch_isolation_environment import build_environment
+    from .batch_isolation_environment import windows_overrides
     from .batch_plan import BatchPlanError, TreeSnapshot, snapshot_tree
 except ImportError:
     from batch_isolation_authority import AuthorityError, Reservation
     from batch_isolation_authority import creator_signature, reserve_attempt
     from batch_contracts import BatchContractError, validate_named_contract
+    from batch_isolation_environment import APPROVED_PROFILE_NAMES
+    from batch_isolation_environment import EnvironmentPolicyError
+    from batch_isolation_environment import build_environment
+    from batch_isolation_environment import windows_overrides
     from batch_plan import BatchPlanError, TreeSnapshot, snapshot_tree
 
 if os.name == "nt":
@@ -68,9 +75,6 @@ else:
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
-_LOCALE_NAME = re.compile(r"(?:LANG(?:UAGE)?|LC_[A-Z0-9_]+)\Z")
-_PROFILE_VALUE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
-_PROFILE_NAMES = {"AWS_PROFILE", "VOLCENGINE_PROFILE"}
 _DIRECTORY_FIELDS = ("home", "workspace", "cache", "temp", "logs", "promptfoo")
 _RECEIPT_NAME = ".receipts-sealed"
 
@@ -96,17 +100,30 @@ class AttemptCell:
 
 
 @dataclass
+class _CellBinding:
+    pair_id: str
+    attempt_id: str
+    root: Path
+    paths: dict[str, Path]
+    environment: Mapping[str, str]
+    receipt_marker: Path
+    capability: object
+    public_object_id: int
+
+
+@dataclass
 class _CellState:
-    cell: AttemptCell
+    binding: _CellBinding
     filesystem: CellFilesystem
     reservation: Reservation
-    environment: Mapping[str, str]
     nonce: bytes
+    creator_pid: int
     lifecycle: str = "active"
     receipt: bytes | None = None
 
 
 _CELLS: dict[object, _CellState] = {}
+_CREATOR_PID = os.getpid()
 
 
 def _validate_identifier(name: str, value: object) -> str:
@@ -125,9 +142,7 @@ def _validate_profile(profile: object) -> dict[str, object]:
     names = profile["environmentAllowlist"]
     assert isinstance(names, list)
     for name in names:
-        if type(name) is not str or not (
-            name in _PROFILE_NAMES or _LOCALE_NAME.fullmatch(name)
-        ):
+        if type(name) is not str or not (name in APPROVED_PROFILE_NAMES):
             raise IsolationError(
                 f"{name!s} is not an approved non-secret profile environment name; "
                 "secret or proxy inheritance is forbidden"
@@ -199,62 +214,16 @@ def _validate_base(base_root: Path) -> tuple[Path, int]:
         ) from error
 
 
-def _windows_environment_overrides(
-    home: Path, cache: Path, temp: Path
-) -> dict[str, str]:
-    home_text = str(home)
-    return {
-        "USERPROFILE": home_text,
-        "HOMEDRIVE": home.drive,
-        "HOMEPATH": home_text[len(home.drive) :],
-        "APPDATA": str(home / "AppData" / "Roaming"),
-        "LOCALAPPDATA": str(cache),
-        "TEMP": str(temp),
-        "TMP": str(temp),
-    }
+_windows_environment_overrides = windows_overrides
 
 
 def _environment(
     paths: dict[str, Path], profile: dict[str, object], source: Mapping[str, str]
 ) -> Mapping[str, str]:
-    if not isinstance(source, Mapping):
-        raise IsolationError("source environment must be a mapping")
-    declared = profile["environmentAllowlist"]
-    assert isinstance(declared, list)
-    names = {"PATH", "SHELL", "LANG", "LANGUAGE", *declared}
-    names.update(
-        name for name in source if type(name) is str and name.startswith("LC_")
-    )
-    environment: dict[str, str] = {}
-    for name in names:
-        if name not in source:
-            continue
-        value = source[name]
-        if type(value) is not str or "\0" in value:
-            raise IsolationError(f"invalid environment value: {name}")
-        if name in _PROFILE_NAMES and not _PROFILE_VALUE.fullmatch(value):
-            raise IsolationError(
-                f"profile environment value is not a safe name: {name}"
-            )
-        environment[name] = value
-    environment.update(
-        {
-            "HOME": str(paths["home"]),
-            "CODEX_HOME": str(paths["home"]),
-            "TMPDIR": str(paths["temp"]),
-            "PROMPTFOO_CACHE_PATH": str(paths["cache"] / "promptfoo"),
-            "PROMPTFOO_CONFIG_DIR": str(paths["promptfoo"]),
-            "PROMPTFOO_OUTPUT_PATH": str(paths["promptfoo"] / "output.json"),
-            "PROMPTFOO_CACHE_ENABLED": "false",
-            "FORCE_COLOR": "0",
-            "NO_PROXY": "127.0.0.1,localhost,::1",
-        }
-    )
-    if os.name == "nt":
-        environment.update(
-            _windows_environment_overrides(paths["home"], paths["cache"], paths["temp"])
-        )
-    return MappingProxyType(environment)
+    try:
+        return build_environment(paths, profile, source, _windows_environment_overrides)
+    except EnvironmentPolicyError as error:
+        raise IsolationError(str(error)) from error
 
 
 def _write_snapshot(
@@ -272,19 +241,24 @@ def _state_for(cell: AttemptCell, *, cleanup: bool = False) -> _CellState:
     state = _CELLS.get(cell._capability)
     if state is None:
         raise IsolationError("attempt cell capability is invalid")
-    if cell.environment is not state.environment:
+    if state.creator_pid != os.getpid() or _CREATOR_PID != os.getpid():
+        raise IsolationError("attempt cell belongs to another process")
+    binding = state.binding
+    if cell.environment is not binding.environment:
         raise IsolationError("candidate environment binding changed")
-    if cell.root != state.cell.root:
+    if cell.root != binding.root:
         raise IsolationError("attempt root identity binding changed")
     for name in _DIRECTORY_FIELDS:
-        if getattr(cell, name) != getattr(state.cell, name):
+        if getattr(cell, name) != binding.paths[name]:
             raise IsolationError(f"{name} path binding changed")
     if (
-        cell.pair_id != state.cell.pair_id
-        or cell.attempt_id != state.cell.attempt_id
-        or cell.receipt_marker != state.cell.receipt_marker
+        cell.pair_id != binding.pair_id
+        or cell.attempt_id != binding.attempt_id
+        or cell.receipt_marker != binding.receipt_marker
     ):
         raise IsolationError("attempt identity or receipt binding changed")
+    if id(cell) != binding.public_object_id:
+        raise IsolationError("public attempt cell capability binding changed")
     try:
         state.reservation.validate()
     except AuthorityError as error:
@@ -315,19 +289,21 @@ def create_attempt_cell(
     except BatchPlanError as error:
         raise IsolationError(f"unsafe seed: {error}") from error
     base, inspected_fd = _validate_base(Path(base_root))
-    close_handle(inspected_fd)
     nonce = secrets.token_bytes(32)
+    reservation: Reservation | None = None
+    filesystem: CellFilesystem | None = None
+    capability: object | None = None
     try:
         reservation = reserve_attempt(pair, attempt, nonce)
-    except AuthorityError as error:
-        raise IsolationError(str(error)) from error
-    root_name = (
-        "cell-"
-        + hashlib.sha256(pair.encode() + b"\0" + attempt.encode() + nonce).hexdigest()
-    )
-    filesystem: CellFilesystem | None = None
-    try:
-        filesystem = CellFilesystem.create(base, root_name)
+        root_name = (
+            "cell-"
+            + hashlib.sha256(
+                pair.encode() + b"\0" + attempt.encode() + nonce
+            ).hexdigest()
+        )
+        backend_fd = inspected_fd
+        inspected_fd = -1
+        filesystem = CellFilesystem.create(base, root_name, backend_fd)
         root = base / root_name
         paths = {name: root / name for name in _DIRECTORY_FIELDS}
         _write_snapshot(filesystem, home_snapshot, "home")
@@ -348,18 +324,36 @@ def create_attempt_cell(
             root / _RECEIPT_NAME,
             capability,
         )
-        state = _CellState(cell, filesystem, reservation, environment, nonce)
+        binding = _CellBinding(
+            pair,
+            attempt,
+            root,
+            dict(paths),
+            environment,
+            root / _RECEIPT_NAME,
+            capability,
+            id(cell),
+        )
+        state = _CellState(binding, filesystem, reservation, nonce, os.getpid())
         _CELLS[capability] = state
         _state_for(cell)
         if not filesystem.base_is_still_bound():
             raise IsolationError("attempt base identity changed during creation")
         return cell
-    except BaseException:
+    except BaseException as error:
+        if capability is not None:
+            _CELLS.pop(capability, None)
         if filesystem is not None:
             try:
                 filesystem.delete_exact()
-            except OSError:
-                pass
+            except (OSError, SecureFilesystemError):
+                filesystem.close()
+        elif inspected_fd >= 0:
+            close_handle(inspected_fd)
+        if reservation is not None:
+            reservation.close()
+        if isinstance(error, AuthorityError):
+            raise IsolationError(str(error)) from error
         raise
 
 
@@ -388,9 +382,9 @@ def verify_attempt_cells_disjoint(left: AttemptCell, right: AttemptCell) -> None
 
 def _receipt_payload(state: _CellState) -> bytes:
     binding = (
-        state.cell.pair_id.encode()
+        state.binding.pair_id.encode()
         + b"\0"
-        + state.cell.attempt_id.encode()
+        + state.binding.attempt_id.encode()
         + b"\0"
         + repr(state.filesystem.root_identity).encode()
         + b"\0"
@@ -430,14 +424,30 @@ def _delete_cell_root(cell: AttemptCell) -> None:
 def cleanup_attempt_cell(cell: AttemptCell) -> None:
     """Delete exactly one handle-bound cell after its authenticated receipt seal."""
     state = _state_for(cell, cleanup=True)
-    if state.lifecycle != "sealed" or state.receipt is None:
+    if state.lifecycle not in {"sealed", "cleaning"} or state.receipt is None:
         raise IsolationError("receipts are not sealed")
-    try:
-        marker = state.filesystem.read_file(_RECEIPT_NAME, 256)
-    except OSError as error:
-        raise IsolationError("receipt seal is unavailable") from error
-    if not hmac.compare_digest(marker, state.receipt):
-        raise IsolationError("receipt seal is forged")
+    if state.lifecycle == "sealed":
+        try:
+            marker = state.filesystem.read_file(_RECEIPT_NAME, 256)
+        except OSError as error:
+            raise IsolationError("receipt seal is unavailable") from error
+        if not hmac.compare_digest(marker, state.receipt):
+            raise IsolationError("receipt seal is forged")
+        state.lifecycle = "cleaning"
     _delete_cell_root(cell)
     state.lifecycle = "cleaned"
+    state.reservation.close()
     del _CELLS[cell._capability]
+
+
+def _after_fork_child() -> None:
+    global _CREATOR_PID
+    for state in _CELLS.values():
+        state.filesystem.close()
+        state.reservation.close()
+    _CELLS.clear()
+    _CREATOR_PID = os.getpid()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_after_fork_child)
