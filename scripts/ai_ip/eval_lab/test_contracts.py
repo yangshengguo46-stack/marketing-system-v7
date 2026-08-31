@@ -30,6 +30,14 @@ def test_load_exact_json_round_trips_exact_wire_values(tmp_path):
     }
 
 
+def test_load_exact_json_rejects_invalid_utf8(tmp_path):
+    path = tmp_path / "input.json"
+    path.write_bytes(b'{"text":"\xff"}')
+
+    with pytest.raises(LabContractError):
+        load_exact_json(path)
+
+
 @pytest.mark.parametrize(
     "payload",
     [

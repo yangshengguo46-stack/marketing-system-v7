@@ -6,12 +6,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator
 
-from contracts import (
-    LabContractError,
-    _load_exact_json_bytes,
-    canonical_json_bytes,
-    sha256_json,
-)
+if __package__:
+    from .contracts import (
+        LabContractError,
+        _load_exact_json_bytes,
+        canonical_json_bytes,
+        sha256_json,
+    )
+else:
+    from contracts import (
+        LabContractError,
+        _load_exact_json_bytes,
+        canonical_json_bytes,
+        sha256_json,
+    )
 
 
 _MODULE_REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -136,7 +144,14 @@ def _lstat_at(parent_fd: int, name: str) -> os.stat_result:
         ) from error
 
 
-def _open_checked_at(parent_fd: int, name: str, flags: int, *, directory: bool) -> int:
+def _open_checked_at(
+    parent_fd: int,
+    name: str,
+    flags: int,
+    *,
+    directory: bool,
+    expected: os.stat_result | None = None,
+) -> int:
     before = _lstat_at(parent_fd, name)
     if stat.S_ISLNK(before.st_mode):
         raise LabContractError(f"symlink path component is forbidden: {name}")
@@ -148,6 +163,11 @@ def _open_checked_at(parent_fd: int, name: str, flags: int, *, directory: bool) 
         after = os.fstat(descriptor)
         if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
             raise LabContractError(f"private path changed while opening: {name}")
+        if expected is not None and (expected.st_dev, expected.st_ino) != (
+            after.st_dev,
+            after.st_ino,
+        ):
+            raise LabContractError(f"created private path was replaced: {name}")
         if directory:
             _validate_directory(after, name)
         else:
@@ -182,18 +202,14 @@ class PrivateRoot:
             os.mkdir(root, 0o700)
         except OSError as error:
             raise LabContractError("cannot create private root") from error
-        created = root.lstat()
         instance = cls(root, repo_root, worktrees)
+        created: os.stat_result | None = None
         try:
-            descriptor = instance._open_root()
+            created = root.lstat()
+            descriptor = instance._open_root(expected=created)
             os.close(descriptor)
         except BaseException:
-            try:
-                current = root.lstat()
-                if (current.st_dev, current.st_ino) == (created.st_dev, created.st_ino):
-                    os.rmdir(root)
-            except OSError:
-                pass
+            cls._remove_created_root(root, created)
             raise
         return instance
 
@@ -205,7 +221,22 @@ class PrivateRoot:
         os.close(descriptor)
         return instance
 
-    def _open_root(self) -> int:
+    @staticmethod
+    def _remove_created_root(root: Path, expected: os.stat_result | None) -> None:
+        try:
+            current = os.lstat(root)
+            if not stat.S_ISDIR(current.st_mode) or stat.S_ISLNK(current.st_mode):
+                return
+            if expected is not None and (current.st_dev, current.st_ino) != (
+                expected.st_dev,
+                expected.st_ino,
+            ):
+                return
+            os.rmdir(root)
+        except OSError:
+            pass
+
+    def _open_root(self, expected: os.stat_result | None = None) -> int:
         _reject_symlink_ancestors(self.path)
         try:
             before = self.path.lstat()
@@ -221,6 +252,11 @@ class PrivateRoot:
             after = os.fstat(descriptor)
             if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
                 raise LabContractError("private root changed while opening")
+            if expected is not None and (expected.st_dev, expected.st_ino) != (
+                after.st_dev,
+                after.st_ino,
+            ):
+                raise LabContractError("created private root was replaced")
             _validate_directory(after, "private root")
             return descriptor
         except BaseException:
@@ -250,14 +286,19 @@ class PrivateRoot:
                 raise LabContractError(
                     f"cannot create private directory: {relative}"
                 ) from error
-            created = _lstat_at(parent_fd, name)
+            created: os.stat_result | None = None
             try:
+                created = _lstat_at(parent_fd, name)
                 descriptor = _open_checked_at(
-                    parent_fd, name, _DIRECTORY_FLAGS, directory=True
+                    parent_fd,
+                    name,
+                    _DIRECTORY_FLAGS,
+                    directory=True,
+                    expected=created,
                 )
                 os.close(descriptor)
             except BaseException:
-                self._rmdir_if_same(parent_fd, name, created)
+                self._remove_created_dir(parent_fd, name, created)
                 raise
         return self.path.joinpath(*_relative_parts(relative))
 
@@ -289,8 +330,7 @@ class PrivateRoot:
                     os.close(descriptor)
                 except OSError:
                     pass
-                if created is not None:
-                    self._unlink_if_same(parent_fd, name, created)
+                self._remove_created_file(parent_fd, name, created)
                 raise
             try:
                 os.close(descriptor)
@@ -301,7 +341,7 @@ class PrivateRoot:
                 ) from error
 
             try:
-                retained = self._read_checked_file(parent_fd, name)
+                retained = self._read_checked_file(parent_fd, name, expected=created)
                 if retained != payload:
                     raise LabContractError("retained private JSON differs from write")
                 parsed = _load_exact_json_bytes(retained[:-1])
@@ -311,8 +351,20 @@ class PrivateRoot:
                 self._unlink_if_same(parent_fd, name, created)
                 raise
 
-    def _read_checked_file(self, parent_fd: int, name: str) -> bytes:
-        descriptor = _open_checked_at(parent_fd, name, _READ_FLAGS, directory=False)
+    def _read_checked_file(
+        self,
+        parent_fd: int,
+        name: str,
+        *,
+        expected: os.stat_result | None = None,
+    ) -> bytes:
+        descriptor = _open_checked_at(
+            parent_fd,
+            name,
+            _READ_FLAGS,
+            directory=False,
+            expected=expected,
+        )
         try:
             chunks: list[bytes] = []
             while True:
@@ -333,12 +385,34 @@ class PrivateRoot:
             pass
 
     @staticmethod
-    def _rmdir_if_same(parent_fd: int, name: str, expected: os.stat_result) -> None:
+    def _remove_created_file(
+        parent_fd: int, name: str, expected: os.stat_result | None
+    ) -> None:
+        if expected is not None:
+            PrivateRoot._unlink_if_same(parent_fd, name, expected)
+            return
         try:
             current = _lstat_at(parent_fd, name)
-            if (current.st_dev, current.st_ino) == (expected.st_dev, expected.st_ino):
-                os.rmdir(name, dir_fd=parent_fd)
-        except (FileNotFoundError, OSError):
+            if not stat.S_ISDIR(current.st_mode):
+                os.unlink(name, dir_fd=parent_fd)
+        except OSError:
+            pass
+
+    @staticmethod
+    def _remove_created_dir(
+        parent_fd: int, name: str, expected: os.stat_result | None
+    ) -> None:
+        try:
+            current = _lstat_at(parent_fd, name)
+            if not stat.S_ISDIR(current.st_mode) or stat.S_ISLNK(current.st_mode):
+                return
+            if expected is not None and (current.st_dev, current.st_ino) != (
+                expected.st_dev,
+                expected.st_ino,
+            ):
+                return
+            os.rmdir(name, dir_fd=parent_fd)
+        except OSError:
             pass
 
     def read_json(self, relative: str | Path) -> object:
