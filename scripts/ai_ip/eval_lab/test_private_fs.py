@@ -258,9 +258,12 @@ def test_read_second_fstat_failure_closes_opened_file_descriptor(tmp_path, monke
             original_close(failed_descriptor)
 
 
-def test_precommit_receipt_close_failure_leaves_no_openable_root(tmp_path, monkeypatch):
+def test_valid_receipt_survives_close_and_unlink_errors_as_committed(
+    tmp_path, monkeypatch
+):
     root_path = tmp_path / "private"
     original_close = os.close
+    original_unlink = os.unlink
     injected = False
 
     def fail_first_regular_close(descriptor):
@@ -271,13 +274,47 @@ def test_precommit_receipt_close_failure_leaves_no_openable_root(tmp_path, monke
             injected = True
             raise OSError("injected precommit receipt close failure")
 
-    monkeypatch.setattr(private_fs_module.os, "close", fail_first_regular_close)
+    def fail_receipt_unlink(name, *args, **kwargs):
+        if name == private_fs_module._RECEIPT_NAME:
+            raise OSError("injected receipt unlink failure")
+        return original_unlink(name, *args, **kwargs)
 
-    with pytest.raises((LabContractError, OSError)):
-        PrivateRoot.create_new(root_path)
-    if root_path.exists():
-        with pytest.raises(LabContractError):
-            PrivateRoot.open_existing(root_path)
+    monkeypatch.setattr(private_fs_module.os, "close", fail_first_regular_close)
+    monkeypatch.setattr(private_fs_module.os, "unlink", fail_receipt_unlink)
+
+    private = PrivateRoot.create_new(root_path)
+    assert injected
+    assert private.path == root_path
+    assert PrivateRoot.open_existing(root_path).path == root_path
+
+
+def test_ambiguous_receipt_close_is_attempted_once(tmp_path, monkeypatch):
+    root_path = tmp_path / "private"
+    original_close = os.close
+    ambiguous_fd = None
+    close_attempts = 0
+
+    def fail_receipt_close_without_closing(descriptor):
+        nonlocal ambiguous_fd, close_attempts
+        if ambiguous_fd is None and stat.S_ISREG(os.fstat(descriptor).st_mode):
+            ambiguous_fd = descriptor
+        if descriptor == ambiguous_fd:
+            close_attempts += 1
+            raise OSError("injected ambiguous receipt close failure")
+        original_close(descriptor)
+
+    monkeypatch.setattr(
+        private_fs_module.os, "close", fail_receipt_close_without_closing
+    )
+
+    try:
+        private = PrivateRoot.create_new(root_path)
+        assert close_attempts == 1
+        assert PrivateRoot.open_existing(root_path).path == private.path
+    finally:
+        monkeypatch.setattr(private_fs_module.os, "close", original_close)
+        if ambiguous_fd is not None:
+            original_close(ambiguous_fd)
 
 
 @pytest.mark.parametrize("directory_close_index", [1, 2])

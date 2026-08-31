@@ -152,11 +152,11 @@ def _write_and_fsync(descriptor: int, payload: bytes, description: str) -> None:
     os.fsync(descriptor)
 
 
-def _close_descriptor(descriptor: int, *, committed: bool) -> None:
+def _close_descriptor(descriptor: int, *, suppress_error: bool) -> None:
     try:
         os.close(descriptor)
     except OSError:
-        if not committed:
+        if not suppress_error:
             raise
 
 
@@ -272,12 +272,12 @@ class PrivateRoot:
                 committed = True
             except BaseException:
                 if descriptor is not None:
-                    _close_descriptor(descriptor, committed=True)
+                    _close_descriptor(descriptor, suppress_error=True)
                 cls._remove_if_same(parent_fd, root.name, created, directory=True)
                 raise
-            _close_descriptor(descriptor, committed=True)
+            _close_descriptor(descriptor, suppress_error=True)
         finally:
-            _close_descriptor(parent_fd, committed=committed)
+            _close_descriptor(parent_fd, suppress_error=committed)
         return instance
 
     @classmethod
@@ -328,15 +328,12 @@ class PrivateRoot:
             created = _created_file_metadata(descriptor, "private root receipt")
             payload = canonical_json_bytes(self._receipt_value(root, created)) + b"\n"
             _write_and_fsync(descriptor, payload, "private root receipt")
-            _close_descriptor(descriptor, committed=False)
         except BaseException:
-            try:
-                os.close(descriptor)
-            except OSError:
-                pass
+            _close_descriptor(descriptor, suppress_error=True)
             if created is not None:
                 self._remove_if_same(root_fd, _RECEIPT_NAME, created)
             raise
+        _close_descriptor(descriptor, suppress_error=True)
         try:
             self._validate_completion_receipt(root_fd, root)
         except BaseException:
