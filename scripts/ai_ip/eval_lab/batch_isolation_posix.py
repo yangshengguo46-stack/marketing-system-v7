@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+try:
+    from . import batch_isolation_posix_terminal as terminal
+except ImportError:
+    import batch_isolation_posix_terminal as terminal
+
 
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
@@ -24,18 +29,16 @@ _MAX_DELETE_ENTRIES = 100_000
 _MAX_DELETE_DEPTH = 2_048
 _MAX_SCAN_BYTES = 1024 * 1024 * 1024
 _MAX_SCAN_SECONDS = 10.0
+_MAX_TERMINAL_SCAN_ENTRIES = 100_000
+_MAX_TERMINAL_SCAN_SECONDS = 10.0
 
 
 class SecureFilesystemError(OSError):
     pass
 
 
-def identity(metadata: os.stat_result) -> tuple[int, int]:
-    return metadata.st_dev, metadata.st_ino
-
-
-def handle_identity(fd: int) -> tuple[int, int]:
-    return identity(os.fstat(fd))
+identity = terminal.identity
+handle_identity = terminal.handle_identity
 
 
 def close_handle(fd: int) -> None:
@@ -168,6 +171,7 @@ class PosixCellFilesystem:
     directory_identities: dict[str, tuple[int, int]]
     creator_pid: int
     quarantine_name: str | None = None
+    terminal_unlinked: bool = False
 
     @classmethod
     def create(cls, base: Path, root_name: str, base_fd: int) -> "PosixCellFilesystem":
@@ -232,6 +236,14 @@ class PosixCellFilesystem:
         self._require_owner()
         _require_directory(self.base_fd, self.base_identity)
         _require_private_directory(self.root_fd, self.root_identity, "root")
+        if cleanup and self.terminal_unlinked:
+            try:
+                terminal.require_parent(
+                    self.root_fd, self.base_identity, _DIRECTORY_FLAGS
+                )
+            except terminal.TerminalProofError as error:
+                raise SecureFilesystemError(str(error)) from error
+            return
         entry_name = (
             self.quarantine_name if cleanup and self.quarantine_name else self.root_name
         )
@@ -373,8 +385,9 @@ class PosixCellFilesystem:
             raise
 
     def delete_exact(self) -> None:
-        self.validate(cleanup=True)
-        if self.quarantine_name is None:
+        if not self.terminal_unlinked:
+            self.validate(cleanup=True)
+        if self.quarantine_name is None and not self.terminal_unlinked:
             quarantine = f".deleting-{secrets.token_hex(16)}"
             os.rename(
                 self.root_name,
@@ -389,29 +402,27 @@ class PosixCellFilesystem:
             for fd in self.directories.values():
                 os.close(fd)
             self.directories.clear()
-        self._delete_contents()
-        before = os.stat(
-            self.quarantine_name, dir_fd=self.base_fd, follow_symlinks=False
-        )
-        if identity(before) != self.root_identity:
-            raise SecureFilesystemError("cleanup quarantine identity changed")
-        os.rmdir(self.quarantine_name, dir_fd=self.base_fd)
-        parent_fd = os.open("..", _DIRECTORY_FLAGS, dir_fd=self.root_fd)
+        if not self.terminal_unlinked:
+            self._delete_contents()
+            before = os.stat(
+                self.quarantine_name, dir_fd=self.base_fd, follow_symlinks=False
+            )
+            if identity(before) != self.root_identity:
+                raise SecureFilesystemError("cleanup quarantine identity changed")
+            os.rmdir(self.quarantine_name, dir_fd=self.base_fd)
+            self.terminal_unlinked = True
         try:
-            parent_matches = handle_identity(parent_fd) == self.base_identity
-        finally:
-            os.close(parent_fd)
-        still_linked = False
-        with os.scandir(self.base_fd) as entries:
-            for entry in entries:
-                metadata = os.stat(
-                    entry.name, dir_fd=self.base_fd, follow_symlinks=False
-                )
-                if identity(metadata) == self.root_identity:
-                    still_linked = True
-                    break
-        if not parent_matches or still_linked:
-            raise SecureFilesystemError("cleanup did not remove the original root")
+            terminal.prove_unlinked(
+                self.base_fd,
+                self.root_fd,
+                self.base_identity,
+                self.root_identity,
+                _DIRECTORY_FLAGS,
+                _MAX_TERMINAL_SCAN_ENTRIES,
+                _MAX_TERMINAL_SCAN_SECONDS,
+            )
+        except terminal.TerminalProofError as error:
+            raise SecureFilesystemError(str(error)) from error
         os.close(self.root_fd)
         os.close(self.base_fd)
         self.root_fd = -1

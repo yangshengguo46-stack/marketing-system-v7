@@ -16,6 +16,11 @@ try:
     from .batch_isolation_environment import EnvironmentPolicyError
     from .batch_isolation_environment import build_environment
     from .batch_isolation_environment import windows_overrides
+    from .batch_isolation_orphans import _ORPHANS
+    from .batch_isolation_orphans import OrphanCleanupError
+    from .batch_isolation_orphans import close_orphans_after_fork
+    from .batch_isolation_orphans import retain_orphan
+    from .batch_isolation_orphans import retry_orphans
     from .batch_plan import BatchPlanError, TreeSnapshot, snapshot_tree
 except ImportError:
     from batch_isolation_authority import AuthorityError, Reservation
@@ -25,6 +30,11 @@ except ImportError:
     from batch_isolation_environment import EnvironmentPolicyError
     from batch_isolation_environment import build_environment
     from batch_isolation_environment import windows_overrides
+    from batch_isolation_orphans import _ORPHANS
+    from batch_isolation_orphans import OrphanCleanupError
+    from batch_isolation_orphans import close_orphans_after_fork
+    from batch_isolation_orphans import retain_orphan
+    from batch_isolation_orphans import retry_orphans
     from batch_plan import BatchPlanError, TreeSnapshot, snapshot_tree
 
 if os.name == "nt":
@@ -108,7 +118,6 @@ class _CellBinding:
     environment: Mapping[str, str]
     receipt_marker: Path
     capability: object
-    public_object_id: int
 
 
 @dataclass
@@ -118,6 +127,7 @@ class _CellState:
     reservation: Reservation
     nonce: bytes
     creator_pid: int
+    public_cell: AttemptCell | None
     lifecycle: str = "active"
     receipt: bytes | None = None
 
@@ -257,7 +267,7 @@ def _state_for(cell: AttemptCell, *, cleanup: bool = False) -> _CellState:
         or cell.receipt_marker != binding.receipt_marker
     ):
         raise IsolationError("attempt identity or receipt binding changed")
-    if id(cell) != binding.public_object_id:
+    if cell is not state.public_cell:
         raise IsolationError("public attempt cell capability binding changed")
     try:
         state.reservation.validate()
@@ -280,6 +290,7 @@ def create_attempt_cell(
     source_environment: Mapping[str, str],
 ) -> AttemptCell:
     """Create one candidate attempt with independent bytes and retained capabilities."""
+    _retry_orphans()
     pair = _validate_identifier("pair ID", pair_id)
     attempt = _validate_identifier("attempt ID", attempt_id)
     execution_profile = _validate_profile(profile)
@@ -332,9 +343,10 @@ def create_attempt_cell(
             environment,
             root / _RECEIPT_NAME,
             capability,
-            id(cell),
         )
-        state = _CellState(binding, filesystem, reservation, nonce, os.getpid())
+        state = _CellState(
+            binding, filesystem, reservation, nonce, os.getpid(), cell
+        )
         _CELLS[capability] = state
         _state_for(cell)
         if not filesystem.base_is_still_bound():
@@ -343,18 +355,38 @@ def create_attempt_cell(
     except BaseException as error:
         if capability is not None:
             _CELLS.pop(capability, None)
-        if filesystem is not None:
+        orphan_resource = getattr(error, "orphan_resource", None)
+        orphan_retained = False
+        if orphan_resource is not None and reservation is not None:
+            retain_orphan(orphan_resource, reservation)
+            reservation = None
+            orphan_retained = True
+        elif filesystem is not None:
             try:
                 filesystem.delete_exact()
             except (OSError, SecureFilesystemError):
-                filesystem.close()
+                if reservation is not None:
+                    retain_orphan(filesystem, reservation)
+                    reservation = None
+                    orphan_retained = True
         elif inspected_fd >= 0:
             close_handle(inspected_fd)
         if reservation is not None:
             reservation.close()
         if isinstance(error, AuthorityError):
             raise IsolationError(str(error)) from error
+        if orphan_retained:
+            raise IsolationError(
+                "isolated cell orphan cleanup is pending"
+            ) from error
         raise
+
+
+def _retry_orphans() -> None:
+    try:
+        retry_orphans()
+    except OrphanCleanupError as error:
+        raise IsolationError(str(error)) from error
 
 
 def verify_attempt_cells_disjoint(left: AttemptCell, right: AttemptCell) -> None:
@@ -417,7 +449,7 @@ def _delete_cell_root(cell: AttemptCell) -> None:
         state.filesystem.delete_exact()
     except (OSError, SecureFilesystemError) as error:
         raise IsolationError(
-            "cleanup refused a substituted or unstable root"
+            f"cleanup refused a substituted or unstable root: {error}"
         ) from error
 
 
@@ -437,6 +469,7 @@ def cleanup_attempt_cell(cell: AttemptCell) -> None:
     _delete_cell_root(cell)
     state.lifecycle = "cleaned"
     state.reservation.close()
+    state.public_cell = None
     del _CELLS[cell._capability]
 
 
@@ -446,6 +479,7 @@ def _after_fork_child() -> None:
         state.filesystem.close()
         state.reservation.close()
     _CELLS.clear()
+    close_orphans_after_fork()
     _CREATOR_PID = os.getpid()
 
 
