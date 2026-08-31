@@ -8,7 +8,6 @@ try:
         BatchContractError,
         seal_self_commitment,
         validate_named_contract,
-        verify_self_commitment,
     )
     from .batch_receipt_verification import (
         verify_arm_attempt_receipt,
@@ -16,14 +15,11 @@ try:
     )
     from .batch_receipt_storage import (
         MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
-        MAX_PRIVATE_FILE_BYTES as _MAX_PRIVATE_FILE_BYTES,
         SecureStorageError as BatchReceiptError,
         child_directory as _child_directory,
         entry_exists as _entry_exists,
         identifier as _identifier,
-        load_canonical as _load_canonical,
         private_directory as _private_directory,
-        read_bounded as _read_bounded,
         write_exclusive as _write_exclusive,
     )
     from .contracts import (
@@ -36,7 +32,6 @@ except ImportError:
         BatchContractError,
         seal_self_commitment,
         validate_named_contract,
-        verify_self_commitment,
     )
     from batch_receipt_verification import (
         verify_arm_attempt_receipt,
@@ -44,14 +39,11 @@ except ImportError:
     )
     from batch_receipt_storage import (
         MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
-        MAX_PRIVATE_FILE_BYTES as _MAX_PRIVATE_FILE_BYTES,
         SecureStorageError as BatchReceiptError,
         child_directory as _child_directory,
         entry_exists as _entry_exists,
         identifier as _identifier,
-        load_canonical as _load_canonical,
         private_directory as _private_directory,
-        read_bounded as _read_bounded,
         write_exclusive as _write_exclusive,
     )
     from contracts import (

@@ -42,7 +42,6 @@ try:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from .contracts import sha256_json
 except ImportError:
     from batch_controller_attempt import (
         capture_arm,
@@ -82,7 +81,6 @@ except ImportError:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from contracts import sha256_json
 
 
 class BatchControllerError(ValueError):

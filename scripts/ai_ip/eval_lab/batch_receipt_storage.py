@@ -53,6 +53,11 @@ def _open_directory(path: Path, *, private: bool) -> int:
         raise
 
 
+def open_private_directory(path: Path) -> int:
+    """Return a bound descriptor for an owner-only private directory."""
+    return _open_directory(Path(path), private=True)
+
+
 def private_directory(path: Path, *, create: bool = False) -> Path:
     target = Path(path)
     if create:

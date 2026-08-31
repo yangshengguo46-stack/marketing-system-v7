@@ -23,9 +23,7 @@ try:
         read_bounded,
     )
     from .contracts import (
-        LabContractError,
         canonical_json_bytes,
-        load_exact_json,
         sha256_json,
     )
 except ImportError:
@@ -47,9 +45,7 @@ except ImportError:
         read_bounded,
     )
     from contracts import (
-        LabContractError,
         canonical_json_bytes,
-        load_exact_json,
         sha256_json,
     )
 
@@ -93,7 +89,6 @@ def _load_pair_context(
     except (
         BatchContractError,
         json.JSONDecodeError,
-        LabContractError,
         OSError,
     ) as error:
         raise BatchReceiptError("sealed pair context is invalid") from error
@@ -249,7 +244,11 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
         raise BatchReceiptError("pair must commit two distinct arm receipts")
     stock, stock_output = by_commitment[stock_hash]
     modified, modified_output = by_commitment[modified_hash]
-    if stock["privateArmId"] == modified["privateArmId"]:
+    if (
+        stock["pairId"] != pair_id
+        or modified["pairId"] != pair_id
+        or stock["privateArmId"] == modified["privateArmId"]
+    ):
         raise BatchReceiptError("pair arm identity is false")
     failures = [
         arm["exitClassification"]
@@ -270,7 +269,9 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
             raise BatchReceiptError("pair output relation is false")
         if relation == "distinct":
             mapping = load_canonical(mapping_path)
-            if type(mapping) is not dict or set(
-                mapping.get("labelToPrivateArmId", {}).values()
-            ) != {stock["privateArmId"], modified["privateArmId"]}:
+            labels = mapping.get("labelToPrivateArmId") if type(mapping) is dict else None
+            if type(labels) is not dict or set(labels.values()) != {
+                stock["privateArmId"],
+                modified["privateArmId"],
+            }:
                 raise BatchReceiptError("anonymous arm mapping is false")
