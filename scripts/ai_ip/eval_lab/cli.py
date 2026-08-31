@@ -245,9 +245,7 @@ def _prepare(arguments: argparse.Namespace) -> dict[str, object]:
         stock_answer_path=arguments.stock_answer,
         modified_answer_path=arguments.modified_answer,
         rubric_path=arguments.rubric,
-        base_qualification_receipt_paths=tuple(
-            arguments.base_qualification_receipt
-        ),
+        base_qualification_receipt_paths=tuple(arguments.base_qualification_receipt),
         arbitrator_qualification_receipt_path=_optional_path(
             arguments.arbitrator_qualification_receipt
         ),
@@ -261,9 +259,7 @@ def _seal(arguments: argparse.Namespace) -> dict[str, object]:
     statistics = seal_blind_statistics(
         private_root=PrivateRoot.open_existing(arguments.private_root),
         blind_pack_receipt_path=arguments.blind_pack_receipt,
-        base_qualification_receipt_paths=tuple(
-            arguments.base_qualification_receipt
-        ),
+        base_qualification_receipt_paths=tuple(arguments.base_qualification_receipt),
         arbitrator_qualification_receipt_path=_optional_path(
             arguments.arbitrator_qualification_receipt
         ),

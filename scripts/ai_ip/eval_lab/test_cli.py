@@ -293,9 +293,7 @@ def test_domain_errors_are_generic_and_do_not_leak_input_body(tmp_path, capsys):
     assert not (output_parent / "reviewer-1").exists()
 
 
-def test_path_canonicalization_completes_before_any_domain_action(
-    monkeypatch, capsys
-):
+def test_path_canonicalization_completes_before_any_domain_action(monkeypatch, capsys):
     calls = {
         "create_new": 0,
         "open_existing": 0,
