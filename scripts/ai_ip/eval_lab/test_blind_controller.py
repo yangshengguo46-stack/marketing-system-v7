@@ -384,14 +384,8 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
         (primary, swap),
     ):
         assert reviewer_primary["position"] != reviewer_swap["position"]
-        assert (
-            reviewer_primary["armAOutputSha256"]
-            == reviewer_swap["armBOutputSha256"]
-        )
-        assert (
-            reviewer_primary["armBOutputSha256"]
-            == reviewer_swap["armAOutputSha256"]
-        )
+        assert reviewer_primary["armAOutputSha256"] == reviewer_swap["armBOutputSha256"]
+        assert reviewer_primary["armBOutputSha256"] == reviewer_swap["armAOutputSha256"]
 
 
 def test_swap_seed_changes_only_opaque_ids_and_nonces_not_pair_mapping(tmp_path):
@@ -407,9 +401,7 @@ def test_swap_seed_changes_only_opaque_ids_and_nonces_not_pair_mapping(tmp_path)
     for reviewer in ("reviewer-business-1", "reviewer-business-2"):
         for role in ("primary", "swap"):
             label = f"{reviewer}-{role}"
-            relative = (
-                f"batches/{BATCH_ID}/reviewer/{reviewer}/{label}/assignment.json"
-            )
+            relative = f"batches/{BATCH_ID}/reviewer/{reviewer}/{label}/assignment.json"
             first, second = (root.read_json(relative) for root in roots)
             assert {
                 key: first[key]
@@ -442,9 +434,7 @@ def test_manifest_hash_order_does_not_encode_treatment_argument_order(tmp_path):
         arm_keys.append(fixture["private_root"].read_json(f"{prefix}/arm-key.json"))
 
     assert manifests[0] == manifests[1]
-    assert manifests[0]["armOutputSha256s"] == sorted(
-        manifests[0]["armOutputSha256s"]
-    )
+    assert manifests[0]["armOutputSha256s"] == sorted(manifests[0]["armOutputSha256s"])
     assert arm_keys[0]["stockOutputSha256"] == arm_keys[1]["modifiedOutputSha256"]
     assert arm_keys[0]["modifiedOutputSha256"] == arm_keys[1]["stockOutputSha256"]
 

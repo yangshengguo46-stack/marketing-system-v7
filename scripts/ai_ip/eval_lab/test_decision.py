@@ -8,7 +8,12 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import decision
 from blind_controller import prepare_blind_batch
-from contracts import canonical_json_bytes, load_exact_json, sha256_json, validate_contract
+from contracts import (
+    canonical_json_bytes,
+    load_exact_json,
+    sha256_json,
+    validate_contract,
+)
 from decision import ArbitrationRequiredError, DecisionError, seal_blind_statistics
 from private_fs import PrivateRoot
 from test_blind_controller import (
@@ -79,9 +84,7 @@ def _submission(
     eligibility="both",
     preference=None,
 ):
-    output_hashes = {
-        arm: assignment[f"arm{arm}OutputSha256"] for arm in ("A", "B")
-    }
+    output_hashes = {arm: assignment[f"arm{arm}OutputSha256"] for arm in ("A", "B")}
     if preference is None:
         preference = (
             "abstain"
@@ -159,9 +162,7 @@ def _base_preferences(batch):
 
 
 def _arm_key_path(batch):
-    return batch["private_root"].path / (
-        f"batches/{BATCH_ID}/coordinator/arm-key.json"
-    )
+    return batch["private_root"].path / (f"batches/{BATCH_ID}/coordinator/arm-key.json")
 
 
 def _assert_generic_arbitration_signal(caught):
@@ -204,9 +205,12 @@ def test_seals_output_hash_preferences_without_reading_arm_key(tmp_path, monkeyp
         "arbitrationCompleted": False,
         "sealedAt": SEALED_AT,
     }
-    assert batch["private_root"].read_json(
-        f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
-    ) == result
+    assert (
+        batch["private_root"].read_json(
+            f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
+        )
+        == result
+    )
     validate_contract(result, LAB_ROOT / "schemas/batch.schema.json")
     assert len(sha256_json(result)) == 64
     assert "total" not in json.dumps(result).lower()
@@ -265,9 +269,12 @@ def test_requires_then_completes_arbitration_and_retains_known_failures(tmp_path
     assert result["arbitrationRequired"] is True
     assert result["arbitrationCompleted"] is True
     assert "totalQualityScore" not in result
-    assert batch["private_root"].read_json(
-        f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
-    ) == result
+    assert (
+        batch["private_root"].read_json(
+            f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
+        )
+        == result
+    )
 
 
 def test_severe_flags_alone_require_arbitration_and_survive_the_final_seal(tmp_path):
@@ -467,7 +474,9 @@ def test_rejects_invalid_review_sets_before_writing_statistics(tmp_path, case):
         "dimension_swap_mismatch",
         "severe_swap_mismatch",
     }:
-        index = 0 if case not in {"dimension_swap_mismatch", "severe_swap_mismatch"} else 1
+        index = (
+            0 if case not in {"dimension_swap_mismatch", "severe_swap_mismatch"} else 1
+        )
         value = load_exact_json(paths[index])
         if case == "extra_submission_field":
             value["treatmentId"] = "forbidden"
@@ -514,7 +523,9 @@ def test_rejects_invalid_review_sets_before_writing_statistics(tmp_path, case):
 
 
 @pytest.mark.parametrize("arbitrator_count", [1, 2])
-def test_rejects_incomplete_or_wrong_release_arbitration_pair(tmp_path, arbitrator_count):
+def test_rejects_incomplete_or_wrong_release_arbitration_pair(
+    tmp_path, arbitrator_count
+):
     batch = _prepared_batch(tmp_path)
     output_a, output_b = _base_preferences(batch)
     base = _submission_paths(
@@ -530,7 +541,9 @@ def test_rejects_incomplete_or_wrong_release_arbitration_pair(tmp_path, arbitrat
     if arbitrator_count == 2:
         private = batch["private_root"]
         label = "reviewer-arbitrator-1-primary"
-        relative = f"batches/{BATCH_ID}/reviewer/reviewer-arbitrator-1/{label}/assignment.json"
+        relative = (
+            f"batches/{BATCH_ID}/reviewer/reviewer-arbitrator-1/{label}/assignment.json"
+        )
         assignment = private.read_json(relative)
         assignment["releaseCondition"] = "immediate"
         _write_json(private.path / relative, assignment)
@@ -542,9 +555,7 @@ def test_rejects_incomplete_or_wrong_release_arbitration_pair(tmp_path, arbitrat
 
     error = ArbitrationRequiredError if arbitrator_count == 1 else DecisionError
     with pytest.raises(error):
-        seal_blind_statistics(
-            **_args(batch, base + arbitrator[:arbitrator_count])
-        )
+        seal_blind_statistics(**_args(batch, base + arbitrator[:arbitrator_count]))
     assert not _statistics_path(batch).exists()
 
 
@@ -608,6 +619,9 @@ def test_create_new_statistics_never_overwrites_existing_file(tmp_path):
     with pytest.raises(DecisionError):
         seal_blind_statistics(**_args(batch, submissions))
 
-    assert batch["private_root"].read_json(
-        f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
-    ) == sentinel
+    assert (
+        batch["private_root"].read_json(
+            f"batches/{BATCH_ID}/coordinator/blind-statistics.json"
+        )
+        == sentinel
+    )
