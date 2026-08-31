@@ -27,6 +27,7 @@ _DIRECTORY_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
 _READ_FLAGS = os.O_RDONLY
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _CLOEXEC = getattr(os, "O_CLOEXEC", 0)
+_RECEIPT_NAME = ".ai-ip-private-root-v1.json"
 
 
 def _git_bytes(repo: Path, *arguments: str) -> bytes:
@@ -135,6 +136,48 @@ def _validate_file(metadata: os.stat_result, description: str) -> None:
         raise LabContractError(f"{description} mode must be 0600")
 
 
+def _created_file_metadata(descriptor: int, description: str) -> os.stat_result:
+    metadata = os.fstat(descriptor)
+    _validate_file(metadata, description)
+    return metadata
+
+
+def _write_and_fsync(descriptor: int, payload: bytes, description: str) -> None:
+    view = memoryview(payload)
+    while view:
+        written = os.write(descriptor, view)
+        if written <= 0:
+            raise LabContractError(f"short write for {description}")
+        view = view[written:]
+    os.fsync(descriptor)
+
+
+def _open_trusted_parent(root: Path) -> int:
+    parent = root.parent
+    _reject_symlink_ancestors(parent)
+    try:
+        before = parent.lstat()
+        if stat.S_ISLNK(before.st_mode):
+            raise LabContractError("private root parent may not be a symlink")
+        descriptor = os.open(parent, _DIRECTORY_FLAGS | _NOFOLLOW | _CLOEXEC)
+    except OSError as error:
+        raise LabContractError("cannot safely open private root parent") from error
+    try:
+        after = os.fstat(descriptor)
+        if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
+            raise LabContractError("private root parent changed while opening")
+        if not stat.S_ISDIR(after.st_mode) or after.st_uid != _owner_uid():
+            raise LabContractError("private root parent must be an owner directory")
+        if stat.S_IMODE(after.st_mode) & 0o022:
+            raise LabContractError(
+                "private root parent must not be group/world writable"
+            )
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
 def _lstat_at(parent_fd: int, name: str) -> os.stat_result:
     try:
         return os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
@@ -184,6 +227,8 @@ def _relative_parts(relative: str | Path) -> tuple[str, ...]:
         raise LabContractError("private artifact path must be non-empty and relative")
     if any(part in ("", ".", "..") for part in path.parts):
         raise LabContractError("private artifact path may not traverse")
+    if _RECEIPT_NAME in path.parts:
+        raise LabContractError("private root completion receipt name is reserved")
     return path.parts
 
 
@@ -196,21 +241,33 @@ class PrivateRoot:
     @classmethod
     def create_new(cls, path: Path) -> "PrivateRoot":
         root, repo_root, worktrees = _prepare_root_path(path)
-        if os.path.lexists(root):
-            raise LabContractError("private root already exists")
+        parent_fd = _open_trusted_parent(root)
         try:
-            os.mkdir(root, 0o700)
-        except OSError as error:
-            raise LabContractError("cannot create private root") from error
-        instance = cls(root, repo_root, worktrees)
-        created: os.stat_result | None = None
-        try:
-            created = root.lstat()
-            descriptor = instance._open_root(expected=created)
+            try:
+                os.mkdir(root.name, 0o700, dir_fd=parent_fd)
+            except OSError as error:
+                raise LabContractError("cannot create private root") from error
+            instance = cls(root, repo_root, worktrees)
+            created: os.stat_result | None = None
+            descriptor: int | None = None
+            try:
+                created = _lstat_at(parent_fd, root.name)
+                descriptor = _open_checked_at(
+                    parent_fd,
+                    root.name,
+                    _DIRECTORY_FLAGS,
+                    directory=True,
+                    expected=created,
+                )
+                instance._create_completion_receipt(descriptor, created)
+            except BaseException:
+                if descriptor is not None:
+                    os.close(descriptor)
+                cls._remove_created_dir(parent_fd, root.name, created)
+                raise
             os.close(descriptor)
-        except BaseException:
-            cls._remove_created_root(root, created)
-            raise
+        finally:
+            os.close(parent_fd)
         return instance
 
     @classmethod
@@ -221,47 +278,75 @@ class PrivateRoot:
         os.close(descriptor)
         return instance
 
-    @staticmethod
-    def _remove_created_root(root: Path, expected: os.stat_result | None) -> None:
-        try:
-            current = os.lstat(root)
-            if not stat.S_ISDIR(current.st_mode) or stat.S_ISLNK(current.st_mode):
-                return
-            if expected is not None and (current.st_dev, current.st_ino) != (
-                expected.st_dev,
-                expected.st_ino,
-            ):
-                return
-            os.rmdir(root)
-        except OSError:
-            pass
-
     def _open_root(self, expected: os.stat_result | None = None) -> int:
-        _reject_symlink_ancestors(self.path)
+        parent_fd = _open_trusted_parent(self.path)
         try:
-            before = self.path.lstat()
-        except OSError as error:
-            raise LabContractError("private root is unavailable") from error
-        if stat.S_ISLNK(before.st_mode):
-            raise LabContractError("private root may not be a symlink")
+            descriptor = _open_checked_at(
+                parent_fd,
+                self.path.name,
+                _DIRECTORY_FLAGS,
+                directory=True,
+                expected=expected,
+            )
+        finally:
+            os.close(parent_fd)
         try:
-            descriptor = os.open(self.path, _DIRECTORY_FLAGS | _NOFOLLOW | _CLOEXEC)
-        except OSError as error:
-            raise LabContractError("cannot safely open private root") from error
-        try:
-            after = os.fstat(descriptor)
-            if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
-                raise LabContractError("private root changed while opening")
-            if expected is not None and (expected.st_dev, expected.st_ino) != (
-                after.st_dev,
-                after.st_ino,
-            ):
-                raise LabContractError("created private root was replaced")
-            _validate_directory(after, "private root")
+            self._validate_completion_receipt(descriptor, os.fstat(descriptor))
             return descriptor
         except BaseException:
             os.close(descriptor)
             raise
+
+    @staticmethod
+    def _receipt_value(
+        root: os.stat_result, receipt: os.stat_result
+    ) -> dict[str, object]:
+        return {
+            "formatVersion": 1,
+            "receiptDevice": receipt.st_dev,
+            "receiptInode": receipt.st_ino,
+            "rootDevice": root.st_dev,
+            "rootInode": root.st_ino,
+        }
+
+    def _create_completion_receipt(self, root_fd: int, root: os.stat_result) -> None:
+        flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | _NOFOLLOW | _CLOEXEC
+        try:
+            descriptor = os.open(_RECEIPT_NAME, flags, 0o600, dir_fd=root_fd)
+        except OSError as error:
+            raise LabContractError("cannot create private root receipt") from error
+        created: os.stat_result | None = None
+        try:
+            created = _created_file_metadata(descriptor, "private root receipt")
+            payload = canonical_json_bytes(self._receipt_value(root, created)) + b"\n"
+            _write_and_fsync(descriptor, payload, "private root receipt")
+        except BaseException:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+            if created is not None:
+                self._unlink_if_same(root_fd, _RECEIPT_NAME, created)
+            raise
+        os.close(descriptor)
+        try:
+            self._validate_completion_receipt(root_fd, root)
+        except BaseException:
+            self._unlink_if_same(root_fd, _RECEIPT_NAME, created)
+            raise
+
+    def _validate_completion_receipt(self, root_fd: int, root: os.stat_result) -> None:
+        try:
+            payload, receipt = self._read_checked_file(root_fd, _RECEIPT_NAME)
+        except OSError as error:
+            raise LabContractError("private root receipt is unavailable") from error
+        if not payload.endswith(b"\n"):
+            raise LabContractError("private root receipt must end with one LF")
+        value = _load_exact_json_bytes(payload[:-1])
+        if value != self._receipt_value(root, receipt):
+            raise LabContractError("private root receipt identity mismatch")
+        if canonical_json_bytes(value) + b"\n" != payload:
+            raise LabContractError("private root receipt is not canonical")
 
     @contextmanager
     def _parent(self, relative: str | Path) -> Iterator[tuple[int, str]]:
@@ -316,21 +401,15 @@ class PrivateRoot:
                 ) from error
             created: os.stat_result | None = None
             try:
-                created = os.fstat(descriptor)
-                _validate_file(created, str(relative))
-                view = memoryview(payload)
-                while view:
-                    written = os.write(descriptor, view)
-                    if written <= 0:
-                        raise LabContractError("short write for private JSON")
-                    view = view[written:]
-                os.fsync(descriptor)
+                created = _created_file_metadata(descriptor, str(relative))
+                _write_and_fsync(descriptor, payload, "private JSON")
             except BaseException:
                 try:
                     os.close(descriptor)
                 except OSError:
                     pass
-                self._remove_created_file(parent_fd, name, created)
+                if created is not None:
+                    self._unlink_if_same(parent_fd, name, created)
                 raise
             try:
                 os.close(descriptor)
@@ -341,7 +420,7 @@ class PrivateRoot:
                 ) from error
 
             try:
-                retained = self._read_checked_file(parent_fd, name, expected=created)
+                retained, _ = self._read_checked_file(parent_fd, name, expected=created)
                 if retained != payload:
                     raise LabContractError("retained private JSON differs from write")
                 parsed = _load_exact_json_bytes(retained[:-1])
@@ -357,7 +436,7 @@ class PrivateRoot:
         name: str,
         *,
         expected: os.stat_result | None = None,
-    ) -> bytes:
+    ) -> tuple[bytes, os.stat_result]:
         descriptor = _open_checked_at(
             parent_fd,
             name,
@@ -365,12 +444,13 @@ class PrivateRoot:
             directory=False,
             expected=expected,
         )
+        metadata = os.fstat(descriptor)
         try:
             chunks: list[bytes] = []
             while True:
                 chunk = os.read(descriptor, 1024 * 1024)
                 if not chunk:
-                    return b"".join(chunks)
+                    return b"".join(chunks), metadata
                 chunks.append(chunk)
         finally:
             os.close(descriptor)
@@ -385,39 +465,25 @@ class PrivateRoot:
             pass
 
     @staticmethod
-    def _remove_created_file(
-        parent_fd: int, name: str, expected: os.stat_result | None
-    ) -> None:
-        if expected is not None:
-            PrivateRoot._unlink_if_same(parent_fd, name, expected)
-            return
-        try:
-            current = _lstat_at(parent_fd, name)
-            if not stat.S_ISDIR(current.st_mode):
-                os.unlink(name, dir_fd=parent_fd)
-        except OSError:
-            pass
-
-    @staticmethod
     def _remove_created_dir(
         parent_fd: int, name: str, expected: os.stat_result | None
     ) -> None:
+        if expected is None:
+            return
         try:
             current = _lstat_at(parent_fd, name)
-            if not stat.S_ISDIR(current.st_mode) or stat.S_ISLNK(current.st_mode):
-                return
-            if expected is not None and (current.st_dev, current.st_ino) != (
+            same_inode = (current.st_dev, current.st_ino) == (
                 expected.st_dev,
                 expected.st_ino,
-            ):
-                return
-            os.rmdir(name, dir_fd=parent_fd)
+            )
+            if same_inode and stat.S_ISDIR(current.st_mode):
+                os.rmdir(name, dir_fd=parent_fd)
         except OSError:
             pass
 
     def read_json(self, relative: str | Path) -> object:
         with self._parent(relative) as (parent_fd, name):
-            payload = self._read_checked_file(parent_fd, name)
+            payload, _ = self._read_checked_file(parent_fd, name)
         if not payload.endswith(b"\n"):
             raise LabContractError("private JSON must end with one LF")
         value = _load_exact_json_bytes(payload[:-1])
