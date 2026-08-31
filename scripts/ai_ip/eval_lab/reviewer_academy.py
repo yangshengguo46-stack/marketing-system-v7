@@ -4,9 +4,19 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 if __package__:
-    from .contracts import LabContractError, sha256_json, validate_contract
+    from .contracts import (
+        LabContractError,
+        load_exact_json,
+        sha256_json,
+        validate_contract,
+    )
 else:
-    from contracts import LabContractError, sha256_json, validate_contract
+    from contracts import (
+        LabContractError,
+        load_exact_json,
+        sha256_json,
+        validate_contract,
+    )
 
 
 class ReviewerAcademyError(ValueError):
@@ -15,6 +25,7 @@ class ReviewerAcademyError(ValueError):
 
 _LAB_ROOT = Path(__file__).resolve().parents[3] / "ai-ip-evals" / "lab"
 _REVIEWER_SCHEMA = _LAB_ROOT / "schemas" / "reviewer.schema.json"
+_FIXTURE_POLICY_PATH = _LAB_ROOT / "rubrics" / "fixture-qualification-policy.json"
 _POLICY_FIELDS = {
     "schemaVersion",
     "policyId",
@@ -59,13 +70,32 @@ def _validate_policy(policy: object) -> dict[str, object]:
     return policy
 
 
+def _load_frozen_policy() -> dict[str, object]:
+    try:
+        return _validate_policy(load_exact_json(_FIXTURE_POLICY_PATH))
+    except (LabContractError, OSError, ReviewerAcademyError) as error:
+        raise ReviewerAcademyError(
+            "frozen qualification policy is unavailable"
+        ) from error
+
+
+def _require_frozen_policy(policy: dict[str, object]) -> None:
+    frozen_policy = _load_frozen_policy()
+    if policy != frozen_policy or sha256_json(policy) != sha256_json(frozen_policy):
+        raise ReviewerAcademyError(
+            "policy must exactly match the frozen fixture policy"
+        )
+
+
 def _parse_utc(value: object, field: str) -> datetime:
     if type(value) is not str:
         raise ReviewerAcademyError(f"{field} must be an RFC3339 UTC timestamp")
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as error:
-        raise ReviewerAcademyError(f"{field} must be an RFC3339 UTC timestamp") from error
+        raise ReviewerAcademyError(
+            f"{field} must be an RFC3339 UTC timestamp"
+        ) from error
     if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
         raise ReviewerAcademyError(f"{field} must be an RFC3339 UTC timestamp")
     return parsed.astimezone(timezone.utc)
@@ -110,6 +140,7 @@ def evaluate_calibration(
     profile_value = _validate_contract(profile, "ReviewerProfile")
     attempt_value = _validate_contract(attempt, "CalibrationAttempt")
     policy_value = _validate_policy(policy)
+    _require_frozen_policy(policy_value)
 
     if profile_value["objectKind"] != "ReviewerProfile":
         raise ReviewerAcademyError("profile must be a ReviewerProfile")
@@ -129,7 +160,9 @@ def evaluate_calibration(
 
     completed_at = _parse_utc(attempt_value["completedAt"], "completedAt")
     evaluation_time = _parse_utc(evaluated_at, "evaluated_at")
-    expires_at = completed_at + timedelta(days=policy_value["qualificationLifetimeDays"])
+    expires_at = completed_at + timedelta(
+        days=policy_value["qualificationLifetimeDays"]
+    )
 
     if evaluation_time >= expires_at:
         return _receipt(profile_value, attempt_value, expires_at, "expired")

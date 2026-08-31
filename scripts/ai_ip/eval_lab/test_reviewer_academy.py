@@ -1,14 +1,20 @@
-from pathlib import Path
+import importlib
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from contracts import LabContractError, sha256_json, validate_contract
-from reviewer_academy import ReviewerAcademyError, evaluate_calibration
+_contracts = importlib.import_module("contracts")
+_academy = importlib.import_module("reviewer_academy")
+LabContractError = _contracts.LabContractError
+sha256_json = _contracts.sha256_json
+validate_contract = _contracts.validate_contract
+ReviewerAcademyError = _academy.ReviewerAcademyError
+evaluate_calibration = _academy.evaluate_calibration
 
 
 LAB_ROOT = REPO_ROOT / "ai-ip-evals" / "lab"
@@ -20,8 +26,10 @@ def test_supports_package_import():
         [
             sys.executable,
             "-c",
-            "from scripts.ai_ip.eval_lab.reviewer_academy import evaluate_calibration; "
-            "assert callable(evaluate_calibration)",
+            (
+                "from scripts.ai_ip.eval_lab.reviewer_academy import "
+                "evaluate_calibration; assert callable(evaluate_calibration)"
+            ),
         ],
         cwd=REPO_ROOT,
         check=False,
@@ -76,7 +84,9 @@ def _policy(**overrides):
     return value
 
 
-def _evaluate(profile=None, attempt=None, policy=None, evaluated_at="2026-08-31T00:00:00Z"):
+def _evaluate(
+    profile=None, attempt=None, policy=None, evaluated_at="2026-08-31T00:00:00Z"
+):
     return evaluate_calibration(
         profile or _profile(), attempt or _attempt(), policy or _policy(), evaluated_at
     )
@@ -127,7 +137,9 @@ def test_threshold_failures_return_validated_not_qualified_receipts(
 def test_disclosed_conflict_returns_not_qualified_diagnostic_receipt():
     attempt = _attempt()
 
-    receipt = _evaluate(profile=_profile(conflictDisclosure="disclosedConflict"), attempt=attempt)
+    receipt = _evaluate(
+        profile=_profile(conflictDisclosure="disclosedConflict"), attempt=attempt
+    )
 
     assert receipt["status"] == "notQualified"
     assert receipt["qualifiedDomains"] == []
@@ -141,6 +153,35 @@ def test_expired_passing_attempt_returns_expired_not_qualified_receipt():
     assert receipt["qualifiedDomains"] == []
     assert receipt["expiresAt"] == "2026-09-07T00:00:00Z"
     validate_contract(receipt, REVIEWER_SCHEMA)
+
+
+def test_expiry_boundary_is_expired_and_never_retains_qualified_domains():
+    receipt = _evaluate(evaluated_at="2026-09-07T00:00:00Z")
+
+    assert receipt["status"] == "expired"
+    assert receipt["qualifiedDomains"] == []
+
+
+@pytest.mark.parametrize(
+    ("attempt", "policy"),
+    [
+        (
+            _attempt(anchorCorrect=0, repeatAgreement=0, swapAgreement=0),
+            _policy(
+                minimumAnchorCorrect=0,
+                minimumRepeatAgreementPermille=0,
+                minimumSwapAgreementPermille=0,
+            ),
+        ),
+        (
+            _attempt(policyId="fixture-reviewer-qualification-v2"),
+            _policy(policyId="fixture-reviewer-qualification-v2"),
+        ),
+    ],
+)
+def test_rejects_policy_not_identical_to_frozen_fixture(attempt, policy):
+    with pytest.raises(ReviewerAcademyError, match="frozen"):
+        _evaluate(attempt=attempt, policy=policy)
 
 
 def test_rejects_calibration_attempt_for_another_reviewer():
@@ -170,7 +211,9 @@ def test_rejects_requested_domain_absent_from_reviewer_capabilities():
         (_profile(), _attempt(), _policy(unexpected="rejected")),
     ],
 )
-def test_rejects_unknown_fields_from_profiles_attempts_and_policies(profile, attempt, policy):
+def test_rejects_unknown_fields_from_profiles_attempts_and_policies(
+    profile, attempt, policy
+):
     with pytest.raises((ReviewerAcademyError, LabContractError)):
         _evaluate(profile=profile, attempt=attempt, policy=policy)
 
