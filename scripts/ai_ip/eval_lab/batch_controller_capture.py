@@ -36,6 +36,8 @@ class FatalSupervisorError(RuntimeError):
 class CapturedResult:
     raw: object
     telemetry: AttemptTelemetry
+    forced_evidence_failure: bool = False
+    launch_record: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -293,6 +295,10 @@ def normalize(
         "stderrBytes": stderr_evidence,
         "stdoutBytes": stdout_evidence,
     }
+    if captured.launch_record is not None:
+        raw_evidence["launchRecordSha256"] = hashlib.sha256(
+            canonical_json_bytes(captured.launch_record) + b"\n"
+        ).hexdigest()
     return NormalizedResult(
         exit_code,
         started_at,
@@ -304,6 +310,7 @@ def normalize(
         raw_evidence,
         attestation,
         invalid_result
+        or captured.forced_evidence_failure
         or bad_output
         or bad_metadata
         or bad_stdout

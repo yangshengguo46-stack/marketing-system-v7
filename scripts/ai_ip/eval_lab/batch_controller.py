@@ -9,11 +9,19 @@ try:
         seal_arm,
         seal_arm_failure,
     )
-    from .batch_controller_execution import counting_executor, start_and_capture_pair
+    from . import batch_controller_process as _process
     from .batch_controller_identity import ExecutionIdentityError
     from .batch_controller_lifecycle import PairLifecycle, PairLifecycleError
     from .batch_controller_reservation import reserve_batch, reserve_single
     from . import batch_controller_types as _types
+    from .batch_launch_spec import (
+        CandidateLaunchSet,
+        LaunchArtifact,
+        LaunchSpec,
+        LaunchSpecError,
+        ValidatedLaunchSet,
+        validate_launch_set,
+    )
     from .batch_receipt_storage import seal_failure_tombstone
     from .batch_controller_staging import stage_inputs
     from .batch_controller_support import (
@@ -48,11 +56,19 @@ except ImportError:
         seal_arm,
         seal_arm_failure,
     )
-    from batch_controller_execution import counting_executor, start_and_capture_pair
+    import batch_controller_process as _process
     from batch_controller_identity import ExecutionIdentityError
     from batch_controller_lifecycle import PairLifecycle, PairLifecycleError
     from batch_controller_reservation import reserve_batch, reserve_single
     import batch_controller_types as _types
+    from batch_launch_spec import (
+        CandidateLaunchSet,
+        LaunchArtifact,
+        LaunchSpec,
+        LaunchSpecError,
+        ValidatedLaunchSet,
+        validate_launch_set,
+    )
     from batch_receipt_storage import seal_failure_tombstone
     from batch_controller_staging import stage_inputs
     from batch_controller_support import (
@@ -100,7 +116,7 @@ class BatchControllerError(ValueError):
 def _run_candidate_pair(
     plan_value: dict[str, object],
     validated: ValidatedBindings,
-    executor: CandidateExecutor,
+    launches: ValidatedLaunchSet,
     private_root: Path,
     *,
     active_seed: bytes,
@@ -110,7 +126,7 @@ def _run_candidate_pair(
         return _run_candidate_pair_scoped(
             plan_value,
             validated,
-            executor,
+            launches,
             private_root,
             active_seed=active_seed,
             resources=resources,
@@ -121,7 +137,7 @@ def _run_candidate_pair(
 def _run_candidate_pair_scoped(
     plan_value: dict[str, object],
     validated: ValidatedBindings,
-    executor: CandidateExecutor,
+    launches: ValidatedLaunchSet,
     private_root: Path,
     *,
     active_seed: bytes,
@@ -236,7 +252,27 @@ def _run_candidate_pair_scoped(
         )
         for name in ("stock", "modified")
     }
-    captured = start_and_capture_pair(executor, prepared, order)
+    process_specs = {"stock": launches.stock, "modified": launches.modified}
+    processes: dict[str, object] = {}
+    launch_errors: list[BaseException] = []
+    for name in order:
+        try:
+            candidate = _process.prepare_process(prepared[name][1], process_specs[name])
+            owned = _process.spawn(
+                candidate,
+                min(
+                    int(validated.execution_profile["maxOutputBytes"]),
+                    16 * 1024 * 1024,
+                ),
+            )
+            lifecycle.bind_process(owned)
+            processes[name] = owned
+            _process.seal_launch_record(owned, directories[name])
+        except BaseException as error:
+            launch_errors.append(error)
+    if launch_errors:
+        raise BatchControllerError("candidate process launch failed") from launch_errors[0]
+    captured = _process.supervise_pair(processes)
     try:
         layout.verify()
     except BaseException as error:
@@ -334,19 +370,16 @@ def _run_candidate_pair_scoped(
 def run_candidate_pair(
     plan: object,
     bindings: object,
-    executor: CandidateExecutor,
+    launches: CandidateLaunchSet,
     private_root: Path,
     *,
     seed: bytes | None = None,
 ) -> dict[str, object]:
     require_supported_isolation_platform()
     try:
-        counted = counting_executor(executor)
-    except ValueError as error:
-        raise BatchControllerError(str(error)) from error
-    try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
+        validated_launches = validate_launch_set(launches, validated)
         plan_value = validated.plan
         if plan_value.get("replicationCount") != 1:
             raise ControllerSupportError(
@@ -359,11 +392,16 @@ def run_candidate_pair(
         return _run_candidate_pair(
             plan_value,
             validated,
-            counted,
+            validated_launches,
             Path(private_root),
             active_seed=active_seed,
         )
-    except (BatchReceiptError, ExecutionIdentityError, PairLifecycleError) as error:
+    except (
+        BatchReceiptError,
+        ExecutionIdentityError,
+        LaunchSpecError,
+        PairLifecycleError,
+    ) as error:
         raise BatchControllerError(str(error)) from error
     except BaseException:
         raise
@@ -372,19 +410,16 @@ def run_candidate_pair(
 def run_candidate_batch(
     plan: object,
     bindings: object,
-    executor: CandidateExecutor,
+    launches: CandidateLaunchSet,
     private_root: Path,
     *,
     seed: bytes | None = None,
 ) -> list[dict[str, object]]:
     require_supported_isolation_platform()
     try:
-        counted = counting_executor(executor)
-    except ValueError as error:
-        raise BatchControllerError(str(error)) from error
-    try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
+        validated_launches = validate_launch_set(launches, validated)
         plan_value = validated.plan
     except ControllerSupportError as error:
         raise BatchControllerError(str(error)) from error
@@ -397,7 +432,7 @@ def run_candidate_batch(
             _run_candidate_pair(
                 plan_value,
                 validated,
-                counted,
+                validated_launches,
                 Path(private_root),
                 active_seed=active_seed,
             )

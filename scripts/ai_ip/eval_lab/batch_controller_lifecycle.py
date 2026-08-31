@@ -30,6 +30,7 @@ class PairLifecycle:
         self.pair_id = pair_id
         self.layout = None
         self.cells: list[object] = []
+        self.processes: list[object] = []
         self.completed = False
 
     def __enter__(self) -> "PairLifecycle":
@@ -48,7 +49,13 @@ class PairLifecycle:
     def bind_cell(self, cell: object) -> None:
         self.cells.append(cell)
 
+    def bind_process(self, process: object) -> None:
+        """Own a concrete process immediately after the OS returns its handle."""
+        self.processes.append(process)
+
     def complete(self) -> None:
+        if any(item.process.poll() is None for item in self.processes):
+            raise PairLifecycleError("pair process is still live at completion")
         self.completed = True
 
     def _tombstone(self, directory: object, error: BaseException) -> None:
@@ -82,7 +89,20 @@ class PairLifecycle:
                     self._tombstone(directory, error)
                 except BaseException:
                     pass
-        if isinstance(error, FatalSupervisorError):
+        orphaned = isinstance(error, FatalSupervisorError)
+        if self.processes:
+            try:
+                from .batch_controller_process import terminate_and_wait
+            except ImportError:
+                from batch_controller_process import terminate_and_wait
+
+            for process in self.processes:
+                try:
+                    if not terminate_and_wait(process, __import__("time").monotonic() + 1.0):
+                        orphaned = True
+                except BaseException:
+                    orphaned = True
+        if orphaned:
             try:
                 self._record_orphan(error)
             except BaseException:

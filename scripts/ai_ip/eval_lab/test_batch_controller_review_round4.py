@@ -121,9 +121,10 @@ def _launches(world: World, *, mode: str = "normal"):
 
     def spec(arm: str):
         binding = world.bindings[arm]
+        executable = Path(sys.executable).resolve()
         return spec_type(
-            executable_path=Path(sys.executable),
-            executable_sha256=sha256_file(Path(sys.executable)),
+            executable_path=executable,
+            executable_sha256=sha256_file(executable),
             argv=("{artifact:runner.py}",),
             environment=(("AI_IP_FIXTURE_MODE", mode),),
             artifacts=(script,),
@@ -174,7 +175,10 @@ def test_controller_launch_record_comes_from_opened_executable_and_exact_bytes(
         for path in world.private_root.glob("attempts/*/launch-record.json")
     ]
     assert len(records) == 2
-    assert all(record["executableSha256"] == sha256_file(Path(sys.executable)) for record in records)
+    assert all(
+        record["executableSha256"] == sha256_file(Path(sys.executable).resolve())
+        for record in records
+    )
     assert all(record["copiedExecutableSha256"] == record["executableSha256"] for record in records)
     assert all(record["argv"] and record["environmentSha256"] for record in records)
 
