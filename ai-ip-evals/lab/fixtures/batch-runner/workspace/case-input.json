@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "inputId": "provider-free-smoke",
+  "prompt": "Return only a JSON object matching the requested output schema.",
+  "outputSchemaId": "case-answer-v1"
+}
