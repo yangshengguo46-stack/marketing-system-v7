@@ -390,6 +390,33 @@ def test_four_streams_share_one_total_acquisition_and_storage_budget(
         assert raw["aggregateStreamBytes"]["truncated"] is True
 
 
+def test_completed_process_stream_objects_relinquish_every_descriptor(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    process_module = batch_controller._process
+    real_popen = process_module._Popen
+    processes: list[object] = []
+
+    def tracking_popen(*args, **kwargs):
+        process = real_popen(*args, **kwargs)
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(process_module, "_Popen", tracking_popen)
+
+    receipt = batch_controller.run_candidate_pair(
+        world.plan,
+        world.bindings,
+        _launches(world, _BOUND_CHILD),
+        world.private_root,
+        seed=b"v" * 32,
+    )
+
+    assert receipt["pairValidity"] == "valid"
+    assert processes
+    assert all(process.stdout.closed and process.stderr.closed for process in processes)
+
+
 @pytest.mark.parametrize(
     "checkpoint",
     [

@@ -154,10 +154,35 @@ def _close_descriptor(descriptor: int) -> None:
 
 
 def close_owned(owned: OwnedProcess) -> None:
-    for descriptor in set(owned.read_descriptors.values()):
-        _close_descriptor(descriptor)
+    for name, descriptor in list(owned.read_descriptors.items()):
+        _close_read_descriptor(owned, name, descriptor)
     owned.read_descriptors.clear()
     owned.prepared.close()
+
+
+def _close_process_stream(process: subprocess.Popen, name: str) -> int | None:
+    stream = getattr(process, name, None)
+    if stream is None:
+        return None
+    try:
+        descriptor = stream.fileno()
+    except (OSError, ValueError):
+        descriptor = None
+    try:
+        stream.close()
+    except OSError:
+        pass
+    return descriptor
+
+
+def _close_read_descriptor(
+    owned: OwnedProcess, name: str, descriptor: int
+) -> None:
+    if name in {"stdout", "stderr"}:
+        _close_process_stream(owned.process, name)
+    else:
+        _close_descriptor(descriptor)
+    owned.read_descriptors.pop(name, None)
 
 
 class ProcessOwnershipGuard:
@@ -189,6 +214,10 @@ class ProcessOwnershipGuard:
             confirmed = _terminate_process(
                 self.process, self.group_id, time.monotonic() + _STOP_SECONDS
             )
+            for name in ("stdout", "stderr"):
+                descriptor = _close_process_stream(self.process, name)
+                if descriptor is not None:
+                    self.descriptors.discard(descriptor)
         for descriptor in tuple(self.descriptors):
             _close_descriptor(descriptor)
         self.descriptors.clear()
@@ -384,7 +413,8 @@ def supervise_pair(
                     for descriptor, (owner, _) in list(descriptor_owner.items()):
                         if owner is item:
                             selector.unregister(descriptor)
-                            _close_descriptor(descriptor)
+                            _, name = descriptor_owner[descriptor]
+                            _close_read_descriptor(item, name, descriptor)
                             descriptor_owner.pop(descriptor)
                     for buffer in item.buffers.values():
                         buffer.raw_complete = False
@@ -415,7 +445,7 @@ def supervise_pair(
                     continue
                 if not chunk:
                     selector.unregister(descriptor)
-                    _close_descriptor(descriptor)
+                    _close_read_descriptor(item, name, descriptor)
                     descriptor_owner.pop(descriptor)
                     continue
                 if draining:
@@ -437,8 +467,8 @@ def supervise_pair(
         return {name: captured_result(item, _now()) for name, item in owned.items()}
     finally:
         selector.close()
-        for descriptor in list(descriptor_owner):
-            _close_descriptor(descriptor)
+        for descriptor, (item, name) in list(descriptor_owner.items()):
+            _close_read_descriptor(item, name, descriptor)
         for item in owned.values():
             item.read_descriptors.clear()
             item.prepared.close()
