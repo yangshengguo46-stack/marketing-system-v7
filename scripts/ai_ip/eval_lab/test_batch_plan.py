@@ -742,3 +742,42 @@ def test_effective_condition_parity_rejects_missing_key_and_plan_id_mutation(
     modified["planId"] = "other-plan"
     with pytest.raises(BatchPlanError, match="undeclared condition difference"):
         verify_effective_condition_parity(valid_plan, modified)
+
+
+def test_fallback_rejects_root_replaced_during_first_enumeration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Catches fallback traversal that adopts a root swapped after scan begins."""
+    root, detached = tmp_path / "root", tmp_path / "detached"
+    root.mkdir()
+    (root / "old").write_bytes(b"old")
+    scandir = batch_plan.os.scandir
+
+    def scan_then_replace(path: Path):
+        entries = list(scandir(path))
+        root.rename(detached)
+        root.mkdir()
+        (root / "new").write_bytes(b"new")
+        return iter(entries)
+
+    monkeypatch.setattr(batch_plan, "_descriptor_traversal_available", lambda: False)
+    monkeypatch.setattr(batch_plan.os, "scandir", scan_then_replace)
+    with pytest.raises(BatchPlanError, match="tree changed"):
+        sha256_tree(root)
+
+
+@pytest.mark.parametrize("root_kind", ["missing", "file", "symlink"])
+def test_fallback_rejects_unsafe_root_before_enumeration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, root_kind: str
+) -> None:
+    """Catches fallback roots that are missing, non-directories, or links."""
+    root = tmp_path / "root"
+    if root_kind == "file":
+        root.write_bytes(b"file")
+    elif root_kind == "symlink":
+        target = tmp_path / "target"
+        target.mkdir()
+        root.symlink_to(target, target_is_directory=True)
+    monkeypatch.setattr(batch_plan, "_descriptor_traversal_available", lambda: False)
+    with pytest.raises(BatchPlanError, match="tree root"):
+        sha256_tree(root)

@@ -151,33 +151,44 @@ def _descriptor_traversal_available() -> bool:
 
 def _fallback_snapshot_tree(root: Path) -> TreeSnapshot:
     """Capture a Windows-compatible tree with complete before/after identities."""
-    states: dict[Path, os.stat_result] = {}
+    try:
+        root_state = root.lstat()
+    except OSError as error:
+        raise BatchPlanError("tree root is unavailable") from error
+    if (
+        stat.S_ISLNK(root_state.st_mode)
+        or not stat.S_ISDIR(root_state.st_mode)
+        or getattr(root_state, "st_file_attributes", 0) & 0x400
+    ):
+        raise BatchPlanError("tree root must be a non-reparse directory")
+    states: dict[Path, os.stat_result] = {root: root_state}
+    file_states: dict[Path, os.stat_result] = {}
     entries, files = [], {}
     total = 0
-    for directory, dirnames, filenames in os.walk(root, followlinks=False):
-        current = Path(directory)
-        metadata = current.lstat()
-        if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
-            raise BatchPlanError("symbolic link or reparse point is not allowed")
-        states[current] = metadata
-        for name in sorted(dirnames):
-            path = current / name
-            metadata = path.lstat()
-            if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
-                raise BatchPlanError("symbolic link or reparse point is not allowed")
-        for name in sorted(filenames):
-            path = current / name
-            relative = _safe_relative_path(path.relative_to(root))
-            metadata = path.lstat()
-            if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
-                raise BatchPlanError(f"symbolic link or reparse point is not allowed: {relative}")
-            _require_regular_file(metadata, relative)
-            digest, size, mode, payload = _stable_file(path)
-            total += size
-            if total > _MAX_TREE_BYTES: raise BatchPlanError("tree exceeds 64 MiB")
-            files[relative] = (digest, payload)
-            entries.append({"mode": mode, "path": relative, "sha256": digest, "size": size})
-    if any(_file_state(before) != _file_state(path.lstat()) for path, before in states.items()):
+    pending = [root]
+    try:
+        while pending:
+            current = pending.pop()
+            for child in sorted(os.scandir(current), key=lambda entry: entry.name):
+                name, path = child.name, current / child.name
+                metadata = path.lstat()
+                relative = _safe_relative_path(path.relative_to(root))
+                if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
+                    raise BatchPlanError(f"symbolic link or reparse point is not allowed: {relative}")
+                if stat.S_ISDIR(metadata.st_mode):
+                    states[path] = metadata
+                    pending.append(path)
+                    continue
+                _require_regular_file(metadata, relative)
+                digest, size, mode, payload = _stable_file(path)
+                file_states[path] = metadata
+                total += size
+                if total > _MAX_TREE_BYTES: raise BatchPlanError("tree exceeds 64 MiB")
+                files[relative] = (digest, payload)
+                entries.append({"mode": mode, "path": relative, "sha256": digest, "size": size})
+    except OSError as error:
+        raise BatchPlanError("tree changed during traversal") from error
+    if any(_file_state(before) != _file_state(path.lstat()) for path, before in states.items()) or any(_file_state(before) != _file_state(path.lstat()) for path, before in file_states.items()):
         raise BatchPlanError("tree changed during traversal")
     return TreeSnapshot(sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}), files)
 
