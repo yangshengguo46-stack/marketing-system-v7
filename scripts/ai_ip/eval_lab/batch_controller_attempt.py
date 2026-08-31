@@ -1,7 +1,6 @@
 """Preparation, capture, normalization, and sealing for one candidate arm."""
 
 from datetime import datetime, timezone
-from pathlib import Path
 
 try:
     from .batch_controller_artifacts import materialize_neutral_binary_bytes
@@ -26,7 +25,12 @@ try:
     from .batch_plan import sha256_tree
     from .batch_receipts import seal_arm_attempt_receipt
     from .batch_receipt_storage import write_entry
-    from .contracts import LabContractError, canonical_json_bytes, sha256_json
+    from .contracts import (
+        CompiledContract,
+        LabContractError,
+        canonical_json_bytes,
+        sha256_json,
+    )
 except ImportError:
     from batch_controller_artifacts import materialize_neutral_binary_bytes
     from batch_controller_capture import (
@@ -50,7 +54,12 @@ except ImportError:
     from batch_plan import sha256_tree
     from batch_receipts import seal_arm_attempt_receipt
     from batch_receipt_storage import write_entry
-    from contracts import LabContractError, canonical_json_bytes, sha256_json
+    from contracts import (
+        CompiledContract,
+        LabContractError,
+        canonical_json_bytes,
+        sha256_json,
+    )
 
 
 def _failure_result(error: BaseException) -> RawAttemptResult:
@@ -138,7 +147,7 @@ def seal_arm(
     bindings: ValidatedBindings,
     before: str,
     captured: object,
-    schema_path: Path,
+    schema: CompiledContract,
 ) -> tuple[dict[str, object], object, bytes]:
     raw = normalize(
         captured,
@@ -160,7 +169,7 @@ def seal_arm(
         output,
         metadata,
         plan,
-        schema_path,
+        schema,
         started_at=raw.raw_evidence["startedAt"],
         finished_at=raw.raw_evidence["finishedAt"],
         request_count=raw.raw_evidence["requestCount"],
@@ -205,7 +214,6 @@ def seal_arm(
         input_sha256=str(plan["caseBundleSha256"]),
         workspace_before_sha256=before,
         workspace_after_sha256=after,
-        workspace_path=cell.workspace,
         app_server_protocol_schema_sha256=bindings.protocol_sha256,
         promptfoo_config_sha256=bindings.promptfoo_config_sha256,
         started_at=raw.started_at,

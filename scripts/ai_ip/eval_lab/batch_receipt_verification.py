@@ -28,7 +28,9 @@ try:
         read_bounded,
     )
     from .contracts import (
+        CompiledContract,
         canonical_json_bytes,
+        compile_contract,
         sha256_json,
     )
     from .private_fs import PrivateRoot
@@ -56,7 +58,9 @@ except ImportError:
         read_bounded,
     )
     from contracts import (
+        CompiledContract,
         canonical_json_bytes,
+        compile_contract,
         sha256_json,
     )
     from private_fs import PrivateRoot
@@ -82,13 +86,14 @@ def _metadata_parts(metadata: object) -> tuple[object, object, object, object, o
     )
 
 
-def _load_pair_context(
-    private_root: Path, pair_id: str, evidence: OfflineEvidence
-) -> tuple[dict[str, object], dict[str, object], Path, dict[str, object]]:
-    root = Path(private_root)
+PairContext = tuple[
+    dict[str, object], dict[str, object], CompiledContract, dict[str, object]
+]
+
+
+def _load_pair_context(pair_id: str, evidence: OfflineEvidence) -> PairContext:
     plan = evidence.load_pair("plan.json", MAX_CONTEXT_BYTES)
     profile = evidence.load_pair("execution-profile.json", MAX_CONTEXT_BYTES)
-    schema_path = evidence.pair.path / "case-answer-schema.json"
     identity = evidence.load_pair("identity-context.json", MAX_CONTEXT_BYTES)
     if (
         type(plan) is not dict
@@ -101,11 +106,10 @@ def _load_pair_context(
         verify_self_commitment(plan, "planSha256")
         validate_named_contract("execution-profile", profile)
         schema_bytes = evidence.read_pair("case-answer-schema.json", MAX_CONTEXT_BYTES)
-        if type(json.loads(schema_bytes)) is not dict:
-            raise BatchReceiptError("sealed CaseAnswer schema is invalid")
+        schema = compile_contract(schema_bytes)
     except (
         BatchContractError,
-        json.JSONDecodeError,
+        ValueError,
         OSError,
     ) as error:
         raise BatchReceiptError("sealed pair context is invalid") from error
@@ -115,11 +119,11 @@ def _load_pair_context(
         raise BatchReceiptError("sealed execution profile commitment mismatch")
     if profile["maxWallClockSeconds"] != plan["timeoutBudget"]:
         raise BatchReceiptError("sealed execution timeout mismatch")
-    return plan, profile, schema_path, identity
+    return plan, profile, schema, identity
 
 
 def _verify_arm_details(
-    receipt: object, private_root: Path, evidence: OfflineEvidence
+    receipt: object, evidence: OfflineEvidence, context: PairContext
 ) -> tuple[dict[str, object], object, str]:
     try:
         validate_named_contract("arm-attempt-receipt", receipt)
@@ -129,9 +133,7 @@ def _verify_arm_details(
     assert type(receipt) is dict
     attempt_id = identifier(receipt["attemptId"], "attempt ID")
     pair_id = identifier(receipt["pairId"], "pair ID")
-    plan, profile, schema_path, identity = _load_pair_context(
-        private_root, pair_id, evidence
-    )
+    plan, profile, schema, identity = context
     if evidence.load_attempt(attempt_id, "receipt.json") != receipt:
         raise BatchReceiptError("arm receipt differs from sealed private receipt")
     output = evidence.load_attempt(attempt_id, "output.json")
@@ -147,7 +149,7 @@ def _verify_arm_details(
         "stderrSha256": _sha256_bytes(stderr),
         "stdoutSha256": _sha256_bytes(stdout),
         "trajectory": _metadata_parts(metadata)[2],
-        "workspacePath": envelope.get("workspacePath"),
+        "workspaceAfterSha256": envelope.get("workspaceAfterSha256"),
         "rawEvidence": envelope.get("rawEvidence"),
     }
     if envelope != expected or sha256_json(envelope) != receipt["trajectorySha256"]:
@@ -232,7 +234,7 @@ def _verify_arm_details(
         output,
         metadata,
         plan,
-        schema_path,
+        schema,
         started_at=raw.get("startedAt"),
         finished_at=raw.get("finishedAt"),
         request_count=raw.get("requestCount"),
@@ -248,11 +250,7 @@ def _verify_arm_details(
         or receipt["failureDetails"] != details
     ):
         raise BatchReceiptError("arm receipt classification is false")
-    try:
-        workspace_digest = sha256_tree(Path(str(envelope["workspacePath"])))
-    except BatchPlanError as error:
-        raise BatchReceiptError("sealed workspace cannot be verified") from error
-    if workspace_digest != receipt["workspaceAfterSha256"]:
+    if envelope.get("workspaceAfterSha256") != receipt["workspaceAfterSha256"]:
         raise BatchReceiptError("evidence commitment mismatch")
     return receipt, output, arm_class
 
@@ -265,7 +263,8 @@ def verify_arm_attempt_receipt(receipt: object, private_root: Path) -> None:
         private_root, identifier(receipt.get("pairId"), "pair ID")
     )
     try:
-        _verify_arm_details(receipt, private_root, evidence)
+        context = _load_pair_context(str(receipt["pairId"]), evidence)
+        _verify_arm_details(receipt, evidence, context)
         evidence.verify()
     finally:
         evidence.close()
@@ -282,7 +281,8 @@ def _verify_pair_with_evidence(
         raise BatchReceiptError(f"pair receipt verification failed: {error}") from error
     assert type(receipt) is dict
     pair_id = identifier(receipt["pairId"], "pair ID")
-    plan, _, _, identity = _load_pair_context(private_root, pair_id, evidence)
+    context = _load_pair_context(pair_id, evidence)
+    plan, _, _, identity = context
     if receipt["planSha256"] != plan["planSha256"]:
         raise BatchReceiptError("pair plan commitment mismatch")
     if evidence.load_pair("receipt.json") != receipt:
@@ -321,7 +321,7 @@ def _verify_pair_with_evidence(
         arm = evidence.load_attempt(attempt, "receipt.json")
         if type(arm) is not dict or arm.get("attemptId") != attempt:
             raise BatchReceiptError("pair arm receipt is invalid")
-        arm_values.append(_verify_arm_details(arm, private_root, evidence))
+        arm_values.append(_verify_arm_details(arm, evidence, context))
     by_commitment = {
         arm["receiptSha256"]: (arm, output, arm_class)
         for arm, output, arm_class in arm_values

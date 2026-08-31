@@ -260,6 +260,11 @@ def normalize(
         metadata["costEvidence"] = {
             **(cost if type(cost) is dict else {}),
             "costCny": telemetry.cost_cny,
+            "sourceSha256": (
+                cost.get("sourceSha256")
+                if type(cost) is dict and type(cost.get("sourceSha256")) is str
+                else hashlib.sha256(b"controller-owned-telemetry").hexdigest()
+            ),
         }
         stored_metadata = canonical_json_bytes(metadata) + b"\n"
         metadata_evidence["storedSha256"] = hashlib.sha256(stored_metadata).hexdigest()

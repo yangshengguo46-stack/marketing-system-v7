@@ -50,6 +50,7 @@ try:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
+    from .contracts import compile_contract
 except ImportError:
     from batch_controller_attempt import (
         prepare_arm,
@@ -97,6 +98,7 @@ except ImportError:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
+    from contracts import compile_contract
 
 
 AttemptAttestation = _types.AttemptAttestation
@@ -243,6 +245,7 @@ def _run_candidate_pair_scoped(
     directories = {"stock": attempt_directories[0], "modified": attempt_directories[1]}
     arm_receipts: dict[str, dict[str, object]] = {}
     outputs: dict[str, tuple[object, bytes]] = {}
+    case_answer_validator = compile_contract(validated.case_answer_schema_file.payload)
     prepared = {
         name: prepare_arm(
             arms[name],
@@ -292,7 +295,7 @@ def _run_candidate_pair_scoped(
                 validated,
                 prepared[name][0],
                 captured[name],
-                staged.schema_path,
+                case_answer_validator,
             )
             arm_receipts[name] = arm_receipt
             outputs[name] = (output, output_bytes)

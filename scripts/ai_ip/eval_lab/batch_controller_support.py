@@ -27,11 +27,12 @@ try:
         SnapshotError,
     )
     from .contracts import (
+        CompiledContract,
         LabContractError,
         canonical_json_bytes,
         load_exact_json,
         sha256_json,
-        validate_contract,
+        validate_compiled_contract,
     )
 except ImportError:
     from batch_contracts import BatchContractError, validate_named_contract
@@ -51,11 +52,12 @@ except ImportError:
         SnapshotError,
     )
     from contracts import (
+        CompiledContract,
         LabContractError,
         canonical_json_bytes,
         load_exact_json,
         sha256_json,
-        validate_contract,
+        validate_compiled_contract,
     )
 
 
@@ -354,7 +356,7 @@ def classify_attempt_result(
     output: object,
     metadata: object,
     plan: dict[str, object],
-    schema_path: Path,
+    schema: CompiledContract,
     *,
     started_at: object,
     finished_at: object,
@@ -374,7 +376,7 @@ def classify_attempt_result(
     if type(metadata) is dict and metadata.get("timedOut") is True:
         return "executionFailure", "candidate execution timed out"
     try:
-        validate_contract(output, schema_path)
+        validate_compiled_contract(output, schema)
     except LabContractError:
         return "schemaFailure", "candidate output failed CaseAnswer validation"
     assert type(output) is dict

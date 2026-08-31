@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import NoReturn
@@ -25,6 +26,23 @@ _RFC3339_TIMESTAMP = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
 )
 _FORMAT_CHECKER = FormatChecker()
+
+
+@dataclass(frozen=True, slots=True)
+class CompiledContract:
+    """An immutable validation authority compiled from already-acquired bytes."""
+
+    schema_sha256: str
+    _validator: Draft202012Validator = field(repr=False, compare=False)
+
+    def validate(self, value: object) -> None:
+        _require_wire_value(value)
+        try:
+            self._validator.validate(value)
+        except ValidationError as error:
+            raise LabContractError(
+                f"contract validation failed: {error.message}"
+            ) from error
 
 
 @_FORMAT_CHECKER.checks("date-time")
@@ -66,6 +84,31 @@ def _load_exact_json_bytes(payload: bytes) -> object:
 
 def load_exact_json(path: Path) -> object:
     return _load_exact_json_bytes(path.read_bytes())
+
+
+def compile_contract(payload: bytes) -> CompiledContract:
+    """Compile exact schema bytes without retaining or reopening a pathname."""
+    if type(payload) is not bytes:
+        raise LabContractError("contract schema bytes must be immutable")
+    schema = _load_exact_json_bytes(payload)
+    if type(schema) is not dict:
+        raise LabContractError("contract schema must be a JSON object")
+    try:
+        Draft202012Validator.check_schema(schema)
+    except SchemaError as error:
+        raise LabContractError(
+            f"contract validation failed: {error.message}"
+        ) from error
+    return CompiledContract(
+        hashlib.sha256(payload).hexdigest(),
+        Draft202012Validator(schema, format_checker=_FORMAT_CHECKER),
+    )
+
+
+def validate_compiled_contract(value: object, contract: CompiledContract) -> None:
+    if type(contract) is not CompiledContract:
+        raise LabContractError("compiled contract authority is invalid")
+    contract.validate(value)
 
 
 def _require_wire_value(value: object, active: set[int] | None = None) -> None:
@@ -119,14 +162,4 @@ def sha256_json(value: object) -> str:
 
 
 def validate_contract(value: object, schema_path: Path) -> None:
-    _require_wire_value(value)
-    schema = load_exact_json(schema_path)
-    if type(schema) is not dict:
-        raise LabContractError("contract schema must be a JSON object")
-    try:
-        Draft202012Validator.check_schema(schema)
-        Draft202012Validator(schema, format_checker=_FORMAT_CHECKER).validate(value)
-    except (SchemaError, ValidationError) as error:
-        raise LabContractError(
-            f"contract validation failed: {error.message}"
-        ) from error
+    validate_compiled_contract(value, compile_contract(schema_path.read_bytes()))

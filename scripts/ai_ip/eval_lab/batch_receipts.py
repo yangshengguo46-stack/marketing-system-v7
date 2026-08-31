@@ -218,7 +218,6 @@ def seal_arm_attempt_receipt(
     input_sha256: str,
     workspace_before_sha256: str,
     workspace_after_sha256: str,
-    workspace_path: Path,
     app_server_protocol_schema_sha256: str,
     promptfoo_config_sha256: str,
     started_at: str,
@@ -246,7 +245,7 @@ def seal_arm_attempt_receipt(
         "stderrSha256": _sha256_bytes(stderr),
         "stdoutSha256": _sha256_bytes(stdout),
         "trajectory": trajectory,
-        "workspacePath": str(Path(workspace_path)),
+        "workspaceAfterSha256": workspace_after_sha256,
         "rawEvidence": raw_evidence,
     }
     evidence_bytes = _json_bytes(evidence)

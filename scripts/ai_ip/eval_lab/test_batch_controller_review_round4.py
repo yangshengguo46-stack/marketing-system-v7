@@ -243,7 +243,7 @@ def test_second_launch_failure_stops_and_waits_first_owned_process(
     plan, bindings = _one_second(world)
     child_world = World(plan, bindings, world.private_root)
     process_module = getattr(batch_controller, "_process")
-    real_popen = subprocess.Popen
+    real_popen = process_module._Popen
     first = None
     calls = 0
 
@@ -255,7 +255,7 @@ def test_second_launch_failure_stops_and_waits_first_owned_process(
         first = real_popen(*args, **kwargs)
         return first
 
-    monkeypatch.setattr(process_module.subprocess, "Popen", fail_second)
+    monkeypatch.setattr(process_module, "_Popen", fail_second)
 
     with pytest.raises(BatchControllerError, match="launch|process|lifecycle"):
         batch_controller.run_candidate_pair(

@@ -1,5 +1,6 @@
 """All-exit terminalization for one reserved candidate pair."""
 
+import time
 from pathlib import Path
 
 try:
@@ -56,6 +57,12 @@ class PairLifecycle:
     def complete(self) -> None:
         if any(item.process.poll() is None for item in self.processes):
             raise PairLifecycleError("pair process is still live at completion")
+        for cell in self.cells:
+            try:
+                cleanup_attempt_cell(cell)
+            except BaseException as error:
+                self._record_orphan(error)
+                raise PairLifecycleError("sealed attempt cell cleanup failed") from error
         self.completed = True
 
     def _tombstone(self, directory: object, error: BaseException) -> None:
@@ -98,7 +105,7 @@ class PairLifecycle:
 
             for process in self.processes:
                 try:
-                    if not terminate_and_wait(process, __import__("time").monotonic() + 1.0):
+                    if not terminate_and_wait(process, time.monotonic() + 1.0):
                         orphaned = True
                 except BaseException:
                     orphaned = True

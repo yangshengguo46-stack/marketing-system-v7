@@ -41,6 +41,7 @@ except ImportError:
 
 _CHUNK_BYTES = 64 * 1024
 _MAX_EVENTS = 1_024
+_Popen = subprocess.Popen
 
 
 class ProcessLaunchError(RuntimeError):
@@ -192,6 +193,7 @@ def spawn(prepared: PreparedProcess, limit: int) -> OwnedProcess:
     environment.update(dict(prepared.spec.environment))
     environment.update(
         {
+            "AI_IP_ATTEMPT_ID": prepared.request.cell.attempt_id,
             "AI_IP_CODEX_PATH": str(prepared.request.binary_path),
             "AI_IP_CONFIG_PATH": str(prepared.artifact_paths["config"]),
             "AI_IP_PROFILE_PATH": str(prepared.artifact_paths["profile"]),
@@ -204,7 +206,7 @@ def spawn(prepared: PreparedProcess, limit: int) -> OwnedProcess:
         }
     )
     try:
-        process = subprocess.Popen(
+        process = _Popen(
             argv,
             executable=str(prepared.launcher_path),
             cwd=prepared.request.cell.workspace,
@@ -342,7 +344,19 @@ def _captured(owned: OwnedProcess) -> CapturedResult:
     except (TypeError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
         forced = True
         output_bytes = result_payload
-        metadata_bytes = b"null"
+        metadata_bytes = canonical_json_bytes(
+            {
+                "costEvidence": {
+                    "costCny": 0,
+                    "sourceSha256": hashlib.sha256(b"invalid-result-envelope").hexdigest(),
+                },
+                "requestCount": 0,
+                "threadId": None,
+                "trajectory": None,
+                "turnId": None,
+                "usage": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0},
+            }
+        )
     try:
         telemetry_value = _json(telemetry_payload)
         if type(telemetry_value) is not dict:
