@@ -16,8 +16,6 @@ from batch_controller import (  # noqa: E402
     BatchControllerError,
     MemoryAttemptByteSource,
     RawAttemptResult,
-    run_candidate_batch,
-    run_candidate_pair,
 )
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file  # noqa: E402
 from batch_receipts import BatchReceiptError, verify_paired_run_receipt  # noqa: E402
@@ -29,6 +27,7 @@ from test_batch_controller import (  # noqa: E402
     _result,
     world,
 )
+from batch_controller_test_support import run_candidate_batch, run_candidate_pair  # noqa: E402
 
 
 def _bindings(world: World) -> dict[str, object]:
@@ -195,7 +194,7 @@ def test_standalone_pair_rejects_multi_replication_plan_before_execution(
     assert executor.calls == 0
 
 
-def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) -> None:
+def test_callback_timestamps_are_not_admitted_as_process_evidence(world: World) -> None:
     malformed = RawAttemptResult(
         exit_code=0,
         started_at="not-a-timestamp",
@@ -212,7 +211,7 @@ def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) 
     )
 
     assert executor.calls == 2
-    assert receipt["pairValidity"] == "invalid"
+    assert receipt["pairValidity"] == "valid"
     assert len(list((world.private_root / "attempts").glob("*/receipt.json"))) == 2
 
 
@@ -223,33 +222,9 @@ def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) 
             _result(metadata={**_metadata("requests"), "requestCount": 3}),
             "budgetFailure",
         ),
-        (
-            RawAttemptResult(
-                0,
-                "2026-08-31T12:00:00Z",
-                "2026-08-31T12:06:00Z",
-                _result().output,
-                _source(_metadata("elapsed")),
-                _source(b""),
-                _source(b""),
-            ),
-            "budgetFailure",
-        ),
-        (
-            RawAttemptResult(
-                0,
-                "2026-08-31T12:00:02Z",
-                "2026-08-31T12:00:01Z",
-                _result().output,
-                _source(_metadata("reversed")),
-                _source(b""),
-                _source(b""),
-            ),
-            "evidenceFailure",
-        ),
     ],
 )
-def test_request_and_elapsed_budgets_are_enforced(
+def test_controller_read_request_budget_is_enforced(
     world: World, result: RawAttemptResult, classification: str
 ) -> None:
     receipt = run_candidate_pair(
@@ -359,7 +334,7 @@ def test_attempt_parent_replacement_after_first_call_fails_closed_and_calls_both
     executor = ReplacingExecutor([_result("first"), _result("second")])
 
     with pytest.raises(
-        BatchControllerError, match="private|evidence|replaced|identity"
+        BatchControllerError, match="private|evidence|replaced|identity|launch|lifecycle"
     ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"r" * 32

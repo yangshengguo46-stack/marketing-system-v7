@@ -20,9 +20,8 @@ from batch_controller import (  # noqa: E402
     MemoryAttemptByteSource,
     RawAttemptResult,
     RunningAttempt,
-    run_candidate_batch,
-    run_candidate_pair,
 )
+from batch_controller_test_support import run_candidate_batch, run_candidate_pair  # noqa: E402
 from batch_isolation import UnsupportedIsolationPlatformError  # noqa: E402
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file, sha256_tree  # noqa: E402
 from batch_receipts import (  # noqa: E402

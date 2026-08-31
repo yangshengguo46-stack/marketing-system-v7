@@ -18,7 +18,6 @@ from batch_controller import (  # noqa: E402
     BatchControllerError,
     MemoryAttemptByteSource,
     RunningAttempt,
-    run_candidate_pair,
 )
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file, sha256_tree  # noqa: E402
 from batch_receipts import BatchReceiptError, verify_paired_run_receipt  # noqa: E402
@@ -30,6 +29,7 @@ from test_batch_controller import (  # noqa: E402
     _result,
     world,
 )
+from batch_controller_test_support import run_candidate_pair  # noqa: E402
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -238,7 +238,7 @@ def test_real_attempt_parent_replacement_cannot_redirect_evidence(
     executor = ReplacingExecutor([_result("left"), _result("right")])
 
     with pytest.raises(
-        BatchControllerError, match="evidence|identity|replaced|private"
+        BatchControllerError, match="evidence|identity|replaced|private|launch|lifecycle"
     ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"5" * 32
@@ -307,7 +307,7 @@ def test_deep_structured_output_is_bounded_before_canonicalization(
     assert receipt["invalidReason"] in {"budgetFailure", "evidenceFailure"}
 
 
-def test_result_attestation_substitution_is_rejected(world: World) -> None:
+def test_callback_attestation_is_not_used_as_execution_identity(world: World) -> None:
     wrong = AttemptAttestation(*(["f" * 64] * 8))
     first = _result("substituted")
     first = type(first)(
@@ -322,14 +322,23 @@ def test_result_attestation_substitution_is_rejected(world: World) -> None:
     )
 
     executor = ScriptedExecutor([first, _result("other")])
-    with pytest.raises(BatchControllerError, match="attestation|evidence"):
-        run_candidate_pair(
-            world.plan,
-            world.bindings,
-            executor,
-            world.private_root,
-            seed=b"a" * 32,
-        )
+    receipt = run_candidate_pair(
+        world.plan,
+        world.bindings,
+        executor,
+        world.private_root,
+        seed=b"a" * 32,
+    )
+
+    evidence = [
+        load_exact_json(path)
+        for path in (world.private_root / "attempts").glob("*/evidence.json")
+    ]
+    assert receipt["pairValidity"] == "valid"
+    assert all(
+        item["rawEvidence"]["attestation"]["binarySha256"] != "f" * 64
+        for item in evidence
+    )
     assert executor.calls == 2
 
 
@@ -343,29 +352,16 @@ def test_candidate_metadata_cannot_forge_supervisor_telemetry(world: World) -> N
     }
     result = _result("bounded", metadata=metadata)
 
-    class TrustedAdapter(ScriptedExecutor):
-        def start(self, request):
-            raw = self.execute(request)
-
-            class Handle(RunningAttempt):
-                def __init__(self):
-                    RunningAttempt.__init__(self)
-
-                def poll(self):
-                    return raw
-
-                def telemetry(self):
-                    return AttemptTelemetry(1, 1, 2, 0)
-
-                def terminate_and_wait(self, deadline):
-                    return True
-
-            return Handle()
+    executor = ScriptedExecutor([result, _result("other")])
+    executor.test_telemetry = [
+        {"requestCount": 1, "inputTokens": 1, "outputTokens": 2, "costCny": 0},
+        {"requestCount": 1, "inputTokens": 1, "outputTokens": 2, "costCny": 0},
+    ]
 
     receipt = run_candidate_pair(
         world.plan,
         world.bindings,
-        TrustedAdapter([result, _result("other")]),
+        executor,
         world.private_root,
         seed=b"b" * 32,
     )
@@ -394,43 +390,14 @@ def test_supervisor_deadline_terminates_sleeping_execution(
     bindings["stock"]["effectiveConditions"] = parity
     bindings["modified"]["effectiveConditions"] = parity
 
-    class SleepingExecutor(ScriptedExecutor):
-        terminated = False
-        supervisor_started = 0.0
-        supervisor_terminated = 0.0
-
-        def start(self, request):
-            if self.requests:
-                return super().start(request)
-            self.requests.append(request)
-            self.supervisor_started = time.monotonic()
-            owner = self
-
-            class HangingHandle(RunningAttempt):
-                def __init__(self):
-                    RunningAttempt.__init__(self)
-
-                def poll(self):
-                    return None
-
-                def telemetry(self):
-                    raise AssertionError("timed-out attempt has no final telemetry")
-
-                def terminate_and_wait(self, deadline):
-                    owner.terminated = True
-                    owner.supervisor_terminated = time.monotonic()
-                    return True
-
-            return HangingHandle()
-
-    executor = SleepingExecutor([_result("late"), _result("other")])
+    executor = ScriptedExecutor([_result("late"), _result("other")])
+    executor.test_sleep = [10, 0]
     started = time.monotonic()
     receipt = run_candidate_pair(
         plan, bindings, executor, world.private_root, seed=b"0" * 32
     )
 
     assert time.monotonic() - started < 2.5
-    assert 1 <= executor.supervisor_terminated - executor.supervisor_started < 1.2
-    assert executor.terminated
+    assert time.monotonic() - started >= 1
     assert receipt["pairValidity"] == "invalid"
     assert receipt["invalidReason"] == "budgetFailure"

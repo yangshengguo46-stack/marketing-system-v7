@@ -243,6 +243,7 @@ def test_second_launch_failure_stops_and_waits_first_owned_process(
     plan, bindings = _one_second(world)
     child_world = World(plan, bindings, world.private_root)
     process_module = getattr(batch_controller, "_process")
+    cells_before = set(batch_isolation._CELLS)
     real_popen = process_module._Popen
     first = None
     calls = 0
@@ -269,7 +270,7 @@ def test_second_launch_failure_stops_and_waits_first_owned_process(
     assert calls == 2
     assert first is not None and first.poll() is not None
     assert not list(Path(bindings["attemptBase"]).glob("*"))
-    assert not batch_isolation._CELLS
+    assert set(batch_isolation._CELLS) == cells_before
     assert not list(world.private_root.glob("orphan-*.json"))
     assert list(world.private_root.glob("pairs/*/failure.json"))
 

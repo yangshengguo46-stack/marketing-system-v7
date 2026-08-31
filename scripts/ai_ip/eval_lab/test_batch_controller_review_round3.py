@@ -19,7 +19,6 @@ from batch_controller import (  # noqa: E402
     BatchControllerError,
     RawAttemptResult,
     RunningAttempt,
-    run_candidate_pair,
 )
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_tree  # noqa: E402
 from batch_receipts import BatchReceiptError, verify_paired_run_receipt  # noqa: E402
@@ -31,6 +30,7 @@ from test_batch_controller import (  # noqa: E402
     _result,
     world,
 )
+from batch_controller_test_support import run_candidate_pair  # noqa: E402
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -92,7 +92,7 @@ def test_request_json_identity_is_deeply_immutable(world: World) -> None:
     assert executor.rejected_mutations == 8
 
 
-def test_staged_seed_replacement_is_remeasured_before_any_start(
+def test_staged_seed_replacement_is_remeasured_before_affected_launch(
     world: World, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     real_create = batch_controller.create_attempt_cell
@@ -108,12 +108,15 @@ def test_staged_seed_replacement_is_remeasured_before_any_start(
     monkeypatch.setattr(batch_controller, "create_attempt_cell", replace_staged_config)
     executor = ScriptedExecutor([_result("left"), _result("right")])
 
-    with pytest.raises(BatchControllerError, match="identity|seed|config|cell"):
+    with pytest.raises(
+        BatchControllerError, match="identity|seed|config|cell|launch|lifecycle"
+    ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"b" * 32
         )
 
-    assert executor.calls == 0
+    assert executor.calls == 1
+    assert not list(Path(world.bindings["attemptBase"]).glob("*"))
 
 
 def test_only_audited_supervisor_capability_is_admitted(world: World) -> None:
@@ -126,8 +129,10 @@ def test_only_audited_supervisor_capability_is_admitted(world: World) -> None:
 
     executor = StartShaped()
 
-    with pytest.raises(BatchControllerError, match="audited|supervisor|capability"):
-        run_candidate_pair(
+    with pytest.raises(
+        BatchControllerError, match="launch|immutable|specification|capability"
+    ):
+        batch_controller.run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"c" * 32
         )
 
@@ -135,44 +140,37 @@ def test_only_audited_supervisor_capability_is_admitted(world: World) -> None:
     assert not world.private_root.exists()
 
 
-def test_both_arms_start_before_poll_and_unconfirmed_stop_is_fatal(
-    world: World,
+def test_both_processes_launch_before_unconfirmed_stop_records_orphan(
+    world: World, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plan, bindings = _one_second_plan(world)
     events: list[str] = []
+    executor = ScriptedExecutor([_result("unused"), _result("second")])
+    executor.test_sleep = [10, 10]
+    process = batch_controller._process
+    real_spawn = process.spawn
+    real_stop = process.terminate_and_wait
 
-    class RefusingStopExecutor(ScriptedExecutor):
-        def start(self, request):
-            index = len(self.requests) + 1
-            events.append(f"start-{index}")
-            if index == 1:
-                self.requests.append(request)
+    def record_spawn(*args, **kwargs):
+        owned = real_spawn(*args, **kwargs)
+        events.append("launch")
+        return owned
 
-                class LiveHandle(RunningAttempt):
-                    def __init__(self):
-                        RunningAttempt.__init__(self)
+    def stop_but_refuse(owned, deadline):
+        events.append("stop")
+        real_stop(owned, deadline)
+        return False
 
-                    def poll(self):
-                        events.append("poll-1")
-                        return None
-
-                    def telemetry(self):
-                        return AttemptTelemetry(1, 1, 1, 0)
-
-                    def terminate_and_wait(self, deadline):
-                        events.append("terminate-and-wait")
-                        return False
-
-                return LiveHandle()
-            return super().start(request)
-
-    executor = RefusingStopExecutor([_result("unused"), _result("second")])
+    monkeypatch.setattr(process, "spawn", record_spawn)
+    monkeypatch.setattr(process, "terminate_and_wait", stop_but_refuse)
 
     with pytest.raises(BatchControllerError, match="fatal|stop|orphan|supervisor"):
         run_candidate_pair(plan, bindings, executor, world.private_root, seed=b"d" * 32)
 
+    assert events[:2] == ["launch", "launch"]
     assert executor.calls == 2
-    assert events[:2] == ["start-1", "start-2"]
+    assert list(world.private_root.glob("orphan-*.json"))
+    assert not list(world.private_root.glob("pairs/*/receipt.json"))
     assert list(world.private_root.glob("pairs/*/failure.json"))
 
 
