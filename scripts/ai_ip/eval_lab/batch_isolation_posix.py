@@ -172,6 +172,7 @@ class PosixCellFilesystem:
     creator_pid: int
     quarantine_name: str | None = None
     terminal_unlinked: bool = False
+    terminal_proof: terminal.TerminalProof | None = None
 
     @classmethod
     def create(cls, base: Path, root_name: str, base_fd: int) -> "PosixCellFilesystem":
@@ -412,16 +413,17 @@ class PosixCellFilesystem:
             os.rmdir(self.quarantine_name, dir_fd=self.base_fd)
             self.terminal_unlinked = True
         try:
-            terminal.prove_unlinked(
-                self.base_fd,
+            if self.terminal_proof is None:
+                self.terminal_proof = terminal.TerminalProof.start(self, _DIRECTORY_FLAGS)
+            self.terminal_proof.advance(
                 self.root_fd,
-                self.base_identity,
-                self.root_identity,
-                _DIRECTORY_FLAGS,
                 _MAX_TERMINAL_SCAN_ENTRIES,
                 _MAX_TERMINAL_SCAN_SECONDS,
             )
+            self.terminal_proof = None
         except terminal.TerminalProofError as error:
+            if self.terminal_proof is not None and self.terminal_proof.scan_fd < 0:
+                self.terminal_proof = None
             raise SecureFilesystemError(str(error)) from error
         os.close(self.root_fd)
         os.close(self.base_fd)
@@ -476,6 +478,9 @@ class PosixCellFilesystem:
                     os.close(parent_fd)
 
     def close(self) -> None:
+        if self.terminal_proof is not None:
+            self.terminal_proof.close()
+            self.terminal_proof = None
         for fd in self.directories.values():
             try:
                 os.close(fd)
