@@ -144,6 +144,63 @@ def test_win32_disposition_uses_native_one_byte_boolean(
     assert abi.Disposition(1).DeleteFile == 1
 
 
+def test_win32_delete_api_receives_one_byte_disposition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    abi = _load_win32_abi(monkeypatch)
+    calls: list[tuple[int, int]] = []
+    sid_text = ctypes.c_wchar_p("S-1-5-21-7")
+
+    def open_process_token(process, access, output) -> int:
+        ctypes.cast(output, ctypes.POINTER(abi.wintypes.HANDLE)).contents.value = 91
+        return 1
+
+    def get_token_information(token, kind, buffer, length, needed) -> int:
+        ctypes.cast(needed, ctypes.POINTER(abi.wintypes.DWORD)).contents.value = (
+            ctypes.sizeof(abi.SidAndAttributes)
+        )
+        if not buffer:
+            return 0
+        value = abi.SidAndAttributes.from_buffer(buffer)
+        value.Sid = 1234
+        return 1
+
+    def convert_sid(sid, output) -> int:
+        ctypes.cast(output, ctypes.POINTER(abi.wintypes.LPWSTR))[0] = sid_text
+        return 1
+
+    def set_information(handle, kind, value, size) -> int:
+        disposition = ctypes.cast(value, ctypes.POINTER(abi.Disposition)).contents
+        calls.append((disposition.DeleteFile, size))
+        return 1
+
+    def get_information(handle, kind, value, size) -> int:
+        standard = ctypes.cast(
+            value, ctypes.POINTER(abi.StandardInformation)
+        ).contents
+        standard.DeletePending = 1
+        return 1
+
+    abi.kernel32.GetCurrentProcess = lambda: 1
+    abi.kernel32.CloseHandle = lambda handle: 1
+    abi.kernel32.LocalFree = lambda value: None
+    abi.kernel32.SetFileInformationByHandle = set_information
+    abi.kernel32.GetFileInformationByHandleEx = get_information
+    abi.advapi32.OpenProcessToken = open_process_token
+    abi.advapi32.GetTokenInformation = get_token_information
+    abi.advapi32.ConvertSidToStringSidW = convert_sid
+    monkeypatch.setitem(sys.modules, "batch_isolation_win32_abi", abi)
+    path = Path(__file__).with_name("batch_isolation_win32.py")
+    spec = importlib.util.spec_from_file_location("_round4_win32", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    module.mark_delete(77)
+
+    assert calls == [(1, 1)]
+
+
 @dataclass(frozen=True)
 class _Entry:
     name: str
@@ -265,6 +322,7 @@ def _load_windows_tree(monkeypatch: pytest.MonkeyPatch, world: _WindowsWorld):
     fake.delete_pending = world.delete_pending
     fake.close = world.close
     monkeypatch.setitem(sys.modules, "batch_isolation_win32", fake)
+    monkeypatch.delitem(sys.modules, "batch_isolation_windows_cleanup", raising=False)
     path = Path(__file__).with_name("batch_isolation_windows_tree.py")
     name = f"_round4_windows_tree_{world.kind}"
     spec = importlib.util.spec_from_file_location(name, path)
