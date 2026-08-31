@@ -333,7 +333,7 @@ OpenAI Evals、DeepEval、Giskard、Argilla、Phoenix、MLflow、Langfuse 和 DV
 - 运行 reviewer 校准并拒绝无资格 submission；
 - 收集两人独立评审并在分歧时进入仲裁；
 - 在解盲前输出无正文统计，在锁定后才解盲；
-- 用 A115 已知负例证明严重错误不能被创意分抵消；
+- 用 A115/A116 留存的已知失败证明主体错位、无依据经验和不可用错误不能被创意分抵消；
 - 全流程不调用 provider、不读取凭证、不访问实时抖音、不声称业务 PASS。
 
 只有第四个 child 完成，才允许讨论新的 G2 真实业务门；在此之前，任何离线 fixture、模型自评或漂亮 UI 都不能被称为“营销能力已经通过”。
