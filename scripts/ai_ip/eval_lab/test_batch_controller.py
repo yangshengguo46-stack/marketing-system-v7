@@ -34,15 +34,22 @@ CASE_ANSWER_SCHEMA = (
 )
 
 
-def _sealed_treatment(treatment_id: str) -> dict[str, object]:
+def _sealed_treatment(
+    treatment_id: str,
+    binary_id: str,
+    seed: Path,
+    system_instruction: Path,
+    capability_bundle: Path,
+    effective_config: Path,
+) -> dict[str, object]:
     value: dict[str, object] = {
         "schemaVersion": 1,
         "treatmentId": treatment_id,
-        "binaryManifestRef": f"{treatment_id}-binary",
-        "codexHomeSeedSha256": "a" * 64,
-        "systemInstructionSha256": "b" * 64,
-        "capabilityBundleSha256": "c" * 64,
-        "effectiveCodexConfigSha256": "d" * 64,
+        "binaryManifestRef": binary_id,
+        "codexHomeSeedSha256": sha256_tree(seed),
+        "systemInstructionSha256": sha256_file(system_instruction),
+        "capabilityBundleSha256": sha256_tree(capability_bundle),
+        "effectiveCodexConfigSha256": sha256_file(effective_config),
         "declaredCapabilities": [],
         "prohibitedCaseSpecificMaterial": ["case answers", "review rubrics"],
         "treatmentManifestSha256": "0" * 64,
@@ -86,6 +93,7 @@ def _metadata(marker: str = "ok") -> dict[str, object]:
         "trajectory": [{"type": "turn.completed", "marker": marker}],
         "usage": {"inputTokens": 1, "outputTokens": 2, "totalTokens": 3},
         "costEvidence": {"costCny": 0, "sourceSha256": "e" * 64},
+        "requestCount": 1,
     }
 
 
@@ -132,8 +140,82 @@ class World:
 
 @pytest.fixture
 def world(tmp_path: Path) -> World:
-    stock_treatment = _sealed_treatment("stock-treatment")
-    modified_treatment = _sealed_treatment("modified-treatment")
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+    capability_bundle = artifacts / "capability"
+    capability_bundle.mkdir()
+    (capability_bundle / "README.md").write_text("sealed capability\n", encoding="utf-8")
+    system_instruction = artifacts / "system.md"
+    system_instruction.write_text("Return only the requested schema.\n", encoding="utf-8")
+    effective_config = artifacts / "config.toml"
+    effective_config.write_text("model = 'loopback-model'\n", encoding="utf-8")
+    profile = {
+        "schemaVersion": 1,
+        "sandboxMode": "workspace-write",
+        "approvalPolicy": "never",
+        "networkMode": "offline",
+        "networkAllowlist": [],
+        "writablePaths": ["workspace"],
+        "externalTools": [],
+        "environmentAllowlist": ["LANG"],
+        "maxWallClockSeconds": 300,
+        "maxOutputBytes": 1_048_576,
+    }
+    model_route = {
+        "model": "loopback-model",
+        "baseUrl": "http://127.0.0.1:1/v1",
+    }
+    profile_path = artifacts / "execution-profile.json"
+    route_path = artifacts / "model-route.json"
+    protocol_path = artifacts / "app-server-protocol.json"
+    promptfoo_path = artifacts / "promptfoo-config.json"
+    profile_path.write_text(json.dumps(profile, sort_keys=True), encoding="utf-8")
+    route_path.write_text(json.dumps(model_route, sort_keys=True), encoding="utf-8")
+    protocol_path.write_text('{"version":2}\n', encoding="utf-8")
+    promptfoo_path.write_text('{"reuse_server":false}\n', encoding="utf-8")
+    stock_binary = artifacts / "candidate-a" / "stock-codex"
+    modified_binary = artifacts / "candidate-b" / "modified-codex"
+    stock_binary.parent.mkdir()
+    modified_binary.parent.mkdir()
+    stock_binary.write_bytes(b"stock-codex-binary")
+    modified_binary.write_bytes(b"modified-codex-binary")
+    stock_manifest = {
+        "schemaVersion": 1,
+        "binaryId": "binary-a",
+        "armClass": "stock",
+        "sourceRepository": "https://example.invalid/codex",
+        "sourceCommit": "4ef1d4b89",
+        "targetTriple": "aarch64-apple-darwin",
+        "buildProfile": "release",
+        "toolchainVersions": {"rust": "1.95.0"},
+        "buildReceiptSha256": "a" * 64,
+        "binarySha256": sha256_file(stock_binary),
+        "declaredCapabilities": [],
+    }
+    modified_manifest = {
+        **stock_manifest,
+        "binaryId": "binary-b",
+        "armClass": "modified",
+        "sourceCommit": "abcdef123",
+        "forkBaseCommit": "4ef1d4b89",
+        "binarySha256": sha256_file(modified_binary),
+    }
+    stock_treatment = _sealed_treatment(
+        "stock-treatment",
+        "binary-a",
+        FIXTURE_ROOT / "stock-seed",
+        system_instruction,
+        capability_bundle,
+        effective_config,
+    )
+    modified_treatment = _sealed_treatment(
+        "modified-treatment",
+        "binary-b",
+        FIXTURE_ROOT / "modified-seed",
+        system_instruction,
+        capability_bundle,
+        effective_config,
+    )
     case_bundle = {"caseId": "case-1", "prompt": "Return one CaseAnswer."}
     plan: dict[str, object] = {
         "schemaVersion": 1,
@@ -146,8 +228,8 @@ def world(tmp_path: Path) -> World:
         "caseAnswerSchemaSha256": sha256_file(CASE_ANSWER_SCHEMA),
         "stockTreatmentRef": "stock-treatment",
         "modifiedTreatmentRef": "modified-treatment",
-        "modelRouteRef": "loopback-model",
-        "executionProfileRef": "offline-profile",
+        "modelRouteRef": sha256_json(model_route),
+        "executionProfileRef": sha256_json(profile),
         "workspaceTemplateSha256": sha256_tree(FIXTURE_ROOT / "workspace"),
         "promptfooPackageVersion": "0.122.0",
         "promptfooLockSha256": "f" * 64,
@@ -176,42 +258,43 @@ def world(tmp_path: Path) -> World:
         "stock": {
             "privateArmId": "opaque-arm-a",
             "treatmentManifest": stock_treatment,
-            "binaryManifestSha256": "1" * 64,
-            "binaryPath": tmp_path / "stock-codex",
+            "binaryManifest": stock_manifest,
+            "binaryManifestSha256": sha256_json(stock_manifest),
+            "binaryPath": stock_binary,
             "codexHomeSeed": FIXTURE_ROOT / "stock-seed",
-            "effectiveConfigSha256": "2" * 64,
+            "systemInstruction": system_instruction,
+            "capabilityBundle": capability_bundle,
+            "effectiveConfig": effective_config,
+            "effectiveConfigSha256": sha256_file(effective_config),
             "effectiveConditions": conditions,
         },
         "modified": {
             "privateArmId": "opaque-arm-b",
             "treatmentManifest": modified_treatment,
-            "binaryManifestSha256": "3" * 64,
-            "binaryPath": tmp_path / "modified-codex",
+            "binaryManifest": modified_manifest,
+            "binaryManifestSha256": sha256_json(modified_manifest),
+            "binaryPath": modified_binary,
             "codexHomeSeed": FIXTURE_ROOT / "modified-seed",
-            "effectiveConfigSha256": "4" * 64,
+            "systemInstruction": system_instruction,
+            "capabilityBundle": capability_bundle,
+            "effectiveConfig": effective_config,
+            "effectiveConfigSha256": sha256_file(effective_config),
             "effectiveConditions": conditions,
         },
         "attemptBase": attempt_base,
         "workspaceSeed": FIXTURE_ROOT / "workspace",
-        "executionProfile": {
-            "schemaVersion": 1,
-            "sandboxMode": "workspace-write",
-            "approvalPolicy": "never",
-            "networkMode": "offline",
-            "networkAllowlist": [],
-            "writablePaths": ["workspace"],
-            "externalTools": [],
-            "environmentAllowlist": ["LANG"],
-            "maxWallClockSeconds": 300,
-            "maxOutputBytes": 1_048_576,
-        },
+        "executionProfile": profile,
+        "executionProfilePath": profile_path,
         "sourceEnvironment": {"PATH": "/safe/bin", "LANG": "C.UTF-8"},
         "caseBundle": case_bundle,
         "caseAnswerSchema": load_exact_json(CASE_ANSWER_SCHEMA),
         "caseAnswerSchemaPath": CASE_ANSWER_SCHEMA,
-        "modelRoute": {"model": "loopback-model", "baseUrl": "http://127.0.0.1:1/v1"},
-        "appServerProtocolSchemaSha256": "5" * 64,
-        "promptfooConfigSha256": "6" * 64,
+        "modelRoute": model_route,
+        "modelRoutePath": route_path,
+        "appServerProtocolSchemaPath": protocol_path,
+        "appServerProtocolSchemaSha256": sha256_file(protocol_path),
+        "promptfooConfigPath": promptfoo_path,
+        "promptfooConfigSha256": sha256_file(promptfoo_path),
         "retryPolicy": {"maxAttemptsPerArm": 1},
     }
     return World(plan, bindings, tmp_path / "private")
