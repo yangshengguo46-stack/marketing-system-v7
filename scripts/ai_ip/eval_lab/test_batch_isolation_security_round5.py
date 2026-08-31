@@ -29,6 +29,8 @@ class _CleanupWorld:
         self.pending: set[int] = set()
         self.fail_identity_for: set[int] = set()
         self.fail_close_for: set[int] = set()
+        self.reused: set[int] = set()
+        self.unsafe_mutations: list[int] = []
         self.observed: list[list[tuple[int | None, object, str | None]]] = []
         self.journal = None
 
@@ -67,12 +69,18 @@ class _CleanupWorld:
         return handle
 
     def mark_delete(self, handle: int) -> None:
+        if handle in self.reused:
+            self.unsafe_mutations.append(handle)
+            raise _FakeWin32Error("deleted through a reused handle value")
         self.pending.add(handle)
 
     def delete_pending(self, handle: int) -> bool:
         return handle in self.pending
 
     def close(self, handle: int) -> None:
+        if handle in self.reused:
+            self.unsafe_mutations.append(handle)
+            raise _FakeWin32Error("closed through a reused handle value")
         if handle in self.fail_close_for:
             self.fail_close_for.remove(handle)
             self.identities[handle] = (99, 99)
@@ -125,6 +133,30 @@ def test_cleanup_records_existing_handle_before_identity_query(
     _assert_unknown_owned(world.observed, 40)
     assert journal.creator_pid == os.getpid()
     assert journal.pending[0].handle == 40
+
+
+def test_cleanup_unknown_identity_retry_never_acts_on_reused_raw_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    world = _CleanupWorld()
+    world.identities[40] = (7, 40)
+    world.fail_identity_for.add(40)
+    cleanup = _load_cleanup(monkeypatch, world)
+    filesystem = _FakeFilesystem()
+    journal = cleanup.WindowsCleanupJournal()
+    world.journal = journal
+    with pytest.raises(OSError, match="identity|uncertain|query"):
+        journal.dispose(filesystem, 40)
+    assert journal.pending
+    assert journal.pending[0].proof_handle == 1_040
+    world.fail_identity_for.clear()
+    world.identities[40] = (99, 99)
+    world.reused.add(40)
+
+    journal.retry(filesystem)
+
+    assert world.unsafe_mutations == []
+    assert journal.pending == []
 
 
 def test_cleanup_records_reopened_root_before_identity_query(
