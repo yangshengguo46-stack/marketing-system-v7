@@ -10,6 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 if __package__:
+    from .blind_artifacts import (
+        BlindArtifactError,
+        _reject_candidate_provenance,
+        _stage_and_publish,
+        _validate_arm_key,
+        _validate_assignment_mapping,
+    )
     from .contracts import (
         BlindPackReceipt,
         LabContractError,
@@ -20,6 +27,13 @@ if __package__:
     )
     from .private_fs import _DIRECTORY_FLAGS, PrivateRoot, _open_checked_at
 else:
+    from blind_artifacts import (
+        BlindArtifactError,
+        _reject_candidate_provenance,
+        _stage_and_publish,
+        _validate_arm_key,
+        _validate_assignment_mapping,
+    )
     from contracts import (
         BlindPackReceipt,
         LabContractError,
@@ -44,6 +58,7 @@ _BLIND_SCHEMA = _LAB_ROOT / "schemas" / "blind-review.schema.json"
 _FROZEN_RUBRIC = _LAB_ROOT / "rubrics" / "golden-gift-l1-l2-rubric.json"
 _REQUIRED_DOMAINS = {"businessIpJudgment", "evidenceIntegrity"}
 _COMPONENT = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\Z")
+_RFC3339_UTC = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\Z")
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _CLOEXEC = getattr(os, "O_CLOEXEC", 0)
 
@@ -113,14 +128,12 @@ def _private_case_receipt(
 
 
 def _parse_time(value: object, label: str) -> datetime:
-    if type(value) is not str:
+    if type(value) is not str or not _RFC3339_UTC.fullmatch(value):
         raise BlindControllerError(f"{label} must be an RFC3339 timestamp")
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
     except ValueError as error:
         raise BlindControllerError(f"{label} must be an RFC3339 timestamp") from error
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        raise BlindControllerError(f"{label} must include a UTC offset")
     return parsed
 
 
@@ -235,43 +248,6 @@ def _assignment_values(
     return values
 
 
-def _publish(private_root: PrivateRoot, stage_name: str, batch_id: str) -> None:
-    root_fd = private_root._open_root()
-    batches_fd = stage_fd = destination_fd = None
-    try:
-        batches_fd = _open_checked_at(
-            root_fd, "batches", _DIRECTORY_FLAGS, directory=True
-        )
-        try:
-            os.mkdir(batch_id, 0o700, dir_fd=batches_fd)
-        except OSError as error:
-            raise BlindControllerError("batch destination already exists") from error
-        stage_fd = _open_checked_at(
-            batches_fd, stage_name, _DIRECTORY_FLAGS, directory=True
-        )
-        destination_fd = _open_checked_at(
-            batches_fd, batch_id, _DIRECTORY_FLAGS, directory=True
-        )
-        for child in ("coordinator", "reviewer"):
-            os.rename(
-                child,
-                child,
-                src_dir_fd=stage_fd,
-                dst_dir_fd=destination_fd,
-            )
-        os.fsync(destination_fd)
-        os.rmdir(stage_name, dir_fd=batches_fd)
-        os.fsync(batches_fd)
-    except BlindControllerError:
-        raise
-    except (LabContractError, OSError) as error:
-        raise BlindControllerError("cannot publish verified blind batch") from error
-    finally:
-        for descriptor in (destination_fd, stage_fd, batches_fd, root_fd):
-            if descriptor is not None:
-                os.close(descriptor)
-
-
 def prepare_blind_batch(
     *,
     private_root: PrivateRoot,
@@ -328,6 +304,11 @@ def prepare_blind_batch(
     stock_hash, modified_hash = sha256_json(stock), sha256_json(modified)
     if stock_hash == modified_hash:
         raise BlindControllerError("candidate outputs are canonically identical")
+    try:
+        _reject_candidate_provenance(stock)
+        _reject_candidate_provenance(modified)
+    except BlindArtifactError as error:
+        raise BlindControllerError("candidate output exposes provenance") from error
 
     rubric_raw = _load_regular_json(rubric_path, "rubric")
     frozen_rubric = _load_regular_json(_FROZEN_RUBRIC, "frozen rubric")
@@ -404,33 +385,43 @@ def prepare_blind_batch(
         "modifiedOutputSha256": modified_hash,
         "diagnosticOnly": True,
     }
+    try:
+        _validate_arm_key(
+            arm_key,
+            batch_id=batch_id,
+            stock_hash=stock_hash,
+            modified_hash=modified_hash,
+        )
+    except BlindArtifactError as error:
+        raise BlindControllerError("invalid private arm key") from error
     artifacts: dict[str, object] = {
         "coordinator/batch-manifest.json": manifest,
         "coordinator/arm-key.json": arm_key,
     }
     assignment_hashes = []
     mapping_hashes = []
-    assignment_lookup = {label: value for label, value, _ in assignments}
-    mapping_lookup = {label: value for label, _, value in assignments}
-    for reviewer_id in reviewer_ids:
-        for role in ("primary", "swap"):
-            label = f"{reviewer_id}-{role}"
-            assignment = assignment_lookup[label]
-            mapping = mapping_lookup[label]
-            answer_a, answer_b = (
-                (stock, modified)
-                if assignment["position"] == "AB"
-                else (modified, stock)
+    for label, assignment, mapping in assignments:
+        try:
+            _validate_assignment_mapping(
+                mapping,
+                assignment_id=assignment["assignmentId"],
+                arm_a_hash=assignment["armAOutputSha256"],
+                arm_b_hash=assignment["armBOutputSha256"],
             )
-            reviewer_base = f"reviewer/{reviewer_id}/{label}"
-            artifacts[f"coordinator/mappings/{label}.json"] = mapping
-            artifacts[f"{reviewer_base}/assignment.json"] = assignment
-            artifacts[f"{reviewer_base}/A.json"] = answer_a
-            artifacts[f"{reviewer_base}/B.json"] = answer_b
-            artifacts[f"{reviewer_base}/content-packet.json"] = content
-            artifacts[f"{reviewer_base}/rubric.json"] = rubric
-            assignment_hashes.append(sha256_json(assignment))
-            mapping_hashes.append(sha256_json(mapping))
+        except BlindArtifactError as error:
+            raise BlindControllerError("invalid private assignment mapping") from error
+        answer_a, answer_b = (
+            (stock, modified) if assignment["position"] == "AB" else (modified, stock)
+        )
+        reviewer_base = f"reviewer/{assignment['reviewerId']}/{label}"
+        artifacts[f"coordinator/mappings/{label}.json"] = mapping
+        artifacts[f"{reviewer_base}/assignment.json"] = assignment
+        artifacts[f"{reviewer_base}/A.json"] = answer_a
+        artifacts[f"{reviewer_base}/B.json"] = answer_b
+        artifacts[f"{reviewer_base}/content-packet.json"] = content
+        artifacts[f"{reviewer_base}/rubric.json"] = rubric
+        assignment_hashes.append(sha256_json(assignment))
+        mapping_hashes.append(sha256_json(mapping))
     receipt: BlindPackReceipt = {
         "schemaVersion": 1,
         "objectKind": "BlindPackReceipt",
@@ -453,39 +444,14 @@ def prepare_blind_batch(
         "\0".join(sorted(reserved)).encode("ascii")
     ).hexdigest()[:24]
     stage_name = f".{batch_id}-{stage_token}.staging"
-    stage_base = f"batches/{stage_name}"
     try:
-        try:
-            private_root.create_dir("batches")
-        except LabContractError:
-            with private_root._parent("batches/.probe"):
-                pass
-        private_root.create_dir(stage_base)
-        directories = set()
-        for relative in artifacts:
-            parent = Path(relative).parent
-            directories.update(
-                str(item) for item in (parent, *parent.parents) if str(item) != "."
-            )
-        for directory in sorted(directories, key=lambda item: (item.count("/"), item)):
-            private_root.create_dir(f"{stage_base}/{directory}")
-        for relative, value in artifacts.items():
-            private_root.write_new_json(f"{stage_base}/{relative}", value)
-        for relative, value in artifacts.items():
-            if private_root.read_json(f"{stage_base}/{relative}") != value:
-                raise BlindControllerError("staged blind artifact verification failed")
-    except BlindControllerError:
-        raise
-    except (LabContractError, OSError) as error:
-        raise BlindControllerError("cannot stage blind batch") from error
-
-    _publish(private_root, stage_name, batch_id)
-    try:
-        private_root.write_new_json(
-            f"batches/{batch_id}/blind-pack-receipt.json", receipt
+        _stage_and_publish(
+            private_root=private_root,
+            batch_id=batch_id,
+            stage_name=stage_name,
+            artifacts=artifacts,
+            receipt=receipt,
         )
-    except (LabContractError, OSError) as error:
-        raise BlindControllerError(
-            "published batch has no completion receipt"
-        ) from error
+    except BlindArtifactError as error:
+        raise BlindControllerError("blind artifact transaction failed") from error
     return receipt
