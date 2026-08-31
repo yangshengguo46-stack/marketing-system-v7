@@ -16,7 +16,10 @@ from batch_controller import (  # noqa: E402
     AttemptRequest,
     AttemptTelemetry,
     BatchControllerError,
+    CandidateExecutor,
+    MemoryAttemptByteSource,
     RawAttemptResult,
+    RunningAttempt,
     run_candidate_batch,
     run_candidate_pair,
 )
@@ -112,18 +115,31 @@ def _result(
         exit_code=exit_code,
         started_at="2026-08-31T12:00:00Z",
         finished_at="2026-08-31T12:00:01Z",
-        output=_answer(label) if output is None else output,
-        metadata=_metadata(label) if metadata is None else metadata,
-        stdout=f"stdout-{label}".encode(),
-        stderr=f"stderr-{label}".encode(),
+        output=MemoryAttemptByteSource(
+            json.dumps(
+                _answer(label) if output is None else output,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ),
+        metadata=MemoryAttemptByteSource(
+            json.dumps(
+                _metadata(label) if metadata is None else metadata,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ),
+        stdout=MemoryAttemptByteSource(f"stdout-{label}".encode()),
+        stderr=MemoryAttemptByteSource(f"stderr-{label}".encode()),
     )
 
 
 @dataclass
-class ScriptedExecutor:
+class ScriptedExecutor(CandidateExecutor):
     results: list[RawAttemptResult]
 
     def __post_init__(self) -> None:
+        CandidateExecutor.__init__(self)
         self.requests: list[AttemptRequest] = []
 
     @property
@@ -135,13 +151,15 @@ class ScriptedExecutor:
         result = self.results[len(self.requests) - 1]
         if result.attestation is None:
             result = dataclasses.replace(
-                result, attestation=AttemptAttestation.from_request(request)
+                result, attestation=AttemptAttestation.measure(request)
             )
         return result
 
     def start(self, request: AttemptRequest):
         result = self.execute(request)
-        metadata = result.metadata if type(result.metadata) is dict else {}
+        metadata = json.loads(
+            getattr(result.metadata, "_payload", getattr(result.metadata, "payload", b"{}"))
+        )
         usage = metadata.get("usage") if type(metadata.get("usage")) is dict else {}
         telemetry = AttemptTelemetry(
             int(metadata.get("requestCount", 0)),
@@ -154,14 +172,17 @@ class ScriptedExecutor:
             ),
         )
 
-        class ImmediateHandle:
+        class ImmediateHandle(RunningAttempt):
+            def __init__(self):
+                RunningAttempt.__init__(self)
+
             def poll(self):
                 return result
 
             def telemetry(self):
                 return telemetry
 
-            def terminate(self):
+            def terminate_and_wait(self, deadline):
                 return True
 
         return ImmediateHandle()

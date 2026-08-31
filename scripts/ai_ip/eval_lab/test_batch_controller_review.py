@@ -14,6 +14,7 @@ import batch_plan_authority  # noqa: E402
 from batch_contracts import seal_self_commitment  # noqa: E402
 from batch_controller import (  # noqa: E402
     BatchControllerError,
+    MemoryAttemptByteSource,
     RawAttemptResult,
     run_candidate_batch,
     run_candidate_pair,
@@ -32,6 +33,11 @@ from test_batch_controller import (  # noqa: E402
 
 def _bindings(world: World) -> dict[str, object]:
     return copy.deepcopy(world.bindings)
+
+
+def _source(value: object) -> MemoryAttemptByteSource:
+    payload = value if type(value) is bytes else canonical_json_bytes(value)
+    return MemoryAttemptByteSource(payload)
 
 
 def _plan_with_count(
@@ -195,9 +201,9 @@ def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) 
         started_at="not-a-timestamp",
         finished_at="also-not-a-timestamp",
         output=_result().output,
-        metadata=_metadata("malformed"),
-        stdout=b"first",
-        stderr=b"",
+        metadata=_source(_metadata("malformed")),
+        stdout=_source(b"first"),
+        stderr=_source(b""),
     )
     executor = ScriptedExecutor([malformed, _result("second")])
 
@@ -223,9 +229,9 @@ def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) 
                 "2026-08-31T12:00:00Z",
                 "2026-08-31T12:06:00Z",
                 _result().output,
-                _metadata("elapsed"),
-                b"",
-                b"",
+                _source(_metadata("elapsed")),
+                _source(b""),
+                _source(b""),
             ),
             "budgetFailure",
         ),
@@ -235,9 +241,9 @@ def test_malformed_first_result_still_calls_and_retains_both_arms(world: World) 
                 "2026-08-31T12:00:02Z",
                 "2026-08-31T12:00:01Z",
                 _result().output,
-                _metadata("reversed"),
-                b"",
-                b"",
+                _source(_metadata("reversed")),
+                _source(b""),
+                _source(b""),
             ),
             "evidenceFailure",
         ),
@@ -271,8 +277,8 @@ def test_output_stream_budget_is_enforced_without_unbounded_evidence_write(
         oversized.finished_at,
         oversized.output,
         oversized.metadata,
-        b"x" * (1_048_576 + 1),
-        b"",
+        _source(b"x" * (1_048_576 + 1)),
+        _source(b""),
     )
 
     receipt = run_candidate_pair(

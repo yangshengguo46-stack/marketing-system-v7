@@ -1,4 +1,5 @@
 import copy
+import json
 import shutil
 import sys
 import time
@@ -15,6 +16,7 @@ from batch_controller import (  # noqa: E402
     AttemptAttestation,
     AttemptTelemetry,
     BatchControllerError,
+    RunningAttempt,
     run_candidate_pair,
 )
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file, sha256_tree  # noqa: E402
@@ -23,6 +25,7 @@ from contracts import canonical_json_bytes, load_exact_json, sha256_json  # noqa
 from test_batch_controller import (  # noqa: E402
     ScriptedExecutor,
     World,
+    _metadata,
     _result,
     world,
 )
@@ -117,8 +120,8 @@ def test_preflight_snapshot_survives_nested_and_artifact_mutation(
 
     assert executor.calls == 2
     for request in executor.requests:
-        assert request.execution_profile == original_profile
-        assert request.model_route == original_route
+        assert json.loads(request.execution_profile_json) == original_profile
+        assert json.loads(request.model_route_json) == original_route
         assert request.workspace_seed_sha256 == expected_workspace
         assert request.app_server_protocol_schema_sha256 == expected_protocol
         assert request.promptfoo_config_sha256 == expected_promptfoo
@@ -298,7 +301,7 @@ def test_deep_structured_output_is_bounded_before_canonicalization(
 
 
 def test_result_attestation_substitution_is_rejected(world: World) -> None:
-    wrong = AttemptAttestation(*(["f" * 64] * 7))
+    wrong = AttemptAttestation(*(["f" * 64] * 8))
     first = _result("substituted")
     first = type(first)(
         first.exit_code,
@@ -324,26 +327,30 @@ def test_result_attestation_substitution_is_rejected(world: World) -> None:
 
 
 def test_candidate_metadata_cannot_forge_supervisor_telemetry(world: World) -> None:
-    result = _result("bounded")
-    result.metadata["requestCount"] = 999
-    result.metadata["usage"] = {
+    metadata = _metadata("bounded")
+    metadata["requestCount"] = 999
+    metadata["usage"] = {
         "inputTokens": 999_999,
         "outputTokens": 999_999,
         "totalTokens": 1_999_998,
     }
+    result = _result("bounded", metadata=metadata)
 
     class TrustedAdapter(ScriptedExecutor):
         def start(self, request):
             raw = self.execute(request)
 
-            class Handle:
+            class Handle(RunningAttempt):
+                def __init__(self):
+                    RunningAttempt.__init__(self)
+
                 def poll(self):
                     return raw
 
                 def telemetry(self):
                     return AttemptTelemetry(1, 1, 2, 0)
 
-                def terminate(self):
+                def terminate_and_wait(self, deadline):
                     return True
 
             return Handle()
@@ -392,14 +399,17 @@ def test_supervisor_deadline_terminates_sleeping_execution(
             self.supervisor_started = time.monotonic()
             owner = self
 
-            class HangingHandle:
+            class HangingHandle(RunningAttempt):
+                def __init__(self):
+                    RunningAttempt.__init__(self)
+
                 def poll(self):
                     return None
 
                 def telemetry(self):
                     raise AssertionError("timed-out attempt has no final telemetry")
 
-                def terminate(self):
+                def terminate_and_wait(self, deadline):
                     owner.terminated = True
                     owner.supervisor_terminated = time.monotonic()
                     return True

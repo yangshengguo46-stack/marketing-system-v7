@@ -14,9 +14,11 @@ import batch_isolation  # noqa: E402
 from batch_contracts import seal_self_commitment  # noqa: E402
 from batch_controller import (  # noqa: E402
     AttemptAttestation,
+    AttemptByteSource,
     AttemptTelemetry,
     BatchControllerError,
     RawAttemptResult,
+    RunningAttempt,
     run_candidate_pair,
 )
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_tree  # noqa: E402
@@ -69,10 +71,10 @@ def test_request_json_identity_is_deeply_immutable(world: World) -> None:
 
         def start(self, request):
             for value, key in (
-                (request.model_route, "model"),
-                (request.execution_profile, "sandboxMode"),
-                (request.case_bundle, "caseId"),
-                (request.case_answer_schema, "type"),
+                (request.model_route_json, 0),
+                (request.execution_profile_json, 0),
+                (request.case_bundle_json, 0),
+                (request.case_answer_schema_json, 0),
             ):
                 try:
                     value[key] = "substituted"
@@ -141,21 +143,21 @@ def test_both_arms_start_before_poll_and_unconfirmed_stop_is_fatal(
 
     class RefusingStopExecutor(ScriptedExecutor):
         def start(self, request):
-            self.requests.append(request)
-            index = len(self.requests)
+            index = len(self.requests) + 1
             events.append(f"start-{index}")
             if index == 1:
-                class LiveHandle:
+                self.requests.append(request)
+
+                class LiveHandle(RunningAttempt):
+                    def __init__(self):
+                        RunningAttempt.__init__(self)
+
                     def poll(self):
                         events.append("poll-1")
                         return None
 
                     def telemetry(self):
                         return AttemptTelemetry(1, 1, 1, 0)
-
-                    def terminate(self):
-                        events.append("legacy-terminate")
-                        return False
 
                     def terminate_and_wait(self, deadline):
                         events.append("terminate-and-wait")
@@ -174,13 +176,15 @@ def test_both_arms_start_before_poll_and_unconfirmed_stop_is_fatal(
     assert list(world.private_root.glob("pairs/*/failure.json"))
 
 
-class _LazyBytes:
+class _LazyBytes(AttemptByteSource):
     def __init__(self, payload: bytes):
+        AttemptByteSource.__init__(self)
         self.payload = payload
         self.offset = 0
         self.requests: list[int] = []
 
     def read(self, maximum: int) -> bytes:
+        self._validate_capability()
         self.requests.append(maximum)
         chunk = self.payload[self.offset : self.offset + maximum]
         self.offset += len(chunk)
