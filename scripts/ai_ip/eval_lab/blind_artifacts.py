@@ -62,7 +62,7 @@ _GENERATION_PATTERN = re.compile(
 _CHINESE_GENERATION_PATTERN = re.compile(
     rf"(?i)(?:由|使用)\s*(?:{_VENDORS})\s*(?:生成|创作|编写)"
 )
-_POSIX_PATH = re.compile(r"(?:^|[\s\"'=:])/(?!/)[^\s\"'<>]*")
+_POSIX_PATH = re.compile(r"(?:^|[\s\"'=:])/(?!/)[^\s\"'<>]+")
 _WINDOWS_PATH = re.compile(r"(?:^|[\s\"'=])[A-Za-z]:[\\/]")
 
 

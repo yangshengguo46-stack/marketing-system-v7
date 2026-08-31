@@ -605,6 +605,23 @@ def test_allows_ordinary_chinese_business_cost_language(tmp_path):
 
 
 @pytest.mark.parametrize(
+    "prose",
+    [
+        "渠道覆盖 B2B / B2C 两类人群",
+        "比较直营 / 分销 / 联营 三种方式",
+        "关注 L1\t/\tL2 的业务判断",
+    ],
+)
+def test_allows_whitespace_delimited_slash_business_prose(tmp_path, prose):
+    fixture = _fixture(tmp_path)
+    _candidate_text(fixture, prose)
+
+    receipt = prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert receipt["objectKind"] == "BlindPackReceipt"
+
+
+@pytest.mark.parametrize(
     ("contract", "mutation"),
     [
         ("arm_key", "extra"),
