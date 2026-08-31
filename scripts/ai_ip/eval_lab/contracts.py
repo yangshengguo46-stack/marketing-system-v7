@@ -1,5 +1,7 @@
 import hashlib
 import json
+import re
+from datetime import datetime
 from pathlib import Path
 from typing import NoReturn
 
@@ -17,6 +19,23 @@ BatchDecision = JsonObject
 
 class LabContractError(ValueError):
     pass
+
+
+_RFC3339_TIMESTAMP = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
+)
+_FORMAT_CHECKER = FormatChecker()
+
+
+@_FORMAT_CHECKER.checks("date-time")
+def _is_rfc3339_timestamp(value: object) -> bool:
+    if type(value) is not str or _RFC3339_TIMESTAMP.fullmatch(value) is None:
+        return False
+    try:
+        datetime.fromisoformat(value.replace("z", "+00:00").replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
 
 
 def _load_exact_json_bytes(payload: bytes) -> object:
@@ -106,7 +125,7 @@ def validate_contract(value: object, schema_path: Path) -> None:
         raise LabContractError("contract schema must be a JSON object")
     try:
         Draft202012Validator.check_schema(schema)
-        Draft202012Validator(schema, format_checker=FormatChecker()).validate(value)
+        Draft202012Validator(schema, format_checker=_FORMAT_CHECKER).validate(value)
     except (SchemaError, ValidationError) as error:
         raise LabContractError(
             f"contract validation failed: {error.message}"
