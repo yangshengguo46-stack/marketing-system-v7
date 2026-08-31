@@ -214,7 +214,7 @@ def open_path(
         | SYNCHRONIZE
         | (DELETE if deletable else 0)
         | (READ_CONTROL if security_query else 0),
-        SHARE_READ_WRITE | (SHARE_DELETE if not deletable else 0),  # noqa: F405
+        SHARE_READ_WRITE,  # noqa: F405
         None,
         OPEN_EXISTING,  # noqa: F405
         flags,

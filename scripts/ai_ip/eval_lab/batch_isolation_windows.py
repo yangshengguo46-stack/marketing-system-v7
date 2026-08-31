@@ -109,12 +109,25 @@ def _windows_path_has_private_acl(path: Path) -> bool:
 
 def create_private_directory(path: Path) -> int:
     parent = open_directory(Path(path).parent, deletable=False)
+    handle = -1
     try:
-        return _translate(
+        handle = _translate(
             "cannot create protected Windows directory",
             lambda: win32.create_directory(parent, Path(path).name),
         )
+        _translate(
+            "created Windows directory DACL is invalid",
+            lambda: win32.require_private_acl(handle),
+        )
+        result = handle
+        handle = -1
+        return result
     finally:
+        if handle >= 0:
+            try:
+                win32.mark_delete(handle)
+            finally:
+                win32.close(handle)
         close_handle(parent)
 
 
@@ -325,14 +338,16 @@ class WindowsCellFilesystem:
                 for part in parts[:-1]:
                     child = (*parent, part)
                     if child not in created:
-                        try:
-                            handle = win32.create_directory(created[parent], part)
-                        except win32.Win32SecurityError:
-                            handle = win32.open_child(
-                                created[parent], part, directory=True
-                            )
-                        created[child] = handle
+                        handle = _translate(
+                            "cannot create private snapshot directory",
+                            lambda: win32.create_directory(created[parent], part),
+                        )
                         owned.append(handle)
+                        _translate(
+                            "snapshot directory DACL is invalid",
+                            lambda: win32.require_private_acl(handle),
+                        )
+                        created[child] = handle
                     parent = child
                 handle = _translate(
                     "cannot copy independent snapshot bytes",
