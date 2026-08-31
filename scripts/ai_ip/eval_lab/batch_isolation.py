@@ -102,7 +102,6 @@ _platform_name = platform.system
 
 
 def require_supported_isolation_platform() -> None:
-    """Fail closed until a separate Windows redesign has native CI proof."""
     if _platform_name() == "Windows":
         raise UnsupportedIsolationPlatformError(
             "the 07B isolated runner requires a separate Windows redesign and native CI"
