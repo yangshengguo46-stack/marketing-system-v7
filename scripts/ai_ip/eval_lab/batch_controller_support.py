@@ -72,6 +72,7 @@ class ArmBinding:
     binary_manifest_sha256: str
     binary: FrozenFile
     codex_home_seed: FrozenTree
+    effective_config: FrozenFile
     effective_config_sha256: str
     effective_conditions: dict[str, object]
 
@@ -156,6 +157,7 @@ def _arm_binding(value: object, name: str, arm_class: str) -> ArmBinding:
         )
         binary = FrozenFile.capture(binary_path)
         seed = FrozenTree.capture(seed_path)
+        effective_config = FrozenFile.capture(config_path)
     except (BatchPlanError, SnapshotError) as error:
         raise ControllerSupportError(str(error)) from error
     return ArmBinding(
@@ -166,6 +168,7 @@ def _arm_binding(value: object, name: str, arm_class: str) -> ArmBinding:
         _sha256(arm.get("binaryManifestSha256"), "binary manifest SHA-256"),
         binary,
         seed,
+        effective_config,
         _sha256(arm.get("effectiveConfigSha256"), "effective config SHA-256"),
         conditions,
     )

@@ -217,6 +217,7 @@ def _verify_arm_details(
         "executionProfileSha256": identity.get("executionProfileSha256"),
         "modelRouteSha256": identity.get("modelRouteSha256"),
         "promptfooConfigSha256": identity.get("promptfooConfigSha256"),
+        "workspaceSeedSha256": identity.get("workspaceBeforeSha256"),
     }
     if (
         receipt["exitClassification"] == "completed"

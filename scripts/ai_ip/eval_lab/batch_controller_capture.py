@@ -1,19 +1,41 @@
-"""Bound and normalize executor evidence without suppressing the paired call."""
+"""Start, supervise, and incrementally normalize bounded executor evidence."""
 
 import hashlib
+import json
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 try:
-    from .contracts import LabContractError, canonical_json_bytes
+    from .batch_controller_identity import measure_request_identity
+    from .batch_controller_types import (
+        AttemptTelemetry,
+        MemoryAttemptByteSource,
+        RawAttemptResult,
+        validate_handle,
+        validate_source,
+    )
+    from .contracts import canonical_json_bytes
 except ImportError:
-    from contracts import LabContractError, canonical_json_bytes
+    from batch_controller_identity import measure_request_identity
+    from batch_controller_types import (
+        AttemptTelemetry,
+        MemoryAttemptByteSource,
+        RawAttemptResult,
+        validate_handle,
+        validate_source,
+    )
+    from contracts import canonical_json_bytes
+
+
+class FatalSupervisorError(RuntimeError):
+    """The controller cannot prove that candidate work stopped."""
 
 
 @dataclass(frozen=True)
 class CapturedResult:
     raw: object
+    telemetry: AttemptTelemetry
 
 
 @dataclass(frozen=True)
@@ -34,152 +56,206 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def capture(
-    executor: object, request: object, failure_factory: object
-) -> CapturedResult:
+def start(executor: object, request: object) -> object:
+    """Remeasure the cell, then perform the adapter's one nonblocking start."""
+    measure_request_identity(request)
+    return validate_handle(executor.start(request))
+
+
+def _zero_telemetry() -> AttemptTelemetry:
+    return AttemptTelemetry(0, 0, 0, 0)
+
+
+def capture(handle: object, request: object, failure_factory: object) -> CapturedResult:
+    """Supervise one already-started handle without blocking past its deadline."""
     try:
-        handle = executor.start(request)
+        handle = validate_handle(handle)
         deadline = time.monotonic() + request.timeout_seconds
         raw = None
-        timed_out = False
         while raw is None:
             raw = handle.poll()
             if raw is not None:
                 break
             if time.monotonic() >= deadline:
-                timed_out = True
-                if handle.terminate() is not True:
-                    raise RuntimeError("executor termination was not confirmed")
+                stop_deadline = time.monotonic() + min(1.0, request.timeout_seconds)
+                if handle.terminate_and_wait(stop_deadline) is not True:
+                    raise FatalSupervisorError(
+                        "fatal supervisor orphan: stop was not confirmed"
+                    )
                 raise TimeoutError("candidate exceeded the supervisor deadline")
             time.sleep(0.005)
         telemetry = handle.telemetry()
-        if timed_out:
-            raise TimeoutError("candidate exceeded the supervisor deadline")
-        raw = _bind_telemetry(raw, telemetry)
+        if not isinstance(telemetry, AttemptTelemetry):
+            raise ValueError("trusted executor telemetry is missing")
+        return CapturedResult(raw, telemetry)
+    except FatalSupervisorError:
+        raise
     except BaseException as error:
-        raw = failure_factory(error)
-    return CapturedResult(raw)
+        return CapturedResult(failure_factory(error), _zero_telemetry())
 
 
-def _bind_telemetry(raw: object, telemetry: object) -> object:
-    from dataclasses import replace
+def capture_start_failure(error: BaseException, failure_factory: object) -> CapturedResult:
+    return CapturedResult(failure_factory(error), _zero_telemetry())
 
-    if not all(
-        hasattr(telemetry, name)
-        for name in ("request_count", "input_tokens", "output_tokens", "cost_cny")
-    ):
-        raise ValueError("trusted executor telemetry is missing")
-    if not hasattr(raw, "metadata") or type(raw.metadata) is not dict:
-        return raw
-    metadata = dict(raw.metadata)
-    metadata["requestCount"] = telemetry.request_count
-    metadata["usage"] = {
-        "inputTokens": telemetry.input_tokens,
-        "outputTokens": telemetry.output_tokens,
-        "totalTokens": telemetry.input_tokens + telemetry.output_tokens,
+
+def _collect(source: object, limit: int) -> tuple[bytes, dict[str, object], bool]:
+    try:
+        source = validate_source(source)
+    except ValueError:
+        return b"", _byte_evidence(b"", False), True
+    chunks: list[bytes] = []
+    size = 0
+    oversized = False
+    digest = hashlib.sha256()
+    while True:
+        remaining = limit + 1 - size
+        if remaining <= 0:
+            oversized = True
+            break
+        chunk = source.read(min(64 * 1024, remaining))
+        if type(chunk) is not bytes or len(chunk) > min(64 * 1024, remaining):
+            return b"".join(chunks), _byte_evidence(b"".join(chunks), False), True
+        if not chunk:
+            break
+        chunks.append(chunk)
+        digest.update(chunk)
+        size += len(chunk)
+    payload = b"".join(chunks)
+    if len(payload) > limit:
+        oversized = True
+    evidence = {
+        "rawSha256": digest.hexdigest(),
+        "rawSize": size,
+        "storedSha256": hashlib.sha256(payload[:limit]).hexdigest(),
+        "storedSize": min(size, limit),
+        "truncated": oversized,
     }
-    cost = metadata.get("costEvidence")
-    metadata["costEvidence"] = {
-        **(cost if type(cost) is dict else {}),
-        "costCny": telemetry.cost_cny,
+    return payload[:limit], evidence, oversized
+
+
+def _byte_evidence(payload: bytes, truncated: bool) -> dict[str, object]:
+    return {
+        "rawSha256": hashlib.sha256(payload).hexdigest(),
+        "rawSize": len(payload),
+        "storedSha256": hashlib.sha256(payload).hexdigest(),
+        "storedSize": len(payload),
+        "truncated": truncated,
     }
-    return replace(raw, metadata=metadata)
+
+
+def _json_shape(payload: bytes) -> bool:
+    depth = 0
+    nodes = 1
+    in_string = False
+    escaped = False
+    for byte in payload:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif byte == 0x5C:
+                escaped = True
+            elif byte == 0x22:
+                in_string = False
+            continue
+        if byte == 0x22:
+            in_string = True
+        elif byte in (0x5B, 0x7B):
+            depth += 1
+            nodes += 1
+            if depth > 64:
+                return False
+        elif byte in (0x5D, 0x7D):
+            depth -= 1
+            if depth < 0:
+                return False
+        elif byte in (0x2C, 0x3A):
+            nodes += 1
+            if nodes > 10_000:
+                return False
+    return not in_string and depth == 0
 
 
 def _bounded_json(
-    value: object, limit: int, label: str
+    source: object, limit: int, label: str
 ) -> tuple[object, dict[str, object], bool]:
-    malformed = not _bounded_shape(value, limit)
-    if malformed:
-        payload = b""
-    else:
+    payload, evidence, malformed = _collect(source, limit)
+    if not malformed and _json_shape(payload):
         try:
-            payload = canonical_json_bytes(value)
-        except (LabContractError, TypeError, ValueError):
-            payload = b""
+            value = json.loads(payload)
+            stored = canonical_json_bytes(value) + b"\n"
+            evidence["storedSha256"] = hashlib.sha256(stored).hexdigest()
+            evidence["storedSize"] = len(stored)
+            return value, evidence, False
+        except (UnicodeDecodeError, TypeError, ValueError):
             malformed = True
-    oversized = len(payload) > limit
-    if malformed or oversized:
-        normalized: object = {
-            f"{label}Evidence": "malformed" if malformed else "oversized",
-            "rawSha256": hashlib.sha256(payload).hexdigest(),
-            "rawSize": len(payload),
-        }
     else:
-        normalized = value
-    stored = canonical_json_bytes(normalized)
-    evidence = {
-        "rawSha256": hashlib.sha256(payload).hexdigest(),
-        "rawSize": len(payload),
-        "storedSha256": hashlib.sha256(stored + b"\n").hexdigest(),
-        "storedSize": len(stored) + 1,
+        malformed = True
+    normalized = {
+        f"{label}Evidence": "oversized" if evidence["truncated"] else "malformed",
+        "rawSha256": evidence["rawSha256"],
+        "rawSize": evidence["rawSize"],
     }
+    stored = canonical_json_bytes(normalized) + b"\n"
+    evidence["storedSha256"] = hashlib.sha256(stored).hexdigest()
+    evidence["storedSize"] = len(stored)
     return normalized, evidence, malformed
 
 
-def _bounded_shape(value: object, limit: int) -> bool:
-    """Reject deep/large structures before recursive canonical serialization."""
-    pending = [(value, 0)]
-    nodes = 0
-    scalar_bytes = 0
-    while pending:
-        item, depth = pending.pop()
-        nodes += 1
-        if depth > 64 or nodes > 10_000:
-            return False
-        if item is None or type(item) in (bool, int, float):
-            scalar_bytes += 16
-        elif type(item) is str:
-            if len(item) > limit:
-                return False
-            scalar_bytes += len(item.encode("utf-8", errors="replace"))
-        elif type(item) is list:
-            pending.extend((child, depth + 1) for child in item)
-        elif type(item) is dict:
-            for key, child in item.items():
-                if type(key) is not str:
-                    return False
-                scalar_bytes += len(key.encode("utf-8", errors="replace"))
-                pending.append((child, depth + 1))
-        else:
-            return False
-        if scalar_bytes > limit:
-            return False
-    return True
-
-
-def _bounded_stream(value: object, limit: int) -> tuple[bytes, dict[str, object], bool]:
-    malformed = type(value) is not bytes
-    raw = value if type(value) is bytes else b""
-    stored = raw[:limit]
-    return (
-        stored,
-        {
-            "rawSha256": hashlib.sha256(raw).hexdigest(),
-            "rawSize": len(raw),
-            "storedSha256": hashlib.sha256(stored).hexdigest(),
-            "storedSize": len(stored),
-        },
-        malformed,
+def _attestation(value: object) -> dict[str, object] | None:
+    fields = (
+        "app_server_protocol_schema_sha256",
+        "binary_sha256",
+        "codex_home_seed_sha256",
+        "effective_config_sha256",
+        "execution_profile_sha256",
+        "model_route_sha256",
+        "promptfoo_config_sha256",
+        "workspace_seed_sha256",
     )
+    if not all(hasattr(value, field) for field in fields):
+        return None
+    return {
+        "appServerProtocolSchemaSha256": value.app_server_protocol_schema_sha256,
+        "binarySha256": value.binary_sha256,
+        "codexHomeSeedSha256": value.codex_home_seed_sha256,
+        "effectiveConfigSha256": value.effective_config_sha256,
+        "executionProfileSha256": value.execution_profile_sha256,
+        "modelRouteSha256": value.model_route_sha256,
+        "promptfooConfigSha256": value.promptfoo_config_sha256,
+        "workspaceSeedSha256": value.workspace_seed_sha256,
+    }
 
 
-def normalize(
-    captured: CapturedResult, result_type: type, limit: int
-) -> NormalizedResult:
+def normalize(captured: CapturedResult, result_type: type, limit: int) -> NormalizedResult:
     raw = captured.raw
-    if not isinstance(raw, result_type):
+    invalid_result = not isinstance(raw, result_type)
+    if invalid_result:
         now = _now()
-        raw = result_type(-1, now, now, None, None, b"", b"")
-        invalid_result = True
-    else:
-        invalid_result = False
+        empty = lambda value: MemoryAttemptByteSource(value)
+        raw = result_type(-1, now, now, empty(b"null"), empty(b"null"), empty(b""), empty(b""))
     output, output_evidence, bad_output = _bounded_json(raw.output, limit, "output")
     metadata, metadata_evidence, bad_metadata = _bounded_json(
         raw.metadata, limit, "metadata"
     )
-    stdout, stdout_evidence, bad_stdout = _bounded_stream(raw.stdout, limit)
-    stderr, stderr_evidence, bad_stderr = _bounded_stream(raw.stderr, limit)
+    stdout, stdout_evidence, bad_stdout = _collect(raw.stdout, limit)
+    stderr, stderr_evidence, bad_stderr = _collect(raw.stderr, limit)
+    if type(metadata) is dict:
+        metadata = dict(metadata)
+        telemetry = captured.telemetry
+        metadata["requestCount"] = telemetry.request_count
+        metadata["usage"] = {
+            "inputTokens": telemetry.input_tokens,
+            "outputTokens": telemetry.output_tokens,
+            "totalTokens": telemetry.input_tokens + telemetry.output_tokens,
+        }
+        cost = metadata.get("costEvidence")
+        metadata["costEvidence"] = {
+            **(cost if type(cost) is dict else {}),
+            "costCny": telemetry.cost_cny,
+        }
+        stored_metadata = canonical_json_bytes(metadata) + b"\n"
+        metadata_evidence["storedSha256"] = hashlib.sha256(stored_metadata).hexdigest()
+        metadata_evidence["storedSize"] = len(stored_metadata)
     timestamps_valid = (
         type(raw.started_at) is str
         and type(raw.finished_at) is str
@@ -199,30 +275,17 @@ def normalize(
     started_at = raw.started_at if timestamps_valid else now
     finished_at = raw.finished_at if timestamps_valid else now
     exit_code = raw.exit_code if type(raw.exit_code) is int else -1
+    attestation = _attestation(raw.attestation)
     raw_evidence = {
+        "attestation": attestation,
         "exitCode": exit_code,
         "finishedAt": raw.finished_at if type(raw.finished_at) is str else None,
         "metadataBytes": metadata_evidence,
         "outputBytes": output_evidence,
-        "requestCount": (
-            raw.metadata.get("requestCount") if type(raw.metadata) is dict else None
-        ),
+        "requestCount": captured.telemetry.request_count,
         "startedAt": raw.started_at if type(raw.started_at) is str else None,
         "stderrBytes": stderr_evidence,
         "stdoutBytes": stdout_evidence,
-        "attestation": (
-            {
-                "appServerProtocolSchemaSha256": raw.attestation.app_server_protocol_schema_sha256,
-                "binarySha256": raw.attestation.binary_sha256,
-                "codexHomeSeedSha256": raw.attestation.codex_home_seed_sha256,
-                "effectiveConfigSha256": raw.attestation.effective_config_sha256,
-                "executionProfileSha256": raw.attestation.execution_profile_sha256,
-                "modelRouteSha256": raw.attestation.model_route_sha256,
-                "promptfooConfigSha256": raw.attestation.promptfoo_config_sha256,
-            }
-            if hasattr(raw.attestation, "binary_sha256")
-            else None
-        ),
     }
     return NormalizedResult(
         exit_code,
@@ -233,7 +296,7 @@ def normalize(
         stdout,
         stderr,
         raw_evidence,
-        raw_evidence["attestation"],
+        attestation,
         invalid_result
         or bad_output
         or bad_metadata

@@ -1,23 +1,17 @@
 """Randomized two-arm controller for sealed 07B candidate plans."""
 
-from dataclasses import dataclass
 from contextlib import ExitStack
 from pathlib import Path
 
 try:
     from .batch_controller_attempt import (
-        capture_arm,
         prepare_arm,
         seal_arm,
         seal_arm_failure,
     )
-    from .batch_controller_types import (
-        AttemptAttestation,
-        AttemptRequest,
-        AttemptTelemetry,
-        CandidateExecutor,
-        RawAttemptResult,
-    )
+    from .batch_controller_execution import counting_executor, start_and_capture_pair
+    from .batch_controller_identity import ExecutionIdentityError
+    from . import batch_controller_types as _types
     from .batch_receipt_storage import seal_failure_tombstone
     from .batch_controller_staging import stage_inputs
     from .batch_controller_support import (
@@ -38,7 +32,7 @@ try:
         verify_attempt_cells_disjoint,
     )
     from .batch_plan import verify_effective_condition_parity
-    from .batch_plan_authority import PlanAuthorityError, reserve_plan
+    from .batch_plan_authority import reserve_plan
     from .batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -50,18 +44,13 @@ try:
     )
 except ImportError:
     from batch_controller_attempt import (
-        capture_arm,
         prepare_arm,
         seal_arm,
         seal_arm_failure,
     )
-    from batch_controller_types import (
-        AttemptAttestation,
-        AttemptRequest,
-        AttemptTelemetry,
-        CandidateExecutor,
-        RawAttemptResult,
-    )
+    from batch_controller_execution import counting_executor, start_and_capture_pair
+    from batch_controller_identity import ExecutionIdentityError
+    import batch_controller_types as _types
     from batch_receipt_storage import seal_failure_tombstone
     from batch_controller_staging import stage_inputs
     from batch_controller_support import (
@@ -82,7 +71,7 @@ except ImportError:
         verify_attempt_cells_disjoint,
     )
     from batch_plan import verify_effective_condition_parity
-    from batch_plan_authority import PlanAuthorityError, reserve_plan
+    from batch_plan_authority import reserve_plan
     from batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -94,18 +83,18 @@ except ImportError:
     )
 
 
+AttemptAttestation = _types.AttemptAttestation
+AttemptByteSource = _types.AttemptByteSource
+AttemptRequest = _types.AttemptRequest
+AttemptTelemetry = _types.AttemptTelemetry
+CandidateExecutor = _types.CandidateExecutor
+MemoryAttemptByteSource = _types.MemoryAttemptByteSource
+RawAttemptResult = _types.RawAttemptResult
+RunningAttempt = _types.RunningAttempt
+
+
 class BatchControllerError(ValueError):
     pass
-
-
-@dataclass
-class _CountingExecutor:
-    executor: CandidateExecutor
-    calls: int = 0
-
-    def start(self, request: AttemptRequest):
-        self.calls += 1
-        return self.executor.start(request)
 
 
 def _run_candidate_pair(
@@ -116,7 +105,8 @@ def _run_candidate_pair(
     *,
     active_seed: bytes,
 ) -> dict[str, object]:
-    with ExitStack() as resources:
+    resources = ExitStack()
+    try:
         return _run_candidate_pair_scoped(
             plan_value,
             validated,
@@ -125,6 +115,8 @@ def _run_candidate_pair(
             active_seed=active_seed,
             resources=resources,
         )
+    finally:
+        resources.close()
 
 
 def _run_candidate_pair_scoped(
@@ -147,7 +139,7 @@ def _run_candidate_pair_scoped(
         pair_directory = layout.pair_directory
         attempt_directories = layout.attempt_directories
         resources.callback(layout.close)
-    except BatchReceiptError as error:
+    except (BatchReceiptError, ExecutionIdentityError) as error:
         raise BatchControllerError(str(error)) from error
     cells: dict[str, object] = {}
     staged = None
@@ -239,7 +231,7 @@ def _run_candidate_pair_scoped(
         )
         for name in ("stock", "modified")
     }
-    captured = {name: capture_arm(executor, prepared[name][1]) for name in order}
+    captured = start_and_capture_pair(executor, prepared, order)
     try:
         layout.verify()
     except BaseException as error:
@@ -341,10 +333,11 @@ def run_candidate_pair(
     *,
     seed: bytes | None = None,
 ) -> dict[str, object]:
-    """Execute the sole replication in a sealed plan."""
     require_supported_isolation_platform()
-    if not callable(getattr(executor, "start", None)):
-        raise BatchControllerError("executor requires the bounded start/poll contract")
+    try:
+        counted = counting_executor(executor)
+    except ValueError as error:
+        raise BatchControllerError(str(error)) from error
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
@@ -364,7 +357,6 @@ def run_candidate_pair(
         )
     except ValueError as error:
         raise BatchControllerError(str(error)) from error
-    counted = _CountingExecutor(executor)
     try:
         return _run_candidate_pair(
             plan_value,
@@ -373,7 +365,7 @@ def run_candidate_pair(
             Path(private_root),
             active_seed=active_seed,
         )
-    except BatchReceiptError as error:
+    except (BatchReceiptError, ExecutionIdentityError) as error:
         raise BatchControllerError(str(error)) from error
     except BaseException:
         raise
@@ -387,10 +379,11 @@ def run_candidate_batch(
     *,
     seed: bytes | None = None,
 ) -> list[dict[str, object]]:
-    """Execute exactly the pre-sealed replication count without adaptive stopping."""
     require_supported_isolation_platform()
-    if not callable(getattr(executor, "start", None)):
-        raise BatchControllerError("executor requires the bounded start/poll contract")
+    try:
+        counted = counting_executor(executor)
+    except ValueError as error:
+        raise BatchControllerError(str(error)) from error
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
@@ -420,7 +413,6 @@ def run_candidate_batch(
         )
     except ValueError as error:
         raise BatchControllerError(str(error)) from error
-    counted = _CountingExecutor(executor)
     try:
         return [
             _run_candidate_pair(

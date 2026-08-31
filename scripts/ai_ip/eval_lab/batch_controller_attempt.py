@@ -5,14 +5,18 @@ from pathlib import Path
 
 try:
     from .batch_controller_artifacts import materialize_neutral_binary_bytes
-    from .batch_controller_capture import capture, normalize
+    from .batch_controller_capture import capture, capture_start_failure, normalize, start
     from .batch_controller_support import (
         ArmBinding,
         ValidatedBindings,
         classify_attempt_result,
         freeze_json,
     )
-    from .batch_controller_types import AttemptRequest, RawAttemptResult
+    from .batch_controller_types import (
+        AttemptRequest,
+        MemoryAttemptByteSource,
+        RawAttemptResult,
+    )
     from .batch_isolation import AttemptCell, mark_receipts_sealed
     from .batch_plan import sha256_tree
     from .batch_receipts import seal_arm_attempt_receipt
@@ -20,14 +24,18 @@ try:
     from .contracts import LabContractError, canonical_json_bytes, sha256_json
 except ImportError:
     from batch_controller_artifacts import materialize_neutral_binary_bytes
-    from batch_controller_capture import capture, normalize
+    from batch_controller_capture import capture, capture_start_failure, normalize, start
     from batch_controller_support import (
         ArmBinding,
         ValidatedBindings,
         classify_attempt_result,
         freeze_json,
     )
-    from batch_controller_types import AttemptRequest, RawAttemptResult
+    from batch_controller_types import (
+        AttemptRequest,
+        MemoryAttemptByteSource,
+        RawAttemptResult,
+    )
     from batch_isolation import AttemptCell, mark_receipts_sealed
     from batch_plan import sha256_tree
     from batch_receipts import seal_arm_attempt_receipt
@@ -51,7 +59,15 @@ def _failure_result(error: BaseException) -> RawAttemptResult:
         "turnId": None,
         "usage": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0},
     }
-    return RawAttemptResult(-1, now, now, None, metadata, b"", str(error).encode())
+    return RawAttemptResult(
+        -1,
+        now,
+        now,
+        MemoryAttemptByteSource(b"null"),
+        MemoryAttemptByteSource(canonical_json_bytes(metadata)),
+        MemoryAttemptByteSource(b""),
+        MemoryAttemptByteSource(str(error).encode()),
+    )
 
 
 def prepare_arm(
@@ -67,14 +83,16 @@ def prepare_arm(
     request = AttemptRequest(
         cell,
         binary_path,
-        freeze_json(bindings.case_bundle),
-        freeze_json(bindings.case_answer_schema),
-        dict(bindings.model_route),
-        freeze_json(bindings.execution_profile),
+        canonical_json_bytes(bindings.case_bundle),
+        canonical_json_bytes(bindings.case_answer_schema),
+        canonical_json_bytes(bindings.model_route),
+        canonical_json_bytes(bindings.execution_profile),
+        arm.effective_config.payload,
         int(plan["timeoutBudget"]),
         int(plan["tokenBudget"]),
         int(plan["requestBudget"]),
         int(plan["costBudgetCny"]),
+        arm.binary.sha256,
         arm.codex_home_seed.digest,
         arm.effective_config_sha256,
         bindings.workspace_seed.digest,
@@ -84,12 +102,22 @@ def prepare_arm(
         bindings.protocol_sha256,
         bindings.promptfoo_config.payload,
         bindings.promptfoo_config_sha256,
+        arm.codex_home_seed,
+        bindings.workspace_seed,
     )
     return before, request
 
 
-def capture_arm(executor: object, request: AttemptRequest) -> object:
-    return capture(executor, request, _failure_result)
+def start_arm(executor: object, request: AttemptRequest) -> object:
+    return start(executor, request)
+
+
+def capture_arm(handle: object, request: AttemptRequest) -> object:
+    return capture(handle, request, _failure_result)
+
+
+def capture_arm_start_failure(error: BaseException) -> object:
+    return capture_start_failure(error, _failure_result)
 
 
 def seal_arm(
@@ -143,6 +171,7 @@ def seal_arm(
                     "executionProfileSha256": sha256_json(bindings.execution_profile),
                     "modelRouteSha256": sha256_json(bindings.model_route),
                     "promptfooConfigSha256": bindings.promptfoo_config_sha256,
+                    "workspaceSeedSha256": bindings.workspace_seed.cell_digest(),
                 }
             )
         ),
