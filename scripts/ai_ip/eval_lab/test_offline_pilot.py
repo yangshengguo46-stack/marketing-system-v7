@@ -81,9 +81,7 @@ def _source_values() -> dict[str, dict[str, object]]:
             "semantic_result": {
                 "failure": "content-root-abstraction-stopped-too-early"
             },
-            "post_run_defect": {
-                "symptom": "unsupported-existing-experience-claim"
-            },
+            "post_run_defect": {"symptom": "unsupported-existing-experience-claim"},
             "secrets_included": False,
         },
         "A116": {
@@ -171,9 +169,7 @@ def _submission(
     preferred_output: str,
     known_failure_sha: str,
 ) -> dict[str, object]:
-    output_by_arm = {
-        arm: assignment[f"arm{arm}OutputSha256"] for arm in ("A", "B")
-    }
+    output_by_arm = {arm: assignment[f"arm{arm}OutputSha256"] for arm in ("A", "B")}
     scores_by_output = {
         known_failure_sha: _scores(4),
         next(
@@ -268,8 +264,13 @@ def _install_external_operation_traps(monkeypatch) -> None:
     original_getenv = os.getenv
 
     def reject_credential_lookup(name, *defaults):
-        if any(marker in name.casefold() for marker in ("key", "token", "secret", "credential")):
-            raise AssertionError("offline pilot inspected a credential environment variable")
+        if any(
+            marker in name.casefold()
+            for marker in ("key", "token", "secret", "credential")
+        ):
+            raise AssertionError(
+                "offline pilot inspected a credential environment variable"
+            )
         return original_getenv(name, *defaults)
 
     monkeypatch.setattr(socket, "create_connection", reject_external)
@@ -433,13 +434,17 @@ def test_provider_free_golden_gift_pilot_runs_all_five_cli_commands(
         "caseId": CASE_ID,
         "objectKind": "CaseCompilationReceipt",
     }
-    assert qualification_projections == [
-        {
-            "diagnosticOnly": True,
-            "objectKind": "QualificationReceipt",
-            "status": "qualified",
-        }
-    ] * 3
+    assert (
+        qualification_projections
+        == [
+            {
+                "diagnosticOnly": True,
+                "objectKind": "QualificationReceipt",
+                "status": "qualified",
+            }
+        ]
+        * 3
+    )
     assert prepare_projection == {
         "batchId": BATCH_ID,
         "objectKind": "BlindPackReceipt",
@@ -505,9 +510,11 @@ def test_legacy_sources_compile_with_exact_approved_digests():
             == 0
         )
         receipt = load_exact_json(
-            private_root
-            / f"cases/{CASE_ID}/coordinator/case-compilation-receipt.json"
+            private_root / f"cases/{CASE_ID}/coordinator/case-compilation-receipt.json"
         )
-        assert receipt["sourceManifestSha256"] == hashlib.sha256(
-            (LAB_ROOT / f"fixtures/{CASE_ID}/source-import.json").read_bytes()
-        ).hexdigest()
+        assert (
+            receipt["sourceManifestSha256"]
+            == hashlib.sha256(
+                (LAB_ROOT / f"fixtures/{CASE_ID}/source-import.json").read_bytes()
+            ).hexdigest()
+        )

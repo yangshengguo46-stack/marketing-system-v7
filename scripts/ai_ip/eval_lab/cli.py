@@ -95,9 +95,7 @@ def _parser() -> _SafeParser:
     prepare_parser.add_argument(
         "--base-qualification-receipt", action="append", required=True
     )
-    prepare_parser.add_argument(
-        "--arbitrator-qualification-receipt", action="append"
-    )
+    prepare_parser.add_argument("--arbitrator-qualification-receipt", action="append")
 
     seal_parser = commands.add_parser(
         "seal-blind-statistics", add_help=False, allow_abbrev=False
@@ -106,9 +104,7 @@ def _parser() -> _SafeParser:
     seal_parser.add_argument(
         "--base-qualification-receipt", action="append", required=True
     )
-    seal_parser.add_argument(
-        "--arbitrator-qualification-receipt", action="append"
-    )
+    seal_parser.add_argument("--arbitrator-qualification-receipt", action="append")
     seal_parser.add_argument("--submission", action="append", required=True)
 
     unlock_parser = commands.add_parser(

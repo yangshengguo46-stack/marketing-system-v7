@@ -172,8 +172,7 @@ def test_abbreviated_flags_are_rejected_without_echoing_path(capsys):
 @pytest.mark.parametrize(
     "arguments",
     [
-        _prepare_arguments()
-        + ["--base-qualification-receipt", "only-one.json"],
+        _prepare_arguments() + ["--base-qualification-receipt", "only-one.json"],
         _prepare_arguments()
         + [
             "--base-qualification-receipt",
@@ -205,9 +204,7 @@ def test_abbreviated_flags_are_rejected_without_echoing_path(capsys):
         ],
     ],
 )
-def test_cardinality_errors_return_two_before_domain_dispatch(
-    arguments, capsys
-):
+def test_cardinality_errors_return_two_before_domain_dispatch(arguments, capsys):
     result = main(arguments)
 
     captured = capsys.readouterr()
@@ -261,9 +258,7 @@ def test_qualification_accepts_relative_paths_but_emits_only_safe_projection(
     assert str(output_parent) not in captured.out
 
 
-def test_domain_errors_are_generic_and_do_not_leak_input_body(
-    tmp_path, capsys
-):
+def test_domain_errors_are_generic_and_do_not_leak_input_body(tmp_path, capsys):
     secret = "DO-NOT-ECHO-private-reviewer-identity"
     profile_path = tmp_path / "profile.json"
     attempt_path = tmp_path / "attempt.json"
