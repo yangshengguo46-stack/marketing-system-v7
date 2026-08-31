@@ -268,3 +268,25 @@ next child=07B Codex Batch Runner, separately reviewed and authorized
 ```
 
 - Reverse rollback: first revert every future F-0008A maintenance or correction commit newer than this text in reverse history, then revert `b87920b1d`, `09e3bde14`, `602d3ff62`, and `793b1b1b0` in that order. Continue by reverting the older maintenance/correction commits in reverse history, including the cohesive maintenance title above and `7cd5bf4be`, ending with the named creation commit `docs: record marketing eval lab foundation`; then revert `0d78df5e0`, `1e1ce240a`, `ea69217a8`, `bf64a68b3`, `48b54d145`, and `bca4cfa27`. Continue through Task 7 to Task 1 in reverse dependency order, then revert `8844b030e` only after all F-0008A implementation commits are gone. Never rewrite F-0006 through F-0008 history or retain a provider, credential, live-platform, G2, or Phase 0B bypass.
+
+## F-0009 — Authorize Marketing Evaluation Lab Codex Batch Runner 07B
+
+- Owner: Marketing Evaluation Lab Codex Batch Runner 07B.
+- Consumes: design commits `1c0cd8177` and `ee478e96c`, amended by identical-batch tie-semantics commit `c587eb5e8` and reviewed implementation-plan commit `25feea412` for `docs/superpowers/plans/2026-08-31-07b-codex-isolated-batch-runner.md`.
+- Classification: **add** only the external 07B provider-free-first batch-runner child: Python lab modules, frozen schemas, exact-pinned Promptfoo workspace, proof-only bounded proxy, tests, fixtures, and documentation; **preserve** the product App Server/core, 06A/06B1 proof/runtime behavior, 07A provider-free foundation, credentials, and existing public contracts.
+- Business reason: establish a removable, auditable, fully isolated Stock-versus-Modified candidate production chain that executes one sealed business case under equal conditions, records immutable pair evidence, anonymizes outputs, and hands them to 07A without turning the runner or Promptfoo into a business-quality judge.
+- Authorized scope: provider-free mechanical contracts, plan sealing, binary/treatment parity, fresh candidate cells, deterministic loopback execution, exact Promptfoo adapter behavior, real-process tests against local fixtures, private 07A import/anonymization, and fail-closed receipts for timeout, crash, malformed output, budget, isolation, rerun, or tamper failure. The runner may prepare a live path only behind a separately consumed one-shot authorization with explicit model, route, request, token/time, and CNY ceilings; no open-ended provider execution is authorized.
+- Scope fence: provider-free first; no provider call, API-key or credential inspection, live GLM smoke, real held-out business case, human review, business-quality or marketing-superiority claim, G2, `PASS_TO_PHASE_0B`, production configuration change, product App Server/core change, SaaS/control-plane surface, or irreversible migration is authorized by this entry. Promptfoo scores, assertions, AI Judge, and database have no formal authority. Fixed five-case material remains regression/calibration only.
+- Provider/cost disposition: `providerMode=not-run`; authorized provider cost `0`; paid provider cost `0`. Candidate environments receive only a loopback dummy bearer; any future live secret may exist only in the proof-only bounded proxy under the separately authorized one-shot live gate. No API key, external provider, customer material, or external network is located, read, or used for this authorization.
+- Gate disposition:
+
+```text
+MARKETING_EVAL_LAB_07B=AUTHORIZED_NOT_IMPLEMENTED
+G0=OPEN
+G1=OPEN
+G2=OPEN
+PASS_TO_PHASE_0B=false
+```
+
+- Upstream-sync risk: high around App Server JSON-RPC and lifecycle behavior, exact Promptfoo/provider adapter pin, candidate environment isolation, binary and treatment commitments, batch tie semantics, receipt/import wires, bounded proxy behavior, and 07A private-root contracts. Any rebase or conflict resolution requires replaying the complete locked provider-free Python/Cargo/Bazel matrix and preserving this entry's fail-closed boundaries.
+- Reverse rollback: before implementation, revert only the cohesive F-0009 authorization commit. After implementation begins, revert later F-0009 completion or maintenance entries and all 07B-owned implementation commits in reverse dependency order, then this authorization commit. Never rewrite F-0008/F-0008A or earlier history, weaken isolation or receipt checks, retain a compatibility bypass, or convert provider-free evidence into G2 or Phase 0B evidence.
