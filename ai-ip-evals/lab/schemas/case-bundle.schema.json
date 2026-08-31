@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case-bundle.schema.json",
+  "title": "CaseBundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectKind"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "objectKind": {"enum": ["CaseBlueprint", "ContentPacket", "OutcomePacket", "ReferenceDossier", "CaseCompilationReceipt"]},
+    "caseFamilyId": {"type": "string", "minLength": 1},
+    "caseId": {"type": "string", "minLength": 1},
+    "taskLevels": {"type": "array", "items": {"enum": ["L1", "L2"]}, "minItems": 1, "uniqueItems": true},
+    "mission": {"type": "string", "minLength": 1},
+    "businessSubject": {"type": "string", "minLength": 1},
+    "directionFamilies": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/directionFamily"}},
+    "knownUnknowns": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "diagnosticOnly": {"type": "boolean"},
+    "predictionTime": {"type": "string", "format": "date-time"},
+    "knownEvidence": {"$ref": "#/$defs/knownEvidence"},
+    "unknowns": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "requestedOutput": {"type": "array", "items": {"enum": ["L1", "L2"]}, "minItems": 1, "uniqueItems": true},
+    "sourceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "revealAfter": {"type": "string", "format": "date-time"},
+    "observations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "knownFailures": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "counterexamples": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "nonCopyBoundaries": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "disputes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "contentPacketSha256": {"$ref": "#/$defs/sha256"},
+    "outcomePacketSha256": {"$ref": "#/$defs/sha256"},
+    "referenceDossierSha256": {"$ref": "#/$defs/sha256"},
+    "sourceManifestSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "directionFamily": {
+      "type": "object", "additionalProperties": false,
+      "required": ["directionFamilyId", "title", "mandatoryRoot", "conditions"],
+      "properties": {
+        "directionFamilyId": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "mandatoryRoot": {"const": false},
+        "conditions": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      }
+    },
+    "knownEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "providerRevision", "localExperimentLicenseStatus", "query", "resultCount", "payloadSizeBytes", "limitations"],
+      "properties": {
+        "sourceId": {"type": "string", "minLength": 1},
+        "providerRevision": {"type": "string", "minLength": 1},
+        "localExperimentLicenseStatus": {"type": "string", "minLength": 1},
+        "query": {"type": "string", "minLength": 1},
+        "resultCount": {"type": "integer", "minimum": 0},
+        "payloadSizeBytes": {"type": "integer", "minimum": 0},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      }
+    }
+  },
+  "oneOf": [
+    {"properties": {"objectKind": {"const": "CaseBlueprint"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "caseFamilyId", "taskLevels", "mission", "businessSubject", "directionFamilies", "knownUnknowns", "diagnosticOnly"]}, "required": ["caseFamilyId", "taskLevels", "mission", "businessSubject", "directionFamilies", "knownUnknowns", "diagnosticOnly"]},
+    {"properties": {"objectKind": {"const": "ContentPacket"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "caseId", "predictionTime", "mission", "businessSubject", "knownEvidence", "unknowns", "requestedOutput", "sourceRefs"]}, "required": ["caseId", "predictionTime", "mission", "businessSubject", "knownEvidence", "unknowns", "requestedOutput", "sourceRefs"]},
+    {"properties": {"objectKind": {"const": "OutcomePacket"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "caseId", "revealAfter", "observations", "knownFailures", "sourceRefs"]}, "required": ["caseId", "revealAfter", "observations", "knownFailures", "sourceRefs"]},
+    {"properties": {"objectKind": {"const": "ReferenceDossier"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "caseId", "directionFamilies", "counterexamples", "nonCopyBoundaries", "disputes", "sourceRefs"]}, "required": ["caseId", "directionFamilies", "counterexamples", "nonCopyBoundaries", "disputes", "sourceRefs"]},
+    {"properties": {"objectKind": {"const": "CaseCompilationReceipt"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "caseId", "contentPacketSha256", "outcomePacketSha256", "referenceDossierSha256", "sourceManifestSha256"]}, "required": ["caseId", "contentPacketSha256", "outcomePacketSha256", "referenceDossierSha256", "sourceManifestSha256"]}
+  ]
+}

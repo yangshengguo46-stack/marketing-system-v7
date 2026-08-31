@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "objectKind": "CaseBlueprint",
+  "caseFamilyId": "golden-gift-li-culture-v1",
+  "taskLevels": ["L1", "L2"],
+  "mission": "在不把历史案例当成唯一答案的前提下，理解黄金礼品业务并提出有证据边界的品牌 IP 孵化方向。",
+  "businessSubject": "经营黄金礼品并探索礼文化品牌 IP 的业务主体",
+  "directionFamilies": [
+    {
+      "directionFamilyId": "etiquette-conflict",
+      "title": "礼仪知识与传统/现代冲突",
+      "mandatoryRoot": false,
+      "conditions": ["能区分历史礼俗、当代规范与具体场景", "不把单一传统解释包装成普遍真理"]
+    },
+    {
+      "directionFamilyId": "relationship-situations",
+      "title": "人情往来、关系判断与生活情境",
+      "mandatoryRoot": false,
+      "conditions": ["以真实关系困境或生活情境承载判断", "避免替所有受众规定同一人情规则"]
+    },
+    {
+      "directionFamilyId": "gift-choice-commerce",
+      "title": "礼品选择、赠礼风险与品牌商业承接",
+      "mandatoryRoot": false,
+      "conditions": ["商业承接必须与受众的选择风险相关", "不以强卖货替代礼品与关系判断"]
+    }
+  ],
+  "knownUnknowns": [
+    "目标受众内部的具体关系场景与优先级尚未验证",
+    "三类方向的长期选题供给和制作成本尚未实测",
+    "内容偏好与购买、咨询或到店行动之间的增量关系未知"
+  ],
+  "diagnosticOnly": true
+}

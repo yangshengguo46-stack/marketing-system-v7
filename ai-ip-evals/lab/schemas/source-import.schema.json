@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source-import.schema.json",
+  "title": "SourceImportManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectKind", "caseFamilyId", "sources"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "objectKind": {"const": "SourceImportManifest"},
+    "caseFamilyId": {"type": "string", "minLength": 1},
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["sourceId", "relativePath", "sha256", "packetRoles"],
+        "properties": {
+          "sourceId": {"type": "string", "minLength": 1},
+          "relativePath": {"type": "string", "pattern": "^[^/\\\\]+\\.json$"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "packetRoles": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"enum": ["contentEvidence", "outcomeEvidence", "referenceEvidence"]}
+          }
+        }
+      }
+    }
+  }
+}

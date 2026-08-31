@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reviewer.schema.json",
+  "title": "ReviewerContracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectKind"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "objectKind": {"enum": ["ReviewerProfile", "CalibrationAttempt", "QualificationReceipt"]},
+    "reviewerId": {"type": "string", "minLength": 1},
+    "capabilityDomains": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "conflictDisclosure": {"enum": ["accepted", "disclosedConflict"]},
+    "requestedQualifications": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "policyId": {"type": "string", "minLength": 1},
+    "anchorCorrect": {"type": "integer", "minimum": 0},
+    "severeMisses": {"type": "integer", "minimum": 0},
+    "repeatAgreement": {"type": "integer", "minimum": 0, "maximum": 1000},
+    "swapAgreement": {"type": "integer", "minimum": 0, "maximum": 1000},
+    "completedAt": {"type": "string", "format": "date-time"},
+    "qualifiedDomains": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "status": {"enum": ["qualified", "notQualified", "expired"]},
+    "attemptSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "diagnosticOnly": {"const": true}
+  },
+  "oneOf": [
+    {"properties": {"objectKind": {"const": "ReviewerProfile"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "reviewerId", "capabilityDomains", "conflictDisclosure", "requestedQualifications"]}, "required": ["reviewerId", "capabilityDomains", "conflictDisclosure", "requestedQualifications"]},
+    {"properties": {"objectKind": {"const": "CalibrationAttempt"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "reviewerId", "policyId", "anchorCorrect", "severeMisses", "repeatAgreement", "swapAgreement", "completedAt"]}, "required": ["reviewerId", "policyId", "anchorCorrect", "severeMisses", "repeatAgreement", "swapAgreement", "completedAt"]},
+    {"properties": {"objectKind": {"const": "QualificationReceipt"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "reviewerId", "policyId", "qualifiedDomains", "status", "attemptSha256", "expiresAt", "diagnosticOnly"]}, "required": ["reviewerId", "policyId", "qualifiedDomains", "status", "attemptSha256", "expiresAt", "diagnosticOnly"]}
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "objectKind": "CaseAnswer",
+  "caseId": "golden-gift-li-culture-v1",
+  "taskLevels": ["L1", "L2"],
+  "subject": "经营黄金礼品并探索礼文化品牌 IP 的业务主体",
+  "audiences": ["重视赠礼体面与关系维护的人"],
+  "desiredActions": ["继续观看并保存可复用的情境判断", "在需要时咨询或选择适合关系场景的礼品"],
+  "evidenceGaps": [],
+  "directionOptions": [
+    {
+      "directionId": "claimed-proven-experience",
+      "directionFamily": "礼品选择、赠礼风险与品牌商业承接",
+      "rationale": "把未经材料支持的既有成功经验直接当作成熟方法输出。",
+      "tradeoffs": ["缺少可核验的历史经验与结果证据"],
+      "conditions": ["必须先取得并核验真实经营与内容结果证据"],
+      "evidenceRefs": []
+    }
+  ],
+  "recommendedDirectionId": "claimed-proven-experience",
+  "claims": [
+    {
+      "claimId": "unsupported-existing-experience",
+      "text": "该业务已经用这套内容方法长期经营并获得稳定转化。",
+      "claimType": "existingExperience",
+      "support": "unsupported",
+      "evidenceRefs": []
+    }
+  ],
+  "readiness": "notUsable",
+  "synthetic": true
+}

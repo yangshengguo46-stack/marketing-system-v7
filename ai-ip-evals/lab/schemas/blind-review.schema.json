@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blind-review.schema.json",
+  "title": "BlindReviewContracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectKind"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "objectKind": {"enum": ["BlindAssignment", "ReviewSubmission", "BlindPackReceipt"]},
+    "assignmentId": {"type": "string", "minLength": 1},
+    "batchId": {"type": "string", "minLength": 1},
+    "reviewerId": {"type": "string", "minLength": 1},
+    "position": {"enum": ["AB", "BA"]},
+    "sequenceSlot": {"type": "integer", "minimum": 1},
+    "releaseCondition": {"enum": ["immediate", "arbitrationRequired"]},
+    "contentPacketSha256": {"$ref": "#/$defs/sha256"},
+    "armAOutputSha256": {"$ref": "#/$defs/sha256"},
+    "armBOutputSha256": {"$ref": "#/$defs/sha256"},
+    "swapOf": {"type": ["string", "null"]},
+    "eligibility": {"enum": ["both", "aOnly", "bOnly", "neither"]},
+    "preference": {"enum": ["A", "B", "nearTie", "abstain"]},
+    "dimensionsByArm": {"$ref": "#/$defs/dimensionsByArm"},
+    "severeFlagsByArm": {"$ref": "#/$defs/severeFlagsByArm"},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "maxItems": 3},
+    "evidenceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "submittedAt": {"type": "string", "format": "date-time"},
+    "batchManifestSha256": {"$ref": "#/$defs/sha256"},
+    "armKeySha256": {"$ref": "#/$defs/sha256"},
+    "assignmentSha256s": {"type": "array", "items": {"$ref": "#/$defs/sha256"}, "minItems": 1, "uniqueItems": true},
+    "mappingSha256s": {"type": "array", "items": {"$ref": "#/$defs/sha256"}, "minItems": 1, "uniqueItems": true},
+    "createdAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "dimensionScores": {
+      "type": "object", "additionalProperties": false,
+      "required": ["businessSubjectClarity", "audienceActionFit", "directionBreadthAndTradeoffs", "evidenceAndUnknownDiscipline", "sustainableIpPotential", "commercialConnectionWithoutForcedSelling"],
+      "properties": {
+        "businessSubjectClarity": {"type": "integer", "minimum": 0, "maximum": 4},
+        "audienceActionFit": {"type": "integer", "minimum": 0, "maximum": 4},
+        "directionBreadthAndTradeoffs": {"type": "integer", "minimum": 0, "maximum": 4},
+        "evidenceAndUnknownDiscipline": {"type": "integer", "minimum": 0, "maximum": 4},
+        "sustainableIpPotential": {"type": "integer", "minimum": 0, "maximum": 4},
+        "commercialConnectionWithoutForcedSelling": {"type": "integer", "minimum": 0, "maximum": 4}
+      }
+    },
+    "dimensionsByArm": {"type": "object", "additionalProperties": false, "required": ["A", "B"], "properties": {"A": {"$ref": "#/$defs/dimensionScores"}, "B": {"$ref": "#/$defs/dimensionScores"}}},
+    "flagList": {"type": "array", "uniqueItems": true, "items": {"enum": ["fabricatedExistingExperience", "wrongBusinessSubject", "wrongDesiredAction", "singlePathPresentedAsProvenTruth", "notActuallyUsable", "rightsOrPrivacyViolation"]}},
+    "severeFlagsByArm": {"type": "object", "additionalProperties": false, "required": ["A", "B"], "properties": {"A": {"$ref": "#/$defs/flagList"}, "B": {"$ref": "#/$defs/flagList"}}}
+  },
+  "oneOf": [
+    {"properties": {"objectKind": {"const": "BlindAssignment"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "assignmentId", "batchId", "reviewerId", "position", "sequenceSlot", "releaseCondition", "contentPacketSha256", "armAOutputSha256", "armBOutputSha256", "swapOf"]}, "required": ["assignmentId", "batchId", "reviewerId", "position", "sequenceSlot", "releaseCondition", "contentPacketSha256", "armAOutputSha256", "armBOutputSha256", "swapOf"]},
+    {"properties": {"objectKind": {"const": "ReviewSubmission"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "assignmentId", "reviewerId", "eligibility", "preference", "dimensionsByArm", "severeFlagsByArm", "reasons", "evidenceRefs", "submittedAt"]}, "required": ["assignmentId", "reviewerId", "eligibility", "preference", "dimensionsByArm", "severeFlagsByArm", "reasons", "evidenceRefs", "submittedAt"]},
+    {"properties": {"objectKind": {"const": "BlindPackReceipt"}}, "propertyNames": {"enum": ["schemaVersion", "objectKind", "batchId", "batchManifestSha256", "armKeySha256", "assignmentSha256s", "mappingSha256s", "createdAt"]}, "required": ["batchId", "batchManifestSha256", "armKeySha256", "assignmentSha256s", "mappingSha256s", "createdAt"]}
+  ]
+}

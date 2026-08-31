@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case-answer.schema.json",
+  "title": "CaseAnswer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectKind", "caseId", "taskLevels", "subject", "audiences", "desiredActions", "evidenceGaps", "directionOptions", "recommendedDirectionId", "claims", "readiness"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "objectKind": {"const": "CaseAnswer"},
+    "caseId": {"type": "string", "minLength": 1},
+    "taskLevels": {"type": "array", "items": {"enum": ["L1", "L2"]}, "minItems": 1, "uniqueItems": true},
+    "subject": {"type": "string", "minLength": 1},
+    "audiences": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "desiredActions": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "evidenceGaps": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "directionOptions": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["directionId", "directionFamily", "rationale", "tradeoffs", "conditions", "evidenceRefs"],
+        "properties": {
+          "directionId": {"type": "string", "minLength": 1},
+          "directionFamily": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "tradeoffs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+          "conditions": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+          "evidenceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    },
+    "recommendedDirectionId": {"type": ["string", "null"]},
+    "claims": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["claimId", "text", "claimType", "support", "evidenceRefs"],
+        "properties": {
+          "claimId": {"type": "string", "minLength": 1},
+          "text": {"type": "string", "minLength": 1},
+          "claimType": {"enum": ["businessFact", "audienceHypothesis", "existingExperience", "directionHypothesis"]},
+          "support": {"enum": ["supported", "unsupported", "unknown"]},
+          "evidenceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    },
+    "readiness": {"enum": ["readyForHumanReview", "blockedByMissingEvidence", "notUsable"]},
+    "synthetic": {"const": true}
+  }
+}

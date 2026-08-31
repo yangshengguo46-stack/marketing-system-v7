@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "rubricId": "golden-gift-l1-l2-v1",
+  "dimensions": [
+    "businessSubjectClarity",
+    "audienceActionFit",
+    "directionBreadthAndTradeoffs",
+    "evidenceAndUnknownDiscipline",
+    "sustainableIpPotential",
+    "commercialConnectionWithoutForcedSelling"
+  ],
+  "severeFlags": [
+    "fabricatedExistingExperience",
+    "wrongBusinessSubject",
+    "wrongDesiredAction",
+    "singlePathPresentedAsProvenTruth",
+    "notActuallyUsable",
+    "rightsOrPrivacyViolation"
+  ],
+  "preferenceOptions": ["A", "B", "nearTie", "abstain"],
+  "eligibilityOptions": ["both", "aOnly", "bOnly", "neither"]
+}

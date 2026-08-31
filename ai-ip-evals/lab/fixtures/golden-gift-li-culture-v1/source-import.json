@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "objectKind": "SourceImportManifest",
+  "caseFamilyId": "golden-gift-li-culture-v1",
+  "sources": [
+    {
+      "sourceId": "v6-a113-community-acceptance",
+      "relativePath": "douyin-community-mcp-a113-2026-08-20.json",
+      "sha256": "f3171fbbad16cd5fc2d3907d619132fcf873a16225fa29eb78e59be0986ff3f9",
+      "packetRoles": ["contentEvidence", "referenceEvidence"]
+    },
+    {
+      "sourceId": "v6-a115-known-failure",
+      "relativePath": "a115-golden-gift-real-e2e-2026-08-20.json",
+      "sha256": "4fb16c9fe54a313f51a479d60e51e7361726a36c8dd2a1a7a6a5cabcf1398c7e",
+      "packetRoles": ["outcomeEvidence", "referenceEvidence"]
+    },
+    {
+      "sourceId": "v6-a116-pollution-diagnostic",
+      "relativePath": "a116-vertical-incubation-skill-live-2026-08-20.json",
+      "sha256": "6b304738309195216b203dc846ee7491e430a396d69fb4001cef93f870af889c",
+      "packetRoles": ["outcomeEvidence", "referenceEvidence"]
+    }
+  ]
+}

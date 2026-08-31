@@ -1,0 +1,17 @@
+filegroup(
+    name = "lab-assets",
+    srcs = [
+        "fixtures/golden-gift-li-culture-v1/case-blueprint.json",
+        "fixtures/golden-gift-li-culture-v1/source-import.json",
+        "fixtures/synthetic/arm-known-failure.json",
+        "fixtures/synthetic/arm-strong.json",
+        "rubrics/fixture-qualification-policy.json",
+        "rubrics/golden-gift-l1-l2-rubric.json",
+        "schemas/batch.schema.json",
+        "schemas/blind-review.schema.json",
+        "schemas/case-answer.schema.json",
+        "schemas/case-bundle.schema.json",
+        "schemas/reviewer.schema.json",
+        "schemas/source-import.schema.json",
+    ],
+)
