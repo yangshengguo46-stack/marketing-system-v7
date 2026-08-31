@@ -143,9 +143,7 @@ class WindowsConstructionJournal:
                 entry = self.entries[-1]
                 if entry.handle is not None:
                     self._bind(entry)
-                    if not primary_is_owned(
-                        entry, self.operations, self.creator_pid
-                    ):
+                    if not primary_is_owned(entry, self.operations, self.creator_pid):
                         raise JournalRollbackError("rollback handle identity changed")
                     self.operations.mark_delete(entry.handle)
                     if not self.operations.delete_pending(entry.handle):

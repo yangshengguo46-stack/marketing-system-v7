@@ -447,9 +447,7 @@ class _JournalOperations:
     def open_live(parent: int, name: str, *, directory: bool) -> int | None:
         try:
             open_child = getattr(win32, "open_child_raw", win32.open_child)
-            return open_child(
-                parent, name, directory=directory, deletable=False
-            )
+            return open_child(parent, name, directory=directory, deletable=False)
         except win32.Win32SecurityError as error:
             code = getattr(error, "winerror", None) or getattr(error, "errno", None)
             if code in {2, 3}:

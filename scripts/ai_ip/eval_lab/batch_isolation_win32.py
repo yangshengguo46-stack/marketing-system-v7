@@ -259,9 +259,7 @@ def open_path(
         )
     )
     try:
-        validate_opened_handle(
-            handle, directory=directory, allow_reparse=allow_reparse
-        )
+        validate_opened_handle(handle, directory=directory, allow_reparse=allow_reparse)
     except BaseException:
         close(handle)
         raise

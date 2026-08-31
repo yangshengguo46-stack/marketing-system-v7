@@ -64,7 +64,8 @@ class WindowsCleanupJournal:
 
     def has_handle(self, handle: int) -> bool:
         return any(
-            item.handle == handle or item.proof_handle == handle for item in self.pending
+            item.handle == handle or item.proof_handle == handle
+            for item in self.pending
         )
 
     def _clear_slot(

@@ -83,7 +83,11 @@ class WindowsHandleLedger:
     def close(self, handle: int) -> None:
         self._require_owner()
         record = next(
-            (candidate for candidate in reversed(self.records) if candidate.handle == handle),
+            (
+                candidate
+                for candidate in reversed(self.records)
+                if candidate.handle == handle
+            ),
             None,
         )
         if record is None:
@@ -98,12 +102,20 @@ class WindowsHandleLedger:
         """Move a live handle into another journal without an unowned interval."""
         self._require_owner()
         record = next(
-            (candidate for candidate in reversed(self.records) if candidate.handle == handle),
+            (
+                candidate
+                for candidate in reversed(self.records)
+                if candidate.handle == handle
+            ),
             None,
         )
         if record is None:
             return None
-        if record.close_requested or record.identity is None or record.proof_handle is not None:
+        if (
+            record.close_requested
+            or record.identity is None
+            or record.proof_handle is not None
+        ):
             raise WindowsHandleLedgerError(
                 "Windows handle ownership transfer is unproven"
             )

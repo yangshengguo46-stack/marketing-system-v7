@@ -34,7 +34,9 @@ def _error_code(error: OSError) -> int | None:
 
 def _require_owner(creator_pid: int) -> None:
     if creator_pid != os.getpid():
-        raise HandleOwnershipError("Windows handle ownership belongs to another process")
+        raise HandleOwnershipError(
+            "Windows handle ownership belongs to another process"
+        )
 
 
 def _close_proof(
@@ -106,7 +108,9 @@ def primary_is_owned(
         actual = operations.identity(ownership.handle)
     except OSError as error:
         if _error_code(error) != 6:
-            raise HandleOwnershipError("Windows handle identity is uncertain") from error
+            raise HandleOwnershipError(
+                "Windows handle identity is uncertain"
+            ) from error
         actual = None
     if actual != ownership.identity:
         ownership.handle = None
