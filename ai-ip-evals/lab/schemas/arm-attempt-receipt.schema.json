@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "arm-attempt-receipt.schema.json",
+  "title": "ArmAttemptReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "attemptId", "pairId", "privateArmId", "treatmentManifestSha256", "binaryManifestSha256", "effectiveConfigSha256", "inputSha256", "workspaceBeforeSha256", "workspaceAfterSha256", "appServerProtocolSchemaSha256", "promptfooConfigSha256", "startedAt", "finishedAt", "threadIdCommitment", "turnIdCommitment", "trajectorySha256", "outputSha256", "usage", "costEvidence", "exitClassification", "failureDetails", "receiptSha256"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "attemptId": {"type": "string", "minLength": 1}, "pairId": {"type": "string", "minLength": 1}, "privateArmId": {"type": "string", "minLength": 1}, "treatmentManifestSha256": {"$ref": "#/$defs/sha256"}, "binaryManifestSha256": {"$ref": "#/$defs/sha256"}, "effectiveConfigSha256": {"$ref": "#/$defs/sha256"}, "inputSha256": {"$ref": "#/$defs/sha256"}, "workspaceBeforeSha256": {"$ref": "#/$defs/sha256"}, "workspaceAfterSha256": {"$ref": "#/$defs/sha256"}, "appServerProtocolSchemaSha256": {"$ref": "#/$defs/sha256"}, "promptfooConfigSha256": {"$ref": "#/$defs/sha256"}, "startedAt": {"$ref": "#/$defs/timestamp"}, "finishedAt": {"$ref": "#/$defs/timestamp"}, "threadIdCommitment": {"$ref": "#/$defs/sha256"}, "turnIdCommitment": {"$ref": "#/$defs/sha256"}, "trajectorySha256": {"$ref": "#/$defs/sha256"}, "outputSha256": {"$ref": "#/$defs/sha256"}, "usage": {"type": "object", "additionalProperties": false, "required": ["inputTokens", "outputTokens", "totalTokens"], "properties": {"inputTokens": {"type": "integer", "minimum": 0}, "outputTokens": {"type": "integer", "minimum": 0}, "totalTokens": {"type": "integer", "minimum": 0}}}, "costEvidence": {"type": "object", "additionalProperties": false, "required": ["costCny", "sourceSha256"], "properties": {"costCny": {"type": "integer", "minimum": 0}, "sourceSha256": {"$ref": "#/$defs/sha256"}}}, "exitClassification": {"enum": ["completed", "executionFailure", "schemaFailure", "budgetFailure", "evidenceFailure"]}, "failureDetails": {"type": ["string", "null"]}, "receiptSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "timestamp": {"type": "string", "format": "date-time"}}
+}

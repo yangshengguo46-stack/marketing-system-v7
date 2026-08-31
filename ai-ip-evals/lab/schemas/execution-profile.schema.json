@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "execution-profile.schema.json",
+  "title": "ExecutionProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sandboxMode", "approvalPolicy", "networkMode", "networkAllowlist", "writablePaths", "externalTools", "environmentAllowlist", "maxWallClockSeconds", "maxOutputBytes"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "sandboxMode": {"type": "string", "minLength": 1},
+    "approvalPolicy": {"type": "string", "minLength": 1},
+    "networkMode": {"enum": ["offline", "allowlist"]},
+    "networkAllowlist": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "writablePaths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "externalTools": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "environmentAllowlist": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "maxWallClockSeconds": {"type": "integer", "minimum": 1},
+    "maxOutputBytes": {"type": "integer", "minimum": 1}
+  },
+  "allOf": [
+    {"if": {"properties": {"networkMode": {"const": "offline"}}}, "then": {"properties": {"networkAllowlist": {"maxItems": 0}}}, "else": {"properties": {"networkAllowlist": {"minItems": 1}}}}
+  ]
+}

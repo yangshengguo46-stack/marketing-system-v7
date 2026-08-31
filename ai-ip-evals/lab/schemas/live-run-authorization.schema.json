@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "live-run-authorization.schema.json",
+  "title": "LiveRunAuthorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planId", "model", "route", "maxRequests", "maxTokens", "maxCostCny", "maxWallClockSeconds", "createdAt", "expiresAt", "nonce", "authorizationStatus"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "planId": {"type": "string", "minLength": 1}, "model": {"type": "string", "minLength": 1}, "route": {"type": "string", "minLength": 1}, "maxRequests": {"type": "integer", "minimum": 1}, "maxTokens": {"type": "integer", "minimum": 1}, "maxCostCny": {"type": "integer", "minimum": 0}, "maxWallClockSeconds": {"type": "integer", "minimum": 1}, "createdAt": {"type": "string", "format": "date-time"}, "expiresAt": {"type": "string", "format": "date-time"}, "nonce": {"type": "string", "minLength": 1}, "authorizationStatus": {"enum": ["issued", "consumed"]}
+  }
+}

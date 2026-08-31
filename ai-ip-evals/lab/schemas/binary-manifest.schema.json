@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "binary-manifest.schema.json",
+  "title": "BinaryManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "binaryId", "armClass", "sourceRepository", "sourceCommit", "targetTriple", "buildProfile", "toolchainVersions", "buildReceiptSha256", "binarySha256", "declaredCapabilities"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "binaryId": {"type": "string", "minLength": 1},
+    "armClass": {"enum": ["stock", "modified"]},
+    "sourceRepository": {"type": "string", "minLength": 1},
+    "sourceCommit": {"type": "string", "pattern": "^[0-9a-f]{7,64}$"},
+    "forkBaseCommit": {"type": "string", "pattern": "^[0-9a-f]{7,64}$"},
+    "targetTriple": {"type": "string", "minLength": 1},
+    "buildProfile": {"type": "string", "minLength": 1},
+    "toolchainVersions": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}, "minProperties": 1},
+    "buildReceiptSha256": {"$ref": "#/$defs/sha256"},
+    "binarySha256": {"$ref": "#/$defs/sha256"},
+    "declaredCapabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "allOf": [
+    {"if": {"properties": {"armClass": {"const": "modified"}}}, "then": {"required": ["forkBaseCommit"]}, "else": {"not": {"required": ["forkBaseCommit"]}}}
+  ],
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

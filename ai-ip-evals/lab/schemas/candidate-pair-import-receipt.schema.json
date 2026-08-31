@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidate-pair-import-receipt.schema.json",
+  "title": "CandidatePairImportReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "importId", "pairId", "pairedRunReceiptSha256", "stockOutputSha256", "modifiedOutputSha256", "outputRelation", "blindDisposition", "privateDestinationCommitment", "importedAt", "importReceiptSha256"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "importId": {"type": "string", "minLength": 1}, "pairId": {"type": "string", "minLength": 1}, "pairedRunReceiptSha256": {"$ref": "#/$defs/sha256"}, "stockOutputSha256": {"$ref": "#/$defs/sha256"}, "modifiedOutputSha256": {"$ref": "#/$defs/sha256"}, "outputRelation": {"enum": ["distinct", "canonicallyIdentical"]}, "blindDisposition": {"enum": ["readyForBlindReview", "identicalTieNoReview"]}, "privateDestinationCommitment": {"$ref": "#/$defs/sha256"}, "importedAt": {"type": "string", "format": "date-time"}, "importReceiptSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {"if": {"properties": {"outputRelation": {"const": "distinct"}}}, "then": {"properties": {"blindDisposition": {"const": "readyForBlindReview"}}}, "else": {"properties": {"blindDisposition": {"const": "identicalTieNoReview"}}}}
+  ],
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}
