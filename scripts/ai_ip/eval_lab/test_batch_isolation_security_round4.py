@@ -376,6 +376,39 @@ def test_windows_cleanup_does_not_succeed_until_root_entry_is_proven_absent(
     assert not world.root_present
 
 
+def test_windows_cleanup_retains_transient_handle_validation_uncertainty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    world = _WindowsWorld("dynamic")
+    tree = _load_windows_tree(monkeypatch, world)
+    filesystem = _FakeWindowsFilesystem(world)
+    with pytest.raises(tree.WindowsTreeError):
+        tree.delete_tree(filesystem)
+    item = filesystem.cleanup_journal.pending[0]
+    world._reused.remove(item.handle)
+    world.identities[item.handle] = item.identity
+    original_identity = world.identity
+    failed = False
+
+    def fail_query_once(handle: int) -> tuple[int, int]:
+        nonlocal failed
+        if handle == item.handle and not failed:
+            failed = True
+            error = _FakeWin32Error("transient identity query failure")
+            error.winerror = 5
+            raise error
+        return original_identity(handle)
+
+    tree.win32.identity = fail_query_once
+    with pytest.raises(tree.WindowsTreeError, match="uncertain|identity|cleanup"):
+        tree.delete_tree(filesystem)
+    assert filesystem.cleanup_journal.pending == [item]
+
+    tree.win32.identity = original_identity
+    tree.delete_tree(filesystem)
+    assert world.unsafe_mutations == []
+
+
 def test_public_construction_retains_filesystem_after_cleanup_uncertainty(
     tmp_path: Path,
     profile: dict[str, object],
