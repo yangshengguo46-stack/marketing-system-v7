@@ -143,7 +143,9 @@ def seal_pair_context(
     if len(schema_bytes) > _MAX_CONTEXT_BYTES:
         raise BatchReceiptError("CaseAnswer schema exceeds the context bound")
     _write_exclusive(directory / "plan.json", _json_bytes(plan))
-    _write_exclusive(directory / "execution-profile.json", _json_bytes(execution_profile))
+    _write_exclusive(
+        directory / "execution-profile.json", _json_bytes(execution_profile)
+    )
     _write_exclusive(directory / "case-answer-schema.json", schema_bytes)
 
 
@@ -226,6 +228,7 @@ def seal_arm_attempt_receipt(
         raise BatchReceiptError(f"arm receipt is invalid: {error}") from error
     _write_exclusive(directory / "receipt.json", _json_bytes(receipt))
     return receipt
+
 
 def seal_paired_run_receipt(
     pair_directory: Path,

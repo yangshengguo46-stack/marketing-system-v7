@@ -69,7 +69,9 @@ def private_directory(path: Path, *, create: bool = False) -> Path:
             except FileExistsError:
                 pass
         except OSError as error:
-            raise SecureStorageError("private evidence directory is unavailable") from error
+            raise SecureStorageError(
+                "private evidence directory is unavailable"
+            ) from error
         finally:
             if parent_fd >= 0:
                 os.close(parent_fd)
@@ -94,7 +96,9 @@ def child_directory(parent: Path, name: str, *, exclusive: bool) -> Path:
             if exclusive:
                 raise SecureStorageError(f"{name} already exists")
     except OSError as error:
-        raise SecureStorageError("private evidence directory creation failed") from error
+        raise SecureStorageError(
+            "private evidence directory creation failed"
+        ) from error
     finally:
         os.close(descriptor)
     return private_directory(Path(parent) / name)
@@ -120,10 +124,7 @@ def write_exclusive(path: Path, payload: bytes) -> None:
     try:
         descriptor = os.open(
             Path(path).name,
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_EXCL
-            | getattr(os, "O_NOFOLLOW", 0),
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
             0o600,
             dir_fd=parent_fd,
         )
@@ -147,14 +148,17 @@ def write_exclusive(path: Path, payload: bytes) -> None:
 def seal_failure_tombstone(
     pair_directory: Path, pair_id: str, phase: str, error: BaseException
 ) -> None:
-    payload = canonical_json_bytes(
-        {
-            "errorType": type(error).__name__,
-            "pairId": pair_id,
-            "phase": phase,
-            "status": "failed",
-        }
-    ) + b"\n"
+    payload = (
+        canonical_json_bytes(
+            {
+                "errorType": type(error).__name__,
+                "pairId": pair_id,
+                "phase": phase,
+                "status": "failed",
+            }
+        )
+        + b"\n"
+    )
     write_exclusive(Path(pair_directory) / "failure.json", payload)
 
 

@@ -32,7 +32,9 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def capture(executor: object, request: object, failure_factory: object) -> CapturedResult:
+def capture(
+    executor: object, request: object, failure_factory: object
+) -> CapturedResult:
     try:
         raw = executor.execute(request)
     except BaseException as error:
@@ -40,7 +42,9 @@ def capture(executor: object, request: object, failure_factory: object) -> Captu
     return CapturedResult(raw)
 
 
-def _bounded_json(value: object, limit: int, label: str) -> tuple[object, dict[str, object], bool]:
+def _bounded_json(
+    value: object, limit: int, label: str
+) -> tuple[object, dict[str, object], bool]:
     malformed = False
     try:
         payload = canonical_json_bytes(value)
@@ -82,7 +86,9 @@ def _bounded_stream(value: object, limit: int) -> tuple[bytes, dict[str, object]
     )
 
 
-def normalize(captured: CapturedResult, result_type: type, limit: int) -> NormalizedResult:
+def normalize(
+    captured: CapturedResult, result_type: type, limit: int
+) -> NormalizedResult:
     raw = captured.raw
     if not isinstance(raw, result_type):
         now = _now()

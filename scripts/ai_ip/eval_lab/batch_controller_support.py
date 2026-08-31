@@ -194,7 +194,9 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
     if sha256_json(profile) != plan["executionProfileRef"]:
         raise ControllerSupportError("execution profile reference mismatch")
     if profile["maxWallClockSeconds"] != plan["timeoutBudget"]:
-        raise ControllerSupportError("execution profile wall clock differs from plan timeout")
+        raise ControllerSupportError(
+            "execution profile wall clock differs from plan timeout"
+        )
     source_environment = bindings.get("sourceEnvironment")
     model_route = bindings.get("modelRoute")
     if not isinstance(source_environment, Mapping) or not isinstance(

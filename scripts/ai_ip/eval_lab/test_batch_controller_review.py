@@ -34,7 +34,9 @@ def _bindings(world: World) -> dict[str, object]:
     return copy.deepcopy(world.bindings)
 
 
-def _plan_with_count(world: World, count: int) -> tuple[dict[str, object], dict[str, object]]:
+def _plan_with_count(
+    world: World, count: int
+) -> tuple[dict[str, object], dict[str, object]]:
     plan = dict(world.plan)
     plan["replicationCount"] = count
     plan["planSha256"] = "0" * 64
@@ -54,7 +56,9 @@ def _write_json(path: Path, value: object) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
 
 
-def _reseal(value: dict[str, object], field: str = "receiptSha256") -> dict[str, object]:
+def _reseal(
+    value: dict[str, object], field: str = "receiptSha256"
+) -> dict[str, object]:
     value[field] = "0" * 64
     return seal_self_commitment(value, field)
 
@@ -79,7 +83,10 @@ def test_global_preflight_verifies_actual_sealed_execution_identity(
         bindings["stock"]["effectiveConfig"] = config
         bindings["stock"]["effectiveConfigSha256"] = sha256_file(config)
     elif substitution == "model-route":
-        bindings["modelRoute"] = {"model": "substitute", "baseUrl": "http://127.0.0.1:1"}
+        bindings["modelRoute"] = {
+            "model": "substitute",
+            "baseUrl": "http://127.0.0.1:1",
+        }
     elif substitution == "protocol":
         protocol = tmp_path / "substitute-protocol.json"
         protocol.write_text('{"version":999}\n', encoding="utf-8")
@@ -99,7 +106,9 @@ def test_global_preflight_verifies_actual_sealed_execution_identity(
     assert not world.private_root.exists()
 
 
-def test_candidate_observes_same_neutral_binary_path_for_both_arms(world: World) -> None:
+def test_candidate_observes_same_neutral_binary_path_for_both_arms(
+    world: World,
+) -> None:
     executor = ScriptedExecutor([_result("left"), _result("right")])
 
     run_candidate_pair(
@@ -122,17 +131,18 @@ def test_sealed_replication_authority_rejects_append_and_repeated_batch(
 ) -> None:
     plan, bindings = _plan_with_count(world, 3)
     first = ScriptedExecutor([_result(f"first-{index}") for index in range(6)])
-    assert len(
-        run_candidate_batch(
-            plan, bindings, first, world.private_root, seed=b"a" * 32
+    assert (
+        len(
+            run_candidate_batch(
+                plan, bindings, first, world.private_root, seed=b"a" * 32
+            )
         )
-    ) == 3
+        == 3
+    )
 
     append = ScriptedExecutor([_result("append-a"), _result("append-b")])
     with pytest.raises(BatchControllerError, match="replication|reserved|complete"):
-        run_candidate_pair(
-            plan, bindings, append, world.private_root, seed=b"b" * 32
-        )
+        run_candidate_pair(plan, bindings, append, world.private_root, seed=b"b" * 32)
     assert append.calls == 0
 
     repeated = ScriptedExecutor([_result(f"repeat-{index}") for index in range(6)])
@@ -175,9 +185,7 @@ def test_standalone_pair_rejects_multi_replication_plan_before_execution(
     executor = ScriptedExecutor([_result("left"), _result("right")])
 
     with pytest.raises(BatchControllerError, match="replication"):
-        run_candidate_pair(
-            plan, bindings, executor, world.private_root, seed=b"s" * 32
-        )
+        run_candidate_pair(plan, bindings, executor, world.private_root, seed=b"s" * 32)
     assert executor.calls == 0
 
 
@@ -246,7 +254,11 @@ def test_request_and_elapsed_budgets_are_enforced(
         seed=b"u" * 32,
     )
 
-    assert receipt == {**receipt, "pairValidity": "invalid", "invalidReason": classification}
+    assert receipt == {
+        **receipt,
+        "pairValidity": "invalid",
+        "invalidReason": classification,
+    }
 
 
 def test_output_stream_budget_is_enforced_without_unbounded_evidence_write(
@@ -273,10 +285,13 @@ def test_output_stream_budget_is_enforced_without_unbounded_evidence_write(
 
     assert receipt["pairValidity"] == "invalid"
     assert receipt["invalidReason"] == "budgetFailure"
-    assert max(
-        path.stat().st_size
-        for path in (world.private_root / "attempts").glob("*/stdout.bin")
-    ) <= 1_048_576
+    assert (
+        max(
+            path.stat().st_size
+            for path in (world.private_root / "attempts").glob("*/stdout.bin")
+        )
+        <= 1_048_576
+    )
 
 
 def test_private_root_rejects_wrong_mode_before_executor_calls(world: World) -> None:
@@ -337,7 +352,9 @@ def test_attempt_parent_replacement_after_first_call_fails_closed_and_calls_both
 
     executor = ReplacingExecutor([_result("first"), _result("second")])
 
-    with pytest.raises(BatchControllerError, match="private|evidence|replaced|identity"):
+    with pytest.raises(
+        BatchControllerError, match="private|evidence|replaced|identity"
+    ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"r" * 32
         )
@@ -405,7 +422,11 @@ def test_resealed_usage_inflation_is_rejected(world: World) -> None:
     arm_dir = arm_path.parent
     arm = load_exact_json(arm_path)
     metadata = load_exact_json(arm_dir / "metadata.json")
-    metadata["usage"] = {"inputTokens": 1, "outputTokens": 999_998, "totalTokens": 999_999}
+    metadata["usage"] = {
+        "inputTokens": 1,
+        "outputTokens": 999_998,
+        "totalTokens": 999_999,
+    }
     _write_json(arm_dir / "metadata.json", metadata)
     evidence = load_exact_json(arm_dir / "evidence.json")
     evidence["metadataSha256"] = sha256_file(arm_dir / "metadata.json")
@@ -444,9 +465,7 @@ def test_resealed_false_pair_semantics_are_rejected(world: World, tamper: str) -
         pair.pop("anonymousMappingCommitment")
         (pair_dir / "mapping.json").unlink()
     else:
-        pair["modifiedArmAttemptReceiptSha256"] = pair[
-            "stockArmAttemptReceiptSha256"
-        ]
+        pair["modifiedArmAttemptReceiptSha256"] = pair["stockArmAttemptReceiptSha256"]
     pair = _reseal(pair)
     _write_json(pair_dir / "receipt.json", pair)
 

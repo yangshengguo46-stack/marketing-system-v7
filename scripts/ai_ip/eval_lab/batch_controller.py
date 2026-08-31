@@ -10,7 +10,11 @@ try:
         seal_arm,
         seal_arm_failure,
     )
-    from .batch_controller_types import AttemptRequest, CandidateExecutor, RawAttemptResult
+    from .batch_controller_types import (
+        AttemptRequest,
+        CandidateExecutor,
+        RawAttemptResult,
+    )
     from .batch_receipt_storage import seal_failure_tombstone
     from .batch_controller_support import (
         ControllerSupportError,
@@ -49,7 +53,11 @@ except ImportError:
         seal_arm,
         seal_arm_failure,
     )
-    from batch_controller_types import AttemptRequest, CandidateExecutor, RawAttemptResult
+    from batch_controller_types import (
+        AttemptRequest,
+        CandidateExecutor,
+        RawAttemptResult,
+    )
     from batch_receipt_storage import seal_failure_tombstone
     from batch_controller_support import (
         ControllerSupportError,
@@ -144,7 +152,9 @@ def _run_candidate_pair(
         }
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
-        raise BatchControllerError("pair cell creation or context sealing failed") from error
+        raise BatchControllerError(
+            "pair cell creation or context sealing failed"
+        ) from error
     verify_attempt_cells_disjoint(cells["stock"], cells["modified"])
     order_secret = derive(active_seed, b"execution-order")
     order = ("stock", "modified") if order_secret[0] % 2 == 0 else ("modified", "stock")
@@ -161,9 +171,7 @@ def _run_candidate_pair(
         )
         for name in ("stock", "modified")
     }
-    captured = {
-        name: capture_arm(executor, prepared[name][1]) for name in order
-    }
+    captured = {name: capture_arm(executor, prepared[name][1]) for name in order}
     sealing_errors: list[BaseException] = []
     for name in order:
         try:

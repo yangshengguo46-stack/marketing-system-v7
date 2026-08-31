@@ -18,18 +18,15 @@ def materialize_neutral_binary(
     try:
         runtime.mkdir(mode=0o700)
         runtime_state = runtime.lstat()
-        if not stat.S_ISDIR(runtime_state.st_mode) or stat.S_ISLNK(runtime_state.st_mode):
+        if not stat.S_ISDIR(runtime_state.st_mode) or stat.S_ISLNK(
+            runtime_state.st_mode
+        ):
             raise ArtifactMaterializationError("neutral runtime directory is invalid")
-        source_fd = os.open(
-            source, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        )
+        source_fd = os.open(source, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
         destination = runtime / "codex"
         destination_fd = os.open(
             destination,
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_EXCL
-            | getattr(os, "O_NOFOLLOW", 0),
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
             0o700,
         )
     except (OSError, ArtifactMaterializationError) as error:

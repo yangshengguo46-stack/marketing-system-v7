@@ -146,7 +146,9 @@ def _verify_arm_details(
         raise BatchReceiptError("arm receipt semantic evidence mismatch")
     raw = evidence.get("rawEvidence")
     byte_fields = ("outputBytes", "metadataBytes", "stdoutBytes", "stderrBytes")
-    if type(raw) is not dict or any(type(raw.get(field)) is not dict for field in byte_fields):
+    if type(raw) is not dict or any(
+        type(raw.get(field)) is not dict for field in byte_fields
+    ):
         raise BatchReceiptError("raw attempt byte evidence is invalid")
     if (
         raw["outputBytes"].get("storedSha256") != _sha256_bytes(_json_bytes(output))
@@ -157,7 +159,9 @@ def _verify_arm_details(
     ):
         raise BatchReceiptError("raw attempt byte evidence mismatch")
     try:
-        artifact_sizes = tuple(int(raw[field].get("rawSize", -1)) for field in byte_fields)
+        artifact_sizes = tuple(
+            int(raw[field].get("rawSize", -1)) for field in byte_fields
+        )
     except (TypeError, ValueError) as error:
         raise BatchReceiptError("raw attempt byte sizes are invalid") from error
     classification, details = classify_attempt_result(
@@ -232,7 +236,8 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
     for attempt_id in order["attemptOrder"]:
         attempt = identifier(attempt_id, "attempt ID")
         arm = load_canonical(
-            private_directory(Path(private_root) / "attempts" / attempt) / "receipt.json"
+            private_directory(Path(private_root) / "attempts" / attempt)
+            / "receipt.json"
         )
         if type(arm) is not dict or arm.get("attemptId") != attempt:
             raise BatchReceiptError("pair arm receipt is invalid")
@@ -262,14 +267,17 @@ def verify_paired_run_receipt(receipt: object, private_root: Path) -> None:
     if not failures:
         relation = (
             "canonicallyIdentical"
-            if canonical_json_bytes(stock_output) == canonical_json_bytes(modified_output)
+            if canonical_json_bytes(stock_output)
+            == canonical_json_bytes(modified_output)
             else "distinct"
         )
         if receipt.get("outputRelation") != relation:
             raise BatchReceiptError("pair output relation is false")
         if relation == "distinct":
             mapping = load_canonical(mapping_path)
-            labels = mapping.get("labelToPrivateArmId") if type(mapping) is dict else None
+            labels = (
+                mapping.get("labelToPrivateArmId") if type(mapping) is dict else None
+            )
             if type(labels) is not dict or set(labels.values()) != {
                 stock["privateArmId"],
                 modified["privateArmId"],

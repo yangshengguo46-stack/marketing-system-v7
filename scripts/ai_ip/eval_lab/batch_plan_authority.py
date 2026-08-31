@@ -70,13 +70,16 @@ def reserve_plan(
             raise PlanAuthorityError("plan authority lock is unsafe")
         state_name = f"{plan_sha256}.json"
         state_path = authority / state_name
-        payload = canonical_json_bytes(
-            {
-                "pairIds": list(pair_ids),
-                "planSha256": plan_sha256,
-                "replicationCount": replication_count,
-            }
-        ) + b"\n"
+        payload = (
+            canonical_json_bytes(
+                {
+                    "pairIds": list(pair_ids),
+                    "planSha256": plan_sha256,
+                    "replicationCount": replication_count,
+                }
+            )
+            + b"\n"
+        )
         fcntl.flock(lock_fd, fcntl.LOCK_EX)
         try:
             existing_state = os.stat(
@@ -88,13 +91,12 @@ def reserve_plan(
             existing = json.loads(read_bounded(state_path, 1024 * 1024))
             if not stat.S_ISREG(existing_state.st_mode) or type(existing) is not dict:
                 raise PlanAuthorityError("sealed replication authority is invalid")
-            raise PlanAuthorityError("sealed replication set is already reserved or complete")
+            raise PlanAuthorityError(
+                "sealed replication set is already reserved or complete"
+            )
         state_fd = os.open(
             state_name,
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_EXCL
-            | getattr(os, "O_NOFOLLOW", 0),
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
             0o600,
             dir_fd=authority_fd,
         )
@@ -120,9 +122,7 @@ def reserve_plan(
             os.close(authority_fd)
         if root_fd >= 0:
             os.close(root_fd)
-    return PlanReservation(
-        state_path, payload, (root_state.st_dev, root_state.st_ino)
-    )
+    return PlanReservation(state_path, payload, (root_state.st_dev, root_state.st_ino))
 
 
 def release_unstarted(reservation: PlanReservation) -> None:

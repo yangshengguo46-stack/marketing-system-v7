@@ -169,20 +169,28 @@ def seal_arm_failure(
     try:
         output = canonical_json_bytes(raw.output) + b"\n"
     except LabContractError:
-        output = canonical_json_bytes({"unserializable": type(raw.output).__name__}) + b"\n"
+        output = (
+            canonical_json_bytes({"unserializable": type(raw.output).__name__}) + b"\n"
+        )
     try:
         metadata = canonical_json_bytes(raw.metadata) + b"\n"
     except LabContractError:
-        metadata = canonical_json_bytes({"unserializable": type(raw.metadata).__name__}) + b"\n"
-    failure = canonical_json_bytes(
-        {
-            "attemptId": cell.attempt_id,
-            "errorType": type(error).__name__,
-            "pairId": cell.pair_id,
-            "rawEvidence": raw.raw_evidence,
-            "status": "failed",
-        }
-    ) + b"\n"
+        metadata = (
+            canonical_json_bytes({"unserializable": type(raw.metadata).__name__})
+            + b"\n"
+        )
+    failure = (
+        canonical_json_bytes(
+            {
+                "attemptId": cell.attempt_id,
+                "errorType": type(error).__name__,
+                "pairId": cell.pair_id,
+                "rawEvidence": raw.raw_evidence,
+                "status": "failed",
+            }
+        )
+        + b"\n"
+    )
     write_exclusive(directory / "failure-output.json", output)
     write_exclusive(directory / "failure-metadata.json", metadata)
     write_exclusive(directory / "failure-stdout.bin", raw.stdout)

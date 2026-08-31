@@ -145,9 +145,13 @@ def world(tmp_path: Path) -> World:
     artifacts.mkdir()
     capability_bundle = artifacts / "capability"
     capability_bundle.mkdir()
-    (capability_bundle / "README.md").write_text("sealed capability\n", encoding="utf-8")
+    (capability_bundle / "README.md").write_text(
+        "sealed capability\n", encoding="utf-8"
+    )
     system_instruction = artifacts / "system.md"
-    system_instruction.write_text("Return only the requested schema.\n", encoding="utf-8")
+    system_instruction.write_text(
+        "Return only the requested schema.\n", encoding="utf-8"
+    )
     effective_config = artifacts / "config.toml"
     effective_config.write_text("model = 'loopback-model'\n", encoding="utf-8")
     profile = {
