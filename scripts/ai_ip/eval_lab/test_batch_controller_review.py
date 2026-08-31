@@ -1,4 +1,5 @@
 import copy
+import importlib
 import json
 import os
 import sys
@@ -8,6 +9,8 @@ import pytest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import batch_controller  # noqa: E402
+import batch_plan_authority  # noqa: E402
 from batch_contracts import seal_self_commitment  # noqa: E402
 from batch_controller import (  # noqa: E402
     BatchControllerError,
@@ -138,6 +141,31 @@ def test_sealed_replication_authority_rejects_append_and_repeated_batch(
             plan, bindings, repeated, world.private_root, seed=b"c" * 32
         )
     assert repeated.calls == 0
+
+
+def test_reopened_replication_authority_rejects_repeated_batch_without_calls(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plan, bindings = _plan_with_count(world, 3)
+    run_candidate_batch(
+        plan,
+        bindings,
+        ScriptedExecutor([_result(f"initial-{index}") for index in range(6)]),
+        world.private_root,
+        seed=b"d" * 32,
+    )
+    reopened = importlib.reload(batch_plan_authority)
+    monkeypatch.setattr(batch_controller, "reserve_plan", reopened.reserve_plan)
+    monkeypatch.setattr(
+        batch_controller, "PlanAuthorityError", reopened.PlanAuthorityError
+    )
+    executor = ScriptedExecutor([_result(f"repeat-{index}") for index in range(6)])
+
+    with pytest.raises(BatchControllerError, match="reserved|complete"):
+        run_candidate_batch(
+            plan, bindings, executor, world.private_root, seed=b"e" * 32
+        )
+    assert executor.calls == 0
 
 
 def test_standalone_pair_rejects_multi_replication_plan_before_execution(
@@ -333,6 +361,38 @@ def test_unrelated_partial_attempt_directory_does_not_poison_pair_verification(
     verify_paired_run_receipt(receipt, world.private_root)
 
 
+def test_cell_creation_failure_writes_tombstone_and_allows_new_id_recovery(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    real_create = batch_controller.create_attempt_cell
+    calls = 0
+
+    def fail_second(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("injected second-cell failure")
+        return real_create(*args, **kwargs)
+
+    monkeypatch.setattr(batch_controller, "create_attempt_cell", fail_second)
+    executor = ScriptedExecutor([_result("left"), _result("right")])
+
+    with pytest.raises(BatchControllerError, match="cell|isolation|pair"):
+        run_candidate_pair(
+            world.plan, world.bindings, executor, world.private_root, seed=b"k" * 32
+        )
+    assert executor.calls == 0
+    assert len(list((world.private_root / "pairs").glob("*/failure.json"))) == 1
+
+    monkeypatch.setattr(batch_controller, "create_attempt_cell", real_create)
+    recovery = ScriptedExecutor([_result("recovery-a"), _result("recovery-b")])
+    receipt = run_candidate_pair(
+        world.plan, world.bindings, recovery, world.private_root, seed=b"l" * 32
+    )
+    assert receipt["pairValidity"] == "valid"
+    assert recovery.calls == 2
+
+
 def test_resealed_usage_inflation_is_rejected(world: World) -> None:
     pair = run_candidate_pair(
         world.plan,
@@ -428,6 +488,38 @@ def test_resealed_false_arm_classification_is_rejected(world: World) -> None:
     _write_json(pair_path, pair)
 
     with pytest.raises(BatchReceiptError, match="classification|semantic|exit"):
+        verify_paired_run_receipt(pair, world.private_root)
+
+
+def test_resealed_raw_exit_code_tamper_is_rejected(world: World) -> None:
+    pair = run_candidate_pair(
+        world.plan,
+        world.bindings,
+        ScriptedExecutor([_result("same"), _result("same")]),
+        world.private_root,
+        seed=b"h" * 32,
+    )
+    arm_path = next((world.private_root / "attempts").glob("*/receipt.json"))
+    arm_dir = arm_path.parent
+    arm = load_exact_json(arm_path)
+    evidence = load_exact_json(arm_dir / "evidence.json")
+    evidence["rawEvidence"]["exitCode"] = 9
+    _write_json(arm_dir / "evidence.json", evidence)
+    old_commitment = arm["receiptSha256"]
+    arm["trajectorySha256"] = sha256_json(evidence)
+    arm = _reseal(arm)
+    _write_json(arm_path, arm)
+    field = (
+        "stockArmAttemptReceiptSha256"
+        if pair["stockArmAttemptReceiptSha256"] == old_commitment
+        else "modifiedArmAttemptReceiptSha256"
+    )
+    pair[field] = arm["receiptSha256"]
+    pair = _reseal(pair)
+    pair_path = world.private_root / "pairs" / str(pair["pairId"]) / "receipt.json"
+    _write_json(pair_path, pair)
+
+    with pytest.raises(BatchReceiptError, match="classification|exit"):
         verify_paired_run_receipt(pair, world.private_root)
 
 
