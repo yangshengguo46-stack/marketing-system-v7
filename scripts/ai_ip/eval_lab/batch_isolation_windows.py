@@ -180,6 +180,7 @@ class WindowsCellFilesystem:
     creator_pid: int
     marker_handle: int | None = None
     cleanup_started: bool = False
+    cleanup_journal: object | None = None
 
     @classmethod
     def create(
@@ -250,6 +251,8 @@ class WindowsCellFilesystem:
 
     def validate(self, *, cleanup: bool = False) -> None:
         self._require_owner()
+        if cleanup and self.cleanup_started:
+            return
         if (
             handle_identity(self.base_fd) != self.base_identity
             or handle_identity(self.root_fd) != self.root_identity

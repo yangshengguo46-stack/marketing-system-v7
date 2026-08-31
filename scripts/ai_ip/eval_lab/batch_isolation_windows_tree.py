@@ -4,8 +4,12 @@ import time
 
 try:
     from . import batch_isolation_win32 as win32
+    from .batch_isolation_windows_cleanup import WindowsCleanupError
+    from .batch_isolation_windows_cleanup import WindowsCleanupJournal
 except ImportError:
     import batch_isolation_win32 as win32
+    from batch_isolation_windows_cleanup import WindowsCleanupError
+    from batch_isolation_windows_cleanup import WindowsCleanupJournal
 
 
 MAX_ENTRIES = 100_000
@@ -63,12 +67,38 @@ def scan_regular_identities(filesystem: object) -> frozenset[tuple[int, int]]:
 
 
 def delete_tree(filesystem: object) -> None:
-    filesystem.validate(cleanup=True)
-    filesystem.cleanup_started = True
-    if filesystem.marker_handle is not None:
-        win32.mark_delete(filesystem.marker_handle)
-        win32.close(filesystem.marker_handle)
-        filesystem.marker_handle = None
+    journal = getattr(filesystem, "cleanup_journal", None)
+    if journal is None:
+        journal = WindowsCleanupJournal()
+        filesystem.cleanup_journal = journal
+    try:
+        journal.retry(filesystem)
+        if filesystem.base_fd < 0:
+            return
+        if filesystem.root_fd < 0:
+            journal.prove_root_absent(filesystem)
+            journal.close(filesystem, filesystem.base_fd, slot="base")
+            return
+        if not filesystem.cleanup_started:
+            filesystem.validate(cleanup=True)
+            filesystem.cleanup_started = True
+        if filesystem.marker_handle is not None:
+            journal.dispose(
+                filesystem, filesystem.marker_handle, slot="marker"
+            )
+        _delete_contents(filesystem, journal)
+        for name, handle in tuple(filesystem.directories.items()):
+            journal.close(filesystem, handle, slot=f"directory:{name}")
+        journal.dispose(filesystem, filesystem.root_fd, slot="root")
+        journal.prove_root_absent(filesystem)
+        journal.close(filesystem, filesystem.base_fd, slot="base")
+    except (OSError, win32.Win32SecurityError) as error:
+        if isinstance(error, WindowsTreeError):
+            raise
+        raise WindowsTreeError(f"Windows cleanup is uncertain: {error}") from error
+
+
+def _delete_contents(filesystem: object, journal: WindowsCleanupJournal) -> None:
     entries = 0
     total_bytes = 0
     started = time.monotonic()
@@ -91,10 +121,7 @@ def delete_tree(filesystem: object) -> None:
                     allow_reparse=True,
                     deletable=True,
                 )
-                try:
-                    win32.mark_delete(handle)
-                finally:
-                    win32.close(handle)
+                journal.dispose(filesystem, handle)
             if child_directory is not None:
                 if len(child_directory) > MAX_DEPTH:
                     raise WindowsTreeError("cleanup exceeds Windows depth bound")
@@ -106,29 +133,28 @@ def delete_tree(filesystem: object) -> None:
                 )
                 continue
             stack.pop()
-            if relative:
-                retained_name = "/".join(relative)
-                retained = filesystem.directories.get(retained_name)
-                win32.mark_delete(retained if retained is not None else current)
-                if retained is not None:
-                    win32.close(retained)
-                    del filesystem.directories[retained_name]
-            win32.close(current)
+            retained_name = "/".join(relative)
+            retained = filesystem.directories.get(retained_name)
+            disposed_current = bool(relative) and retained is None
+            try:
+                if relative:
+                    journal.dispose(
+                        filesystem,
+                        retained if retained is not None else current,
+                        slot=(
+                            f"directory:{retained_name}"
+                            if retained is not None
+                            else None
+                        ),
+                    )
+            finally:
+                if not disposed_current:
+                    journal.close(filesystem, current)
     except BaseException:
         for _, handle in stack:
-            try:
-                win32.close(handle)
-            except win32.Win32SecurityError:
-                pass
+            if not journal.has_handle(handle):
+                try:
+                    journal.close(filesystem, handle)
+                except (OSError, win32.Win32SecurityError):
+                    continue
         raise
-    for handle in filesystem.directories.values():
-        try:
-            win32.close(handle)
-        except win32.Win32SecurityError:
-            pass
-    filesystem.directories.clear()
-    win32.mark_delete(filesystem.root_fd)
-    win32.close(filesystem.root_fd)
-    win32.close(filesystem.base_fd)
-    filesystem.root_fd = -1
-    filesystem.base_fd = -1
