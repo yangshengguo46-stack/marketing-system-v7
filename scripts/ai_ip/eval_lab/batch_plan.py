@@ -1,6 +1,9 @@
 import hashlib
 import os
+import re
 import stat
+import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 try:
@@ -30,13 +33,8 @@ _MAX_FILE_BYTES = 8 * 1024 * 1024
 _MAX_TREE_BYTES = 64 * 1024 * 1024
 _CHUNK_BYTES = 1024 * 1024
 _FORBIDDEN_SEED_TERMS = (
-    b"golden-gift",
-    b"rubric",
-    b"case answer",
-    b"review rubric",
-    b"reference dossier",
-    b"outcome packet",
-    b"case-specific hidden",
+    b"goldengift", b"rubric", b"caseanswer", b"referencedossier",
+    b"outcomepacket", b"scores", b"hiddeninstructions",
 )
 
 PARITY_FIELDS = (
@@ -141,50 +139,95 @@ def _safe_relative_path(relative: Path) -> str:
     return relative.as_posix()
 
 
-def sha256_tree(root: Path) -> str:
-    """Hash a bounded tree of regular files with canonical relative entries."""
+@dataclass(frozen=True)
+class TreeSnapshot:
+    digest: str
+    files: dict[str, tuple[str, bytes]]
+
+
+def snapshot_tree(root: Path) -> TreeSnapshot:
+    """Capture a descriptor-bound regular-file tree without following links."""
     tree_root = Path(root)
     try:
-        root_metadata = tree_root.lstat()
+        before = tree_root.lstat()
+        if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
+            raise BatchPlanError("tree root must be a non-symlink directory")
+        flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        root_fd = os.open(tree_root, flags)
+    except BatchPlanError:
+        raise
     except OSError as error:
-        raise BatchPlanError(f"cannot inspect tree root: {tree_root}") from error
-    if stat.S_ISLNK(root_metadata.st_mode):
-        raise BatchPlanError(f"symbolic link is not allowed: {tree_root}")
-    if not stat.S_ISDIR(root_metadata.st_mode):
-        raise BatchPlanError(f"tree root must be a directory: {tree_root}")
-
+        raise BatchPlanError("cannot securely open tree root") from error
+    if _file_state(before) != _file_state(os.fstat(root_fd)):
+        os.close(root_fd)
+        raise BatchPlanError("tree changed while opening")
+    pending = [(root_fd, (), before)]
+    opened = [root_fd]
     entries: list[dict[str, object]] = []
-    pending = [tree_root]
-    total_bytes = 0
-    while pending:
-        directory = pending.pop()
-        try:
-            children = sorted(os.scandir(directory), key=lambda entry: entry.name)
-        except OSError as error:
-            raise BatchPlanError(f"cannot enumerate tree: {directory}") from error
-        for child in children:
-            path = Path(child.path)
-            relative = path.relative_to(tree_root)
-            display = _safe_relative_path(relative)
-            try:
-                metadata = path.lstat()
-            except OSError as error:
-                raise BatchPlanError(f"cannot inspect tree entry: {display}") from error
-            if stat.S_ISLNK(metadata.st_mode):
-                raise BatchPlanError(f"symbolic link is not allowed: {display}")
-            if stat.S_ISDIR(metadata.st_mode):
-                pending.append(path)
-                continue
-            _require_regular_file(metadata, display)
-            digest, size, mode, _ = _stable_file(path)
-            total_bytes += size
-            if total_bytes > _MAX_TREE_BYTES:
-                raise BatchPlanError("tree exceeds 64 MiB")
-            entries.append(
-                {"mode": mode, "path": display, "sha256": digest, "size": size}
-            )
-    entries.sort(key=lambda entry: str(entry["path"]))
-    return sha256_json({"entries": entries})
+    files: dict[str, tuple[str, bytes]] = {}
+    total = 0
+    try:
+        while pending:
+            directory_fd, prefix, state = pending.pop()
+            children = sorted(os.scandir(directory_fd), key=lambda entry: entry.name)
+            for child in children:
+                name = child.name
+                relative = Path(*prefix, name)
+                display = _safe_relative_path(relative)
+                metadata = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
+                    raise BatchPlanError(f"symbolic link or reparse point is not allowed: {display}")
+                if stat.S_ISDIR(metadata.st_mode):
+                    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+                    child_fd = os.open(name, flags, dir_fd=directory_fd)
+                    if _file_state(metadata) != _file_state(os.fstat(child_fd)):
+                        os.close(child_fd)
+                        raise BatchPlanError("tree changed while opening")
+                    opened.append(child_fd)
+                    pending.append((child_fd, (*prefix, name), metadata))
+                    continue
+                _require_regular_file(metadata, display)
+                fd = os.open(name, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
+                try:
+                    opened_file = os.fstat(fd)
+                    if _file_state(metadata) != _file_state(opened_file):
+                        raise BatchPlanError("file changed while opening")
+                    remaining = metadata.st_size
+                    chunks = []
+                    while remaining:
+                        chunk = os.read(fd, min(_CHUNK_BYTES, remaining))
+                        if not chunk or len(chunk) > remaining:
+                            raise BatchPlanError("file changed while read")
+                        chunks.append(chunk)
+                        remaining -= len(chunk)
+                    if os.read(fd, 1):
+                        raise BatchPlanError("file changed while read")
+                    payload = b"".join(chunks)
+                    after = os.fstat(fd)
+                finally:
+                    os.close(fd)
+                if len(payload) != metadata.st_size or _file_state(metadata) != _file_state(after):
+                    raise BatchPlanError("file changed while read")
+                total += len(payload)
+                if total > _MAX_TREE_BYTES:
+                    raise BatchPlanError("tree exceeds 64 MiB")
+                digest = hashlib.sha256(payload).hexdigest()
+                files[display] = (digest, payload)
+                entries.append({"mode": stat.S_IMODE(metadata.st_mode), "path": display, "sha256": digest, "size": len(payload)})
+            if _file_state(state) != _file_state(os.fstat(directory_fd)):
+                raise BatchPlanError("tree changed during traversal")
+        if _file_state(before) != _file_state(tree_root.lstat()):
+            raise BatchPlanError("tree changed during traversal")
+    except OSError as error:
+        raise BatchPlanError("tree changed during traversal") from error
+    finally:
+        for fd in opened:
+            os.close(fd)
+    return TreeSnapshot(sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}), files)
+
+
+def sha256_tree(root: Path) -> str:
+    return snapshot_tree(root).digest
 
 
 def _validate_contract(name: str, value: object) -> dict[str, object]:
@@ -205,35 +248,26 @@ def verify_binary_manifest(manifest: object, binary_path: Path) -> None:
         raise BatchPlanError("binary SHA-256 differs from manifest")
 
 
-def _verify_seed_material(seed: Path, declared_capabilities: object) -> None:
+def _verify_seed_material(snapshot: TreeSnapshot, declared_capabilities: object) -> None:
     if type(declared_capabilities) is not list:
         raise BatchPlanError("declared capabilities must be a list")
-    lead_skill = seed / "skills" / _LEAD_SKILL_NAME / "SKILL.md"
+    lead_path = f"skills/{_LEAD_SKILL_NAME}/SKILL.md"
+    lead_digest = sha256_file(_LEAD_SKILL_PATH)
     declares_lead_skill = _LEAD_SKILL_NAME in declared_capabilities
     if declares_lead_skill:
-        if not lead_skill.is_file() or lead_skill.is_symlink():
+        try:
+            config = tomllib.loads(snapshot.files["config.toml"][1].decode("utf-8"))["lead_skill"]
+        except (KeyError, UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+            raise BatchPlanError("Lead Skill config is missing") from error
+        if config != {"path": lead_path, "sha256": lead_digest} or snapshot.files.get(lead_path, (None,))[0] != lead_digest:
             raise BatchPlanError("declared Lead Skill is missing from seed")
-        if _stable_file(lead_skill)[3] != _stable_file(_LEAD_SKILL_PATH)[3]:
-            raise BatchPlanError("Lead Skill differs from repository asset")
-    elif lead_skill.exists() or lead_skill.is_symlink():
+    elif any(digest == lead_digest for digest, _ in snapshot.files.values()):
         raise BatchPlanError("undeclared Lead Skill is present in seed")
-
-    pending = [seed]
-    while pending:
-        directory = pending.pop()
-        for child in sorted(directory.iterdir(), key=lambda path: path.name):
-            lower_name = child.name.lower().encode("utf-8")
-            if any(term in lower_name for term in _FORBIDDEN_SEED_TERMS):
-                raise BatchPlanError("case-specific material is present in seed")
-            metadata = child.lstat()
-            if stat.S_ISLNK(metadata.st_mode):
-                raise BatchPlanError("case-specific seed scan found a symbolic link")
-            if stat.S_ISDIR(metadata.st_mode):
-                pending.append(child)
-            else:
-                _, _, _, payload = _stable_file(child)
-                if any(term in payload.lower() for term in _FORBIDDEN_SEED_TERMS):
-                    raise BatchPlanError("case-specific material is present in seed")
+    for path, (_, payload) in snapshot.files.items():
+        normalized = re.sub(rb"[^a-z0-9]+", b"", path.lower().encode())
+        content = re.sub(rb"[^a-z0-9]+", b"", payload.lower())
+        if any(term in normalized or term in content for term in _FORBIDDEN_SEED_TERMS):
+            raise BatchPlanError("case-specific material is present in seed")
 
 
 def verify_treatment_manifest(
@@ -243,6 +277,8 @@ def verify_treatment_manifest(
     system_instruction: Path,
     capability_bundle: Path,
     effective_config: Path,
+    binary_manifest: object,
+    binary_path: Path,
 ) -> None:
     """Verify every treatment artifact, its commitment, and seed hygiene."""
     value = _validate_contract("treatment-manifest", manifest)
@@ -250,8 +286,12 @@ def verify_treatment_manifest(
         verify_self_commitment(value, "treatmentManifestSha256")
     except BatchContractError as error:
         raise BatchPlanError("treatment commitment mismatch") from error
+    verify_binary_manifest(binary_manifest, binary_path)
+    if value["binaryManifestRef"] != binary_manifest["binaryId"]:
+        raise BatchPlanError("binary manifest reference differs from verified binary")
+    seed_snapshot = snapshot_tree(codex_home_seed)
     expected_artifacts = (
-        ("codexHomeSeedSha256", sha256_tree(codex_home_seed), "codex home seed"),
+        ("codexHomeSeedSha256", seed_snapshot.digest, "codex home seed"),
         ("systemInstructionSha256", sha256_file(system_instruction), "system instruction"),
         ("capabilityBundleSha256", sha256_tree(capability_bundle), "capability bundle"),
         ("effectiveCodexConfigSha256", sha256_file(effective_config), "effective config"),
@@ -259,12 +299,23 @@ def verify_treatment_manifest(
     for field, actual, label in expected_artifacts:
         if actual != value[field]:
             raise BatchPlanError(f"{label} SHA-256 differs from manifest")
-    _verify_seed_material(Path(codex_home_seed), value["declaredCapabilities"])
+    _verify_seed_material(seed_snapshot, value["declaredCapabilities"])
 
 
-def seal_candidate_run_plan(plan: object) -> dict[str, object]:
+def _verify_plan_refs(plan: dict[str, object], stock_treatment: object, modified_treatment: object) -> None:
+    stock = _validate_contract("treatment-manifest", stock_treatment)
+    modified = _validate_contract("treatment-manifest", modified_treatment)
+    for treatment in (stock, modified):
+        try: verify_self_commitment(treatment, "treatmentManifestSha256")
+        except BatchContractError as error: raise BatchPlanError("treatment commitment mismatch") from error
+    if plan["stockTreatmentRef"] != stock["treatmentId"]: raise BatchPlanError("stock treatment reference differs from verified treatment")
+    if plan["modifiedTreatmentRef"] != modified["treatmentId"]: raise BatchPlanError("modified treatment reference differs from verified treatment")
+
+
+def seal_candidate_run_plan(plan: object, *, stock_treatment: object, modified_treatment: object) -> dict[str, object]:
     """Return a schema-valid CandidateRunPlan with a fresh self-commitment."""
     value = _validate_contract("candidate-run-plan", plan)
+    _verify_plan_refs(value, stock_treatment, modified_treatment)
     try:
         sealed = seal_self_commitment(value, "planSha256")
     except BatchContractError as error:
@@ -273,9 +324,10 @@ def seal_candidate_run_plan(plan: object) -> dict[str, object]:
     return sealed
 
 
-def verify_candidate_run_plan(plan: object) -> None:
+def verify_candidate_run_plan(plan: object, *, stock_treatment: object, modified_treatment: object) -> None:
     """Require a schema-valid CandidateRunPlan whose full payload is committed."""
     value = _validate_contract("candidate-run-plan", plan)
+    _verify_plan_refs(value, stock_treatment, modified_treatment)
     try:
         verify_self_commitment(value, "planSha256")
     except BatchContractError as error:
@@ -295,4 +347,8 @@ def verify_effective_condition_parity(
         if stock[field] != modified[field]:
             raise BatchPlanError(f"condition parity differs: {field}")
         parity[field] = stock[field]
+    allowed = {"planId", "stockTreatmentRef", "modifiedTreatmentRef", "privateArmPath", "executionOrder"}
+    for field in set(stock) | set(modified):
+        if field not in PARITY_FIELDS and field not in allowed and stock.get(field) != modified.get(field):
+            raise BatchPlanError(f"undeclared condition difference: {field}")
     return sha256_json(parity)
