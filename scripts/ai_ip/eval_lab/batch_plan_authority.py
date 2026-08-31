@@ -135,21 +135,5 @@ def reserve_plan(
 
 
 def release_unstarted(reservation: PlanReservation) -> None:
-    """Rollback a reservation only when its controller made zero executor calls."""
-    try:
-        root = reservation.path.parent.parent
-        root_fd = open_private_directory(root)
-        state = os.fstat(root_fd)
-        if (state.st_dev, state.st_ino) != reservation.root_identity:
-            raise PlanAuthorityError("private authority root was replaced")
-        authority_fd = open_private_directory(reservation.path.parent)
-        if read_bounded(reservation.path, 1024 * 1024) != reservation.payload:
-            raise PlanAuthorityError("plan reservation changed before rollback")
-        os.unlink(reservation.path.name, dir_fd=authority_fd)
-    except OSError as error:
-        raise PlanAuthorityError("cannot roll back unstarted reservation") from error
-    finally:
-        if "authority_fd" in locals():
-            os.close(authority_fd)
-        if "root_fd" in locals():
-            os.close(root_fd)
+    """Reservations are intentionally irreversible once any lifecycle state exists."""
+    raise PlanAuthorityError("sealed replication reservations cannot be released")

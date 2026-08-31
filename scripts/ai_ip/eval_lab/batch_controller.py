@@ -37,11 +37,7 @@ try:
         verify_attempt_cells_disjoint,
     )
     from .batch_plan import verify_effective_condition_parity
-    from .batch_plan_authority import (
-        PlanAuthorityError,
-        release_unstarted,
-        reserve_plan,
-    )
+    from .batch_plan_authority import PlanAuthorityError, reserve_plan
     from .batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -85,11 +81,7 @@ except ImportError:
         verify_attempt_cells_disjoint,
     )
     from batch_plan import verify_effective_condition_parity
-    from batch_plan_authority import (
-        PlanAuthorityError,
-        release_unstarted,
-        reserve_plan,
-    )
+    from batch_plan_authority import PlanAuthorityError, reserve_plan
     from batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -190,6 +182,11 @@ def _run_candidate_pair(
             )
     except BaseException as error:
         seal_failure_tombstone(pair_directory, pair_id, "cellCreation", error)
+        for directory in attempt_directories:
+            try:
+                seal_failure_tombstone(directory, pair_id, "cellCreation", error)
+            except BaseException:
+                pass
         for cell in cells.values():
             try:
                 mark_receipts_sealed(cell)
@@ -324,6 +321,8 @@ def run_candidate_pair(
 ) -> dict[str, object]:
     """Execute the sole replication in a sealed plan."""
     require_supported_isolation_platform()
+    if not callable(getattr(executor, "start", None)):
+        raise BatchControllerError("executor requires the bounded start/poll contract")
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
@@ -341,7 +340,7 @@ def run_candidate_pair(
         reservation = reserve_plan(
             Path(private_root), str(plan_value["planSha256"]), 1, (pair_id,)
         )
-    except (BatchReceiptError, ControllerSupportError, PlanAuthorityError) as error:
+    except ValueError as error:
         raise BatchControllerError(str(error)) from error
     counted = _CountingExecutor(executor)
     try:
@@ -368,6 +367,8 @@ def run_candidate_batch(
 ) -> list[dict[str, object]]:
     """Execute exactly the pre-sealed replication count without adaptive stopping."""
     require_supported_isolation_platform()
+    if not callable(getattr(executor, "start", None)):
+        raise BatchControllerError("executor requires the bounded start/poll contract")
     try:
         plan_value = require_mapping(plan, "candidate run plan")
         validated = validate_bindings(plan_value, bindings)
@@ -395,7 +396,7 @@ def run_candidate_batch(
             replication_count,
             tuple(value[0] for value in batch_identities),
         )
-    except (BatchReceiptError, PlanAuthorityError) as error:
+    except ValueError as error:
         raise BatchControllerError(str(error)) from error
     counted = _CountingExecutor(executor)
     try:

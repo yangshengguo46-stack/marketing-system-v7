@@ -130,6 +130,8 @@ def _bounded_shape(value: object, limit: int) -> bool:
         if item is None or type(item) in (bool, int, float):
             scalar_bytes += 16
         elif type(item) is str:
+            if len(item) > limit:
+                return False
             scalar_bytes += len(item.encode("utf-8", errors="replace"))
         elif type(item) is list:
             pending.extend((child, depth + 1) for child in item)

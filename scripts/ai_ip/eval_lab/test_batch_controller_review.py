@@ -378,7 +378,7 @@ def test_unrelated_partial_attempt_directory_does_not_poison_pair_verification(
     verify_paired_run_receipt(receipt, world.private_root)
 
 
-def test_cell_creation_failure_writes_tombstone_and_allows_new_id_recovery(
+def test_cell_creation_failure_writes_tombstone_and_consumes_plan(
     world: World, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     real_create = batch_controller.create_attempt_cell
@@ -403,11 +403,11 @@ def test_cell_creation_failure_writes_tombstone_and_allows_new_id_recovery(
 
     monkeypatch.setattr(batch_controller, "create_attempt_cell", real_create)
     recovery = ScriptedExecutor([_result("recovery-a"), _result("recovery-b")])
-    receipt = run_candidate_pair(
-        world.plan, world.bindings, recovery, world.private_root, seed=b"l" * 32
-    )
-    assert receipt["pairValidity"] == "valid"
-    assert recovery.calls == 2
+    with pytest.raises(BatchControllerError, match="reserved|complete"):
+        run_candidate_pair(
+            world.plan, world.bindings, recovery, world.private_root, seed=b"l" * 32
+        )
+    assert recovery.calls == 0
 
 
 def test_resealed_usage_inflation_is_rejected(world: World) -> None:

@@ -4,6 +4,7 @@ import json
 import os
 import re
 import stat
+from dataclasses import dataclass
 from pathlib import Path
 
 try:
@@ -19,6 +20,49 @@ _IDENTIFIER = re.compile(r"[0-9a-f]{64}\Z")
 
 class SecureStorageError(ValueError):
     pass
+
+
+@dataclass
+class BoundDirectory:
+    """A retained owner-only directory identity for one evidence lifecycle."""
+
+    path: Path
+    descriptor: int
+    identity: tuple[int, int]
+    closed: bool = False
+
+    @classmethod
+    def open(cls, path: Path) -> "BoundDirectory":
+        descriptor = open_private_directory(path)
+        state = os.fstat(descriptor)
+        return cls(Path(path), descriptor, (state.st_dev, state.st_ino))
+
+    def verify(self) -> None:
+        if self.closed:
+            raise SecureStorageError("private evidence capability is closed")
+        try:
+            state = self.path.lstat()
+            bound = os.fstat(self.descriptor)
+        except OSError as error:
+            raise SecureStorageError("private evidence capability is unavailable") from error
+        if (state.st_dev, state.st_ino) != self.identity or (
+            bound.st_dev,
+            bound.st_ino,
+        ) != self.identity:
+            raise SecureStorageError("private evidence directory identity was replaced")
+
+    def close(self) -> None:
+        if not self.closed:
+            os.close(self.descriptor)
+            self.closed = True
+
+
+def directory_path(directory: Path | BoundDirectory) -> Path:
+    return directory.path if isinstance(directory, BoundDirectory) else Path(directory)
+
+
+def bind_directory(path: Path) -> BoundDirectory:
+    return BoundDirectory.open(Path(path))
 
 
 def identifier(value: object, name: str) -> str:
@@ -145,8 +189,45 @@ def write_exclusive(path: Path, payload: bytes) -> None:
         os.close(parent_fd)
 
 
+def write_entry(
+    directory: Path | BoundDirectory, name: str, payload: bytes
+) -> None:
+    if not name or "/" in name or "\\" in name:
+        raise SecureStorageError("invalid private evidence file name")
+    if not isinstance(directory, BoundDirectory):
+        write_exclusive(Path(directory) / name, payload)
+        return
+    if len(payload) > MAX_PRIVATE_FILE_BYTES:
+        raise SecureStorageError("private evidence exceeds the write bound")
+    directory.verify()
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            name,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=directory.descriptor,
+        )
+        view = memoryview(payload)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise SecureStorageError("private evidence write failed")
+            view = view[written:]
+        os.fsync(descriptor)
+        directory.verify()
+    except OSError as error:
+        raise SecureStorageError(f"private evidence write collision: {name}") from error
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
 def seal_failure_tombstone(
-    pair_directory: Path, pair_id: str, phase: str, error: BaseException
+    pair_directory: Path | BoundDirectory,
+    pair_id: str,
+    phase: str,
+    error: BaseException,
 ) -> None:
     payload = (
         canonical_json_bytes(
@@ -159,7 +240,7 @@ def seal_failure_tombstone(
         )
         + b"\n"
     )
-    write_exclusive(Path(pair_directory) / "failure.json", payload)
+    write_entry(pair_directory, "failure.json", payload)
 
 
 def read_bounded(path: Path, limit: int) -> bytes:

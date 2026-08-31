@@ -16,7 +16,7 @@ try:
     from .batch_isolation import AttemptCell, mark_receipts_sealed
     from .batch_plan import sha256_tree
     from .batch_receipts import seal_arm_attempt_receipt
-    from .batch_receipt_storage import write_exclusive
+    from .batch_receipt_storage import write_entry
     from .contracts import LabContractError, canonical_json_bytes, sha256_json
 except ImportError:
     from batch_controller_artifacts import materialize_neutral_binary_bytes
@@ -31,7 +31,7 @@ except ImportError:
     from batch_isolation import AttemptCell, mark_receipts_sealed
     from batch_plan import sha256_tree
     from batch_receipts import seal_arm_attempt_receipt
-    from batch_receipt_storage import write_exclusive
+    from batch_receipt_storage import write_entry
     from contracts import LabContractError, canonical_json_bytes, sha256_json
 
 
@@ -95,7 +95,7 @@ def capture_arm(executor: object, request: AttemptRequest) -> object:
 def seal_arm(
     arm: ArmBinding,
     cell: AttemptCell,
-    directory: Path,
+    directory: object,
     plan: dict[str, object],
     bindings: ValidatedBindings,
     before: str,
@@ -184,7 +184,7 @@ def seal_arm(
 
 
 def seal_arm_failure(
-    directory: Path,
+    directory: object,
     cell: AttemptCell,
     captured: object,
     max_output_bytes: int,
@@ -217,8 +217,8 @@ def seal_arm_failure(
         )
         + b"\n"
     )
-    write_exclusive(directory / "failure-output.json", output)
-    write_exclusive(directory / "failure-metadata.json", metadata)
-    write_exclusive(directory / "failure-stdout.bin", raw.stdout)
-    write_exclusive(directory / "failure-stderr.bin", raw.stderr)
-    write_exclusive(directory / "failure.json", failure)
+    write_entry(directory, "failure-output.json", output)
+    write_entry(directory, "failure-metadata.json", metadata)
+    write_entry(directory, "failure-stdout.bin", raw.stdout)
+    write_entry(directory, "failure-stderr.bin", raw.stderr)
+    write_entry(directory, "failure.json", failure)

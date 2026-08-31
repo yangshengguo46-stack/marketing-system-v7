@@ -17,11 +17,15 @@ try:
     )
     from .batch_receipt_storage import (
         MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
+        BoundDirectory,
         SecureStorageError as BatchReceiptError,
+        bind_directory as _bind_directory,
         child_directory as _child_directory,
         entry_exists as _entry_exists,
         identifier as _identifier,
         private_directory as _private_directory,
+        directory_path as _directory_path,
+        write_entry as _write_entry,
         write_exclusive as _write_exclusive,
     )
     from .contracts import (
@@ -41,11 +45,15 @@ except ImportError:
     )
     from batch_receipt_storage import (
         MAX_CONTEXT_BYTES as _MAX_CONTEXT_BYTES,
+        BoundDirectory,
         SecureStorageError as BatchReceiptError,
+        bind_directory as _bind_directory,
         child_directory as _child_directory,
         entry_exists as _entry_exists,
         identifier as _identifier,
         private_directory as _private_directory,
+        directory_path as _directory_path,
+        write_entry as _write_entry,
         write_exclusive as _write_exclusive,
     )
     from contracts import (
@@ -57,23 +65,17 @@ except ImportError:
 
 @dataclass
 class EvidenceLayout:
-    pair_directory: Path
-    attempt_directories: tuple[Path, Path]
-    _entries: tuple[tuple[Path, int, tuple[int, int]], ...]
+    pair_directory: BoundDirectory
+    attempt_directories: tuple[BoundDirectory, BoundDirectory]
+    _entries: tuple[BoundDirectory, ...]
 
     def verify(self) -> None:
-        for path, descriptor, identity in self._entries:
-            state = path.lstat()
-            bound = os.fstat(descriptor)
-            if (state.st_dev, state.st_ino) != identity or (
-                bound.st_dev,
-                bound.st_ino,
-            ) != identity:
-                raise BatchReceiptError("private evidence directory identity was replaced")
+        for entry in self._entries:
+            entry.verify()
 
     def close(self) -> None:
-        for _, descriptor, _ in self._entries:
-            os.close(descriptor)
+        for entry in self._entries:
+            entry.close()
 
 
 def prepare_private_layout(
@@ -102,23 +104,20 @@ def prepare_private_layout(
         pair_path.rmdir()
         raise
     paths = (root, pairs_root, attempts_root, pair_path, created[0], created[1])
-    entries = []
-    for path in paths:
-        descriptor = os.open(
-            path,
-            os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0),
-        )
-        state = os.fstat(descriptor)
-        entries.append((path, descriptor, (state.st_dev, state.st_ino)))
-    layout = EvidenceLayout(pair_path, (created[0], created[1]), tuple(entries))
+    entries = tuple(_bind_directory(path) for path in paths)
+    layout = EvidenceLayout(entries[3], (entries[4], entries[5]), entries)
     layout.verify()
     _write_exclusive(
         root / f"layout-{pair}.json",
         _json_bytes(
             {
                 "entries": [
-                    {"device": identity[0], "inode": identity[1], "path": str(path.relative_to(root))}
-                    for path, _, identity in entries
+                    {
+                        "device": entry.identity[0],
+                        "inode": entry.identity[1],
+                        "path": str(entry.path.relative_to(root)),
+                    }
+                    for entry in entries
                 ],
                 "pairId": pair,
             }
@@ -174,7 +173,7 @@ def _metadata_parts(metadata: object) -> tuple[object, object, object, object, o
 
 
 def seal_pair_context(
-    pair_directory: Path,
+    pair_directory: Path | BoundDirectory,
     *,
     plan: dict[str, object],
     execution_profile: dict[str, object],
@@ -182,23 +181,23 @@ def seal_pair_context(
     identity_context: dict[str, object],
 ) -> None:
     """Seal the immutable semantic inputs needed for offline receipt verification."""
-    directory = _private_directory(Path(pair_directory))
+    directory = pair_directory
+    if not isinstance(directory, BoundDirectory):
+        directory = _private_directory(Path(directory))
     try:
         schema_bytes = Path(case_answer_schema_path).read_bytes()
     except OSError as error:
         raise BatchReceiptError("CaseAnswer schema is unavailable") from error
     if len(schema_bytes) > _MAX_CONTEXT_BYTES:
         raise BatchReceiptError("CaseAnswer schema exceeds the context bound")
-    _write_exclusive(directory / "plan.json", _json_bytes(plan))
-    _write_exclusive(
-        directory / "execution-profile.json", _json_bytes(execution_profile)
-    )
-    _write_exclusive(directory / "case-answer-schema.json", schema_bytes)
-    _write_exclusive(directory / "identity-context.json", _json_bytes(identity_context))
+    _write_entry(directory, "plan.json", _json_bytes(plan))
+    _write_entry(directory, "execution-profile.json", _json_bytes(execution_profile))
+    _write_entry(directory, "case-answer-schema.json", schema_bytes)
+    _write_entry(directory, "identity-context.json", _json_bytes(identity_context))
 
 
 def seal_arm_attempt_receipt(
-    attempt_directory: Path,
+    attempt_directory: Path | BoundDirectory,
     *,
     attempt_id: str,
     pair_id: str,
@@ -223,12 +222,14 @@ def seal_arm_attempt_receipt(
     raw_evidence: dict[str, object],
 ) -> dict[str, object]:
     """Seal raw private evidence, then seal its schema-valid arm receipt."""
-    directory = _private_directory(Path(attempt_directory))
+    directory = attempt_directory
+    if not isinstance(directory, BoundDirectory):
+        directory = _private_directory(Path(directory))
     output_bytes, metadata_bytes = _json_bytes(output), _json_bytes(metadata)
-    _write_exclusive(directory / "output.json", output_bytes)
-    _write_exclusive(directory / "metadata.json", metadata_bytes)
-    _write_exclusive(directory / "stdout.bin", stdout)
-    _write_exclusive(directory / "stderr.bin", stderr)
+    _write_entry(directory, "output.json", output_bytes)
+    _write_entry(directory, "metadata.json", metadata_bytes)
+    _write_entry(directory, "stdout.bin", stdout)
+    _write_entry(directory, "stderr.bin", stderr)
     thread_id, turn_id, trajectory, usage, cost_evidence = _metadata_parts(metadata)
     evidence = {
         "metadataSha256": _sha256_bytes(metadata_bytes),
@@ -239,7 +240,7 @@ def seal_arm_attempt_receipt(
         "rawEvidence": raw_evidence,
     }
     evidence_bytes = _json_bytes(evidence)
-    _write_exclusive(directory / "evidence.json", evidence_bytes)
+    _write_entry(directory, "evidence.json", evidence_bytes)
     if type(usage) is not dict:
         usage = {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0}
     if type(cost_evidence) is not dict:
@@ -274,12 +275,12 @@ def seal_arm_attempt_receipt(
         validate_named_contract("arm-attempt-receipt", receipt)
     except BatchContractError as error:
         raise BatchReceiptError(f"arm receipt is invalid: {error}") from error
-    _write_exclusive(directory / "receipt.json", _json_bytes(receipt))
+    _write_entry(directory, "receipt.json", _json_bytes(receipt))
     return receipt
 
 
 def seal_paired_run_receipt(
-    pair_directory: Path,
+    pair_directory: Path | BoundDirectory,
     *,
     pair_id: str,
     plan_sha256: str,
@@ -293,8 +294,10 @@ def seal_paired_run_receipt(
     mapping_record: dict[str, object] | None,
 ) -> dict[str, object]:
     """Seal private order/mapping evidence, then the public pair receipt."""
-    directory = _private_directory(Path(pair_directory))
-    _write_exclusive(directory / "order.json", _json_bytes(order_record))
+    directory = pair_directory
+    if not isinstance(directory, BoundDirectory):
+        directory = _private_directory(Path(directory))
+    _write_entry(directory, "order.json", _json_bytes(order_record))
     receipt: dict[str, object] = {
         "schemaVersion": 1,
         "pairId": pair_id,
@@ -310,12 +313,12 @@ def seal_paired_run_receipt(
     if output_relation is not None:
         receipt["outputRelation"] = output_relation
     if mapping_record is not None:
-        _write_exclusive(directory / "mapping.json", _json_bytes(mapping_record))
+        _write_entry(directory, "mapping.json", _json_bytes(mapping_record))
         receipt["anonymousMappingCommitment"] = sha256_json(mapping_record)
     try:
         receipt = seal_self_commitment(receipt, "receiptSha256")
         validate_named_contract("paired-run-receipt", receipt)
     except BatchContractError as error:
         raise BatchReceiptError(f"pair receipt is invalid: {error}") from error
-    _write_exclusive(directory / "receipt.json", _json_bytes(receipt))
+    _write_entry(directory, "receipt.json", _json_bytes(receipt))
     return receipt
