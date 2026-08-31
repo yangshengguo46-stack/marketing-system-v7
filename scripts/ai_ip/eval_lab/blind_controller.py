@@ -6,7 +6,7 @@ import re
 import secrets
 import stat
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
@@ -58,7 +58,10 @@ _BLIND_SCHEMA = _LAB_ROOT / "schemas" / "blind-review.schema.json"
 _FROZEN_RUBRIC = _LAB_ROOT / "rubrics" / "golden-gift-l1-l2-rubric.json"
 _REQUIRED_DOMAINS = {"businessIpJudgment", "evidenceIntegrity"}
 _COMPONENT = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\Z")
-_RFC3339_UTC = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\Z")
+_RFC3339 = re.compile(
+    r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+    r"(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)\Z"
+)
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _CLOEXEC = getattr(os, "O_CLOEXEC", 0)
 
@@ -128,13 +131,14 @@ def _private_case_receipt(
 
 
 def _parse_time(value: object, label: str) -> datetime:
-    if type(value) is not str or not _RFC3339_UTC.fullmatch(value):
+    if type(value) is not str or not _RFC3339.fullmatch(value):
         raise BlindControllerError(f"{label} must be an RFC3339 timestamp")
     try:
-        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+        wire_value = value[:-1] + "+00:00" if value.endswith("Z") else value
+        parsed = datetime.fromisoformat(wire_value)
     except ValueError as error:
         raise BlindControllerError(f"{label} must be an RFC3339 timestamp") from error
-    return parsed
+    return parsed.astimezone(timezone.utc)
 
 
 def _qualification(path: Path, analysis_time: datetime) -> dict[str, object]:

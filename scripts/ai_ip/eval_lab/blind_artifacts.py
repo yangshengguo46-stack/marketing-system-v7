@@ -55,13 +55,14 @@ _LABEL_PATTERN = re.compile(
     r"\bsource[-_ ]?root\s*(?::|=))"
 )
 _VENDORS = r"openai|gpt(?:-[0-9.]+)?|codex|anthropic|claude|gemini|glm(?:-[0-9.]+)?|doubao|deepseek|qwen"
+_VENDOR_PATTERN = re.compile(rf"(?i)(?<![a-z0-9])(?:{_VENDORS})(?![a-z0-9])")
 _GENERATION_PATTERN = re.compile(
     rf"(?i)\b(?:generated|created|authored|written|produced)\s+(?:by|with|using)\s+(?:[a-z0-9.-]+\s+)?(?:{_VENDORS})\b"
 )
 _CHINESE_GENERATION_PATTERN = re.compile(
     rf"(?i)(?:由|使用)\s*(?:{_VENDORS})\s*(?:生成|创作|编写)"
 )
-_POSIX_PATH = re.compile(r"(?:^|[\s\"'=:])/(?:[A-Za-z0-9._~-]+/)+(?:[A-Za-z0-9._~-]+)?")
+_POSIX_PATH = re.compile(r"(?:^|[\s\"'=:])/(?!/)[^\s\"'<>]*")
 _WINDOWS_PATH = re.compile(r"(?:^|[\s\"'=])[A-Za-z]:[\\/]")
 
 
@@ -150,6 +151,7 @@ def _forbidden_string(value: str) -> bool:
     lowered = value.casefold()
     return bool(
         _LABEL_PATTERN.search(value)
+        or _VENDOR_PATTERN.search(value)
         or _GENERATION_PATTERN.search(value)
         or _CHINESE_GENERATION_PATTERN.search(value)
         or _POSIX_PATH.search(value)
@@ -162,9 +164,11 @@ def _reject_candidate_provenance(value: object) -> None:
     if type(value) is dict:
         for key, child in value.items():
             normalized = re.sub(r"[^a-z0-9]", "", key.casefold())
-            if any(
-                marker in normalized for marker in _KEY_MARKERS
-            ) or normalized.startswith("arm"):
+            if (
+                any(marker in normalized for marker in _KEY_MARKERS)
+                or normalized.startswith("arm")
+                or _forbidden_string(key)
+            ):
                 raise BlindArtifactError("candidate contains provenance metadata key")
             _reject_candidate_provenance(child)
     elif type(value) is list:
@@ -237,6 +241,7 @@ def _cleanup_stage(
 
 def _atomic_publish(private_root: PrivateRoot, stage_name: str, batch_id: str) -> None:
     batches_fd = _open_batches(private_root)
+    committed = False
     try:
         if _entry_exists(batches_fd, batch_id):
             raise BlindArtifactError("batch destination appeared before publish")
@@ -249,11 +254,33 @@ def _atomic_publish(private_root: PrivateRoot, stage_name: str, batch_id: str) -
             src_dir_fd=batches_fd,
             dst_dir_fd=batches_fd,
         )
+        committed = True
         os.fsync(batches_fd)
     except BlindArtifactError:
         raise
     except (LabContractError, OSError) as error:
-        raise BlindArtifactError("atomic blind batch publish failed") from error
+        if not committed:
+            raise BlindArtifactError("atomic blind batch publish failed") from error
+    finally:
+        try:
+            os.close(batches_fd)
+        except OSError as error:
+            if not committed:
+                raise BlindArtifactError("atomic blind batch publish failed") from error
+
+
+def _stage_identity(
+    private_root: PrivateRoot, stage_name: str
+) -> tuple[int, int] | None:
+    batches_fd = _open_batches(private_root)
+    try:
+        try:
+            metadata = os.stat(stage_name, dir_fd=batches_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            return None
+        if not stat.S_ISDIR(metadata.st_mode):
+            raise BlindArtifactError("staging artifact is not a directory")
+        return metadata.st_dev, metadata.st_ino
     finally:
         os.close(batches_fd)
 
@@ -275,21 +302,20 @@ def _stage_and_publish(
     try:
         if _entry_exists(batches_fd, batch_id):
             raise BlindArtifactError("batch destination already exists")
+        if _entry_exists(batches_fd, stage_name):
+            raise BlindArtifactError("blind staging destination already exists")
     finally:
         os.close(batches_fd)
 
     stage_base = f"batches/{stage_name}"
-    created = False
+    cleanup_allowed = False
     identity = None
     try:
+        cleanup_allowed = True
         private_root.create_dir(stage_base)
-        created = True
-        batches_fd = _open_batches(private_root)
-        try:
-            metadata = os.stat(stage_name, dir_fd=batches_fd, follow_symlinks=False)
-            identity = (metadata.st_dev, metadata.st_ino)
-        finally:
-            os.close(batches_fd)
+        identity = _stage_identity(private_root, stage_name)
+        if identity is None:
+            raise BlindArtifactError("created staging directory is unavailable")
         directories = set()
         for relative in artifacts:
             parent = Path(relative).parent
@@ -307,11 +333,13 @@ def _stage_and_publish(
         if private_root.read_json(f"{stage_base}/blind-pack-receipt.json") != receipt:
             raise BlindArtifactError("staged blind receipt verification failed")
         _atomic_publish(private_root, stage_name, batch_id)
-        created = False
+        cleanup_allowed = False
     except BlindArtifactError:
         raise
     except (LabContractError, OSError) as error:
         raise BlindArtifactError("blind batch staging failed") from error
     finally:
-        if created and identity is not None:
+        if cleanup_allowed and identity is None:
+            identity = _stage_identity(private_root, stage_name)
+        if cleanup_allowed and identity is not None:
             _cleanup_stage(private_root, stage_name, identity)
