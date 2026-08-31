@@ -31,9 +31,8 @@ class DecisionError(ValueError):
 class ArbitrationRequiredError(DecisionError):
     """Raised when valid base judgments require an absent arbitration pair."""
 
-    def __init__(self, preference_counts: dict[str, int]):
+    def __init__(self):
         super().__init__("a designated arbitrator primary/swap pair is required")
-        self.preference_counts = preference_counts
 
 
 _LAB_ROOT = Path(__file__).resolve().parents[3] / "ai-ip-evals" / "lab"
@@ -436,11 +435,11 @@ def seal_blind_statistics(
     arbitration_completed = False
     if arbitration_required:
         if arbitrator is None:
-            raise ArbitrationRequiredError(_counts(preferences))
+            raise ArbitrationRequiredError()
         try:
             preference, consistent = consume(2)
         except KeyError as error:
-            raise ArbitrationRequiredError(_counts(preferences)) from error
+            raise ArbitrationRequiredError() from error
         if not consistent or preference not in ("A", "B"):
             raise DecisionError("arbitrator primary/swap judgments must resolve to one output")
         preferences.append(preference)

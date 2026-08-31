@@ -164,6 +164,14 @@ def _arm_key_path(batch):
     )
 
 
+def _assert_generic_arbitration_signal(caught):
+    error = caught.value
+    assert type(error) is ArbitrationRequiredError
+    assert error.args == ("a designated arbitrator primary/swap pair is required",)
+    assert vars(error) == {}
+    assert not hasattr(error, "preference_counts")
+
+
 def test_seals_output_hash_preferences_without_reading_arm_key(tmp_path, monkeypatch):
     batch = _prepared_batch(tmp_path)
     output_a, output_b = _base_preferences(batch)
@@ -396,12 +404,7 @@ def test_position_disagreement_becomes_near_tie_and_requires_arbitration(tmp_pat
     with pytest.raises(ArbitrationRequiredError) as caught:
         seal_blind_statistics(**_args(batch, tuple(paths)))
 
-    assert caught.value.preference_counts == {
-        "A": 1,
-        "B": 0,
-        "nearTie": 1,
-        "abstain": 0,
-    }
+    _assert_generic_arbitration_signal(caught)
     assert not _statistics_path(batch).exists()
 
 
@@ -424,12 +427,8 @@ def test_neither_is_both_output_ineligibility_not_an_ordinary_tie(tmp_path):
     with pytest.raises(ArbitrationRequiredError) as caught:
         seal_blind_statistics(**_args(batch, tuple(paths)))
 
-    assert caught.value.preference_counts == {
-        "A": 1,
-        "B": 0,
-        "nearTie": 0,
-        "abstain": 1,
-    }
+    _assert_generic_arbitration_signal(caught)
+    assert not _statistics_path(batch).exists()
 
 
 @pytest.mark.parametrize(

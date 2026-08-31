@@ -404,12 +404,11 @@ def test_provider_free_golden_gift_pilot_runs_all_five_cli_commands(
         "fabricatedExistingExperience",
         "notActuallyUsable",
     ]
-    assert statistics["preferenceCounts"] == {
-        "A": 1,
-        "B": 2,
-        "nearTie": 0,
-        "abstain": 0,
-    }
+    assert sorted(
+        [statistics["preferenceCounts"]["A"], statistics["preferenceCounts"]["B"]]
+    ) == [1, 2]
+    assert statistics["preferenceCounts"]["nearTie"] == 0
+    assert statistics["preferenceCounts"]["abstain"] == 0
 
     result = _run(
         capsys,

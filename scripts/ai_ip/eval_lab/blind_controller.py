@@ -64,6 +64,8 @@ _RFC3339 = re.compile(
 )
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _CLOEXEC = getattr(os, "O_CLOEXEC", 0)
+_POSITION_DOMAIN = b"ai-ip-eval-public-position-v1\0"
+_MAPPING_DOMAIN = b"ai-ip-eval-hidden-arm-mapping-v1\0"
 
 
 def _component(value: object, label: str) -> str:
@@ -195,6 +197,10 @@ def _derived(seed: bytes) -> tuple[str, str, str]:
     return assignment_id, arm_a_nonce, arm_b_nonce
 
 
+def _seed_bit(seed: bytes, domain: bytes) -> bool:
+    return bool(hashlib.sha256(domain + seed).digest()[0] & 1)
+
+
 def _assignment_values(
     *,
     batch_id: str,
@@ -219,10 +225,11 @@ def _assignment_values(
         reviewer_id = reviewer_ids[reviewer_index]
         label = f"{reviewer_id}-{role}"
         assignment_id, arm_a_nonce, arm_b_nonce = derived[sequence_index]
-        primary_ab = reviewer_index % 2 == 0
-        position_ab = primary_ab != is_swap
+        primary_seed = seeds[reviewer_index]
+        position_ab = _seed_bit(primary_seed, _POSITION_DOMAIN) != is_swap
+        stock_is_a = (not _seed_bit(primary_seed, _MAPPING_DOMAIN)) != is_swap
         arm_a_hash, arm_b_hash = (
-            (stock_hash, modified_hash) if position_ab else (modified_hash, stock_hash)
+            (stock_hash, modified_hash) if stock_is_a else (modified_hash, stock_hash)
         )
         assignment = {
             "schemaVersion": 1,
@@ -376,7 +383,7 @@ def prepare_blind_batch(
         "batchId": batch_id,
         "caseId": case_id,
         "rubricSha256": sha256_json(rubric),
-        "armOutputSha256s": [stock_hash, modified_hash],
+        "armOutputSha256s": sorted((stock_hash, modified_hash)),
         "reviewerIds": reviewer_ids,
         "analysisFrozenAt": analysis_frozen_at,
         "diagnosticOnly": True,
@@ -414,9 +421,9 @@ def prepare_blind_batch(
             )
         except BlindArtifactError as error:
             raise BlindControllerError("invalid private assignment mapping") from error
-        answer_a, answer_b = (
-            (stock, modified) if assignment["position"] == "AB" else (modified, stock)
-        )
+        answer_by_hash = {stock_hash: stock, modified_hash: modified}
+        answer_a = answer_by_hash[assignment["armAOutputSha256"]]
+        answer_b = answer_by_hash[assignment["armBOutputSha256"]]
         reviewer_base = f"reviewer/{assignment['reviewerId']}/{label}"
         artifacts[f"coordinator/mappings/{label}.json"] = mapping
         artifacts[f"{reviewer_base}/assignment.json"] = assignment

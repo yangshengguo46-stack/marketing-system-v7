@@ -21,6 +21,14 @@ CASE_ID = "golden-gift-li-culture-v1"
 BATCH_ID = "golden-gift-fixture-batch-1"
 FROZEN_AT = "2026-09-01T00:00:00Z"
 SEEDS = tuple(bytes([index]) * 32 for index in range(1, 7))
+ORIENTATION_SEEDS = (
+    SEEDS[0],
+    SEEDS[1],
+    SEEDS[3],
+    SEEDS[2],
+    SEEDS[4],
+    SEEDS[5],
+)
 
 
 def _write_json(path, value):
@@ -212,8 +220,8 @@ def test_prepares_deterministic_physically_separated_swapped_assignments(tmp_pat
     ] == [
         (1, "AB"),
         (3, "BA"),
-        (2, "BA"),
-        (4, "AB"),
+        (2, "AB"),
+        (4, "BA"),
     ]
     assert (
         assignments["reviewer-business-1-swap"]["swapOf"]
@@ -240,10 +248,19 @@ def test_prepares_deterministic_physically_separated_swapped_assignments(tmp_pat
     assert private.read_json(f"{first}/B.json") == modified
     assert private.read_json(f"{swapped}/A.json") == modified
     assert private.read_json(f"{swapped}/B.json") == stock
+    second = f"{base}/reviewer/reviewer-business-2/reviewer-business-2-primary"
+    second_swapped = f"{base}/reviewer/reviewer-business-2/reviewer-business-2-swap"
+    assert private.read_json(f"{second}/A.json") == modified
+    assert private.read_json(f"{second}/B.json") == stock
+    assert private.read_json(f"{second_swapped}/A.json") == stock
+    assert private.read_json(f"{second_swapped}/B.json") == modified
 
     manifest = private.read_json(f"{base}/coordinator/batch-manifest.json")
     arm_key = private.read_json(f"{base}/coordinator/arm-key.json")
     assert manifest["diagnosticOnly"] is True
+    assert manifest["armOutputSha256s"] == sorted(
+        [sha256_json(stock), sha256_json(modified)]
+    )
     assert arm_key == {
         "schemaVersion": 1,
         "objectKind": "ArmKey",
@@ -323,7 +340,7 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
     _write_json(arbitrator_path, _qualification("reviewer-arbitrator-1"))
     fixture["arbitrator_qualification_receipt_path"] = arbitrator_path
     calls = []
-    fixture["seed_source"] = _seed_source(SEEDS, calls)
+    fixture["seed_source"] = _seed_source(ORIENTATION_SEEDS, calls)
 
     prepare_blind_batch(**fixture)
 
@@ -334,12 +351,102 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
     )
     swap = private.read_json(f"{prefix}/reviewer-arbitrator-1-swap/assignment.json")
     assert (primary["sequenceSlot"], swap["sequenceSlot"]) == (3, 6)
-    assert (primary["position"], swap["position"]) == ("AB", "BA")
+    assert (primary["position"], swap["position"]) == ("BA", "AB")
     assert (
         primary["releaseCondition"] == swap["releaseCondition"] == "arbitrationRequired"
     )
     assert swap["swapOf"] == primary["assignmentId"]
     assert calls == [32] * 6
+
+    base = f"batches/{BATCH_ID}/reviewer"
+    first = private.read_json(
+        f"{base}/reviewer-business-1/reviewer-business-1-primary/assignment.json"
+    )
+    second = private.read_json(
+        f"{base}/reviewer-business-2/reviewer-business-2-primary/assignment.json"
+    )
+    assert first["position"] == second["position"] == "AB"
+    assert first["armAOutputSha256"] == primary["armAOutputSha256"]
+    assert first["armAOutputSha256"] != second["armAOutputSha256"]
+    for reviewer_primary, reviewer_swap in (
+        (
+            first,
+            private.read_json(
+                f"{base}/reviewer-business-1/reviewer-business-1-swap/assignment.json"
+            ),
+        ),
+        (
+            second,
+            private.read_json(
+                f"{base}/reviewer-business-2/reviewer-business-2-swap/assignment.json"
+            ),
+        ),
+        (primary, swap),
+    ):
+        assert reviewer_primary["position"] != reviewer_swap["position"]
+        assert (
+            reviewer_primary["armAOutputSha256"]
+            == reviewer_swap["armBOutputSha256"]
+        )
+        assert (
+            reviewer_primary["armBOutputSha256"]
+            == reviewer_swap["armAOutputSha256"]
+        )
+
+
+def test_swap_seed_changes_only_opaque_ids_and_nonces_not_pair_mapping(tmp_path):
+    roots = []
+    for name, swap_seeds in (("first", SEEDS[2:4]), ("second", SEEDS[4:6])):
+        parent = tmp_path / name
+        parent.mkdir()
+        fixture = _fixture(parent)
+        fixture["seed_source"] = _seed_source(SEEDS[:2] + swap_seeds)
+        prepare_blind_batch(**fixture)
+        roots.append(fixture["private_root"])
+
+    for reviewer in ("reviewer-business-1", "reviewer-business-2"):
+        for role in ("primary", "swap"):
+            label = f"{reviewer}-{role}"
+            relative = (
+                f"batches/{BATCH_ID}/reviewer/{reviewer}/{label}/assignment.json"
+            )
+            first, second = (root.read_json(relative) for root in roots)
+            assert {
+                key: first[key]
+                for key in ("position", "armAOutputSha256", "armBOutputSha256")
+            } == {
+                key: second[key]
+                for key in ("position", "armAOutputSha256", "armBOutputSha256")
+            }
+            if role == "swap":
+                assert first["assignmentId"] != second["assignmentId"]
+
+
+def test_manifest_hash_order_does_not_encode_treatment_argument_order(tmp_path):
+    manifests = []
+    arm_keys = []
+    for name, reverse in (("forward", False), ("reverse", True)):
+        parent = tmp_path / name
+        parent.mkdir()
+        fixture = _fixture(parent)
+        if reverse:
+            fixture["stock_answer_path"], fixture["modified_answer_path"] = (
+                fixture["modified_answer_path"],
+                fixture["stock_answer_path"],
+            )
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+        prefix = f"batches/{BATCH_ID}/coordinator"
+        manifests.append(
+            fixture["private_root"].read_json(f"{prefix}/batch-manifest.json")
+        )
+        arm_keys.append(fixture["private_root"].read_json(f"{prefix}/arm-key.json"))
+
+    assert manifests[0] == manifests[1]
+    assert manifests[0]["armOutputSha256s"] == sorted(
+        manifests[0]["armOutputSha256s"]
+    )
+    assert arm_keys[0]["stockOutputSha256"] == arm_keys[1]["modifiedOutputSha256"]
+    assert arm_keys[0]["modifiedOutputSha256"] == arm_keys[1]["stockOutputSha256"]
 
 
 @pytest.mark.parametrize(
