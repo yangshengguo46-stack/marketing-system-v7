@@ -2,8 +2,10 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from blind_controller import prepare_blind_batch
+from blind_controller import BlindControllerError, prepare_blind_batch
 from contracts import (
     canonical_json_bytes,
     load_exact_json,
@@ -280,3 +282,93 @@ def test_prepares_unreleased_arbitrator_primary_and_nonadjacent_swap(tmp_path):
     )
     assert swap["swapOf"] == primary["assignmentId"]
     assert calls == [32] * 6
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "identical_outputs",
+        "answer_case_mismatch",
+        "unqualified",
+        "expired",
+        "duplicate_reviewer",
+        "wrong_reviewer_count",
+        "duplicate_arbitrator",
+        "wrong_rubric",
+        "extra_answer_field",
+        "reused_seed",
+        "wrong_seed_length",
+        "reserved_nonce",
+    ],
+)
+def test_rejects_invalid_authority_without_destination_batch(tmp_path, case):
+    fixture = _fixture(tmp_path)
+    seeds = list(SEEDS[:4])
+    if case == "identical_outputs":
+        fixture["modified_answer_path"].write_text(
+            "  " + fixture["stock_answer_path"].read_text(), encoding="utf-8"
+        )
+    elif case == "answer_case_mismatch":
+        value = load_exact_json(fixture["modified_answer_path"])
+        value["caseId"] = "another-case"
+        _write_json(fixture["modified_answer_path"], value)
+    elif case in ("unqualified", "expired"):
+        value = load_exact_json(fixture["base_qualification_receipt_paths"][0])
+        value["status"] = "notQualified" if case == "unqualified" else "qualified"
+        if case == "expired":
+            value["expiresAt"] = FROZEN_AT
+        _write_json(fixture["base_qualification_receipt_paths"][0], value)
+    elif case == "duplicate_reviewer":
+        duplicate = tmp_path / "duplicate.json"
+        _write_json(duplicate, _qualification("reviewer-business-1"))
+        fixture["base_qualification_receipt_paths"] = (
+            fixture["base_qualification_receipt_paths"][0],
+            duplicate,
+        )
+    elif case == "wrong_reviewer_count":
+        fixture["base_qualification_receipt_paths"] = fixture[
+            "base_qualification_receipt_paths"
+        ][:1]
+        seeds = SEEDS[:2]
+    elif case == "duplicate_arbitrator":
+        duplicate = tmp_path / "arbitrator.json"
+        _write_json(duplicate, _qualification("reviewer-business-1"))
+        fixture["arbitrator_qualification_receipt_path"] = duplicate
+        seeds = SEEDS
+    elif case == "wrong_rubric":
+        value = load_exact_json(fixture["rubric_path"])
+        value["rubricId"] = "weakened-rubric"
+        _write_json(fixture["rubric_path"], value)
+    elif case == "extra_answer_field":
+        value = load_exact_json(fixture["stock_answer_path"])
+        value["model"] = "leaking-model"
+        _write_json(fixture["stock_answer_path"], value)
+    elif case == "reused_seed":
+        seeds[3] = seeds[0]
+    elif case == "wrong_seed_length":
+        seeds[2] = b"short"
+    elif case == "reserved_nonce":
+        value = load_exact_json(fixture["stock_answer_path"])
+        value["subject"] += (
+            " arm-37ec8e9fe861cd6f751b9b3a7e10fe4d4eb9aaa7f05d805d9578aeb554ac8b37"
+        )
+        _write_json(fixture["stock_answer_path"], value)
+    fixture["seed_source"] = _seed_source(seeds)
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture)
+
+    assert not (fixture["private_root"].path / "batches" / BATCH_ID).exists()
+
+
+def test_rejects_preexisting_destination_without_overwriting_it(tmp_path):
+    fixture = _fixture(tmp_path)
+    private = fixture["private_root"]
+    private.create_dir("batches")
+    private.create_dir(f"batches/{BATCH_ID}")
+    private.write_new_json(f"batches/{BATCH_ID}/sentinel.json", {"owned": "before"})
+
+    with pytest.raises(BlindControllerError):
+        prepare_blind_batch(**fixture, seed_source=_seed_source(SEEDS[:4]))
+
+    assert private.read_json(f"batches/{BATCH_ID}/sentinel.json") == {"owned": "before"}
