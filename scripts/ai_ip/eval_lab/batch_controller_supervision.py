@@ -109,9 +109,7 @@ def _stopped(process: subprocess.Popen, group_id: int) -> bool:
     return process.poll() is not None and not _group_alive(group_id)
 
 
-def _wait_stopped(
-    process: subprocess.Popen, group_id: int, deadline: float
-) -> bool:
+def _wait_stopped(process: subprocess.Popen, group_id: int, deadline: float) -> bool:
     while time.monotonic() < deadline:
         if _stopped(process, group_id):
             return True
@@ -175,9 +173,7 @@ def _close_process_stream(process: subprocess.Popen, name: str) -> int | None:
     return descriptor
 
 
-def _close_read_descriptor(
-    owned: OwnedProcess, name: str, descriptor: int
-) -> None:
+def _close_read_descriptor(owned: OwnedProcess, name: str, descriptor: int) -> None:
     if name in {"stdout", "stderr"}:
         _close_process_stream(owned.process, name)
     else:
@@ -349,7 +345,10 @@ def spawn(
             started_monotonic + prepared.request.timeout_seconds,
             process.pid,
             record,
-            {name: StreamBuffer() for name in ("result", "telemetry", "stdout", "stderr")},
+            {
+                name: StreamBuffer()
+                for name in ("result", "telemetry", "stdout", "stderr")
+            },
             AggregateBudget(limit),
         )
         lifecycle.bind_process(owned)
@@ -433,7 +432,11 @@ def supervise_pair(
                 descriptor = key.fd
                 item, name = descriptor_owner[descriptor]
                 draining = item.drain_deadline is not None
-                maximum = _CHUNK_BYTES if draining else min(_CHUNK_BYTES, item.budget.remaining)
+                maximum = (
+                    _CHUNK_BYTES
+                    if draining
+                    else min(_CHUNK_BYTES, item.budget.remaining)
+                )
                 if maximum < 1:
                     _begin_terminal_drain(
                         item, timed_out=False, stop_process=stop_process

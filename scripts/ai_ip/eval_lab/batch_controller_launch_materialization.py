@@ -122,7 +122,9 @@ def _open_bound(name: str, path: Path, expected: str) -> BoundLaunchInput:
             or stat.S_ISLNK(before.st_mode)
             or before.st_size > _MAX_INPUT_BYTES
         ):
-            raise LaunchMaterializationError("launch input is not a bounded regular file")
+            raise LaunchMaterializationError(
+                "launch input is not a bounded regular file"
+            )
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
         opened = os.fstat(descriptor)
         if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
@@ -149,9 +151,7 @@ def _open_bound(name: str, path: Path, expected: str) -> BoundLaunchInput:
         raise
 
 
-def _materialize(
-    name: str, path: Path, payload: bytes, mode: int
-) -> BoundLaunchInput:
+def _materialize(name: str, path: Path, payload: bytes, mode: int) -> BoundLaunchInput:
     writer = -1
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     try:
@@ -201,9 +201,7 @@ class PreparedProcess:
     @property
     def written_sha256(self) -> dict[str, str]:
         return {
-            name: item.sha256
-            for name, item in self.inputs.items()
-            if name != "codex"
+            name: item.sha256 for name, item in self.inputs.items() if name != "codex"
         }
 
     @property

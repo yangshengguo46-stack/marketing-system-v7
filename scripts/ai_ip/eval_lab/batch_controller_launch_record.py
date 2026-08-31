@@ -22,14 +22,10 @@ def build_launch_record(
 ) -> dict[str, object]:
     """Build evidence only from descriptor reads and the exact OS handoff values."""
     prepared.verify_handoff()
-    bound = {
-        name: item.evidence() for name, item in sorted(prepared.inputs.items())
-    }
+    bound = {name: item.evidence() for name, item in sorted(prepared.inputs.items())}
     bound["executable"]["childPath"] = argv[0]
     artifacts = {
-        name: evidence["sha256"]
-        for name, evidence in bound.items()
-        if name != "codex"
+        name: evidence["sha256"] for name, evidence in bound.items() if name != "codex"
     }
     launch_spec = launch_spec_identity_fn(prepared.spec)[0]
     executable = bound["executable"]

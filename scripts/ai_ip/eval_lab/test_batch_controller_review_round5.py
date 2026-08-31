@@ -47,7 +47,7 @@ def answer():
 _BOUND_CHILD = (
     "import hashlib,json,os,sys\n"
     + _ANSWER_SOURCE
-    + r'''
+    + r"""
 names = {
     "case": os.environ["AI_IP_CASE_PATH"],
     "codex": os.environ["AI_IP_CODEX_PATH"],
@@ -91,7 +91,7 @@ telemetry = json.dumps(
 os.write(int(os.environ["AI_IP_RESULT_FD"]), result)
 os.write(int(os.environ["AI_IP_TELEMETRY_FD"]), telemetry)
 os.write(2, json.dumps(consumed, sort_keys=True, separators=(",", ":")).encode())
-'''
+"""
 ).encode()
 
 _SUBSTITUTED_CHILD = _BOUND_CHILD + b"\n# substituted after descriptor preparation\n"
@@ -99,7 +99,7 @@ _SUBSTITUTED_CHILD = _BOUND_CHILD + b"\n# substituted after descriptor preparati
 _DESCENDANT_CHILD = (
     "import json,os,signal,time\n"
     + _ANSWER_SOURCE
-    + r'''
+    + r"""
 metadata = {
     "threadId": "thread",
     "turnId": "turn",
@@ -126,7 +126,7 @@ pid_path = os.environ.get("AI_IP_DESCENDANT_PID_PATH")
 if pid_path:
     open(pid_path, "w").write(str(pid))
 os.write(2, (str(pid) + "\n").encode())
-'''
+"""
 ).encode()
 
 _FOUR_STREAM_CHILD = b"""\
@@ -326,9 +326,8 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
         if pid_path.exists():
             descendant_pid = int(pid_path.read_text())
             stop_deadline = time.monotonic() + 1
-            while (
-                time.monotonic() < stop_deadline
-                and not _process_is_absent(descendant_pid)
+            while time.monotonic() < stop_deadline and not _process_is_absent(
+                descendant_pid
             ):
                 time.sleep(0.01)
             descendant_absent_before_cleanup = _process_is_absent(descendant_pid)
@@ -497,7 +496,9 @@ def test_every_post_popen_failure_remains_owned_until_stop(
             fail_once()
             return original(spec)
 
-        monkeypatch.setattr(process_module, "launch_spec_identity", launch_spec_identity)
+        monkeypatch.setattr(
+            process_module, "launch_spec_identity", launch_spec_identity
+        )
     elif checkpoint == "environmentDigest":
         original = process_module.sha256_json
 

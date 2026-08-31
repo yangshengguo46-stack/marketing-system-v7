@@ -47,8 +47,7 @@ def verify_bound_inputs(
     for name, value in bound.items():
         if (
             type(value) is not dict
-            or set(value)
-            != {"childPath", "device", "inode", "mode", "sha256", "size"}
+            or set(value) != {"childPath", "device", "inode", "mode", "sha256", "size"}
             or type(value["childPath"]) is not str
             or not value["childPath"]
             or any(
