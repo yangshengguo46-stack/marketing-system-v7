@@ -62,7 +62,9 @@ class PairLifecycle:
                 cleanup_attempt_cell(cell)
             except BaseException as error:
                 self._record_orphan(error)
-                raise PairLifecycleError("sealed attempt cell cleanup failed") from error
+                raise PairLifecycleError(
+                    "sealed attempt cell cleanup failed"
+                ) from error
         self.completed = True
 
     def _tombstone(self, directory: object, error: BaseException) -> None:

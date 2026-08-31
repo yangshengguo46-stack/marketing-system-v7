@@ -238,7 +238,8 @@ def test_real_attempt_parent_replacement_cannot_redirect_evidence(
     executor = ReplacingExecutor([_result("left"), _result("right")])
 
     with pytest.raises(
-        BatchControllerError, match="evidence|identity|replaced|private|launch|lifecycle"
+        BatchControllerError,
+        match="evidence|identity|replaced|private|launch|lifecycle",
     ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"5" * 32

@@ -199,9 +199,7 @@ def _run_candidate_pair_scoped(
                     "launchSpecSha256": launch_spec_identity(launches.modified)[1],
                 },
                 "inputSha256": plan_value["caseBundleSha256"],
-                "caseAnswerRuntimeSha256": sha256_json(
-                    validated.case_answer_schema
-                ),
+                "caseAnswerRuntimeSha256": sha256_json(validated.case_answer_schema),
                 "workspaceBeforeSha256": validated.workspace_seed.cell_digest(),
                 "appServerProtocolSchemaSha256": validated.protocol_sha256,
                 "promptfooConfigSha256": validated.promptfoo_config_sha256,
@@ -281,7 +279,9 @@ def _run_candidate_pair_scoped(
         except BaseException as error:
             launch_errors.append(error)
     if launch_errors:
-        raise BatchControllerError("candidate process launch failed") from launch_errors[0]
+        raise BatchControllerError(
+            "candidate process launch failed"
+        ) from launch_errors[0]
     captured = _process.supervise_pair(processes)
     try:
         layout.verify()

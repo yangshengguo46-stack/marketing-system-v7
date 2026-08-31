@@ -334,7 +334,8 @@ def test_attempt_parent_replacement_after_first_call_fails_closed_and_calls_both
     executor = ReplacingExecutor([_result("first"), _result("second")])
 
     with pytest.raises(
-        BatchControllerError, match="private|evidence|replaced|identity|launch|lifecycle"
+        BatchControllerError,
+        match="private|evidence|replaced|identity|launch|lifecycle",
     ):
         run_candidate_pair(
             world.plan, world.bindings, executor, world.private_root, seed=b"r" * 32

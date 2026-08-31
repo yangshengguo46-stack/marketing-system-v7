@@ -107,8 +107,10 @@ def launch_spec_identity(spec: FrozenLaunchSpec) -> tuple[dict[str, object], str
 
 
 def _digest(value: object, label: str) -> str:
-    if type(value) is not str or len(value) != 64 or any(
-        character not in "0123456789abcdef" for character in value
+    if (
+        type(value) is not str
+        or len(value) != 64
+        or any(character not in "0123456789abcdef" for character in value)
     ):
         raise LaunchSpecError(f"{label} must be a lowercase SHA-256")
     return value
@@ -175,11 +177,15 @@ def _artifact(value: object) -> LaunchArtifact:
 
 def _spec(value: object, expected: dict[str, bytes]) -> FrozenLaunchSpec:
     if type(value) is not LaunchSpec:
-        raise LaunchSpecError("controller requires an exact immutable launch specification")
+        raise LaunchSpecError(
+            "controller requires an exact immutable launch specification"
+        )
     if not isinstance(value.executable_path, Path):
         raise LaunchSpecError("launch executable path must be a Path")
     executable_sha256 = _digest(value.executable_sha256, "launch executable SHA-256")
-    if type(value.argv) is not tuple or not all(type(item) is str for item in value.argv):
+    if type(value.argv) is not tuple or not all(
+        type(item) is str for item in value.argv
+    ):
         raise LaunchSpecError("launch argv must be an immutable string tuple")
     if len(value.argv) > 64 or any(len(item) > 4096 for item in value.argv):
         raise LaunchSpecError("launch argv exceeds its bound")
@@ -191,7 +197,9 @@ def _spec(value: object, expected: dict[str, bytes]) -> FrozenLaunchSpec:
     ):
         raise LaunchSpecError("launch environment must be immutable string pairs")
     names = [name for name, _ in value.environment]
-    if len(names) != len(set(names)) or any(name in _RESERVED_ENVIRONMENT for name in names):
+    if len(names) != len(set(names)) or any(
+        name in _RESERVED_ENVIRONMENT for name in names
+    ):
         raise LaunchSpecError("launch environment collides with controller authority")
     if any("KEY" in name or "TOKEN" in name or "SECRET" in name for name in names):
         raise LaunchSpecError("launch environment contains a prohibited secret name")
@@ -219,10 +227,14 @@ def _spec(value: object, expected: dict[str, bytes]) -> FrozenLaunchSpec:
     )
 
 
-def validate_launch_set(value: object, bindings: ValidatedBindings) -> ValidatedLaunchSet:
+def validate_launch_set(
+    value: object, bindings: ValidatedBindings
+) -> ValidatedLaunchSet:
     """Freeze a closed launch set and reject caller-claimed emitted-byte drift."""
     if type(value) is not CandidateLaunchSet:
-        raise LaunchSpecError("controller requires an exact immutable launch specification set")
+        raise LaunchSpecError(
+            "controller requires an exact immutable launch specification set"
+        )
     shared = {
         "execution_profile_json": canonical_json_bytes(bindings.execution_profile),
         "model_route_json": canonical_json_bytes(bindings.model_route),

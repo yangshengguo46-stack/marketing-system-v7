@@ -188,7 +188,10 @@ def test_controller_launch_record_comes_from_opened_executable_and_exact_bytes(
         record["executableSha256"] == sha256_file(Path(sys.executable).resolve())
         for record in records
     )
-    assert all(record["copiedExecutableSha256"] == record["executableSha256"] for record in records)
+    assert all(
+        record["copiedExecutableSha256"] == record["executableSha256"]
+        for record in records
+    )
     assert all(record["argv"] and record["environmentSha256"] for record in records)
 
 
@@ -249,9 +252,10 @@ def test_real_child_is_deadline_and_read_bounded(world: World, mode: str) -> Non
             json.loads(path.read_bytes())
             for path in world.private_root.glob("attempts/*/evidence.json")
         ]
-        assert max(
-            item["rawEvidence"]["stdoutBytes"]["rawSize"] for item in evidence
-        ) > 1_048_577
+        assert (
+            max(item["rawEvidence"]["stdoutBytes"]["rawSize"] for item in evidence)
+            > 1_048_577
+        )
 
 
 def test_resealed_launch_record_identity_substitution_is_rejected(world: World) -> None:
@@ -284,7 +288,9 @@ def test_resealed_launch_record_identity_substitution_is_rejected(world: World) 
     )
     pair[field] = arm["receiptSha256"]
     pair = _reseal(pair)
-    _write_json(world.private_root / "pairs" / str(pair["pairId"]) / "receipt.json", pair)
+    _write_json(
+        world.private_root / "pairs" / str(pair["pairId"]) / "receipt.json", pair
+    )
 
     with pytest.raises(BatchReceiptError, match="launch|identity|binary"):
         verify_paired_run_receipt(pair, world.private_root)
@@ -338,7 +344,9 @@ def test_offline_classification_never_reopens_schema_path(
         world.private_root,
         seed=b"f" * 32,
     )
-    schema_path = world.private_root / "pairs" / str(pair["pairId"]) / "case-answer-schema.json"
+    schema_path = (
+        world.private_root / "pairs" / str(pair["pairId"]) / "case-answer-schema.json"
+    )
     original = batch_receipt_verification.classify_attempt_result
     calls = 0
 

@@ -14,13 +14,23 @@ from pathlib import Path
 
 try:
     import batch_controller as _controller
-    from batch_controller_support import derive, identities, pair_seed, replication_seeds
+    from batch_controller_support import (
+        derive,
+        identities,
+        pair_seed,
+        replication_seeds,
+    )
     from batch_launch_spec import CandidateLaunchSet, LaunchArtifact, LaunchSpec
     from batch_plan import sha256_file
     from contracts import canonical_json_bytes
 except ImportError:
     from . import batch_controller as _controller
-    from .batch_controller_support import derive, identities, pair_seed, replication_seeds
+    from .batch_controller_support import (
+        derive,
+        identities,
+        pair_seed,
+        replication_seeds,
+    )
     from .batch_launch_spec import CandidateLaunchSet, LaunchArtifact, LaunchSpec
     from .batch_plan import sha256_file
     from .contracts import canonical_json_bytes
@@ -142,7 +152,9 @@ def _launches(
     case_bytes = canonical_json_bytes(cases)
     artifacts = (
         LaunchArtifact("runner.py", _RUNNER, hashlib.sha256(_RUNNER).hexdigest()),
-        LaunchArtifact("cases.json", case_bytes, hashlib.sha256(case_bytes).hexdigest()),
+        LaunchArtifact(
+            "cases.json", case_bytes, hashlib.sha256(case_bytes).hexdigest()
+        ),
     )
     executable = Path(sys.executable).resolve()
 
@@ -174,7 +186,9 @@ def _run(
     batch: bool,
 ):
     active_seed = os.urandom(32) if seed is None else seed
-    launches = _launches(plan, bindings, executor, Path(private_root), active_seed, batch)
+    launches = _launches(
+        plan, bindings, executor, Path(private_root), active_seed, batch
+    )
     original = _controller._process.prepare_process
 
     def observe(request, spec):

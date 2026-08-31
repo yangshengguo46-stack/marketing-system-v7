@@ -117,7 +117,9 @@ def _verify_launch_record(
         type(artifacts) is not dict
         or type(environment) is not dict
         or type(launch_spec) is not dict
-        or any(artifacts.get(name) != digest for name, digest in required_artifacts.items())
+        or any(
+            artifacts.get(name) != digest for name, digest in required_artifacts.items()
+        )
         or record.get("candidateBinarySha256") != expected_arm.get("binarySha256")
         or record.get("executableSha256") != record.get("copiedExecutableSha256")
         or launch_spec.get("executableSha256") != record.get("executableSha256")

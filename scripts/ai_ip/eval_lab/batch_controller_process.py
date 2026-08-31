@@ -252,12 +252,20 @@ def spawn(prepared: PreparedProcess, limit: int) -> OwnedProcess:
     return OwnedProcess(
         process,
         prepared,
-        {"result": result_read, "telemetry": telemetry_read, "stdout": stdout, "stderr": stderr},
+        {
+            "result": result_read,
+            "telemetry": telemetry_read,
+            "stdout": stdout,
+            "stderr": stderr,
+        },
         started_at,
         started_monotonic,
         started_monotonic + prepared.request.timeout_seconds,
         record,
-        {name: _BoundedBytes(limit) for name in ("result", "telemetry", "stdout", "stderr")},
+        {
+            name: _BoundedBytes(limit)
+            for name in ("result", "telemetry", "stdout", "stderr")
+        },
     )
 
 
@@ -356,7 +364,9 @@ def _captured(owned: OwnedProcess) -> CapturedResult:
             {
                 "costEvidence": {
                     "costCny": 0,
-                    "sourceSha256": hashlib.sha256(b"invalid-result-envelope").hexdigest(),
+                    "sourceSha256": hashlib.sha256(
+                        b"invalid-result-envelope"
+                    ).hexdigest(),
                 },
                 "requestCount": 0,
                 "threadId": None,
@@ -430,16 +440,24 @@ def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
             selector.register(descriptor, selectors.EVENT_READ)
             descriptor_owner[descriptor] = (attempt, name)
     try:
-        while descriptor_owner or any(item.process.poll() is None for item in owned.values()):
+        while descriptor_owner or any(
+            item.process.poll() is None for item in owned.values()
+        ):
             now = time.monotonic()
             for item in owned.values():
                 if item.process.poll() is None and now >= item.deadline:
                     item.timed_out = True
                     if not terminate_and_wait(item, now + 1.0):
-                        raise FatalSupervisorError("fatal supervisor orphan: stop was not confirmed")
+                        raise FatalSupervisorError(
+                            "fatal supervisor orphan: stop was not confirmed"
+                        )
             timeout = min(
                 [0.05]
-                + [max(0.0, item.deadline - now) for item in owned.values() if item.process.poll() is None]
+                + [
+                    max(0.0, item.deadline - now)
+                    for item in owned.values()
+                    if item.process.poll() is None
+                ]
             )
             for key, _ in selector.select(timeout):
                 descriptor = key.fd
@@ -456,7 +474,9 @@ def supervise_pair(owned: dict[str, OwnedProcess]) -> dict[str, CapturedResult]:
                 item.buffers[name].add(chunk)
                 if item.buffers[name].truncated and item.process.poll() is None:
                     if not terminate_and_wait(item, time.monotonic() + 1.0):
-                        raise FatalSupervisorError("fatal supervisor orphan: stop was not confirmed")
+                        raise FatalSupervisorError(
+                            "fatal supervisor orphan: stop was not confirmed"
+                        )
             for item in owned.values():
                 if item.process.poll() is not None:
                     item.stopped = True
