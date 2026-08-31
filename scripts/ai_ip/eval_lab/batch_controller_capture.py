@@ -310,6 +310,7 @@ def normalize(
             raw_evidence[field].update(captured.byte_evidence[stream])
         raw_evidence["resultEnvelopeBytes"] = captured.byte_evidence["result"]
         raw_evidence["telemetryEnvelopeBytes"] = captured.byte_evidence["telemetry"]
+        raw_evidence["aggregateStreamBytes"] = captured.byte_evidence["aggregate"]
     return NormalizedResult(
         exit_code,
         started_at,

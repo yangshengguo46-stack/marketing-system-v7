@@ -1,5 +1,6 @@
 """Owned process-group supervision and aggregate bounded stream acquisition."""
 
+import hashlib
 import os
 import selectors
 import signal
@@ -204,6 +205,24 @@ def _pipes() -> tuple[int, int]:
     return read_descriptor, write_descriptor
 
 
+def _pipe_pair() -> tuple[int, int, int, int]:
+    result_read = result_write = telemetry_read = telemetry_write = -1
+    try:
+        result_read, result_write = _pipes()
+        telemetry_read, telemetry_write = _pipes()
+        return result_read, result_write, telemetry_read, telemetry_write
+    except BaseException:
+        for descriptor in (
+            result_read,
+            result_write,
+            telemetry_read,
+            telemetry_write,
+        ):
+            if descriptor >= 0:
+                _close_descriptor(descriptor)
+        raise
+
+
 def spawn(
     prepared: object,
     limit: int,
@@ -216,15 +235,6 @@ def spawn(
 ) -> OwnedProcess:
     """Launch under a preexisting guard and atomically transfer lifecycle ownership."""
     prepared.verify_handoff()
-    result_read, result_write = _pipes()
-    telemetry_read, telemetry_write = _pipes()
-    descriptors = set(prepared.pass_fds) | {
-        result_read,
-        result_write,
-        telemetry_read,
-        telemetry_write,
-    }
-    guard = ProcessOwnershipGuard(prepared, descriptors)
     started_at = _now()
     started_monotonic = time.monotonic()
     executable = prepared.executable_handoff_path
@@ -244,12 +254,21 @@ def spawn(
             "AI_IP_PROTOCOL_PATH": prepared.child_path("protocol"),
             "AI_IP_PROMPTFOO_PATH": prepared.child_path("promptfoo"),
             "AI_IP_SCHEMA_PATH": prepared.child_path("schema"),
-            "AI_IP_RESULT_FD": str(result_write),
-            "AI_IP_TELEMETRY_FD": str(telemetry_write),
         }
     )
-    pass_fds = prepared.pass_fds + (result_write, telemetry_write)
+    result_read, result_write, telemetry_read, telemetry_write = _pipe_pair()
+    guard = ProcessOwnershipGuard(
+        prepared,
+        {result_read, result_write, telemetry_read, telemetry_write},
+    )
     try:
+        environment.update(
+            {
+                "AI_IP_RESULT_FD": str(result_write),
+                "AI_IP_TELEMETRY_FD": str(telemetry_write),
+            }
+        )
+        pass_fds = prepared.pass_fds + (result_write, telemetry_write)
         process = guard.start(
             popen,
             argv,
