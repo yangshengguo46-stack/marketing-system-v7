@@ -140,6 +140,8 @@ def _open_bound(name: str, path: Path, expected: str) -> BoundLaunchInput:
             digest,
         )
     except OSError as error:
+        if descriptor >= 0:
+            os.close(descriptor)
         raise LaunchMaterializationError("launch input could not be opened") from error
     except BaseException:
         if descriptor >= 0:

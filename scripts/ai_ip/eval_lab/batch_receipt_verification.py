@@ -11,6 +11,10 @@ try:
         verify_self_commitment,
     )
     from .batch_controller_support import classify_attempt_result
+    from .batch_launch_record_verification import (
+        LaunchRecordVerificationError,
+        verify_bound_inputs,
+    )
     from .batch_receipt_offline import OfflineEvidence
     from .batch_plan import (
         BatchPlanError,
@@ -41,6 +45,10 @@ except ImportError:
         verify_self_commitment,
     )
     from batch_controller_support import classify_attempt_result
+    from batch_launch_record_verification import (
+        LaunchRecordVerificationError,
+        verify_bound_inputs,
+    )
     from batch_receipt_offline import OfflineEvidence
     from batch_plan import (
         BatchPlanError,
@@ -134,6 +142,10 @@ def _verify_launch_record(
         or record.get("startedAt") != raw.get("startedAt")
     ):
         raise BatchReceiptError("launch record identity differs from sealed context")
+    try:
+        verify_bound_inputs(record, artifacts, environment, launch_spec)
+    except LaunchRecordVerificationError as error:
+        raise BatchReceiptError("launch record bound inputs are invalid") from error
 
 
 PairContext = tuple[

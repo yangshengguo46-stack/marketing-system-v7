@@ -14,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import batch_controller  # noqa: E402
 import batch_isolation  # noqa: E402
 from batch_controller import BatchControllerError  # noqa: E402
-from batch_contracts import seal_self_commitment  # noqa: E402
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file  # noqa: E402
 from contracts import canonical_json_bytes, sha256_json  # noqa: E402
 from test_batch_controller import World, world  # noqa: E402
@@ -50,6 +49,7 @@ _BOUND_CHILD = (
     + _ANSWER_SOURCE
     + r'''
 names = {
+    "case": os.environ["AI_IP_CASE_PATH"],
     "codex": os.environ["AI_IP_CODEX_PATH"],
     "config": os.environ["AI_IP_CONFIG_PATH"],
     "profile": os.environ["AI_IP_PROFILE_PATH"],
@@ -57,10 +57,17 @@ names = {
     "protocol": os.environ["AI_IP_PROTOCOL_PATH"],
     "promptfoo": os.environ["AI_IP_PROMPTFOO_PATH"],
     "schema": os.environ["AI_IP_SCHEMA_PATH"],
+    "executable": sys.executable,
     "artifact:runner.py": sys.argv[0],
 }
 consumed = {
-    name: hashlib.sha256(open(path, "rb").read()).hexdigest()
+    name: hashlib.sha256(
+        os.pread(
+            descriptor := os.open(path, os.O_RDONLY),
+            os.fstat(descriptor).st_size,
+            0,
+        )
+    ).hexdigest()
     for name, path in names.items()
 }
 metadata = {
@@ -147,16 +154,18 @@ while any(remaining.values()):
 """
 
 
-def _one_second(world: World) -> tuple[dict[str, object], dict[str, object]]:
+def _with_timeout(
+    world: World, seconds: int
+) -> tuple[dict[str, object], dict[str, object]]:
     bindings = copy.deepcopy(world.bindings)
     profile = dict(bindings["executionProfile"])
-    profile["maxWallClockSeconds"] = 1
+    profile["maxWallClockSeconds"] = seconds
     bindings["executionProfile"] = profile
     Path(bindings["executionProfilePath"]).write_bytes(
         canonical_json_bytes(profile) + b"\n"
     )
     plan = dict(world.plan)
-    plan["timeoutBudget"] = 1
+    plan["timeoutBudget"] = seconds
     plan["executionProfileRef"] = sha256_json(profile)
     plan["planSha256"] = "0" * 64
     plan = seal_candidate_run_plan(
@@ -264,6 +273,7 @@ def test_materialized_launch_inputs_are_consumed_from_bound_descriptors_or_fail_
         json.loads(stderr.read_bytes())
         == {
             "artifact:runner.py": record["artifactSha256"]["artifact:runner.py"],
+            "case": record["artifactSha256"]["case"],
             "codex": record["candidateBinarySha256"],
             "config": record["artifactSha256"]["config"],
             "profile": record["artifactSha256"]["profile"],
@@ -271,6 +281,7 @@ def test_materialized_launch_inputs_are_consumed_from_bound_descriptors_or_fail_
             "protocol": record["artifactSha256"]["protocol"],
             "route": record["artifactSha256"]["route"],
             "schema": record["artifactSha256"]["schema"],
+            "executable": record["executableSha256"],
         }
         for stderr, record in (
             (
@@ -285,7 +296,7 @@ def test_materialized_launch_inputs_are_consumed_from_bound_descriptors_or_fail_
 def test_absolute_deadline_stops_descendant_group_after_leader_exits(
     world: World,
 ) -> None:
-    plan, bindings = _one_second(world)
+    plan, bindings = _with_timeout(world, 1)
     child_world = World(plan, bindings, world.private_root)
     started = time.monotonic()
     pid_path = world.private_root.parent / "descendant.pid"
@@ -343,7 +354,7 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
 def test_four_streams_share_one_total_acquisition_and_storage_budget(
     world: World,
 ) -> None:
-    plan, bindings = _one_second(world)
+    plan, bindings = _with_timeout(world, 3)
     child_world = World(plan, bindings, world.private_root)
 
     receipt = batch_controller.run_candidate_pair(
@@ -385,7 +396,7 @@ def test_every_post_popen_failure_remains_owned_until_stop(
     monkeypatch: pytest.MonkeyPatch,
     checkpoint: str,
 ) -> None:
-    plan, bindings = _one_second(world)
+    plan, bindings = _with_timeout(world, 1)
     child_world = World(plan, bindings, world.private_root)
     process_module = batch_controller._process
     real_popen = process_module._Popen

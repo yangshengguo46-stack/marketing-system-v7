@@ -25,6 +25,7 @@ def build_launch_record(
     bound = {
         name: item.evidence() for name, item in sorted(prepared.inputs.items())
     }
+    bound["executable"]["childPath"] = argv[0]
     artifacts = {
         name: evidence["sha256"]
         for name, evidence in bound.items()
