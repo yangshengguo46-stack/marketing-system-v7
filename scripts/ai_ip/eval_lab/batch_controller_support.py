@@ -14,6 +14,7 @@ try:
         BatchPlanError,
         sha256_file,
         sha256_tree,
+        verify_treatment_manifest,
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
@@ -30,6 +31,7 @@ except ImportError:
         BatchPlanError,
         sha256_file,
         sha256_tree,
+        verify_treatment_manifest,
         verify_candidate_run_plan,
         verify_effective_condition_parity,
     )
@@ -50,9 +52,13 @@ class ControllerSupportError(ValueError):
 class ArmBinding:
     private_arm_id: str
     treatment_manifest: dict[str, object]
+    binary_manifest: dict[str, object]
     binary_manifest_sha256: str
     binary_path: Path
     codex_home_seed: Path
+    system_instruction: Path
+    capability_bundle: Path
+    effective_config: Path
     effective_config_sha256: str
     effective_conditions: dict[str, object]
 
@@ -64,12 +70,16 @@ class ValidatedBindings:
     attempt_base: Path
     workspace_seed: Path
     execution_profile: dict[str, object]
+    execution_profile_path: Path
     source_environment: Mapping[str, str]
     case_bundle: object
     case_answer_schema: object
     case_answer_schema_path: Path
     model_route: Mapping[str, object]
+    model_route_path: Path
+    protocol_path: Path
     protocol_sha256: str
+    promptfoo_config_path: Path
     promptfoo_config_sha256: str
 
 
@@ -110,9 +120,13 @@ def _arm_binding(value: object, name: str) -> ArmBinding:
     return ArmBinding(
         private_arm_id,
         require_mapping(arm.get("treatmentManifest"), "treatment manifest"),
+        require_mapping(arm.get("binaryManifest"), "binary manifest"),
         _sha256(arm.get("binaryManifestSha256"), "binary manifest SHA-256"),
         _path(arm.get("binaryPath"), "binary path"),
         _path(arm.get("codexHomeSeed"), "Codex home seed"),
+        _path(arm.get("systemInstruction"), "system instruction"),
+        _path(arm.get("capabilityBundle"), "capability bundle"),
+        _path(arm.get("effectiveConfig"), "effective config"),
         _sha256(arm.get("effectiveConfigSha256"), "effective config SHA-256"),
         require_mapping(arm.get("effectiveConditions"), "effective conditions"),
     )
@@ -126,6 +140,8 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
         raise ControllerSupportError("sealed plan must prohibit retries")
     stock = _arm_binding(bindings.get("stock"), "stock")
     modified = _arm_binding(bindings.get("modified"), "modified")
+    if stock.private_arm_id == modified.private_arm_id:
+        raise ControllerSupportError("private arm IDs must differ")
     try:
         verify_candidate_run_plan(
             plan,
@@ -135,6 +151,22 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
         verify_effective_condition_parity(
             stock.effective_conditions, modified.effective_conditions
         )
+        for arm, arm_class in ((stock, "stock"), (modified, "modified")):
+            if arm.binary_manifest_sha256 != sha256_json(arm.binary_manifest):
+                raise BatchPlanError("binary manifest commitment mismatch")
+            if arm.binary_manifest.get("armClass") != arm_class:
+                raise BatchPlanError("binary manifest arm class mismatch")
+            verify_treatment_manifest(
+                arm.treatment_manifest,
+                codex_home_seed=arm.codex_home_seed,
+                system_instruction=arm.system_instruction,
+                capability_bundle=arm.capability_bundle,
+                effective_config=arm.effective_config,
+                binary_manifest=arm.binary_manifest,
+                binary_path=arm.binary_path,
+            )
+            if arm.effective_config_sha256 != sha256_file(arm.effective_config):
+                raise BatchPlanError("effective config commitment mismatch")
     except BatchPlanError as error:
         raise ControllerSupportError(str(error)) from error
     if sha256_json(bindings.get("caseBundle")) != plan["caseBundleSha256"]:
@@ -149,12 +181,19 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
     if sha256_tree(workspace_seed) != plan["workspaceTemplateSha256"]:
         raise ControllerSupportError("workspace template commitment mismatch")
     profile = require_mapping(bindings.get("executionProfile"), "execution profile")
+    profile_path = _path(bindings.get("executionProfilePath"), "execution profile path")
     try:
         validate_named_contract("execution-profile", profile)
     except BatchContractError as error:
         raise ControllerSupportError(
             f"execution profile is invalid: {error}"
         ) from error
+    if load_exact_json(profile_path) != profile:
+        raise ControllerSupportError("execution profile bytes were substituted")
+    if sha256_json(profile) != plan["executionProfileRef"]:
+        raise ControllerSupportError("execution profile reference mismatch")
+    if profile["maxWallClockSeconds"] != plan["timeoutBudget"]:
+        raise ControllerSupportError("execution profile wall clock differs from plan timeout")
     source_environment = bindings.get("sourceEnvironment")
     model_route = bindings.get("modelRoute")
     if not isinstance(source_environment, Mapping) or not isinstance(
@@ -163,21 +202,42 @@ def validate_bindings(plan: dict[str, object], value: object) -> ValidatedBindin
         raise ControllerSupportError(
             "source environment and model route must be mappings"
         )
+    model_route_path = _path(bindings.get("modelRoutePath"), "model route path")
+    if load_exact_json(model_route_path) != model_route:
+        raise ControllerSupportError("model route bytes were substituted")
+    if sha256_json(model_route) != plan["modelRouteRef"]:
+        raise ControllerSupportError("model route reference mismatch")
+    protocol_path = _path(
+        bindings.get("appServerProtocolSchemaPath"), "protocol schema path"
+    )
+    protocol_sha256 = _sha256(
+        bindings.get("appServerProtocolSchemaSha256"), "protocol schema SHA-256"
+    )
+    if sha256_file(protocol_path) != protocol_sha256:
+        raise ControllerSupportError("protocol schema bytes were substituted")
+    promptfoo_path = _path(bindings.get("promptfooConfigPath"), "Promptfoo config path")
+    promptfoo_sha256 = _sha256(
+        bindings.get("promptfooConfigSha256"), "Promptfoo config SHA-256"
+    )
+    if sha256_file(promptfoo_path) != promptfoo_sha256:
+        raise ControllerSupportError("Promptfoo config bytes were substituted")
     return ValidatedBindings(
         stock,
         modified,
         _path(bindings.get("attemptBase"), "attempt base"),
         workspace_seed,
         profile,
+        profile_path,
         source_environment,
         bindings.get("caseBundle"),
         case_answer_schema,
         schema_path,
         model_route,
-        _sha256(
-            bindings.get("appServerProtocolSchemaSha256"), "protocol schema SHA-256"
-        ),
-        _sha256(bindings.get("promptfooConfigSha256"), "Promptfoo config SHA-256"),
+        model_route_path,
+        protocol_path,
+        protocol_sha256,
+        promptfoo_path,
+        promptfoo_sha256,
     )
 
 

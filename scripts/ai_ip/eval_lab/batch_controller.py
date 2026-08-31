@@ -6,6 +6,10 @@ from pathlib import Path
 from typing import Mapping, Protocol
 
 try:
+    from .batch_controller_artifacts import (
+        ArtifactMaterializationError,
+        materialize_neutral_binary,
+    )
     from .batch_controller_support import (
         ArmBinding,
         ControllerSupportError,
@@ -27,6 +31,11 @@ try:
         verify_attempt_cells_disjoint,
     )
     from .batch_plan import sha256_tree, verify_effective_condition_parity
+    from .batch_plan_authority import (
+        PlanAuthorityError,
+        release_unstarted,
+        reserve_plan,
+    )
     from .batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -38,6 +47,10 @@ try:
     )
     from .contracts import LabContractError, canonical_json_bytes, sha256_json
 except ImportError:
+    from batch_controller_artifacts import (
+        ArtifactMaterializationError,
+        materialize_neutral_binary,
+    )
     from batch_controller_support import (
         ArmBinding,
         ControllerSupportError,
@@ -59,6 +72,11 @@ except ImportError:
         verify_attempt_cells_disjoint,
     )
     from batch_plan import sha256_tree, verify_effective_condition_parity
+    from batch_plan_authority import (
+        PlanAuthorityError,
+        release_unstarted,
+        reserve_plan,
+    )
     from batch_receipts import (
         BatchReceiptError,
         assert_private_layout_available,
@@ -106,6 +124,16 @@ class CandidateExecutor(Protocol):
     def execute(self, request: AttemptRequest) -> RawAttemptResult: ...
 
 
+@dataclass
+class _CountingExecutor:
+    executor: CandidateExecutor
+    calls: int = 0
+
+    def execute(self, request: AttemptRequest) -> RawAttemptResult:
+        self.calls += 1
+        return self.executor.execute(request)
+
+
 def _failure_result(error: BaseException) -> RawAttemptResult:
     now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     timed_out = isinstance(error, TimeoutError)
@@ -134,9 +162,15 @@ def _execute_arm(
     executor: CandidateExecutor,
 ) -> tuple[dict[str, object], object, bytes]:
     before = sha256_tree(cell.workspace)
+    try:
+        binary_path = materialize_neutral_binary(
+            cell.home, arm.binary_path, str(arm.binary_manifest["binarySha256"])
+        )
+    except ArtifactMaterializationError as error:
+        raise BatchControllerError(str(error)) from error
     request = AttemptRequest(
         cell,
-        arm.binary_path,
+        binary_path,
         freeze_json(bindings.case_bundle),
         freeze_json(bindings.case_answer_schema),
         dict(bindings.model_route),
@@ -193,24 +227,14 @@ def _execute_arm(
     return receipt, output, canonical_json_bytes(output)
 
 
-def run_candidate_pair(
-    plan: object,
-    bindings: object,
+def _run_candidate_pair(
+    plan_value: dict[str, object],
+    validated: ValidatedBindings,
     executor: CandidateExecutor,
     private_root: Path,
     *,
-    seed: bytes | None = None,
+    active_seed: bytes,
 ) -> dict[str, object]:
-    """Execute exactly one sealed, randomized two-arm pair and return its public receipt."""
-    require_supported_isolation_platform()
-    try:
-        plan_value = require_mapping(plan, "candidate run plan")
-        validated = validate_bindings(plan_value, bindings)
-        active_seed = pair_seed(
-            require_seed(seed), Path(private_root), plan_value["planSha256"]
-        )
-    except ControllerSupportError as error:
-        raise BatchControllerError(str(error)) from error
     pair_id, stock_attempt_id, modified_attempt_id = identities(active_seed)
     try:
         assert_private_layout_available(
@@ -312,6 +336,50 @@ def run_candidate_pair(
     return pair_receipt
 
 
+def run_candidate_pair(
+    plan: object,
+    bindings: object,
+    executor: CandidateExecutor,
+    private_root: Path,
+    *,
+    seed: bytes | None = None,
+) -> dict[str, object]:
+    """Execute the sole replication in a sealed plan."""
+    require_supported_isolation_platform()
+    try:
+        plan_value = require_mapping(plan, "candidate run plan")
+        validated = validate_bindings(plan_value, bindings)
+        if plan_value.get("replicationCount") != 1:
+            raise ControllerSupportError(
+                "standalone pair requires sealed replication count 1"
+            )
+        active_seed = pair_seed(
+            require_seed(seed), Path(private_root), plan_value["planSha256"]
+        )
+        pair_id = identities(active_seed)[0]
+        reservation = reserve_plan(
+            Path(private_root), str(plan_value["planSha256"]), 1, (pair_id,)
+        )
+    except (ControllerSupportError, PlanAuthorityError) as error:
+        raise BatchControllerError(str(error)) from error
+    counted = _CountingExecutor(executor)
+    try:
+        return _run_candidate_pair(
+            plan_value,
+            validated,
+            counted,
+            Path(private_root),
+            active_seed=active_seed,
+        )
+    except BaseException:
+        if counted.calls == 0:
+            try:
+                release_unstarted(reservation)
+            except PlanAuthorityError:
+                pass
+        raise
+
+
 def run_candidate_batch(
     plan: object,
     bindings: object,
@@ -324,7 +392,7 @@ def run_candidate_batch(
     require_supported_isolation_platform()
     try:
         plan_value = require_mapping(plan, "candidate run plan")
-        validate_bindings(plan_value, bindings)
+        validated = validate_bindings(plan_value, bindings)
         master_seed = require_seed(seed)
     except ControllerSupportError as error:
         raise BatchControllerError(str(error)) from error
@@ -341,12 +409,31 @@ def run_candidate_batch(
     )
     batch_identities = tuple(identities(active_seed) for active_seed in pair_seeds)
     try:
-        assert_private_layout_available(Path(private_root), batch_identities)
-    except BatchReceiptError as error:
-        raise BatchControllerError(str(error)) from error
-    return [
-        run_candidate_pair(
-            plan_value, bindings, executor, private_root, seed=raw_pair_seed
+        reservation = reserve_plan(
+            Path(private_root),
+            str(plan_value["planSha256"]),
+            replication_count,
+            tuple(value[0] for value in batch_identities),
         )
-        for raw_pair_seed in raw_pair_seeds
-    ]
+        assert_private_layout_available(Path(private_root), batch_identities)
+    except (BatchReceiptError, PlanAuthorityError) as error:
+        raise BatchControllerError(str(error)) from error
+    counted = _CountingExecutor(executor)
+    try:
+        return [
+            _run_candidate_pair(
+                plan_value,
+                validated,
+                counted,
+                Path(private_root),
+                active_seed=active_seed,
+            )
+            for active_seed in pair_seeds
+        ]
+    except BaseException:
+        if counted.calls == 0:
+            try:
+                release_unstarted(reservation)
+            except PlanAuthorityError:
+                pass
+        raise

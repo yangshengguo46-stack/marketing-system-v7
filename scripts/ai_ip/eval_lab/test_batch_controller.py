@@ -41,6 +41,7 @@ def _sealed_treatment(
     system_instruction: Path,
     capability_bundle: Path,
     effective_config: Path,
+    declared_capabilities: list[str],
 ) -> dict[str, object]:
     value: dict[str, object] = {
         "schemaVersion": 1,
@@ -50,7 +51,7 @@ def _sealed_treatment(
         "systemInstructionSha256": sha256_file(system_instruction),
         "capabilityBundleSha256": sha256_tree(capability_bundle),
         "effectiveCodexConfigSha256": sha256_file(effective_config),
-        "declaredCapabilities": [],
+        "declaredCapabilities": declared_capabilities,
         "prohibitedCaseSpecificMaterial": ["case answers", "review rubrics"],
         "treatmentManifestSha256": "0" * 64,
     }
@@ -207,6 +208,7 @@ def world(tmp_path: Path) -> World:
         system_instruction,
         capability_bundle,
         effective_config,
+        [],
     )
     modified_treatment = _sealed_treatment(
         "modified-treatment",
@@ -215,6 +217,7 @@ def world(tmp_path: Path) -> World:
         system_instruction,
         capability_bundle,
         effective_config,
+        ["deliver-ai-ip-content-package"],
     )
     case_bundle = {"caseId": "case-1", "prompt": "Return one CaseAnswer."}
     plan: dict[str, object] = {
@@ -362,13 +365,19 @@ def test_seeded_pairs_execute_both_orders(world: World) -> None:
             private_root,
             seed=index.to_bytes(32, "big"),
         )
-        observed.add(tuple(request.binary_path.name for request in executor.requests))
+        pair_dir = next((private_root / "pairs").iterdir())
+        order = load_exact_json(pair_dir / "order.json")["attemptOrder"]
+        arms = {
+            path.parent.name: load_exact_json(path)["privateArmId"]
+            for path in (private_root / "attempts").glob("*/receipt.json")
+        }
+        observed.add(tuple(arms[attempt_id] for attempt_id in order))
         if len(observed) == 2:
             break
 
     assert observed == {
-        ("stock-codex", "modified-codex"),
-        ("modified-codex", "stock-codex"),
+        ("opaque-arm-a", "opaque-arm-b"),
+        ("opaque-arm-b", "opaque-arm-a"),
     }
 
 
