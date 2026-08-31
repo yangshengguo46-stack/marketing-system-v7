@@ -125,7 +125,9 @@ class _FakeDll:
 
 
 def _load_win32_abi(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(ctypes, "WinDLL", lambda *args, **kwargs: _FakeDll(), raising=False)
+    monkeypatch.setattr(
+        ctypes, "WinDLL", lambda *args, **kwargs: _FakeDll(), raising=False
+    )
     path = Path(__file__).with_name("batch_isolation_win32_abi.py")
     spec = importlib.util.spec_from_file_location("_round4_win32_abi", path)
     assert spec and spec.loader
@@ -156,9 +158,9 @@ def test_win32_delete_api_receives_one_byte_disposition(
         return 1
 
     def get_token_information(token, kind, buffer, length, needed) -> int:
-        ctypes.cast(needed, ctypes.POINTER(abi.wintypes.DWORD)).contents.value = (
-            ctypes.sizeof(abi.SidAndAttributes)
-        )
+        ctypes.cast(
+            needed, ctypes.POINTER(abi.wintypes.DWORD)
+        ).contents.value = ctypes.sizeof(abi.SidAndAttributes)
         if not buffer:
             return 0
         value = abi.SidAndAttributes.from_buffer(buffer)
@@ -175,9 +177,7 @@ def test_win32_delete_api_receives_one_byte_disposition(
         return 1
 
     def get_information(handle, kind, value, size) -> int:
-        standard = ctypes.cast(
-            value, ctypes.POINTER(abi.StandardInformation)
-        ).contents
+        standard = ctypes.cast(value, ctypes.POINTER(abi.StandardInformation)).contents
         standard.DeletePending = 1
         return 1
 
@@ -239,7 +239,9 @@ class _WindowsWorld:
     def iter_directory(self, handle: int):
         identity = self.identity(handle)
         if identity == (7, 10) and self.child_present:
-            yield _Entry("home" if self.kind == "retained" else "victim", self.kind == "retained")
+            yield _Entry(
+                "home" if self.kind == "retained" else "victim", self.kind == "retained"
+            )
 
     def open_path(self, path, *, directory: bool, **kwargs) -> int:
         name = path[-1] if isinstance(path, tuple) else str(path)
@@ -276,7 +278,11 @@ class _WindowsWorld:
             raise _FakeWin32Error("closed a reused handle")
         identity = self.identity(handle)
         target = 20 if self.kind == "retained" else 30
-        if identity == (7, target) and handle in self.pending and not self.first_close_failed:
+        if (
+            identity == (7, target)
+            and handle in self.pending
+            and not self.first_close_failed
+        ):
             self.first_close_failed = True
             self.identities[handle] = (99, 99)
             self._reused.add(handle)

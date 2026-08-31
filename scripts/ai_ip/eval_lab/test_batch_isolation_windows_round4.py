@@ -75,9 +75,10 @@ def test_native_windows_close_uncertainty_retries_without_handle_reuse(
     def fail_once(handle: int) -> None:
         nonlocal failed
         try:
-            matches = (
-                batch_isolation_windows.win32.identity(handle) == target_identity
-                and batch_isolation_windows.win32.delete_pending(handle)
+            matches = batch_isolation_windows.win32.identity(
+                handle
+            ) == target_identity and batch_isolation_windows.win32.delete_pending(
+                handle
             )
         except batch_isolation_windows.win32.Win32SecurityError:
             matches = False

@@ -106,9 +106,7 @@ class TerminalProof:
                 self.close()
                 return True
             entries_seen += 1
-            metadata = os.stat(
-                entry.name, dir_fd=self.base_fd, follow_symlinks=False
-            )
+            metadata = os.stat(entry.name, dir_fd=self.base_fd, follow_symlinks=False)
             if identity(metadata) == self.root_identity:
                 self.close()
                 raise TerminalProofError("cleanup did not remove the original root")

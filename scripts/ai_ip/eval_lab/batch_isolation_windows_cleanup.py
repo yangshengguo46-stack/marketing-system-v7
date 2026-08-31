@@ -28,7 +28,9 @@ class WindowsCleanupJournal:
 
     def _require_owner(self) -> None:
         if self.creator_pid != os.getpid():
-            raise WindowsCleanupError("Windows cleanup journal belongs to another process")
+            raise WindowsCleanupError(
+                "Windows cleanup journal belongs to another process"
+            )
 
     def has_handle(self, handle: int) -> bool:
         return any(item.handle == handle for item in self.pending)
@@ -45,9 +47,7 @@ class WindowsCleanupJournal:
             if filesystem.directories.get(name) == item.handle:
                 del filesystem.directories[name]
 
-    def _record(
-        self, handle: int, *, delete: bool, slot: str | None
-    ) -> PendingHandle:
+    def _record(self, handle: int, *, delete: bool, slot: str | None) -> PendingHandle:
         self._require_owner()
         item = PendingHandle(handle, win32.identity(handle), delete, slot)
         self.pending.append(item)

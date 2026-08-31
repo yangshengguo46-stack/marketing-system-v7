@@ -12,7 +12,7 @@ except ImportError:
     import batch_isolation_posix_terminal as terminal
 
 
-_DIRECTORY_FLAGS = (
+_DIR_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_DIRECTORY", 0)
     | getattr(os, "O_NOFOLLOW", 0)
@@ -76,7 +76,7 @@ def open_directory(path: Path) -> int:
         raise SecureFilesystemError("absolute directory path required")
     current = -1
     try:
-        current = os.open(candidate.anchor, _DIRECTORY_FLAGS)
+        current = os.open(candidate.anchor, _DIR_FLAGS)
         _require_directory(current)
         for part in candidate.parts[1:]:
             child = _open_child(current, part)
@@ -101,7 +101,7 @@ def ancestor_identities(fd: int) -> frozenset[tuple[int, int]]:
         for _ in range(2_048):
             child = _require_directory(current)
             found.add(child)
-            parent = os.open("..", _DIRECTORY_FLAGS, dir_fd=current)
+            parent = os.open("..", _DIR_FLAGS, dir_fd=current)
             parent_identity = _require_directory(parent)
             if parent_identity == child:
                 os.close(parent)
@@ -117,7 +117,7 @@ def _open_child(parent_fd: int, name: str) -> int:
     before = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
     if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
         raise SecureFilesystemError("directory entry is not a safe directory")
-    fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
+    fd = os.open(name, _DIR_FLAGS, dir_fd=parent_fd)
     _require_directory(fd, identity(before))
     return fd
 
@@ -239,9 +239,7 @@ class PosixCellFilesystem:
         _require_private_directory(self.root_fd, self.root_identity, "root")
         if cleanup and self.terminal_unlinked:
             try:
-                terminal.require_parent(
-                    self.root_fd, self.base_identity, _DIRECTORY_FLAGS
-                )
+                terminal.require_parent(self.root_fd, self.base_identity, _DIR_FLAGS)
             except terminal.TerminalProofError as error:
                 raise SecureFilesystemError(str(error)) from error
             return
@@ -414,7 +412,7 @@ class PosixCellFilesystem:
             self.terminal_unlinked = True
         try:
             if self.terminal_proof is None:
-                self.terminal_proof = terminal.TerminalProof.start(self, _DIRECTORY_FLAGS)
+                self.terminal_proof = terminal.TerminalProof.start(self, _DIR_FLAGS)
             self.terminal_proof.advance(
                 self.root_fd,
                 _MAX_TERMINAL_SCAN_ENTRIES,

@@ -81,9 +81,7 @@ def delete_tree(filesystem: object) -> None:
             filesystem.validate(cleanup=True)
             filesystem.cleanup_started = True
         if filesystem.marker_handle is not None:
-            journal.dispose(
-                filesystem, filesystem.marker_handle, slot="marker"
-            )
+            journal.dispose(filesystem, filesystem.marker_handle, slot="marker")
         _delete_contents(filesystem, journal)
         for name, handle in tuple(filesystem.directories.items()):
             journal.close(filesystem, handle, slot=f"directory:{name}")
