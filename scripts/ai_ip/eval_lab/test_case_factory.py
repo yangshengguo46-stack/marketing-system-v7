@@ -193,7 +193,22 @@ def test_compiles_physically_separated_packets_and_receipt(tmp_path):
             ),
         ],
     }
+    encoded_content = canonical_json_bytes(content).decode("utf-8")
+    assert "A115" not in encoded_content
+    assert "A116" not in encoded_content
     assert not (FORBIDDEN_CONTENT_KEYS & _all_keys(content))
+    assert outcome["observations"] == [
+        "A115 status: partial downstream passed; content root failed",
+        "A116 diagnostic status: accepted with performance debt",
+        (
+            "A115 date has day precision; ordering treats 2026-08-20 as inclusive "
+            "end-of-day UTC without inventing second-level precision."
+        ),
+        (
+            "A116 date has day precision; ordering treats 2026-08-20 as inclusive "
+            "end-of-day UTC without inventing second-level precision."
+        ),
+    ]
     assert outcome["knownFailures"] == [
         "A115: content-root-abstraction-stopped-too-early",
         "A115: raw-project-question-rendered-as-account-stance",
@@ -287,6 +302,25 @@ def _mutate_a113_identity(fixture, tmp_path):
     _write_manifest(fixture[0], fixture[2])
 
 
+def _mutate_manifest_extra_entry(fixture, tmp_path):
+    manifest = load_exact_json(fixture[2])
+    manifest["sources"].append(
+        {
+            "sourceId": "unexpected-source",
+            "relativePath": "unexpected.json",
+            "sha256": "0" * 64,
+            "packetRoles": ["referenceEvidence"],
+        }
+    )
+    _write_json(fixture[2], manifest)
+
+
+def _mutate_manifest_duplicate_missing_identity(fixture, tmp_path):
+    manifest = load_exact_json(fixture[2])
+    manifest["sources"][2] = dict(manifest["sources"][1])
+    _write_json(fixture[2], manifest)
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -299,6 +333,8 @@ def _mutate_a113_identity(fixture, tmp_path):
         _mutate_a116_secrets,
         _mutate_case_family,
         _mutate_a113_identity,
+        _mutate_manifest_extra_entry,
+        _mutate_manifest_duplicate_missing_identity,
     ],
     ids=lambda mutation: mutation.__name__.removeprefix("_mutate_"),
 )

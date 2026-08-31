@@ -195,18 +195,25 @@ def _validate_source_identity(audit, value):
 
 
 def _validate_source_times(values, compiled_time):
-    day_precision = False
+    day_precision = {}
     for audit, value in values.items():
         time_key = "recorded_at" if audit == "A113" else "date"
         recorded, date_only = _source_time(value.get(time_key), audit)
         if recorded > compiled_time:
             raise CaseFactoryError("compiledAt precedes a source record")
-        if audit == "A113":
-            day_precision = date_only
+        if date_only:
+            day_precision[audit] = value[time_key]
     return day_precision
 
 
-def _project_packets(blueprint, values, compiled_at, a113_day_precision):
+def _day_precision_limitation(audit, field, value):
+    return (
+        f"{audit} {field} has day precision; ordering treats {value} as inclusive "
+        "end-of-day UTC without inventing second-level precision."
+    )
+
+
+def _project_packets(blueprint, values, compiled_at, day_precision):
     a113, a115, a116 = values["A113"], values["A115"], values["A116"]
     provider = _object(a113, "provider", "A113")
     acceptance = _object(a113, "deerflow_acceptance", "A113")
@@ -220,11 +227,9 @@ def _project_packets(blueprint, values, compiled_at, a113_day_precision):
     ):
         raise CaseFactoryError("A113 result or payload evidence is invalid")
     limitations = [_string(a113, "production_status", "A113")]
-    if a113_day_precision:
+    if "A113" in day_precision:
         limitations.append(
-            f"A113 recorded_at has day precision; ordering treats "
-            f"{a113['recorded_at']} as inclusive end-of-day UTC without inventing "
-            "second-level precision."
+            _day_precision_limitation("A113", "recorded_at", day_precision["A113"])
         )
     content = {
         "schemaVersion": 1,
@@ -261,15 +266,21 @@ def _project_packets(blueprint, values, compiled_at, a113_day_precision):
         if type(failure) is not dict:
             raise CaseFactoryError("A116 retained failure must be an object")
         known_failures.append(f"A116 diagnostic: {_string(failure, 'failure', 'A116')}")
+    observations = [
+        f"A115 status: {_string(a115, 'status', 'A115')}",
+        f"A116 diagnostic status: {_string(a116, 'status', 'A116')}",
+    ]
+    for audit in ("A115", "A116"):
+        if audit in day_precision:
+            observations.append(
+                _day_precision_limitation(audit, "date", day_precision[audit])
+            )
     outcome = {
         "schemaVersion": 1,
         "objectKind": "OutcomePacket",
         "caseId": CASE_ID,
         "revealAfter": compiled_at,
-        "observations": [
-            f"A115 status: {_string(a115, 'status', 'A115')}",
-            f"A116 diagnostic status: {_string(a116, 'status', 'A116')}",
-        ],
+        "observations": observations,
         "knownFailures": known_failures,
         "sourceRefs": [
             "v6-a115-known-failure",
