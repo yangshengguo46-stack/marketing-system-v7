@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import batch_controller  # noqa: E402
 import batch_isolation  # noqa: E402
 import batch_receipt_verification  # noqa: E402
+from batch_contracts import seal_self_commitment  # noqa: E402
 from batch_controller import BatchControllerError  # noqa: E402
 from batch_plan import PARITY_FIELDS, seal_candidate_run_plan, sha256_file  # noqa: E402
 from batch_receipts import BatchReceiptError, verify_paired_run_receipt  # noqa: E402
@@ -64,10 +65,13 @@ output = answer(label)
 if mode == "deep":
     result = b"[" * 2000 + b"0" + b"]" * 2000
 else:
+    trajectory = [{"type": "turn.completed"}]
+    if mode == "events":
+        trajectory = [{"type": "turn.completed"}] * 1025
     metadata = {
         "threadId": "thread-" + label,
         "turnId": "turn-" + label,
-        "trajectory": [{"type": "turn.completed"}],
+        "trajectory": trajectory,
         "usage": {"inputTokens": 1, "outputTokens": 2, "totalTokens": 3},
         "costEvidence": {"costCny": 0, "sourceSha256": "e" * 64},
         "requestCount": 1,
@@ -90,6 +94,11 @@ os.write(2, ("stderr-" + label).encode())
 
 def _write_json(path: Path, value: object) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
+
+
+def _reseal(value: dict[str, object]) -> dict[str, object]:
+    value["receiptSha256"] = "0" * 64
+    return seal_self_commitment(value, "receiptSha256")
 
 
 def _one_second(world: World) -> tuple[dict[str, object], dict[str, object]]:
@@ -213,7 +222,7 @@ def test_divergent_launch_artifact_cannot_yield_a_valid_pair(
     assert not world.private_root.exists()
 
 
-@pytest.mark.parametrize("mode", ["block", "excessive", "deep"])
+@pytest.mark.parametrize("mode", ["block", "excessive", "deep", "events"])
 def test_real_child_is_deadline_and_read_bounded(world: World, mode: str) -> None:
     plan, bindings = _one_second(world)
     child_world = World(plan, bindings, world.private_root)
@@ -235,6 +244,42 @@ def test_real_child_is_deadline_and_read_bounded(world: World, mode: str) -> Non
         path.stat().st_size <= 1_048_576
         for path in world.private_root.glob("attempts/*/*.bin")
     )
+
+
+def test_resealed_launch_record_identity_substitution_is_rejected(world: World) -> None:
+    pair = batch_controller.run_candidate_pair(
+        world.plan,
+        world.bindings,
+        _launches(world),
+        world.private_root,
+        seed=b"l" * 32,
+    )
+    arm_path = next(world.private_root.glob("attempts/*/receipt.json"))
+    arm_dir = arm_path.parent
+    arm = json.loads(arm_path.read_bytes())
+    old_hash = arm["receiptSha256"]
+    launch_record = json.loads((arm_dir / "launch-record.json").read_bytes())
+    launch_record["candidateBinarySha256"] = "f" * 64
+    _write_json(arm_dir / "launch-record.json", launch_record)
+    evidence = json.loads((arm_dir / "evidence.json").read_bytes())
+    evidence["rawEvidence"]["launchRecordSha256"] = hashlib.sha256(
+        canonical_json_bytes(launch_record) + b"\n"
+    ).hexdigest()
+    _write_json(arm_dir / "evidence.json", evidence)
+    arm["trajectorySha256"] = sha256_json(evidence)
+    arm = _reseal(arm)
+    _write_json(arm_path, arm)
+    field = (
+        "stockArmAttemptReceiptSha256"
+        if pair["stockArmAttemptReceiptSha256"] == old_hash
+        else "modifiedArmAttemptReceiptSha256"
+    )
+    pair[field] = arm["receiptSha256"]
+    pair = _reseal(pair)
+    _write_json(world.private_root / "pairs" / str(pair["pairId"]) / "receipt.json", pair)
+
+    with pytest.raises(BatchReceiptError, match="launch|identity|binary"):
+        verify_paired_run_receipt(pair, world.private_root)
 
 
 def test_second_launch_failure_stops_and_waits_first_owned_process(

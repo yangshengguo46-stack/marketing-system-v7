@@ -290,7 +290,7 @@ def normalize(
     exit_code = raw.exit_code if type(raw.exit_code) is int else -1
     attestation = _attestation(raw.attestation)
     raw_evidence = {
-        "attestation": attestation,
+        "controllerIdentity": attestation,
         "exitCode": exit_code,
         "finishedAt": raw.finished_at if type(raw.finished_at) is str else None,
         "metadataBytes": metadata_evidence,

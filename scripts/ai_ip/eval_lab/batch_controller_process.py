@@ -22,7 +22,7 @@ try:
         MemoryAttemptByteSource,
         RawAttemptResult,
     )
-    from .batch_launch_spec import FrozenLaunchSpec
+    from .batch_launch_spec import FrozenLaunchSpec, launch_spec_identity
     from .batch_receipt_storage import write_entry
     from .contracts import canonical_json_bytes, sha256_json
 except ImportError:
@@ -34,7 +34,7 @@ except ImportError:
         MemoryAttemptByteSource,
         RawAttemptResult,
     )
-    from batch_launch_spec import FrozenLaunchSpec
+    from batch_launch_spec import FrozenLaunchSpec, launch_spec_identity
     from batch_receipt_storage import write_entry
     from contracts import canonical_json_bytes, sha256_json
 
@@ -238,6 +238,7 @@ def spawn(prepared: PreparedProcess, limit: int) -> OwnedProcess:
         "environment": dict(sorted(environment.items())),
         "environmentSha256": sha256_json(dict(sorted(environment.items()))),
         "executableSha256": prepared.spec.executable_sha256,
+        "launchSpec": launch_spec_identity(prepared.spec)[0],
         "pid": process.pid,
         "startedAt": started_at,
     }

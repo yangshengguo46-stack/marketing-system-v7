@@ -20,6 +20,7 @@ try:
         LaunchSpec,
         LaunchSpecError,
         ValidatedLaunchSet,
+        launch_spec_identity,
         validate_launch_set,
     )
     from .batch_receipt_storage import seal_failure_tombstone
@@ -50,7 +51,7 @@ try:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from .contracts import compile_contract
+    from .contracts import compile_contract, sha256_json
 except ImportError:
     from batch_controller_attempt import (
         prepare_arm,
@@ -68,6 +69,7 @@ except ImportError:
         LaunchSpec,
         LaunchSpecError,
         ValidatedLaunchSet,
+        launch_spec_identity,
         validate_launch_set,
     )
     from batch_receipt_storage import seal_failure_tombstone
@@ -98,7 +100,7 @@ except ImportError:
         verify_arm_attempt_receipt,
         verify_paired_run_receipt,
     )
-    from contracts import compile_contract
+    from contracts import compile_contract, sha256_json
 
 
 AttemptAttestation = _types.AttemptAttestation
@@ -182,6 +184,7 @@ def _run_candidate_pair_scoped(
                     "codexHomeSeedSha256": validated.stock.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.stock.effective_config_sha256,
                     "effectiveConditions": validated.stock.effective_conditions,
+                    "launchSpecSha256": launch_spec_identity(launches.stock)[1],
                 },
                 "modified": {
                     "privateArmId": validated.modified.private_arm_id,
@@ -193,8 +196,12 @@ def _run_candidate_pair_scoped(
                     "codexHomeSeedSha256": validated.modified.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.modified.effective_config_sha256,
                     "effectiveConditions": validated.modified.effective_conditions,
+                    "launchSpecSha256": launch_spec_identity(launches.modified)[1],
                 },
                 "inputSha256": plan_value["caseBundleSha256"],
+                "caseAnswerRuntimeSha256": sha256_json(
+                    validated.case_answer_schema
+                ),
                 "workspaceBeforeSha256": validated.workspace_seed.cell_digest(),
                 "appServerProtocolSchemaSha256": validated.protocol_sha256,
                 "promptfooConfigSha256": validated.promptfoo_config_sha256,

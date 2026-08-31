@@ -86,6 +86,54 @@ def _metadata_parts(metadata: object) -> tuple[object, object, object, object, o
     )
 
 
+def _verify_launch_record(
+    evidence: OfflineEvidence,
+    attempt_id: str,
+    raw: dict[str, object],
+    expected_arm: dict[str, object],
+    identity: dict[str, object],
+    plan: dict[str, object],
+) -> None:
+    record = evidence.load_attempt(
+        attempt_id, "launch-record.json", MAX_PRIVATE_FILE_BYTES
+    )
+    if type(record) is not dict or raw.get("launchRecordSha256") != _sha256_bytes(
+        _json_bytes(record)
+    ):
+        raise BatchReceiptError("launch record commitment mismatch")
+    artifacts = record.get("artifactSha256")
+    environment = record.get("environment")
+    launch_spec = record.get("launchSpec")
+    required_artifacts = {
+        "case": plan.get("caseBundleSha256"),
+        "config": expected_arm.get("effectiveConfigSha256"),
+        "profile": identity.get("executionProfileSha256"),
+        "promptfoo": identity.get("promptfooConfigSha256"),
+        "protocol": identity.get("appServerProtocolSchemaSha256"),
+        "route": identity.get("modelRouteSha256"),
+        "schema": identity.get("caseAnswerRuntimeSha256"),
+    }
+    if (
+        type(artifacts) is not dict
+        or type(environment) is not dict
+        or type(launch_spec) is not dict
+        or any(artifacts.get(name) != digest for name, digest in required_artifacts.items())
+        or record.get("candidateBinarySha256") != expected_arm.get("binarySha256")
+        or record.get("executableSha256") != record.get("copiedExecutableSha256")
+        or launch_spec.get("executableSha256") != record.get("executableSha256")
+        or sha256_json(launch_spec) != expected_arm.get("launchSpecSha256")
+        or sha256_json(environment) != record.get("environmentSha256")
+        or environment.get("AI_IP_ATTEMPT_ID") != attempt_id
+        or type(record.get("argv")) is not list
+        or not record["argv"]
+        or not all(type(item) is str for item in record["argv"])
+        or type(record.get("pid")) is not int
+        or record["pid"] < 1
+        or record.get("startedAt") != raw.get("startedAt")
+    ):
+        raise BatchReceiptError("launch record identity differs from sealed context")
+
+
 PairContext = tuple[
     dict[str, object], dict[str, object], CompiledContract, dict[str, object]
 ]
@@ -192,6 +240,7 @@ def _verify_arm_details(
         raise BatchReceiptError("arm identity is absent from sealed context")
     expected_arm = arms[arm_class]
     assert type(expected_arm) is dict
+    _verify_launch_record(evidence, attempt_id, raw, expected_arm, identity, plan)
     expected_fields = {
         "treatmentManifestSha256": expected_arm.get("treatmentManifestSha256"),
         "binaryManifestSha256": expected_arm.get("binaryManifestSha256"),
@@ -205,7 +254,7 @@ def _verify_arm_details(
         receipt.get(field) != expected for field, expected in expected_fields.items()
     ):
         raise BatchReceiptError("arm identity differs from sealed context")
-    expected_attestation = {
+    expected_controller_identity = {
         "appServerProtocolSchemaSha256": identity.get("appServerProtocolSchemaSha256"),
         "binarySha256": expected_arm.get("binarySha256"),
         "codexHomeSeedSha256": expected_arm.get("codexHomeSeedSha256"),
@@ -217,12 +266,12 @@ def _verify_arm_details(
     }
     if (
         receipt["exitClassification"] == "completed"
-        and raw.get("attestation") != expected_attestation
+        and raw.get("controllerIdentity") != expected_controller_identity
     ) or (
-        raw.get("attestation") is not None
-        and raw.get("attestation") != expected_attestation
+        raw.get("controllerIdentity") is not None
+        and raw.get("controllerIdentity") != expected_controller_identity
     ):
-        raise BatchReceiptError("executor attestation differs from sealed context")
+        raise BatchReceiptError("controller identity differs from sealed context")
     try:
         artifact_sizes = tuple(
             int(raw[field].get("rawSize", -1)) for field in byte_fields

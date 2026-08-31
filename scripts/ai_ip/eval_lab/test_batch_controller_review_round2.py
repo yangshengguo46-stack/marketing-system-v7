@@ -336,7 +336,7 @@ def test_callback_attestation_is_not_used_as_execution_identity(world: World) ->
     ]
     assert receipt["pairValidity"] == "valid"
     assert all(
-        item["rawEvidence"]["attestation"]["binarySha256"] != "f" * 64
+        item["rawEvidence"]["controllerIdentity"]["binarySha256"] != "f" * 64
         for item in evidence
     )
     assert executor.calls == 2

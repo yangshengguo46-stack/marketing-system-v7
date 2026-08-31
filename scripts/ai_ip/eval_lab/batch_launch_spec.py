@@ -8,10 +8,10 @@ from pathlib import Path, PurePosixPath
 
 try:
     from .batch_controller_support import ValidatedBindings
-    from .contracts import canonical_json_bytes
+    from .contracts import canonical_json_bytes, sha256_json
 except ImportError:
     from batch_controller_support import ValidatedBindings
-    from contracts import canonical_json_bytes
+    from contracts import canonical_json_bytes, sha256_json
 
 
 _MAX_EXECUTABLE_BYTES = 128 * 1024 * 1024
@@ -82,6 +82,28 @@ class FrozenLaunchSpec:
 class ValidatedLaunchSet:
     stock: FrozenLaunchSpec
     modified: FrozenLaunchSpec
+
+
+def launch_spec_identity(spec: FrozenLaunchSpec) -> tuple[dict[str, object], str]:
+    """Return the exact immutable adapter declaration and its commitment."""
+    value = {
+        "appServerProtocolSchemaSha256": hashlib.sha256(
+            spec.app_server_protocol_schema
+        ).hexdigest(),
+        "argv": list(spec.argv),
+        "artifacts": {
+            artifact.relative_path: artifact.sha256 for artifact in spec.artifacts
+        },
+        "effectiveConfigSha256": hashlib.sha256(spec.effective_config).hexdigest(),
+        "environment": [list(item) for item in spec.environment],
+        "executableSha256": spec.executable_sha256,
+        "executionProfileSha256": hashlib.sha256(
+            spec.execution_profile_json
+        ).hexdigest(),
+        "modelRouteSha256": hashlib.sha256(spec.model_route_json).hexdigest(),
+        "promptfooConfigSha256": hashlib.sha256(spec.promptfoo_config).hexdigest(),
+    }
+    return value, sha256_json(value)
 
 
 def _digest(value: object, label: str) -> str:
