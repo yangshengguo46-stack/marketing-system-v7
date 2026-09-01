@@ -21,14 +21,14 @@ function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value !== null && typeof value === "object") {
     return `{${Object.keys(value)
-      .sort()
+      .sort((left, right) => Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8")))
       .map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`)
       .join(",")}}`;
   }
   return JSON.stringify(value);
 }
 
-function boundedJson(payload, label) {
+function boundedJson(payload, label, numberContract = "finite") {
   let shapeDepth = 0;
   let shapeNodes = 1;
   let inString = false;
@@ -156,6 +156,9 @@ function boundedJson(payload, label) {
     if (!match) throw new PromptfooResultError(`${label} is not valid strict JSON`);
     const token = match[0];
     index += token.length;
+    if (numberContract === "integer-evidence" && (token.includes(".") || /[eE]/.test(token))) {
+      throw new PromptfooResultError(`${label} contains a non-integral JSON number`);
+    }
     if (!token.includes(".") && !/[eE]/.test(token) && BigInt(token) > MAX_SAFE_INTEGER) {
       throw new PromptfooResultError(`${label} contains an unsafe JSON integer`);
     }
@@ -221,7 +224,7 @@ function boundedEvidence(value, maximum, label) {
         const code = item.charCodeAt(index);
         if (code >= 0xd800 && code <= 0xdbff) {
           const next = item.charCodeAt(index + 1);
-          if (next < 0xdc00 || next > 0xdfff) {
+          if (!(next >= 0xdc00 && next <= 0xdfff)) {
             throw new PromptfooResultError(`${label} contains invalid Unicode`);
           }
           index += 1;
@@ -268,7 +271,6 @@ function parseResult(payload) {
   if (typeof response.output !== "string") {
     throw new PromptfooResultError("Promptfoo output must be a string");
   }
-  const output = boundedJson(Buffer.from(response.output), "Promptfoo output");
   const metadata = object(response.metadata, "Promptfoo metadata");
   const codex = object(metadata.codexAppServer, "Codex metadata");
   if (
@@ -291,10 +293,20 @@ function parseResult(payload) {
     !Array.isArray(raw.items) ||
     !raw.items.length ||
     raw.items.length > MAX_EVENTS ||
+    typeof raw.output !== "string" ||
     typeof raw.finalResponse !== "string"
   ) {
     throw new PromptfooResultError("Codex raw events are required");
   }
+  if (response.output !== raw.output || response.output !== raw.finalResponse) {
+    throw new PromptfooResultError("Promptfoo final response differs across retained output fields");
+  }
+  const output = boundedJson(
+    Buffer.from(response.output),
+    "Promptfoo output",
+    "integer-evidence",
+  );
+  boundedEvidence(output, MAX_FINAL_RESPONSE_BYTES, "Promptfoo final response");
   const responseUsage = usageLayer(response.tokenUsage, "response token usage", false);
   const rowUsage = usageLayer(row.tokenUsage, "row token usage", true);
   for (const [field, value] of Object.entries(responseUsage)) {

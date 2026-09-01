@@ -159,12 +159,30 @@ def _usage_layer(
 
 
 def _canonical(value: object) -> bytes:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
+    if type(value) is dict:
+        return b"{" + b",".join(
+            _canonical(key) + b":" + _canonical(value[key])
+            for key in sorted(value, key=_utf8_key)
+        ) + b"}"
+    if type(value) is list:
+        return b"[" + b",".join(_canonical(item) for item in value) + b"]"
+    if value is None or type(value) in (bool, int, str):
+        try:
+            return json.dumps(
+                value,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8", errors="strict")
+        except UnicodeEncodeError as error:
+            raise PromptfooAdapterError("evidence contains invalid Unicode") from error
+    raise PromptfooAdapterError("evidence contains unsupported values")
+
+
+def _utf8_key(value: str) -> bytes:
+    try:
+        return value.encode("utf-8", errors="strict")
+    except UnicodeEncodeError as error:
+        raise PromptfooAdapterError("evidence contains invalid Unicode") from error
 
 
 def _bounded_evidence(value: object, maximum: int, label: str) -> None:
@@ -215,7 +233,6 @@ def parse_promptfoo_result(
     output_text = response.get("output")
     if type(output_text) is not str:
         raise PromptfooAdapterError("Promptfoo provider must return string output")
-    output = _decode_json(output_text.encode(), "Promptfoo provider output")
     metadata = _mapping(response.get("metadata"), "Promptfoo provider metadata")
     codex = _mapping(metadata.get("codexAppServer"), "Codex App Server metadata")
     thread_id = codex.get("threadId")
@@ -236,6 +253,7 @@ def parse_promptfoo_result(
     )
     notifications = raw.get("notifications")
     raw_items = raw.get("items")
+    raw_output = raw.get("output")
     final_response = raw.get("finalResponse")
     if (
         type(items) is not list
@@ -247,9 +265,16 @@ def parse_promptfoo_result(
         or type(notifications) is not list
         or not notifications
         or len(notifications) > _MAX_EVENTS
+        or type(raw_output) is not str
         or type(final_response) is not str
     ):
         raise PromptfooAdapterError("Codex trajectory and raw events are required")
+    if output_text != raw_output or output_text != final_response:
+        raise PromptfooAdapterError(
+            "Promptfoo final response differs across retained output fields"
+        )
+    output = _decode_json(output_text.encode(), "Promptfoo provider output")
+    _bounded_evidence(output, _MAX_FINAL_RESPONSE_BYTES, "Promptfoo final response")
     response_usage = _usage_layer(
         response.get("tokenUsage"),
         "Promptfoo response token usage",

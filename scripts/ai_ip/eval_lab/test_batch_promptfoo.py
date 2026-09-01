@@ -19,6 +19,36 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 FROZEN_RESULT = (
     REPO_ROOT / "ai-ip-evals/lab/fixtures/batch-runner/promptfoo-result.json"
 )
+BASELINE_ANSWER = '{"caseId":"case-1","objectKind":"CaseAnswer","schemaVersion":1}'
+ANSWER_EVIDENCE_CORPUS = (
+    pytest.param(
+        '{"\ue000":"bmp","\U00010000":"non-bmp"}',
+        True,
+        {"\ue000": "bmp", "\U00010000": "non-bmp"},
+        id="bmp-and-non-bmp-keys",
+    ),
+    pytest.param(
+        '{"gift":"\u793c\\ud83c\\udf81"}',
+        True,
+        {"gift": "礼🎁"},
+        id="escaped-equivalent",
+    ),
+    pytest.param('{"value":-0}', True, {"value": 0}, id="negative-zero"),
+    pytest.param('{"value":"\\ud800"}', False, None, id="unpaired-high-surrogate"),
+    pytest.param('{"value":"\\udc00"}', False, None, id="unpaired-low-surrogate"),
+    pytest.param('{"value":1.0}', False, None, id="decimal"),
+    pytest.param('{"value":1e0}', False, None, id="lowercase-exponent"),
+    pytest.param('{"value":1E+1}', False, None, id="uppercase-exponent"),
+    pytest.param('{"value":1,"value":2}', False, None, id="duplicate-key"),
+    pytest.param('{"value":NaN}', False, None, id="nan"),
+    pytest.param('{"value":Infinity}', False, None, id="infinity"),
+    pytest.param(
+        '{"value":9007199254740992}', False, None, id="positive-unsafe-integer"
+    ),
+    pytest.param(
+        '{"value":-9007199254740992}', False, None, id="negative-unsafe-integer"
+    ),
+)
 sys.path.insert(0, str(MODULE_ROOT))
 
 
@@ -65,6 +95,7 @@ def _canonical_bytes(value: object) -> bytes:
 def _result_value() -> dict[str, object]:
     value = json.loads(FROZEN_RESULT.read_bytes())
     assert type(value) is dict
+    _set_answer_fields(value, BASELINE_ANSWER)
     return value
 
 
@@ -86,6 +117,35 @@ def _response(value: dict[str, object]) -> dict[str, object]:
     response = _row(value)["response"]
     assert type(response) is dict
     return response
+
+
+def _set_answer_fields(value: dict[str, object], answer_text: str) -> None:
+    response = _response(value)
+    raw = json.loads(response["raw"])
+    assert type(raw) is dict
+    response["output"] = answer_text
+    raw["output"] = answer_text
+    raw["finalResponse"] = answer_text
+    response["raw"] = json.dumps(raw, ensure_ascii=False, separators=(",", ":"))
+
+
+def _mutate_one_answer_field(
+    value: dict[str, object], field: str
+) -> dict[str, object]:
+    mutated = copy.deepcopy(value)
+    response = _response(mutated)
+    raw = json.loads(response["raw"])
+    assert type(raw) is dict
+    replacement = "not valid JSON"
+    if field == "response":
+        response["output"] = replacement
+    elif field == "rawOutput":
+        raw["output"] = replacement
+    else:
+        assert field == "rawFinalResponse"
+        raw["finalResponse"] = replacement
+    response["raw"] = json.dumps(raw, ensure_ascii=False, separators=(",", ":"))
+    return mutated
 
 
 def _run_js_parser(payload: bytes) -> subprocess.CompletedProcess[bytes]:
@@ -222,7 +282,7 @@ def test_config_resolves_candidate_workspace_only_from_runtime_environment() -> 
 
 def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None:
     adapter = _adapter()
-    payload = FROZEN_RESULT.read_bytes()
+    payload = _result_bytes(_result_value())
 
     parsed = adapter.parse_promptfoo_result(payload)
 
@@ -232,7 +292,7 @@ def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None
         "schemaVersion": 1,
     }
     expected_trajectory = {
-        "finalResponse": "sealed",
+        "finalResponse": BASELINE_ANSWER,
         "items": [
             {"id": "item-1", "status": "completed", "type": "agentMessage"}
         ],
@@ -296,7 +356,7 @@ def test_parser_rejects_multiple_rows() -> None:
 
 def test_parser_enforces_its_own_byte_bound_before_decoding() -> None:
     adapter = _adapter()
-    payload = FROZEN_RESULT.read_bytes()
+    payload = _result_bytes(_result_value())
 
     with pytest.raises(adapter.PromptfooAdapterError, match="byte bound"):
         adapter.parse_promptfoo_result(payload, maximum_bytes=len(payload) - 1)
@@ -484,7 +544,7 @@ def test_python_and_js_reject_the_same_nonstandard_or_lossy_json(
 ) -> None:
     adapter = _adapter()
     value = _result_value()
-    _response(value)["output"] = output_text
+    _set_answer_fields(value, output_text)
     payload = _result_bytes(value)
 
     with pytest.raises(adapter.PromptfooAdapterError, match="JSON"):
@@ -492,6 +552,80 @@ def test_python_and_js_reject_the_same_nonstandard_or_lossy_json(
     completed = _run_js_parser(payload)
     assert completed.returncode == 2
     assert b"JSON" in completed.stderr
+
+
+@pytest.mark.parametrize("field", ["response", "rawOutput", "rawFinalResponse"])
+def test_answer_must_equal_retained_final_response(field: str) -> None:
+    adapter = _adapter()
+    payload = _result_bytes(_mutate_one_answer_field(_result_value(), field))
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="final response differs"):
+        adapter.parse_promptfoo_result(payload)
+    completed = _run_js_parser(payload)
+    assert completed.returncode == 2
+    assert b"final response differs" in completed.stderr
+
+
+@pytest.mark.parametrize(
+    ("answer_text", "accepted", "expected_output"), ANSWER_EVIDENCE_CORPUS
+)
+def test_python_and_js_share_the_answer_evidence_corpus(
+    answer_text: str, accepted: bool, expected_output: object
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    _set_answer_fields(value, answer_text)
+    payload = _result_bytes(value)
+
+    if not accepted:
+        with pytest.raises(adapter.PromptfooAdapterError):
+            adapter.parse_promptfoo_result(payload)
+        assert _run_js_parser(payload).returncode == 2
+        return
+
+    parsed = adapter.parse_promptfoo_result(payload)
+    completed = _run_js_parser(payload)
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    js_value = json.loads(completed.stdout)
+    assert parsed.output == expected_output
+    assert js_value["result"]["output"] == expected_output
+    assert (
+        js_value["result"]["metadata"]["costEvidence"]["sourceSha256"]
+        == parsed.metadata["costEvidence"]["sourceSha256"]
+    )
+
+
+def test_python_and_js_sort_canonical_trajectory_keys_by_utf8_bytes() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    response = _response(value)
+    metadata = response["metadata"]
+    assert type(metadata) is dict
+    codex = metadata["codexAppServer"]
+    assert type(codex) is dict
+    items = codex["items"]
+    assert type(items) is list and type(items[0]) is dict
+    items[0]["\ue000"] = "bmp"
+    items[0]["\U00010000"] = "non-bmp"
+    raw = json.loads(response["raw"])
+    raw["items"][0]["\ue000"] = "bmp"
+    raw["items"][0]["\U00010000"] = "non-bmp"
+    response["raw"] = json.dumps(raw, ensure_ascii=False, separators=(",", ":"))
+    payload = _result_bytes(value)
+
+    parsed = adapter.parse_promptfoo_result(payload)
+    completed = _run_js_parser(payload)
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    expected_digest = "d49ba0ea646d93e2efd101e7c5744d92cae72dc13cbbb9f5c605bcc1cd7c80ae"
+    assert parsed.metadata["costEvidence"]["sourceSha256"] == expected_digest
+    assert (
+        json.loads(completed.stdout)["result"]["metadata"]["costEvidence"][
+            "sourceSha256"
+        ]
+        == expected_digest
+    )
 
 
 def test_retained_trajectory_excludes_scores_and_assertions_but_keeps_raw_evidence() -> None:
@@ -516,7 +650,7 @@ def test_retained_trajectory_excludes_scores_and_assertions_but_keeps_raw_eviden
     assert trajectory["items"]
     assert trajectory["rawItems"]
     assert trajectory["notifications"]
-    assert trajectory["finalResponse"] == "sealed"
+    assert trajectory["finalResponse"] == BASELINE_ANSWER
     assert "assertions" not in _canonical_bytes(trajectory).decode()
     assert parsed.metadata["costEvidence"]["sourceSha256"] == hashlib.sha256(
         _canonical_bytes(trajectory)
@@ -534,8 +668,9 @@ def test_python_and_js_retain_the_same_unicode_trajectory() -> None:
     items = codex["items"]
     assert type(items) is list and type(items[0]) is dict
     items[0]["text"] = "礼🎁"
+    _set_answer_fields(value, '{"gift":"礼🎁"}')
+    response = _response(value)
     raw = json.loads(response["raw"])
-    raw["finalResponse"] = "礼🎁"
     raw["items"][0]["text"] = "礼🎁"
     response["raw"] = json.dumps(raw, ensure_ascii=True, separators=(",", ":"))
     payload = _result_bytes(value)
@@ -550,10 +685,7 @@ def test_python_and_js_retain_the_same_unicode_trajectory() -> None:
 def test_python_and_js_reject_oversized_retained_evidence() -> None:
     adapter = _adapter()
     value = _result_value()
-    response = _response(value)
-    raw = json.loads(response["raw"])
-    raw["finalResponse"] = "x" * (4 * 1024 * 1024 + 1)
-    response["raw"] = json.dumps(raw, sort_keys=True, separators=(",", ":"))
+    _set_answer_fields(value, json.dumps("x" * (1024 * 1024)))
     payload = _result_bytes(value)
 
     with pytest.raises(adapter.PromptfooAdapterError, match="evidence"):
@@ -899,7 +1031,7 @@ def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
     tmp_path: Path,
 ) -> None:
     adapter = _adapter()
-    frozen_result_literal = json.dumps(FROZEN_RESULT.read_text())
+    frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
     runtime, _, node = _test_runtime(
         tmp_path,
         f"""const fs = require('node:fs');
@@ -990,7 +1122,9 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
     assert child_environment["PROMPTFOO_DISABLE_UPDATE"] == "1"
     assert "REAL_PROVIDER_API_KEY" not in child_environment
     assert json.loads(result) == {
-        "metadata": adapter.parse_promptfoo_result(FROZEN_RESULT.read_bytes()).metadata,
+        "metadata": adapter.parse_promptfoo_result(
+            _result_bytes(_result_value())
+        ).metadata,
         "output": {
             "caseId": "case-1",
             "objectKind": "CaseAnswer",
