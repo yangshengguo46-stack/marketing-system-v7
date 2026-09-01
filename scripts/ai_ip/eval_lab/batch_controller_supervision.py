@@ -14,12 +14,22 @@ try:
     from .batch_controller_launch_materialization import expand_argument
     from .batch_controller_launch_record import build_launch_record
     from .batch_controller_process_capture import captured_result
+    from .batch_controller_process_guard import (
+        ProcessOwnershipGuard,
+        close_descriptor as _close_descriptor,
+        close_process_stream as _close_process_stream,
+    )
     from .batch_controller_process_lease import ProcessLifecycleLease
 except ImportError:
     from batch_controller_capture import CapturedResult, FatalSupervisorError
     from batch_controller_launch_materialization import expand_argument
     from batch_controller_launch_record import build_launch_record
     from batch_controller_process_capture import captured_result
+    from batch_controller_process_guard import (
+        ProcessOwnershipGuard,
+        close_descriptor as _close_descriptor,
+        close_process_stream as _close_process_stream,
+    )
     from batch_controller_process_lease import ProcessLifecycleLease
 
 
@@ -147,33 +157,11 @@ def terminate_and_wait(owned: OwnedProcess, deadline: float) -> bool:
     return owned.stopped
 
 
-def _close_descriptor(descriptor: int) -> None:
-    try:
-        os.close(descriptor)
-    except OSError:
-        pass
-
-
 def close_owned(owned: OwnedProcess) -> None:
     for name, descriptor in list(owned.read_descriptors.items()):
         _close_read_descriptor(owned, name, descriptor)
     owned.read_descriptors.clear()
     owned.prepared.close()
-
-
-def _close_process_stream(process: subprocess.Popen, name: str) -> int | None:
-    stream = getattr(process, name, None)
-    if stream is None:
-        return None
-    try:
-        descriptor = stream.fileno()
-    except (OSError, ValueError):
-        descriptor = None
-    try:
-        stream.close()
-    except OSError:
-        pass
-    return descriptor
 
 
 def _close_read_descriptor(owned: OwnedProcess, name: str, descriptor: int) -> None:
@@ -182,67 +170,6 @@ def _close_read_descriptor(owned: OwnedProcess, name: str, descriptor: int) -> N
     else:
         _close_descriptor(descriptor)
     owned.read_descriptors.pop(name, None)
-
-
-class ProcessOwnershipGuard:
-    """Own every launch FD before Popen and the process at Popen assignment."""
-
-    def __init__(
-        self,
-        prepared: object,
-        descriptors: set[int],
-        lease: ProcessLifecycleLease,
-    ) -> None:
-        self.prepared = prepared
-        self.descriptors = descriptors
-        self.lease = lease
-        self.process: subprocess.Popen | None = None
-        self.group_id: int | None = None
-        self.transferred = False
-
-    def start(self, popen: object, argv: list[str], **kwargs) -> subprocess.Popen:
-        self.process = popen(argv, **kwargs)
-        self.group_id = self.process.pid
-        self.lease.attach_raw_process(self.process.pid, self.group_id)
-        return self.process
-
-    def close_descriptor(self, descriptor: int) -> None:
-        os.close(descriptor)
-        self.descriptors.discard(descriptor)
-
-    def transfer(self) -> None:
-        self.transferred = True
-        self.descriptors.clear()
-
-    def abort(self, error: BaseException) -> None:
-        confirmed = True
-        stop_error = None
-        if self.process is not None and self.group_id is not None:
-            try:
-                confirmed = _terminate_process(
-                    self.process, self.group_id, time.monotonic() + _STOP_SECONDS
-                )
-            except BaseException as termination_error:
-                confirmed = False
-                stop_error = termination_error
-            if confirmed:
-                self.lease.confirm_stopped()
-            else:
-                self.lease.mark_orphaned(stop_error or error)
-            for name in ("stdout", "stderr"):
-                descriptor = _close_process_stream(self.process, name)
-                if descriptor is not None:
-                    self.descriptors.discard(descriptor)
-        else:
-            self.lease.cancel_before_start()
-        for descriptor in tuple(self.descriptors):
-            _close_descriptor(descriptor)
-        self.descriptors.clear()
-        self.prepared.close()
-        if not confirmed:
-            raise FatalSupervisorError(
-                "fatal supervisor orphan: post-launch stop was not confirmed"
-            ) from (stop_error or error)
 
 
 def _pipes() -> tuple[int, int]:
@@ -388,7 +315,7 @@ def spawn(
         guard.transfer()
         return owned
     except BaseException as error:
-        guard.abort(error)
+        guard.abort(error, _terminate_process)
         raise
 
 
