@@ -1,30 +1,45 @@
 """Deterministic Promptfoo runtime sealing for Task 4 launch artifacts."""
 
-import gzip
 import hashlib
 import json
-import os
 import platform
 import re
-import stat
-import struct
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 try:
+    from .batch_promptfoo_archive import (
+        MAX_CHUNK_BYTES,
+        MAX_CHUNKS,
+        MAX_FILES,
+        MAX_FILE_BYTES,
+        MAX_UNPACKED_BYTES,
+        PromptfooFilesystemError,
+        build_runtime_archive,
+        read_bounded_regular,
+    )
     from .batch_launch_spec import LaunchArtifact
 except ImportError:
+    from batch_promptfoo_archive import (
+        MAX_CHUNK_BYTES,
+        MAX_CHUNKS,
+        MAX_FILES,
+        MAX_FILE_BYTES,
+        MAX_UNPACKED_BYTES,
+        PromptfooFilesystemError,
+        build_runtime_archive,
+        read_bounded_regular,
+    )
     from batch_launch_spec import LaunchArtifact
 
 
 PROMPTFOO_VERSION = "0.122.0"
 ARCHIVE_FORMAT = "ai-ip-promptfoo-records-v1"
-MAX_CHUNK_BYTES = 16 * 1024 * 1024
-MAX_CHUNKS = 29
-MAX_FILES = 100_000
-MAX_FILE_BYTES = 384 * 1024 * 1024
-MAX_UNPACKED_BYTES = 2 * 1024 * 1024 * 1024
 MAX_NODE_BYTES = 128 * 1024 * 1024
+MAX_WORKSPACE_PACKAGE_BYTES = 64 * 1024
+MAX_WORKSPACE_LOCK_BYTES = 8 * 1024 * 1024
+MAX_RUNTIME_MANIFEST_BYTES = 1024 * 1024
+MAX_SOURCE_BYTES = 1024 * 1024
 _ENTRYPOINT = "node_modules/promptfoo/dist/src/entrypoint.js"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _WORKSPACE_PACKAGE = _REPO_ROOT / "ai-ip-evals/lab/promptfoo/package.json"
@@ -89,32 +104,6 @@ class SealedPromptfooRuntime:
     artifact_arguments: tuple[str, ...]
 
 
-class _ChunkWriter:
-    def __init__(self) -> None:
-        self._pending = bytearray()
-        self.chunks: list[bytes] = []
-
-    def write(self, payload: bytes) -> int:
-        view = memoryview(payload)
-        while view:
-            amount = min(MAX_CHUNK_BYTES - len(self._pending), len(view))
-            self._pending.extend(view[:amount])
-            view = view[amount:]
-            if len(self._pending) == MAX_CHUNK_BYTES:
-                self.chunks.append(bytes(self._pending))
-                self._pending.clear()
-        return len(payload)
-
-    def flush(self) -> None:
-        pass
-
-    def finish(self) -> tuple[bytes, ...]:
-        if self._pending:
-            self.chunks.append(bytes(self._pending))
-            self._pending.clear()
-        return tuple(self.chunks)
-
-
 def _canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
@@ -130,126 +119,18 @@ def _digest(value: object, label: str) -> str:
 
 
 def _bounded_regular(path: Path, maximum: int, label: str) -> bytes:
-    descriptor = -1
     try:
-        before = path.lstat()
-        if (
-            not stat.S_ISREG(before.st_mode)
-            or stat.S_ISLNK(before.st_mode)
-            or before.st_size > maximum
-        ):
-            raise PromptfooBundleError(f"{label} is not a bounded regular file")
-        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-        opened = os.fstat(descriptor)
-        if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
-            raise PromptfooBundleError(f"{label} changed while opened")
-        chunks: list[bytes] = []
-        remaining = maximum + 1
-        while remaining:
-            chunk = os.read(descriptor, min(64 * 1024, remaining))
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        after = os.fstat(descriptor)
-        if (
-            opened.st_size,
-            opened.st_mtime_ns,
-            opened.st_ino,
-        ) != (after.st_size, after.st_mtime_ns, after.st_ino):
-            raise PromptfooBundleError(f"{label} changed while measured")
-        payload = b"".join(chunks)
-        if len(payload) > maximum:
-            raise PromptfooBundleError(f"{label} exceeds its byte bound")
-        return payload
-    except OSError as error:
-        raise PromptfooBundleError(f"{label} is unavailable") from error
-    finally:
-        if descriptor >= 0:
-            os.close(descriptor)
-
-
-def _runtime_files(root: Path) -> tuple[tuple[PurePosixPath, Path], ...]:
-    if not root.is_absolute() or not root.is_dir() or root.is_symlink():
-        raise PromptfooBundleError("Promptfoo runtime root is unsafe")
-    files: list[tuple[PurePosixPath, Path]] = []
-    try:
-        for directory, names, filenames in os.walk(root, followlinks=False):
-            names.sort()
-            filenames.sort()
-            directory_path = Path(directory)
-            for name in names:
-                candidate = directory_path / name
-                if candidate.is_symlink():
-                    raise PromptfooBundleError("Promptfoo runtime contains a symlink")
-            for name in filenames:
-                candidate = directory_path / name
-                relative = PurePosixPath(candidate.relative_to(root).as_posix())
-                if candidate.is_symlink() and ".bin" in relative.parts:
-                    continue
-                if candidate.is_symlink() or not candidate.is_file():
-                    raise PromptfooBundleError(
-                        "Promptfoo runtime contains a non-regular entry"
-                    )
-                files.append((relative, candidate))
-    except OSError as error:
-        raise PromptfooBundleError("Promptfoo runtime tree is unavailable") from error
-    if not files or len(files) > MAX_FILES:
-        raise PromptfooBundleError("Promptfoo runtime file count exceeds its bound")
-    return tuple(files)
-
-
-def _validate_promptfoo_package(root: Path) -> None:
-    package_path = root / "node_modules/promptfoo/package.json"
-    try:
-        package = json.loads(_bounded_regular(package_path, 1024 * 1024, "package"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise PromptfooBundleError("Promptfoo package manifest is invalid") from error
-    if (
-        type(package) is not dict
-        or package.get("name") != "promptfoo"
-        or package.get("version") != PROMPTFOO_VERSION
-        or type(package.get("bin")) is not dict
-        or package["bin"].get("promptfoo") != "dist/src/entrypoint.js"
-        or not (root / _ENTRYPOINT).is_file()
-    ):
-        raise PromptfooBundleError("Promptfoo runtime package is not exact 0.122.0")
+        return read_bounded_regular(path, maximum, label)
+    except PromptfooFilesystemError as error:
+        raise PromptfooBundleError(str(error)) from error
 
 
 def _build_archive(root: Path) -> tuple[tuple[bytes, ...], str, int, int]:
-    _validate_promptfoo_package(root)
-    writer = _ChunkWriter()
-    tree = hashlib.sha256()
-    file_count = 0
-    unpacked_bytes = 0
-    with gzip.GzipFile(fileobj=writer, mode="wb", compresslevel=9, mtime=0) as archive:
-        for relative, path in _runtime_files(root):
-            payload = _bounded_regular(path, MAX_FILE_BYTES, "Promptfoo runtime file")
-            unpacked_bytes += len(payload)
-            file_count += 1
-            if unpacked_bytes > MAX_UNPACKED_BYTES:
-                raise PromptfooBundleError(
-                    "Promptfoo runtime expanded bytes exceed the bound"
-                )
-            mode = 0o700 if path.stat().st_mode & 0o111 else 0o600
-            header = _canonical(
-                {
-                    "mode": mode,
-                    "path": relative.as_posix(),
-                    "sha256": hashlib.sha256(payload).hexdigest(),
-                    "size": len(payload),
-                }
-            )
-            record = struct.pack(">I", len(header)) + header + payload
-            tree.update(record)
-            archive.write(record)
-        terminator = struct.pack(">I", 0)
-        tree.update(terminator)
-        archive.write(terminator)
-    chunks = writer.finish()
-    if not chunks or len(chunks) > MAX_CHUNKS:
-        raise PromptfooBundleError("Promptfoo runtime archive exceeds its chunk bound")
-    return chunks, tree.hexdigest(), file_count, unpacked_bytes
+    try:
+        built = build_runtime_archive(root)
+    except PromptfooFilesystemError as error:
+        raise PromptfooBundleError(str(error)) from error
+    return built.chunks, built.tree_sha256, built.file_count, built.unpacked_bytes
 
 
 def _platform_identity() -> tuple[str, str]:
@@ -279,10 +160,16 @@ def measure_promptfoo_runtime(
         file_count,
         hashlib.sha256(node).hexdigest(),
         node_version,
-        hashlib.sha256(_WORKSPACE_PACKAGE.read_bytes()).hexdigest(),
+        hashlib.sha256(
+            _bounded_regular(
+                _WORKSPACE_PACKAGE, MAX_WORKSPACE_PACKAGE_BYTES, "workspace package"
+            )
+        ).hexdigest(),
         platform_arch,
         platform_os,
-        hashlib.sha256(_WORKSPACE_LOCK.read_bytes()).hexdigest(),
+        hashlib.sha256(
+            _bounded_regular(_WORKSPACE_LOCK, MAX_WORKSPACE_LOCK_BYTES, "workspace lock")
+        ).hexdigest(),
         PROMPTFOO_VERSION,
         tree_sha256,
         unpacked_bytes,
@@ -393,16 +280,26 @@ def seal_committed_promptfoo_runtime(
     platform_os, platform_arch = _platform_identity()
     manifest_path = _COMMITTED_SEALS / f"{platform_os}-{platform_arch}.json"
     try:
-        value = json.loads(manifest_path.read_bytes())
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        value = json.loads(
+            _bounded_regular(
+                manifest_path, MAX_RUNTIME_MANIFEST_BYTES, "runtime manifest"
+            )
+        )
+    except (PromptfooBundleError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise PromptfooBundleError("committed Promptfoo runtime seal is unavailable") from error
     seal = _seal_from_json(value)
     if (seal.platform_os, seal.platform_arch) != (platform_os, platform_arch):
         raise PromptfooBundleError("committed Promptfoo runtime targets another platform")
     if (
-        hashlib.sha256(_WORKSPACE_PACKAGE.read_bytes()).hexdigest()
+        hashlib.sha256(
+            _bounded_regular(
+                _WORKSPACE_PACKAGE, MAX_WORKSPACE_PACKAGE_BYTES, "workspace package"
+            )
+        ).hexdigest()
         != seal.package_json_sha256
-        or hashlib.sha256(_WORKSPACE_LOCK.read_bytes()).hexdigest()
+        or hashlib.sha256(
+            _bounded_regular(_WORKSPACE_LOCK, MAX_WORKSPACE_LOCK_BYTES, "workspace lock")
+        ).hexdigest()
         != seal.pnpm_lock_sha256
     ):
         raise PromptfooBundleError(

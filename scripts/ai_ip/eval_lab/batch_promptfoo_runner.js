@@ -115,21 +115,43 @@ function exactKeys(value, keys, label) {
 }
 
 function safeRelative(value) {
+  const encoded = typeof value === "string" ? Buffer.from(value, "utf8") : null;
   if (
     typeof value !== "string" ||
     value.length < 1 ||
-    value.length > 4096 ||
+    encoded.toString("utf8") !== value ||
+    encoded.length > 4096 ||
     value.includes("\\") ||
-    value.includes("\0") ||
+    /[\x00-\x1f\x7f]/.test(value) ||
     path.posix.isAbsolute(value)
   ) {
     throw new RunnerError("runtime archive path is unsafe");
   }
   const parts = value.split("/");
-  if (parts.some((part) => part === "" || part === "." || part === "..")) {
+  if (
+    parts.length > 128 ||
+    parts.some((part) => part === "" || part === "." || part === "..")
+  ) {
     throw new RunnerError("runtime archive path traversal is prohibited");
   }
   return parts;
+}
+
+function writeAll(fd, payload, writer = fs.writeSync) {
+  let offset = 0;
+  while (offset < payload.length) {
+    let amount;
+    try {
+      amount = writer(fd, payload, offset, payload.length - offset);
+    } catch (error) {
+      if (error?.code === "EINTR") continue;
+      throw error;
+    }
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > payload.length - offset) {
+      throw new RunnerError("pipe write made no progress");
+    }
+    offset += amount;
+  }
 }
 
 function isolatedDirectory(value, label) {
@@ -450,12 +472,12 @@ async function main() {
   const parsed = parseResult(
     boundedFile(outputPath, MAX_RESULT_BYTES, "Promptfoo result"),
   );
-  fs.writeSync(Number(process.env.AI_IP_RESULT_FD), Buffer.from(canonical(parsed.result)));
-  fs.writeSync(Number(process.env.AI_IP_TELEMETRY_FD), Buffer.from(canonical(parsed.telemetry)));
+  writeAll(Number(process.env.AI_IP_RESULT_FD), Buffer.from(canonical(parsed.result)));
+  writeAll(Number(process.env.AI_IP_TELEMETRY_FD), Buffer.from(canonical(parsed.telemetry)));
   return 0;
 }
 
-module.exports = { nodeVersionSupported };
+module.exports = { nodeVersionSupported, safeRelative, writeAll };
 
 if (require.main === module) {
   main()

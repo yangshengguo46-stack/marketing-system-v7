@@ -204,7 +204,12 @@ def compile_promptfoo_launch_set(
         ) from error
     source_artifacts = []
     for name in ("batch_promptfoo_runner.js", "batch_promptfoo_result.js"):
-        payload = Path(__file__).with_name(name).read_bytes()
+        try:
+            payload = _bundle.read_bounded_regular(
+                Path(__file__).with_name(name), _bundle.MAX_SOURCE_BYTES, name
+            )
+        except _bundle.PromptfooFilesystemError as error:
+            raise PromptfooAdapterError(f"sealed runner source is unavailable: {error}") from error
         source_artifacts.append(
             LaunchArtifact(name, payload, hashlib.sha256(payload).hexdigest())
         )

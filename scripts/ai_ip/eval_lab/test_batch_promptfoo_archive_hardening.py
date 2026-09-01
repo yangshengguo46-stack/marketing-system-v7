@@ -6,6 +6,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -143,7 +144,10 @@ def test_bin_file_link_is_ignored_but_bin_directory_link_is_rejected(
 def test_runtime_archive_rejects_special_entries(tmp_path: Path, kind: str) -> None:
     """Catches special entries entering a runtime authority seal."""
     archive = _archive()
-    runtime = _runtime(tmp_path)
+    short_root: Path | None = None
+    if kind == "socket":
+        short_root = Path(tempfile.mkdtemp(prefix="07b-pf-", dir="/tmp"))
+    runtime = _runtime(short_root or tmp_path)
     unsafe = runtime / kind
     if kind == "fifo":
         os.mkfifo(unsafe)
@@ -152,8 +156,12 @@ def test_runtime_archive_rejects_special_entries(tmp_path: Path, kind: str) -> N
         endpoint.bind(str(unsafe))
         endpoint.close()
 
-    with pytest.raises(archive.PromptfooFilesystemError, match="regular|special"):
-        archive.build_runtime_archive(_canonical(runtime))
+    try:
+        with pytest.raises(archive.PromptfooFilesystemError, match="regular|special"):
+            archive.build_runtime_archive(_canonical(runtime))
+    finally:
+        if short_root is not None:
+            shutil.rmtree(short_root)
 
 
 def test_control_regular_to_fifo_race_is_nonblocking(
