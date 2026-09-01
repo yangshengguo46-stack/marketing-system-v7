@@ -796,6 +796,7 @@ def _malicious_archive_manifest(payload: bytes) -> bytes:
             "entrypoint": "node_modules/promptfoo/dist/src/entrypoint.js",
             "fileCount": 1,
             "format": "ai-ip-promptfoo-records-v1",
+            "inventorySha256": "d" * 64,
             "maximumFileBytes": 384 * 1024 * 1024,
             "maximumUnpackedBytes": 2 * 1024 * 1024 * 1024,
             "nodeSha256": "a" * 64,
@@ -829,6 +830,39 @@ def _runner_isolation(tmp_path: Path) -> dict[str, str]:
     }
 
 
+def _run_sealed_bootstrap(
+    tmp_path: Path, manifest: Path, chunk: Path
+) -> subprocess.CompletedProcess[bytes]:
+    attestation_read, attestation_write = os.pipe()
+    environment = _runner_isolation(tmp_path)
+    environment.update(
+        {
+            "AI_IP_ATTEMPT_ID": "d" * 64,
+            "AI_IP_RUNTIME_ATTESTATION_FD": str(attestation_write),
+        }
+    )
+    try:
+        completed = subprocess.run(
+            [
+                shutil.which("node") or "node",
+                str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+                str(MODULE_ROOT / "batch_promptfoo_result.js"),
+                str(manifest),
+                str(chunk),
+            ],
+            cwd=tmp_path,
+            env=environment,
+            pass_fds=(attestation_write,),
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        os.close(attestation_write)
+    assert os.read(attestation_read, 8193) == b""
+    os.close(attestation_read)
+    return completed
+
+
 @pytest.mark.parametrize(
     "record",
     [
@@ -851,19 +885,7 @@ def test_sealed_bootstrap_rejects_archive_traversal_or_oversize(
     manifest.write_bytes(_malicious_archive_manifest(record))
     chunk.write_bytes(compressed)
 
-    completed = subprocess.run(
-        [
-            shutil.which("node") or "node",
-            str(runner),
-            str(MODULE_ROOT / "batch_promptfoo_result.js"),
-            str(manifest),
-            str(chunk),
-        ],
-        cwd=tmp_path,
-        env=_runner_isolation(tmp_path),
-        capture_output=True,
-        check=False,
-    )
+    completed = _run_sealed_bootstrap(tmp_path, manifest, chunk)
 
     assert completed.returncode == 2
     assert any(token in completed.stderr.lower() for token in (b"path", b"bound"))
@@ -886,19 +908,7 @@ def test_sealed_bootstrap_bounds_incomplete_header_before_buffering_tail(
     manifest.write_bytes(_json_bytes(manifest_value))
     chunk.write_bytes(compressed)
 
-    completed = subprocess.run(
-        [
-            shutil.which("node") or "node",
-            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
-            str(MODULE_ROOT / "batch_promptfoo_result.js"),
-            str(manifest),
-            str(chunk),
-        ],
-        cwd=tmp_path,
-        env=_runner_isolation(tmp_path),
-        capture_output=True,
-        check=False,
-    )
+    completed = _run_sealed_bootstrap(tmp_path, manifest, chunk)
 
     assert completed.returncode == 2
     assert message in completed.stderr.lower()

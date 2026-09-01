@@ -34,6 +34,7 @@
   "entrypoint": "node_modules/promptfoo/dist/src/entrypoint.js",
   "fileCount": 53634,
   "format": "ai-ip-promptfoo-records-v1",
+  "inventorySha256": "b853bb14a613e93fc5918c9254f271daab7b160c46ba4f4bfd6f6b23a2f5a127",
   "maximumFileBytes": 402653184,
   "maximumUnpackedBytes": 2147483648,
   "nodeSha256": "1052eb9c7d6c60a79b968e09f75af55a73462b0f6dff0964336d63b5e13eb63c",

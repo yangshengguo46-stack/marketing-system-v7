@@ -6,8 +6,20 @@ import json
 import os
 import stat
 import struct
-from dataclasses import dataclass
 from pathlib import Path
+
+try:
+    from .batch_promptfoo_runtime_attestation import (
+        ArchiveBuild,
+        PromptfooFilesystemError,
+        inventory_sha256,
+    )
+except ImportError:
+    from batch_promptfoo_runtime_attestation import (
+        ArchiveBuild,
+        PromptfooFilesystemError,
+        inventory_sha256,
+    )
 
 
 MAX_CHUNK_BYTES = 16 * 1024 * 1024
@@ -26,18 +38,6 @@ _ENTRYPOINT = "node_modules/promptfoo/dist/src/entrypoint.js"
 _HAS_DESCRIPTOR_RELATIVE_OPEN = os.open in os.supports_dir_fd
 _HAS_DESCRIPTOR_RELATIVE_STAT = os.stat in os.supports_dir_fd
 _HAS_DESCRIPTOR_SCANDIR = os.scandir in os.supports_fd
-
-
-class PromptfooFilesystemError(ValueError):
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class ArchiveBuild:
-    chunks: tuple[bytes, ...]
-    tree_sha256: str
-    file_count: int
-    unpacked_bytes: int
 
 
 def _state(metadata: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
@@ -318,6 +318,7 @@ class _ArchiveBuilder:
         self.unpacked_bytes = 0
         self.package_bytes: bytes | None = None
         self.has_entrypoint = False
+        self.inventory: list[dict[str, object]] = []
 
     def _file(self, directory: int, name: str, parts: tuple[str, ...], before: os.stat_result) -> None:
         relative, _ = _relative_path(parts)
@@ -369,6 +370,14 @@ class _ArchiveBuilder:
             self.unpacked_bytes += before.st_size
             if self.file_count > MAX_FILES or self.unpacked_bytes > MAX_UNPACKED_BYTES:
                 raise PromptfooFilesystemError("Promptfoo runtime content exceeds its bound")
+            self.inventory.append(
+                {
+                    "mode": 0o500 if mode == 0o700 else 0o400,
+                    "path": relative,
+                    "sha256": first_digest,
+                    "size": before.st_size,
+                }
+            )
             if is_package:
                 self.package_bytes = captured
             if relative == _ENTRYPOINT:
@@ -475,4 +484,11 @@ def build_runtime_archive(runtime_root: Path) -> ArchiveBuild:
     chunks = writer.finish()
     if not chunks:
         raise PromptfooFilesystemError("Promptfoo runtime archive is empty")
-    return ArchiveBuild(chunks, tree.hexdigest(), builder.file_count, builder.unpacked_bytes)
+    ordered = sorted(builder.inventory, key=lambda item: str(item["path"]).encode("utf-8"))
+    return ArchiveBuild(
+        chunks,
+        tree.hexdigest(),
+        inventory_sha256(ordered),
+        builder.file_count,
+        builder.unpacked_bytes,
+    )

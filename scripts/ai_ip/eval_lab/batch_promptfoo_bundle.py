@@ -65,6 +65,7 @@ class RuntimeSeal:
     chunk_sha256: tuple[str, ...]
     entrypoint: str
     file_count: int
+    inventory_sha256: str
     node_sha256: str
     node_version: str
     package_json_sha256: str
@@ -82,6 +83,7 @@ class RuntimeSeal:
             "entrypoint": self.entrypoint,
             "fileCount": self.file_count,
             "format": ARCHIVE_FORMAT,
+            "inventorySha256": self.inventory_sha256,
             "maximumFileBytes": MAX_FILE_BYTES,
             "maximumUnpackedBytes": MAX_UNPACKED_BYTES,
             "nodeSha256": self.node_sha256,
@@ -125,12 +127,18 @@ def _bounded_regular(path: Path, maximum: int, label: str) -> bytes:
         raise PromptfooBundleError(str(error)) from error
 
 
-def _build_archive(root: Path) -> tuple[tuple[bytes, ...], str, int, int]:
+def _build_archive(root: Path) -> tuple[tuple[bytes, ...], str, str, int, int]:
     try:
         built = build_runtime_archive(root)
     except PromptfooFilesystemError as error:
         raise PromptfooBundleError(str(error)) from error
-    return built.chunks, built.tree_sha256, built.file_count, built.unpacked_bytes
+    return (
+        built.chunks,
+        built.tree_sha256,
+        built.inventory_sha256,
+        built.file_count,
+        built.unpacked_bytes,
+    )
 
 
 def _platform_identity() -> tuple[str, str]:
@@ -151,13 +159,16 @@ def measure_promptfoo_runtime(
 ) -> RuntimeSeal:
     """Measure a tree for builder tests; production still requires the committed seal."""
     node = _bounded_regular(node_path, MAX_NODE_BYTES, "portable Node")
-    chunks, tree_sha256, file_count, unpacked_bytes = _build_archive(runtime_root)
+    chunks, tree_sha256, inventory_sha256, file_count, unpacked_bytes = _build_archive(
+        runtime_root
+    )
     platform_os, platform_arch = _platform_identity()
     return RuntimeSeal(
         hashlib.sha256(b"".join(chunks)).hexdigest(),
         tuple(hashlib.sha256(chunk).hexdigest() for chunk in chunks),
         _ENTRYPOINT,
         file_count,
+        inventory_sha256,
         hashlib.sha256(node).hexdigest(),
         node_version,
         hashlib.sha256(
@@ -183,11 +194,14 @@ def seal_promptfoo_runtime(
     node = _bounded_regular(node_path, MAX_NODE_BYTES, "portable Node")
     if hashlib.sha256(node).hexdigest() != expected.node_sha256:
         raise PromptfooBundleError("portable Node identity differs from the runtime seal")
-    chunks, tree_sha256, file_count, unpacked_bytes = _build_archive(runtime_root)
+    chunks, tree_sha256, inventory_sha256, file_count, unpacked_bytes = _build_archive(
+        runtime_root
+    )
     archive_sha256 = hashlib.sha256(b"".join(chunks)).hexdigest()
     chunk_sha256 = tuple(hashlib.sha256(chunk).hexdigest() for chunk in chunks)
     if (
         tree_sha256 != expected.tree_sha256
+        or inventory_sha256 != expected.inventory_sha256
         or archive_sha256 != expected.archive_sha256
         or chunk_sha256 != expected.chunk_sha256
         or file_count != expected.file_count
@@ -220,6 +234,7 @@ def _seal_from_json(value: object) -> RuntimeSeal:
         "entrypoint",
         "fileCount",
         "format",
+        "inventorySha256",
         "maximumFileBytes",
         "maximumUnpackedBytes",
         "nodeSha256",
@@ -261,6 +276,7 @@ def _seal_from_json(value: object) -> RuntimeSeal:
         tuple(_digest(item, "chunk SHA-256") for item in chunks),
         value["entrypoint"],
         value["fileCount"],
+        _digest(value["inventorySha256"], "inventory SHA-256"),
         _digest(value["nodeSha256"], "Node SHA-256"),
         value["nodeVersion"],
         _digest(value["packageJsonSha256"], "package SHA-256"),

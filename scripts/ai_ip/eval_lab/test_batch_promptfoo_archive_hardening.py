@@ -497,6 +497,7 @@ const terminator = Buffer.alloc(4);
 const record = Buffer.concat([length, header, payload, terminator]);
 const manifest = {
   fileCount: 1,
+  inventorySha256: "1daa97129e09a48f9b24294866126cca15b2fbcd8aa860076514b3269fbc8e48",
   maximumFileBytes: 1024,
   maximumUnpackedBytes: 1024,
   treeSha256: crypto.createHash("sha256").update(record).digest("hex"),
