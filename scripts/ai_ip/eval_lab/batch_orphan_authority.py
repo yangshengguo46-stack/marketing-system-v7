@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pathlib import Path
+from contextlib import closing
 
 try:
     from .batch_contracts import seal_self_commitment, verify_self_commitment
@@ -77,55 +78,44 @@ def verify_orphan_authority(
     private_root: Path, pair_id: str, attempt_id: str
 ) -> dict[str, object]:
     name = orphan_authority_name(pair_id, attempt_id)
-    evidence = None
     try:
-        evidence = OfflineEvidence(Path(private_root), pair_id)
-        evidence.attempt(attempt_id)
-        record = evidence.load_root(name)
-        invalid_types = type(record) is not dict or set(record) != _FIELDS
-        if not invalid_types:
-            invalid_types = any(
+        with closing(OfflineEvidence(Path(private_root), pair_id)) as evidence:
+            evidence.attempt(attempt_id)
+            record = evidence.load_root(name)
+            if type(record) is not dict or set(record) != _FIELDS:
+                raise OrphanAuthorityError("orphan authority fields are invalid")
+            if any(
                 type(record[field]) is not int for field in _FIELDS - _TEXT_FIELDS
-            )
-            invalid_types |= any(
-                type(record[field]) is not str for field in _TEXT_FIELDS
-            )
-        if invalid_types:
-            raise OrphanAuthorityError("orphan authority fields or types are invalid")
-        verify_self_commitment(record, "orphanSha256")
-        if record["pairId"] != pair_id or record["attemptId"] != attempt_id:
-            raise OrphanAuthorityError("orphan authority filename identity differs")
-        identifier(record["pairId"], "pair ID")
-        identifier(record["attemptId"], "attempt ID")
-        arm = record["armClass"]
-        identity = evidence.load_pair("identity-context.json")
-        if (
-            arm not in {"stock", "modified"}
-            or type(identity) is not dict
-            or type(identity.get(arm)) is not dict
-            or identity[arm].get("launchSpecSha256") != record["launchSpecSha256"]
-        ):
-            raise OrphanAuthorityError("orphan authority arm commitment differs")
-        identifier(record["launchSpecSha256"], "launch specification SHA-256")
-        if (
-            record["schemaVersion"] != 1
-            or record["processId"] <= 0
-            or record["processGroupId"] <= 0
-            or record["status"] != "orphaned"
-            or record["stopDisposition"] != "unconfirmed"
-            or not record["errorType"]
-        ):
-            raise OrphanAuthorityError("orphan authority disposition is invalid")
-        _timestamp(record["recordedAt"])
-        evidence.load_pair("failure.json")
-        if evidence.has_pair("receipt.json"):
-            raise OrphanAuthorityError("completed pair cannot claim orphan authority")
-        evidence.verify()
-        return record
+            ) or any(type(record[field]) is not str for field in _TEXT_FIELDS):
+                raise OrphanAuthorityError("orphan authority types are invalid")
+            verify_self_commitment(record, "orphanSha256")
+            if record["pairId"] != pair_id or record["attemptId"] != attempt_id:
+                raise OrphanAuthorityError("orphan authority filename identity differs")
+            identifier(record["pairId"], "pair ID")
+            identifier(record["attemptId"], "attempt ID")
+            arm = record["armClass"]
+            identity = evidence.load_pair("identity-context.json")
+            if (
+                arm not in {"stock", "modified"}
+                or type(identity) is not dict
+                or type(identity.get(arm)) is not dict
+                or identity[arm].get("launchSpecSha256") != record["launchSpecSha256"]
+            ):
+                raise OrphanAuthorityError("orphan authority arm commitment differs")
+            identifier(record["launchSpecSha256"], "launch specification SHA-256")
+            if record["schemaVersion"] != 1 or record["status"] != "orphaned":
+                raise OrphanAuthorityError("orphan authority disposition is invalid")
+            if record["stopDisposition"] != "unconfirmed" or not record["errorType"]:
+                raise OrphanAuthorityError("orphan authority disposition is invalid")
+            if min(record["processId"], record["processGroupId"]) <= 0:
+                raise OrphanAuthorityError("orphan authority disposition is invalid")
+            _timestamp(record["recordedAt"])
+            evidence.load_pair("failure.json")
+            if evidence.has_pair("receipt.json"):
+                raise OrphanAuthorityError("completed pair has orphan authority")
+            evidence.verify()
+            return record
     except OrphanAuthorityError:
         raise
     except (OSError, ValueError) as error:
         raise OrphanAuthorityError("orphan authority verification failed") from error
-    finally:
-        if evidence is not None:
-            evidence.close()

@@ -24,6 +24,8 @@ except ImportError:
     )
     from contracts import canonical_json_bytes
 
+_PROMOTED = leases.ProcessLeaseState.PROMOTED_OWNED_PROCESS
+
 
 class PairLifecycle:
     """Tracks evidence and cells until verified pair completion or terminal failure."""
@@ -145,10 +147,10 @@ class PairLifecycle:
                     except BaseException as stop_error:
                         lease.mark_orphaned(stop_error)
                     else:
-                        if confirmed:
-                            lease.confirm_stopped()
-                        else:
+                        if not confirmed:
                             lease.mark_orphaned(error)
+                        elif lease.state is _PROMOTED:
+                            lease.confirm_stopped()
                 finally:
                     close_owned(process)
         if self.orphaned_processes:

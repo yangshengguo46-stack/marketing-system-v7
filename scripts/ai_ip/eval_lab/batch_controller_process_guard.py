@@ -1,26 +1,23 @@
 import os
 import time
+from contextlib import suppress
 
 try:
     from .batch_controller_capture import FatalSupervisorError
-    from .batch_controller_process_lease import ProcessLifecycleLease
 except ImportError:
     from batch_controller_capture import FatalSupervisorError
-    from batch_controller_process_lease import ProcessLifecycleLease
 
 
 class ProcessOwnershipGuard:
-    def __init__(self, prepared, descriptors, lease: ProcessLifecycleLease):
+    def __init__(self, prepared, descriptors, lease):
         self.prepared = prepared
         self.descriptors = descriptors
         self.lease = lease
         self.process = None
-        self.group_id = None
 
     def start(self, popen: object, argv: list[str], **kwargs):
         self.process = popen(argv, **kwargs)
-        self.group_id = self.process.pid
-        self.lease.attach_raw_process(self.process.pid, self.group_id)
+        self.lease.attach_raw_process(self.process.pid, self.process.pid)
         return self.process
 
     def close_descriptor(self, descriptor: int) -> None:
@@ -36,7 +33,7 @@ class ProcessOwnershipGuard:
             self.lease.cancel_before_start()
         else:
             try:
-                confirmed = stop(self.process, self.group_id, time.monotonic() + 1.0)
+                confirmed = stop(self.process, self.process.pid, time.monotonic() + 1.0)
             except BaseException as cause:
                 confirmed = False
             if confirmed:
@@ -48,10 +45,8 @@ class ProcessOwnershipGuard:
                 if descriptor is not None:
                     self.descriptors.discard(descriptor)
         for descriptor in tuple(self.descriptors):
-            try:
+            with suppress(OSError):
                 os.close(descriptor)
-            except OSError:
-                pass
         self.descriptors.clear()
         self.prepared.close()
         if not confirmed:
