@@ -8,7 +8,12 @@ try:
         validate_contract,
     )
 except ImportError:
-    from contracts import LabContractError, load_exact_json, sha256_json, validate_contract
+    from contracts import (
+        LabContractError,
+        load_exact_json,
+        sha256_json,
+        validate_contract,
+    )
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -31,6 +36,7 @@ _SELF_COMMITMENT_FIELDS = frozenset(
         "planSha256",
         "receiptSha256",
         "importReceiptSha256",
+        "orphanSha256",
     }
 )
 

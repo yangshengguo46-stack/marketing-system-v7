@@ -5,6 +5,7 @@ from pathlib import Path
 
 try:
     from .batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
+    from .batch_orphan_authority import seal_orphan_authority
     from .batch_controller_process_lease import (
         OrphanedProcess,
         ProcessLeaseState,
@@ -18,6 +19,7 @@ try:
     from .contracts import canonical_json_bytes
 except ImportError:
     from batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
+    from batch_orphan_authority import seal_orphan_authority
     from batch_controller_process_lease import (
         OrphanedProcess,
         ProcessLeaseState,
@@ -72,9 +74,7 @@ class PairLifecycle:
         self._leases[key] = lease
         return lease
 
-    def promote_process(
-        self, lease: ProcessLifecycleLease, process: object
-    ) -> None:
+    def promote_process(self, lease: ProcessLifecycleLease, process: object) -> None:
         if lease not in self._leases.values():
             raise PairLifecycleError("process lease does not belong to this pair")
         lease.promote(process)
@@ -153,9 +153,7 @@ class PairLifecycle:
                     if lease.state is ProcessLeaseState.STOP_CONFIRMED:
                         continue
                     try:
-                        confirmed = terminate_and_wait(
-                            process, time.monotonic() + 1.0
-                        )
+                        confirmed = terminate_and_wait(process, time.monotonic() + 1.0)
                     except BaseException as stop_error:
                         lease.mark_orphaned(stop_error)
                     else:
@@ -166,7 +164,19 @@ class PairLifecycle:
                             lease.mark_orphaned(error)
                 finally:
                     close_owned(process)
-        if self.orphaned_processes:
+        orphaned_processes = self.orphaned_processes
+        if orphaned_processes:
+            sealing_error = None
+            for orphan in orphaned_processes:
+                try:
+                    seal_orphan_authority(self.layout.root_directory, orphan)
+                except BaseException as error:
+                    if sealing_error is None:
+                        sealing_error = error
+            if sealing_error is not None:
+                raise PairLifecycleError(
+                    "authenticated orphan authority sealing failed"
+                ) from sealing_error
             return
         for cell in self.cells:
             try:

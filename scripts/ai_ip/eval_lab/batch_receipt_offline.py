@@ -100,6 +100,9 @@ class OfflineEvidence:
     def load_pair(self, name: str, limit: int = MAX_PRIVATE_FILE_BYTES) -> object:
         return _load(self.pair, name, limit)
 
+    def load_root(self, name: str, limit: int = MAX_PRIVATE_FILE_BYTES) -> object:
+        return _load(self.root, name, limit)
+
     def load_attempt(
         self, attempt_id: str, name: str, limit: int = MAX_PRIVATE_FILE_BYTES
     ) -> object:

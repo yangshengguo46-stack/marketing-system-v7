@@ -343,9 +343,7 @@ def _begin_terminal_drain(
         owned.lease.mark_orphaned(error)
         raise
     if not confirmed:
-        error = FatalSupervisorError(
-            "fatal supervisor orphan: stop was not confirmed"
-        )
+        error = FatalSupervisorError("fatal supervisor orphan: stop was not confirmed")
         owned.lease.mark_orphaned(error)
         raise error
     owned.lease.confirm_stopped()

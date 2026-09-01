@@ -65,6 +65,7 @@ except ImportError:
 
 @dataclass
 class EvidenceLayout:
+    root_directory: BoundDirectory
     pair_directory: BoundDirectory
     attempt_directories: tuple[BoundDirectory, BoundDirectory]
     _entries: tuple[BoundDirectory, ...]
@@ -119,7 +120,7 @@ def prepare_private_layout(
     }
     layout_sha256 = sha256_json(layout_value)
     layout = EvidenceLayout(
-        entries[3], (entries[4], entries[5]), entries, layout_sha256
+        entries[0], entries[3], (entries[4], entries[5]), entries, layout_sha256
     )
     layout.verify()
     _write_exclusive(root / f"layout-{pair}.json", _json_bytes(layout_value))
