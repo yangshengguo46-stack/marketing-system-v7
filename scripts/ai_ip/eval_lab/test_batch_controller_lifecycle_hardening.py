@@ -272,6 +272,8 @@ class TestOrphanAuthority:
 
     def test_abort_rejects_foreign_lease_without_erasing_orphan(self, world, monkeypatch):  # fmt: skip
         pair_lifecycle = PairLifecycle(world.private_root, "a" * 64)
+        sentinel = SimpleNamespace(attempt_id="d" * 64)
+        pair_lifecycle.bind_cell(sentinel)
         expected = pair_lifecycle.reserve_process("stock", "b" * 64, "c" * 64); expected.attach_raw_process(123, 123)  # fmt: skip
         process, foreign = SimpleNamespace(lease=expected), _lease()
         pair_lifecycle.promote_process(expected, process); process.lease = foreign  # fmt: skip
