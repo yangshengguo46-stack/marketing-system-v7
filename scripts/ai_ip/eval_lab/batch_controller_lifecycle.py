@@ -6,11 +6,7 @@ from pathlib import Path
 try:
     from .batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
     from .batch_orphan_authority import seal_orphan_authority
-    from .batch_controller_process_lease import (
-        OrphanedProcess,
-        ProcessLeaseState,
-        ProcessLifecycleLease,
-    )
+    from . import batch_controller_process_lease as leases
     from .batch_receipt_storage import (
         entry_exists,
         seal_failure_tombstone,
@@ -20,11 +16,7 @@ try:
 except ImportError:
     from batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
     from batch_orphan_authority import seal_orphan_authority
-    from batch_controller_process_lease import (
-        OrphanedProcess,
-        ProcessLeaseState,
-        ProcessLifecycleLease,
-    )
+    import batch_controller_process_lease as leases
     from batch_receipt_storage import (
         entry_exists,
         seal_failure_tombstone,
@@ -42,8 +34,7 @@ class PairLifecycle:
         self.layout = None
         self.cells: list[object] = []
         self.processes: list[object] = []
-        self._leases: dict[tuple[str, str], ProcessLifecycleLease] = {}
-        self._process_leases: dict[int, ProcessLifecycleLease] = {}
+        self._leases: dict[tuple[str, str], leases.ProcessLifecycleLease] = {}
         self.completed = False
 
     def __enter__(self) -> "PairLifecycle":
@@ -64,25 +55,24 @@ class PairLifecycle:
 
     def reserve_process(
         self, arm_class: str, attempt_id: str, launch_spec_sha256: str
-    ) -> ProcessLifecycleLease:
+    ) -> leases.ProcessLifecycleLease:
         key = (arm_class, attempt_id)
         if key in self._leases:
             raise PairLifecycleError("process lease is already reserved")
-        lease = ProcessLifecycleLease(
+        lease = leases.ProcessLifecycleLease(
             self.pair_id, arm_class, attempt_id, launch_spec_sha256
         )
         self._leases[key] = lease
         return lease
 
-    def promote_process(self, lease: ProcessLifecycleLease, process: object) -> None:
+    def promote_process(self, lease, process):
         if lease not in self._leases.values():
             raise PairLifecycleError("process lease does not belong to this pair")
         lease.promote(process)
         self.processes.append(process)
-        self._process_leases[id(process)] = lease
 
     @property
-    def orphaned_processes(self) -> tuple[OrphanedProcess, ...]:
+    def orphaned_processes(self) -> tuple[leases.OrphanedProcess, ...]:
         return tuple(
             orphan
             for lease in self._leases.values()
@@ -90,13 +80,11 @@ class PairLifecycle:
         )
 
     def complete(self) -> None:
-        unsafe_states = {
-            ProcessLeaseState.RESERVED,
-            ProcessLeaseState.ATTACHED_RAW_PROCESS,
-            ProcessLeaseState.PROMOTED_OWNED_PROCESS,
-            ProcessLeaseState.ORPHANED,
+        terminal = {
+            leases.ProcessLeaseState.STOP_CONFIRMED,
+            leases.ProcessLeaseState.CANCELLED_BEFORE_START,
         }
-        if any(lease.state in unsafe_states for lease in self._leases.values()):
+        if any(lease.state not in terminal for lease in self._leases.values()):
             raise PairLifecycleError("pair process lease is not safely terminal")
         if any(not item.stopped for item in self.processes):
             raise PairLifecycleError("pair process is still live at completion")
@@ -148,9 +136,9 @@ class PairLifecycle:
                 from batch_controller_process import close_owned, terminate_and_wait
 
             for process in self.processes:
-                lease = self._process_leases[id(process)]
+                lease = process.lease
                 try:
-                    if lease.state is ProcessLeaseState.STOP_CONFIRMED:
+                    if lease.state is leases.ProcessLeaseState.STOP_CONFIRMED:
                         continue
                     try:
                         confirmed = terminate_and_wait(process, time.monotonic() + 1.0)
@@ -158,25 +146,22 @@ class PairLifecycle:
                         lease.mark_orphaned(stop_error)
                     else:
                         if confirmed:
-                            if lease.state is ProcessLeaseState.PROMOTED_OWNED_PROCESS:
-                                lease.confirm_stopped()
+                            lease.confirm_stopped()
                         else:
                             lease.mark_orphaned(error)
                 finally:
                     close_owned(process)
-        orphaned_processes = self.orphaned_processes
-        if orphaned_processes:
-            sealing_error = None
-            for orphan in orphaned_processes:
+        if self.orphaned_processes:
+            sealing_errors = []
+            for orphan in self.orphaned_processes:
                 try:
                     seal_orphan_authority(self.layout.root_directory, orphan)
                 except BaseException as error:
-                    if sealing_error is None:
-                        sealing_error = error
-            if sealing_error is not None:
+                    sealing_errors.append(error)
+            if sealing_errors:
                 raise PairLifecycleError(
                     "authenticated orphan authority sealing failed"
-                ) from sealing_error
+                ) from sealing_errors[0]
             return
         for cell in self.cells:
             try:

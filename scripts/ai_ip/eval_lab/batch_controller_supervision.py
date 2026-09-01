@@ -14,22 +14,14 @@ try:
     from .batch_controller_launch_materialization import expand_argument
     from .batch_controller_launch_record import build_launch_record
     from .batch_controller_process_capture import captured_result
-    from .batch_controller_process_guard import (
-        ProcessOwnershipGuard,
-        close_descriptor as _close_descriptor,
-        close_process_stream as _close_process_stream,
-    )
+    from .batch_controller_process_guard import ProcessOwnershipGuard
     from .batch_controller_process_lease import ProcessLifecycleLease
 except ImportError:
     from batch_controller_capture import CapturedResult, FatalSupervisorError
     from batch_controller_launch_materialization import expand_argument
     from batch_controller_launch_record import build_launch_record
     from batch_controller_process_capture import captured_result
-    from batch_controller_process_guard import (
-        ProcessOwnershipGuard,
-        close_descriptor as _close_descriptor,
-        close_process_stream as _close_process_stream,
-    )
+    from batch_controller_process_guard import ProcessOwnershipGuard
     from batch_controller_process_lease import ProcessLifecycleLease
 
 
@@ -157,11 +149,33 @@ def terminate_and_wait(owned: OwnedProcess, deadline: float) -> bool:
     return owned.stopped
 
 
+def _close_descriptor(descriptor: int) -> None:
+    try:
+        os.close(descriptor)
+    except OSError:
+        pass
+
+
 def close_owned(owned: OwnedProcess) -> None:
     for name, descriptor in list(owned.read_descriptors.items()):
         _close_read_descriptor(owned, name, descriptor)
     owned.read_descriptors.clear()
     owned.prepared.close()
+
+
+def _close_process_stream(process: subprocess.Popen, name: str) -> int | None:
+    stream = getattr(process, name, None)
+    if stream is None:
+        return None
+    try:
+        descriptor = stream.fileno()
+    except (OSError, ValueError):
+        descriptor = None
+    try:
+        stream.close()
+    except OSError:
+        pass
+    return descriptor
 
 
 def _close_read_descriptor(owned: OwnedProcess, name: str, descriptor: int) -> None:
@@ -315,7 +329,7 @@ def spawn(
         guard.transfer()
         return owned
     except BaseException as error:
-        guard.abort(error, _terminate_process)
+        guard.abort(error, _terminate_process, _close_process_stream)
         raise
 
 
