@@ -301,7 +301,9 @@ fn verify_pending_fixed_file_inventory(
         bail!("pending {label} filesystem SHA-256 differs from the expected entry");
     }
     if let Ok((records, _, _)) = verified_state(
-        root, /* allowed_new */ None, /* supplied_bytes */ None,
+        root,
+        /* allowed_new */ None,
+        /* supplied_bytes */ None,
         /* trust_allowed_projection */ false,
     ) && records
         .iter()
@@ -316,9 +318,7 @@ fn verify_pending_fixed_file_inventory(
         /* supplied_bytes */ None,
         /* trust_allowed_projection */ false,
     )
-    .with_context(|| {
-        format!("pending {label} inventory contains an unexpected path or changed state")
-    })?;
+    .with_context(|| format!("pending {label} inventory contains an unexpected path or changed state"))?;
     drop(records);
     retained.reverify_unchanged()?;
     Ok(VerifiedPrivateInventory {

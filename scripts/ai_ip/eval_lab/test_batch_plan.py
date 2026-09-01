@@ -28,7 +28,11 @@ from contracts import sha256_json  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parents[3]
 LAB_ROOT = REPO_ROOT / "ai-ip-evals" / "lab"
 ASSET_SKILL = (
-    REPO_ROOT / "ai-ip-assets" / "skills" / "deliver-ai-ip-content-package" / "SKILL.md"
+    REPO_ROOT
+    / "ai-ip-assets"
+    / "skills"
+    / "deliver-ai-ip-content-package"
+    / "SKILL.md"
 )
 
 
@@ -84,11 +88,7 @@ def _treatment_manifest(
         "treatmentManifestSha256": "0" * 64,
     }
     manifest["treatmentManifestSha256"] = sha256_json(
-        {
-            key: value
-            for key, value in manifest.items()
-            if key != "treatmentManifestSha256"
-        }
+        {key: value for key, value in manifest.items() if key != "treatmentManifestSha256"}
     )
     return manifest
 
@@ -330,9 +330,9 @@ def test_fixture_seeds_only_differ_by_the_declared_skill() -> None:
     assert modified_skill.read_bytes() == ASSET_SKILL.read_bytes()
     assert sha256_file(modified_skill) == sha256_file(ASSET_SKILL)
     stock_config = tomllib.loads(
-        (
-            LAB_ROOT / "fixtures" / "batch-runner" / "stock-seed" / "config.toml"
-        ).read_text(encoding="utf-8")
+        (LAB_ROOT / "fixtures" / "batch-runner" / "stock-seed" / "config.toml").read_text(
+            encoding="utf-8"
+        )
     )
     modified_config = tomllib.loads(
         (
@@ -347,15 +347,12 @@ def test_fixture_seeds_only_differ_by_the_declared_skill() -> None:
 
 
 def test_mutated_plan_is_rejected(
-    valid_plan: dict[str, object],
-    treatments: tuple[dict[str, object], dict[str, object]],
+    valid_plan: dict[str, object], treatments: tuple[dict[str, object], dict[str, object]]
 ) -> None:
     """Catches a plan verifier that does not bind token budget changes."""
     stock_treatment, modified_treatment = treatments
     sealed = seal_candidate_run_plan(
-        valid_plan,
-        stock_treatment=stock_treatment,
-        modified_treatment=modified_treatment,
+        valid_plan, stock_treatment=stock_treatment, modified_treatment=modified_treatment
     )
     assert sealed is not valid_plan
     verify_candidate_run_plan(
@@ -364,15 +361,12 @@ def test_mutated_plan_is_rejected(
     sealed["tokenBudget"] = 4097
     with pytest.raises(BatchPlanError, match="plan commitment"):
         verify_candidate_run_plan(
-            sealed,
-            stock_treatment=stock_treatment,
-            modified_treatment=modified_treatment,
+            sealed, stock_treatment=stock_treatment, modified_treatment=modified_treatment
         )
 
 
 def test_plan_sealer_rejects_invalid_wire_shape(
-    valid_plan: dict[str, object],
-    treatments: tuple[dict[str, object], dict[str, object]],
+    valid_plan: dict[str, object], treatments: tuple[dict[str, object], dict[str, object]]
 ) -> None:
     """Catches a plan sealer that commits a schema-invalid candidate plan."""
     valid_plan["tokenBudget"] = True
@@ -514,9 +508,7 @@ def test_treatment_manifest_rejects_normalized_prohibited_seed_names(
         )
 
 
-def test_stock_treatment_rejects_lead_skill_under_a_renamed_path(
-    tmp_path: Path,
-) -> None:
+def test_stock_treatment_rejects_lead_skill_under_a_renamed_path(tmp_path: Path) -> None:
     """Catches a stock seed that hides the Lead Skill under a noncanonical name."""
     seed = tmp_path / "seed"
     bundle = tmp_path / "bundle"
@@ -673,32 +665,25 @@ def test_treatment_verification_uses_one_seed_snapshot(
 
 
 def test_plan_refs_bind_verified_treatment_manifests(
-    valid_plan: dict[str, object],
-    treatments: tuple[dict[str, object], dict[str, object]],
+    valid_plan: dict[str, object], treatments: tuple[dict[str, object], dict[str, object]]
 ) -> None:
     """Catches a plan that seals valid strings referring to the wrong treatment."""
     stock_treatment, modified_treatment = treatments
     valid_plan["stockTreatmentRef"] = "wrong-treatment"
     with pytest.raises(BatchPlanError, match="stock treatment reference"):
         seal_candidate_run_plan(
-            valid_plan,
-            stock_treatment=stock_treatment,
-            modified_treatment=modified_treatment,
+            valid_plan, stock_treatment=stock_treatment, modified_treatment=modified_treatment
         )
 
 
-@pytest.mark.parametrize(
-    "field", ["caseAnswerSchemaSha256", "replicationCount", "retryPolicy"]
-)
+@pytest.mark.parametrize("field", ["caseAnswerSchemaSha256", "replicationCount", "retryPolicy"])
 def test_effective_condition_parity_rejects_undeclared_runtime_differences(
     valid_plan: dict[str, object], field: str
 ) -> None:
     """Catches parity that ignores material plan differences outside its commitment."""
     modified = dict(valid_plan)
-    modified[field] = (
-        "e" * 64
-        if field == "caseAnswerSchemaSha256"
-        else (2 if field == "replicationCount" else {"maxRetries": 1})
+    modified[field] = "e" * 64 if field == "caseAnswerSchemaSha256" else (
+        2 if field == "replicationCount" else {"maxRetries": 1}
     )
     with pytest.raises(BatchPlanError, match="undeclared condition difference"):
         verify_effective_condition_parity(valid_plan, modified)
@@ -741,21 +726,12 @@ def test_tree_hash_fallback_backend_handles_a_regular_tree(
     (root / "safe").write_bytes(b"safe")
     monkeypatch.setattr(batch_plan, "_descriptor_traversal_available", lambda: False)
     assert sha256_tree(root) == sha256_json(
-        {
-            "entries": [
-                {
-                    "mode": stat.S_IMODE((root / "safe").stat().st_mode),
-                    "path": "safe",
-                    "sha256": hashlib.sha256(b"safe").hexdigest(),
-                    "size": 4,
-                }
-            ]
-        }
+        {"entries": [{"mode": stat.S_IMODE((root / "safe").stat().st_mode), "path": "safe", "sha256": hashlib.sha256(b"safe").hexdigest(), "size": 4}]}
     )
 
 
 def test_effective_condition_parity_rejects_missing_key_and_plan_id_mutation(
-    valid_plan: dict[str, object],
+    valid_plan: dict[str, object]
 ) -> None:
     """Catches missing-vs-null equality and unbound plan identity changes."""
     modified = dict(valid_plan)

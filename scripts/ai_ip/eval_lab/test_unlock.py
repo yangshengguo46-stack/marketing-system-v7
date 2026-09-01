@@ -112,11 +112,15 @@ def _fixture(
         private_root.write_new_json(
             f"batches/{BATCH_ID}/coordinator/blind-statistics.json", statistics
         )
-    private_root.write_new_json(f"batches/{BATCH_ID}/coordinator/arm-key.json", arm_key)
+    private_root.write_new_json(
+        f"batches/{BATCH_ID}/coordinator/arm-key.json", arm_key
+    )
     private_root.write_new_json(
         f"cases/{CASE_ID}/coordinator/case-compilation-receipt.json", receipt
     )
-    private_root.write_new_json(f"cases/{CASE_ID}/outcome/outcome-packet.json", outcome)
+    private_root.write_new_json(
+        f"cases/{CASE_ID}/outcome/outcome-packet.json", outcome
+    )
     return {
         "private_root": private_root,
         "blind_statistics_path": private_root.path
@@ -144,11 +148,7 @@ def test_unlock_writes_the_exact_diagnostic_known_failure_decision(tmp_path):
     fixture = _fixture(tmp_path)
 
     decision = _unlock(
-        **{
-            key: value
-            for key, value in fixture.items()
-            if key not in {"statistics", "outcome"}
-        }
+        **{key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}}
     )
 
     assert decision == {
@@ -166,12 +166,9 @@ def test_unlock_writes_the_exact_diagnostic_known_failure_decision(tmp_path):
         "unlockedAt": UNLOCKED_AT,
     }
     validate_contract(decision, BATCH_SCHEMA)
-    assert (
-        fixture["private_root"].read_json(
-            f"batches/{BATCH_ID}/coordinator/batch-decision.json"
-        )
-        == decision
-    )
+    assert fixture["private_root"].read_json(
+        f"batches/{BATCH_ID}/coordinator/batch-decision.json"
+    ) == decision
     encoded = canonical_json_bytes(decision).decode("utf-8")
     assert "PASS_TO_PHASE_0B" not in encoded
     assert "G2" not in encoded
@@ -180,10 +177,7 @@ def test_unlock_writes_the_exact_diagnostic_known_failure_decision(tmp_path):
 def test_unlock_emits_iterate_without_both_seeded_failure_signals(tmp_path):
     for index, (statistics, outcome) in enumerate(
         (
-            (
-                _statistics(severeByOutputSha256={STOCK_SHA: [], MODIFIED_SHA: []}),
-                _outcome(),
-            ),
+            (_statistics(severeByOutputSha256={STOCK_SHA: [], MODIFIED_SHA: []}), _outcome()),
             (_statistics(), _outcome(known_failures=[])),
         )
     ):
@@ -221,9 +215,7 @@ def test_unlock_emits_iterate_without_both_seeded_failure_signals(tmp_path):
 def test_unlock_rejects_incomplete_or_impossible_statistics(tmp_path, statistics):
     fixture = _fixture(tmp_path, statistics=statistics)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
@@ -235,9 +227,7 @@ def test_unlock_rejects_incomplete_or_impossible_statistics(tmp_path, statistics
 def test_unlock_rejects_absent_statistics(tmp_path):
     fixture = _fixture(tmp_path, write_statistics=False)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
@@ -249,9 +239,7 @@ def test_unlock_rejects_absent_statistics(tmp_path):
 def test_unlock_rejects_cross_batch_and_non_authoritative_paths(tmp_path):
     fixture = _fixture(tmp_path, statistics=_statistics(batchId="another-batch"))
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
     with pytest.raises(_unlock_error()):
         _unlock(**arguments)
@@ -259,15 +247,11 @@ def test_unlock_rejects_cross_batch_and_non_authoritative_paths(tmp_path):
     alias_parent = tmp_path / "alias"
     alias_parent.mkdir(mode=0o700)
     valid = _fixture(alias_parent)
-    copied = (
-        valid["private_root"].path / "batches" / BATCH_ID / "copied-statistics.json"
-    )
+    copied = valid["private_root"].path / "batches" / BATCH_ID / "copied-statistics.json"
     copied.write_bytes(valid["blind_statistics_path"].read_bytes())
     copied.chmod(0o600)
     arguments = {
-        key: value
-        for key, value in valid.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in valid.items() if key not in {"statistics", "outcome"}
     }
     arguments["blind_statistics_path"] = copied
     with pytest.raises(_unlock_error()):
@@ -293,9 +277,7 @@ def test_unlock_validates_outcome_binding_before_opening_arm_key(tmp_path, monke
 
     monkeypatch.setattr(PrivateRoot, "read_json", recording_read)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
@@ -316,9 +298,7 @@ def test_unlock_rejects_arm_key_output_set_mismatch(tmp_path):
     }
     fixture = _fixture(tmp_path, arm_key=arm_key)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
@@ -338,9 +318,7 @@ def test_unlock_rejects_arm_key_output_set_mismatch(tmp_path):
 def test_unlock_rejects_invalid_or_early_unlock_time(tmp_path, unlocked_at):
     fixture = _fixture(tmp_path)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
     arguments["unlocked_at"] = unlocked_at
 
@@ -369,9 +347,7 @@ def test_unlock_rejects_statistics_mutation_after_arm_reveal(tmp_path, monkeypat
 
     monkeypatch.setattr(PrivateRoot, "read_json", mutating_read)
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
@@ -385,9 +361,7 @@ def test_unlock_never_rewrites_statistics_and_preserves_offset_text(tmp_path):
     fixture = _fixture(tmp_path)
     before = fixture["blind_statistics_path"].read_bytes()
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
     arguments["unlocked_at"] = "2026-09-01T08:00:01+08:00"
 
@@ -418,18 +392,13 @@ def test_unlock_collision_preserves_existing_decision_and_statistics(tmp_path):
     )
     statistics_before = fixture["blind_statistics_path"].read_bytes()
     arguments = {
-        key: value
-        for key, value in fixture.items()
-        if key not in {"statistics", "outcome"}
+        key: value for key, value in fixture.items() if key not in {"statistics", "outcome"}
     }
 
     with pytest.raises(_unlock_error()):
         _unlock(**arguments)
 
-    assert (
-        fixture["private_root"].read_json(
-            f"batches/{BATCH_ID}/coordinator/batch-decision.json"
-        )
-        == existing
-    )
+    assert fixture["private_root"].read_json(
+        f"batches/{BATCH_ID}/coordinator/batch-decision.json"
+    ) == existing
     assert fixture["blind_statistics_path"].read_bytes() == statistics_before

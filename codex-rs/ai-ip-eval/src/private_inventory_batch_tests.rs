@@ -65,7 +65,9 @@ fn pending_supplier_root() -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntr
     (temp, root, file(relative, b"supplier"))
 }
 
-fn pending_binding_root(relative: &str) -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntry) {
+fn pending_binding_root(
+    relative: &str,
+) -> (tempfile::TempDir, PathBuf, ExpectedInventoryEntry) {
     let (temp, root) = owner_root();
     crate::secure_fs::create_owner_only_dir_new(&root.join("coordinator")).unwrap();
     crate::secure_fs::create_owner_only_dir_new(&root.join("coordinator/cost")).unwrap();
@@ -253,24 +255,27 @@ fn private_inventory_checked_appends_require_the_retained_old_root() {
     crate::secure_fs::create_owner_only_dir_new(&root.join("batch")).unwrap();
     let before = inventory_bytes(&root);
     let wrong_root = "f".repeat(64);
-    let error = append_private_inventory_batch_from_root(&root, &wrong_root, &[directory("batch")])
-        .unwrap_err();
-    assert_eq!(
-        error.to_string(),
-        "private inventory cursor changed before batch append"
-    );
+    let error = append_private_inventory_batch_from_root(
+        &root,
+        &wrong_root,
+        &[directory("batch")],
+    )
+    .unwrap_err();
+    assert_eq!(error.to_string(), "private inventory cursor changed before batch append");
     assert_eq!(inventory_bytes(&root), before);
 
     let next_root =
-        append_private_inventory_batch_from_root(&root, &old_root, &[directory("batch")]).unwrap();
+        append_private_inventory_batch_from_root(&root, &old_root, &[directory("batch")])
+            .unwrap();
     crate::secure_fs::write_owner_only_new(&root.join("receipt.json"), b"receipt").unwrap();
     let before_receipt = inventory_bytes(&root);
-    let error = append_private_inventory_from_root(&root, &old_root, Path::new("receipt.json"))
-        .unwrap_err();
-    assert_eq!(
-        error.to_string(),
-        "private inventory cursor changed before append"
-    );
+    let error = append_private_inventory_from_root(
+        &root,
+        &old_root,
+        Path::new("receipt.json"),
+    )
+    .unwrap_err();
+    assert_eq!(error.to_string(), "private inventory cursor changed before append");
     assert_eq!(inventory_bytes(&root), before_receipt);
     append_private_inventory_from_root(&root, &next_root, Path::new("receipt.json")).unwrap();
 }
@@ -358,12 +363,8 @@ fn pending_supplier_inventory_rejects_recorded_or_arbitrary_leaf() {
     pending_supplier_error(
         |root, expected| {
             let old_root = digest(&inventory_bytes(root));
-            append_private_inventory_batch_from_root(
-                root,
-                &old_root,
-                std::slice::from_ref(expected),
-            )
-            .unwrap();
+            append_private_inventory_batch_from_root(root, &old_root, std::slice::from_ref(expected))
+                .unwrap();
         },
         "already recorded",
     );
@@ -386,7 +387,10 @@ fn pending_supplier_inventory_rejects_wrong_kind_missing_or_wrong_sha() {
         },
         "regular file",
     );
-    pending_supplier_error(|_, expected| expected.sha256 = None, "lowercase SHA-256");
+    pending_supplier_error(
+        |_, expected| expected.sha256 = None,
+        "lowercase SHA-256",
+    );
     pending_supplier_error(
         |_, expected| expected.sha256 = Some("f".repeat(64)),
         "SHA-256",
@@ -450,7 +454,8 @@ fn pending_cost_binding_inventory_rejects_recorded_arbitrary_or_extra_leaf() {
     );
     pending_binding_error(
         |root, _| {
-            crate::secure_fs::write_owner_only_new(&root.join("unexpected.bin"), b"extra").unwrap();
+            crate::secure_fs::write_owner_only_new(&root.join("unexpected.bin"), b"extra")
+                .unwrap();
         },
         "unexpected path",
     );
@@ -498,12 +503,7 @@ fn pending_cost_binding_inventory_rejects_unsafe_leaf_permissions() {
     let error = verify_pending_cost_binding_inventory(&root, &expected)
         .err()
         .expect("unsafe binding leaf must be rejected");
-    assert!(
-        error
-            .to_string()
-            .contains("unsafe type, links, or permissions"),
-        "{error:#}"
-    );
+    assert!(error.to_string().contains("unsafe type, links, or permissions"), "{error:#}");
 }
 
 #[test]

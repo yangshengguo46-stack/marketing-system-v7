@@ -8,12 +8,12 @@ filegroup(
 filegroup(
     name = "cost-contract-canonical-fixtures",
     srcs = [
+        "tests/fixtures/contracts/06b1/provider-rate-card.canonical.json",
         "tests/fixtures/contracts/06b1/billing-policy.canonical.json",
-        "tests/fixtures/contracts/06b1/cost-receipt.canonical.json",
         "tests/fixtures/contracts/06b1/fx-policy.canonical.json",
         "tests/fixtures/contracts/06b1/provider-budget-evidence.canonical.json",
-        "tests/fixtures/contracts/06b1/provider-rate-card.canonical.json",
         "tests/fixtures/contracts/06b1/supplier-statement.canonical.json",
+        "tests/fixtures/contracts/06b1/cost-receipt.canonical.json",
     ],
 )
 

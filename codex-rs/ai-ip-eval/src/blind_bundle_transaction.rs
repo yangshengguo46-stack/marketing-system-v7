@@ -256,9 +256,7 @@ fn publish_and_record(
     }
     publish_private_tree_no_replace(root, Path::new(plan.staging), Path::new(plan.final_path))?;
     transaction.reverify_root_unchanged()?;
-    hook(BlindBundleCheckpoint::AfterTreeRenameBeforeInventoryAppend(
-        tree,
-    ))?;
+    hook(BlindBundleCheckpoint::AfterTreeRenameBeforeInventoryAppend(tree))?;
     transaction.reverify_root_unchanged()?;
     let inventory_root =
         append_private_inventory_batch_from_root(root, inventory_root, &plan.inventory_entries())?;
@@ -347,7 +345,9 @@ impl<'a> TreePlan<'a> {
     fn file(&mut self, relative: &str, bytes: &'a [u8]) -> Result<()> {
         validate_private_relative_path(Path::new(relative))?;
         let relative = path_wire(Path::new(relative))?;
-        if self.directories.contains(&relative) || self.files.insert(relative, bytes).is_some() {
+        if self.directories.contains(&relative)
+            || self.files.insert(relative, bytes).is_some()
+        {
             bail!("blind bundle tree plan contains a duplicate path");
         }
         Ok(())
@@ -377,24 +377,16 @@ impl<'a> TreePlan<'a> {
             kind: InventoryKind::Directory,
             sha256: None,
         }];
-        entries.extend(
-            self.directories
-                .iter()
-                .map(|relative| ExpectedInventoryEntry {
-                    relative_path: format!("{}/{relative}", self.final_path),
-                    kind: InventoryKind::Directory,
-                    sha256: None,
-                }),
-        );
-        entries.extend(
-            self.files
-                .iter()
-                .map(|(relative, bytes)| ExpectedInventoryEntry {
-                    relative_path: format!("{}/{relative}", self.final_path),
-                    kind: InventoryKind::File,
-                    sha256: Some(sha256(bytes)),
-                }),
-        );
+        entries.extend(self.directories.iter().map(|relative| ExpectedInventoryEntry {
+            relative_path: format!("{}/{relative}", self.final_path),
+            kind: InventoryKind::Directory,
+            sha256: None,
+        }));
+        entries.extend(self.files.iter().map(|(relative, bytes)| ExpectedInventoryEntry {
+            relative_path: format!("{}/{relative}", self.final_path),
+            kind: InventoryKind::File,
+            sha256: Some(sha256(bytes)),
+        }));
         entries.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
         entries
     }
@@ -406,9 +398,7 @@ fn path_wire(path: &Path) -> Result<String> {
 }
 
 fn canonical(value: &impl Serialize) -> Result<Vec<u8>> {
-    Ok(crate::jcs::canonicalize_value(&serde_json::to_value(
-        value,
-    )?)?)
+    Ok(crate::jcs::canonicalize_value(&serde_json::to_value(value)?)?)
 }
 
 fn sha256(bytes: &[u8]) -> String {
