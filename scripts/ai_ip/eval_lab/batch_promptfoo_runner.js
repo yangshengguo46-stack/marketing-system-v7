@@ -12,10 +12,22 @@ const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_CONFIG_BYTES = 1024 * 1024;
 const MAX_RESULT_BYTES = 8 * 1024 * 1024;
 const MAX_HEADER_BYTES = 4096;
+const MAX_CHUNKS = 29;
+const MAX_FILES = 100000;
 const MAX_EVENTS = 1024;
 const MAX_JSON_DEPTH = 64;
 const MAX_JSON_NODES = 10000;
 class RunnerError extends Error {}
+
+function nodeVersionSupported(value) {
+  const matched = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
+  if (!matched) return false;
+  const version = matched.slice(1).map(Number);
+  return (
+    version[0] > 22 ||
+    (version[0] === 22 && (version[1] > 22 || (version[1] === 22 && version[2] >= 0)))
+  );
+}
 
 function sha256(payload) {
   return crypto.createHash("sha256").update(payload).digest("hex");
@@ -142,6 +154,33 @@ function isolatedOutput(value, parent) {
   }
   if (fs.existsSync(resolved)) throw new RunnerError("Promptfoo output already exists");
   return resolved;
+}
+
+function promptfooEnvironment() {
+  const names = [
+    "AI_IP_ATTEMPT_ID", "AI_IP_CASE_PATH", "AI_IP_CODEX_PATH", "AI_IP_CONFIG_PATH",
+    "AI_IP_PROFILE_PATH", "AI_IP_PROMPTFOO_PATH", "AI_IP_PROTOCOL_PATH",
+    "AI_IP_RESULT_FD", "AI_IP_ROUTE_PATH", "AI_IP_SCHEMA_PATH", "AI_IP_TELEMETRY_FD",
+    "APPDATA", "AWS_PROFILE", "CODEX_HOME", "COMSPEC", "FORCE_COLOR", "HOME",
+    "HOMEDRIVE", "HOMEPATH", "LANG", "LANGUAGE", "LC_ALL", "LC_COLLATE", "LC_CTYPE",
+    "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC", "LC_TIME", "LOCALAPPDATA", "NO_PROXY",
+    "PATH", "PATHEXT", "PROMPTFOO_CACHE_ENABLED", "PROMPTFOO_CACHE_PATH",
+    "PROMPTFOO_CONFIG_DIR", "PROMPTFOO_DISABLE_SHARING", "PROMPTFOO_DISABLE_TELEMETRY",
+    "PROMPTFOO_DISABLE_UPDATE", "PROMPTFOO_OUTPUT_PATH", "SHELL", "SYSTEMROOT", "TEMP",
+    "TMP", "TMPDIR", "USERPROFILE", "VOLCENGINE_PROFILE",
+  ];
+  for (const name of [
+    "PROMPTFOO_DISABLE_SHARING",
+    "PROMPTFOO_DISABLE_TELEMETRY",
+    "PROMPTFOO_DISABLE_UPDATE",
+  ]) {
+    if (process.env[name] !== "1") throw new RunnerError(`${name} must be sealed off`);
+  }
+  const environment = Object.fromEntries(
+    names.filter((name) => process.env[name] !== undefined).map((name) => [name, process.env[name]]),
+  );
+  environment.AI_IP_WORKSPACE = process.cwd();
+  return environment;
 }
 
 function ensureParents(root, parts) {
@@ -315,18 +354,22 @@ function runtimeManifest(manifestPath, chunkPaths) {
     manifest.promptfooVersion !== "0.122.0" ||
     manifest.entrypoint !== "node_modules/promptfoo/dist/src/entrypoint.js" ||
     manifest.nodeVersion !== process.version ||
+    !nodeVersionSupported(manifest.nodeVersion) ||
     manifest.platform?.os !== process.platform ||
     manifest.platform?.arch !== ({ x64: "x86_64", arm64: "arm64" }[process.arch] || process.arch) ||
     !Array.isArray(manifest.chunkSha256) ||
+    manifest.chunkSha256.length > MAX_CHUNKS ||
     manifest.chunkSha256.length !== chunkPaths.length ||
     !Number.isSafeInteger(manifest.fileCount) ||
     manifest.fileCount < 1 ||
+    manifest.fileCount > MAX_FILES ||
     !Number.isSafeInteger(manifest.unpackedBytes) ||
     manifest.unpackedBytes < 1 ||
     !Number.isSafeInteger(manifest.maximumFileBytes) ||
     manifest.maximumFileBytes > 384 * 1024 * 1024 ||
     !Number.isSafeInteger(manifest.maximumUnpackedBytes) ||
-    manifest.maximumUnpackedBytes > 2 * 1024 * 1024 * 1024
+    manifest.maximumUnpackedBytes > 2 * 1024 * 1024 * 1024 ||
+    manifest.unpackedBytes > manifest.maximumUnpackedBytes
   ) {
     throw new RunnerError("runtime manifest is incompatible");
   }
@@ -399,7 +442,7 @@ async function main() {
   ];
   const completed = spawnSync(process.execPath, [entrypoint, ...command], {
     cwd: process.cwd(),
-    env: process.env,
+    env: promptfooEnvironment(),
     stdio: ["ignore", "inherit", "inherit"],
   });
   if (completed.error) throw completed.error;
@@ -412,12 +455,16 @@ async function main() {
   return 0;
 }
 
-main()
-  .then((status) => {
-    process.exitCode = status;
-  })
-  .catch((error) => {
-    const message = `Promptfoo sealed runner failed: ${error.name}: ${error.message}\n`;
-    fs.writeSync(2, Buffer.from(message).subarray(0, 4096));
-    process.exitCode = 2;
-  });
+module.exports = { nodeVersionSupported };
+
+if (require.main === module) {
+  main()
+    .then((status) => {
+      process.exitCode = status;
+    })
+    .catch((error) => {
+      const message = `Promptfoo sealed runner failed: ${error.name}: ${error.message}\n`;
+      fs.writeSync(2, Buffer.from(message).subarray(0, 4096));
+      process.exitCode = 2;
+    });
+}

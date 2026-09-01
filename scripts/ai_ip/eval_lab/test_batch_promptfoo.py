@@ -523,6 +523,30 @@ def test_retained_trajectory_excludes_scores_and_assertions_but_keeps_raw_eviden
     ).hexdigest()
 
 
+def test_python_and_js_retain_the_same_unicode_trajectory() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    response = _response(value)
+    metadata = response["metadata"]
+    assert type(metadata) is dict
+    codex = metadata["codexAppServer"]
+    assert type(codex) is dict
+    items = codex["items"]
+    assert type(items) is list and type(items[0]) is dict
+    items[0]["text"] = "礼🎁"
+    raw = json.loads(response["raw"])
+    raw["finalResponse"] = "礼🎁"
+    raw["items"][0]["text"] = "礼🎁"
+    response["raw"] = json.dumps(raw, ensure_ascii=True, separators=(",", ":"))
+    payload = _result_bytes(value)
+
+    parsed = adapter.parse_promptfoo_result(payload)
+    js = _run_js_parser(payload)
+
+    assert js.returncode == 0, js.stderr.decode(errors="replace")
+    assert json.loads(js.stdout)["result"]["metadata"] == parsed.metadata
+
+
 def test_python_and_js_reject_oversized_retained_evidence() -> None:
     adapter = _adapter()
     value = _result_value()
@@ -690,6 +714,11 @@ def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) ->
     with pytest.raises(bundle.PromptfooBundleError, match="Node identity"):
         bundle.seal_promptfoo_runtime(runtime, node, seal)
 
+    node.write_bytes(b"sealed portable node")
+    entrypoint.write_bytes(b"replaced entrypoint")
+    with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
+        bundle.seal_promptfoo_runtime(runtime, node, seal)
+
 
 @pytest.mark.parametrize(
     ("version", "accepted"),
@@ -744,11 +773,6 @@ process.stdout.write(JSON.stringify(runner.nodeVersionSupported(process.argv[2])
 
     assert completed.returncode == 0, completed.stderr.decode(errors="replace")
     assert json.loads(completed.stdout) is accepted
-
-    node.write_bytes(b"sealed portable node")
-    entrypoint.write_bytes(b"replaced entrypoint")
-    with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
-        bundle.seal_promptfoo_runtime(runtime, node, seal)
 
 
 def test_production_compile_rejects_forged_exact_version_stub(tmp_path: Path) -> None:

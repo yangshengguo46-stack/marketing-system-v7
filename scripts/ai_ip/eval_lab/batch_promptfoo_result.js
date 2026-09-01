@@ -1,10 +1,15 @@
 "use strict";
 
 const crypto = require("node:crypto");
+const { TextDecoder } = require("node:util");
 
 const MAX_EVENTS = 1024;
+const MAX_EVIDENCE_ITEM_BYTES = 256 * 1024;
+const MAX_FINAL_RESPONSE_BYTES = 1024 * 1024;
+const MAX_TRAJECTORY_BYTES = 4 * 1024 * 1024;
 const MAX_JSON_DEPTH = 64;
 const MAX_JSON_NODES = 10000;
+const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
 
 class PromptfooResultError extends Error {}
 
@@ -24,8 +29,8 @@ function canonical(value) {
 }
 
 function boundedJson(payload, label) {
-  let depth = 0;
-  let nodes = 1;
+  let shapeDepth = 0;
+  let shapeNodes = 1;
   let inString = false;
   let escaped = false;
   for (const byte of payload) {
@@ -37,21 +42,138 @@ function boundedJson(payload, label) {
     }
     if (byte === 0x22) inString = true;
     else if (byte === 0x5b || byte === 0x7b) {
-      depth += 1;
-      nodes += 1;
-      if (depth > MAX_JSON_DEPTH) throw new PromptfooResultError(`${label} exceeds JSON depth`);
+      shapeDepth += 1;
+      shapeNodes += 1;
+      if (shapeDepth > MAX_JSON_DEPTH) throw new PromptfooResultError(`${label} exceeds JSON depth`);
     } else if (byte === 0x5d || byte === 0x7d) {
-      depth -= 1;
-      if (depth < 0) throw new PromptfooResultError(`${label} has invalid JSON shape`);
+      shapeDepth -= 1;
+      if (shapeDepth < 0) throw new PromptfooResultError(`${label} has invalid JSON shape`);
     } else if (byte === 0x2c || byte === 0x3a) {
-      nodes += 1;
-      if (nodes > MAX_JSON_NODES) throw new PromptfooResultError(`${label} exceeds JSON nodes`);
+      shapeNodes += 1;
+      if (shapeNodes > MAX_JSON_NODES) throw new PromptfooResultError(`${label} exceeds JSON nodes`);
     }
   }
-  if (inString || depth !== 0) throw new PromptfooResultError(`${label} has invalid JSON shape`);
+  if (inString || shapeDepth !== 0) throw new PromptfooResultError(`${label} has invalid JSON shape`);
+  let text;
   try {
-    return JSON.parse(payload.toString("utf8"));
+    text = new TextDecoder("utf-8", { fatal: true }).decode(payload);
   } catch (error) {
+    throw new PromptfooResultError(`${label} is not valid strict JSON`, { cause: error });
+  }
+  let index = 0;
+  let nodes = 0;
+  const whitespace = () => {
+    while (index < text.length && /[\t\n\r ]/.test(text[index])) index += 1;
+  };
+  const string = () => {
+    const start = index;
+    index += 1;
+    while (index < text.length) {
+      const code = text.charCodeAt(index);
+      if (code === 0x22) {
+        index += 1;
+        return JSON.parse(text.slice(start, index));
+      }
+      if (code < 0x20) throw new PromptfooResultError(`${label} is not valid strict JSON`);
+      if (code === 0x5c) {
+        index += 1;
+        if (index >= text.length || !/["\\/bfnrtu]/.test(text[index])) {
+          throw new PromptfooResultError(`${label} is not valid strict JSON`);
+        }
+        if (text[index] === "u") {
+          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(index + 1, index + 5))) {
+            throw new PromptfooResultError(`${label} is not valid strict JSON`);
+          }
+          index += 4;
+        }
+      }
+      index += 1;
+    }
+    throw new PromptfooResultError(`${label} is not valid strict JSON`);
+  };
+  const value = (depth) => {
+    nodes += 1;
+    if (nodes > MAX_JSON_NODES) throw new PromptfooResultError(`${label} exceeds JSON nodes`);
+    if (depth > MAX_JSON_DEPTH) throw new PromptfooResultError(`${label} exceeds JSON depth`);
+    whitespace();
+    const current = text[index];
+    if (current === '"') {
+      string();
+      return;
+    }
+    if (current === "[") {
+      index += 1;
+      whitespace();
+      if (text[index] === "]") {
+        index += 1;
+        return;
+      }
+      while (true) {
+        value(depth + 1);
+        whitespace();
+        if (text[index] === "]") {
+          index += 1;
+          return;
+        }
+        if (text[index] !== ",") throw new PromptfooResultError(`${label} is not valid strict JSON`);
+        index += 1;
+      }
+    }
+    if (current === "{") {
+      index += 1;
+      whitespace();
+      if (text[index] === "}") {
+        index += 1;
+        return;
+      }
+      const keys = new Set();
+      while (true) {
+        whitespace();
+        if (text[index] !== '"') throw new PromptfooResultError(`${label} is not valid strict JSON`);
+        const key = string();
+        if (keys.has(key)) throw new PromptfooResultError(`${label} has a duplicate JSON key`);
+        keys.add(key);
+        whitespace();
+        if (text[index] !== ":") throw new PromptfooResultError(`${label} is not valid strict JSON`);
+        index += 1;
+        value(depth + 1);
+        whitespace();
+        if (text[index] === "}") {
+          index += 1;
+          return;
+        }
+        if (text[index] !== ",") throw new PromptfooResultError(`${label} is not valid strict JSON`);
+        index += 1;
+      }
+    }
+    for (const literal of ["true", "false", "null"]) {
+      if (text.startsWith(literal, index)) {
+        index += literal.length;
+        return;
+      }
+    }
+    const match = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(text.slice(index));
+    if (!match) throw new PromptfooResultError(`${label} is not valid strict JSON`);
+    const token = match[0];
+    index += token.length;
+    if (!token.includes(".") && !/[eE]/.test(token) && BigInt(token) > MAX_SAFE_INTEGER) {
+      throw new PromptfooResultError(`${label} contains an unsafe JSON integer`);
+    }
+    if (!token.includes(".") && !/[eE]/.test(token) && BigInt(token) < -MAX_SAFE_INTEGER) {
+      throw new PromptfooResultError(`${label} contains an unsafe JSON integer`);
+    }
+    const numeric = Number(token);
+    if (!Number.isFinite(numeric) || (Number.isInteger(numeric) && !Number.isSafeInteger(numeric))) {
+      throw new PromptfooResultError(`${label} contains a non-finite JSON number`);
+    }
+  };
+  try {
+    value(1);
+    whitespace();
+    if (index !== text.length) throw new PromptfooResultError(`${label} is not valid strict JSON`);
+    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof PromptfooResultError) throw error;
     throw new PromptfooResultError(`${label} is not valid JSON`, { cause: error });
   }
 }
@@ -72,8 +194,16 @@ function nonnegative(value, label) {
 
 function usageLayer(value, label, requireRequests) {
   const usage = object(value, label);
-  const fields = ["prompt", "completion", "total"];
-  if (requireRequests || Object.hasOwn(usage, "numRequests")) fields.push("numRequests");
+  const fields = ["prompt", "completion", "cached", "total"];
+  if (requireRequests) fields.push("numRequests");
+  const allowed = requireRequests ? [...fields, "assertions"] : fields;
+  const actual = Object.keys(usage).sort();
+  if (
+    actual.join("\0") !== [...fields].sort().join("\0") &&
+    actual.join("\0") !== [...allowed].sort().join("\0")
+  ) {
+    throw new PromptfooResultError(`${label} has invalid token usage fields`);
+  }
   const result = Object.fromEntries(
     fields.map((field) => [field, nonnegative(usage[field], `${label} ${field}`)]),
   );
@@ -81,6 +211,44 @@ function usageLayer(value, label, requireRequests) {
     throw new PromptfooResultError(`${label} total is inconsistent`);
   }
   return result;
+}
+
+function boundedEvidence(value, maximum, label) {
+  const validate = (item) => {
+    if (item === null || typeof item === "boolean") return;
+    if (typeof item === "string") {
+      for (let index = 0; index < item.length; index += 1) {
+        const code = item.charCodeAt(index);
+        if (code >= 0xd800 && code <= 0xdbff) {
+          const next = item.charCodeAt(index + 1);
+          if (next < 0xdc00 || next > 0xdfff) {
+            throw new PromptfooResultError(`${label} contains invalid Unicode`);
+          }
+          index += 1;
+        } else if (code >= 0xdc00 && code <= 0xdfff) {
+          throw new PromptfooResultError(`${label} contains invalid Unicode`);
+        }
+      }
+      return;
+    }
+    if (Number.isSafeInteger(item)) return;
+    if (Array.isArray(item)) {
+      item.forEach(validate);
+      return;
+    }
+    if (typeof item === "object") {
+      Object.entries(item).forEach(([key, child]) => {
+        validate(key);
+        validate(child);
+      });
+      return;
+    }
+    throw new PromptfooResultError(`${label} contains unsupported evidence values`);
+  };
+  validate(value);
+  if (Buffer.byteLength(canonical(value)) > maximum) {
+    throw new PromptfooResultError(`${label} exceeds its evidence byte bound`);
+  }
 }
 
 function parseResult(payload) {
@@ -116,7 +284,15 @@ function parseResult(payload) {
   }
   if (typeof response.raw !== "string") throw new PromptfooResultError("Codex raw events are required");
   const raw = object(boundedJson(Buffer.from(response.raw), "Codex raw response"), "Codex raw response");
-  if (!Array.isArray(raw.notifications) || !raw.notifications.length || raw.notifications.length > MAX_EVENTS) {
+  if (
+    !Array.isArray(raw.notifications) ||
+    !raw.notifications.length ||
+    raw.notifications.length > MAX_EVENTS ||
+    !Array.isArray(raw.items) ||
+    !raw.items.length ||
+    raw.items.length > MAX_EVENTS ||
+    typeof raw.finalResponse !== "string"
+  ) {
     throw new PromptfooResultError("Codex raw events are required");
   }
   const responseUsage = usageLayer(response.tokenUsage, "response token usage", false);
@@ -127,13 +303,31 @@ function parseResult(payload) {
     }
   }
   if (rowUsage.numRequests < 1) throw new PromptfooResultError("request count must be positive");
+  for (const [label, values] of [
+    ["Codex trajectory item", codex.items],
+    ["Codex raw item", raw.items],
+    ["Codex notification", raw.notifications],
+  ]) {
+    values.forEach((value) => boundedEvidence(value, MAX_EVIDENCE_ITEM_BYTES, label));
+  }
+  boundedEvidence(raw.finalResponse, MAX_FINAL_RESPONSE_BYTES, "Codex final response");
+  const trajectory = {
+    finalResponse: raw.finalResponse,
+    items: codex.items,
+    notifications: raw.notifications,
+    rawItems: raw.items,
+    responseUsage,
+    rowUsage,
+  };
+  boundedEvidence(trajectory, MAX_TRAJECTORY_BYTES, "Codex retained evidence");
+  const trajectoryBytes = Buffer.from(canonical(trajectory));
   return {
     result: {
       metadata: {
-        costEvidence: { costCny: 0, sourceSha256: sha256(payload) },
+        costEvidence: { costCny: 0, sourceSha256: sha256(trajectoryBytes) },
         requestCount: rowUsage.numRequests,
         threadId: codex.threadId,
-        trajectory: raw.notifications,
+        trajectory,
         turnId: codex.turnId,
         usage: {
           inputTokens: responseUsage.prompt,

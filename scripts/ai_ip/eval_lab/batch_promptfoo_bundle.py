@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import stat
 import struct
 from dataclasses import dataclass
@@ -29,10 +30,18 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _WORKSPACE_PACKAGE = _REPO_ROOT / "ai-ip-evals/lab/promptfoo/package.json"
 _WORKSPACE_LOCK = _REPO_ROOT / "pnpm-lock.yaml"
 _COMMITTED_SEALS = _REPO_ROOT / "ai-ip-evals/lab/promptfoo/runtime-manifests"
+_NODE_VERSION = re.compile(r"v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\Z")
 
 
 class PromptfooBundleError(ValueError):
     pass
+
+
+def _supported_node_version(value: object) -> bool:
+    if type(value) is not str:
+        return False
+    matched = _NODE_VERSION.fullmatch(value)
+    return matched is not None and tuple(map(int, matched.groups())) >= (22, 22, 0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -353,8 +362,7 @@ def _seal_from_json(value: object) -> RuntimeSeal:
         or not 1 <= value["fileCount"] <= MAX_FILES
         or type(value["unpackedBytes"]) is not int
         or not 1 <= value["unpackedBytes"] <= MAX_UNPACKED_BYTES
-        or type(value["nodeVersion"]) is not str
-        or not value["nodeVersion"].startswith("v")
+        or not _supported_node_version(value["nodeVersion"])
         or type(target) is not dict
         or set(target) != {"arch", "os"}
         or type(target["arch"]) is not str

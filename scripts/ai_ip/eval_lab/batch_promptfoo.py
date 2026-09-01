@@ -36,6 +36,11 @@ _REASONING_EFFORTS = {
 _APPROVAL_POLICIES = {"never", "on-request", "on-failure", "untrusted"}
 _SANDBOX_MODES = {"read-only", "workspace-write", "danger-full-access"}
 _PUBLIC_DUMMY_BEARER = "ai-ip-public-loopback-dummy"
+_PROMPTFOO_ENVIRONMENT = (
+    ("PROMPTFOO_DISABLE_SHARING", "1"),
+    ("PROMPTFOO_DISABLE_TELEMETRY", "1"),
+    ("PROMPTFOO_DISABLE_UPDATE", "1"),
+)
 
 
 def _json_object(payload: object, label: str) -> dict[str, object]:
@@ -154,7 +159,7 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
                     "sandbox_mode": sandbox,
                     "startup_timeout_ms": timeout_ms,
                     "turn_timeout_ms": timeout_ms,
-                    "working_dir": ".",
+                    "working_dir": "{{ env.AI_IP_WORKSPACE }}",
                 },
             }
         ],
@@ -215,7 +220,7 @@ def compile_promptfoo_launch_set(
             executable_path=runtime.node_path,
             executable_sha256=runtime.node_sha256,
             argv=argv,
-            environment=(),
+            environment=_PROMPTFOO_ENVIRONMENT,
             artifacts=artifacts,
             effective_config=request.effective_config,
             execution_profile_json=request.execution_profile_json,

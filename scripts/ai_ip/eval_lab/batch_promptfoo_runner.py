@@ -2,14 +2,19 @@
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 
 
 MAX_PROMPTFOO_RESULT_BYTES = 8 * 1024 * 1024
 _MAX_CONFIG_BYTES = 1024 * 1024
 _MAX_EVENTS = 1024
+_MAX_EVIDENCE_ITEM_BYTES = 256 * 1024
+_MAX_FINAL_RESPONSE_BYTES = 1024 * 1024
+_MAX_TRAJECTORY_BYTES = 4 * 1024 * 1024
 _MAX_JSON_DEPTH = 64
 _MAX_JSON_NODES = 10_000
+_MAX_SAFE_INTEGER = (1 << 53) - 1
 _COMMAND = (
     "eval",
     "--config",
@@ -72,10 +77,47 @@ def _bounded_shape(payload: bytes) -> bool:
 def _decode_json(payload: bytes, label: str) -> object:
     if not _bounded_shape(payload):
         raise PromptfooAdapterError(f"{label} has an invalid bounded JSON shape")
+
+    def reject_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        value: dict[str, object] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("duplicate JSON key")
+            value[key] = item
+        return value
+
+    def safe_integer(token: str) -> int:
+        value = int(token)
+        if abs(value) > _MAX_SAFE_INTEGER:
+            raise ValueError("JSON integer exceeds the safe range")
+        return value
+
+    def finite_number(token: str) -> float:
+        value = float(token)
+        if not math.isfinite(value) or (
+            value.is_integer() and abs(value) > _MAX_SAFE_INTEGER
+        ):
+            raise ValueError("JSON number must be finite")
+        return value
+
+    def reject_constant(token: str) -> object:
+        raise ValueError(f"non-standard JSON constant: {token}")
+
     try:
-        return json.loads(payload)
-    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as error:
-        raise PromptfooAdapterError(f"{label} is not valid JSON") from error
+        return json.loads(
+            payload.decode("utf-8", errors="strict"),
+            object_pairs_hook=reject_pairs,
+            parse_constant=reject_constant,
+            parse_float=finite_number,
+            parse_int=safe_integer,
+        )
+    except (
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        RecursionError,
+        ValueError,
+    ) as error:
+        raise PromptfooAdapterError(f"{label} is not valid strict JSON") from error
 
 
 def _mapping(value: object, label: str) -> dict[str, object]:
@@ -89,7 +131,7 @@ def _has_provider_error(value: object) -> bool:
 
 
 def _nonnegative_integer(value: object, label: str) -> int:
-    if type(value) is not int or value < 0:
+    if type(value) is not int or not 0 <= value <= _MAX_SAFE_INTEGER:
         raise PromptfooAdapterError(f"{label} must be a nonnegative integer")
     return value
 
@@ -98,21 +140,55 @@ def _usage_layer(
     value: object, label: str, *, require_requests: bool
 ) -> dict[str, int]:
     usage = _mapping(value, label)
-    required = ("prompt", "completion", "total")
+    required = ("prompt", "completion", "cached", "total")
     fields = required + (("numRequests",) if require_requests else ())
+    allowed = set(fields) | ({"assertions"} if require_requests else set())
+    if set(usage) != allowed and not (
+        require_requests and set(usage) == set(fields)
+    ):
+        raise PromptfooAdapterError(f"{label} has invalid token usage fields")
     normalized = {
         field: _nonnegative_integer(usage.get(field), f"{label} {field}")
         for field in fields
     }
-    if "numRequests" in usage and "numRequests" not in normalized:
-        normalized["numRequests"] = _nonnegative_integer(
-            usage["numRequests"], f"{label} numRequests"
-        )
     if normalized["total"] != normalized["prompt"] + normalized["completion"]:
         raise PromptfooAdapterError(
             f"{label} total must equal prompt plus completion"
         )
     return normalized
+
+
+def _canonical(value: object) -> bytes:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode()
+
+
+def _bounded_evidence(value: object, maximum: int, label: str) -> None:
+    def validate(item: object) -> None:
+        if item is None or type(item) in (bool, str):
+            if type(item) is str and any(0xD800 <= ord(char) <= 0xDFFF for char in item):
+                raise PromptfooAdapterError(f"{label} contains invalid Unicode")
+            return
+        if type(item) is int and abs(item) <= _MAX_SAFE_INTEGER:
+            return
+        if type(item) is list:
+            for child in item:
+                validate(child)
+            return
+        if type(item) is dict and all(type(key) is str for key in item):
+            for key, child in item.items():
+                validate(key)
+                validate(child)
+            return
+        raise PromptfooAdapterError(f"{label} contains unsupported evidence values")
+
+    validate(value)
+    if len(_canonical(value)) > maximum:
+        raise PromptfooAdapterError(f"{label} exceeds its evidence byte bound")
 
 
 def parse_promptfoo_result(
@@ -158,14 +234,20 @@ def parse_promptfoo_result(
     raw = _mapping(
         _decode_json(raw_text.encode(), "Codex raw response"), "Codex raw response"
     )
-    trajectory = raw.get("notifications")
+    notifications = raw.get("notifications")
+    raw_items = raw.get("items")
+    final_response = raw.get("finalResponse")
     if (
         type(items) is not list
         or not items
         or len(items) > _MAX_EVENTS
-        or type(trajectory) is not list
-        or not trajectory
-        or len(trajectory) > _MAX_EVENTS
+        or type(raw_items) is not list
+        or not raw_items
+        or len(raw_items) > _MAX_EVENTS
+        or type(notifications) is not list
+        or not notifications
+        or len(notifications) > _MAX_EVENTS
+        or type(final_response) is not str
     ):
         raise PromptfooAdapterError("Codex trajectory and raw events are required")
     response_usage = _usage_layer(
@@ -187,6 +269,26 @@ def parse_promptfoo_result(
     request_count = row_usage["numRequests"]
     if request_count < 1:
         raise PromptfooAdapterError("request count must be positive")
+    for label, values in (
+        ("Codex trajectory item", items),
+        ("Codex raw item", raw_items),
+        ("Codex notification", notifications),
+    ):
+        for value in values:
+            _bounded_evidence(value, _MAX_EVIDENCE_ITEM_BYTES, label)
+    _bounded_evidence(
+        final_response, _MAX_FINAL_RESPONSE_BYTES, "Codex final response"
+    )
+    trajectory = {
+        "finalResponse": final_response,
+        "items": items,
+        "notifications": notifications,
+        "rawItems": raw_items,
+        "responseUsage": response_usage,
+        "rowUsage": row_usage,
+    }
+    _bounded_evidence(trajectory, _MAX_TRAJECTORY_BYTES, "Codex retained evidence")
+    trajectory_bytes = _canonical(trajectory)
     normalized_usage = {
         "inputTokens": input_tokens,
         "outputTokens": output_tokens,
@@ -195,7 +297,7 @@ def parse_promptfoo_result(
     normalized_metadata = {
         "costEvidence": {
             "costCny": 0,
-            "sourceSha256": hashlib.sha256(payload).hexdigest(),
+            "sourceSha256": hashlib.sha256(trajectory_bytes).hexdigest(),
         },
         "requestCount": request_count,
         "threadId": thread_id,
