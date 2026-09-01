@@ -87,7 +87,7 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
 
     assert set(config) == {"prompts", "providers", "tests"}
     assert len(config["prompts"]) == 1
-    assert config["tests"] == [{}]
+    assert config["tests"] == [{"vars": {}}]
     provider = config["providers"][0]
     assert provider == {
         "id": "openai:codex-app-server",
@@ -374,12 +374,37 @@ def _malicious_archive_manifest(payload: bytes) -> bytes:
             "entrypoint": "node_modules/promptfoo/dist/src/entrypoint.js",
             "fileCount": 1,
             "format": "ai-ip-promptfoo-records-v1",
+            "maximumFileBytes": 384 * 1024 * 1024,
+            "maximumUnpackedBytes": 2 * 1024 * 1024 * 1024,
+            "nodeSha256": "a" * 64,
+            "nodeVersion": subprocess.check_output(
+                [shutil.which("node") or "node", "--version"], text=True
+            ).strip(),
+            "packageJsonSha256": "b" * 64,
+            "platform": {
+                "arch": "x86_64" if sys.platform == "darwin" else "unsupported",
+                "os": "darwin" if sys.platform == "darwin" else sys.platform,
+            },
+            "pnpmLockSha256": "c" * 64,
             "promptfooVersion": "0.122.0",
             "schemaVersion": 1,
             "treeSha256": hashlib.sha256(payload).hexdigest(),
             "unpackedBytes": len(payload),
         }
     )
+
+
+def _runner_isolation(tmp_path: Path) -> dict[str, str]:
+    temporary = tmp_path / "isolated-temp"
+    promptfoo = tmp_path / "isolated-promptfoo"
+    temporary.mkdir()
+    promptfoo.mkdir()
+    return {
+        **os.environ,
+        "PROMPTFOO_CONFIG_DIR": str(promptfoo),
+        "PROMPTFOO_OUTPUT_PATH": str(promptfoo / "output.json"),
+        "TMPDIR": str(temporary),
+    }
 
 
 @pytest.mark.parametrize(
@@ -405,14 +430,56 @@ def test_sealed_bootstrap_rejects_archive_traversal_or_oversize(
     chunk.write_bytes(compressed)
 
     completed = subprocess.run(
-        [shutil.which("node") or "node", str(runner), str(manifest), str(chunk)],
+        [
+            shutil.which("node") or "node",
+            str(runner),
+            str(MODULE_ROOT / "batch_promptfoo_result.js"),
+            str(manifest),
+            str(chunk),
+        ],
         cwd=tmp_path,
+        env=_runner_isolation(tmp_path),
         capture_output=True,
         check=False,
     )
 
     assert completed.returncode == 2
+    assert any(token in completed.stderr.lower() for token in (b"path", b"bound"))
     assert not (tmp_path.parent / "escape").exists()
+
+
+@pytest.mark.parametrize(
+    ("header_length", "message"),
+    [(4097, b"header"), (4096, b"inflated")],
+)
+def test_sealed_bootstrap_bounds_incomplete_header_before_buffering_tail(
+    tmp_path: Path, header_length: int, message: bytes
+) -> None:
+    record = struct.pack(">I", header_length) + b"x" * (2 * 1024 * 1024)
+    compressed = gzip.compress(record, mtime=0)
+    manifest_value = json.loads(_malicious_archive_manifest(record))
+    manifest_value["unpackedBytes"] = 1
+    manifest = tmp_path / "manifest.json"
+    chunk = tmp_path / "chunk.bin"
+    manifest.write_bytes(_json_bytes(manifest_value))
+    chunk.write_bytes(compressed)
+
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+            str(MODULE_ROOT / "batch_promptfoo_result.js"),
+            str(manifest),
+            str(chunk),
+        ],
+        cwd=tmp_path,
+        env=_runner_isolation(tmp_path),
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert message in completed.stderr.lower()
 
 
 def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) -> None:
@@ -480,23 +547,38 @@ def test_production_compile_rejects_forged_exact_version_stub(tmp_path: Path) ->
         )
 
 
-def test_launch_compiler_returns_controller_owned_parity_material(
-    tmp_path: Path,
-) -> None:
-    adapter = _adapter()
-    package_root = tmp_path / "node_modules" / "promptfoo"
-    entrypoint = package_root / "dist" / "src" / "entrypoint.js"
+def _test_runtime(tmp_path: Path, entrypoint_source: bytes) -> tuple[object, Path, Path]:
+    bundle = importlib.import_module("batch_promptfoo_bundle")
+    runtime = tmp_path / "runtime"
+    entrypoint = runtime / "node_modules/promptfoo/dist/src/entrypoint.js"
     entrypoint.parent.mkdir(parents=True)
-    entrypoint.write_text("#!/usr/bin/env node\n", encoding="utf-8")
-    (package_root / "package.json").write_text(
-        json.dumps(
+    entrypoint.write_bytes(entrypoint_source)
+    (entrypoint.parents[2] / "package.json").write_bytes(
+        _json_bytes(
             {
                 "bin": {"promptfoo": "dist/src/entrypoint.js"},
                 "name": "promptfoo",
                 "version": "0.122.0",
             }
-        ),
-        encoding="utf-8",
+        )
+    )
+    node = Path(shutil.which("node") or "node").resolve()
+    node_version = subprocess.check_output([str(node), "--version"], text=True).strip()
+    seal = bundle.measure_promptfoo_runtime(runtime, node, node_version=node_version)
+    return bundle.seal_promptfoo_runtime(runtime, node, seal), runtime, node
+
+
+def test_launch_compiler_returns_controller_owned_parity_material(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = _adapter()
+    runtime, runtime_root, node = _test_runtime(
+        tmp_path, b"console.log('sealed Promptfoo')\n"
+    )
+    monkeypatch.setattr(
+        adapter._bundle,
+        "seal_committed_promptfoo_runtime",
+        lambda runtime_root, node_path: runtime,
     )
     stock = _request(effective_config=b"stock-config")
     config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
@@ -510,16 +592,22 @@ def test_launch_compiler_returns_controller_owned_parity_material(
     launches = adapter.compile_promptfoo_launch_set(
         stock,
         modified,
-        promptfoo_cli_path=entrypoint,
-        runner_python_path=Path(sys.executable).resolve(),
+        promptfoo_runtime_root=runtime_root,
+        portable_node_path=node,
     )
 
     launch_types = importlib.import_module("batch_launch_spec")
     assert type(launches) is launch_types.CandidateLaunchSet
     assert launches.stock.effective_config == b"stock-config"
     assert launches.modified.effective_config == b"modified-config"
-    assert launches.stock.argv == ("{artifact:promptfoo_runner.py}",)
-    assert launches.stock.environment == (("AI_IP_PROMPTFOO_CLI", str(entrypoint)),)
+    assert launches.stock.executable_path == node
+    assert launches.stock.executable_sha256 == runtime.node_sha256
+    assert launches.stock.argv == (
+        "{artifact:batch_promptfoo_runner.js}",
+        "{artifact:batch_promptfoo_result.js}",
+        *runtime.artifact_arguments,
+    )
+    assert launches.stock.environment == ()
     assert launches.stock.artifacts == launches.modified.artifacts
     assert launches.stock.promptfoo_config == launches.modified.promptfoo_config
     assert (
@@ -531,8 +619,9 @@ def test_launch_compiler_returns_controller_owned_parity_material(
         launches.modified.app_server_protocol_schema
     )
     runner = launches.stock.artifacts[0]
-    assert runner.relative_path == "promptfoo_runner.py"
+    assert runner.relative_path == "batch_promptfoo_runner.js"
     assert runner.sha256 == hashlib.sha256(runner.payload).hexdigest()
+    assert launches.stock.artifacts[2:] == runtime.artifacts
     assert all(
         token not in runner.payload.lower()
         for token in (b"rubric", b"reference", b"outcome", b"arm mapping")
@@ -543,63 +632,52 @@ def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
     tmp_path: Path,
 ) -> None:
     adapter = _adapter()
-    package_root = tmp_path / "node_modules" / "promptfoo"
-    entrypoint = package_root / "dist" / "src" / "entrypoint.js"
-    entrypoint.parent.mkdir(parents=True)
-    entrypoint.write_text(
-        """#!/usr/bin/env python3
-import json
-import os
-import shutil
-import sys
-
-open("argv.json", "w", encoding="utf-8").write(json.dumps(sys.argv[1:]))
-shutil.copyfile(os.environ["FAKE_PROMPTFOO_RESULT"], sys.argv[5])
+    runtime, _, node = _test_runtime(
+        tmp_path,
+        b"""const fs = require('node:fs');
+const argvPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'argv.json');
+fs.writeFileSync(argvPath, JSON.stringify(process.argv.slice(2)));
+fs.copyFileSync(process.env.FAKE_PROMPTFOO_RESULT, process.argv[6]);
 """,
-        encoding="utf-8",
-    )
-    entrypoint.chmod(0o700)
-    (package_root / "package.json").write_text(
-        json.dumps(
-            {
-                "bin": {"promptfoo": "dist/src/entrypoint.js"},
-                "name": "promptfoo",
-                "version": "0.122.0",
-            }
-        ),
-        encoding="utf-8",
     )
     stock = _request(effective_config=b"stock-config")
     config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
-    stock.promptfoo_config = config_bytes
-    modified = _request(
-        effective_config=b"modified-config", promptfoo_config=config_bytes
-    )
-    launches = adapter.compile_promptfoo_launch_set(
-        stock,
-        modified,
-        promptfoo_cli_path=entrypoint,
-        runner_python_path=Path(sys.executable).resolve(),
-    )
-    runner_path = tmp_path / "sealed-runner.py"
-    runner_path.write_bytes(launches.stock.artifacts[0].payload)
+    runner_path = MODULE_ROOT / "batch_promptfoo_runner.js"
+    artifact_paths: list[Path] = []
+    for artifact in runtime.artifacts:
+        artifact_path = tmp_path / artifact.relative_path
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_bytes(artifact.payload)
+        artifact_paths.append(artifact_path)
     config_path = tmp_path / "promptfoo-config.json"
     config_path.write_bytes(config_bytes)
     workspace = tmp_path / "workspace"
     workspace.mkdir()
+    isolated = tmp_path / "isolated"
+    isolated_temp = isolated / "temp"
+    isolated_promptfoo = isolated / "promptfoo"
+    isolated_temp.mkdir(parents=True)
+    isolated_promptfoo.mkdir()
     result_read, result_write = os.pipe()
     telemetry_read, telemetry_write = os.pipe()
     environment = {
         **os.environ,
-        "AI_IP_PROMPTFOO_CLI": str(entrypoint),
         "AI_IP_PROMPTFOO_PATH": str(config_path),
         "AI_IP_RESULT_FD": str(result_write),
         "AI_IP_TELEMETRY_FD": str(telemetry_write),
         "FAKE_PROMPTFOO_RESULT": str(FROZEN_RESULT),
+        "PROMPTFOO_CONFIG_DIR": str(isolated_promptfoo),
+        "PROMPTFOO_OUTPUT_PATH": str(isolated_promptfoo / "output.json"),
+        "TMPDIR": str(isolated_temp),
     }
     try:
         completed = subprocess.run(
-            [sys.executable, str(runner_path)],
+            [
+                str(node),
+                str(runner_path),
+                str(MODULE_ROOT / "batch_promptfoo_result.js"),
+                *(str(path) for path in artifact_paths),
+            ],
             cwd=workspace,
             env=environment,
             pass_fds=(result_write, telemetry_write),
@@ -614,13 +692,14 @@ shutil.copyfile(os.environ["FAKE_PROMPTFOO_RESULT"], sys.argv[5])
     os.close(result_read)
     os.close(telemetry_read)
 
+    assert not list(workspace.iterdir()), "sealed runner polluted candidate workspace"
     assert completed.returncode == 0, completed.stderr.decode(errors="replace")
-    assert json.loads((workspace / "argv.json").read_bytes()) == [
+    assert json.loads((isolated_promptfoo / "argv.json").read_bytes()) == [
         "eval",
         "--config",
-        "cell/promptfoo/config.json",
+        str(isolated_promptfoo / "eval-config.json"),
         "--output",
-        "cell/promptfoo/result.json",
+        str(isolated_promptfoo / "output.json"),
         "--no-cache",
         "--no-progress-bar",
         "--no-table",

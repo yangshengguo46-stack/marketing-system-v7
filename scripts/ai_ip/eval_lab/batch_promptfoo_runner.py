@@ -2,12 +2,7 @@
 
 import hashlib
 import json
-import os
-import stat
-import subprocess
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 
 MAX_PROMPTFOO_RESULT_BYTES = 8 * 1024 * 1024
@@ -99,6 +94,27 @@ def _nonnegative_integer(value: object, label: str) -> int:
     return value
 
 
+def _usage_layer(
+    value: object, label: str, *, require_requests: bool
+) -> dict[str, int]:
+    usage = _mapping(value, label)
+    required = ("prompt", "completion", "total")
+    fields = required + (("numRequests",) if require_requests else ())
+    normalized = {
+        field: _nonnegative_integer(usage.get(field), f"{label} {field}")
+        for field in fields
+    }
+    if "numRequests" in usage and "numRequests" not in normalized:
+        normalized["numRequests"] = _nonnegative_integer(
+            usage["numRequests"], f"{label} numRequests"
+        )
+    if normalized["total"] != normalized["prompt"] + normalized["completion"]:
+        raise PromptfooAdapterError(
+            f"{label} total must equal prompt plus completion"
+        )
+    return normalized
+
+
 def parse_promptfoo_result(
     payload: bytes, *, maximum_bytes: int = MAX_PROMPTFOO_RESULT_BYTES
 ) -> PromptfooResult:
@@ -152,18 +168,23 @@ def parse_promptfoo_result(
         or len(trajectory) > _MAX_EVENTS
     ):
         raise PromptfooAdapterError("Codex trajectory and raw events are required")
-    usage = _mapping(response.get("tokenUsage"), "Promptfoo token usage")
-    input_tokens = _nonnegative_integer(usage.get("prompt"), "token usage prompt")
-    output_tokens = _nonnegative_integer(
-        usage.get("completion"), "token usage completion"
+    response_usage = _usage_layer(
+        response.get("tokenUsage"),
+        "Promptfoo response token usage",
+        require_requests=False,
     )
-    total_tokens = _nonnegative_integer(usage.get("total"), "token usage total")
-    if total_tokens != input_tokens + output_tokens:
-        raise PromptfooAdapterError(
-            "token usage total must equal prompt plus completion"
-        )
-    row_usage = _mapping(row.get("tokenUsage"), "Promptfoo row token usage")
-    request_count = _nonnegative_integer(row_usage.get("numRequests"), "request count")
+    row_usage = _usage_layer(
+        row.get("tokenUsage"), "Promptfoo row token usage", require_requests=True
+    )
+    for field, response_value in response_usage.items():
+        if row_usage.get(field) != response_value:
+            raise PromptfooAdapterError(
+                f"Promptfoo token usage layers disagree for {field}"
+            )
+    input_tokens = response_usage["prompt"]
+    output_tokens = response_usage["completion"]
+    total_tokens = response_usage["total"]
+    request_count = row_usage["numRequests"]
     if request_count < 1:
         raise PromptfooAdapterError("request count must be positive")
     normalized_usage = {
@@ -189,119 +210,3 @@ def parse_promptfoo_result(
         "requestCount": request_count,
     }
     return PromptfooResult(output, normalized_metadata, telemetry)
-
-
-def _read_bounded(path: Path, maximum: int) -> bytes:
-    try:
-        with path.open("rb") as stream:
-            payload = stream.read(maximum + 1)
-    except OSError as error:
-        raise PromptfooAdapterError("Promptfoo input is unavailable") from error
-    if len(payload) > maximum:
-        raise PromptfooAdapterError("Promptfoo input exceeds the byte bound")
-    return payload
-
-
-def _write_all(descriptor: int, payload: bytes) -> None:
-    view = memoryview(payload)
-    while view:
-        written = os.write(descriptor, view)
-        if written < 1:
-            raise PromptfooAdapterError("controller descriptor write made no progress")
-        view = view[written:]
-
-
-def _write_file_at(directory: int, name: str, payload: bytes) -> None:
-    descriptor = os.open(
-        name,
-        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-        0o600,
-        dir_fd=directory,
-    )
-    try:
-        _write_all(descriptor, payload)
-        os.fchmod(descriptor, 0o600)
-    finally:
-        os.close(descriptor)
-
-
-def _same_file(left: os.stat_result, right: os.stat_result) -> bool:
-    return (left.st_dev, left.st_ino) == (right.st_dev, right.st_ino)
-
-
-def _read_result_at(directory: int, directory_path: Path) -> bytes:
-    retained = os.fstat(directory)
-    current = directory_path.lstat()
-    if (
-        not stat.S_ISDIR(current.st_mode)
-        or stat.S_ISLNK(current.st_mode)
-        or not _same_file(retained, current)
-    ):
-        raise PromptfooAdapterError("Promptfoo result path escaped its directory")
-    descriptor = os.open(
-        "result.json",
-        os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
-        dir_fd=directory,
-    )
-    try:
-        before = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(before.st_mode)
-            or before.st_size > MAX_PROMPTFOO_RESULT_BYTES
-        ):
-            raise PromptfooAdapterError("Promptfoo result path is not a bounded file")
-        payload = os.read(descriptor, MAX_PROMPTFOO_RESULT_BYTES + 1)
-        after = os.fstat(descriptor)
-        if not _same_file(before, after) or len(payload) != before.st_size:
-            raise PromptfooAdapterError("Promptfoo result changed while read")
-        return payload
-    except OSError as error:
-        raise PromptfooAdapterError("Promptfoo result path is unsafe") from error
-    finally:
-        os.close(descriptor)
-
-
-def _canonical(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-
-
-def main() -> int:
-    """Run only when this source has been sealed as a controller launch artifact."""
-    directory = -1
-    try:
-        cli = os.environ["AI_IP_PROMPTFOO_CLI"]
-        config_source = Path(os.environ["AI_IP_PROMPTFOO_PATH"])
-        result_fd = int(os.environ["AI_IP_RESULT_FD"])
-        telemetry_fd = int(os.environ["AI_IP_TELEMETRY_FD"])
-        cell = Path.cwd() / "cell"
-        promptfoo = cell / "promptfoo"
-        cell.mkdir(mode=0o700)
-        promptfoo.mkdir(mode=0o700)
-        directory = os.open(
-            promptfoo,
-            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-        )
-        _write_file_at(
-            directory, "config.json", _read_bounded(config_source, _MAX_CONFIG_BYTES)
-        )
-        completed = subprocess.run((cli, *_COMMAND), check=False)
-        if completed.returncode != 0:
-            return completed.returncode
-        parsed = parse_promptfoo_result(_read_result_at(directory, promptfoo))
-        _write_all(
-            result_fd,
-            _canonical({"metadata": parsed.metadata, "output": parsed.output}),
-        )
-        _write_all(telemetry_fd, _canonical(parsed.telemetry))
-        return 0
-    except (KeyError, OSError, TypeError, ValueError) as error:
-        message = f"Promptfoo sealed runner failed: {type(error).__name__}: {error}\n"
-        _write_all(2, message.encode()[:4096])
-        return 2
-    finally:
-        if directory >= 0:
-            os.close(directory)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
