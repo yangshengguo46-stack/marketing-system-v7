@@ -41,11 +41,20 @@ ProcessLaunchError = LaunchMaterializationError
 _Popen = subprocess.Popen
 
 
-def spawn(prepared: PreparedProcess, limit: int, lifecycle: object) -> OwnedProcess:
+def spawn(
+    prepared: PreparedProcess,
+    limit: int,
+    lifecycle: object,
+    *,
+    arm_class: str,
+    launch_spec_sha256: str,
+) -> OwnedProcess:
     return _spawn(
         prepared,
         limit,
         lifecycle,
+        arm_class=arm_class,
+        launch_spec_sha256=launch_spec_sha256,
         popen=_Popen,
         owned_type=OwnedProcess,
         launch_spec_identity_fn=launch_spec_identity,

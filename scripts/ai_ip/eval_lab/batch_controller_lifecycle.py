@@ -4,8 +4,12 @@ import time
 from pathlib import Path
 
 try:
-    from .batch_controller_capture import FatalSupervisorError
     from .batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
+    from .batch_controller_process_lease import (
+        OrphanedProcess,
+        ProcessLeaseState,
+        ProcessLifecycleLease,
+    )
     from .batch_receipt_storage import (
         entry_exists,
         seal_failure_tombstone,
@@ -13,8 +17,12 @@ try:
     )
     from .contracts import canonical_json_bytes
 except ImportError:
-    from batch_controller_capture import FatalSupervisorError
     from batch_isolation import cleanup_attempt_cell, mark_receipts_sealed
+    from batch_controller_process_lease import (
+        OrphanedProcess,
+        ProcessLeaseState,
+        ProcessLifecycleLease,
+    )
     from batch_receipt_storage import (
         entry_exists,
         seal_failure_tombstone,
@@ -32,6 +40,8 @@ class PairLifecycle:
         self.layout = None
         self.cells: list[object] = []
         self.processes: list[object] = []
+        self._leases: dict[tuple[str, str], ProcessLifecycleLease] = {}
+        self._process_leases: dict[int, ProcessLifecycleLease] = {}
         self.completed = False
 
     def __enter__(self) -> "PairLifecycle":
@@ -50,11 +60,44 @@ class PairLifecycle:
     def bind_cell(self, cell: object) -> None:
         self.cells.append(cell)
 
-    def bind_process(self, process: object) -> None:
-        """Own a concrete process immediately after the OS returns its handle."""
+    def reserve_process(
+        self, arm_class: str, attempt_id: str, launch_spec_sha256: str
+    ) -> ProcessLifecycleLease:
+        key = (arm_class, attempt_id)
+        if key in self._leases:
+            raise PairLifecycleError("process lease is already reserved")
+        lease = ProcessLifecycleLease(
+            self.pair_id, arm_class, attempt_id, launch_spec_sha256
+        )
+        self._leases[key] = lease
+        return lease
+
+    def promote_process(
+        self, lease: ProcessLifecycleLease, process: object
+    ) -> None:
+        if lease not in self._leases.values():
+            raise PairLifecycleError("process lease does not belong to this pair")
+        lease.promote(process)
         self.processes.append(process)
+        self._process_leases[id(process)] = lease
+
+    @property
+    def orphaned_processes(self) -> tuple[OrphanedProcess, ...]:
+        return tuple(
+            orphan
+            for lease in self._leases.values()
+            if (orphan := lease.orphaned_process) is not None
+        )
 
     def complete(self) -> None:
+        unsafe_states = {
+            ProcessLeaseState.RESERVED,
+            ProcessLeaseState.ATTACHED_RAW_PROCESS,
+            ProcessLeaseState.PROMOTED_OWNED_PROCESS,
+            ProcessLeaseState.ORPHANED,
+        }
+        if any(lease.state in unsafe_states for lease in self._leases.values()):
+            raise PairLifecycleError("pair process lease is not safely terminal")
         if any(not item.stopped for item in self.processes):
             raise PairLifecycleError("pair process is still live at completion")
         for cell in self.cells:
@@ -98,7 +141,6 @@ class PairLifecycle:
                     self._tombstone(directory, error)
                 except BaseException:
                     pass
-        orphaned = isinstance(error, FatalSupervisorError)
         if self.processes:
             try:
                 from .batch_controller_process import close_owned, terminate_and_wait
@@ -106,18 +148,25 @@ class PairLifecycle:
                 from batch_controller_process import close_owned, terminate_and_wait
 
             for process in self.processes:
+                lease = self._process_leases[id(process)]
                 try:
-                    if not terminate_and_wait(process, time.monotonic() + 1.0):
-                        orphaned = True
-                except BaseException:
-                    orphaned = True
+                    if lease.state is ProcessLeaseState.STOP_CONFIRMED:
+                        continue
+                    try:
+                        confirmed = terminate_and_wait(
+                            process, time.monotonic() + 1.0
+                        )
+                    except BaseException as stop_error:
+                        lease.mark_orphaned(stop_error)
+                    else:
+                        if confirmed:
+                            if lease.state is ProcessLeaseState.PROMOTED_OWNED_PROCESS:
+                                lease.confirm_stopped()
+                        else:
+                            lease.mark_orphaned(error)
                 finally:
                     close_owned(process)
-        if orphaned:
-            try:
-                self._record_orphan(error)
-            except BaseException:
-                pass
+        if self.orphaned_processes:
             return
         for cell in self.cells:
             try:

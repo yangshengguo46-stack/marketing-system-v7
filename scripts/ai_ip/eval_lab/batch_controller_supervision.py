@@ -14,11 +14,13 @@ try:
     from .batch_controller_launch_materialization import expand_argument
     from .batch_controller_launch_record import build_launch_record
     from .batch_controller_process_capture import captured_result
+    from .batch_controller_process_lease import ProcessLifecycleLease
 except ImportError:
     from batch_controller_capture import CapturedResult, FatalSupervisorError
     from batch_controller_launch_materialization import expand_argument
     from batch_controller_launch_record import build_launch_record
     from batch_controller_process_capture import captured_result
+    from batch_controller_process_lease import ProcessLifecycleLease
 
 
 _CHUNK_BYTES = 64 * 1024
@@ -80,6 +82,7 @@ class StreamBuffer:
 @dataclass
 class OwnedProcess:
     process: subprocess.Popen
+    lease: ProcessLifecycleLease
     prepared: object
     read_descriptors: dict[str, int]
     started_at: str
@@ -184,9 +187,15 @@ def _close_read_descriptor(owned: OwnedProcess, name: str, descriptor: int) -> N
 class ProcessOwnershipGuard:
     """Own every launch FD before Popen and the process at Popen assignment."""
 
-    def __init__(self, prepared: object, descriptors: set[int]) -> None:
+    def __init__(
+        self,
+        prepared: object,
+        descriptors: set[int],
+        lease: ProcessLifecycleLease,
+    ) -> None:
         self.prepared = prepared
         self.descriptors = descriptors
+        self.lease = lease
         self.process: subprocess.Popen | None = None
         self.group_id: int | None = None
         self.transferred = False
@@ -194,6 +203,7 @@ class ProcessOwnershipGuard:
     def start(self, popen: object, argv: list[str], **kwargs) -> subprocess.Popen:
         self.process = popen(argv, **kwargs)
         self.group_id = self.process.pid
+        self.lease.attach_raw_process(self.process.pid, self.group_id)
         return self.process
 
     def close_descriptor(self, descriptor: int) -> None:
@@ -206,14 +216,25 @@ class ProcessOwnershipGuard:
 
     def abort(self, error: BaseException) -> None:
         confirmed = True
+        stop_error = None
         if self.process is not None and self.group_id is not None:
-            confirmed = _terminate_process(
-                self.process, self.group_id, time.monotonic() + _STOP_SECONDS
-            )
+            try:
+                confirmed = _terminate_process(
+                    self.process, self.group_id, time.monotonic() + _STOP_SECONDS
+                )
+            except BaseException as termination_error:
+                confirmed = False
+                stop_error = termination_error
+            if confirmed:
+                self.lease.confirm_stopped()
+            else:
+                self.lease.mark_orphaned(stop_error or error)
             for name in ("stdout", "stderr"):
                 descriptor = _close_process_stream(self.process, name)
                 if descriptor is not None:
                     self.descriptors.discard(descriptor)
+        else:
+            self.lease.cancel_before_start()
         for descriptor in tuple(self.descriptors):
             _close_descriptor(descriptor)
         self.descriptors.clear()
@@ -221,7 +242,7 @@ class ProcessOwnershipGuard:
         if not confirmed:
             raise FatalSupervisorError(
                 "fatal supervisor orphan: post-launch stop was not confirmed"
-            ) from error
+            ) from (stop_error or error)
 
 
 def _pipes() -> tuple[int, int]:
@@ -253,6 +274,8 @@ def spawn(
     limit: int,
     lifecycle: object,
     *,
+    arm_class: str,
+    launch_spec_sha256: str,
     popen: object,
     owned_type: type,
     launch_spec_identity_fn: object,
@@ -281,12 +304,21 @@ def spawn(
             "AI_IP_SCHEMA_PATH": prepared.child_path("schema"),
         }
     )
-    result_read, result_write, telemetry_read, telemetry_write = _pipe_pair()
+    lease = lifecycle.reserve_process(
+        arm_class,
+        prepared.request.cell.attempt_id,
+        launch_spec_sha256,
+    )
     guard = ProcessOwnershipGuard(
         prepared,
-        {result_read, result_write, telemetry_read, telemetry_write},
+        set(),
+        lease,
     )
     try:
+        result_read, result_write, telemetry_read, telemetry_write = _pipe_pair()
+        guard.descriptors.update(
+            (result_read, result_write, telemetry_read, telemetry_write)
+        )
         environment.update(
             {
                 "AI_IP_RESULT_FD": str(result_write),
@@ -333,6 +365,7 @@ def spawn(
         )
         owned = owned_type(
             process,
+            lease,
             prepared,
             {
                 "result": result_read,
@@ -351,7 +384,7 @@ def spawn(
             },
             AggregateBudget(limit),
         )
-        lifecycle.bind_process(owned)
+        lifecycle.promote_process(lease, owned)
         guard.transfer()
         return owned
     except BaseException as error:
@@ -377,8 +410,18 @@ def _begin_terminal_drain(
     if owned.drain_deadline is not None:
         return
     owned.timed_out = owned.timed_out or timed_out
-    if not stop_process(owned, time.monotonic() + _STOP_SECONDS):
-        raise FatalSupervisorError("fatal supervisor orphan: stop was not confirmed")
+    try:
+        confirmed = stop_process(owned, time.monotonic() + _STOP_SECONDS)
+    except BaseException as error:
+        owned.lease.mark_orphaned(error)
+        raise
+    if not confirmed:
+        error = FatalSupervisorError(
+            "fatal supervisor orphan: stop was not confirmed"
+        )
+        owned.lease.mark_orphaned(error)
+        raise error
+    owned.lease.confirm_stopped()
     owned.drain_deadline = time.monotonic() + _DRAIN_SECONDS
 
 
@@ -465,8 +508,9 @@ def supervise_pair(
                             item, timed_out=False, stop_process=stop_process
                         )
             for item in owned.values():
-                if _stopped(item.process, item.group_id):
+                if not item.stopped and _stopped(item.process, item.group_id):
                     item.stopped = True
+                    item.lease.confirm_stopped()
         return {name: captured_result(item, _now()) for name, item in owned.items()}
     finally:
         selector.close()

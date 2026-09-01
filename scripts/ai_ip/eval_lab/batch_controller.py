@@ -168,6 +168,10 @@ def _run_candidate_pair_scoped(
         layout.verify()
         staged = stage_inputs(validated, pair_id)
         resources.callback(staged.cleanup)
+        launch_identities = {
+            "stock": launch_spec_identity(launches.stock),
+            "modified": launch_spec_identity(launches.modified),
+        }
         seal_pair_context(
             pair_directory,
             plan=plan_value,
@@ -184,7 +188,7 @@ def _run_candidate_pair_scoped(
                     "codexHomeSeedSha256": validated.stock.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.stock.effective_config_sha256,
                     "effectiveConditions": validated.stock.effective_conditions,
-                    "launchSpecSha256": launch_spec_identity(launches.stock)[1],
+                    "launchSpecSha256": launch_identities["stock"][1],
                 },
                 "modified": {
                     "privateArmId": validated.modified.private_arm_id,
@@ -196,7 +200,7 @@ def _run_candidate_pair_scoped(
                     "codexHomeSeedSha256": validated.modified.codex_home_seed.digest,
                     "effectiveConfigSha256": validated.modified.effective_config_sha256,
                     "effectiveConditions": validated.modified.effective_conditions,
-                    "launchSpecSha256": launch_spec_identity(launches.modified)[1],
+                    "launchSpecSha256": launch_identities["modified"][1],
                 },
                 "inputSha256": plan_value["caseBundleSha256"],
                 "caseAnswerRuntimeSha256": sha256_json(validated.case_answer_schema),
@@ -273,6 +277,8 @@ def _run_candidate_pair_scoped(
                     16 * 1024 * 1024,
                 ),
                 lifecycle,
+                arm_class=name,
+                launch_spec_sha256=launch_identities[name][1],
             )
             processes[name] = owned
             _process.seal_launch_record(owned, directories[name])
