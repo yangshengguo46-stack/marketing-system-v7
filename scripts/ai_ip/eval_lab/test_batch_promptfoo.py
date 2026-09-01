@@ -9,6 +9,7 @@ import stat
 import struct
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -923,6 +924,11 @@ def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) ->
     node.write_bytes(b"sealed portable node")
     seal = bundle.measure_promptfoo_runtime(runtime, node)
 
+    with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
+        bundle.seal_promptfoo_runtime(
+            runtime, node, replace(seal, inventory_sha256="0" * 64)
+        )
+
     node.write_bytes(b"replaced portable node")
     with pytest.raises(bundle.PromptfooBundleError, match="Node identity"):
         bundle.seal_promptfoo_runtime(runtime, node, seal)
@@ -931,6 +937,19 @@ def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) ->
     entrypoint.write_bytes(b"replaced entrypoint")
     with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
         bundle.seal_promptfoo_runtime(runtime, node, seal)
+
+
+def test_runtime_seal_loader_requires_inventory_commitment() -> None:
+    bundle = importlib.import_module("batch_promptfoo_bundle")
+    manifest_path = (
+        REPO_ROOT
+        / "ai-ip-evals/lab/promptfoo/runtime-manifests/darwin-x86_64.json"
+    )
+    value = json.loads(manifest_path.read_bytes())
+    value.pop("inventorySha256", None)
+
+    with pytest.raises(bundle.PromptfooBundleError, match="invalid fields"):
+        bundle._seal_from_json(value)
 
 
 @pytest.mark.parametrize(
@@ -1055,14 +1074,20 @@ def _run_sealed_runner(
     entrypoint_source: bytes,
     *,
     dependency_source: bytes | None = None,
+    attestation_fd: str = "private",
+    attempt_id: str | None = "d" * 64,
+    manifest_inventory: str | None = None,
+    preexisting_runtime: bool = False,
     extra_environment: dict[str, str] | None = None,
 ) -> tuple[
     subprocess.CompletedProcess[bytes],
     bytes,
     bytes,
+    bytes,
     Path,
     Path,
     Path,
+    int,
 ]:
     adapter = _adapter()
     runtime, _, node = _test_runtime(
@@ -1074,7 +1099,14 @@ def _run_sealed_runner(
     for artifact in runtime.artifacts:
         artifact_path = tmp_path / artifact.relative_path
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
-        artifact_path.write_bytes(artifact.payload)
+        payload = artifact.payload
+        if manifest_inventory is not None and artifact.relative_path.endswith(
+            "manifest.json"
+        ):
+            value = json.loads(payload)
+            value["inventorySha256"] = manifest_inventory
+            payload = _json_bytes(value)
+        artifact_path.write_bytes(payload)
         artifact_paths.append(artifact_path)
     config_path = tmp_path / "promptfoo-config.json"
     config_path.write_bytes(config_bytes)
@@ -1085,8 +1117,11 @@ def _run_sealed_runner(
     isolated_promptfoo = isolated / "promptfoo"
     isolated_temp.mkdir(parents=True)
     isolated_promptfoo.mkdir()
+    if preexisting_runtime:
+        (isolated_temp / "promptfoo-runtime").mkdir()
     result_read, result_write = os.pipe()
     telemetry_read, telemetry_write = os.pipe()
+    attestation_read, attestation_write = os.pipe()
     environment = {
         **os.environ,
         "AI_IP_PROMPTFOO_PATH": str(config_path),
@@ -1101,6 +1136,19 @@ def _run_sealed_runner(
         "TMPDIR": str(isolated_temp),
         **(extra_environment or {}),
     }
+    selected_attestation = {
+        "private": attestation_write,
+        "result": result_write,
+        "telemetry": telemetry_write,
+    }.get(attestation_fd)
+    if attestation_fd != "missing":
+        environment["AI_IP_RUNTIME_ATTESTATION_FD"] = (
+            str(selected_attestation)
+            if selected_attestation is not None
+            else attestation_fd
+        )
+    if attempt_id is not None:
+        environment["AI_IP_ATTEMPT_ID"] = attempt_id
     try:
         completed = subprocess.run(
             [
@@ -1111,18 +1159,239 @@ def _run_sealed_runner(
             ],
             cwd=workspace,
             env=environment,
-            pass_fds=(result_write, telemetry_write),
+            pass_fds=(result_write, telemetry_write, attestation_write),
             capture_output=True,
             check=False,
         )
     finally:
         os.close(result_write)
         os.close(telemetry_write)
+        os.close(attestation_write)
     result = os.read(result_read, 64 * 1024)
     telemetry = os.read(telemetry_read, 64 * 1024)
+    attestation = os.read(attestation_read, 8193)
     os.close(result_read)
     os.close(telemetry_read)
-    return completed, result, telemetry, workspace, isolated_temp, isolated_promptfoo
+    os.close(attestation_read)
+    return (
+        completed,
+        result,
+        telemetry,
+        attestation,
+        workspace,
+        isolated_temp,
+        isolated_promptfoo,
+        attestation_write,
+    )
+
+
+def _identity_frame(payload: bytes) -> bytes:
+    return struct.pack(">I", len(payload)) + payload
+
+
+def _object_identity_sha256(root: Path) -> str:
+    """Task 4B contract: root + path-ordered object metadata, excluding atime."""
+    records: list[tuple[bytes, bytes, os.stat_result]] = [
+        (b"", b"root", root.lstat())
+    ]
+    for target in root.rglob("*"):
+        relative = target.relative_to(root).as_posix().encode("utf-8", errors="strict")
+        metadata = target.lstat()
+        if stat.S_ISDIR(metadata.st_mode):
+            kind = b"directory"
+        elif stat.S_ISREG(metadata.st_mode):
+            kind = b"file"
+        else:
+            raise AssertionError("synthetic runtime contains a non-regular object")
+        records.append((relative, kind, metadata))
+    records.sort(key=lambda item: item[0])
+    digest = hashlib.sha256(b"ai-ip-promptfoo-object-identity/v1\0")
+    for relative, kind, metadata in records:
+        digest.update(kind + b"\0")
+        for value in (
+            relative,
+            str(metadata.st_dev).encode("ascii"),
+            str(metadata.st_ino).encode("ascii"),
+            str(metadata.st_mode).encode("ascii"),
+            str(metadata.st_nlink).encode("ascii"),
+            str(metadata.st_size).encode("ascii"),
+            str(metadata.st_mtime_ns).encode("ascii"),
+            str(metadata.st_ctime_ns).encode("ascii"),
+        ):
+            digest.update(_identity_frame(value))
+    digest.update(b"end\0")
+    return digest.hexdigest()
+
+
+def test_sealed_runner_emits_exact_bounded_path_free_runtime_envelope(
+    tmp_path: Path,
+) -> None:
+    frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
+    completed, result, telemetry, payload, _, isolated_temp, _, _ = (
+        _run_sealed_runner(
+            tmp_path,
+            f"""const fs = require('node:fs');
+fs.writeFileSync(process.argv[6], {frozen_result_literal});
+""".encode(),
+        )
+    )
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert 1 <= len(payload) <= 8192 and payload.endswith(b"\n")
+    envelope = json.loads(payload)
+    assert payload == _json_bytes(envelope) + b"\n"
+    runtime_root = isolated_temp / "promptfoo-runtime"
+    assert runtime_root.is_dir()
+    assert not list(isolated_temp.glob("promptfoo-runtime-*"))
+    manifest_payload = (tmp_path / "promptfoo-runtime-manifest.json").read_bytes()
+    manifest = json.loads(manifest_payload)
+    root_state = runtime_root.lstat()
+    assert envelope == {
+        "attemptId": "d" * 64,
+        "fileCount": manifest["fileCount"],
+        "inventorySha256": manifest["inventorySha256"],
+        "manifestSha256": hashlib.sha256(manifest_payload).hexdigest(),
+        "objectIdentitySha256": _object_identity_sha256(runtime_root),
+        "rootDevice": str(root_state.st_dev),
+        "rootInode": str(root_state.st_ino),
+        "schemaVersion": "ai-ip-promptfoo-runtime-attestation/v1",
+        "unpackedBytes": manifest["unpackedBytes"],
+    }
+    assert str(tmp_path).encode() not in payload
+    assert str(runtime_root).encode() not in payload
+    assert result and telemetry
+
+
+def test_sealed_runner_rejects_preexisting_fixed_runtime_root(tmp_path: Path) -> None:
+    completed, result, telemetry, attestation, _, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        b"throw new Error('Promptfoo must not start');\n",
+        preexisting_runtime=True,
+    )
+
+    assert completed.returncode == 2
+    assert b"exist" in completed.stderr.lower()
+    assert result == telemetry == attestation == b""
+
+
+@pytest.mark.parametrize(
+    ("attestation_fd", "attempt_id"),
+    [
+        ("missing", "d" * 64),
+        ("03", "d" * 64),
+        ("2", "d" * 64),
+        ("-1", "d" * 64),
+        ("1e3", "d" * 64),
+        ("999999", "d" * 64),
+        ("private", None),
+        ("private", "D" * 64),
+        ("private", "d" * 63),
+    ],
+)
+def test_sealed_runner_requires_strict_private_attestation_inputs(
+    tmp_path: Path, attestation_fd: str, attempt_id: str | None
+) -> None:
+    completed, result, telemetry, attestation, _, _, promptfoo, _ = (
+        _run_sealed_runner(
+            tmp_path,
+            b"throw new Error('Promptfoo must not start');\n",
+            attestation_fd=attestation_fd,
+            attempt_id=attempt_id,
+        )
+    )
+
+    assert completed.returncode == 2
+    assert b"attestation" in completed.stderr.lower() or b"attempt" in completed.stderr.lower()
+    assert result == telemetry == attestation == b""
+    assert not (promptfoo / "output.json").exists()
+
+
+@pytest.mark.parametrize("channel", ["result", "telemetry"])
+def test_result_or_telemetry_fd_cannot_substitute_for_attestation(
+    tmp_path: Path, channel: str
+) -> None:
+    completed, result, telemetry, attestation, _, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        b"throw new Error('Promptfoo must not start');\n",
+        attestation_fd=channel,
+    )
+
+    assert completed.returncode == 2
+    assert b"attestation" in completed.stderr.lower()
+    assert result == telemetry == attestation == b""
+
+
+def test_sealed_runner_rejects_wrong_manifest_inventory_commitment(
+    tmp_path: Path,
+) -> None:
+    completed, result, telemetry, attestation, _, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        b"throw new Error('Promptfoo must not start');\n",
+        manifest_inventory="0" * 64,
+    )
+
+    assert completed.returncode == 2
+    assert b"inventory" in completed.stderr.lower()
+    assert result == telemetry == attestation == b""
+
+
+def test_runtime_envelope_follows_locked_attestation_and_precedes_spawn(
+    tmp_path: Path,
+) -> None:
+    preload = tmp_path / "trace-runtime-envelope.js"
+    trace = tmp_path / "runtime-envelope-order.json"
+    preload.write_text(
+        """const fs = require('node:fs');
+const childProcess = require('node:child_process');
+const originalRead = fs.readSync;
+const originalWrite = fs.writeSync;
+const originalClose = fs.closeSync;
+const originalSpawn = childProcess.spawnSync;
+const attestation = Number(process.env.AI_IP_RUNTIME_ATTESTATION_FD);
+let lockedRead = false;
+let envelopeWritten = false;
+let envelopeClosed = false;
+fs.readSync = (descriptor, ...args) => {
+  const amount = originalRead(descriptor, ...args);
+  try {
+    const state = fs.fstatSync(descriptor, {bigint: true});
+    const mode = state.mode & 0o7777n;
+    if (state.isFile() && (mode === 0o400n || mode === 0o500n)) lockedRead = true;
+  } catch {}
+  return amount;
+};
+fs.writeSync = (descriptor, ...args) => {
+  if (descriptor === attestation) envelopeWritten = true;
+  return originalWrite(descriptor, ...args);
+};
+fs.closeSync = (descriptor) => {
+  if (descriptor === attestation) envelopeClosed = true;
+  return originalClose(descriptor);
+};
+childProcess.spawnSync = (...args) => {
+  fs.writeFileSync(process.env.AI_IP_TEST_TRACE, JSON.stringify({lockedRead, envelopeWritten, envelopeClosed}));
+  return originalSpawn(...args);
+};
+"""
+    )
+    frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
+    completed, _, _, attestation, _, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        f"""require('node:fs').writeFileSync(process.argv[6], {frozen_result_literal});
+""".encode(),
+        extra_environment={
+            "AI_IP_TEST_TRACE": str(trace),
+            "NODE_OPTIONS": f"--require={preload}",
+        },
+    )
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert json.loads(trace.read_bytes()) == {
+        "lockedRead": True,
+        "envelopeWritten": True,
+        "envelopeClosed": True,
+    }
+    assert attestation.endswith(b"\n")
 
 
 def test_launch_compiler_returns_controller_owned_parity_material(
@@ -1194,7 +1463,7 @@ def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
 ) -> None:
     adapter = _adapter()
     frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
-    completed, result, telemetry, workspace, isolated_temp, isolated_promptfoo = (
+    completed, result, telemetry, attestation, workspace, isolated_temp, isolated_promptfoo, attestation_fd = (
         _run_sealed_runner(
             tmp_path,
             f"""const fs = require('node:fs');
@@ -1202,6 +1471,11 @@ const argvPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'ar
 fs.writeFileSync(argvPath, JSON.stringify(process.argv.slice(2)));
 const envPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'child-env.json');
 fs.writeFileSync(envPath, JSON.stringify(process.env));
+const open = [];
+for (let descriptor = 3; descriptor < 128; descriptor += 1) {{
+  try {{ fs.fstatSync(descriptor); open.push(descriptor); }} catch {{}}
+}}
+fs.writeFileSync(require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'open-fds.json'), JSON.stringify(open));
 fs.writeFileSync(process.argv[6], {frozen_result_literal});
 """.encode(),
         )
@@ -1237,6 +1511,11 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
     assert stat.S_IMODE(candidate_tmp.stat().st_mode) == 0o700
     assert list(workspace.iterdir()) == [candidate_tmp]
     assert "REAL_PROVIDER_API_KEY" not in child_environment
+    assert "AI_IP_ATTEMPT_ID" not in child_environment
+    assert "AI_IP_RUNTIME_ATTESTATION_FD" not in child_environment
+    assert attestation_fd not in json.loads(
+        (isolated_promptfoo / "open-fds.json").read_bytes()
+    )
     assert json.loads(result) == {
         "metadata": adapter.parse_promptfoo_result(
             _result_bytes(_result_value())
@@ -1253,11 +1532,12 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
         "outputTokens": 11,
         "requestCount": 1,
     }
+    assert attestation.endswith(b"\n")
 
 
 def test_sealed_runner_rejects_post_start_runtime_drift(tmp_path: Path) -> None:
     frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
-    completed, result, telemetry, _, _, _ = _run_sealed_runner(
+    completed, result, telemetry, attestation, _, _, _, _ = _run_sealed_runner(
         tmp_path,
         f"""const fs = require('node:fs');
 const path = require('node:path');
@@ -1277,6 +1557,7 @@ fs.appendFileSync(dependency, '\\n// changed after startup\\n');
     )
     assert result == b""
     assert telemetry == b""
+    assert len(attestation) <= 8192
 
 
 @pytest.mark.parametrize("primary_drift", [False, True])
@@ -1292,7 +1573,7 @@ const originalClose = fs.closeSync;
 let runtimeRoot = -1;
 fs.openSync = (target, flags, ...rest) => {
   const descriptor = originalOpen(target, flags, ...rest);
-  if (typeof target === 'string' && path.basename(target).startsWith('promptfoo-runtime-') &&
+  if (typeof target === 'string' && path.basename(target) === 'promptfoo-runtime' &&
       (flags & (fs.constants.O_DIRECTORY || 0))) runtimeRoot = descriptor;
   return descriptor;
 };
@@ -1312,7 +1593,7 @@ const dependency = require('node:path').join(__dirname, 'dependency.js');
 fs.chmodSync(dependency, 0o600);
 fs.appendFileSync(dependency, '\\n// changed after startup\\n');
 """ if primary_drift else ""
-    completed, result, telemetry, _, _, _ = _run_sealed_runner(
+    completed, result, telemetry, attestation, _, _, _, _ = _run_sealed_runner(
         tmp_path,
         f"""const fs = require('node:fs');
 require('./dependency.js');
@@ -1332,3 +1613,4 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
     assert completed.stderr.decode() == expected
     assert result == b""
     assert telemetry == b""
+    assert len(attestation) <= 8192

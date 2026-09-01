@@ -596,6 +596,89 @@ def test_extractor_retains_exact_regular_file_inventory(tmp_path: Path) -> None:
     ]
 
 
+_INVENTORY_CORPUS = (
+    {"mode": 0o400, "path": "a.txt", "sha256": "00" * 32, "size": 0},
+    {"mode": 0o500, "path": "礼/🎁.js", "sha256": "ff" * 32, "size": 17},
+)
+_INVENTORY_SHA256 = "06038e10f336a46d1758563b3cc0691e58705114d678b2c0474ec65961e3522a"
+_INVENTORY_PROBE = r"""
+const fs = require("node:fs");
+const path = require("node:path");
+const runnerPath = process.argv[1];
+const runnerSource = fs.readFileSync(runnerPath, "utf8");
+const loaded = {exports: {}};
+new Function("require", "module", "exports", "__filename", "__dirname",
+  `${runnerSource}\nmodule.exports.inventorySha256 = inventorySha256;`
+)(require, loaded, loaded.exports, runnerPath, path.dirname(runnerPath));
+process.stdout.write(loaded.exports.inventorySha256(JSON.parse(process.argv[2])));
+"""
+
+
+def _javascript_inventory(records: object) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            _INVENTORY_PROBE,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+            json.dumps(records, ensure_ascii=True),
+        ],
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_python_and_javascript_inventory_commitment_match_literal_contract() -> None:
+    """Catches either implementation drifting from the reviewed framing corpus."""
+    archive = _archive()
+    completed = _javascript_inventory(_INVENTORY_CORPUS)
+
+    assert archive.inventory_sha256(_INVENTORY_CORPUS) == _INVENTORY_SHA256
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert completed.stdout.decode() == _INVENTORY_SHA256
+
+
+@pytest.mark.parametrize(
+    "records",
+    [
+        tuple(reversed(_INVENTORY_CORPUS)),
+        (_INVENTORY_CORPUS[0], _INVENTORY_CORPUS[0]),
+        ({**_INVENTORY_CORPUS[0], "path": "bad/\ud800"},),
+        ({**_INVENTORY_CORPUS[0], "path": "../bad"},),
+        ({**_INVENTORY_CORPUS[0], "mode": 0o600},),
+        ({**_INVENTORY_CORPUS[0], "size": -1},),
+        ({**_INVENTORY_CORPUS[0], "sha256": "A" * 64},),
+    ],
+)
+def test_inventory_commitment_rejects_noncanonical_records(
+    records: tuple[dict[str, object], ...],
+) -> None:
+    """Catches ambiguous, duplicate, unordered, or invalid committed records."""
+    archive = _archive()
+
+    with pytest.raises(archive.PromptfooFilesystemError, match="inventory"):
+        archive.inventory_sha256(records)
+    assert _javascript_inventory(records).returncode != 0
+
+
+def test_runtime_archive_inventory_commitment_is_creation_order_stable(
+    tmp_path: Path,
+) -> None:
+    """Catches filesystem enumeration order changing the committed inventory."""
+    archive = _archive()
+    payloads = (("z.txt", b"z"), ("a/nested.txt", b"nested"))
+    digests = []
+    for name, ordered in (("forward", payloads), ("reverse", reversed(payloads))):
+        runtime = _runtime(tmp_path / name)
+        for relative, payload in ordered:
+            target = runtime / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(payload)
+        digests.append(archive.build_runtime_archive(_canonical(runtime)).inventory_sha256)
+
+    assert digests[0] == digests[1]
+
+
 def test_extractor_rejects_bytes_changed_by_the_writer(tmp_path: Path) -> None:
     """Catches trusting source bytes instead of rereading the output descriptor."""
     observed = _extractor_probe(tmp_path, "corrupt")
@@ -673,6 +756,63 @@ process.stdout.write(JSON.stringify({calls, zero}));
     assert json.loads(completed.stdout) == {
         "calls": [[9, 0, 6], [9, 2, 4], [9, 2, 4]],
         "zero": "pipe write made no progress",
+    }
+
+
+def test_private_envelope_exact_write_bound_and_close_error_precedence() -> None:
+    """Catches a truncated/leaked private frame or close masking its primary error."""
+    source = r"""
+const fs = require("node:fs");
+const path = require("node:path");
+const runnerPath = process.argv[1];
+const runnerSource = fs.readFileSync(runnerPath, "utf8");
+const loaded = {exports: {}};
+new Function("require", "module", "exports", "__filename", "__dirname",
+  `${runnerSource}\nmodule.exports.emitAttestation = emitAttestation;`
+)(require, loaded, loaded.exports, runnerPath, path.dirname(runnerPath));
+const emit = loaded.exports.emitAttestation;
+const chunks = [], calls = [];
+let attempt = 0;
+emit(9, {b: 2, a: 1}, (fd, payload, offset, length) => {
+  calls.push([fd, offset, length]);
+  attempt += 1;
+  if (attempt === 1) length = 2;
+  else if (attempt === 2) { const error = new Error("interrupt"); error.code = "EINTR"; throw error; }
+  chunks.push(payload.subarray(offset, offset + length));
+  return length;
+}, (fd) => calls.push(["close", fd]));
+const errors = {};
+try { emit(9, {a: 1}, () => 0, () => { throw new Error("close after zero"); }); }
+catch (error) { errors.zero = error.message; }
+try { emit(9, {a: 1}, () => { throw new Error("primary write"); }, () => { throw new Error("secondary close"); }); }
+catch (error) { errors.primary = error.message; }
+try { emit(9, {a: 1}, (fd, payload, offset, length) => length, () => { throw new Error("standalone close"); }); }
+catch (error) { errors.close = error.message; }
+try { emit(9, {attemptId: "x".repeat(8192)}, () => 1, () => {}); }
+catch (error) { errors.bound = error.message; }
+process.stdout.write(JSON.stringify({calls, errors, payload: Buffer.concat(chunks).toString()}));
+"""
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            source,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+        ],
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert json.loads(completed.stdout) == {
+        "calls": [[9, 0, 14], [9, 2, 12], [9, 2, 12], ["close", 9]],
+        "errors": {
+            "bound": "runtime attestation envelope exceeds its byte bound",
+            "close": "standalone close",
+            "primary": "primary write",
+            "zero": "pipe write made no progress",
+        },
+        "payload": '{"a":1,"b":2}\n',
     }
 
 
