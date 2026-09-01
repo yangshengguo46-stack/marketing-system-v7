@@ -1,4 +1,5 @@
 packages:
+  - ai-ip-evals/lab/promptfoo
   - codex-cli
   - codex-rs/responses-api-proxy/npm
   - sdk/typescript
