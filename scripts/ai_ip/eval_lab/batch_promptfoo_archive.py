@@ -134,9 +134,9 @@ class _DirectoryCapability:
         try:
             root_state = os.stat(os.path.sep, follow_symlinks=False)
             descriptor = os.open(os.path.sep, _DIR_FLAGS)
+            self.descriptors.append(descriptor)
             if not stat.S_ISDIR(root_state.st_mode) or _state(root_state) != _state(os.fstat(descriptor)):
                 raise PromptfooFilesystemError("filesystem anchor changed while opened")
-            self.descriptors.append(descriptor)
             self.states.append(_state(root_state))
             for name in parts:
                 parent = descriptor
@@ -144,11 +144,10 @@ class _DirectoryCapability:
                 if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
                     raise PromptfooFilesystemError("Promptfoo path contains a directory link")
                 descriptor = os.open(name, _DIR_FLAGS, dir_fd=parent)
+                self.descriptors.append(descriptor)
                 opened = os.fstat(descriptor)
                 if _state(before) != _state(opened):
-                    os.close(descriptor)
                     raise PromptfooFilesystemError("Promptfoo directory changed while opened")
-                self.descriptors.append(descriptor)
                 self.states.append(_state(before))
                 self.edges.append((parent, name, _state(before)))
             return self
@@ -181,11 +180,12 @@ class _DirectoryCapability:
         error: OSError | None = None
         while self.descriptors:
             descriptor = self.descriptors.pop()
-            self.states.pop()
             try:
                 os.close(descriptor)
             except OSError as close_error:
-                error = close_error
+                if error is None:
+                    error = close_error
+        self.states.clear()
         self.edges.clear()
         if error is not None:
             raise PromptfooFilesystemError("Promptfoo descriptor close failed") from error
@@ -215,16 +215,17 @@ def _open_regular(parent: int, name: str, maximum: int, label: str) -> tuple[int
         if _state(before) != _state(opened):
             raise PromptfooFilesystemError(f"{label} changed while opened")
         return descriptor, before
-    except PromptfooFilesystemError:
-        if descriptor >= 0:
-            os.close(descriptor)
-        raise
-    except OSError as error:
+    except (PromptfooFilesystemError, OSError) as error:
+        close_error: OSError | None = None
         if descriptor >= 0:
             try:
                 os.close(descriptor)
-            except OSError:
-                pass
+            except OSError as caught:
+                close_error = caught
+        if close_error is not None:
+            raise PromptfooFilesystemError(f"{label} descriptor close failed") from close_error
+        if isinstance(error, PromptfooFilesystemError):
+            raise
         raise PromptfooFilesystemError(f"{label} is unavailable or changed") from error
 
 
@@ -403,12 +404,6 @@ class _ArchiveBuilder:
             if stat.S_ISLNK(metadata.st_mode):
                 if ".bin" not in prefix:
                     raise PromptfooFilesystemError("Promptfoo runtime contains a symbolic link")
-                try:
-                    target = os.stat(name, dir_fd=directory, follow_symlinks=True)
-                except OSError as error:
-                    raise PromptfooFilesystemError("Promptfoo .bin link is unavailable") from error
-                if not stat.S_ISREG(target.st_mode):
-                    raise PromptfooFilesystemError("Promptfoo runtime contains a linked directory")
                 continue
             if stat.S_ISDIR(metadata.st_mode):
                 directories.append((name, metadata))

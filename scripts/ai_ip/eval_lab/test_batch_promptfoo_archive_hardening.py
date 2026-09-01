@@ -118,26 +118,40 @@ def test_runtime_archive_rejects_hardlinked_regular_file(tmp_path: Path) -> None
         archive.build_runtime_archive(_canonical(runtime))
 
 
-def test_bin_file_link_is_ignored_but_bin_directory_link_is_rejected(
-    tmp_path: Path,
-) -> None:
-    """Catches following deployment .bin leaves or accepting linked directories."""
+def test_ignored_bin_links_are_never_followed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Catches ignored deployment links consulting any target type or location."""
     archive = _archive()
-    runtime = _runtime(tmp_path)
-    bin_dir = runtime / "node_modules/.bin"
-    bin_dir.mkdir()
-    outside_file = tmp_path / "outside-file"
-    outside_file.write_bytes(b"must not be archived")
-    (bin_dir / "tool").symlink_to(outside_file)
+    short_root = Path(tempfile.mkdtemp(prefix="07b-pf-", dir="/tmp"))
+    endpoint = socket.socket(socket.AF_UNIX)
+    try:
+        runtime = _runtime(short_root)
+        bin_dir = runtime / "node_modules/.bin"
+        bin_dir.mkdir()
+        outside_file = short_root / "outside-file"
+        outside_fifo = short_root / "outside-fifo"
+        outside_socket = short_root / "outside-socket"
+        outside_file.write_bytes(b"must not be archived")
+        os.mkfifo(outside_fifo)
+        endpoint.bind(str(outside_socket))
+        (bin_dir / "dangling").symlink_to(short_root / "missing")
+        (bin_dir / "external").symlink_to(outside_file)
+        (bin_dir / "fifo").symlink_to(outside_fifo)
+        (bin_dir / "socket").symlink_to(outside_socket)
+        stat_entry = archive.os.stat
 
-    built = archive.build_runtime_archive(_canonical(runtime))
-    assert built.file_count == 2
+        def reject_target_stat(*args: object, **kwargs: object):
+            if kwargs.get("dir_fd") is not None and kwargs.get("follow_symlinks") is True:
+                raise AssertionError("ignored .bin target was followed")
+            return stat_entry(*args, **kwargs)
 
-    outside_dir = tmp_path / "outside-dir"
-    outside_dir.mkdir()
-    (bin_dir / "linked-dir").symlink_to(outside_dir, target_is_directory=True)
-    with pytest.raises(archive.PromptfooFilesystemError, match="directory|link"):
-        archive.build_runtime_archive(_canonical(runtime))
+        monkeypatch.setattr(archive.os, "stat", reject_target_stat)
+
+        built = archive.build_runtime_archive(_canonical(runtime))
+
+        assert built.file_count == 2
+    finally:
+        endpoint.close()
+        shutil.rmtree(short_root)
 
 
 @pytest.mark.parametrize("kind", ["fifo", "socket"])
@@ -355,6 +369,222 @@ def test_all_descriptors_close_once_when_root_scan_fails(
         archive.build_runtime_archive(_canonical(runtime))
     assert sorted(opened) == sorted(closed)
     assert len(closed) == len(set(closed))
+
+
+@pytest.mark.parametrize("failed_open", [0, 1], ids=["root", "child"])
+def test_new_directory_descriptor_is_owned_before_fstat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failed_open: int
+) -> None:
+    """Catches root or child capabilities leaking when immediate fstat fails."""
+    archive = _archive()
+    runtime = _runtime(tmp_path)
+    opened: list[int] = []
+    closed: list[int] = []
+    open_file = archive.os.open
+    close_file = archive.os.close
+    fstat_file = archive.os.fstat
+
+    def record_open(*args: object, **kwargs: object) -> int:
+        descriptor = open_file(*args, **kwargs)
+        opened.append(descriptor)
+        return descriptor
+
+    def fail_selected_fstat(descriptor: int):
+        if len(opened) > failed_open and descriptor == opened[failed_open]:
+            raise OSError("injected immediate fstat failure")
+        return fstat_file(descriptor)
+
+    def record_close(descriptor: int) -> None:
+        closed.append(descriptor)
+        close_file(descriptor)
+
+    monkeypatch.setattr(archive.os, "open", record_open)
+    monkeypatch.setattr(archive.os, "fstat", fail_selected_fstat)
+    monkeypatch.setattr(archive.os, "close", record_close)
+
+    with pytest.raises(archive.PromptfooFilesystemError, match="capability|changed"):
+        archive.build_runtime_archive(_canonical(runtime))
+
+    assert sorted(opened) == sorted(closed)
+    assert len(closed) == len(set(closed))
+
+
+def test_regular_descriptor_close_failure_is_not_swallowed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Catches an fstat error hiding uncertainty from closing the acquired file."""
+    archive = _archive()
+    control = _canonical(tmp_path) / "control"
+    control.write_bytes(b"safe")
+    control_fd = -1
+    open_file = archive.os.open
+    close_file = archive.os.close
+    fstat_file = archive.os.fstat
+
+    def record_open(name: object, flags: int, *args: object, **kwargs: object) -> int:
+        nonlocal control_fd
+        descriptor = open_file(name, flags, *args, **kwargs)
+        if name == control.name and kwargs.get("dir_fd") is not None:
+            control_fd = descriptor
+        return descriptor
+
+    def fail_control_fstat(descriptor: int):
+        if descriptor == control_fd:
+            raise OSError("injected regular-file fstat failure")
+        return fstat_file(descriptor)
+
+    def fail_control_close(descriptor: int) -> None:
+        close_file(descriptor)
+        if descriptor == control_fd:
+            raise OSError("injected regular-file close failure")
+
+    monkeypatch.setattr(archive.os, "open", record_open)
+    monkeypatch.setattr(archive.os, "fstat", fail_control_fstat)
+    monkeypatch.setattr(archive.os, "close", fail_control_close)
+
+    with pytest.raises(archive.PromptfooFilesystemError, match="descriptor close failed"):
+        archive.read_bounded_regular(control, 64, "control")
+
+
+def test_descriptor_stack_reports_first_close_error_after_closing_all(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Catches later close failures replacing the first uncertain release."""
+    archive = _archive()
+    runtime = _runtime(tmp_path)
+    owner = archive._DirectoryCapability(_canonical(runtime))
+    owner.__enter__()
+    expected_attempts = list(reversed(owner.descriptors))
+    attempts: list[int] = []
+    close_file = archive.os.close
+
+    def fail_close(descriptor: int) -> None:
+        attempts.append(descriptor)
+        close_file(descriptor)
+        raise OSError(f"close {descriptor}")
+
+    monkeypatch.setattr(archive.os, "close", fail_close)
+
+    with pytest.raises(archive.PromptfooFilesystemError) as raised:
+        owner.__exit__(None, None, None)
+
+    assert attempts == expected_attempts
+    assert str(raised.value.__cause__) == f"close {expected_attempts[0]}"
+
+
+_EXTRACTOR_PROBE = r"""
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
+const runnerPath = process.argv[1];
+const root = process.argv[2];
+const scenario = process.argv[3];
+const runnerSource = fs.readFileSync(runnerPath, "utf8");
+const loaded = {exports: {}};
+new Function("require", "module", "exports", "__filename", "__dirname",
+  `${runnerSource}\nmodule.exports.ArchiveReader = RecordExtractor;`
+)(require, loaded, loaded.exports, runnerPath, path.dirname(runnerPath));
+const payload = Buffer.from("abcdef");
+const header = Buffer.from(JSON.stringify({
+  mode: 384,
+  path: "file.txt",
+  sha256: crypto.createHash("sha256").update(payload).digest("hex"),
+  size: payload.length,
+}));
+const length = Buffer.alloc(4);
+length.writeUInt32BE(header.length);
+const terminator = Buffer.alloc(4);
+const record = Buffer.concat([length, header, payload, terminator]);
+const manifest = {
+  fileCount: 1,
+  maximumFileBytes: 1024,
+  maximumUnpackedBytes: 1024,
+  treeSha256: crypto.createHash("sha256").update(record).digest("hex"),
+  unpackedBytes: payload.length,
+};
+const originalWrite = fs.writeSync;
+let attempts = 0;
+fs.writeSync = (fd, buffer, offset = 0, requested = buffer.length - offset, position = null) => {
+  attempts += 1;
+  if (scenario === "partial") {
+    if (attempts === 2) { const error = new Error("interrupt"); error.code = "EINTR"; throw error; }
+    return originalWrite(fd, buffer, offset, Math.min(attempts === 1 ? 2 : requested, requested), position);
+  }
+  const changed = Buffer.from(buffer.subarray(offset, offset + requested));
+  changed[0] ^= 0xff;
+  return originalWrite(fd, changed, 0, changed.length, position);
+};
+let error = null;
+try {
+  const reader = new loaded.exports.ArchiveReader(root, manifest);
+  reader.consume(record);
+  reader.finish();
+} catch (caught) {
+  error = caught.message;
+} finally {
+  fs.writeSync = originalWrite;
+}
+const extracted = fs.readFileSync(path.join(root, "file.txt")).toString("hex");
+process.stdout.write(JSON.stringify({attempts, error, extracted}));
+"""
+
+
+def _extractor_probe(tmp_path: Path, scenario: str) -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            _EXTRACTOR_PROBE,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+            str(tmp_path),
+            scenario,
+        ],
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    return json.loads(completed.stdout)
+
+
+def test_extractor_retries_partial_write_and_eintr(tmp_path: Path) -> None:
+    """Catches an archive payload being hashed despite only a short write."""
+    assert _extractor_probe(tmp_path, "partial") == {
+        "attempts": 3,
+        "error": None,
+        "extracted": b"abcdef".hex(),
+    }
+
+
+def test_extractor_rejects_bytes_changed_by_the_writer(tmp_path: Path) -> None:
+    """Catches trusting source bytes instead of rereading the output descriptor."""
+    observed = _extractor_probe(tmp_path, "corrupt")
+
+    assert observed["attempts"] == 1
+    assert "digest" in str(observed["error"])
+
+
+def test_write_all_at_rejects_zero_progress() -> None:
+    """Catches an archive writer accepting a successful zero-byte write."""
+    source = r"""
+const runner = require(process.argv[1]);
+let error = null;
+try { runner.writeAllAt(9, Buffer.from("x"), 0, () => 0); }
+catch (caught) { error = caught.message; }
+process.stdout.write(JSON.stringify(error));
+"""
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            source,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+        ],
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert json.loads(completed.stdout) == "runtime file write made no progress"
 
 
 def test_write_all_retries_eintr_and_partial_writes_and_rejects_zero() -> None:

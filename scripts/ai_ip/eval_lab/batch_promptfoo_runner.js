@@ -6,7 +6,6 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { createGunzip } = require("node:zlib");
-
 const MAX_CHUNK_BYTES = 16 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_CONFIG_BYTES = 1024 * 1024;
@@ -18,7 +17,6 @@ const MAX_EVENTS = 1024;
 const MAX_JSON_DEPTH = 64;
 const MAX_JSON_NODES = 10000;
 class RunnerError extends Error {}
-
 function nodeVersionSupported(value) {
   const matched = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
   if (!matched) return false;
@@ -32,7 +30,6 @@ function nodeVersionSupported(value) {
 function sha256(payload) {
   return crypto.createHash("sha256").update(payload).digest("hex");
 }
-
 function boundedFile(filePath, maximum, label) {
   const descriptor = fs.openSync(
     filePath,
@@ -137,21 +134,27 @@ function safeRelative(value) {
   return parts;
 }
 
-function writeAll(fd, payload, writer = fs.writeSync) {
+function writeAllAt(fd, payload, position, writer = fs.writeSync, label = "runtime file") {
   let offset = 0;
   while (offset < payload.length) {
     let amount;
     try {
-      amount = writer(fd, payload, offset, payload.length - offset);
+      amount = position === null
+        ? writer(fd, payload, offset, payload.length - offset)
+        : writer(fd, payload, offset, payload.length - offset, position + offset);
     } catch (error) {
       if (error?.code === "EINTR") continue;
       throw error;
     }
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > payload.length - offset) {
-      throw new RunnerError("pipe write made no progress");
+      throw new RunnerError(`${label} write made no progress`);
     }
     offset += amount;
   }
+}
+
+function writeAll(fd, payload, writer = fs.writeSync) {
+  writeAllAt(fd, payload, null, writer, "pipe");
 }
 
 function isolatedDirectory(value, label) {
@@ -229,7 +232,6 @@ class RecordExtractor {
     this.header = null;
     this.output = -1;
     this.remaining = 0;
-    this.fileHash = null;
     this.treeHash = crypto.createHash("sha256");
     this.fileCount = 0;
     this.unpackedBytes = 0;
@@ -292,7 +294,7 @@ class RecordExtractor {
         const target = path.join(this.root, ...parts);
         this.output = fs.openSync(
           target,
-          fs.constants.O_WRONLY |
+          fs.constants.O_RDWR |
             fs.constants.O_CREAT |
             fs.constants.O_EXCL |
             (fs.constants.O_NOFOLLOW || 0),
@@ -300,7 +302,6 @@ class RecordExtractor {
         );
         this.header = header;
         this.remaining = header.size;
-        this.fileHash = crypto.createHash("sha256");
         this.treeHash.update(lengthBytes);
         this.treeHash.update(headerBytes);
         this.pending = this.pending.subarray(4 + length);
@@ -309,8 +310,7 @@ class RecordExtractor {
       }
       const amount = Math.min(this.remaining, this.pending.length);
       const payload = this.pending.subarray(0, amount);
-      fs.writeSync(this.output, payload);
-      this.fileHash.update(payload);
+      writeAllAt(this.output, payload, this.header.size - this.remaining);
       this.treeHash.update(payload);
       this.remaining -= amount;
       this.pending = this.pending.subarray(amount);
@@ -319,13 +319,45 @@ class RecordExtractor {
   }
 
   finishFile() {
-    fs.closeSync(this.output);
-    this.output = -1;
-    if (this.fileHash.digest("hex") !== this.header.sha256) {
-      throw new RunnerError("runtime archive file digest differs");
+    const descriptor = this.output;
+    try {
+      const state = fs.fstatSync(descriptor);
+      if (
+        !state.isFile() || state.size !== this.header.size || state.nlink !== 1 ||
+        (state.mode & 0o777) !== this.header.mode
+      ) {
+        throw new RunnerError("runtime archive file differs after write");
+      }
+      const digest = crypto.createHash("sha256");
+      const buffer = Buffer.alloc(Math.min(1024 * 1024, this.header.size));
+      let offset = 0;
+      while (offset < this.header.size) {
+        let amount;
+        try {
+          amount = fs.readSync(
+            descriptor, buffer, 0, Math.min(buffer.length, this.header.size - offset), offset,
+          );
+        } catch (error) {
+          if (error?.code === "EINTR") continue;
+          throw error;
+        }
+        if (amount < 1) throw new RunnerError("runtime archive file ended after write");
+        digest.update(buffer.subarray(0, amount));
+        offset += amount;
+      }
+      const final = fs.fstatSync(descriptor);
+      if (
+        state.dev !== final.dev || state.ino !== final.ino || state.size !== final.size ||
+        state.mode !== final.mode || state.nlink !== final.nlink ||
+        digest.digest("hex") !== this.header.sha256
+      ) {
+        throw new RunnerError("runtime archive file digest differs after write");
+      }
+    } finally {
+      this.output = -1;
+      fs.closeSync(descriptor);
     }
     this.header = null;
-    this.fileHash = null;
   }
 
   finish() {
@@ -348,28 +380,12 @@ function runtimeManifest(manifestPath, chunkPaths) {
     boundedJson(boundedFile(manifestPath, MAX_MANIFEST_BYTES, "runtime manifest"), "runtime manifest"),
     "runtime manifest",
   );
-  exactKeys(
-    manifest,
-    [
-      "archiveSha256",
-      "chunkSha256",
-      "entrypoint",
-      "fileCount",
-      "format",
-      "maximumFileBytes",
-      "maximumUnpackedBytes",
-      "nodeSha256",
-      "nodeVersion",
-      "packageJsonSha256",
-      "platform",
-      "pnpmLockSha256",
-      "promptfooVersion",
-      "schemaVersion",
-      "treeSha256",
-      "unpackedBytes",
-    ],
-    "runtime manifest",
-  );
+  const fields = (
+    "archiveSha256 chunkSha256 entrypoint fileCount format maximumFileBytes " +
+    "maximumUnpackedBytes nodeSha256 nodeVersion packageJsonSha256 platform " +
+    "pnpmLockSha256 promptfooVersion schemaVersion treeSha256 unpackedBytes"
+  ).split(" ");
+  exactKeys(manifest, fields, "runtime manifest");
   if (
     manifest.schemaVersion !== 1 ||
     manifest.format !== "ai-ip-promptfoo-records-v1" ||
@@ -448,20 +464,11 @@ async function main() {
     boundedFile(process.env.AI_IP_PROMPTFOO_PATH, MAX_CONFIG_BYTES, "Promptfoo config"),
     { flag: "wx", mode: 0o600 },
   );
-  const command = [
-    "eval",
-    "--config",
-    configPath,
-    "--output",
-    outputPath,
-    "--no-cache",
-    "--no-progress-bar",
-    "--no-table",
-    "--no-share",
-    "--no-write",
-    "--max-concurrency",
-    "1",
-  ];
+  const command = ["eval", "--config", configPath, "--output", outputPath];
+  command.push(
+    "--no-cache", "--no-progress-bar", "--no-table", "--no-share", "--no-write",
+    "--max-concurrency", "1",
+  );
   const completed = spawnSync(process.execPath, [entrypoint, ...command], {
     cwd: process.cwd(),
     env: promptfooEnvironment(),
@@ -477,7 +484,7 @@ async function main() {
   return 0;
 }
 
-module.exports = { nodeVersionSupported, safeRelative, writeAll };
+module.exports = { nodeVersionSupported, safeRelative, writeAll, writeAllAt };
 
 if (require.main === module) {
   main()
