@@ -12,6 +12,7 @@ const MAX_JSON_NODES = 10000;
 const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
 
 class PromptfooResultError extends Error {}
+class NonIntegralJsonNumber {}
 
 function sha256(payload) {
   return crypto.createHash("sha256").update(payload).digest("hex");
@@ -98,33 +99,34 @@ function boundedJson(payload, label, numberContract = "finite") {
     whitespace();
     const current = text[index];
     if (current === '"') {
-      string();
-      return;
+      return string();
     }
     if (current === "[") {
+      const result = [];
       index += 1;
       whitespace();
       if (text[index] === "]") {
         index += 1;
-        return;
+        return result;
       }
       while (true) {
-        value(depth + 1);
+        result.push(value(depth + 1));
         whitespace();
         if (text[index] === "]") {
           index += 1;
-          return;
+          return result;
         }
         if (text[index] !== ",") throw new PromptfooResultError(`${label} is not valid strict JSON`);
         index += 1;
       }
     }
     if (current === "{") {
+      const result = Object.create(null);
       index += 1;
       whitespace();
       if (text[index] === "}") {
         index += 1;
-        return;
+        return result;
       }
       const keys = new Set();
       while (true) {
@@ -136,20 +138,20 @@ function boundedJson(payload, label, numberContract = "finite") {
         whitespace();
         if (text[index] !== ":") throw new PromptfooResultError(`${label} is not valid strict JSON`);
         index += 1;
-        value(depth + 1);
+        result[key] = value(depth + 1);
         whitespace();
         if (text[index] === "}") {
           index += 1;
-          return;
+          return result;
         }
         if (text[index] !== ",") throw new PromptfooResultError(`${label} is not valid strict JSON`);
         index += 1;
       }
     }
-    for (const literal of ["true", "false", "null"]) {
+    for (const [literal, result] of [["true", true], ["false", false], ["null", null]]) {
       if (text.startsWith(literal, index)) {
         index += literal.length;
-        return;
+        return result;
       }
     }
     const match = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(text.slice(index));
@@ -169,12 +171,14 @@ function boundedJson(payload, label, numberContract = "finite") {
     if (!Number.isFinite(numeric) || (Number.isInteger(numeric) && !Number.isSafeInteger(numeric))) {
       throw new PromptfooResultError(`${label} contains a non-finite JSON number`);
     }
+    if (token.includes(".") || /[eE]/.test(token)) return new NonIntegralJsonNumber();
+    return numeric;
   };
   try {
-    value(1);
+    const result = value(1);
     whitespace();
     if (index !== text.length) throw new PromptfooResultError(`${label} is not valid strict JSON`);
-    return JSON.parse(text);
+    return result;
   } catch (error) {
     if (error instanceof PromptfooResultError) throw error;
     throw new PromptfooResultError(`${label} is not valid JSON`, { cause: error });
@@ -218,6 +222,9 @@ function usageLayer(value, label, requireRequests) {
 
 function boundedEvidence(value, maximum, label) {
   const validate = (item) => {
+    if (item instanceof NonIntegralJsonNumber) {
+      throw new PromptfooResultError(`${label} contains unsupported evidence values`);
+    }
     if (item === null || typeof item === "boolean") return;
     if (typeof item === "string") {
       for (let index = 0; index < item.length; index += 1) {

@@ -29,7 +29,7 @@
             }
           },
           "output": "{\"caseId\":\"case-1\",\"objectKind\":\"CaseAnswer\",\"schemaVersion\":1}",
-          "raw": "{\"finalResponse\":\"sealed\",\"items\":[{\"id\":\"item-1\",\"status\":\"completed\",\"type\":\"agentMessage\"}],\"notifications\":[{\"method\":\"item/completed\",\"params\":{\"itemId\":\"item-1\"}},{\"method\":\"turn/completed\",\"params\":{\"turnId\":\"turn-1\"}}]}",
+          "raw": "{\"finalResponse\":\"{\\\"caseId\\\":\\\"case-1\\\",\\\"objectKind\\\":\\\"CaseAnswer\\\",\\\"schemaVersion\\\":1}\",\"items\":[{\"id\":\"item-1\",\"status\":\"completed\",\"type\":\"agentMessage\"}],\"notifications\":[{\"method\":\"item/completed\",\"params\":{\"itemId\":\"item-1\"}},{\"method\":\"turn/completed\",\"params\":{\"turnId\":\"turn-1\"}}],\"output\":\"{\\\"caseId\\\":\\\"case-1\\\",\\\"objectKind\\\":\\\"CaseAnswer\\\",\\\"schemaVersion\\\":1}\"}",
           "tokenUsage": {
             "cached": 0,
             "completion": 11,

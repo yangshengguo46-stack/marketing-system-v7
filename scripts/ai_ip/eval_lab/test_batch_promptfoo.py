@@ -95,7 +95,6 @@ def _canonical_bytes(value: object) -> bytes:
 def _result_value() -> dict[str, object]:
     value = json.loads(FROZEN_RESULT.read_bytes())
     assert type(value) is dict
-    _set_answer_fields(value, BASELINE_ANSWER)
     return value
 
 
@@ -282,7 +281,7 @@ def test_config_resolves_candidate_workspace_only_from_runtime_environment() -> 
 
 def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None:
     adapter = _adapter()
-    payload = _result_bytes(_result_value())
+    payload = FROZEN_RESULT.read_bytes()
 
     parsed = adapter.parse_promptfoo_result(payload)
 
@@ -628,11 +627,60 @@ def test_python_and_js_sort_canonical_trajectory_keys_by_utf8_bytes() -> None:
     )
 
 
+@pytest.mark.parametrize("location", ["items", "rawItems"])
+@pytest.mark.parametrize("number_token", [b"1.0", b"1e0", b"1E+1"])
+def test_python_and_js_reject_nonintegral_syntax_in_retained_items(
+    location: str, number_token: bytes
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    response = _response(value)
+    marker = 424242424242
+    if location == "items":
+        metadata = response["metadata"]
+        assert type(metadata) is dict
+        codex = metadata["codexAppServer"]
+        assert type(codex) is dict
+        items = codex["items"]
+        assert type(items) is list and type(items[0]) is dict
+        items[0]["numericEvidence"] = marker
+    else:
+        raw = json.loads(response["raw"])
+        raw_items = raw["items"]
+        assert type(raw_items) is list and type(raw_items[0]) is dict
+        raw_items[0]["numericEvidence"] = marker
+        response["raw"] = json.dumps(raw, ensure_ascii=False, separators=(",", ":"))
+    payload = _result_bytes(value)
+    marker_bytes = str(marker).encode()
+    assert payload.count(marker_bytes) == 1
+    payload = payload.replace(marker_bytes, number_token)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="evidence"):
+        adapter.parse_promptfoo_result(payload)
+    assert _run_js_parser(payload).returncode == 2
+
+
+def test_outer_decoded_unpaired_surrogate_is_an_adapter_error() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    response = _response(value)
+    raw = json.loads(response["raw"])
+    response["output"] = "\ud800"
+    raw["output"] = "\ud800"
+    raw["finalResponse"] = "\ud800"
+    response["raw"] = json.dumps(raw, ensure_ascii=True, separators=(",", ":"))
+    payload = _result_bytes(value)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="invalid Unicode"):
+        adapter.parse_promptfoo_result(payload)
+    assert _run_js_parser(payload).returncode == 2
+
+
 def test_retained_trajectory_excludes_scores_and_assertions_but_keeps_raw_evidence() -> None:
     adapter = _adapter()
     value = _result_value()
     row = _row(value)
-    row["score"] = 123456
+    row["score"] = 1.5
     row["success"] = True
     usage = row["tokenUsage"]
     assert type(usage) is dict

@@ -126,6 +126,13 @@ def _mapping(value: object, label: str) -> dict[str, object]:
     return value
 
 
+def _strict_utf8(value: str, label: str) -> bytes:
+    try:
+        return value.encode("utf-8", errors="strict")
+    except UnicodeEncodeError as error:
+        raise PromptfooAdapterError(f"{label} contains invalid Unicode") from error
+
+
 def _has_provider_error(value: object) -> bool:
     return value is not None and value != ""
 
@@ -249,7 +256,10 @@ def parse_promptfoo_result(
     if type(raw_text) is not str:
         raise PromptfooAdapterError("Codex trajectory and raw events are required")
     raw = _mapping(
-        _decode_json(raw_text.encode(), "Codex raw response"), "Codex raw response"
+        _decode_json(
+            _strict_utf8(raw_text, "Codex raw response"), "Codex raw response"
+        ),
+        "Codex raw response",
     )
     notifications = raw.get("notifications")
     raw_items = raw.get("items")
@@ -273,7 +283,10 @@ def parse_promptfoo_result(
         raise PromptfooAdapterError(
             "Promptfoo final response differs across retained output fields"
         )
-    output = _decode_json(output_text.encode(), "Promptfoo provider output")
+    output = _decode_json(
+        _strict_utf8(output_text, "Promptfoo final response"),
+        "Promptfoo provider output",
+    )
     _bounded_evidence(output, _MAX_FINAL_RESPONSE_BYTES, "Promptfoo final response")
     response_usage = _usage_layer(
         response.get("tokenUsage"),
