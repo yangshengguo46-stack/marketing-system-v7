@@ -5,6 +5,7 @@ import importlib
 import json
 import os
 import shutil
+import stat
 import struct
 import subprocess
 import sys
@@ -198,7 +199,7 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
                 "CODEX_HOME": "{{ env.CODEX_HOME }}",
                 "HOME": "{{ env.HOME }}",
                 "OPENAI_API_KEY": "ai-ip-public-loopback-dummy",
-                "TMPDIR": "{{ env.TMPDIR }}",
+                "TMPDIR": "{{ env.AI_IP_CANDIDATE_TMP }}",
             },
             "codex_path_override": "{{ env.AI_IP_CODEX_PATH }}",
             "ephemeral": True,
@@ -222,6 +223,15 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
         token not in rendered
         for token in (b'"assert"', b"rubric", b"reference", b"javascript")
     )
+
+
+def test_config_routes_candidate_tmp_without_exposing_runner_tmpdir() -> None:
+    config = _adapter().render_promptfoo_config(_request())
+
+    cli_env = config["providers"][0]["config"]["cli_env"]
+    assert cli_env["TMPDIR"] == "{{ env.AI_IP_CANDIDATE_TMP }}"
+    assert "AI_IP_CANDIDATE_TMP" not in cli_env
+    assert "{{ env.TMPDIR }}" not in _json_bytes(config).decode()
 
 
 @pytest.mark.parametrize(
@@ -1011,6 +1021,74 @@ def _test_runtime(tmp_path: Path, entrypoint_source: bytes) -> tuple[object, Pat
     return bundle.seal_promptfoo_runtime(runtime, node, seal), runtime, node
 
 
+def _run_sealed_runner(
+    tmp_path: Path, entrypoint_source: bytes
+) -> tuple[
+    subprocess.CompletedProcess[bytes],
+    bytes,
+    bytes,
+    Path,
+    Path,
+    Path,
+]:
+    adapter = _adapter()
+    runtime, _, node = _test_runtime(tmp_path, entrypoint_source)
+    stock = _request(effective_config=b"stock-config")
+    config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
+    artifact_paths: list[Path] = []
+    for artifact in runtime.artifacts:
+        artifact_path = tmp_path / artifact.relative_path
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_bytes(artifact.payload)
+        artifact_paths.append(artifact_path)
+    config_path = tmp_path / "promptfoo-config.json"
+    config_path.write_bytes(config_bytes)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    isolated = tmp_path / "isolated"
+    isolated_temp = isolated / "temp"
+    isolated_promptfoo = isolated / "promptfoo"
+    isolated_temp.mkdir(parents=True)
+    isolated_promptfoo.mkdir()
+    result_read, result_write = os.pipe()
+    telemetry_read, telemetry_write = os.pipe()
+    environment = {
+        **os.environ,
+        "AI_IP_PROMPTFOO_PATH": str(config_path),
+        "AI_IP_RESULT_FD": str(result_write),
+        "AI_IP_TELEMETRY_FD": str(telemetry_write),
+        "REAL_PROVIDER_API_KEY": "must-not-reach-promptfoo",
+        "PROMPTFOO_DISABLE_SHARING": "1",
+        "PROMPTFOO_DISABLE_TELEMETRY": "1",
+        "PROMPTFOO_DISABLE_UPDATE": "1",
+        "PROMPTFOO_CONFIG_DIR": str(isolated_promptfoo),
+        "PROMPTFOO_OUTPUT_PATH": str(isolated_promptfoo / "output.json"),
+        "TMPDIR": str(isolated_temp),
+    }
+    try:
+        completed = subprocess.run(
+            [
+                str(node),
+                str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+                str(MODULE_ROOT / "batch_promptfoo_result.js"),
+                *(str(path) for path in artifact_paths),
+            ],
+            cwd=workspace,
+            env=environment,
+            pass_fds=(result_write, telemetry_write),
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        os.close(result_write)
+        os.close(telemetry_write)
+    result = os.read(result_read, 64 * 1024)
+    telemetry = os.read(telemetry_read, 64 * 1024)
+    os.close(result_read)
+    os.close(telemetry_read)
+    return completed, result, telemetry, workspace, isolated_temp, isolated_promptfoo
+
+
 def test_launch_compiler_returns_controller_owned_parity_material(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1080,72 +1158,19 @@ def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
 ) -> None:
     adapter = _adapter()
     frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
-    runtime, _, node = _test_runtime(
-        tmp_path,
-        f"""const fs = require('node:fs');
+    completed, result, telemetry, workspace, isolated_temp, isolated_promptfoo = (
+        _run_sealed_runner(
+            tmp_path,
+            f"""const fs = require('node:fs');
 const argvPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'argv.json');
 fs.writeFileSync(argvPath, JSON.stringify(process.argv.slice(2)));
 const envPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'child-env.json');
 fs.writeFileSync(envPath, JSON.stringify(process.env));
 fs.writeFileSync(process.argv[6], {frozen_result_literal});
 """.encode(),
-    )
-    stock = _request(effective_config=b"stock-config")
-    config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
-    runner_path = MODULE_ROOT / "batch_promptfoo_runner.js"
-    artifact_paths: list[Path] = []
-    for artifact in runtime.artifacts:
-        artifact_path = tmp_path / artifact.relative_path
-        artifact_path.parent.mkdir(parents=True, exist_ok=True)
-        artifact_path.write_bytes(artifact.payload)
-        artifact_paths.append(artifact_path)
-    config_path = tmp_path / "promptfoo-config.json"
-    config_path.write_bytes(config_bytes)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    isolated = tmp_path / "isolated"
-    isolated_temp = isolated / "temp"
-    isolated_promptfoo = isolated / "promptfoo"
-    isolated_temp.mkdir(parents=True)
-    isolated_promptfoo.mkdir()
-    result_read, result_write = os.pipe()
-    telemetry_read, telemetry_write = os.pipe()
-    environment = {
-        **os.environ,
-        "AI_IP_PROMPTFOO_PATH": str(config_path),
-        "AI_IP_RESULT_FD": str(result_write),
-        "AI_IP_TELEMETRY_FD": str(telemetry_write),
-        "REAL_PROVIDER_API_KEY": "must-not-reach-promptfoo",
-        "PROMPTFOO_DISABLE_SHARING": "1",
-        "PROMPTFOO_DISABLE_TELEMETRY": "1",
-        "PROMPTFOO_DISABLE_UPDATE": "1",
-        "PROMPTFOO_CONFIG_DIR": str(isolated_promptfoo),
-        "PROMPTFOO_OUTPUT_PATH": str(isolated_promptfoo / "output.json"),
-        "TMPDIR": str(isolated_temp),
-    }
-    try:
-        completed = subprocess.run(
-            [
-                str(node),
-                str(runner_path),
-                str(MODULE_ROOT / "batch_promptfoo_result.js"),
-                *(str(path) for path in artifact_paths),
-            ],
-            cwd=workspace,
-            env=environment,
-            pass_fds=(result_write, telemetry_write),
-            capture_output=True,
-            check=False,
         )
-    finally:
-        os.close(result_write)
-        os.close(telemetry_write)
-    result = os.read(result_read, 64 * 1024)
-    telemetry = os.read(telemetry_read, 64 * 1024)
-    os.close(result_read)
-    os.close(telemetry_read)
+    )
 
-    assert not list(workspace.iterdir()), "sealed runner polluted candidate workspace"
     assert completed.returncode == 0, completed.stderr.decode(errors="replace")
     assert json.loads((isolated_promptfoo / "argv.json").read_bytes()) == [
         "eval",
@@ -1168,6 +1193,13 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
     assert child_environment["PROMPTFOO_DISABLE_SHARING"] == "1"
     assert child_environment["PROMPTFOO_DISABLE_TELEMETRY"] == "1"
     assert child_environment["PROMPTFOO_DISABLE_UPDATE"] == "1"
+    assert child_environment["TMPDIR"] == str(isolated_temp)
+    candidate_tmp = Path(child_environment["AI_IP_CANDIDATE_TMP"])
+    assert candidate_tmp.parent == workspace
+    assert candidate_tmp != isolated_temp
+    assert candidate_tmp.is_dir()
+    assert stat.S_IMODE(candidate_tmp.stat().st_mode) == 0o700
+    assert list(workspace.iterdir()) == [candidate_tmp]
     assert "REAL_PROVIDER_API_KEY" not in child_environment
     assert json.loads(result) == {
         "metadata": adapter.parse_promptfoo_result(
@@ -1185,3 +1217,23 @@ fs.writeFileSync(process.argv[6], {frozen_result_literal});
         "outputTokens": 11,
         "requestCount": 1,
     }
+
+
+def test_sealed_runner_rejects_post_start_runtime_drift(tmp_path: Path) -> None:
+    frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
+    completed, result, telemetry, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        f"""const fs = require('node:fs');
+fs.writeFileSync(process.argv[6], {frozen_result_literal});
+fs.chmodSync(__filename, 0o700);
+fs.appendFileSync(__filename, '\\n// changed after startup\\n');
+""".encode(),
+    )
+
+    assert completed.returncode == 2
+    assert completed.stderr == (
+        b"Promptfoo sealed runner failed: RunnerError: "
+        b"Promptfoo runtime changed after attestation\n"
+    )
+    assert result == b""
+    assert telemetry == b""

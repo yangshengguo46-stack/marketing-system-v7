@@ -532,10 +532,11 @@ fs.writeSync = (fd, buffer, offset = 0, requested = buffer.length - offset, posi
   return written;
 };
 let error = null;
+let inventory;
 try {
   const reader = new loaded.exports.ArchiveReader(root, manifest);
   reader.consume(record);
-  reader.finish();
+  inventory = reader.finish();
 } catch (caught) {
   error = caught.message;
 } finally {
@@ -543,7 +544,7 @@ try {
   fs.fstatSync = originalFstat;
 }
 const extracted = fs.readFileSync(path.join(root, "file.txt")).toString("hex");
-process.stdout.write(JSON.stringify({attempts, error, extracted}));
+process.stdout.write(JSON.stringify({attempts, error, extracted, inventory}));
 """
 
 
@@ -570,7 +571,29 @@ def test_extractor_retries_partial_write_and_eintr(tmp_path: Path) -> None:
         "attempts": 3,
         "error": None,
         "extracted": b"abcdef".hex(),
+        "inventory": [
+            {
+                "mode": 0o400,
+                "path": "file.txt",
+                "sha256": hashlib.sha256(b"abcdef").hexdigest(),
+                "size": 6,
+            }
+        ],
     }
+
+
+def test_extractor_retains_exact_regular_file_inventory(tmp_path: Path) -> None:
+    """Catches discarding the measurements needed for later tree attestation."""
+    observed = _extractor_probe(tmp_path, "inventory")
+
+    assert observed["inventory"] == [
+        {
+            "mode": 0o400,
+            "path": "file.txt",
+            "sha256": hashlib.sha256(b"abcdef").hexdigest(),
+            "size": 6,
+        }
+    ]
 
 
 def test_extractor_rejects_bytes_changed_by_the_writer(tmp_path: Path) -> None:

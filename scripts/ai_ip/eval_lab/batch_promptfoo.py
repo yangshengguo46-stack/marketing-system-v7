@@ -129,9 +129,9 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
             "AI_IP_SCHEMA_PATH",
             "CODEX_HOME",
             "HOME",
-            "TMPDIR",
         )
     }
+    cli_env["TMPDIR"] = "{{ env.AI_IP_CANDIDATE_TMP }}"
     cli_env["OPENAI_API_KEY"] = _PUBLIC_DUMMY_BEARER
     return {
         "prompts": [

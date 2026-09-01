@@ -1,11 +1,16 @@
 "use strict";
-
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { createGunzip } = require("node:zlib");
+const supportPath = require.main === module && process.argv[2]
+  ? process.argv[2] : path.join(__dirname, "batch_promptfoo_result.js");
+const {
+  RunnerError, boundedFile, descriptorDigest, ensureParents, isolatedDirectory, isolatedOutput,
+  nodeVersionSupported, safeRelative, sameIdentity, sha256, writeAll, writeAllAt,
+} = require(supportPath);
 const MAX_CHUNK_BYTES = 16 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_CONFIG_BYTES = 1024 * 1024;
@@ -14,57 +19,6 @@ const MAX_HEADER_BYTES = 4096;
 const MAX_CHUNKS = 29;
 const MAX_FILES = 100000;
 const MAX_EVENTS = 1024;
-const MAX_JSON_DEPTH = 64;
-const MAX_JSON_NODES = 10000;
-class RunnerError extends Error {}
-function nodeVersionSupported(value) {
-  const matched = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
-  if (!matched) return false;
-  const version = matched.slice(1).map(Number);
-  return (
-    version[0] > 22 ||
-    (version[0] === 22 && (version[1] > 22 || (version[1] === 22 && version[2] >= 0)))
-  );
-}
-
-function sha256(payload) {
-  return crypto.createHash("sha256").update(payload).digest("hex");
-}
-function boundedFile(filePath, maximum, label) {
-  const descriptor = fs.openSync(
-    filePath,
-    fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0),
-  );
-  try {
-    const before = fs.fstatSync(descriptor);
-    if (!before.isFile() || before.size > maximum) {
-      throw new RunnerError(`${label} is not a bounded regular file`);
-    }
-    const payload = Buffer.alloc(before.size);
-    let offset = 0;
-    while (offset < payload.length) {
-      const amount = fs.readSync(
-        descriptor,
-        payload,
-        offset,
-        payload.length - offset,
-        offset,
-      );
-      if (amount < 1) {
-        throw new RunnerError(`${label} ended before its declared size`);
-      }
-      offset += amount;
-    }
-    const after = fs.fstatSync(descriptor);
-    if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size) {
-      throw new RunnerError(`${label} changed while read`);
-    }
-    return payload;
-  } finally {
-    fs.closeSync(descriptor);
-  }
-}
-
 function boundedJson(payload, label) {
   let depth = 0;
   let nodes = 1;
@@ -81,13 +35,13 @@ function boundedJson(payload, label) {
     else if (byte === 0x5b || byte === 0x7b) {
       depth += 1;
       nodes += 1;
-      if (depth > MAX_JSON_DEPTH) throw new RunnerError(`${label} exceeds JSON depth`);
+      if (depth > 64) throw new RunnerError(`${label} exceeds JSON depth`);
     } else if (byte === 0x5d || byte === 0x7d) {
       depth -= 1;
       if (depth < 0) throw new RunnerError(`${label} has invalid JSON shape`);
     } else if (byte === 0x2c || byte === 0x3a) {
       nodes += 1;
-      if (nodes > MAX_JSON_NODES) throw new RunnerError(`${label} exceeds JSON nodes`);
+      if (nodes > 10000) throw new RunnerError(`${label} exceeds JSON nodes`);
     }
   }
   if (inString || depth !== 0) throw new RunnerError(`${label} has invalid JSON shape`);
@@ -97,90 +51,17 @@ function boundedJson(payload, label) {
     throw new RunnerError(`${label} is not valid JSON`, { cause: error });
   }
 }
-
 function object(value, label) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new RunnerError(`${label} must be an object`);
   }
   return value;
 }
-
 function exactKeys(value, keys, label) {
   if (Object.keys(value).sort().join("\0") !== [...keys].sort().join("\0")) {
     throw new RunnerError(`${label} has invalid fields`);
   }
 }
-
-function safeRelative(value) {
-  const encoded = typeof value === "string" ? Buffer.from(value, "utf8") : null;
-  if (
-    typeof value !== "string" ||
-    value.length < 1 ||
-    encoded.toString("utf8") !== value ||
-    encoded.length > 4096 ||
-    value.includes("\\") ||
-    /[\x00-\x1f\x7f]/.test(value) ||
-    path.posix.isAbsolute(value)
-  ) {
-    throw new RunnerError("runtime archive path is unsafe");
-  }
-  const parts = value.split("/");
-  if (
-    parts.length > 128 ||
-    parts.some((part) => part === "" || part === "." || part === "..")
-  ) {
-    throw new RunnerError("runtime archive path traversal is prohibited");
-  }
-  return parts;
-}
-
-function writeAllAt(fd, payload, position, writer = fs.writeSync, label = "runtime file") {
-  let offset = 0;
-  while (offset < payload.length) {
-    let amount;
-    try {
-      amount = position === null
-        ? writer(fd, payload, offset, payload.length - offset)
-        : writer(fd, payload, offset, payload.length - offset, position + offset);
-    } catch (error) {
-      if (error?.code === "EINTR") continue;
-      throw error;
-    }
-    if (!Number.isSafeInteger(amount) || amount < 1 || amount > payload.length - offset) {
-      throw new RunnerError(`${label} write made no progress`);
-    }
-    offset += amount;
-  }
-}
-
-function writeAll(fd, payload, writer = fs.writeSync) {
-  writeAllAt(fd, payload, null, writer, "pipe");
-}
-
-function isolatedDirectory(value, label) {
-  if (typeof value !== "string" || !path.isAbsolute(value)) {
-    throw new RunnerError(`${label} must be an absolute isolated directory`);
-  }
-  const resolved = path.resolve(value);
-  const state = fs.lstatSync(resolved);
-  if (!state.isDirectory() || state.isSymbolicLink() || fs.realpathSync(resolved) !== resolved) {
-    throw new RunnerError(`${label} is not a real isolated directory`);
-  }
-  return resolved;
-}
-
-function isolatedOutput(value, parent) {
-  if (typeof value !== "string" || !path.isAbsolute(value)) {
-    throw new RunnerError("Promptfoo output must be an absolute isolated path");
-  }
-  const resolved = path.resolve(value);
-  if (path.dirname(resolved) !== parent || path.basename(resolved) !== "output.json") {
-    throw new RunnerError("Promptfoo output escaped its isolated directory");
-  }
-  if (fs.existsSync(resolved)) throw new RunnerError("Promptfoo output already exists");
-  return resolved;
-}
-
 function promptfooEnvironment() {
   const names = [
     "AI_IP_ATTEMPT_ID", "AI_IP_CASE_PATH", "AI_IP_CODEX_PATH", "AI_IP_CONFIG_PATH",
@@ -207,23 +88,6 @@ function promptfooEnvironment() {
   environment.AI_IP_WORKSPACE = process.cwd();
   return environment;
 }
-
-function ensureParents(root, parts) {
-  let current = root;
-  for (const part of parts.slice(0, -1)) {
-    current = path.join(current, part);
-    try {
-      fs.mkdirSync(current, { mode: 0o700 });
-    } catch (error) {
-      if (error.code !== "EEXIST") throw error;
-      const state = fs.lstatSync(current);
-      if (!state.isDirectory() || state.isSymbolicLink()) {
-        throw new RunnerError("runtime archive parent is unsafe");
-      }
-    }
-  }
-}
-
 class RecordExtractor {
   constructor(root, manifest) {
     this.root = root;
@@ -239,8 +103,9 @@ class RecordExtractor {
     this.maximumInflatedBytes =
       manifest.unpackedBytes + manifest.fileCount * (MAX_HEADER_BYTES + 4) + 4;
     this.finished = false;
+    this.inventory = [];
+    this.identities = new Map();
   }
-
   consume(chunk) {
     this.pending = this.pending.length ? Buffer.concat([this.pending, chunk]) : chunk;
     if (this.header === null && this.pending.length >= 4) {
@@ -317,7 +182,6 @@ class RecordExtractor {
       if (this.remaining === 0) this.finishFile();
     }
   }
-
   finishFile() {
     const descriptor = this.output;
     try {
@@ -353,13 +217,15 @@ class RecordExtractor {
       ) {
         throw new RunnerError("runtime archive file digest differs after write");
       }
+      this.inventory.push(Object.freeze({ mode: this.header.mode === 0o700 ? 0o500 : 0o400,
+        path: this.header.path, sha256: this.header.sha256, size: this.header.size }));
+      this.identities.set(this.header.path, Object.freeze({ dev: final.dev, ino: final.ino }));
     } finally {
       this.output = -1;
       fs.closeSync(descriptor);
     }
     this.header = null;
   }
-
   finish() {
     if (this.output >= 0) fs.closeSync(this.output);
     if (
@@ -372,9 +238,120 @@ class RecordExtractor {
     ) {
       throw new RunnerError("runtime archive is incomplete or differs from its manifest");
     }
+    return Object.freeze(this.inventory);
   }
 }
-
+class RuntimeTree {
+  constructor(root, inventory, fileIdentities) {
+    this.root = root;
+    this.files = new Map(inventory.map((item) => [item.path, item]));
+    this.fileIdentities = fileIdentities;
+    this.directories = new Map();
+    for (const item of inventory) {
+      const parts = safeRelative(item.path);
+      for (let length = 1; length < parts.length; length += 1) {
+        this.directories.set(parts.slice(0, length).join("/"), null);
+      }
+    }
+    this.descriptor = fs.openSync(
+      root,
+      fs.constants.O_RDONLY |
+        (fs.constants.O_DIRECTORY || 0) |
+        (fs.constants.O_NOFOLLOW || 0),
+    );
+    this.rootIdentity = fs.fstatSync(this.descriptor);
+  }
+  rootState(requireLocked) {
+    const target = fs.lstatSync(this.root);
+    const retained = fs.fstatSync(this.descriptor);
+    if (
+      !target.isDirectory() || target.isSymbolicLink() || !retained.isDirectory() ||
+      !sameIdentity(target, retained) || !sameIdentity(retained, this.rootIdentity) ||
+      (requireLocked && (target.mode & 0o7777) !== 0o500)
+    ) throw new RunnerError("runtime root identity changed");
+  }
+  lock() {
+    try {
+      this.rootState(false);
+      for (const [relative, item] of this.files) {
+        const target = path.join(this.root, ...safeRelative(relative));
+        const state = fs.lstatSync(target);
+        if (!state.isFile() || state.isSymbolicLink() || !sameIdentity(state, this.fileIdentities.get(relative))) {
+          throw new RunnerError("runtime file identity changed");
+        }
+        fs.chmodSync(target, item.mode);
+      }
+      const deepestFirst = [...this.directories].sort((left, right) => right[0].length - left[0].length);
+      for (const [relative] of deepestFirst) {
+        const target = path.join(this.root, ...safeRelative(relative));
+        const state = fs.lstatSync(target);
+        if (!state.isDirectory() || state.isSymbolicLink()) {
+          throw new RunnerError("runtime directory identity changed");
+        }
+        this.directories.set(relative, Object.freeze({ dev: state.dev, ino: state.ino }));
+        fs.chmodSync(target, 0o500);
+      }
+      fs.chmodSync(this.root, 0o500);
+    } catch (error) {
+      throw new RunnerError("Promptfoo runtime changed after attestation", { cause: error });
+    }
+  }
+  verifyFile(target, relative, pathState) {
+    const item = this.files.get(relative);
+    const descriptor = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    try {
+      const before = fs.fstatSync(descriptor);
+      const identity = this.fileIdentities.get(relative);
+      if (
+        !item || !pathState.isFile() || pathState.isSymbolicLink() || !before.isFile() ||
+        !sameIdentity(pathState, before) || !sameIdentity(before, identity) || before.nlink !== 1 ||
+        before.size !== item.size || (before.mode & 0o7777) !== item.mode
+      ) throw new RunnerError("runtime file differs");
+      const digest = descriptorDigest(descriptor, item.size);
+      const after = fs.fstatSync(descriptor);
+      if (!sameIdentity(before, after) || before.size !== after.size || before.mode !== after.mode ||
+          before.nlink !== after.nlink || digest !== item.sha256) {
+        throw new RunnerError("runtime file changed while attested");
+      }
+    } finally {
+      fs.closeSync(descriptor);
+    }
+  }
+  scan(directory = this.root, prefix = "", foundFiles = new Set(), foundDirectories = new Set()) {
+    for (const name of fs.readdirSync(directory).sort()) {
+      const relative = prefix ? `${prefix}/${name}` : name;
+      const target = path.join(directory, name);
+      const state = fs.lstatSync(target);
+      if (state.isDirectory() && !state.isSymbolicLink()) {
+        const identity = this.directories.get(relative);
+        if (!identity || !sameIdentity(state, identity) || (state.mode & 0o7777) !== 0o500) {
+          throw new RunnerError("runtime directory differs");
+        }
+        foundDirectories.add(relative);
+        this.scan(target, relative, foundFiles, foundDirectories);
+      } else {
+        if (!state.isFile() || state.isSymbolicLink() || !this.files.has(relative)) {
+          throw new RunnerError("runtime path set differs");
+        }
+        this.verifyFile(target, relative, state);
+        foundFiles.add(relative);
+      }
+    }
+    if (prefix === "" &&
+        (foundFiles.size !== this.files.size || foundDirectories.size !== this.directories.size)) {
+      throw new RunnerError("runtime path set differs");
+    }
+  }
+  attest() {
+    try {
+      this.rootState(true);
+      this.scan();
+    } catch (error) {
+      throw new RunnerError("Promptfoo runtime changed after attestation", { cause: error });
+    }
+  }
+  close() { fs.closeSync(this.descriptor); }
+}
 function runtimeManifest(manifestPath, chunkPaths) {
   const manifest = object(
     boundedJson(boundedFile(manifestPath, MAX_MANIFEST_BYTES, "runtime manifest"), "runtime manifest"),
@@ -433,7 +410,7 @@ async function extractRuntime(manifestPath, chunkPaths, temporaryRoot) {
   const gunzip = createGunzip();
   Readable.from(chunks()).pipe(gunzip);
   for await (const chunk of gunzip) extractor.consume(chunk);
-  extractor.finish();
+  const inventory = extractor.finish();
   if (archiveHash.digest("hex") !== manifest.archiveSha256) {
     throw new RunnerError("runtime archive identity differs from manifest");
   }
@@ -442,7 +419,18 @@ async function extractRuntime(manifestPath, chunkPaths, temporaryRoot) {
   if (!state.isFile() || state.isSymbolicLink()) {
     throw new RunnerError("sealed Promptfoo entrypoint is unavailable");
   }
-  return entrypoint;
+  let runtime;
+  try {
+    runtime = new RuntimeTree(root, inventory, extractor.identities);
+    runtime.lock();
+  } catch (error) {
+    if (runtime) runtime.close();
+    if (error instanceof RunnerError && error.message === "Promptfoo runtime changed after attestation") {
+      throw error;
+    }
+    throw new RunnerError("Promptfoo runtime changed after attestation", { cause: error });
+  }
+  return { attest: () => runtime.attest(), close: () => runtime.close(), entrypoint };
 }
 
 async function main() {
@@ -457,23 +445,32 @@ async function main() {
     "PROMPTFOO_CONFIG_DIR",
   );
   const outputPath = isolatedOutput(process.env.PROMPTFOO_OUTPUT_PATH, promptfoo);
-  const entrypoint = await extractRuntime(manifestPath, chunkPaths, temporaryRoot);
-  const configPath = path.join(promptfoo, "eval-config.json");
-  fs.writeFileSync(
-    configPath,
-    boundedFile(process.env.AI_IP_PROMPTFOO_PATH, MAX_CONFIG_BYTES, "Promptfoo config"),
-    { flag: "wx", mode: 0o600 },
-  );
-  const command = ["eval", "--config", configPath, "--output", outputPath];
-  command.push(
-    "--no-cache", "--no-progress-bar", "--no-table", "--no-share", "--no-write",
-    "--max-concurrency", "1",
-  );
-  const completed = spawnSync(process.execPath, [entrypoint, ...command], {
-    cwd: process.cwd(),
-    env: promptfooEnvironment(),
-    stdio: ["ignore", "inherit", "inherit"],
-  });
+  const runtime = await extractRuntime(manifestPath, chunkPaths, temporaryRoot);
+  let completed;
+  try {
+    const configPath = path.join(promptfoo, "eval-config.json");
+    fs.writeFileSync(
+      configPath,
+      boundedFile(process.env.AI_IP_PROMPTFOO_PATH, MAX_CONFIG_BYTES, "Promptfoo config"),
+      { flag: "wx", mode: 0o600 },
+    );
+    const command = ["eval", "--config", configPath, "--output", outputPath];
+    command.push(
+      "--no-cache", "--no-progress-bar", "--no-table", "--no-share", "--no-write",
+      "--max-concurrency", "1",
+    );
+    const candidateTmp = fs.mkdtempSync(path.join(process.cwd(), ".ai-ip-candidate-tmp-"));
+    fs.chmodSync(candidateTmp, 0o700);
+    const environment = promptfooEnvironment();
+    environment.AI_IP_CANDIDATE_TMP = candidateTmp;
+    runtime.attest();
+    completed = spawnSync(process.execPath, [runtime.entrypoint, ...command], {
+      cwd: process.cwd(), env: environment, stdio: ["ignore", "inherit", "inherit"],
+    });
+    runtime.attest();
+  } finally {
+    runtime.close();
+  }
   if (completed.error) throw completed.error;
   if (completed.status !== 0) return completed.status ?? 2;
   const parsed = parseResult(

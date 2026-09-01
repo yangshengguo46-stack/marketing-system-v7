@@ -1,8 +1,8 @@
 "use strict";
-
 const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
 const { TextDecoder } = require("node:util");
-
 const MAX_EVENTS = 1024;
 const MAX_EVIDENCE_ITEM_BYTES = 256 * 1024;
 const MAX_FINAL_RESPONSE_BYTES = 1024 * 1024;
@@ -10,14 +10,138 @@ const MAX_TRAJECTORY_BYTES = 4 * 1024 * 1024;
 const MAX_JSON_DEPTH = 64;
 const MAX_JSON_NODES = 10000;
 const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
-
 class PromptfooResultError extends Error {}
+class RunnerError extends Error {
+  constructor(message, options) { super(message, options); this.name = "RunnerError"; }
+}
 class NonIntegralJsonNumber {}
-
+function nodeVersionSupported(value) {
+  const matched = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
+  if (!matched) return false;
+  const version = matched.slice(1).map(Number);
+  return version[0] > 22 ||
+    (version[0] === 22 && (version[1] > 22 || (version[1] === 22 && version[2] >= 0)));
+}
 function sha256(payload) {
   return crypto.createHash("sha256").update(payload).digest("hex");
 }
-
+function boundedFile(filePath, maximum, label) {
+  const descriptor = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+  try {
+    const before = fs.fstatSync(descriptor);
+    if (!before.isFile() || before.size > maximum) {
+      throw new RunnerError(`${label} is not a bounded regular file`);
+    }
+    const payload = Buffer.alloc(before.size);
+    let offset = 0;
+    while (offset < payload.length) {
+      const amount = fs.readSync(
+        descriptor, payload, offset, payload.length - offset, offset,
+      );
+      if (amount < 1) throw new RunnerError(`${label} ended before its declared size`);
+      offset += amount;
+    }
+    const after = fs.fstatSync(descriptor);
+    if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size) {
+      throw new RunnerError(`${label} changed while read`);
+    }
+    return payload;
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+function safeRelative(value) {
+  const encoded = typeof value === "string" ? Buffer.from(value, "utf8") : null;
+  if (
+    typeof value !== "string" || value.length < 1 || encoded.toString("utf8") !== value ||
+    encoded.length > 4096 || value.includes("\\") || /[\x00-\x1f\x7f]/.test(value) ||
+    path.posix.isAbsolute(value)
+  ) {
+    throw new RunnerError("runtime archive path is unsafe");
+  }
+  const parts = value.split("/");
+  if (parts.length > 128 || parts.some((part) => part === "" || part === "." || part === "..")) {
+    throw new RunnerError("runtime archive path traversal is prohibited");
+  }
+  return parts;
+}
+function writeAllAt(fd, payload, position, writer = fs.writeSync, label = "runtime file") {
+  let offset = 0;
+  while (offset < payload.length) {
+    let amount;
+    try {
+      amount = position === null
+        ? writer(fd, payload, offset, payload.length - offset)
+        : writer(fd, payload, offset, payload.length - offset, position + offset);
+    } catch (error) {
+      if (error?.code === "EINTR") continue;
+      throw error;
+    }
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > payload.length - offset) {
+      throw new RunnerError(`${label} write made no progress`);
+    }
+    offset += amount;
+  }
+}
+function writeAll(fd, payload, writer = fs.writeSync) {
+  writeAllAt(fd, payload, null, writer, "pipe");
+}
+function isolatedDirectory(value, label) {
+  if (typeof value !== "string" || !path.isAbsolute(value)) {
+    throw new RunnerError(`${label} must be an absolute isolated directory`);
+  }
+  const resolved = path.resolve(value);
+  const state = fs.lstatSync(resolved);
+  if (!state.isDirectory() || state.isSymbolicLink() || fs.realpathSync(resolved) !== resolved) {
+    throw new RunnerError(`${label} is not a real isolated directory`);
+  }
+  return resolved;
+}
+function isolatedOutput(value, parent) {
+  if (typeof value !== "string" || !path.isAbsolute(value)) {
+    throw new RunnerError("Promptfoo output must be an absolute isolated path");
+  }
+  const resolved = path.resolve(value);
+  if (path.dirname(resolved) !== parent || path.basename(resolved) !== "output.json") {
+    throw new RunnerError("Promptfoo output escaped its isolated directory");
+  }
+  if (fs.existsSync(resolved)) throw new RunnerError("Promptfoo output already exists");
+  return resolved;
+}
+function ensureParents(root, parts) {
+  let current = root;
+  for (const part of parts.slice(0, -1)) {
+    current = path.join(current, part);
+    try {
+      fs.mkdirSync(current, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      const state = fs.lstatSync(current);
+      if (!state.isDirectory() || state.isSymbolicLink())
+        throw new RunnerError("runtime archive parent is unsafe");
+    }
+  }
+}
+function sameIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+function descriptorDigest(descriptor, size) {
+  const digest = crypto.createHash("sha256");
+  const buffer = Buffer.alloc(Math.min(1024 * 1024, Math.max(1, size)));
+  for (let offset = 0; offset < size;) {
+    let amount;
+    try {
+      amount = fs.readSync(descriptor, buffer, 0, Math.min(buffer.length, size - offset), offset);
+    } catch (error) {
+      if (error?.code === "EINTR") continue;
+      throw error;
+    }
+    if (amount < 1) throw new RunnerError("runtime file ended during attestation");
+    digest.update(buffer.subarray(0, amount));
+    offset += amount;
+  }
+  return digest.digest("hex");
+}
 function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value !== null && typeof value === "object") {
@@ -365,4 +489,8 @@ function parseResult(payload) {
   };
 }
 
-module.exports = { canonical, parseResult };
+module.exports = {
+  RunnerError, boundedFile, canonical, descriptorDigest, ensureParents, isolatedDirectory,
+  isolatedOutput, nodeVersionSupported, parseResult, safeRelative, sameIdentity, sha256, writeAll,
+  writeAllAt,
+};
