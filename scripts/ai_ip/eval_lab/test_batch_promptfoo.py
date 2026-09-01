@@ -212,6 +212,13 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
             "request_timeout_ms": 30000,
             "reuse_server": False,
             "sandbox_mode": "workspace-write",
+            "sandbox_policy": {
+                "excludeSlashTmp": True,
+                "excludeTmpdirEnvVar": True,
+                "networkAccess": False,
+                "type": "workspaceWrite",
+                "writableRoots": ["{{ env.AI_IP_WORKSPACE }}"],
+            },
             "startup_timeout_ms": 30000,
             "turn_timeout_ms": 30000,
             "working_dir": "{{ env.AI_IP_WORKSPACE }}",
@@ -232,6 +239,22 @@ def test_config_routes_candidate_tmp_without_exposing_runner_tmpdir() -> None:
     assert cli_env["TMPDIR"] == "{{ env.AI_IP_CANDIDATE_TMP }}"
     assert "AI_IP_CANDIDATE_TMP" not in cli_env
     assert "{{ env.TMPDIR }}" not in _json_bytes(config).decode()
+
+
+def test_config_rejects_danger_full_access_for_formal_evidence() -> None:
+    profile = {
+        "approvalPolicy": "never",
+        "maxWallClockSeconds": 30,
+        "sandboxMode": "danger-full-access",
+    }
+
+    with pytest.raises(
+        _adapter().PromptfooAdapterError,
+        match="danger-full-access is forbidden for formal Promptfoo evidence",
+    ):
+        _adapter().render_promptfoo_config(
+            _request(execution_profile_json=_json_bytes(profile))
+        )
 
 
 @pytest.mark.parametrize(
@@ -1000,12 +1023,18 @@ def test_production_compile_rejects_forged_exact_version_stub(tmp_path: Path) ->
         )
 
 
-def _test_runtime(tmp_path: Path, entrypoint_source: bytes) -> tuple[object, Path, Path]:
+def _test_runtime(
+    tmp_path: Path,
+    entrypoint_source: bytes,
+    dependency_source: bytes | None = None,
+) -> tuple[object, Path, Path]:
     bundle = importlib.import_module("batch_promptfoo_bundle")
     runtime = tmp_path / "runtime"
     entrypoint = runtime / "node_modules/promptfoo/dist/src/entrypoint.js"
     entrypoint.parent.mkdir(parents=True)
     entrypoint.write_bytes(entrypoint_source)
+    if dependency_source is not None:
+        entrypoint.with_name("dependency.js").write_bytes(dependency_source)
     (entrypoint.parents[2] / "package.json").write_bytes(
         _json_bytes(
             {
@@ -1022,7 +1051,11 @@ def _test_runtime(tmp_path: Path, entrypoint_source: bytes) -> tuple[object, Pat
 
 
 def _run_sealed_runner(
-    tmp_path: Path, entrypoint_source: bytes
+    tmp_path: Path,
+    entrypoint_source: bytes,
+    *,
+    dependency_source: bytes | None = None,
+    extra_environment: dict[str, str] | None = None,
 ) -> tuple[
     subprocess.CompletedProcess[bytes],
     bytes,
@@ -1032,7 +1065,9 @@ def _run_sealed_runner(
     Path,
 ]:
     adapter = _adapter()
-    runtime, _, node = _test_runtime(tmp_path, entrypoint_source)
+    runtime, _, node = _test_runtime(
+        tmp_path, entrypoint_source, dependency_source
+    )
     stock = _request(effective_config=b"stock-config")
     config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
     artifact_paths: list[Path] = []
@@ -1064,6 +1099,7 @@ def _run_sealed_runner(
         "PROMPTFOO_CONFIG_DIR": str(isolated_promptfoo),
         "PROMPTFOO_OUTPUT_PATH": str(isolated_promptfoo / "output.json"),
         "TMPDIR": str(isolated_temp),
+        **(extra_environment or {}),
     }
     try:
         completed = subprocess.run(
@@ -1224,10 +1260,14 @@ def test_sealed_runner_rejects_post_start_runtime_drift(tmp_path: Path) -> None:
     completed, result, telemetry, _, _, _ = _run_sealed_runner(
         tmp_path,
         f"""const fs = require('node:fs');
+const path = require('node:path');
+require('./dependency.js');
 fs.writeFileSync(process.argv[6], {frozen_result_literal});
-fs.chmodSync(__filename, 0o700);
-fs.appendFileSync(__filename, '\\n// changed after startup\\n');
+const dependency = path.join(__dirname, 'dependency.js');
+fs.chmodSync(dependency, 0o600);
+fs.appendFileSync(dependency, '\\n// changed after startup\\n');
 """.encode(),
+        dependency_source=b"module.exports = 'sealed dependency';\n",
     )
 
     assert completed.returncode == 2
@@ -1235,5 +1275,60 @@ fs.appendFileSync(__filename, '\\n// changed after startup\\n');
         b"Promptfoo sealed runner failed: RunnerError: "
         b"Promptfoo runtime changed after attestation\n"
     )
+    assert result == b""
+    assert telemetry == b""
+
+
+@pytest.mark.parametrize("primary_drift", [False, True])
+def test_runtime_close_preserves_primary_error_and_surfaces_standalone_failure(
+    tmp_path: Path, primary_drift: bool
+) -> None:
+    preload = tmp_path / "fail-runtime-root-close.js"
+    preload.write_text(
+        """const fs = require('node:fs');
+const path = require('node:path');
+const originalOpen = fs.openSync;
+const originalClose = fs.closeSync;
+let runtimeRoot = -1;
+fs.openSync = (target, flags, ...rest) => {
+  const descriptor = originalOpen(target, flags, ...rest);
+  if (typeof target === 'string' && path.basename(target).startsWith('promptfoo-runtime-') &&
+      (flags & (fs.constants.O_DIRECTORY || 0))) runtimeRoot = descriptor;
+  return descriptor;
+};
+fs.closeSync = (descriptor) => {
+  const result = originalClose(descriptor);
+  if (descriptor === runtimeRoot) {
+    runtimeRoot = -1;
+    throw new Error('runtime root close failed');
+  }
+  return result;
+};
+"""
+    )
+    frozen_result_literal = json.dumps(_result_bytes(_result_value()).decode())
+    mutation = """
+const dependency = require('node:path').join(__dirname, 'dependency.js');
+fs.chmodSync(dependency, 0o600);
+fs.appendFileSync(dependency, '\\n// changed after startup\\n');
+""" if primary_drift else ""
+    completed, result, telemetry, _, _, _ = _run_sealed_runner(
+        tmp_path,
+        f"""const fs = require('node:fs');
+require('./dependency.js');
+fs.writeFileSync(process.argv[6], {frozen_result_literal});
+{mutation}""".encode(),
+        dependency_source=b"module.exports = 'sealed dependency';\n",
+        extra_environment={"NODE_OPTIONS": f"--require={preload}"},
+    )
+
+    assert completed.returncode == 2
+    expected = (
+        "Promptfoo sealed runner failed: RunnerError: "
+        "Promptfoo runtime changed after attestation\n"
+        if primary_drift
+        else "Promptfoo sealed runner failed: Error: runtime root close failed\n"
+    )
+    assert completed.stderr.decode() == expected
     assert result == b""
     assert telemetry == b""

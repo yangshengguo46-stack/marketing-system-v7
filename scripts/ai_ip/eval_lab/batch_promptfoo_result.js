@@ -28,11 +28,11 @@ function sha256(payload) {
 function boundedFile(filePath, maximum, label) {
   const descriptor = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
   try {
-    const before = fs.fstatSync(descriptor);
-    if (!before.isFile() || before.size > maximum) {
+    const before = fs.fstatSync(descriptor, { bigint: true });
+    if (!before.isFile() || before.size > BigInt(maximum)) {
       throw new RunnerError(`${label} is not a bounded regular file`);
     }
-    const payload = Buffer.alloc(before.size);
+    const payload = Buffer.alloc(Number(before.size));
     let offset = 0;
     while (offset < payload.length) {
       const amount = fs.readSync(
@@ -41,7 +41,7 @@ function boundedFile(filePath, maximum, label) {
       if (amount < 1) throw new RunnerError(`${label} ended before its declared size`);
       offset += amount;
     }
-    const after = fs.fstatSync(descriptor);
+    const after = fs.fstatSync(descriptor, { bigint: true });
     if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size) {
       throw new RunnerError(`${label} changed while read`);
     }
@@ -125,6 +125,12 @@ function ensureParents(root, parts) {
 function sameIdentity(left, right) {
   return left.dev === right.dev && left.ino === right.ino;
 }
+function closeAll(descriptors, primary = null) {
+  let failure = primary;
+  for (const descriptor of [...descriptors].reverse())
+    try { fs.closeSync(descriptor); } catch (error) { failure ||= error; }
+  if (failure) throw failure;
+}
 function descriptorDigest(descriptor, size) {
   const digest = crypto.createHash("sha256");
   const buffer = Buffer.alloc(Math.min(1024 * 1024, Math.max(1, size)));
@@ -152,7 +158,6 @@ function canonical(value) {
   }
   return JSON.stringify(value);
 }
-
 function boundedJson(payload, label, numberContract = "finite") {
   let shapeDepth = 0;
   let shapeNodes = 1;
@@ -308,14 +313,12 @@ function boundedJson(payload, label, numberContract = "finite") {
     throw new PromptfooResultError(`${label} is not valid JSON`, { cause: error });
   }
 }
-
 function object(value, label) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new PromptfooResultError(`${label} must be an object`);
   }
   return value;
 }
-
 function nonnegative(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new PromptfooResultError(`${label} must be a nonnegative integer`);
@@ -490,7 +493,7 @@ function parseResult(payload) {
 }
 
 module.exports = {
-  RunnerError, boundedFile, canonical, descriptorDigest, ensureParents, isolatedDirectory,
+  RunnerError, boundedFile, canonical, closeAll, descriptorDigest, ensureParents, isolatedDirectory,
   isolatedOutput, nodeVersionSupported, parseResult, safeRelative, sameIdentity, sha256, writeAll,
   writeAllAt,
 };

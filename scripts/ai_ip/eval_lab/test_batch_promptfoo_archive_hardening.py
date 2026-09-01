@@ -506,8 +506,8 @@ const originalWrite = fs.writeSync;
 const originalFstat = fs.fstatSync;
 let attempts = 0;
 let targetFd = -1;
-fs.fstatSync = (fd) => {
-  const state = originalFstat(fd);
+fs.fstatSync = (fd, options) => {
+  const state = originalFstat(fd, options);
   if (scenario === "type" && fd === targetFd) state.isFile = () => false;
   return state;
 };
@@ -673,4 +673,197 @@ process.stdout.write(JSON.stringify({calls, zero}));
     assert json.loads(completed.stdout) == {
         "calls": [[9, 0, 6], [9, 2, 4], [9, 2, 4]],
         "zero": "pipe write made no progress",
+    }
+
+
+_RUNTIME_TREE_PROBE = r"""
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
+const runnerPath = process.argv[1];
+const root = process.argv[2];
+const scenario = process.argv[3];
+const runnerSource = fs.readFileSync(runnerPath, "utf8");
+const loaded = {exports: {}};
+new Function("require", "module", "exports", "__filename", "__dirname",
+  `${runnerSource}\nmodule.exports.RuntimeTree = RuntimeTree;`
+)(require, loaded, loaded.exports, runnerPath, path.dirname(runnerPath));
+const RuntimeTree = loaded.exports.RuntimeTree;
+const digest = (payload) => crypto.createHash("sha256").update(payload).digest("hex");
+const identity = (state) => ({dev: state.dev, ino: state.ino});
+const stat = (target, bigint) => fs.lstatSync(target, bigint ? {bigint: true} : undefined);
+
+if (scenario === "bigint-collision") {
+  fs.mkdirSync(root);
+  const originalFstat = fs.fstatSync;
+  const originalLstat = fs.lstatSync;
+  const first = 9007199254740992n;
+  const wrapped = (state, ino, bigint) => new Proxy(state, {get(target, property) {
+    if (property === "ino") return bigint ? ino : Number(ino);
+    const value = Reflect.get(target, property, target);
+    return typeof value === "function" ? value.bind(target) : value;
+  }});
+  fs.fstatSync = (descriptor, options) => wrapped(
+    originalFstat(descriptor, options), first, options?.bigint === true,
+  );
+  fs.lstatSync = (target, options) => wrapped(
+    originalLstat(target, options), first + 1n, options?.bigint === true,
+  );
+  let tree;
+  let error = null;
+  try {
+    tree = new RuntimeTree(root, [], new Map());
+    tree.rootState(false);
+  } catch (caught) {
+    error = caught.message;
+  } finally {
+    fs.fstatSync = originalFstat;
+    fs.lstatSync = originalLstat;
+    if (tree) tree.close();
+  }
+  process.stdout.write(JSON.stringify({error}));
+  process.exit(0);
+}
+
+if (scenario === "root-fstat-close") {
+  fs.mkdirSync(root);
+  const originalOpen = fs.openSync;
+  const originalFstat = fs.fstatSync;
+  const originalClose = fs.closeSync;
+  let rootDescriptor = -1;
+  let closes = 0;
+  fs.openSync = (target, flags, ...rest) => {
+    const descriptor = originalOpen(target, flags, ...rest);
+    if (target === root) rootDescriptor = descriptor;
+    return descriptor;
+  };
+  fs.fstatSync = (descriptor, options) => {
+    if (descriptor === rootDescriptor) throw new Error("root fstat failed");
+    return originalFstat(descriptor, options);
+  };
+  fs.closeSync = (descriptor) => {
+    if (descriptor === rootDescriptor) closes += 1;
+    return originalClose(descriptor);
+  };
+  let error = null;
+  try {
+    new RuntimeTree(root, [], new Map());
+  } catch (caught) {
+    error = caught.message;
+  } finally {
+    fs.openSync = originalOpen;
+    fs.fstatSync = originalFstat;
+    fs.closeSync = originalClose;
+  }
+  process.stdout.write(JSON.stringify({closes, error}));
+  process.exit(0);
+}
+
+const files = scenario === "file-after-scan"
+  ? [["a.txt", "a"], ["b.txt", "b"]]
+  : [["a/file.txt", "a"], ["b/file.txt", "b"]];
+fs.mkdirSync(root);
+for (const [relative, payload] of files) {
+  const target = path.join(root, relative);
+  fs.mkdirSync(path.dirname(target), {recursive: true});
+  fs.writeFileSync(target, payload, {mode: 0o600});
+}
+const inventory = files.map(([relative, payload]) => ({
+  mode: 0o400, path: relative, sha256: digest(Buffer.from(payload)), size: 1,
+}));
+const tree = new RuntimeTree(root, inventory, new Map());
+const bigint = typeof tree.rootIdentity.ino === "bigint";
+tree.fileIdentities = new Map(files.map(([relative]) => [
+  relative, identity(stat(path.join(root, relative), bigint)),
+]));
+tree.lock();
+let mutated = false;
+let error = null;
+if (scenario === "file-after-scan") {
+  const originalRead = fs.readSync;
+  const originalFstat = fs.fstatSync;
+  const firstIdentity = identity(stat(path.join(root, "a.txt"), bigint));
+  let readFirst = false;
+  fs.readSync = (descriptor, ...args) => {
+    const amount = originalRead(descriptor, ...args);
+    const state = originalFstat(descriptor, bigint ? {bigint: true} : undefined);
+    if (state.dev === firstIdentity.dev && state.ino === firstIdentity.ino) readFirst = true;
+    else if (readFirst && !mutated) {
+      fs.chmodSync(path.join(root, "a.txt"), 0o600);
+      fs.writeFileSync(path.join(root, "a.txt"), "z");
+      fs.chmodSync(path.join(root, "a.txt"), 0o400);
+      mutated = true;
+    }
+    return amount;
+  };
+  try { tree.attest(); } catch (caught) { error = caught.message; }
+  fs.readSync = originalRead;
+} else {
+  const originalReaddir = fs.readdirSync;
+  let rootReads = 0;
+  fs.readdirSync = (target, ...args) => {
+    const entries = originalReaddir(target, ...args);
+    if (scenario === "root-after-enumeration" && path.resolve(target) === root &&
+        ++rootReads === 2) {
+      fs.chmodSync(root, 0o700);
+      mutated = true;
+    } else if (scenario === "directory-after-scan" &&
+               path.resolve(target) === path.join(root, "b") && !mutated) {
+      fs.chmodSync(path.join(root, "a"), 0o700);
+      fs.writeFileSync(path.join(root, "a/extra.txt"), "extra");
+      fs.chmodSync(path.join(root, "a"), 0o500);
+      mutated = true;
+    }
+    return entries;
+  };
+  try { tree.attest(); } catch (caught) { error = caught.message; }
+  fs.readdirSync = originalReaddir;
+}
+tree.close();
+process.stdout.write(JSON.stringify({error, mutated}));
+"""
+
+
+def _runtime_tree_probe(tmp_path: Path, scenario: str) -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            _RUNTIME_TREE_PROBE,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+            str(tmp_path / "runtime-tree"),
+            scenario,
+        ],
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    return json.loads(completed.stdout)
+
+
+def test_runtime_tree_uses_exact_bigint_identities(tmp_path: Path) -> None:
+    """Catches IEEE-754 inode collisions being accepted as the same object."""
+    assert _runtime_tree_probe(tmp_path, "bigint-collision") == {
+        "error": "runtime root identity changed"
+    }
+
+
+def test_runtime_tree_owns_root_descriptor_before_first_fstat(tmp_path: Path) -> None:
+    """Catches the root descriptor leaking when its first fstat fails."""
+    assert _runtime_tree_probe(tmp_path, "root-fstat-close") == {
+        "closes": 1,
+        "error": "root fstat failed",
+    }
+
+
+@pytest.mark.parametrize(
+    "scenario", ["file-after-scan", "directory-after-scan", "root-after-enumeration"]
+)
+def test_runtime_attestation_rechecks_earlier_objects_post_order(
+    tmp_path: Path, scenario: str
+) -> None:
+    """Catches persistent mutation after an earlier path was first inspected."""
+    assert _runtime_tree_probe(tmp_path, scenario) == {
+        "error": "Promptfoo runtime changed after attestation",
+        "mutated": True,
     }

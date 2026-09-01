@@ -109,6 +109,10 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
         )
     if sandbox not in _SANDBOX_MODES:
         raise PromptfooAdapterError("sandbox mode is unsupported by Promptfoo 0.122.0")
+    if sandbox == "danger-full-access":
+        raise PromptfooAdapterError(
+            "danger-full-access is forbidden for formal Promptfoo evidence"
+        )
     if approval not in _APPROVAL_POLICIES:
         raise PromptfooAdapterError(
             "approval policy is unsupported by Promptfoo 0.122.0"
@@ -133,6 +137,34 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
     }
     cli_env["TMPDIR"] = "{{ env.AI_IP_CANDIDATE_TMP }}"
     cli_env["OPENAI_API_KEY"] = _PUBLIC_DUMMY_BEARER
+    provider_config = {
+        "approval_policy": approval,
+        "apiKey": _PUBLIC_DUMMY_BEARER,
+        "base_url": base_url,
+        "cli_env": cli_env,
+        "codex_path_override": "{{ env.AI_IP_CODEX_PATH }}",
+        "ephemeral": True,
+        "include_raw_events": True,
+        "inherit_process_env": False,
+        "model": model,
+        "model_provider": "openai",
+        "model_reasoning_effort": reasoning,
+        "output_schema": output_schema,
+        "request_timeout_ms": timeout_ms,
+        "reuse_server": False,
+        "sandbox_mode": sandbox,
+        "startup_timeout_ms": timeout_ms,
+        "turn_timeout_ms": timeout_ms,
+        "working_dir": "{{ env.AI_IP_WORKSPACE }}",
+    }
+    if sandbox == "workspace-write":
+        provider_config["sandbox_policy"] = {
+            "excludeSlashTmp": True,
+            "excludeTmpdirEnvVar": True,
+            "networkAccess": False,
+            "type": "workspaceWrite",
+            "writableRoots": ["{{ env.AI_IP_WORKSPACE }}"],
+        }
     return {
         "prompts": [
             "Read the sealed case at $AI_IP_CASE_PATH and return only JSON that "
@@ -141,26 +173,7 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
         "providers": [
             {
                 "id": "openai:codex-app-server",
-                "config": {
-                    "approval_policy": approval,
-                    "apiKey": _PUBLIC_DUMMY_BEARER,
-                    "base_url": base_url,
-                    "cli_env": cli_env,
-                    "codex_path_override": "{{ env.AI_IP_CODEX_PATH }}",
-                    "ephemeral": True,
-                    "include_raw_events": True,
-                    "inherit_process_env": False,
-                    "model": model,
-                    "model_provider": "openai",
-                    "model_reasoning_effort": reasoning,
-                    "output_schema": output_schema,
-                    "request_timeout_ms": timeout_ms,
-                    "reuse_server": False,
-                    "sandbox_mode": sandbox,
-                    "startup_timeout_ms": timeout_ms,
-                    "turn_timeout_ms": timeout_ms,
-                    "working_dir": "{{ env.AI_IP_WORKSPACE }}",
-                },
+                "config": provider_config,
             }
         ],
         "tests": [{"vars": {}}],
