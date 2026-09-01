@@ -33,8 +33,13 @@ _MAX_FILE_BYTES = 8 * 1024 * 1024
 _MAX_TREE_BYTES = 64 * 1024 * 1024
 _CHUNK_BYTES = 1024 * 1024
 _FORBIDDEN_SEED_TERMS = (
-    b"goldengift", b"rubric", b"caseanswer", b"referencedossier",
-    b"outcomepacket", b"scores", b"hiddeninstructions",
+    b"goldengift",
+    b"rubric",
+    b"caseanswer",
+    b"referencedossier",
+    b"outcomepacket",
+    b"scores",
+    b"hiddeninstructions",
 )
 
 PARITY_FIELDS = (
@@ -121,9 +126,16 @@ def _stable_file(path: Path) -> tuple[str, int, int, bytes]:
         final = target.lstat()
     except OSError as error:
         raise BatchPlanError(f"file changed while read: {target}") from error
-    if _file_state(before) != _file_state(after) or _file_state(before) != _file_state(final):
+    if _file_state(before) != _file_state(after) or _file_state(before) != _file_state(
+        final
+    ):
         raise BatchPlanError(f"file changed while read: {target}")
-    return digest.hexdigest(), before.st_size, stat.S_IMODE(before.st_mode), b"".join(chunks)
+    return (
+        digest.hexdigest(),
+        before.st_size,
+        stat.S_IMODE(before.st_mode),
+        b"".join(chunks),
+    )
 
 
 def sha256_file(path: Path) -> str:
@@ -173,8 +185,13 @@ def _fallback_snapshot_tree(root: Path) -> TreeSnapshot:
                 name, path = child.name, current / child.name
                 metadata = path.lstat()
                 relative = _safe_relative_path(path.relative_to(root))
-                if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
-                    raise BatchPlanError(f"symbolic link or reparse point is not allowed: {relative}")
+                if (
+                    stat.S_ISLNK(metadata.st_mode)
+                    or getattr(metadata, "st_file_attributes", 0) & 0x400
+                ):
+                    raise BatchPlanError(
+                        f"symbolic link or reparse point is not allowed: {relative}"
+                    )
                 if stat.S_ISDIR(metadata.st_mode):
                     states[path] = metadata
                     pending.append(path)
@@ -183,14 +200,26 @@ def _fallback_snapshot_tree(root: Path) -> TreeSnapshot:
                 digest, size, mode, payload = _stable_file(path)
                 file_states[path] = metadata
                 total += size
-                if total > _MAX_TREE_BYTES: raise BatchPlanError("tree exceeds 64 MiB")
+                if total > _MAX_TREE_BYTES:
+                    raise BatchPlanError("tree exceeds 64 MiB")
                 files[relative] = (digest, payload)
-                entries.append({"mode": mode, "path": relative, "sha256": digest, "size": size})
+                entries.append(
+                    {"mode": mode, "path": relative, "sha256": digest, "size": size}
+                )
     except OSError as error:
         raise BatchPlanError("tree changed during traversal") from error
-    if any(_file_state(before) != _file_state(path.lstat()) for path, before in states.items()) or any(_file_state(before) != _file_state(path.lstat()) for path, before in file_states.items()):
+    if any(
+        _file_state(before) != _file_state(path.lstat())
+        for path, before in states.items()
+    ) or any(
+        _file_state(before) != _file_state(path.lstat())
+        for path, before in file_states.items()
+    ):
         raise BatchPlanError("tree changed during traversal")
-    return TreeSnapshot(sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}), files)
+    return TreeSnapshot(
+        sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}),
+        files,
+    )
 
 
 def snapshot_tree(root: Path) -> TreeSnapshot:
@@ -202,7 +231,9 @@ def snapshot_tree(root: Path) -> TreeSnapshot:
         before = tree_root.lstat()
         if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
             raise BatchPlanError("tree root must be a non-symlink directory")
-        flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        flags = (
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        )
         root_fd = os.open(tree_root, flags)
     except BatchPlanError:
         raise
@@ -226,10 +257,19 @@ def snapshot_tree(root: Path) -> TreeSnapshot:
                 relative = Path(*prefix, name)
                 display = _safe_relative_path(relative)
                 metadata = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
-                if stat.S_ISLNK(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & 0x400:
-                    raise BatchPlanError(f"symbolic link or reparse point is not allowed: {display}")
+                if (
+                    stat.S_ISLNK(metadata.st_mode)
+                    or getattr(metadata, "st_file_attributes", 0) & 0x400
+                ):
+                    raise BatchPlanError(
+                        f"symbolic link or reparse point is not allowed: {display}"
+                    )
                 if stat.S_ISDIR(metadata.st_mode):
-                    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+                    flags = (
+                        os.O_RDONLY
+                        | getattr(os, "O_DIRECTORY", 0)
+                        | getattr(os, "O_NOFOLLOW", 0)
+                    )
                     child_fd = os.open(name, flags, dir_fd=directory_fd)
                     if _file_state(metadata) != _file_state(os.fstat(child_fd)):
                         os.close(child_fd)
@@ -239,7 +279,11 @@ def snapshot_tree(root: Path) -> TreeSnapshot:
                     pending.append((child_fd, (*prefix, name), metadata))
                     continue
                 _require_regular_file(metadata, display)
-                fd = os.open(name, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
+                fd = os.open(
+                    name,
+                    os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                    dir_fd=directory_fd,
+                )
                 try:
                     opened_file = os.fstat(fd)
                     if _file_state(metadata) != _file_state(opened_file):
@@ -258,24 +302,39 @@ def snapshot_tree(root: Path) -> TreeSnapshot:
                     after = os.fstat(fd)
                 finally:
                     os.close(fd)
-                if len(payload) != metadata.st_size or _file_state(metadata) != _file_state(after):
+                if len(payload) != metadata.st_size or _file_state(
+                    metadata
+                ) != _file_state(after):
                     raise BatchPlanError("file changed while read")
                 total += len(payload)
                 if total > _MAX_TREE_BYTES:
                     raise BatchPlanError("tree exceeds 64 MiB")
                 digest = hashlib.sha256(payload).hexdigest()
                 files[display] = (digest, payload)
-                entries.append({"mode": stat.S_IMODE(metadata.st_mode), "path": display, "sha256": digest, "size": len(payload)})
+                entries.append(
+                    {
+                        "mode": stat.S_IMODE(metadata.st_mode),
+                        "path": display,
+                        "sha256": digest,
+                        "size": len(payload),
+                    }
+                )
             if _file_state(state) != _file_state(os.fstat(directory_fd)):
                 raise BatchPlanError("tree changed during traversal")
-        if any(_file_state(state) != _file_state(path.lstat()) for path, state in directories):
+        if any(
+            _file_state(state) != _file_state(path.lstat())
+            for path, state in directories
+        ):
             raise BatchPlanError("tree changed during traversal")
     except OSError as error:
         raise BatchPlanError("tree changed during traversal") from error
     finally:
         for fd in opened:
             os.close(fd)
-    return TreeSnapshot(sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}), files)
+    return TreeSnapshot(
+        sha256_json({"entries": sorted(entries, key=lambda entry: str(entry["path"]))}),
+        files,
+    )
 
 
 def sha256_tree(root: Path) -> str:
@@ -300,7 +359,9 @@ def verify_binary_manifest(manifest: object, binary_path: Path) -> None:
         raise BatchPlanError("binary SHA-256 differs from manifest")
 
 
-def _verify_seed_material(snapshot: TreeSnapshot, declared_capabilities: object) -> None:
+def _verify_seed_material(
+    snapshot: TreeSnapshot, declared_capabilities: object
+) -> None:
     if type(declared_capabilities) is not list:
         raise BatchPlanError("declared capabilities must be a list")
     lead_path = f"skills/{_LEAD_SKILL_NAME}/SKILL.md"
@@ -308,10 +369,15 @@ def _verify_seed_material(snapshot: TreeSnapshot, declared_capabilities: object)
     declares_lead_skill = _LEAD_SKILL_NAME in declared_capabilities
     if declares_lead_skill:
         try:
-            config = tomllib.loads(snapshot.files["config.toml"][1].decode("utf-8"))["lead_skill"]
+            config = tomllib.loads(snapshot.files["config.toml"][1].decode("utf-8"))[
+                "lead_skill"
+            ]
         except (KeyError, UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
             raise BatchPlanError("Lead Skill config is missing") from error
-        if config != {"path": lead_path, "sha256": lead_digest} or snapshot.files.get(lead_path, (None,))[0] != lead_digest:
+        if (
+            config != {"path": lead_path, "sha256": lead_digest}
+            or snapshot.files.get(lead_path, (None,))[0] != lead_digest
+        ):
             raise BatchPlanError("declared Lead Skill is missing from seed")
     elif any(digest == lead_digest for digest, _ in snapshot.files.values()):
         raise BatchPlanError("undeclared Lead Skill is present in seed")
@@ -344,9 +410,17 @@ def verify_treatment_manifest(
     seed_snapshot = snapshot_tree(codex_home_seed)
     expected_artifacts = (
         ("codexHomeSeedSha256", seed_snapshot.digest, "codex home seed"),
-        ("systemInstructionSha256", sha256_file(system_instruction), "system instruction"),
+        (
+            "systemInstructionSha256",
+            sha256_file(system_instruction),
+            "system instruction",
+        ),
         ("capabilityBundleSha256", sha256_tree(capability_bundle), "capability bundle"),
-        ("effectiveCodexConfigSha256", sha256_file(effective_config), "effective config"),
+        (
+            "effectiveCodexConfigSha256",
+            sha256_file(effective_config),
+            "effective config",
+        ),
     )
     for field, actual, label in expected_artifacts:
         if actual != value[field]:
@@ -354,17 +428,29 @@ def verify_treatment_manifest(
     _verify_seed_material(seed_snapshot, value["declaredCapabilities"])
 
 
-def _verify_plan_refs(plan: dict[str, object], stock_treatment: object, modified_treatment: object) -> None:
+def _verify_plan_refs(
+    plan: dict[str, object], stock_treatment: object, modified_treatment: object
+) -> None:
     stock = _validate_contract("treatment-manifest", stock_treatment)
     modified = _validate_contract("treatment-manifest", modified_treatment)
     for treatment in (stock, modified):
-        try: verify_self_commitment(treatment, "treatmentManifestSha256")
-        except BatchContractError as error: raise BatchPlanError("treatment commitment mismatch") from error
-    if plan["stockTreatmentRef"] != stock["treatmentId"]: raise BatchPlanError("stock treatment reference differs from verified treatment")
-    if plan["modifiedTreatmentRef"] != modified["treatmentId"]: raise BatchPlanError("modified treatment reference differs from verified treatment")
+        try:
+            verify_self_commitment(treatment, "treatmentManifestSha256")
+        except BatchContractError as error:
+            raise BatchPlanError("treatment commitment mismatch") from error
+    if plan["stockTreatmentRef"] != stock["treatmentId"]:
+        raise BatchPlanError(
+            "stock treatment reference differs from verified treatment"
+        )
+    if plan["modifiedTreatmentRef"] != modified["treatmentId"]:
+        raise BatchPlanError(
+            "modified treatment reference differs from verified treatment"
+        )
 
 
-def seal_candidate_run_plan(plan: object, *, stock_treatment: object, modified_treatment: object) -> dict[str, object]:
+def seal_candidate_run_plan(
+    plan: object, *, stock_treatment: object, modified_treatment: object
+) -> dict[str, object]:
     """Return a schema-valid CandidateRunPlan with a fresh self-commitment."""
     value = _validate_contract("candidate-run-plan", plan)
     _verify_plan_refs(value, stock_treatment, modified_treatment)
@@ -376,7 +462,9 @@ def seal_candidate_run_plan(plan: object, *, stock_treatment: object, modified_t
     return sealed
 
 
-def verify_candidate_run_plan(plan: object, *, stock_treatment: object, modified_treatment: object) -> None:
+def verify_candidate_run_plan(
+    plan: object, *, stock_treatment: object, modified_treatment: object
+) -> None:
     """Require a schema-valid CandidateRunPlan whose full payload is committed."""
     value = _validate_contract("candidate-run-plan", plan)
     _verify_plan_refs(value, stock_treatment, modified_treatment)
@@ -386,9 +474,7 @@ def verify_candidate_run_plan(plan: object, *, stock_treatment: object, modified
         raise BatchPlanError("plan commitment mismatch") from error
 
 
-def verify_effective_condition_parity(
-    stock: object, modified: object
-) -> str:
+def verify_effective_condition_parity(stock: object, modified: object) -> str:
     """Commit the runtime fields that must be identical across both arms."""
     if type(stock) is not dict or type(modified) is not dict:
         raise BatchPlanError("effective conditions must be objects")
@@ -399,10 +485,20 @@ def verify_effective_condition_parity(
         if stock[field] != modified[field]:
             raise BatchPlanError(f"condition parity differs: {field}")
         parity[field] = stock[field]
-    allowed = {"stockTreatmentRef", "modifiedTreatmentRef", "privateArmPath", "executionOrder"}
+    allowed = {
+        "stockTreatmentRef",
+        "modifiedTreatmentRef",
+        "privateArmPath",
+        "executionOrder",
+    }
     for field in sorted(set(stock) | set(modified)):
-        if field not in PARITY_FIELDS and field not in allowed and (
-            (field in stock) != (field in modified) or stock.get(field) != modified.get(field)
+        if (
+            field not in PARITY_FIELDS
+            and field not in allowed
+            and (
+                (field in stock) != (field in modified)
+                or stock.get(field) != modified.get(field)
+            )
         ):
             raise BatchPlanError(f"undeclared condition difference: {field}")
     return sha256_json(parity)

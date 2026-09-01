@@ -67,13 +67,19 @@ def render_promptfoo_config(request: object) -> dict[str, object]:
     approval = profile.get("approvalPolicy")
     timeout_seconds = profile.get("maxWallClockSeconds")
     if reasoning not in _REASONING_EFFORTS:
-        raise PromptfooAdapterError("reasoning effort is unsupported by Promptfoo 0.122.0")
+        raise PromptfooAdapterError(
+            "reasoning effort is unsupported by Promptfoo 0.122.0"
+        )
     if sandbox not in _SANDBOX_MODES:
         raise PromptfooAdapterError("sandbox mode is unsupported by Promptfoo 0.122.0")
     if approval not in _APPROVAL_POLICIES:
-        raise PromptfooAdapterError("approval policy is unsupported by Promptfoo 0.122.0")
+        raise PromptfooAdapterError(
+            "approval policy is unsupported by Promptfoo 0.122.0"
+        )
     if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 3600:
-        raise PromptfooAdapterError("Promptfoo timeout must be between 1 and 3600 seconds")
+        raise PromptfooAdapterError(
+            "Promptfoo timeout must be between 1 and 3600 seconds"
+        )
     timeout_ms = timeout_seconds * 1000
     cli_env = {
         name: "{{ env." + name + " }}"
@@ -180,14 +186,18 @@ def _validate_promptfoo_cli(path: object) -> Path:
             package = candidate
             break
     if package_root is None or package is None:
-        raise PromptfooAdapterError("Promptfoo CLI is not from a local promptfoo package")
+        raise PromptfooAdapterError(
+            "Promptfoo CLI is not from a local promptfoo package"
+        )
     if package.get("version") != PROMPTFOO_VERSION:
         raise PromptfooAdapterError("Promptfoo CLI must be exactly 0.122.0")
     binary = package.get("bin")
     if type(binary) is not dict or type(binary.get("promptfoo")) is not str:
         raise PromptfooAdapterError("Promptfoo package has no declared CLI")
     if (package_root / binary["promptfoo"]).resolve(strict=True) != resolved:
-        raise PromptfooAdapterError("Promptfoo CLI differs from its package declaration")
+        raise PromptfooAdapterError(
+            "Promptfoo CLI differs from its package declaration"
+        )
     return path
 
 
@@ -199,10 +209,14 @@ def _shared_requests(stock: object, modified: object) -> None:
         "promptfoo_config",
     )
     if any(getattr(stock, field) != getattr(modified, field) for field in fields):
-        raise PromptfooAdapterError("stock and modified Promptfoo launch material differs")
+        raise PromptfooAdapterError(
+            "stock and modified Promptfoo launch material differs"
+        )
     expected = canonical_json_bytes(render_promptfoo_config(stock))
     if stock.promptfoo_config != expected:
-        raise PromptfooAdapterError("frozen Promptfoo config differs from static rendering")
+        raise PromptfooAdapterError(
+            "frozen Promptfoo config differs from static rendering"
+        )
 
 
 def compile_promptfoo_launch_set(

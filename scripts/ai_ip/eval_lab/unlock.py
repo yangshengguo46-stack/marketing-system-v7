@@ -213,9 +213,10 @@ def unlock_fixture_pilot(
     receipt = _private_contract(
         private_root, receipt_relative, _CASE_SCHEMA, "case receipt"
     )
-    if receipt.get("objectKind") != "CaseCompilationReceipt" or receipt.get(
-        "caseId"
-    ) != case_id:
+    if (
+        receipt.get("objectKind") != "CaseCompilationReceipt"
+        or receipt.get("caseId") != case_id
+    ):
         raise UnlockError("case receipt authority mismatch")
     outcome = _private_contract(
         private_root, outcome_relative, _CASE_SCHEMA, "outcome packet"
@@ -238,9 +239,7 @@ def unlock_fixture_pilot(
         arm_key = private_root.read_json(arm_relative)
     except (LabContractError, OSError) as error:
         raise UnlockError("cannot validate arm key") from error
-    stock_sha, modified_sha = _validate_arm_key(
-        arm_key, batch_id, sealed_outputs
-    )
+    stock_sha, modified_sha = _validate_arm_key(arm_key, batch_id, sealed_outputs)
     severe_detected = any(statistics["severeByOutputSha256"].values())
     known_failure = bool(outcome["knownFailures"])
     decision: BatchDecision = {
@@ -249,7 +248,9 @@ def unlock_fixture_pilot(
         "batchId": batch_id,
         "stockOutputSha256": stock_sha,
         "modifiedOutputSha256": modified_sha,
-        "disposition": "fixtureValid" if severe_detected and known_failure else "iterate",
+        "disposition": "fixtureValid"
+        if severe_detected and known_failure
+        else "iterate",
         "diagnosticOnly": True,
         "providerMode": "not-run",
         "promotionEligible": False,

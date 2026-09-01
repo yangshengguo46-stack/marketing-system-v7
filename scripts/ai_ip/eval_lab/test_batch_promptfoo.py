@@ -309,7 +309,10 @@ def test_launch_compiler_returns_controller_owned_parity_material(
     assert launches.stock.environment == (("AI_IP_PROMPTFOO_CLI", str(entrypoint)),)
     assert launches.stock.artifacts == launches.modified.artifacts
     assert launches.stock.promptfoo_config == launches.modified.promptfoo_config
-    assert launches.stock.execution_profile_json == launches.modified.execution_profile_json
+    assert (
+        launches.stock.execution_profile_json
+        == launches.modified.execution_profile_json
+    )
     assert launches.stock.model_route_json == launches.modified.model_route_json
     assert launches.stock.app_server_protocol_schema == (
         launches.modified.app_server_protocol_schema
@@ -356,7 +359,9 @@ shutil.copyfile(os.environ["FAKE_PROMPTFOO_RESULT"], sys.argv[5])
     stock = _request(effective_config=b"stock-config")
     config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
     stock.promptfoo_config = config_bytes
-    modified = _request(effective_config=b"modified-config", promptfoo_config=config_bytes)
+    modified = _request(
+        effective_config=b"modified-config", promptfoo_config=config_bytes
+    )
     launches = adapter.compile_promptfoo_launch_set(
         stock,
         modified,

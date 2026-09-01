@@ -65,9 +65,12 @@ impl RetainedPendingSupplierStatement {
         let contracts = FrozenCostContracts::load()?;
         let retained = RetainedExactPrivateInput::retain(supplied, &expected, |bytes| {
             contracts.validate_supplier_statement(bytes)
-        }).context("retain pending supplier statement")?;
+        })
+        .context("retain pending supplier statement")?;
         if retained.typed().condition != condition {
-            bail!("pending supplier typed condition differs from its condition-bound supplier leaf");
+            bail!(
+                "pending supplier typed condition differs from its condition-bound supplier leaf"
+            );
         }
         retained.reverify_unchanged()?;
         Ok(Self {
@@ -154,7 +157,11 @@ pub(crate) fn publish_cost_receipt(
     clock: &dyn crate::cost_authority::CostClock,
 ) -> Result<()> {
     publish_cost_receipt_with_hook(
-        authority, condition, supplier_path, clock, &mut |_| Ok(()),
+        authority,
+        condition,
+        supplier_path,
+        clock,
+        &mut |_| Ok(()),
         &mut crate::secure_fs::fsync_directory,
     )
 }
@@ -168,7 +175,11 @@ pub(crate) fn publish_cost_receipt_for_test(
     hook: &mut dyn FnMut(CostReceiptCheckpoint) -> Result<()>,
 ) -> Result<()> {
     publish_cost_receipt_with_hook(
-        authority, condition, supplier_path, clock, hook,
+        authority,
+        condition,
+        supplier_path,
+        clock,
+        hook,
         &mut crate::secure_fs::fsync_directory,
     )
 }
@@ -183,7 +194,12 @@ pub(crate) fn publish_cost_receipt_with_sync_for_test(
     sync_parent: &mut dyn FnMut(&Path) -> Result<()>,
 ) -> Result<()> {
     publish_cost_receipt_with_hook(
-        authority, condition, supplier_path, clock, hook, sync_parent,
+        authority,
+        condition,
+        supplier_path,
+        clock,
+        hook,
+        sync_parent,
     )
 }
 
@@ -204,11 +220,11 @@ fn publish_cost_receipt_with_hook(
         authority = authority.rebuild(inventory)?;
         authority.transaction = Some(transaction);
     }
-    let transaction = authority.transaction.take()
+    let transaction = authority
+        .transaction
+        .take()
         .context("prepared cost receipt transaction context is absent")?;
-    crate::verify_prepared_cost_receipt_arguments(
-        &root, condition, supplier_path, &transaction,
-    )?;
+    crate::verify_prepared_cost_receipt_arguments(&root, condition, supplier_path, &transaction)?;
     publish_prepared_receipt(authority, transaction, clock, hook, sync_parent)
 }
 
@@ -220,28 +236,45 @@ fn publish_prepared_receipt(
     sync_parent: &mut dyn FnMut(&Path) -> Result<()>,
 ) -> Result<()> {
     let root = PathBuf::from(authority.transaction_binding().2);
-    let supplier = transaction.supplier.as_ref()
+    let supplier = transaction
+        .supplier
+        .as_ref()
         .map(|value| crate::cost_authority::retain_supplier_statement(value.raw_bytes()))
         .transpose()?;
     verify_sources(&authority, &transaction)?;
     let expected = crate::cost_authority::commit_cost_receipt(
-        &authority, transaction.condition, supplier.as_ref(), clock,
+        &authority,
+        transaction.condition,
+        supplier.as_ref(),
+        clock,
     )?;
     let receipt_bytes = crate::canonical_cost_receipt_bytes(&expected)?;
 
-    if transaction.supplier.as_ref().is_some_and(|value| value.is_pending()) {
+    if transaction
+        .supplier
+        .as_ref()
+        .is_some_and(|value| value.is_pending())
+    {
         verify_sources(&authority, &transaction)?;
-        let statement = transaction.supplier.as_ref().context("pending supplier is absent")?;
+        let statement = transaction
+            .supplier
+            .as_ref()
+            .context("pending supplier is absent")?;
         let statement_entry = statement.inventory_entry();
         hook(CostReceiptCheckpoint::BeforeSupplierInventoryAppend)?;
         let new_root = crate::private_inventory::batch::append_private_inventory_batch_from_root(
-            &root, &transaction.old_inventory_root, &[statement_entry],
+            &root,
+            &transaction.old_inventory_root,
+            &[statement_entry],
         )?;
         let fresh = fresh_inventory(&authority, &root, &new_root)?;
         hook(CostReceiptCheckpoint::AfterSupplierInventoryAppend)?;
         authority = authority.rebuild(fresh)?;
         transaction.old_inventory_root = new_root;
-        transaction.supplier = transaction.supplier.take().map(|value| value.into_covered());
+        transaction.supplier = transaction
+            .supplier
+            .take()
+            .map(|value| value.into_covered());
         verify_sources(&authority, &transaction)?;
         crate::cost_authority::revalidate_cost_receipt(&authority, supplier.as_ref(), &expected)?;
     }
@@ -251,9 +284,8 @@ fn publish_prepared_receipt(
     verify_sources(&authority, &transaction)?;
     let relative = crate::cost_receipt_relative_path(transaction.condition);
     let receipt_path = root.join(relative);
-    let created = crate::secure_fs::create_owner_only_file_new_retained(
-        &receipt_path, &receipt_bytes,
-    )?;
+    let created =
+        crate::secure_fs::create_owner_only_file_new_retained(&receipt_path, &receipt_bytes)?;
     let retained = RetainedBoundedFile::retain_created_with(
         &receipt_path,
         created,
@@ -267,7 +299,9 @@ fn publish_prepared_receipt(
         bail!("retained receipt differs from the prospective exact receipt");
     }
     sync_parent(
-        receipt_path.parent().context("cost receipt path has no parent")?,
+        receipt_path
+            .parent()
+            .context("cost receipt path has no parent")?,
     )
     .context("sync retained cost receipt parent")?;
     hook(CostReceiptCheckpoint::AfterReceiptCreateBeforeInventoryAppend)?;
@@ -280,7 +314,9 @@ fn publish_prepared_receipt(
     };
     hook(CostReceiptCheckpoint::BeforeReceiptInventoryAppend)?;
     let final_root = crate::private_inventory::batch::append_private_inventory_batch_from_root(
-        &root, &transaction.old_inventory_root, &[receipt_entry],
+        &root,
+        &transaction.old_inventory_root,
+        &[receipt_entry],
     )?;
     let fresh = fresh_inventory(&authority, &root, &final_root)?;
     hook(CostReceiptCheckpoint::AfterReceiptInventoryAppend)?;
@@ -304,7 +340,8 @@ pub(crate) fn prepare_transaction_context(
             Ok(inventory) => (inventory, Some(retained.into_covered()), None),
             Err(_) => {
                 let inventory = crate::private_inventory::batch::verify_pending_supplier_inventory(
-                    root, &retained.inventory_entry(),
+                    root,
+                    &retained.inventory_entry(),
                 )?;
                 (inventory, Some(retained), None)
             }
@@ -316,9 +353,15 @@ pub(crate) fn prepare_transaction_context(
         (inventory, None, Some(parent))
     };
     let old_inventory_root = inventory.inventory_root_sha256().to_string();
-    Ok((inventory, PreparedCostReceiptContext {
-        condition, old_inventory_root, supplier, absence_parent,
-    }))
+    Ok((
+        inventory,
+        PreparedCostReceiptContext {
+            condition,
+            old_inventory_root,
+            supplier,
+            absence_parent,
+        },
+    ))
 }
 
 fn fresh_inventory(

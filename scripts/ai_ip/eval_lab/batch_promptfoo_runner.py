@@ -159,11 +159,11 @@ def parse_promptfoo_result(
     )
     total_tokens = _nonnegative_integer(usage.get("total"), "token usage total")
     if total_tokens != input_tokens + output_tokens:
-        raise PromptfooAdapterError("token usage total must equal prompt plus completion")
+        raise PromptfooAdapterError(
+            "token usage total must equal prompt plus completion"
+        )
     row_usage = _mapping(row.get("tokenUsage"), "Promptfoo row token usage")
-    request_count = _nonnegative_integer(
-        row_usage.get("numRequests"), "request count"
-    )
+    request_count = _nonnegative_integer(row_usage.get("numRequests"), "request count")
     if request_count < 1:
         raise PromptfooAdapterError("request count must be positive")
     normalized_usage = {
@@ -245,7 +245,10 @@ def _read_result_at(directory: int, directory_path: Path) -> bytes:
     )
     try:
         before = os.fstat(descriptor)
-        if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_PROMPTFOO_RESULT_BYTES:
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_size > MAX_PROMPTFOO_RESULT_BYTES
+        ):
             raise PromptfooAdapterError("Promptfoo result path is not a bounded file")
         payload = os.read(descriptor, MAX_PROMPTFOO_RESULT_BYTES + 1)
         after = os.fstat(descriptor)
@@ -276,11 +279,11 @@ def main() -> int:
         promptfoo.mkdir(mode=0o700)
         directory = os.open(
             promptfoo,
-            os.O_RDONLY
-            | getattr(os, "O_DIRECTORY", 0)
-            | getattr(os, "O_NOFOLLOW", 0),
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
         )
-        _write_file_at(directory, "config.json", _read_bounded(config_source, _MAX_CONFIG_BYTES))
+        _write_file_at(
+            directory, "config.json", _read_bounded(config_source, _MAX_CONFIG_BYTES)
+        )
         completed = subprocess.run((cli, *_COMMAND), check=False)
         if completed.returncode != 0:
             return completed.returncode

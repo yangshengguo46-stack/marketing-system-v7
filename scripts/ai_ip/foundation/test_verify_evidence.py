@@ -125,22 +125,16 @@ def test_proof_commitment_vectors_match_normative_framing() -> None:
     single = merkle["singleLeaf"]
     assert isinstance(single, dict)
     assert (
-        verifier.proof_merkle_root_vector(
-            {str(single["name"]): str(single["value"])}
-        )
+        verifier.proof_merkle_root_vector({str(single["name"]): str(single["value"])})
         == single["expectedHex"]
     )
     even_node = merkle["evenNode"]
     assert isinstance(even_node, dict)
     assert (
-        verifier.proof_merkle_root_vector(
-            {str(single["name"]): str(single["value"])}
-        )
+        verifier.proof_merkle_root_vector({str(single["name"]): str(single["value"])})
         == even_node["leftHex"]
     )
-    assert verifier.proof_merkle_root_vector({"é": "b" * 64}) == even_node[
-        "rightHex"
-    ]
+    assert verifier.proof_merkle_root_vector({"é": "b" * 64}) == even_node["rightHex"]
     assert (
         verifier.proof_merkle_root_vector(
             {
@@ -152,7 +146,9 @@ def test_proof_commitment_vectors_match_normative_framing() -> None:
     )
     odd_leaves = merkle["oddDuplicationLeaves"]
     assert isinstance(odd_leaves, dict)
-    assert verifier.proof_merkle_root_vector(odd_leaves) == merkle["oddDuplicationRootHex"]
+    assert (
+        verifier.proof_merkle_root_vector(odd_leaves) == merkle["oddDuplicationRootHex"]
+    )
     full_leaves = merkle["fullLeaves"]
     assert isinstance(full_leaves, dict)
     assert verifier.proof_merkle_root_vector(full_leaves) == merkle["fullRootHex"]
@@ -259,7 +255,9 @@ def test_load_recorder_restores_bytecode_setting_when_module_execution_fails(
     tmp_path: Path,
 ) -> None:
     recorder_path = tmp_path / "failing_recorder.py"
-    recorder_path.write_text('raise RuntimeError("fixture failure")\n', encoding="utf-8")
+    recorder_path.write_text(
+        'raise RuntimeError("fixture failure")\n', encoding="utf-8"
+    )
     prior_dont_write_bytecode = sys.dont_write_bytecode
 
     with pytest.raises(RuntimeError, match="fixture failure"):

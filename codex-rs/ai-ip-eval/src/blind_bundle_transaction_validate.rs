@@ -32,8 +32,7 @@ pub(crate) fn validate_prepared_binding(
         || contracts.reviewer_submission_schema_bytes != prepared.reviewer_submission_schema_bytes
         || contracts.rubric_sha256 != prepared.rubric_sha256
         || contracts.decision_policy_sha256 != prepared.decision_policy_sha256
-        || contracts.reviewer_submission_schema_sha256
-            != prepared.reviewer_submission_schema_sha256
+        || contracts.reviewer_submission_schema_sha256 != prepared.reviewer_submission_schema_sha256
     {
         bail!("prepared blind bundles differ from the verified pair binding");
     }
@@ -103,9 +102,10 @@ fn validate_reviewers(
     if uniqueness != [3, 3, 3, 3] {
         bail!("prepared blind bundle commitments are not unique");
     }
-    let orientations = prepared.reviewers.each_ref().map(|reviewer| {
-        [reviewer.mapping.a, reviewer.mapping.b]
-    });
+    let orientations = prepared
+        .reviewers
+        .each_ref()
+        .map(|reviewer| [reviewer.mapping.a, reviewer.mapping.b]);
     if orientations[0] == orientations[1] && orientations[1] == orientations[2] {
         bail!("prepared blind mappings have one orientation for all reviewers");
     }
@@ -113,7 +113,12 @@ fn validate_reviewers(
         && prepared
             .reviewers
             .iter()
-            .map(|reviewer| reviewer.native_seed.as_ref().expect("Native shape was checked"))
+            .map(|reviewer| {
+                reviewer
+                    .native_seed
+                    .as_ref()
+                    .expect("Native shape was checked")
+            })
             .collect::<BTreeSet<_>>()
             .len()
             != 3
@@ -125,9 +130,7 @@ fn validate_reviewers(
         let qualification = ReviewerQualificationCommitment {
             qualification_class: source.qualification_class.to_string(),
             experienced_operator_or_director: source.experienced_operator_or_director,
-            attestation_signed_payload_sha256: source
-                .attestation_signed_payload_sha256
-                .to_string(),
+            attestation_signed_payload_sha256: source.attestation_signed_payload_sha256.to_string(),
             attestation_signature_evidence_sha256: source
                 .attestation_signature_evidence_sha256
                 .to_string(),
@@ -168,8 +171,7 @@ fn validate_reviewer_wire(
         || manifest.a_sha256 != sha256(a_bytes)
         || manifest.b_sha256 != sha256(b_bytes)
         || manifest.rubric_sha256 != prepared.rubric_sha256
-        || manifest.reviewer_submission_schema_sha256
-            != prepared.reviewer_submission_schema_sha256
+        || manifest.reviewer_submission_schema_sha256 != prepared.reviewer_submission_schema_sha256
         || canonical(manifest)? != reviewer.review_bundle_bytes
         || reviewer.review_bundle_sha256 != sha256(&reviewer.review_bundle_bytes)
         || canonical(mapping)? != reviewer.mapping_bytes
@@ -200,7 +202,9 @@ fn arm_bytes<'a>(
 }
 
 fn canonical(value: &impl Serialize) -> Result<Vec<u8>> {
-    Ok(crate::jcs::canonicalize_value(&serde_json::to_value(value)?)?)
+    Ok(crate::jcs::canonicalize_value(&serde_json::to_value(
+        value,
+    )?)?)
 }
 
 fn sha256(bytes: &[u8]) -> String {
