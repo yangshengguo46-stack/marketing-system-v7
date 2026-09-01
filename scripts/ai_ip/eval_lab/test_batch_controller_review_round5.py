@@ -301,6 +301,7 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
     started = time.monotonic()
     pid_path = world.private_root.parent / "descendant.pid"
     descendant_absent_before_cleanup = False
+    controller_elapsed = None
     previous_handler = signal.getsignal(signal.SIGALRM)
 
     def controller_hung(signum, frame):
@@ -320,6 +321,7 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
             world.private_root,
             seed=b"s" * 32,
         )
+        controller_elapsed = time.monotonic() - started
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous_handler)
@@ -337,7 +339,6 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
                 except ProcessLookupError:
                     pass
 
-    elapsed = time.monotonic() - started
     descendant_pids = [
         int(value)
         for value in (
@@ -346,7 +347,7 @@ def test_absolute_deadline_stops_descendant_group_after_leader_exits(
         )
         if value
     ]
-    assert elapsed < 3
+    assert controller_elapsed is not None and controller_elapsed < 3
     assert receipt["pairValidity"] == "invalid"
     assert receipt["invalidReason"] in {"budgetFailure", "evidenceFailure"}
     assert descendant_pids
