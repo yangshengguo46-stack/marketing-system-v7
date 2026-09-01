@@ -2,6 +2,8 @@ import copy
 import hashlib
 import importlib
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -319,3 +321,107 @@ def test_launch_compiler_returns_controller_owned_parity_material(
         token not in runner.payload.lower()
         for token in (b"rubric", b"reference", b"outcome", b"arm mapping")
     )
+
+
+def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
+    tmp_path: Path,
+) -> None:
+    adapter = _adapter()
+    package_root = tmp_path / "node_modules" / "promptfoo"
+    entrypoint = package_root / "dist" / "src" / "entrypoint.js"
+    entrypoint.parent.mkdir(parents=True)
+    entrypoint.write_text(
+        """#!/usr/bin/env python3
+import json
+import os
+import shutil
+import sys
+
+open("argv.json", "w", encoding="utf-8").write(json.dumps(sys.argv[1:]))
+shutil.copyfile(os.environ["FAKE_PROMPTFOO_RESULT"], sys.argv[5])
+""",
+        encoding="utf-8",
+    )
+    entrypoint.chmod(0o700)
+    (package_root / "package.json").write_text(
+        json.dumps(
+            {
+                "bin": {"promptfoo": "dist/src/entrypoint.js"},
+                "name": "promptfoo",
+                "version": "0.122.0",
+            }
+        ),
+        encoding="utf-8",
+    )
+    stock = _request(effective_config=b"stock-config")
+    config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
+    stock.promptfoo_config = config_bytes
+    modified = _request(effective_config=b"modified-config", promptfoo_config=config_bytes)
+    launches = adapter.compile_promptfoo_launch_set(
+        stock,
+        modified,
+        promptfoo_cli_path=entrypoint,
+        runner_python_path=Path(sys.executable).resolve(),
+    )
+    runner_path = tmp_path / "sealed-runner.py"
+    runner_path.write_bytes(launches.stock.artifacts[0].payload)
+    config_path = tmp_path / "promptfoo-config.json"
+    config_path.write_bytes(config_bytes)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    result_read, result_write = os.pipe()
+    telemetry_read, telemetry_write = os.pipe()
+    environment = {
+        **os.environ,
+        "AI_IP_PROMPTFOO_CLI": str(entrypoint),
+        "AI_IP_PROMPTFOO_PATH": str(config_path),
+        "AI_IP_RESULT_FD": str(result_write),
+        "AI_IP_TELEMETRY_FD": str(telemetry_write),
+        "FAKE_PROMPTFOO_RESULT": str(FROZEN_RESULT),
+    }
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(runner_path)],
+            cwd=workspace,
+            env=environment,
+            pass_fds=(result_write, telemetry_write),
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        os.close(result_write)
+        os.close(telemetry_write)
+    result = os.read(result_read, 64 * 1024)
+    telemetry = os.read(telemetry_read, 64 * 1024)
+    os.close(result_read)
+    os.close(telemetry_read)
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert json.loads((workspace / "argv.json").read_bytes()) == [
+        "eval",
+        "--config",
+        "cell/promptfoo/config.json",
+        "--output",
+        "cell/promptfoo/result.json",
+        "--no-cache",
+        "--no-progress-bar",
+        "--no-table",
+        "--no-share",
+        "--no-write",
+        "--max-concurrency",
+        "1",
+    ]
+    assert json.loads(result) == {
+        "metadata": adapter.parse_promptfoo_result(FROZEN_RESULT.read_bytes()).metadata,
+        "output": {
+            "caseId": "case-1",
+            "objectKind": "CaseAnswer",
+            "schemaVersion": 1,
+        },
+    }
+    assert json.loads(telemetry) == {
+        "costCny": 0,
+        "inputTokens": 17,
+        "outputTokens": 11,
+        "requestCount": 1,
+    }
