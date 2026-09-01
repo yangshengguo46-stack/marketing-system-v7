@@ -1,8 +1,11 @@
 import copy
+import gzip
 import hashlib
 import importlib
 import json
 import os
+import shutil
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -90,6 +93,7 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
         "id": "openai:codex-app-server",
         "config": {
             "approval_policy": "never",
+            "apiKey": "ai-ip-public-loopback-dummy",
             "base_url": "http://127.0.0.1:1/v1",
             "cli_env": {
                 "AI_IP_CASE_PATH": "{{ env.AI_IP_CASE_PATH }}",
@@ -100,6 +104,7 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
                 "AI_IP_SCHEMA_PATH": "{{ env.AI_IP_SCHEMA_PATH }}",
                 "CODEX_HOME": "{{ env.CODEX_HOME }}",
                 "HOME": "{{ env.HOME }}",
+                "OPENAI_API_KEY": "ai-ip-public-loopback-dummy",
                 "TMPDIR": "{{ env.TMPDIR }}",
             },
             "codex_path_override": "{{ env.AI_IP_CODEX_PATH }}",
@@ -124,6 +129,38 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
         token not in rendered
         for token in (b'"assert"', b"rubric", b"reference", b"javascript")
     )
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://127.0.0.1:8443/v1",
+        "http://localhost:8000/v1",
+        "http://example.com:8000/v1",
+        "http://10.0.0.1:8000/v1",
+        "http://user:pass@127.0.0.1:8000/v1",
+        "http://127.0.0.1/v1",
+        "http://127.0.0.1:8000/../admin",
+        "http://127.0.0.1:8000/v1?key=value",
+        "file:///tmp/socket",
+    ],
+)
+def test_config_rejects_non_loopback_or_dangerous_model_routes(base_url: str) -> None:
+    adapter = _adapter()
+    route = _json_bytes({"baseUrl": base_url, "model": "loopback-model"})
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="loopback"):
+        adapter.render_promptfoo_config(_request(model_route_json=route))
+
+
+def test_config_accepts_explicit_ipv6_loopback_port() -> None:
+    adapter = _adapter()
+    route = b'{"baseUrl":"http://[::1]:8000/v1","model":"loopback-model"}'
+
+    config = adapter.render_promptfoo_config(_request(model_route_json=route))
+
+    provider = config["providers"][0]
+    assert provider["config"]["base_url"] == "http://[::1]:8000/v1"
 
 
 def test_config_bytes_do_not_change_with_arm_local_material() -> None:
@@ -265,6 +302,182 @@ def test_parser_rejects_nonintegral_negative_or_inconsistent_usage(
 
     with pytest.raises(adapter.PromptfooAdapterError, match="token usage"):
         adapter.parse_promptfoo_result(_result_bytes(value))
+
+
+@pytest.mark.parametrize(
+    ("location", "field", "replacement"),
+    [
+        ("row", "prompt", 18),
+        ("row", "completion", True),
+        ("row", "total", 29),
+        ("row", "numRequests", -1),
+        ("response", "numRequests", 2),
+    ],
+)
+def test_parser_rejects_invalid_or_conflicting_usage_layers(
+    location: str, field: str, replacement: object
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    row = _row(value)
+    response = _response(value)
+    response_usage = response["tokenUsage"]
+    row_usage = row["tokenUsage"]
+    assert type(response_usage) is dict
+    assert type(row_usage) is dict
+    response_usage["numRequests"] = 1
+    target = row_usage if location == "row" else response_usage
+    target[field] = replacement
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="token usage"):
+        adapter.parse_promptfoo_result(_result_bytes(value))
+
+
+def test_parser_ignores_only_assertion_usage_subtree() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    row_usage = _row(value)["tokenUsage"]
+    response_usage = _response(value)["tokenUsage"]
+    assert type(row_usage) is dict
+    assert type(response_usage) is dict
+    response_usage["numRequests"] = 1
+    row_usage["assertions"] = {
+        "completion": False,
+        "numRequests": -10,
+        "prompt": "untrusted",
+        "total": None,
+    }
+
+    parsed = adapter.parse_promptfoo_result(_result_bytes(value))
+
+    assert parsed.telemetry["requestCount"] == 1
+
+
+def _archive_record(path: str, payload: bytes, *, declared_size: int | None = None) -> bytes:
+    header = _json_bytes(
+        {
+            "mode": 0o600,
+            "path": path,
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "size": len(payload) if declared_size is None else declared_size,
+        }
+    )
+    return struct.pack(">I", len(header)) + header + payload + struct.pack(">I", 0)
+
+
+def _malicious_archive_manifest(payload: bytes) -> bytes:
+    compressed = gzip.compress(payload, mtime=0)
+    return _json_bytes(
+        {
+            "archiveSha256": hashlib.sha256(compressed).hexdigest(),
+            "chunkSha256": [hashlib.sha256(compressed).hexdigest()],
+            "entrypoint": "node_modules/promptfoo/dist/src/entrypoint.js",
+            "fileCount": 1,
+            "format": "ai-ip-promptfoo-records-v1",
+            "promptfooVersion": "0.122.0",
+            "schemaVersion": 1,
+            "treeSha256": hashlib.sha256(payload).hexdigest(),
+            "unpackedBytes": len(payload),
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        _archive_record("../escape", b"payload"),
+        _archive_record("/absolute", b"payload"),
+        _archive_record(
+            "node_modules/promptfoo/dist/src/entrypoint.js",
+            b"payload",
+            declared_size=512 * 1024 * 1024,
+        ),
+    ],
+)
+def test_sealed_bootstrap_rejects_archive_traversal_or_oversize(
+    tmp_path: Path, record: bytes
+) -> None:
+    runner = MODULE_ROOT / "batch_promptfoo_runner.js"
+    compressed = gzip.compress(record, mtime=0)
+    manifest = tmp_path / "manifest.json"
+    chunk = tmp_path / "chunk.bin"
+    manifest.write_bytes(_malicious_archive_manifest(record))
+    chunk.write_bytes(compressed)
+
+    completed = subprocess.run(
+        [shutil.which("node") or "node", str(runner), str(manifest), str(chunk)],
+        cwd=tmp_path,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert not (tmp_path.parent / "escape").exists()
+
+
+def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) -> None:
+    bundle = importlib.import_module("batch_promptfoo_bundle")
+    runtime = tmp_path / "runtime"
+    entrypoint = runtime / "node_modules/promptfoo/dist/src/entrypoint.js"
+    entrypoint.parent.mkdir(parents=True)
+    entrypoint.write_bytes(b"console.log('0.122.0')\n")
+    package = entrypoint.parents[2] / "package.json"
+    package.write_bytes(
+        _json_bytes(
+            {
+                "bin": {"promptfoo": "dist/src/entrypoint.js"},
+                "name": "promptfoo",
+                "version": "0.122.0",
+            }
+        )
+    )
+    node = tmp_path / "node"
+    node.write_bytes(b"sealed portable node")
+    seal = bundle.measure_promptfoo_runtime(runtime, node)
+
+    node.write_bytes(b"replaced portable node")
+    with pytest.raises(bundle.PromptfooBundleError, match="Node identity"):
+        bundle.seal_promptfoo_runtime(runtime, node, seal)
+
+    node.write_bytes(b"sealed portable node")
+    entrypoint.write_bytes(b"replaced entrypoint")
+    with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
+        bundle.seal_promptfoo_runtime(runtime, node, seal)
+
+
+def test_production_compile_rejects_forged_exact_version_stub(tmp_path: Path) -> None:
+    adapter = _adapter()
+    runtime = tmp_path / "runtime"
+    entrypoint = runtime / "node_modules/promptfoo/dist/src/entrypoint.js"
+    entrypoint.parent.mkdir(parents=True)
+    entrypoint.write_bytes(b"console.log('forged 0.122.0')\n")
+    (entrypoint.parents[2] / "package.json").write_bytes(
+        _json_bytes(
+            {
+                "bin": {"promptfoo": "dist/src/entrypoint.js"},
+                "name": "promptfoo",
+                "version": "0.122.0",
+            }
+        )
+    )
+    node = tmp_path / "node"
+    node.write_bytes(b"forged node")
+    stock = _request(effective_config=b"stock-config")
+    config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
+    stock.promptfoo_config = config_bytes
+    modified = _request(
+        effective_config=b"modified-config", promptfoo_config=config_bytes
+    )
+
+    with pytest.raises(
+        adapter.PromptfooAdapterError, match="committed Promptfoo runtime"
+    ):
+        adapter.compile_promptfoo_launch_set(
+            stock,
+            modified,
+            promptfoo_runtime_root=runtime,
+            portable_node_path=node,
+        )
 
 
 def test_launch_compiler_returns_controller_owned_parity_material(
