@@ -53,6 +53,15 @@ def _json_bytes(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
+def _canonical_bytes(value: object) -> bytes:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode()
+
+
 def _result_value() -> dict[str, object]:
     value = json.loads(FROZEN_RESULT.read_bytes())
     assert type(value) is dict
@@ -77,6 +86,31 @@ def _response(value: dict[str, object]) -> dict[str, object]:
     response = _row(value)["response"]
     assert type(response) is dict
     return response
+
+
+def _run_js_parser(payload: bytes) -> subprocess.CompletedProcess[bytes]:
+    source = """
+const fs = require('node:fs');
+const parser = require(process.argv[1]);
+try {
+  const parsed = parser.parseResult(fs.readFileSync(0));
+  process.stdout.write(parser.canonical(parsed));
+} catch (error) {
+  process.stderr.write(`${error.name}: ${error.message}`);
+  process.exitCode = 2;
+}
+"""
+    return subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            source,
+            str(MODULE_ROOT / "batch_promptfoo_result.js"),
+        ],
+        input=payload,
+        capture_output=True,
+        check=False,
+    )
 
 
 def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
@@ -120,7 +154,7 @@ def test_config_is_path_neutral_and_forces_one_isolated_app_server() -> None:
             "sandbox_mode": "workspace-write",
             "startup_timeout_ms": 30000,
             "turn_timeout_ms": 30000,
-            "working_dir": ".",
+            "working_dir": "{{ env.AI_IP_WORKSPACE }}",
         },
     }
     rendered = _json_bytes(config)
@@ -177,6 +211,15 @@ def test_config_bytes_do_not_change_with_arm_local_material() -> None:
     )
 
 
+def test_config_resolves_candidate_workspace_only_from_runtime_environment() -> None:
+    adapter = _adapter()
+
+    rendered = _json_bytes(adapter.render_promptfoo_config(_request()))
+
+    assert b'"working_dir":"{{ env.AI_IP_WORKSPACE }}"' in rendered
+    assert b"/private/arm-specific" not in rendered
+
+
 def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None:
     adapter = _adapter()
     payload = FROZEN_RESULT.read_bytes()
@@ -188,17 +231,42 @@ def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None
         "objectKind": "CaseAnswer",
         "schemaVersion": 1,
     }
-    assert parsed.metadata == {
-        "costEvidence": {
-            "costCny": 0,
-            "sourceSha256": hashlib.sha256(payload).hexdigest(),
-        },
-        "requestCount": 1,
-        "threadId": "thread-1",
-        "trajectory": [
+    expected_trajectory = {
+        "finalResponse": "sealed",
+        "items": [
+            {"id": "item-1", "status": "completed", "type": "agentMessage"}
+        ],
+        "notifications": [
             {"method": "item/completed", "params": {"itemId": "item-1"}},
             {"method": "turn/completed", "params": {"turnId": "turn-1"}},
         ],
+        "rawItems": [
+            {"id": "item-1", "status": "completed", "type": "agentMessage"}
+        ],
+        "responseUsage": {
+            "cached": 0,
+            "completion": 11,
+            "prompt": 17,
+            "total": 28,
+        },
+        "rowUsage": {
+            "cached": 0,
+            "completion": 11,
+            "numRequests": 1,
+            "prompt": 17,
+            "total": 28,
+        },
+    }
+    assert parsed.metadata == {
+        "costEvidence": {
+            "costCny": 0,
+            "sourceSha256": hashlib.sha256(
+                _canonical_bytes(expected_trajectory)
+            ).hexdigest(),
+        },
+        "requestCount": 1,
+        "threadId": "thread-1",
+        "trajectory": expected_trajectory,
         "turnId": "turn-1",
         "usage": {"inputTokens": 17, "outputTokens": 11, "totalTokens": 28},
     }
@@ -208,6 +276,9 @@ def test_parser_normalizes_only_provider_output_and_auditable_evidence() -> None
         "outputTokens": 11,
         "requestCount": 1,
     }
+    assert parsed.metadata["costEvidence"]["sourceSha256"] == hashlib.sha256(
+        _canonical_bytes(parsed.metadata["trajectory"])
+    ).hexdigest()
 
 
 def test_parser_rejects_multiple_rows() -> None:
@@ -325,7 +396,6 @@ def test_parser_rejects_invalid_or_conflicting_usage_layers(
     row_usage = row["tokenUsage"]
     assert type(response_usage) is dict
     assert type(row_usage) is dict
-    response_usage["numRequests"] = 1
     target = row_usage if location == "row" else response_usage
     target[field] = replacement
 
@@ -340,7 +410,6 @@ def test_parser_ignores_only_assertion_usage_subtree() -> None:
     response_usage = _response(value)["tokenUsage"]
     assert type(row_usage) is dict
     assert type(response_usage) is dict
-    response_usage["numRequests"] = 1
     row_usage["assertions"] = {
         "completion": False,
         "numRequests": -10,
@@ -351,6 +420,121 @@ def test_parser_ignores_only_assertion_usage_subtree() -> None:
     parsed = adapter.parse_promptfoo_result(_result_bytes(value))
 
     assert parsed.telemetry["requestCount"] == 1
+
+
+@pytest.mark.parametrize(
+    ("location", "replacement"),
+    [
+        ("row", 1),
+        ("response", 1),
+        ("row", True),
+        ("response", -1),
+    ],
+)
+def test_both_parsers_reject_cached_mismatch_or_invalid_value(
+    location: str, replacement: object
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    usage = (
+        _row(value)["tokenUsage"]
+        if location == "row"
+        else _response(value)["tokenUsage"]
+    )
+    assert type(usage) is dict
+    usage["cached"] = replacement
+    payload = _result_bytes(value)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="token usage"):
+        adapter.parse_promptfoo_result(payload)
+    assert _run_js_parser(payload).returncode == 2
+
+
+@pytest.mark.parametrize("location", ["row", "response"])
+def test_both_parsers_reject_unexpected_nonassertion_usage_field(
+    location: str,
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    usage = (
+        _row(value)["tokenUsage"]
+        if location == "row"
+        else _response(value)["tokenUsage"]
+    )
+    assert type(usage) is dict
+    usage["completionDetails"] = {"reasoning": 7}
+    payload = _result_bytes(value)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="token usage"):
+        adapter.parse_promptfoo_result(payload)
+    assert _run_js_parser(payload).returncode == 2
+
+
+@pytest.mark.parametrize(
+    "output_text",
+    [
+        '{"value":NaN}',
+        '{"value":Infinity}',
+        '{"value":9007199254740993}',
+        '{"value":1,"value":2}',
+    ],
+)
+def test_python_and_js_reject_the_same_nonstandard_or_lossy_json(
+    output_text: str,
+) -> None:
+    adapter = _adapter()
+    value = _result_value()
+    _response(value)["output"] = output_text
+    payload = _result_bytes(value)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="JSON"):
+        adapter.parse_promptfoo_result(payload)
+    completed = _run_js_parser(payload)
+    assert completed.returncode == 2
+    assert b"JSON" in completed.stderr
+
+
+def test_retained_trajectory_excludes_scores_and_assertions_but_keeps_raw_evidence() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    row = _row(value)
+    row["score"] = 123456
+    row["success"] = True
+    usage = row["tokenUsage"]
+    assert type(usage) is dict
+    usage["assertions"] = {"prompt": 999999, "total": 999999}
+    payload = _result_bytes(value)
+
+    parsed = adapter.parse_promptfoo_result(payload)
+    js = _run_js_parser(payload)
+
+    assert js.returncode == 0, js.stderr.decode(errors="replace")
+    js_value = json.loads(js.stdout)
+    assert js_value["result"]["metadata"] == parsed.metadata
+    trajectory = parsed.metadata["trajectory"]
+    assert type(trajectory) is dict
+    assert trajectory["items"]
+    assert trajectory["rawItems"]
+    assert trajectory["notifications"]
+    assert trajectory["finalResponse"] == "sealed"
+    assert "assertions" not in _canonical_bytes(trajectory).decode()
+    assert parsed.metadata["costEvidence"]["sourceSha256"] == hashlib.sha256(
+        _canonical_bytes(trajectory)
+    ).hexdigest()
+
+
+def test_python_and_js_reject_oversized_retained_evidence() -> None:
+    adapter = _adapter()
+    value = _result_value()
+    response = _response(value)
+    raw = json.loads(response["raw"])
+    raw["finalResponse"] = "x" * (4 * 1024 * 1024 + 1)
+    response["raw"] = json.dumps(raw, sort_keys=True, separators=(",", ":"))
+    payload = _result_bytes(value)
+
+    with pytest.raises(adapter.PromptfooAdapterError, match="evidence"):
+        adapter.parse_promptfoo_result(payload)
+    assert _run_js_parser(payload).returncode == 2
 
 
 def _archive_record(path: str, payload: bytes, *, declared_size: int | None = None) -> bytes:
@@ -506,6 +690,61 @@ def test_runtime_bundle_rejects_replaced_node_or_module_bytes(tmp_path: Path) ->
     with pytest.raises(bundle.PromptfooBundleError, match="Node identity"):
         bundle.seal_promptfoo_runtime(runtime, node, seal)
 
+
+@pytest.mark.parametrize(
+    ("version", "accepted"),
+    [
+        ("v22.21.9", False),
+        ("v22.22.0", True),
+        ("v24.19.0", True),
+        ("22.22.0", False),
+        ("v22.22", False),
+        ("v022.22.0", False),
+        ("v22.22.0-rc.1", False),
+    ],
+)
+def test_runtime_seal_loader_enforces_strict_node_engine_floor(
+    version: str, accepted: bool
+) -> None:
+    bundle = importlib.import_module("batch_promptfoo_bundle")
+    manifest_path = (
+        REPO_ROOT
+        / "ai-ip-evals/lab/promptfoo/runtime-manifests/darwin-x86_64.json"
+    )
+    value = json.loads(manifest_path.read_bytes())
+    value["nodeVersion"] = version
+
+    if accepted:
+        assert bundle._seal_from_json(value).node_version == version
+    else:
+        with pytest.raises(bundle.PromptfooBundleError, match="incompatible"):
+            bundle._seal_from_json(value)
+
+
+@pytest.mark.parametrize(
+    ("version", "accepted"),
+    [("v22.21.9", False), ("v22.22.0", True), ("v24.19.0", True), ("v22.22", False)],
+)
+def test_sealed_runner_mirrors_node_engine_floor(version: str, accepted: bool) -> None:
+    source = """
+const runner = require(process.argv[1]);
+process.stdout.write(JSON.stringify(runner.nodeVersionSupported(process.argv[2])));
+"""
+    completed = subprocess.run(
+        [
+            shutil.which("node") or "node",
+            "-e",
+            source,
+            str(MODULE_ROOT / "batch_promptfoo_runner.js"),
+            version,
+        ],
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert json.loads(completed.stdout) is accepted
+
     node.write_bytes(b"sealed portable node")
     entrypoint.write_bytes(b"replaced entrypoint")
     with pytest.raises(bundle.PromptfooBundleError, match="runtime tree identity"):
@@ -607,7 +846,11 @@ def test_launch_compiler_returns_controller_owned_parity_material(
         "{artifact:batch_promptfoo_result.js}",
         *runtime.artifact_arguments,
     )
-    assert launches.stock.environment == ()
+    assert launches.stock.environment == (
+        ("PROMPTFOO_DISABLE_SHARING", "1"),
+        ("PROMPTFOO_DISABLE_TELEMETRY", "1"),
+        ("PROMPTFOO_DISABLE_UPDATE", "1"),
+    )
     assert launches.stock.artifacts == launches.modified.artifacts
     assert launches.stock.promptfoo_config == launches.modified.promptfoo_config
     assert (
@@ -632,13 +875,16 @@ def test_sealed_runner_invokes_exact_cli_and_writes_controller_envelopes(
     tmp_path: Path,
 ) -> None:
     adapter = _adapter()
+    frozen_result_literal = json.dumps(FROZEN_RESULT.read_text())
     runtime, _, node = _test_runtime(
         tmp_path,
-        b"""const fs = require('node:fs');
+        f"""const fs = require('node:fs');
 const argvPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'argv.json');
 fs.writeFileSync(argvPath, JSON.stringify(process.argv.slice(2)));
-fs.copyFileSync(process.env.FAKE_PROMPTFOO_RESULT, process.argv[6]);
-""",
+const envPath = require('node:path').join(process.env.PROMPTFOO_CONFIG_DIR, 'child-env.json');
+fs.writeFileSync(envPath, JSON.stringify(process.env));
+fs.writeFileSync(process.argv[6], {frozen_result_literal});
+""".encode(),
     )
     stock = _request(effective_config=b"stock-config")
     config_bytes = _json_bytes(adapter.render_promptfoo_config(stock))
@@ -665,7 +911,10 @@ fs.copyFileSync(process.env.FAKE_PROMPTFOO_RESULT, process.argv[6]);
         "AI_IP_PROMPTFOO_PATH": str(config_path),
         "AI_IP_RESULT_FD": str(result_write),
         "AI_IP_TELEMETRY_FD": str(telemetry_write),
-        "FAKE_PROMPTFOO_RESULT": str(FROZEN_RESULT),
+        "REAL_PROVIDER_API_KEY": "must-not-reach-promptfoo",
+        "PROMPTFOO_DISABLE_SHARING": "1",
+        "PROMPTFOO_DISABLE_TELEMETRY": "1",
+        "PROMPTFOO_DISABLE_UPDATE": "1",
         "PROMPTFOO_CONFIG_DIR": str(isolated_promptfoo),
         "PROMPTFOO_OUTPUT_PATH": str(isolated_promptfoo / "output.json"),
         "TMPDIR": str(isolated_temp),
@@ -708,6 +957,14 @@ fs.copyFileSync(process.env.FAKE_PROMPTFOO_RESULT, process.argv[6]);
         "--max-concurrency",
         "1",
     ]
+    child_environment = json.loads(
+        (isolated_promptfoo / "child-env.json").read_bytes()
+    )
+    assert child_environment["AI_IP_WORKSPACE"] == str(workspace)
+    assert child_environment["PROMPTFOO_DISABLE_SHARING"] == "1"
+    assert child_environment["PROMPTFOO_DISABLE_TELEMETRY"] == "1"
+    assert child_environment["PROMPTFOO_DISABLE_UPDATE"] == "1"
+    assert "REAL_PROVIDER_API_KEY" not in child_environment
     assert json.loads(result) == {
         "metadata": adapter.parse_promptfoo_result(FROZEN_RESULT.read_bytes()).metadata,
         "output": {
