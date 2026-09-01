@@ -324,7 +324,7 @@ class RecordExtractor {
       const state = fs.fstatSync(descriptor);
       if (
         !state.isFile() || state.size !== this.header.size || state.nlink !== 1 ||
-        (state.mode & 0o777) !== this.header.mode
+        (state.mode & 0o7777) !== this.header.mode
       ) {
         throw new RunnerError("runtime archive file differs after write");
       }

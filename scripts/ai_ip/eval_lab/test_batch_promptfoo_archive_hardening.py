@@ -503,16 +503,33 @@ const manifest = {
   unpackedBytes: payload.length,
 };
 const originalWrite = fs.writeSync;
+const originalFstat = fs.fstatSync;
 let attempts = 0;
+let targetFd = -1;
+fs.fstatSync = (fd) => {
+  const state = originalFstat(fd);
+  if (scenario === "type" && fd === targetFd) state.isFile = () => false;
+  return state;
+};
 fs.writeSync = (fd, buffer, offset = 0, requested = buffer.length - offset, position = null) => {
   attempts += 1;
+  targetFd = fd;
   if (scenario === "partial") {
     if (attempts === 2) { const error = new Error("interrupt"); error.code = "EINTR"; throw error; }
     return originalWrite(fd, buffer, offset, Math.min(attempts === 1 ? 2 : requested, requested), position);
   }
-  const changed = Buffer.from(buffer.subarray(offset, offset + requested));
-  changed[0] ^= 0xff;
-  return originalWrite(fd, changed, 0, changed.length, position);
+  let written;
+  if (scenario === "corrupt") {
+    const changed = Buffer.from(buffer.subarray(offset, offset + requested));
+    changed[0] ^= 0xff;
+    written = originalWrite(fd, changed, 0, changed.length, position);
+  } else {
+    written = originalWrite(fd, buffer, offset, requested, position);
+  }
+  if (scenario === "size") originalWrite(fd, Buffer.from("!"), 0, 1, position + requested);
+  if (scenario === "link") fs.linkSync(path.join(root, "file.txt"), path.join(root, "alias.txt"));
+  if (scenario === "special-mode") fs.fchmodSync(fd, 0o4600);
+  return written;
 };
 let error = null;
 try {
@@ -523,6 +540,7 @@ try {
   error = caught.message;
 } finally {
   fs.writeSync = originalWrite;
+  fs.fstatSync = originalFstat;
 }
 const extracted = fs.readFileSync(path.join(root, "file.txt")).toString("hex");
 process.stdout.write(JSON.stringify({attempts, error, extracted}));
@@ -561,6 +579,19 @@ def test_extractor_rejects_bytes_changed_by_the_writer(tmp_path: Path) -> None:
 
     assert observed["attempts"] == 1
     assert "digest" in str(observed["error"])
+
+
+@pytest.mark.parametrize(
+    "scenario", ["type", "size", "link", "special-mode"]
+)
+def test_extractor_rejects_each_invalid_final_file_invariant(
+    tmp_path: Path, scenario: str
+) -> None:
+    """Catches removing any final type, size, link, or complete-mode check."""
+    observed = _extractor_probe(tmp_path, scenario)
+
+    assert observed["attempts"] == 1
+    assert "differs" in str(observed["error"])
 
 
 def test_write_all_at_rejects_zero_progress() -> None:
