@@ -35,7 +35,7 @@ class PairLifecycle:
         self.pair_id = pair_id
         self.layout = None
         self.cells: list[object] = []
-        self.processes: list[object] = []
+        self.processes: list[tuple[object, leases.ProcessLifecycleLease]] = []
         self._leases: dict[tuple[str, str], leases.ProcessLifecycleLease] = {}
         self.completed = False
 
@@ -68,10 +68,12 @@ class PairLifecycle:
         return lease
 
     def promote_process(self, lease, process):
-        if lease not in self._leases.values():
-            raise PairLifecycleError("process lease does not belong to this pair")
+        if lease not in self._leases.values() or process.lease is not lease:
+            raise PairLifecycleError("process lease binding does not belong to this pair")  # fmt: skip
         lease.promote(process)
-        self.processes.append(process)
+        if lease._owned_process is not process:
+            raise PairLifecycleError("process lease retained a foreign owned process")
+        self.processes.append((process, lease))
 
     @property
     def orphaned_processes(self) -> tuple[leases.OrphanedProcess, ...]:
@@ -88,16 +90,14 @@ class PairLifecycle:
         }
         if any(lease.state not in terminal for lease in self._leases.values()):
             raise PairLifecycleError("pair process lease is not safely terminal")
-        if any(not item.stopped for item in self.processes):
+        if any(not item.stopped for item, _ in self.processes):
             raise PairLifecycleError("pair process is still live at completion")
         for cell in self.cells:
             try:
                 cleanup_attempt_cell(cell)
             except BaseException as error:
                 self._record_orphan(error)
-                raise PairLifecycleError(
-                    "sealed attempt cell cleanup failed"
-                ) from error
+                raise PairLifecycleError("sealed attempt cell cleanup failed") from error  # fmt: skip
         self.completed = True
 
     def _tombstone(self, directory: object, error: BaseException) -> None:
@@ -122,6 +122,8 @@ class PairLifecycle:
     def abort(self, error: BaseException) -> None:
         if self.completed:
             return
+        evidence_errors: list[BaseException] = []
+        binding_error = None
         if self.layout is not None:
             for directory in (
                 self.layout.pair_directory,
@@ -129,16 +131,19 @@ class PairLifecycle:
             ):
                 try:
                     self._tombstone(directory, error)
-                except BaseException:
-                    pass
+                except BaseException as tombstone_error:
+                    evidence_errors.append(tombstone_error)
         if self.processes:
             try:
                 from .batch_controller_process import close_owned, terminate_and_wait
             except ImportError:
                 from batch_controller_process import close_owned, terminate_and_wait
 
-            for process in self.processes:
-                lease = process.lease
+            for process, lease in self.processes:
+                if lease._owned_process is not process or process.lease is not lease:
+                    current = PairLifecycleError("process lease binding authority differs")  # fmt: skip
+                    binding_error = binding_error or current
+                    evidence_errors.append(current)
                 try:
                     if lease.state is leases.ProcessLeaseState.STOP_CONFIRMED:
                         continue
@@ -152,19 +157,21 @@ class PairLifecycle:
                         elif lease.state is _PROMOTED:
                             lease.confirm_stopped()
                 finally:
-                    close_owned(process)
+                    try:
+                        close_owned(process)
+                    except BaseException as close_error:
+                        evidence_errors.append(close_error)
         if self.orphaned_processes:
-            sealing_errors = []
             for orphan in self.orphaned_processes:
                 try:
                     seal_orphan_authority(self.layout.root_directory, orphan)
-                except BaseException as error:
-                    sealing_errors.append(error)
-            if sealing_errors:
-                raise PairLifecycleError(
-                    "authenticated orphan authority sealing failed"
-                ) from sealing_errors[0]
+                except BaseException as sealing_error:
+                    evidence_errors.append(sealing_error)
+            if evidence_errors:
+                raise PairLifecycleError("authenticated orphan authority evidence failed") from evidence_errors[0]  # fmt: skip
             return
+        if binding_error is not None:
+            raise PairLifecycleError("process lease binding evidence failed") from binding_error  # fmt: skip
         for cell in self.cells:
             try:
                 mark_receipts_sealed(cell)

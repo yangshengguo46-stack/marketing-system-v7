@@ -34,8 +34,9 @@ class ProcessOwnershipGuard:
         else:
             try:
                 confirmed = stop(self.process, self.process.pid, time.monotonic() + 1.0)
-            except BaseException as cause:
+            except BaseException as stop_error:
                 confirmed = False
+                cause = stop_error
             if confirmed:
                 self.lease.confirm_stopped()
             else:

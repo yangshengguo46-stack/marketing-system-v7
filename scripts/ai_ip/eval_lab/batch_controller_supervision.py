@@ -84,7 +84,7 @@ class StreamBuffer:
 @dataclass
 class OwnedProcess:
     process: subprocess.Popen
-    lease: ProcessLifecycleLease
+    _lease: ProcessLifecycleLease
     prepared: object
     read_descriptors: dict[str, int]
     started_at: str
@@ -98,6 +98,8 @@ class OwnedProcess:
     stopped: bool = False
     drain_deadline: float | None = None
     drain_chunks: int = 0
+
+    lease = property(lambda self: self._lease)
 
 
 def _group_alive(group_id: int) -> bool:
