@@ -1,6 +1,6 @@
 # Business-first Cleanup Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan. Steps use checkbox syntax for tracking.
+> **COMPLETED — HISTORICAL / NOT EXECUTABLE (2026-09-05).** The approved cleanup is complete; [F-0010](../../architecture/codex-fork-patch-ledger.md#f-0010--retire-evaluation-infrastructure-for-business-first-development) records its implementation and checks. The scope and completed steps below are retained as history, not instructions to rerun. Old proof gates remain `RETIRED_NOT_PASSED`; completion is not business PASS or release approval.
 
 **Goal:** Retire the heavy evaluator and unblock internal marketing development without deleting user materials or replacing the removed machinery.
 
@@ -41,13 +41,13 @@
 - Consumes: approved spec, recovery commit, locked upstream tree, existing business schema/API tests.
 - Produces: build graph without `codex-ai-ip-eval`, original native proxy interface, four preserved reference files, and current business-first development authority without proof-lab prerequisites.
 
-- [ ] Verify branch/recovery point and inspect exact `git ls-files` targets. Read this spec and relevant local `AGENTS` overrides. No directory outside the checkout is a deletion target.
-- [ ] Preserve the four reference files using `apply_patch` and compare their bytes with `git show codex/pre-business-cleanup-20260905:<old-path>` before deletion.
-- [ ] Generate one mechanical deletion patch from the validated tracked file list. Each entry is `*** Delete File: <absolute-path>`. Apply it; never recursively remove directories containing ignored files.
-- [ ] Remove the workspace member and dependency named `codex-ai-ip-eval`, eval-only Bazel visibility, and restore proxy files from upstream using `apply_patch`. Inspect inbound references with `rg -n 'codex[-_]ai[-_]ip[-_]eval|ai-ip-evals|scripts/ai_ip/eval_lab' codex-rs scripts ai-ip-assets` and resolve executable/build references, not historical citations.
-- [ ] Remove only the five long repeated audit bullets between material reading and facts/inferences guidance from the Lead Skill. No new methodology or output schema is introduced.
-- [ ] Update current docs to the approved scope. Historical plans may retain exact prior claims under an explicit retirement notice; current authority must not require their completion or label them passed. State the next outcome as a real marketing business slice, not a new proof subsystem.
-- [ ] Regenerate lockfiles and run available retained checks using the toolchain already installed:
+- [x] Verify branch/recovery point and inspect exact `git ls-files` targets. Read this spec and relevant local `AGENTS` overrides. No directory outside the checkout is a deletion target.
+- [x] Preserve the four reference files using `apply_patch` and compare their bytes with `git show codex/pre-business-cleanup-20260905:<old-path>` before deletion.
+- [x] Generate one mechanical deletion patch from the validated tracked file list. Each entry is `*** Delete File: <absolute-path>`. Apply it; never recursively remove directories containing ignored files.
+- [x] Remove the workspace member and dependency named `codex-ai-ip-eval`, eval-only Bazel visibility, and restore proxy files from upstream using `apply_patch`. Inspect inbound references with `rg -n 'codex[-_]ai[-_]ip[-_]eval|ai-ip-evals|scripts/ai_ip/eval_lab' codex-rs scripts ai-ip-assets` and resolve executable/build references, not historical citations.
+- [x] Remove only the five long repeated audit bullets between material reading and facts/inferences guidance from the Lead Skill. No new methodology or output schema is introduced.
+- [x] Update current docs to the approved scope. Historical plans may retain exact prior claims under an explicit retirement notice; current authority must not require their completion or label them passed. State the next outcome as a real marketing business slice, not a new proof subsystem.
+- [x] Regenerate lockfiles and run available retained checks using the toolchain already installed:
 
 ```sh
 export PATH=/Users/yangyucheng/.cache/ai-ip-tools/bazelisk-1.28.1/node_modules/.bin:/Users/yangyucheng/.cache/ai-ip-tools/cargo-nextest-0.9.103/bin:/Users/yangyucheng/.rustup/toolchains/1.95.0-x86_64-apple-darwin/bin:/usr/local/bin:/usr/bin:/bin
@@ -60,7 +60,7 @@ uv run --python 3.11 --with pytest==9.0.2 pytest -q scripts/ai_ip/foundation/tes
 
 The controller owns the already-started pre-change business-crate baseline. Do not run a competing duplicate baseline. If an offline cache is unavailable, report it; ordinary public dependency fetch is permitted, but provider/credential work is not.
 
-- [ ] Run the retained App Server strict-output test if the installed build environment supports it: `just test -p codex-app-server --offline -E 'test(ai_ip_strict_output)'`. Report baseline host/dependency limitations without modifying unrelated runtime code. Do not launch removed evaluator/process/attestation tests.
-- [ ] Run `just fix -p codex-responses-api-proxy` only if restoration produced an actual novel Rust change needing lint fixes; a byte-for-byte upstream restoration does not require rewriting upstream style. Run `just fmt` after all tests. Inspect formatting-only drift and restore unrelated files through `apply_patch`.
-- [ ] Inspect `git diff --check`, compare native proxy bytes to upstream and preserved references to recovery, and confirm protected core/state/model/login/sandbox paths have no cleanup diff. These are one-time removal checks, not new permanent tests.
-- [ ] Commit coherent mechanical removal and documentation changes. Write report with exact commits, removed/preserved counts, commands/results, remaining limits, and recovery reference. Do not claim business quality, live-model reachability, or customer readiness.
+- [x] Run the retained App Server strict-output test if the installed build environment supports it: `just test -p codex-app-server --offline -E 'test(ai_ip_strict_output)'`. Report baseline host/dependency limitations without modifying unrelated runtime code. Do not launch removed evaluator/process/attestation tests.
+- [x] Run `just fix -p codex-responses-api-proxy` only if restoration produced an actual novel Rust change needing lint fixes; a byte-for-byte upstream restoration does not require rewriting upstream style. Run `just fmt` after all tests. Inspect formatting-only drift and restore unrelated files through `apply_patch`.
+- [x] Inspect `git diff --check`, compare native proxy bytes to upstream and preserved references to recovery, and confirm protected core/state/model/login/sandbox paths have no cleanup diff. These are one-time removal checks, not new permanent tests.
+- [x] Commit coherent mechanical removal and documentation changes. Write report with exact commits, removed/preserved counts, commands/results, remaining limits, and recovery reference. Do not claim business quality, live-model reachability, or customer readiness.

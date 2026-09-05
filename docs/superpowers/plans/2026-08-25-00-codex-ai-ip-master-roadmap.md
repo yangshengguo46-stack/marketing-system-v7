@@ -6,7 +6,7 @@
 
 Build the next small, usable marketing slice on the existing Codex execution substrate and retained `codex-ai-ip-domain`, `codex-ai-ip-runtime` and `deliver-ai-ip-content-package` Skill: one real mission and its available materials → a useful ContentPackage with a shootable/publishable draft, practical production notes, and clearly stated missing facts. Improve the concrete business gap exposed by that work. This cleanup introduces no replacement evaluator, proof subsystem, mandatory benchmark or new abstraction.
 
-The approved [cleanup scope](../specs/2026-09-05-business-first-cleanup-design.md) is the only current implementation task. After cleanup, follow-up work should be scoped to that real marketing outcome. No former child, including 07A, 07B or LH1, can authorize more work.
+The approved [cleanup plan](2026-09-05-business-first-cleanup.md) is complete and retained as non-executable history; [F-0010](../../architecture/codex-fork-patch-ledger.md#f-0010--retire-evaluation-infrastructure-for-business-first-development) records its implementation and checks. The next outcome is the real marketing slice above, using the existing business primitives. No former child, including the cleanup plan, 07A, 07B or LH1, can authorize more work.
 
 ## Retirement and retained responsibilities
 

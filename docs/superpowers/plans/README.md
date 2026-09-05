@@ -2,7 +2,7 @@
 
 当前执行依据：
 
-- [Business-first cleanup 已批准范围](../specs/2026-09-05-business-first-cleanup-design.md)：本次唯一实施范围；清理任务完成后该计划也只作完成记录。
+- [Business-first cleanup 完成记录](2026-09-05-business-first-cleanup.md)：已完成、不可重新执行；实施和检查见 [F-0010](../../architecture/codex-fork-patch-ledger.md#f-0010--retire-evaluation-infrastructure-for-business-first-development)。下一步按总路线图，用现有业务原语推进真实营销切片。
 - [当前总路线图](2026-08-25-00-codex-ai-ip-master-roadmap.md)：业务优先的下一步与仍适用的职责边界。
 - [主产品规格](../specs/2026-08-24-ip-agent-saas-design.md)、[国产模型方向](../specs/2026-08-25-domestic-model-adaptation-design.md)与[六版决策记忆](../../architecture/2026-08-25-legacy-six-version-decision-memory.md)：保留产品方向，涉及旧 proof 前置要求的内容由本次退役决定覆盖。
 
