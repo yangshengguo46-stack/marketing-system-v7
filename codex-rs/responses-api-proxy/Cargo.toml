@@ -25,7 +25,6 @@ libc = { workspace = true }
 reqwest = { workspace = true, features = ["blocking", "json", "rustls-tls"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-sha2 = { workspace = true }
 tiny_http = { workspace = true }
 zeroize = { workspace = true }
 

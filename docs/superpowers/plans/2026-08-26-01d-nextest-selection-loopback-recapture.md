@@ -1,3 +1,5 @@
+> **RETIRED — RETIRED_NOT_PASSED (2026-09-05).** This evaluator/proof document is historical and is not executable. All commands, prerequisite gates and successor authorizations below are retired by the approved business-first cleanup; prior results and failures remain historical claims only. Do not resume Phase 0A, 06A, 06B, 07A, 07B or LH1 from this record. Retirement grants no business PASS, model qualification, spending, publication, customer-data access or customer-release authority. Current authority: `docs/superpowers/specs/2026-09-05-business-first-cleanup-design.md` and `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`.
+
 # Phase 0A.2 Task 7R — Nextest Selection and Loopback Recapture Repair
 
 > **Execution:** Use `superpowers:systematic-debugging`, `superpowers:test-driven-development`, and `superpowers:subagent-driven-development`. This is a bounded repair of the frozen native-evidence child, not a business/runtime change.

@@ -2,7 +2,6 @@ filegroup(
     name = "skill",
     srcs = ["SKILL.md"],
     visibility = [
-        "//codex-rs/ai-ip-eval:__pkg__",
         "//codex-rs/ai-ip-runtime:__pkg__",
     ],
 )

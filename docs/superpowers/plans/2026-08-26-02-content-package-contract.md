@@ -1,3 +1,5 @@
+> **HISTORICAL_COMPLETED — NOT EXECUTABLE (2026-09-05).** This completed provenance/business-primitive record is preserved as history. Its commands, follow-on authorizations and proof prerequisites are superseded by the approved [business-first cleanup](../specs/2026-09-05-business-first-cleanup-design.md) and current [roadmap](2026-08-25-00-codex-ai-ip-master-roadmap.md). Retained implementation remains; the old Phase 0A/06A/06B/07A/07B gates are `RETIRED_NOT_PASSED`. No historical child is executable and no business PASS or model/customer-release qualification is claimed.
+
 # Phase 0A Work Package 3 — Pure ContentPackage Contract
 
 > **Execution:** Use `superpowers:test-driven-development`, `superpowers:subagent-driven-development`, and `superpowers:verification-before-completion`.

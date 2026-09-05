@@ -8,7 +8,7 @@
 - **优先 Agent 模型路线：** 火山方舟托管的 GLM 作为优先业务评测路线，通义作为原生 Responses 协议对照；最终实际 model/deployment/revision 仍由能力合同、商业授权和 AI IP 业务盲评决定，跨 provider G4p 另选非火山路线
 - **当前可用接入事实：** 用户确认现有火山方舟凭证已包含 GLM 模型访问范围；实现只记录 `provider=Volcengine Ark` 与实际 GLM model/deployment/revision，不记录、复制或提交 API key
 
-本文件是 `2026-08-24-ip-agent-saas-design.md` 的 provider 专项设计输入。v1.5 已获用户书面确认，由主规格、总台账、Phase 0A 构建规格和本文共同约束实现。本文不授权立即调用任何付费模型；Phase 0A.1 来源导入现已解除书面规格 gate，仍须按其 clean-tree、decision-tip 和来源锁机器门执行。
+本文件是 `2026-08-24-ip-agent-saas-design.md` 的 provider 专项设计输入。国产模型方向继续保留；2026-09-05 已批准的 [business-first cleanup](2026-09-05-business-first-cleanup-design.md) 覆盖本文中的 Phase 0A/proof broker 开发前置要求。这些要求与旧 child 均为 `RETIRED_NOT_PASSED`，不再可执行；旧实施顺序和完成清单仅作历史。本文不授权付费调用，也不把评测退役解释为模型资格、客户激活或客户上线通过。
 
 ## 1. 为什么不是“换一个 Base URL”
 

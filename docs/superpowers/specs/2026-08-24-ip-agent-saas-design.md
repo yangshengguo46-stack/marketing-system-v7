@@ -1,13 +1,15 @@
 # AI IP 一站式影响力创作系统 1.1 设计规格
 
 - **日期：** 2026-08-24
-- **最新修订：** 2026-08-25
-- **状态：** 产品范围 v1.1；架构规格 v1.4 与国产模型适配 v1.5 已于 2026-08-25 获用户确认，批准写入 Phase 0A decision tip；执行仍按总台账逐门推进。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
+- **最新修订：** 2026-09-05（业务优先清理；产品架构不变）
+- **状态：** 产品范围 v1.1；架构规格 v1.4 与国产模型适配 v1.5 已于 2026-08-25 获用户确认，2026-09-05 已退役旧评测开发前置条件；当前执行以总台账的业务优先修订为准。v1.2 固化前六轮系统审计护栏；v1.3 的 DeerFlow 方案已被 v1.4 明确取代；v1.4 采用 Codex 开源仓深度分叉、本地优先 Business Server 和云端商业能力薄控制面
 - **目标市场：** 中国大陆用户为主；首版重点服务抖音、小红书内容，保留服务海外 TikTok 业务题材的能力，但不直接接入 TikTok 发布接口
 - **模型与媒体供应商：** 火山引擎 / 火山方舟作为首条真实 provider；用户现有方舟凭证可访问 GLM，故 GLM 作为优先文本 Agent model route，Seedream/Seedance/TTS 继续承担首发媒体路线；跨 provider 候选后续按能力矩阵选择
 - **正式客户端：** Windows 11；macOS 同期仅作内部使用和邀请测试
 
-本文件是当前产品与总体架构规格；国产模型 provider 专项边界由 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md` 细化。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。v1.3 DeerFlow/云 SaaS 旧计划已归档为历史输入；现役入口是 `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`。Plan 01 是 G0–G2 program gate，不是一份可直接执行的巨型计划；master §9 的 Phase 0A.1 child plan 已解除书面规格 gate。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
+本文件是当前产品与总体架构规格；国产模型 provider 专项边界由 `docs/superpowers/specs/2026-08-25-domestic-model-adaptation-design.md` 细化。产品不再以经典 C 端 SaaS 为前提：C 端是运行于用户电脑的本地优先产品；代理管理和平台内部运营是两套独立云端 Web 系统。v1.3 DeerFlow/云 SaaS 旧计划已归档为历史输入；现役入口是 `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`。旧 Phase 0A 与评测 child 已退役，不再构成内部业务开发许可门。禁止继续按 DeerFlow、云端保存客户项目、C 端浏览器直连公网 Agent、固定多 Agent 流水线或外置 Codex 套壳等旧假设实施。
+
+> **2026-09-05 业务优先退役修订：** 已批准的 [business-first cleanup](2026-09-05-business-first-cleanup-design.md) 覆盖本文及被引用旧计划中的内部开发前置要求。Phase 0A、06A、06B、07A、07B（含 LH1）、`PASS_TO_PHASE_0B` 和依赖旧评测 broker 的 proof 完成链为 `RETIRED_NOT_PASSED`，不能阻止继续做真实营销业务切片，也不得恢复为替代评测系统。旧通过、失败和停止记录均只作历史；清理不等于业务 PASS、模型资格或客户版本就绪。真实支出、发布、客户数据和客户上线职责不因此免除。产品架构、来源许可和国产模型方向继续保留。
 
 ## 1. 产品定义
 
@@ -818,14 +820,11 @@ Seedream、Seedance 和 TTS 返回地址均视为临时地址。云端先按 ope
 
 该系统不得写成一个单体实施计划，也不得先花数月把 SaaS、代理和云基础设施全部搭齐后才验证内容能力。各阶段围绕可真实使用的 Mission 纵切推进；会造成真实扣费、数据损坏或权利事故的底线必须先证明，其余工程能力与业务纵切并行演进。现有实施台账在全部重写前不可执行。
 
-### 子项目 0：Codex 深度分叉与业务纵切证明
+### 子项目 0：Codex 深度分叉与真实业务切片
 
-子项目 0 分成两个连续轨道，避免再次演变成数月基础设施前置：
+来源锁与现有 Codex 执行底座已经保留；旧 0A/0B proof 依赖为 `RETIRED_NOT_PASSED`。下一步围绕一个真实营销任务，用现有 Mission、Lead 和 ContentPackage，完成“一句目标＋现有材料→可直接拍摄或发布的草稿、制作说明和待确认事实”，依据实际缺口改进业务能力。无需先恢复 paired evaluator、隔离评测 broker 或其他替代证明设施。
 
-- **0A 业务证明优先：** 锁定并原样验证 Codex。机械测试只用隔离、可销毁的 fake/录制 provider；G2 则在用户明确批准的披露、次数、Token、时长、留存和隔离账户硬预算内，用 coordinator 自有或已获授权的真实新案例执行一次原子 paired live provider 盲评。先以最小 business instructions、Mission、Artifact schema 和业务 Skills 完成一个非五类冻结案例的 ContentPackage；不以尚未完成 SQLCipher、Windows 安装器或云端账本为由延期。
-- **0B 业务能力先深化、再产品化：** 只有 0A 证明方向值得继续后，先完成 Mission/Lead/Artifact 内核与完整内容能力的冻结/unseen 真人盲评，并用隔离评测 broker 在目标火山模型上运行完整冻结集与新 unseen；通过业务护城河门禁后，才完成 Windows 11、localhost UI、产品专用配置根、SQLCipher/加密 Blob、崩溃重建、统一模型能力合同、火山 Responses 产品网关适配及最小内部预算调用。产品适配后重跑 Plan 03 已授权回归集和一个新选 unseen，不重用已按留存协议删除的 Plan 01 私有案例，也不把已见过的案例叫 held-out。火山托管 GLM 在同一接缝上作为独立 model route 评测；后续非火山国产 Agent adapter 再作为非阻塞 G4p onboarding proof lane 进入，失败只让该 route 保持 disabled，不倒逼修改业务对象或延期既有业务纵切。
-
-子项目 0 的最终通过仍要求“一句目标＋现有材料→可直接使用的 ContentPackage”；页面、线程、工具或账本能运行都不能替代该结果。
+页面、线程、工具或账本能运行不能替代业务成果；机械清理与保留测试通过也不证明内容质量或真实模型可达。真实模型调用仍须有适用授权和预算，客户数据、发布和客户上线继续承担各自职责。后续产品化按具体业务需要推进，本次不新建功能或放宽正式客户启用条件。
 
 ### 子项目 1：一站式内容业务能力
 
@@ -938,13 +937,13 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 
 ### 21.2 Foundation Proof
 
-基础证明不以“尽量不改 Codex”为目标；用户已经选择直接动刀。A 段先保存原样上游基线，B 段立即验证 AI IP Business Server 的关键假设。G0–G2 完成后即可继续深化隔离业务纵切；G6 的完整内容盲评在 UI、加密存储和商业 provider 工程之前完成。G3–G5 及 G7–G9 是对应能力面向真实客户前的产品化/发布门，不能倒过来阻止 fake、回放或经单独批准的隔离业务实验。
+G0–G2/Phase 0A 的 mandatory proof 完成前置已退役，状态为 `RETIRED_NOT_PASSED`。下表 G0–G2 保存原先的证明目标和判断标准，仅作历史，不再是内部开发许可门。来源锁、许可与准确报告测试的责任保留；真实客户能力的产品化/发布责任仍按适用范围承担，不能以清理冒充完成。
 
 | 证明 | 最小证据 | 通过标准 |
 |---|---|---|
-| G0 来源、许可与锁定 | 校验完整 SHA、干净工作树、Cargo/npm 锁文件、Apache-2.0、源码依赖/许可/资产清单、NOTICE 和产品 origin 状态 | 来源可复现，源码阶段清单/NOTICE 完整，不依赖浮动分支；可分发物完整 SBOM 在 Plan 14 按具体发布物生成 |
-| G1 Codex 原样基线 | 在目标 Windows 11 和开发 macOS 上运行上游 build/test、App Server、Thread 恢复、Skill/MCP、Sandbox 与基本工具 | 原样失败被记录并与产品改动区分；关键运行路径可重复 |
-| G2 非编码业务可控性 | 使用最小 business instructions、结构化 Artifact 和临时 Skill 完成一个非五类固定案例的真实任务 | 能形成有业务价值的 ContentPackage，不退化成 coding assistant 或聊天答案 |
+| G0 来源、许可与锁定（历史：RETIRED_NOT_PASSED） | 校验完整 SHA、干净工作树、Cargo/npm 锁文件、Apache-2.0、源码依赖/许可/资产清单、NOTICE 和产品 origin 状态 | 来源可复现，源码阶段清单/NOTICE 完整，不依赖浮动分支；可分发物完整 SBOM 在 Plan 14 按具体发布物生成 |
+| G1 Codex 原样基线（历史：RETIRED_NOT_PASSED） | 在目标 Windows 11 和开发 macOS 上运行上游 build/test、App Server、Thread 恢复、Skill/MCP、Sandbox 与基本工具 | 原样失败被记录并与产品改动区分；关键运行路径可重复 |
+| G2 非编码业务可控性（历史：RETIRED_NOT_PASSED） | 使用最小 business instructions、结构化 Artifact 和临时 Skill 完成一个非五类固定案例的真实任务 | 能形成有业务价值的 ContentPackage，不退化成 coding assistant 或聊天答案 |
 | G3 localhost 产品入口 | App Server 同进程提供静态 UI、同源 RPC/stream、上传下载；验证随机端口、bootstrap 会话、Host/Origin/CSRF/WS 和单实例 fencing | 不依赖 Electron/云端 C 网关，状态和流可恢复；恶意网页和旧进程无权操作 |
 | G4a 首发国产模型内部能力兼容 | 以火山为首条目标，用隔离内部凭证经产品 provider seam 真实验证 Responses 流式、工具、多模态、取消、用量及 Search/Seedream/Seedance/TTS；客户设备令牌和客户点数保持关闭 | Plan 06 的 aggregate gate 只要求：文本 Agent routeId 独立取得 E1/E2，并在相同 product adapter/execution profile 上重跑完整冻结集加新 unseen 取得 E3；Search route 取得 E1/E2 并复用 Plan 03 research suite 取得 E3；Seedream、Seedance、TTS 分别取得 E1/E2。媒体 E3/E4 不属于 G4a，通过后由 Plans 09–10 独立取得。不得继承 evaluation-broker route 资格，只授权有预算上限的内部/邀请使用 |
 | G4b 首发模型客户激活 | 在 G4a 之上验证客户设备令牌、客户点数、产品网关和无旁路配置 | customer build 无 OpenAI 登录/BYOK 旁路；交易、回执、对账、幂等和供应商合同测试同时通过 |
@@ -958,7 +957,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 ### 21.3 裁决规则
 
 - Codex 是已批准的底座，不因需要修改 core/app-server/protocol/state 就自动回退；“需要深改”本身不是失败。若某个原生机制妨碍业务能力，应先建立未改基线，再在 fork 中替换并用业务盲评、可靠性和成本证明收益。
-- G0–G2 是继续深化隔离业务纵切的最低证明；G6 内容业务门必须早于完整产品壳、SaaS 与商业基础设施。G4a 只证明首发模型内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G4p 是按 provider 绑定的非阻塞 onboarding proof：未通过时后续非火山 provider route 保持 disabled，不阻止已通过 G4a/G4b 的首发火山链；只有要启用、宣传或自动切换到该 route 时，才必须继续通过对应业务、发布、账本与客户激活门。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
+- 旧 G0–G2 与依赖旧 proof/broker 的内部开发先后门禁已退役，不再要求完成评测设施才做业务。G4a 只证明首发模型内部兼容，不等于客户可用；外部 customer build 必须再过 G4b。G4p 是按 provider 绑定的非阻塞 onboarding proof：未通过时后续非火山 provider route 保持 disabled，不阻止已通过 G4a/G4b 的首发火山链；只有要启用、宣传或自动切换到该 route 时，才必须继续通过对应业务、发布、账本与客户激活门。G3–G5、G4b、G7–G9 在对应功能交付真实客户前成为产品化/发布门。任何工程门都不能阻止使用 fake provider、录制回放或经单独批准的隔离实验继续提高业务能力。
 - 只有来源/许可不可接受、目标 Windows 无法运行、平台模型完全无法适配，或 Codex 在真实业务盲评中经多轮最小改造仍显著劣于可用替代方案时，才重新发起底座决策；不得静默回到 DeerFlow。
 - 证明结果保存命令、日志、JUnit、Windows 环境、迁移前后校验和、故障注入记录、盲评原始表、供应商合同结果和对应阶段的来源证据：G0 保存源码依赖/许可/资产清单，Plan 14 对每个实际可分发物生成 SBOM。页面能打开、线程能聊天或单次漂亮样例不构成业务通过。
 
@@ -1013,7 +1012,7 @@ Lead 在创作过程中自动识别是否涉及真实可识别人物、严重指
 - 先完成完整 SaaS/代理基础设施才开始验证内容业务能力的顺序。
 - 任何没有 Codex upstream path、现有测试、保留/修改/替换决定、业务收益证明和删除路径的抽象层。
 
-现役台账先执行子项目 0，只引用锁定 Codex 提交中的真实文件路径，并在每个 child plan 中明确是保留、直接修改、替换还是新增。第一条业务纵切必须使用新的真实项目，不得把五类冻结测试的答案带入实现。代码实现只可从 master §9 当前列出的 executable child plan 开始。
+现役台账执行 2026-09-05 业务优先清理修订，随后围绕真实营销任务形成可用业务切片；旧 master §9 与所有旧 child 均不再可执行。继续保留锁定 Codex 的真实源码接缝、最小改动和删除/回退路径，不能把历史参考答案带入生产提示词或伪装成真实业务结果。
 
 ## 23. 官方依据索引
 

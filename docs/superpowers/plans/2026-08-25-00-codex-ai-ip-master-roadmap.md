@@ -1,5 +1,35 @@
 # Codex AI IP 1.1 Master Delivery Roadmap
 
+> **Current authority — 2026-09-05 business-first cleanup.** This current section supersedes every execution dependency and authorization in the historical roadmap below. No old child remains executable.
+
+## Current direction
+
+Build the next small, usable marketing slice on the existing Codex execution substrate and retained `codex-ai-ip-domain`, `codex-ai-ip-runtime` and `deliver-ai-ip-content-package` Skill: one real mission and its available materials → a useful ContentPackage with a shootable/publishable draft, practical production notes, and clearly stated missing facts. Improve the concrete business gap exposed by that work. This cleanup introduces no replacement evaluator, proof subsystem, mandatory benchmark or new abstraction.
+
+The approved [cleanup scope](../specs/2026-09-05-business-first-cleanup-design.md) is the only current implementation task. After cleanup, follow-up work should be scoped to that real marketing outcome. No former child, including 07A, 07B or LH1, can authorize more work.
+
+## Retirement and retained responsibilities
+
+- Phase 0A / G0–G2 as mandatory internal-development prerequisites, 06A, 06B, 07A, 07B and LH1: `RETIRED_NOT_PASSED`. Historical completed, blocked and diagnostic RED results remain historical; none is upgraded to PASS.
+- `PASS_TO_PHASE_0B`, the old paired-proof/broker completion dependency and the old requirement to finish proof infrastructure before product work are retired. Internal business development does not depend on their completion. No replacement mandatory gate is added.
+- Source lock `4ef1d4b89bd419c976b04fefa0fd36844e898340`, ancestry, licenses/NOTICE, six-version decision memory, local-first product architecture and domestic-model direction remain. The native proxy is restored to that upstream tree. Existing Codex core/state/model/login/sandbox behavior is unchanged by cleanup.
+- Existing App Server descendant notifications, strict-output integration tests and business domain/runtime behavior remain. Historical/manual case and rubric references live in [business-reference](../../architecture/business-reference/README.md); their bytes are unchanged and they are not production prompt material or certified business evidence.
+- Actual spending, publication/external sends, customer-data use and customer release retain their applicable responsibilities and authorization boundaries. Cleanup neither qualifies a model nor authorizes a customer release. Later release and commercial obligations in the product/provider specifications are not waived by retiring development prerequisites.
+
+## Current validation and recovery
+
+Use relevant retained tests and repository-required lock/format checks for the changed code. Mechanical checks establish only the behavior they exercise; they do not establish marketing quality, live-model reachability or customer readiness. No permanent negative tests for removed code or tests of static retirement text are added.
+
+Recovery is `codex/pre-business-cleanup-20260905` at `04b3e8bee6c2d0d23b152654eeeadc7011f0a66c`. Original external materials, ignored data, caches and other worktrees remain outside this cleanup.
+
+## Historical roadmap — superseded and non-executable
+
+Everything below is the prior roadmap preserved for decision history. Its “current”, “only executable”, PASS dependencies, commands and successor authorizations are historical quotations, not active instructions. The current section above controls internal development. Prior test outcomes and unresolved failures are not rewritten.
+
+---
+
+# Codex AI IP 1.1 Master Delivery Roadmap
+
 > **Document status:** 本文件是交付路线图和门禁台账，不是可直接执行的 implementation plan。执行者只能运行 §9 明确列出的 child plan。
 
 **Goal:** Deliver a business-first, local-first AI IP product by proving content value before building the local product shell, commercial control plane, media studio, partner system, or release infrastructure.

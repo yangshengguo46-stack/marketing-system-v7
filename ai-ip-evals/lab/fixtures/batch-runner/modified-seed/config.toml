@@ -1,6 +1,0 @@
-approval_policy = "never"
-sandbox_mode = "workspace-write"
-
-[lead_skill]
-path = "skills/deliver-ai-ip-content-package/SKILL.md"
-sha256 = "694c550129321c50f814b61ec4c2de6b5e7d24dd541f24ba4877625b90e417d6"

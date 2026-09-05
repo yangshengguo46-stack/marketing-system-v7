@@ -1,3 +1,5 @@
+> **RETIRED — RETIRED_NOT_PASSED (2026-09-05).** This evaluator/proof document is historical and is not executable. All commands, prerequisite gates and successor authorizations below are retired by the approved business-first cleanup; prior results and failures remain historical claims only. Do not resume Phase 0A, 06A, 06B, 07A, 07B or LH1 from this record. Retirement grants no business PASS, model qualification, spending, publication, customer-data access or customer-release authority. Current authority: `docs/superpowers/specs/2026-09-05-business-first-cleanup-design.md` and `docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md`.
+
 # Phase 0A — Codex 原生 Harness 业务证明 Build Specification
 
 > **Document status:** 本文件是 Phase 0A 的规范性构建与验收合同，不是可直接执行的 implementation plan。不得把本文件交给 `superpowers:subagent-driven-development` 或 `superpowers:executing-plans`；只有总台账明确列出的 executable child plan 可以执行。下面的命令均为验收命令形状或接口示例，必须由后续 child plan 复核真实源码后拆成 2–5 分钟 RED/GREEN 步骤，不能直接复制执行。

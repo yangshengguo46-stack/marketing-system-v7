@@ -5,7 +5,6 @@ members = [
     "agent-graph-store",
     "agent-identity",
     "ai-ip-domain",
-    "ai-ip-eval",
     "ai-ip-runtime",
     "agent-roles",
     "backend-client",
@@ -161,7 +160,6 @@ codex-agent-roles = { path = "agent-roles" }
 codex-ansi-escape = { path = "ansi-escape" }
 codex-api = { path = "codex-api" }
 codex-ai-ip-domain = { path = "ai-ip-domain" }
-codex-ai-ip-eval = { path = "ai-ip-eval" }
 codex-ai-ip-runtime = { path = "ai-ip-runtime" }
 codex-aws-auth = { path = "aws-auth" }
 codex-app-server = { path = "app-server" }
@@ -361,7 +359,6 @@ insta = "1.46.3"
 inventory = "0.3.19"
 itertools = "0.14.0"
 jsonptr = { version = "0.7.1", default-features = false }
-jsonschema = { version = "0.49.9", default-features = false }
 jsonwebtoken = "9.3.1"
 keyring = { version = "3.6", default-features = false }
 landlock = "0.4.4"
@@ -423,7 +420,6 @@ sentry = "0.46.0"
 serde = { version = "1", features = ["rc"] }
 serde_ignored = "0.1.14"
 serde_json = "1"
-serde_json_canonicalizer = "0.3.2"
 serde_path_to_error = "0.1.20"
 serde_with = "3.17"
 serde_yaml = "0.9"

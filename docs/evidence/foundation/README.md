@@ -1,3 +1,17 @@
+# Foundation evidence — historical record
+
+> **RETIRED — RETIRED_NOT_PASSED (2026-09-05).** The frozen capture/evaluator matrix and its mandatory completion gates are retired by the approved business-first cleanup. No capture, wrapper, verifier or successor command below remains an execution instruction.
+
+Existing public evidence files and their earlier PASS/BLOCKED/invalid-capture claims remain unchanged as history; retirement does not certify them, close their gaps or convert them into business PASS. The seven foundation evaluation tools and matrix are removed. `scripts/ai_ip/foundation/verify_upstream_lock.py` and `test_verify_upstream_lock.py` remain for source provenance.
+
+Internal business development proceeds without rebuilding this proof system. Source lock, licenses and accurate reporting of retained tests still apply. Spending, publication, customer-data and customer-release responsibilities are unchanged. No live-model or business-quality claim is made.
+
+## Historical capture contract — non-executable
+
+The text below records the former contract; paths to removed tools are historical identifiers and must not be followed as current commands.
+
+---
+
 ## Claims and non-claims
 
 This directory records reproducible, public foundation evidence for the frozen candidate and the frozen tool tree. A `PASS` means the required command completed with its frozen expected exit status and its recorded bytes, platform, architecture, tested SHA, tools SHA, recorder SHA, matrix SHA, and lock hashes verify. `BLOCKED_BASELINE` means a required baseline command could not be completed and is recorded as such; it is not a pass and cannot be converted into one by later post evidence.

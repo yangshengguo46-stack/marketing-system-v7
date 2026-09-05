@@ -1,9 +1,0 @@
-filegroup(
-    name = "rubrics",
-    srcs = [
-        "blind-review-decision-policy.json",
-        "content-package-blind-review.json",
-        "reviewer-submission.schema.json",
-    ],
-    visibility = ["//codex-rs/ai-ip-eval:__pkg__"],
-)

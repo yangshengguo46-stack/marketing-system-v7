@@ -8,46 +8,17 @@ use zeroize::Zeroize;
 const BUFFER_SIZE: usize = 1024;
 const AUTH_HEADER_PREFIX: &[u8] = b"Bearer ";
 
-/// Authorization header whose backing bytes remain locked for the process lifetime.
-///
-/// Construct this value through [`read_auth_header_from_stdin`]. The inner secret is
-/// intentionally not exposed through `Debug`, `Display`, cloning, or serialization.
-pub struct LockedAuthHeader {
-    value: &'static str,
-}
-
-impl std::fmt::Debug for LockedAuthHeader {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("LockedAuthHeader([REDACTED])")
-    }
-}
-
-impl LockedAuthHeader {
-    pub(crate) fn as_str(&self) -> &'static str {
-        self.value
-    }
-}
-
-/// Constructs a fixed, non-secret authorization header for loopback mock upstreams.
-///
-/// This cannot accept caller data and must never be used for a provider endpoint.
-pub fn local_mock_auth_header() -> LockedAuthHeader {
-    LockedAuthHeader {
-        value: "Bearer local-mock-not-a-secret",
-    }
-}
-
-/// Reads the auth token from stdin into a locked `Authorization` header.
-///
-/// The returned wrapper keeps the `Bearer` header bytes in process-lifetime
-/// locked memory without exposing the secret to downstream callers.
+/// Reads the auth token from stdin and returns a static `Authorization` header
+/// value with the auth token used with `Bearer`. The header value is returned
+/// as a `&'static str` whose bytes are locked in memory to avoid accidental
+/// exposure.
 #[cfg(unix)]
-pub fn read_auth_header_from_stdin() -> Result<LockedAuthHeader> {
+pub(crate) fn read_auth_header_from_stdin() -> Result<&'static str> {
     read_auth_header_with(read_from_unix_stdin)
 }
 
 #[cfg(windows)]
-pub fn read_auth_header_from_stdin() -> Result<LockedAuthHeader> {
+pub(crate) fn read_auth_header_from_stdin() -> Result<&'static str> {
     use std::io::Read;
 
     // Use of `stdio::io::stdin()` has the problem mentioned in the docstring on
@@ -98,7 +69,7 @@ fn read_from_unix_stdin(buffer: &mut [u8]) -> std::io::Result<usize> {
     }
 }
 
-fn read_auth_header_with<F>(mut read_fn: F) -> Result<LockedAuthHeader>
+fn read_auth_header_with<F>(mut read_fn: F) -> Result<&'static str>
 where
     F: FnMut(&mut [u8]) -> std::io::Result<usize>,
 {
@@ -187,21 +158,7 @@ where
     let leaked: &'static mut str = header_value.leak();
     mlock_str(leaked);
 
-    Ok(LockedAuthHeader { value: leaked })
-}
-
-#[cfg(test)]
-pub(crate) fn locked_auth_header_for_test(token: &str) -> LockedAuthHeader {
-    let mut sent = false;
-    read_auth_header_with(|buffer| {
-        if sent {
-            return Ok(0);
-        }
-        buffer[..token.len()].copy_from_slice(token.as_bytes());
-        sent = true;
-        Ok(token.len())
-    })
-    .unwrap()
+    Ok(leaked)
 }
 
 #[cfg(unix)]
@@ -281,7 +238,7 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(result.as_str(), "Bearer sk-abc123");
+        assert_eq!(result, "Bearer sk-abc123");
     }
 
     #[test]
@@ -297,7 +254,7 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(result.as_str(), "Bearer sk-abc123");
+        assert_eq!(result, "Bearer sk-abc123");
     }
 
     #[test]
@@ -314,7 +271,7 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(result.as_str(), "Bearer sk-abc123");
+        assert_eq!(result, "Bearer sk-abc123");
     }
 
     #[test]
