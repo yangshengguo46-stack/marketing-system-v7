@@ -1,0 +1,1329 @@
+{
+  "lesson": null,
+  "part": 80,
+  "source_parts": [
+    {
+      "part": 80,
+      "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+      "segment_count": 243
+    }
+  ],
+  "blocks": [
+    {
+      "first_segment": 1,
+      "last_segment": 5,
+      "heading": "电影时长与推荐理由：老师个人给力量的几部电影",
+      "text": "〔整理说明：以下保留讲师语态和判断，仅依据ASR全文整理，未逐句听校。剧情、真人经历、创作意图、行业史与获奖评价均按讲师本次说法保留，不作为原著/电影准确事实或外部核验。英文播放片段的可辨内容及难辨处分别保留，不补成流利字幕。〕\n\n《华尔街之狼》这部电影时长是3个小时，讲师称国内有个“净化版”〔原“进化版”，指后述删减版本，确切称呼待核〕，两个半小时，删掉了半小时之多，说明这部电影确实尺度非常大，水肌精华〔待核〕也可以来学习一下这部电影。有几个原因：第一，这部电影确实是一个传世佳作，《华尔街之狼》是很多商界人没有精神了就看一遍这个电影，包括老师本人。\n同学们，在老师的人生当中，有几部电影是低潮的时候或者心情不好的时候就会去看一遍的、给我力量的电影，《华尔街之狼》就是其中一部。当然了，还有《绿野仙踪》，1939年的《绿野仙踪》。还有丹泽尔·华盛顿的《深渊人》〔待核〕，有的是爆米花电影，有的是这种。当然了，还有《喜剧之王》。这几部电影在老师人生当中都是看过几十遍的。",
+      "corrections": [
+        {
+          "original": "水肌精华",
+          "cleaned": "水肌精华〔待核〕",
+          "basis": "机器转录不清，无法确定具体指代"
+        },
+        {
+          "original": "深渊人",
+          "cleaned": "深渊人〔待核〕",
+          "basis": "疑为丹泽尔·华盛顿某影片名误识，无法确认"
+        }
+      ],
+      "id": "P080-B001",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 6,
+      "last_segment": 8,
+      "heading": "狼性文化起源与导演、迪卡普里奥的小金人遗憾",
+      "text": "在人生低潮的时候，可以给人以力量。《华尔街之狼》呢，就是在你商业上进行得不顺的时候，给你一种狼性文化。狼性文化就是90年代从美国的销售，七八十、八九十年代从美国的销售兴起的，所以说这部电影叫《华尔街之狼》嘛。\n另外，马丁·斯科塞斯导演在这部电影里展现了极致的疯狂、极致的想象力。迪卡普利奥在这部电影里面配得上一座小金人，但是没有给他，败给谁了来着，老师有点忘了。《华尔街之狼》是迪卡普利奥没有得到小金人最委屈的一次，他那年是真应该得。",
+      "corrections": [],
+      "id": "P080-B002",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 9,
+      "last_segment": 14,
+      "heading": "荒野猎人的补偿与马修·麦康纳之争",
+      "text": "小金人即便是他后来通过《荒野猎人》弥补了这个遗憾，但说实话，《荒野猎人》老师觉得是业界去安慰迪卡普利奥，给了他一个小金人，相当于向他道歉。《华尔街之狼》没有给他，《华尔街之狼》确实是应该拿到最佳男主角了。\n另外这个故事里面的感情线，就是小丑女，也演过《芭比》的那个女演员，也是值得欣赏的。对，那一届给了马修了。当然了，迪卡普利奥你说输给马修·麦康纳冤不冤呢？其实不冤，这就是神仙打架嘛。",
+      "corrections": [],
+      "id": "P080-B003",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 15,
+      "last_segment": 18,
+      "heading": "迪卡普利奥演技巅峰与“太帅的诅咒”",
+      "text": "但问题确实是，《华尔街之狼》是迪卡普利奥演技生涯的巅峰，输给马修·麦康纳不冤，他的《华尔街之狼》是他演技的一个巅峰。迪卡普利奥饱受他的长相困扰，这个演员从十几岁出道之后就一直饱受长相的困扰，因为他长得实在是太帅了，曾经有多年被评为世界上最帅的人。这个事情严重影响了大家对他演技的认可。长得太帅可能也是一种诅咒吧，这个咱们大部分人并没有这个体验，很难共情，他太帅了。这个故事节拍也比较长，非常长。",
+      "corrections": [
+        {
+          "original": "华尔街之郎",
+          "cleaned": "华尔街之狼",
+          "basis": "片名上下文，疑为同音误识"
+        },
+        {
+          "original": "输给马修布员",
+          "cleaned": "输给马修·麦康纳不冤",
+          "basis": "S13明确问冤不冤并回答其实不冤，S15同一意思重复，否定不能遗漏。"
+        }
+      ],
+      "id": "P080-B004",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 19,
+      "last_segment": 25,
+      "heading": "第一拍：插叙开场与成功后的疯狂状态",
+      "text": "来，说一下第一拍，第一分钟。这个故事显然有点插叙，先把后面的一场戏拎上来。拎的哪一场呢？拎的是十几拍〔待核〕的时候，待会再说，后面是一场拎上来，展现成功后的他的疯狂状态。首先上来就展现了这个人对别人极不尊重，欺负弱势群体，小侏儒。配上独白自我介绍。看过的同学都知道这部电影各种独白，因为是传记体嘛，必须是主角自己的声音，特有代入感。他非常成功，也交代了一下他的出身，他现在的生活是什么：豪车、豪宅、美女、游艇、飞机，富豪生活，而且传播了一定的生活理念。这部电影演讲很多，待会我们看一些名场面可以简单看一下。",
+      "corrections": [
+        {
+          "original": "第一排",
+          "cleaned": "第一拍",
+          "basis": "此处讲的是故事节拍（beat），非座位排"
+        },
+        {
+          "original": "实几拍",
+          "cleaned": "十几拍〔待核〕",
+          "basis": "机器转录不清，疑为“十几拍”，无法确定原词"
+        },
+        {
+          "original": "机器不重用",
+          "cleaned": "极不尊重",
+          "basis": "上下文为“欺负弱势群体”，“机器不重用”疑为“极不尊重”误识"
+        },
+        {
+          "original": "名卡面",
+          "cleaned": "名场面",
+          "basis": "上下文“看一些名场面”"
+        }
+      ],
+      "id": "P080-B005",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 26,
+      "last_segment": 28,
+      "heading": "第二拍：从巅峰往下写的结构与他天生的销售天赋",
+      "text": "来到第二拍第五分钟，简单回顾一下他是怎么成长起来的。很多同学认为这部电影讲的是一个人的成功和失败，对吧？如果让我们写传记体，我们可能会写这个人的成功和失败，然后在中间做一个转点，就是他肯定要往下走，这是我们一般人会这么写。但是这部电影其实是从巅峰开始写的，他的那个下位史〔待核〕只是简单交代，基本上是讲一个人的堕落，他是从顶往下写的，讲的是一个人逐步堕落，逐步被FBI击败。\n第二拍第五分钟，回忆他的创业初期来到华尔街。第一份工作在罗斯柴尔德做电话销售，展现了他的环境和技能。他是个天生的seller，由于是真人改编，这个人是一个天生的销售，跟老师一样，属marketing，玩的是sales。\n\n〔“罗斯柴尔德”的机构指称、主角真人销售天赋与讲师自比营销人员，均按源口述保留，不另补公司全名或真人履历。〕",
+      "corrections": [
+        {
+          "original": "第二排",
+          "cleaned": "第二拍",
+          "basis": "此处讲的是故事节拍（beat），非座位排"
+        },
+        {
+          "original": "传题体",
+          "cleaned": "传记体",
+          "basis": "电影类型术语，疑为同音误识"
+        },
+        {
+          "original": "可定要下",
+          "cleaned": "肯定要下",
+          "basis": "上下文语义，“可定”疑为“肯定”误识"
+        },
+        {
+          "original": "下位史",
+          "cleaned": "下位史〔待核〕",
+          "basis": "上下文提到“从巅峰开始写”“只是简单交代”，疑为“发迹史”或“堕落史”误识，无法确定原词"
+        }
+      ],
+      "id": "P080-B006",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 29,
+      "last_segment": 32,
+      "heading": "第三拍：马修·麦康纳名场面与“神仙打架”",
+      "text": "来到第三拍第七分钟，导师，一个名场面。马修·麦康纳在这部电影里面轻微地客串了一下，教我们的主角如何成为一个真正的销售。因为他本身就很有天赋，但还是需要导师点拨。而且马修·麦康纳唱出的那个狼之歌，那个歌，在后面有个呼应，我们看一下吧。\n这场戏堪称神仙打架。如此彪悍的迪卡普利奥，在马修·麦康纳的控制下，基本上节奏就被带跑偏了，因为很多演员都反映说跟马修·麦康纳一起对戏，会完全被他带走。看一下大神怎么演戏。这部电影太长了，我们能看的片段不多，就珍惜一下。\n嗯嗯，对不起。",
+      "corrections": [
+        {
+          "original": "呼影",
+          "cleaned": "呼应",
+          "basis": "上下文“在后面有个呼应”，疑为同音误识"
+        },
+        {
+          "original": "马修麦康娜",
+          "cleaned": "马修·麦康纳",
+          "basis": "人名，疑为同音误识"
+        }
+      ],
+      "id": "P080-B007",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 33,
+      "last_segment": 39,
+      "heading": "影片对白播放：马修·麦康纳与迪卡普利奥的午餐戏",
+      "text": "（影片对白播放，机器转录，未逐句校对）\n“can straight precisely seven and one after that you're going to bring us two more then two more after that every five until one of us passes the sir'm good you.”〔对白标疑〕\n“Its his first day on Wall Street, give him time thank you thank you.”〔对白标疑〕\n“re able to.”〔对白残片标疑〕\n“During the and then still' else would you do this job cocaine anders my friend?”〔对白标疑〕\n“I got to say I'm incredibly excited to be a party firm.”〔对白标疑〕\n“Clients you have are absolutely fuck the clients.”〔对白标疑〕\n“Your only responsibility is to put meat on the table.”〔对白标疑〕",
+      "corrections": [
+        {
+          "original": "a party firm",
+          "cleaned": "a party firm〔对白标疑〕",
+          "basis": "疑为“a part of the firm”误识，未逐句听校原片，不补改"
+        },
+        {
+          "original": "cocaine anders",
+          "cleaned": "cocaine anders〔对白标疑〕",
+          "basis": "机器转录破碎，无法辨认原对白，保留原词标疑"
+        }
+      ],
+      "id": "P080-B008",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c001"
+    },
+    {
+      "first_segment": 40,
+      "last_segment": 42,
+      "heading": "影片对白：客户的钱与华尔街第一条铁律",
+      "text": "〔以下是按机器识别英语所作的中文暂译及残句记录，不是逐句听校的中文字幕；影片人物的说法不作为现实建议。〕\n\n影片对白机器稿暂译。\"You got a girlfriend'm married\"〔待核，原词破碎〕〔S40另有“Thereesaulationesa”残词，待核〕——这个游戏就是把客户口袋里的钱挪进你自己口袋，但如果你同时能让客户也赚钱，对所有人都有利，correct？No。\n\n华尔街第一条铁律：不管你是沃伦·巴菲特还是吉米·巴菲特，没人知道股票会涨、会跌、横盘还是他妈打转，股票经纪人尤其不可能知道。那全是fugazi〔待核，原识别作fuhazi、fuzi isgezi、fuuzzzi等多个变体〕——是假的，是woozy，是fairy dust，它不存在，从未着陆过，什么都不是，不在元素周期表上，它他妈不是真的。\n\n〔现场反应：再问，没……嗯哼。〕",
+      "corrections": [
+        {
+          "original": "Thereesaulationesa",
+          "cleaned": "〔待核，原词破碎〕",
+          "basis": "S40影片对白，机器转录严重破碎，无法辨认原词"
+        },
+        {
+          "original": "everyonem",
+          "cleaned": "everyone",
+          "basis": "S40影片对白，末尾多出m，疑为转录粘连"
+        },
+        {
+          "original": "fuhazi you know fuzi isgezi, it's a fake fuzi fuuzzzi",
+          "cleaned": "fugazi, you know, fugazi, it's a fake, fugazi, fugazi〔待核，原词多次误识〕",
+          "basis": "S41影片对白，影片中该词为fugazi（意大利裔美语俚语，意为'假的'），机器转录为多种变体"
+        },
+        {
+          "original": "are in fucking circles",
+          "cleaned": "or in fucking circles",
+          "basis": "S41影片对白，are疑为or误识，原片台词为'sideways, or in fucking circles'"
+        }
+      ],
+      "id": "P080-B009",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c002"
+    },
+    {
+      "first_segment": 43,
+      "last_segment": 45,
+      "heading": "影片对白：经纪人不创造任何东西，不让客户套现",
+      "text": "〔以下是按机器识别英语所作的中文暂译及残句记录，不是逐句听校的中文字幕；影片人物的说法不作为现实建议。〕\n\n我们不创造任何东西，我们不建造任何东西。所以如果你的客户八块钱买的股票涨到了十六，他高兴得要命，想套现、拿着钱跑回家——你不能让他那么做，因为那就变成真的了。你怎么办？你再给他一个绝妙的主意、一个特别的主意，另一个情境，另一只股票，让他把收益再投进去。然后他每一次都会答应，因为他们他妈上瘾了。你就一遍又一遍地这么干，与此同时他觉得自己在发大财——在账面上他确实在发——但你我这些经纪人，靠佣金每个月往家拿的是实打实的现金。\n\nRight.",
+      "corrections": [],
+      "id": "P080-B010",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c002"
+    },
+    {
+      "first_segment": 46,
+      "last_segment": 54,
+      "heading": "影片对白：成功的两把钥匙之一——保持放松",
+      "text": "〔以下是按机器识别英语所作的中文暂译及残句记录，不是逐句听校的中文字幕；影片人物的说法不作为现实建议。〕\n\n\"太不可思议了，先生，我简直说不出自己有多激动。\"\"你应该激动。做经纪人这行，成功的钥匙有两把。首先——你得保持放松。\"\n\n〔现场反应：你觉得……多多支狗哎〔待核，原词破碎〕。〕\n\n\"Yeah, how many times a week?\"\"Like three, three-four, three-four times maybe.\"\"把这个数字往上加加，在这行那是菜鸟的量。我自己每天至少自慰两次，早上健完身一次，然后午饭后一次。\"\"真的？\"\"嗯。不是为了享受，是因为我他妈需要。\"\n\n\"You're dealing with〔待核，原词破碎：dayal high frequencies acidardeseing〕。\"\"This tip this prescription if you don't〔待核，原词破碎：happen run bathroom anyll be about money〕。",
+      "corrections": [
+        {
+          "original": "多多支狗哎",
+          "cleaned": "〔待核，原词破碎〕",
+          "basis": "S49，机器转录破碎，无法辨认原词"
+        },
+        {
+          "original": "dayal high frequencies acidardeseing",
+          "cleaned": "〔待核，原词破碎〕",
+          "basis": "S53影片对白，机器转录严重破碎，无法辨认原词"
+        },
+        {
+          "original": "This tip this prescription if you dont happen run bathroom anyll be about money",
+          "cleaned": "This tip this prescription if you don't〔待核，原词破碎〕",
+          "basis": "S54影片对白，机器转录严重破碎，后半段无法辨认原词"
+        }
+      ],
+      "id": "P080-B011",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c002"
+    },
+    {
+      "first_segment": 55,
+      "last_segment": 63,
+      "heading": "影片对白：成功的第二把钥匙——可卡因",
+      "text": "〔以下是按机器识别英语所作的中文暂译及残句记录，不是逐句听校的中文字幕；影片人物的说法不作为现实建议。〕\n\n这行成功的第二把钥匙就是这个小东西——可卡因。它能让你保持头脑清醒，还能让你的手指拨号更快，你猜怎么着，那对我有好处。\n\nYes。\n\n〔待核，原词破碎：Revols you follows keep the clients on the fairs will〕……公园全天候开放，24/7/365，每个十年、每个他妈的世纪都如此，这就是游戏的名字。\n\n〔现场反应：嗯，than you……嗯嗯……嗯嗯哼……嗯嗯嗯嗯嗯嗯……误。〕",
+      "corrections": [
+        {
+          "original": "Revols you follows keep the clients on the fairs will",
+          "cleaned": "〔待核，原词破碎〕",
+          "basis": "S58影片对白，机器转录严重破碎，无法辨认原词，仅后半段'park is open 24/7/365'可辨"
+        }
+      ],
+      "id": "P080-B012",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c002"
+    },
+    {
+      "first_segment": 64,
+      "last_segment": 64,
+      "heading": "老师点评：这才是真正的演技",
+      "text": "包括评奖也是这样，总觉得挨打、受虐就是演技。其实不是——挨打受虐或者为角色牺牲，那是一种意志力。演技其实是你看这种戏，这才叫演技，这才是真正的影帝，能让你一秒入戏，让你相信他就是这个角色。包括迪卡普里奥在对面演出来的那种第一天上班的菜鸟——他们叫rookie——的那种尴尬，对吧？老板说一些很不着调的话，你的上司说一些很不着调的话，在公共场合行为很不雅，然后呢……",
+      "corrections": [
+        {
+          "original": "迪卡布利奥",
+          "cleaned": "迪卡普里奥",
+          "basis": "S64，Leonardo DiCaprio的通用中文译名，机器稿误识"
+        }
+      ],
+      "id": "P080-B013",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c002"
+    },
+    {
+      "first_segment": 65,
+      "last_segment": 66,
+      "heading": "第四盘黑色星期一与新工作卖仙股",
+      "text": "这种尴尬但不得不迎合的状态，我们说非常考演技。好，来到第四盘15分钟，黑色星期一股市大跌，行业完蛋了，公司倒闭，需要重新找工作。第五拍来到第18分钟。新工作——他找了一个新工作，那个环境很差，但是可以卖那个仙股。他们叫这个，实际上就是没有上市、私自上市的股票。因为他的天赋异禀，迅速卖出了第一单，开始了新的征程。第六盘22分钟。\n\n〔仙股被解释为未上市/私自上市，是讲师在本课的通俗说法，未核金融定义。〕",
+      "corrections": [
+        {
+          "original": "天赋一禀",
+          "cleaned": "天赋异禀",
+          "basis": "固定搭配，指天生才能"
+        }
+      ],
+      "id": "P080-B014",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 67,
+      "last_segment": 68,
+      "heading": "胖子跟班登场与创业培训",
+      "text": "他的伙伴，那个胖子搭讪登场，成为他的跟班。这个人也是特别能胡扯的一个人设，也非常适合做销售，因为他本身也是个销售。这部电影后面他招募的所有人都是销售，因为在那个年代，销售确实成为了第一批致富的人。来到第七盘27分钟，开始创业，从办公室招募团队，培训大家的技能，包括那个著名的麦比〔待核〕。第八拍31分钟，创业成功，继续他的富裕生活。",
+      "corrections": [
+        {
+          "original": "第棋盘",
+          "cleaned": "第七盘",
+          "basis": "前文顺序为第六盘22分钟，此处应为第七盘"
+        },
+        {
+          "original": "麦比",
+          "cleaned": "麦比〔待核〕",
+          "basis": "不确定所指专有名词，保留原词标疑"
+        }
+      ],
+      "id": "P080-B015",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 69,
+      "last_segment": 71,
+      "heading": "从巅峰写起与新策略：把垃圾股卖给有钱人",
+      "text": "同学们，在这里我要说一下，这部电影基本上是从巅峰开始写的，所以他前面没有讲他是如何苦、如何打拼，因为他上来就是天赋异禀。第九拍32分钟，重新打造公司，经过他老婆的启发，他决定把这些垃圾股卖给有钱人，不能只卖给穷人——有钱人也是可以被说服的。于是产生了公司的新策略。然后第十拍36分钟，公司就飞速发展了，飞速发展赚大钱。第十一拍37分钟，庆祝公司的业绩，逐渐走向疯狂。庆祝仪式上有个比较典型的案例，就是给他的助理剃了个光头。他呢，对女孩子非常不友好。第十二拍来到第40分钟，被执法部门盯上了，对手登场，而且媒体开始称他为华尔街之狼。",
+      "corrections": [
+        {
+          "original": "天赋一禀",
+          "cleaned": "天赋异禀",
+          "basis": "同前"
+        },
+        {
+          "original": "each产生了",
+          "cleaned": "于是产生了",
+          "basis": "口语衔接词，原词疑为语气赘词"
+        },
+        {
+          "original": "PP了一个光头",
+          "cleaned": "剃了个光头",
+          "basis": "结合语境，PP疑为剃的口语化误识"
+        }
+      ],
+      "id": "P080-B016",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 72,
+      "last_segment": 74,
+      "heading": "第一幕结束：对手登场与四幕结构",
+      "text": "我们说第一幕结束的时候，对手登场，威胁开始。同学们，这个故事讲的就是一个销售天才如何走下神坛的这么一个故事线。所以他的第一幕最终把他拉下神坛的那个对手，在第一幕就登场了，然后开始了目标。由于这个电影是被动权的目标，传记体，所以说从这个角度去分。再加上这部电影是三个小时，所以它的四幕其实分得非常规整：“450540”〔原连续数字，具体分组和四幕时长不能确认，不拆成45、05、40〕，基本上是这么一个结论。我们说他被对手盯上，最终这个对手干掉他，第一幕就结束了。他也正式被称之为华尔街之狼，踏上了他的狼的征途。来到第十三拍第二幕，第十三拍41分钟。他这个华尔街之狼的名号走红以后，事业更上一层楼。进入第二幕之后，来了一段游戏时光蒙太奇，伙伴们也纷纷成型了。",
+      "corrections": [
+        {
+          "original": "被动权的目标",
+          "cleaned": "被动权的目标〔待核〕",
+          "basis": "含义不确定，保留原词标疑"
+        },
+        {
+          "original": "450540",
+          "cleaned": "450540〔数字分组待核〕",
+          "basis": "源为连续数字，无法确定四幕分组，不擅加45、05、40。"
+        }
+      ],
+      "id": "P080-B017",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 75,
+      "last_segment": 79,
+      "heading": "第二幕游戏时光蒙太奇与父亲加盟",
+      "text": "父亲也加盟了。进入第二幕的游戏时光，这里是一通蒙太奇，电影进度41分钟开始。〔S75“争到第二幕”指这一处进入第二幕的段落，不据此断言整个第二幕全由蒙太奇构成。〕\n\n〔播放片段，以下仅保留ASR英语，不据常识补专名或完整台词。〕\n〔S76〕是ma。\n\n〔S77〕With E parts, cocaine, testosterone and body fluids Strattons very own Gestala.\n\n〔S78〕第1分钟质逐渐。\n\n在这里父亲有一个不好的预言。像加入父亲、导师这类角色，肯定要放一点flag出来。然后到第15拍50分钟，泳池派对，新姑娘加入。这个泳池派对接着前面纵欲的生活继续往前推。",
+      "corrections": [
+        {
+          "original": "一通蒙开奇",
+          "cleaned": "一通蒙太奇",
+          "basis": "固定术语montage"
+        },
+        {
+          "original": "With E parts, cocaine, testosterone and body fluids Strattons very own Gestala.",
+          "cleaned": "With E parts, cocaine, testosterone and body fluids Strattons very own Gestala.〔待核〕",
+          "basis": "保留原Gestala等词，不猜Gestapo。"
+        },
+        {
+          "original": "争到第二幕",
+          "cleaned": "进入第二幕〔语境整理〕",
+          "basis": "本段说游戏时光开始，不能确定讲师指整个第二幕。"
+        }
+      ],
+      "id": "P080-B018",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 80,
+      "last_segment": 83,
+      "heading": "女鞋IPO商机、新女友与管家偷钱事件",
+      "text": "但是也不能没有信息量。所以这场戏既发现了一个新商机，就是后面那个女鞋IPO的事儿，又发现了一个新的姑娘。在这部片子里叫什么？叫Naomi是吧。第十六拍55分钟开始约会，坠入爱河，又是一段蒙太奇，结束上一段婚姻，开启新的生活。然后第十七拍63分钟，有一个管家偷钱事件，在这里打一个标记——这个管家偷钱事件要不要这场戏没有什么很大的用，单纯的去惹了一下同性这件事。第十八拍65分钟，我们说这个电影亵渎的人还是非常多的，亵渎各种东西。第十八拍65分钟，然后开始处理黑钱，黑户啊、律师啊，对吧？事业线，我回到事业线，回到我们的事业线。第十九拍67分钟求婚这个新的女友，婚前派对、婚礼、游艇、新生活开启。第二十拍71分钟，18个月之后，这段新的婚姻生活又开始吵架了，回到了开头的时间线。我们说这场戏回到开头的时间线。然后第二十一拍77分钟，帮客户IPO。",
+      "corrections": [
+        {
+          "original": "占入爱河",
+          "cleaned": "坠入爱河",
+          "basis": "固定搭配"
+        },
+        {
+          "original": "亵渎的人还是非样多的",
+          "cleaned": "亵渎的人还是非常多的",
+          "basis": "\"非样\"疑为\"非常\"的误识"
+        }
+      ],
+      "id": "P080-B019",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 84,
+      "last_segment": 92,
+      "heading": "IPO激情演讲：推销Steve Madden",
+      "text": "有一场激情演讲。第22拍87分钟，对手逼近。讲师说这场IPO演讲持续了十分钟，非常厉害，可以看看迪卡普里奥的台词功力。\n\n〔下面是影片英文ASR逐段记录，不是校对字幕。可辨内容是在向同事推销Steve及其女鞋生意：他不仅发现潮流，还创造潮流；接着拿几位设计者作比较，谈百货订单，最后用golden ticket与巧克力工厂作比喻。人名“Geio Almani”“Gianni Pisacechi”“Ial Laent”及末尾“Li fucking Waka”等不补成猜定的全名或流利句子。〕\n\n〔S85〕Take a moment to tell you why Steve here is so absolutely off the fucking wall.\n\n〔S86〕Because this man.\n\n〔S87〕Is a creative genius.\n\n〔S88〕This ability, this gift that Steve has, that goes beyond just spotting the hotest shoe trends, Steve's power.\n\n〔S89〕Is that he creates trends, you understand?\n\n〔S90〕Arists like Steve come along once every decade, I'm talking Geio Almani Gianni Pisacechi, Coco Chanel, Ial Laent Steve, come up here for a second, I don't think you all realize.\n\n〔S91〕That Steve Madden is the hottest person in the women's shoe industry with orders going through the roof at every department store in North America right now, we have him here at our office.\n\n〔S92〕We should think our fucking lucky stars. This man is here. This is our golden ticket in a fucking chocolate factory right here. And I want to meet Li fucking Waka. Okay, I want to do with the fucking overs like this get off the fucking stage. get here.",
+      "corrections": [
+        {
+          "original": "对手毕届",
+          "cleaned": "对手逼近",
+          "basis": "结合语境，\"毕届\"疑为\"逼近\"的误识"
+        },
+        {
+          "original": "抵卡李老钟台词功力看一看要吧",
+          "cleaned": "迪卡普里奥的台词功力可以看看",
+          "basis": "\"抵卡李老钟\"疑为迪卡普里奥的误识，\"看一看要吧\"为口语赘词"
+        },
+        {
+          "original": "Take a moment to tell you why Steve here is so absolutely off the fucking wall.",
+          "cleaned": "Take a moment to tell you why Steve here is so absolutely off the fucking wall.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Because this man.",
+          "cleaned": "Because this man.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Is a creative genius.",
+          "cleaned": "Is a creative genius.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "This ability, this gift that Steve has, that goes beyond just spotting the hotest shoe trends, Steve's power.",
+          "cleaned": "This ability, this gift that Steve has, that goes beyond just spotting the hotest shoe trends, Steve's power.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Is that he creates trends, you understand?",
+          "cleaned": "Is that he creates trends, you understand?〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Arists like Steve come along once every decade, I'm talking Geio Almani Gianni Pisacechi, Coco Chanel, Ial Laent Steve, come up here for a second, I don't think you all realize.",
+          "cleaned": "Arists like Steve come along once every decade, I'm talking Geio Almani Gianni Pisacechi, Coco Chanel, Ial Laent Steve, come up here for a second, I don't think you all realize.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "That Steve Madden is the hottest person in the women's shoe industry with orders going through the roof at every department store in North America right now, we have him here at our office.",
+          "cleaned": "That Steve Madden is the hottest person in the women's shoe industry with orders going through the roof at every department store in North America right now, we have him here at our office.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "We should think our fucking lucky stars.",
+          "cleaned": "We should think our fucking lucky stars.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "This man is here. This is our golden ticket in a fucking chocolate factory right here. And I want to meet Li fucking Waka. Okay, I want to do with the fucking overs like this get off the fucking stage. get here.",
+          "cleaned": "This man is here. This is our golden ticket in a fucking chocolate factory right here. And I want to meet Li fucking Waka. Okay, I want to do with the fucking overs like this get off the fucking stage. get here.〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ],
+      "id": "P080-B020",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c003"
+    },
+    {
+      "first_segment": 93,
+      "last_segment": 102,
+      "heading": "影片英文片段：电话、销售动员与财富",
+      "text": "〔接着播放IPO动员演说。以下英文依ASR完整保留，非逐句听校字幕；不将缺失的否定、主语或宾语补成流利英文。〕\n\n〔S93〕All right, we want all you to focus for a second, see those little black boxes, they're called telephones, I'm going to let you on a little secret about these telephones and not going to dial themselves, okay, without you, they're just worthless hunks of plastic, like a loaded M16 without a train re to pull the trigger.\n\n〔S94〕And in the case of the telephone.\n\n〔S95〕It's up to each and every one of you.\n\n〔S96〕My highly trained strattonites.\n\n〔S97〕My killers.\n\n〔S98〕My killers who will not take no for an answer.\n\n〔S99〕fuckinguck warriors who will not hang up the phone until their client either buys or fucking die.\n\n〔S100〕Let me there is no nobility in poverty, I have been a rich man and I have been a poor man, and I choose rich every fucking time.\n\n〔S101〕when I have to face my problems, I show up in the back of a limo wearing a $2,000 suit and a $40,000 gold fucking watch.\n\n〔S102〕Thinks I'm superficial or materialistic. go get a job at fucking McDonald's, because that's why you fucking belong.\n\n〔可辨大意：把黑盒子称为电话，强调电话离不开拨打它的人，并用装填好的M16与扣扳机者作比喻；把员工称为不接受拒绝、直到客户买或死才肯挂电话的战士。接着说贫穷并不高尚，自己经历过贫富，每次都选富，提到豪车、两千美元西装、四万美元金表，并以去麦当劳工作来反击“肤浅、物质”的评价。S93“and not going to dial themselves”“train re”、S102的条件句与why/where仍有识别疑点，以上只是可辨内容整理，不冒充准确原话。〕",
+      "corrections": [
+        {
+          "original": "let you on a little secret",
+          "cleaned": "let you on a little secret〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "train re",
+          "cleaned": "train re〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Let me there is",
+          "cleaned": "Let me there is〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Thinks I'm superficial",
+          "cleaned": "Thinks I'm superficial〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "that's why you fucking belong",
+          "cleaned": "that's why you fucking belong〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ],
+      "id": "P080-B021",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c004"
+    },
+    {
+      "first_segment": 103,
+      "last_segment": 109,
+      "heading": "影片英文片段：旧车新车对比、三种困境与强推股票",
+      "text": "〔下半段演说，源英文记录如下。车型、身旁人物描述、衣着及若干断句严重错识，撤销Pinto、Porsche、degenerate、growth、shirt等由常识补出的确定词。〕\n\n〔S103〕But before you depart this room for the winners.\n\n〔S104〕I want you to take a good look at the person next year go on.\n\n〔S105〕Cause sometime in the not so distant future, you're going to be pulling up to a red light and you beat up old fucking pinnel and that person is going to be pulling up right alongside you in that brand new poors.\n\n〔S106〕Some disgusting wild debe with three days a raiseous stubble in a sleeveless mo crammed in next you a call load full of groceries from a fucking price club. That's who you're gonna be sitting next. So you listen to me and you listen well, Are you behind on your credit card bills, Go pick up the phone and start dialing. is your landlord ready to evict you.\n\n〔S107〕Good, pick up the phone and start dialing Does your girlfriend think you're a fucking worthless loser, Good pick up the phone and start dialing I want you to deal with your problems by becoming rich All you have to do today is pick up that phone.\n\n〔S108〕peak the words that I have taught you, and I will make you richer than the most powerful CEO in the United States of F America I want you to go out there.\n\n〔S109〕I want you to ram Steve Maddenstock down your client' throats till they fucking choke on it till they choke on it and they buy10000 shares, That's what I want You be ferocious, You'd be relentless, You be telephone fucking.\n\n〔可辨内容延续胜者与穷人的对比：让人看身边的同伴，想象未来红灯前自己的旧车和别人新车并排；其后是带侮辱性的同行者/购物物品描述，但具体人貌、衣着和句法不清，不重造一幅确定画面。之后列举信用卡欠款、房东赶人、女友认为自己失败等困境，反复要求拿起电话拨号，通过变富解决问题。又要求说出教过的话，声称能让员工比美国最有权力的CEO更富；最后命令把Steve Madden股票卖给客户，提到买一万股，并强调凶猛、坚持。结尾“telephone fucking”截断，不补后面的称号。所有财富承诺均属影片人物的演说。〕",
+      "corrections": [
+        {
+          "original": "pinnel",
+          "cleaned": "pinnel〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "poors",
+          "cleaned": "poors〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "wild debe",
+          "cleaned": "wild debe〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "raiseous",
+          "cleaned": "raiseous〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "sleeveless mo",
+          "cleaned": "sleeveless mo〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "a call load full",
+          "cleaned": "a call load full〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "peak the words",
+          "cleaned": "peak the words〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Maddenstock",
+          "cleaned": "Maddenstock〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "F America",
+          "cleaned": "F America〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "telephone fucking",
+          "cleaned": "telephone fucking〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ],
+      "id": "P080-B022",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c004"
+    },
+    {
+      "first_segment": 110,
+      "last_segment": 114,
+      "heading": "老师讲解：这场戏的正面意义——用三段式说服别人",
+      "text": "老师：常牛一戏〔待核〕啊。\n\n跟大家说一下，你看像刚才这个，同学们，我为什么说这场电影其实它有些地方还是有正面意义的，它最起码说对了一件事情，就是关于赚钱——如何快速地获得别人的注意力。他刚才说golden ticket啊，这个非常对。你用三段式怎么回答、说服别人？第一段、第一段——\n\n你赚不到钱，是因为你没有买票。先讲一个让他思考、觉得奇怪的事实。什么票呢？坐在有钱人那桌的门票。你没有这个门票，你就没有坐在有钱人那桌。因为有钱人里面有90%的人并不知道咱自己是怎么赚到钱的。\n\n他只是坐对了桌。因为发明方法论的只有10%的人。第三点，你也不需要知道方法论，你不需要知道世界运行的规律，你只需要坐在有钱人那一桌。\n\n这就是三段式啊，三段式正好结合他在讲赚钱，大家去体会一下如何用三段式写台词，包括去说服别人。\n\n〔90%和10%是讲师用“三段式”举例时的说服性断言，未提供统计来源；这里保留的是台词/说服结构示例，不当作关于富人群体的已核实比例。〕",
+      "corrections": [
+        {
+          "original": "常牛一戏",
+          "cleaned": "常牛一戏〔待核〕",
+          "basis": "教师口语，常牛一词无法确定原意，疑为一场牛戏之类说法"
+        }
+      ],
+      "id": "P080-B023",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c004"
+    },
+    {
+      "first_segment": 115,
+      "last_segment": 116,
+      "heading": "FBI逼近与贿赂谈崩",
+      "text": "22拍87分钟，对手逼近，FBI继续调查，主角开始担心，考虑对策〔原“开口对策”，具体措辞未听校〕。然后23拍，主角去约谈对手，试图贿赂对方，结果谈崩了，而且把自己暴露了，正式宣战。我们说故事来到了中点，正式宣战。",
+      "corrections": [
+        {
+          "original": "23盘",
+          "cleaned": "23拍",
+          "basis": "通篇用\"拍\"标记镜头编号，\"盘\"为误识"
+        },
+        {
+          "original": "正式宣价",
+          "cleaned": "正式宣战",
+          "basis": "上下文为对手对抗、谈崩暴露，应为\"宣战\""
+        },
+        {
+          "original": "终点",
+          "cleaned": "中点",
+          "basis": "下一拍S117进入第三幕，87—98分钟处于三小时影片中段，非终局。"
+        }
+      ],
+      "id": "P080-B024",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 117,
+      "last_segment": 118,
+      "heading": "转换目标：海外转移、飞机困境与瑞士银行",
+      "text": "24拍98分钟转换目标了，就是进入第三幕转换目标，开始要把资产转移到海外了，因为主角确实意识到对方要对付自己。25拍100分钟在飞机上闯祸，飞机上闯祸这场戏为什么单拎出来呢？是因为在暗示他的几个困境：药物困境和家庭困境，以及他的伙伴，这些都是暴雷的，他的药物困扰已经很严重了。26拍102分钟去到瑞士的银行，谈如何藏钱。在这场戏里大家也看到，所谓的中立国的这种银行，其实嘴里也不咋地。27拍105分钟进到下一个目标，他在欧洲藏钱的话，需要找一个欧洲亲戚，也就是那个姨妈。\n\n〔对瑞士银行/中立国的评价按讲师对片中情节的说法保留，不外推现实银行行为。〕",
+      "corrections": [
+        {
+          "original": "股是",
+          "cleaned": "就是",
+          "basis": "上下文为\"就是进入第三步\"，应为\"就是\""
+        },
+        {
+          "original": "闯货",
+          "cleaned": "闯祸",
+          "basis": "上下文为飞机上出状况，应为\"闯祸\""
+        },
+        {
+          "original": "在这个店里",
+          "cleaned": "在这场戏里",
+          "basis": "语境为看电影场景中的银行，应为\"在这场戏里\""
+        },
+        {
+          "original": "中帝国",
+          "cleaned": "中立国",
+          "basis": "瑞士为中立国，结合语境应为\"中立国\"〔待核〕"
+        }
+      ],
+      "id": "P080-B025",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 119,
+      "last_segment": 120,
+      "heading": "人肉运钱、团队矛盾与危机爆发",
+      "text": "28拍109分钟，人肉往欧洲运钱，钱藏在人身上。但是开始暗示团队内部有矛盾隐患了，就是他两个伙伴，最不靠谱的两个伙伴有矛盾。29拍112分钟，这个矛盾直接引发危机了，其中一个被警察抓了。30拍115分钟，为了掩盖失误，他的伙伴给他下药，两个人一起嗨。我们说那个胖子确实挺碍事的。31拍118分钟危机爆发，药效也爆发，他试图回家，这也是一场名场面的戏，这场戏拍得也非常有意思——他认为自己是怎么回家的，以及第二天复盘是怎么回家的，特别有意思。",
+      "corrections": [
+        {
+          "original": "闯在人身上",
+          "cleaned": "藏在人身上",
+          "basis": "上下文为人肉运钱，应为\"藏在人身上\""
+        },
+        {
+          "original": "被警他抓了",
+          "cleaned": "被警察抓了",
+          "basis": "\"警他\"为\"警察\"的误识"
+        },
+        {
+          "original": "明场面的戏",
+          "cleaned": "名场面的戏",
+          "basis": "\"名场面\"为常用词，意为经典场景"
+        }
+      ],
+      "id": "P080-B026",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 121,
+      "last_segment": 122,
+      "heading": "家中冲突、急救与危机暂度",
+      "text": "第32拍124分钟，家里发生了与伙伴冲突、急救、濒死、人工呼吸这一连串事情。〔S122主语转写为“女呢”，无法确认，不擅补成妻子与伙伴战斗。〕\n\n第33拍127分钟，醒来后因危险驾驶被警察抓起来。第34拍129分钟，危机暂时过去，但对手盯得更紧了，他产生一个新的解决方案。",
+      "corrections": [
+        {
+          "original": "34盘",
+          "cleaned": "34拍",
+          "basis": "\"盘\"为\"拍\"的误识，通篇用\"拍\"标记镜头编号"
+        },
+        {
+          "original": "女呢",
+          "cleaned": "主语待核，不补妻子",
+          "basis": "S122开头破碎，仅能确认家中冲突、伙伴、急救与濒死动作。"
+        }
+      ],
+      "id": "P080-B027",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 123,
+      "last_segment": 125,
+      "heading": "认罪方案与辞职演说戏引入",
+      "text": "本来是往欧洲运钱，现在又有一个新的解决方案，也就是认罪。认罪的话就代表他要辞职，认罪交罚款，他辞职就不能干这个了。结果来到35拍132分钟，他开始了自己的辞职演说。但是这个人特别是口才太好了，说着说着自己又入戏了，结果撕毁协议，决定继续战斗。而且也呼应了他开场的那个狼之歌，我们来看一下这场戏吧，这场戏写来还是非常不错的。",
+      "corrections": [
+        {
+          "original": "口口才",
+          "cleaned": "口才",
+          "basis": "\"口口\"为重复误识，应为\"口才\""
+        },
+        {
+          "original": "司会协议",
+          "cleaned": "撕毁协议",
+          "basis": "上下文为决定继续战斗，应为\"撕毁协议\"〔待核〕"
+        }
+      ],
+      "id": "P080-B028",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 126,
+      "last_segment": 131,
+      "heading": "影片对白：辞职演说——开场与Kimmy登场",
+      "text": "〔接下来三块为影片辞职演说的英语ASR记录，保留原有残句、人物称呼及金额，不作为校对字幕。Kimmy相关称呼不猜完整姓氏。〕\n\n以下为影片对白：\nI want to thank you all for your years of loyalty and admiration, but the point is this.\nDonnie's leadership along with Nikki Kosoff and Robbie Feinberg moving into key management positions, this place really it's going to be better than ever that I promise see.\nThis is Ellis Island you people Okay who you are, where you're from, whether your relatives came over on the fucking Mayflower or an int from Haiti, this right here the land of opportunity Stratton Oakmont is America.\nAll of you know Kimmy Bels are right Yes we do you Come on Jimmymy, which you probably didn't know is Kimmy was one of the first brokers here, one of Stratton's original 20.\nMost of you met Kimmy, the beautiful, sophisticated woman that she is today, a woman that wears $3000 armmani suits, drives a brand new Mercedes Benz.\nA woman who spends her winters in the Bahamas and the summers in the Hamptons.",
+      "corrections": [
+        {
+          "original": "armmani",
+          "cleaned": "Armani",
+          "basis": "Armani为品牌名，机器误识为armmani"
+        }
+      ],
+      "id": "P080-B029",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 132,
+      "last_segment": 145,
+      "heading": "影片对白：Kimmy往事与情感高潮",
+      "text": "Something kid that I met.\nKimmy that I met didn't have two nickels to rub together.\nShe was a single mom on the balls of a with an eight year old son.\nShe was three months behind on her rent.\nAnd when she came to me and asked me for a job.\nShe asked for a $5,000 advance just so she could pay a son's tuition.\nWhat do.\nYou wrote me a check.\n$25000.\nAnd you know where that is?\nbelved的你。\nBecause I believed in you coming.\nJust like I believe in each and every one of you here today, I fucking love you, Jordan, fucking I fucking love you, I love you, I fucking love you too.\nI love all youI love all you my my.\n\n〔此段关于单亲母亲、八岁儿子、拖欠三个月房租、请求5000美元而收到25000美元的内容，是影片中人物讲述的案例；未核真人事迹。S134、S138、S141—S143多处词句不完整，不推定“belved”为另一人物或地点。〕",
+      "corrections": [
+        {
+          "original": "Kim me",
+          "cleaned": "Kimmy",
+          "basis": "角色名Kimmy，机器误识为\"Kim me\""
+        }
+      ],
+      "id": "P080-B030",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 146,
+      "last_segment": 150,
+      "heading": "影片对白：永不接受拒绝",
+      "text": "For years, I've been telling you guys never to take no for an answer, right?\nPushing to never hang up the phone.\nYou get what you want.\nYou all deserve it.\nYou know this fucking deal that I'm about to sign.",
+      "corrections": [
+        {
+          "original": "You allt deserve it",
+          "cleaned": "You all deserve it",
+          "basis": "\"allt\"为\"all\"的误识"
+        }
+      ],
+      "id": "P080-B031",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c005"
+    },
+    {
+      "first_segment": 151,
+      "last_segment": 165,
+      "heading": "影片演说片段：协议与不接受拒绝的矛盾",
+      "text": "〔继续上一块“即将签署的协议”的影片演说，并不是说已经受罚。以下按源保留，未听校；不将Baring擅改banning，也不补完整的“我要留下”英文台词。〕\n\n〔S151〕Baring me from the securities industry, baring me from stratton.\n\n〔S152〕同。\n\n〔S153〕在没 know。\n\n〔S154〕what it is.\n\n〔S155〕It's me taking no for an answer, you know?\n\n〔S156〕It's them selling me not the other way around.\n\n〔S157〕Maybe in a hypocrite is what it is.\n\n〔S158〕So。\n\n〔S159〕没弄。\n\n〔S160〕回不。\n\n〔S161〕问一问。\n\n〔S162〕那不 leaving.\n\n〔S163〕fuck。\n\n〔S164〕哦。\n\n〔S165〕哦。\n\n〔可辨内容是协议将使自己离开证券业/Stratton，等于接受别人的拒绝、被别人说服，而不是反过来说服别人；又出现hypocrite一词，谈到这与一直要求员工不接受拒绝的矛盾。末尾“那不leaving”等混合残片的确切英文、否定与主语不补写；讲师在S124已经说明他决定继续战斗。〕",
+      "corrections": [
+        {
+          "original": "Baring",
+          "cleaned": "Baring〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "in a hypocrite",
+          "cleaned": "in a hypocrite〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ],
+      "id": "P080-B032",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 166,
+      "last_segment": 168,
+      "heading": "第三幕大危机：从狂欢到全员被捕",
+      "text": "老师讲解说，大危机马上就要到了，因为这是第三幕了嘛，大危机马上就要到。然后第36拍来到138分钟〔原“1138分钟”，由前132、后139分钟推测，未听校；不能改为1小时38分钟〕，那个伙伴出狱之后，他们给大家开party，见证了〔标疑，原转录作\"见证上party\"〕他们继续疯狂、继续藐视法规。然后第37拍来到139分钟，FBI的调查步步逼近〔标疑，原转录作\"BB步步逼近\"〕，开始审问每一个人。\n\n第38拍141分钟，被出卖，抛售股票，欧洲的姨妈〔S118已明确找欧洲亲戚姨妈，不另猜人名〕也挂了，已经放在银行的脏钱也保不住了，整个进入一个大危机。第39拍〔待核，原转录作\"49拍\"，按序列推测应为39拍〕为了挽救这个危机，去摩洛哥遇到海上风暴，打翻了船〔标疑，原转录作\"打决战翻翻船了\"〕，可以说这基本上就是到了绝境。\n\n然后第40拍148分钟被打捞上来，被一艘路过的船打捞上来，包括那个来救他们的飞机还失事了。他认为自己得到了上帝的指引，也就是获得了一个新的方法，重新解决的一个新方法。第41拍139分钟〔待核，139分钟前文已出现，此处数字疑误识〕，主角在拍广告、拍宣传片的时候被抓了。第42拍150分钟，全员被捕、全员被起诉，然后保释。",
+      "corrections": [
+        {
+          "original": "49拍",
+          "cleaned": "39拍（待核）",
+          "basis": "按拍号序列36、37、38、40、41、42推断，49拍疑为39拍之误识"
+        },
+        {
+          "original": "BB步步逼近",
+          "cleaned": "步步逼近（标疑）",
+          "basis": "BB疑为口头重复或机器误识，按语境应为步步逼近"
+        },
+        {
+          "original": "打决战翻翻船了",
+          "cleaned": "打翻了船（标疑）",
+          "basis": "按语境海上风暴翻船，原转录破碎，无法精确还原"
+        },
+        {
+          "original": "1138分钟",
+          "cleaned": "138分钟〔待核〕",
+          "basis": "前132分钟，后139/141分钟；1小时38分钟是98分钟，与上下文不符。"
+        },
+        {
+          "original": "欧洲的阿姨",
+          "cleaned": "欧洲的姨妈",
+          "basis": "S118明确为欧洲亲戚姨妈，未发现需要猜成人名的依据。"
+        }
+      ],
+      "id": "P080-B033",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 169,
+      "last_segment": 175,
+      "heading": "落难、双重背叛与入狱收场",
+      "text": "〔以下关于爱情/友情出卖，是讲师的故事解读；妻子离开、伙伴行为及服刑年数按片中叙述口述保留，不直接当作原著或真人传记事实。〕\n\n第43拍153分钟，落难之后，伙伴对他进行支持，他也开始了比较自律的生活，实际上有一点点要好转的情况了。\n\n然后第44拍〔原转录作\"44排\"〕155分钟，检方又给主角提供了一个方案，就是希望他配合调查，也就是戴上那个窃听器去查其他人，否则将会面临非常漫长的刑期。第45拍157分钟，他的家庭出现危机，妻子要离开他、要离婚，结果他又开始服用毒品了。甚至想带孩子逃跑，失败〔标疑，原转录作\"甚你想卡孩子逃跑啊，失败\"〕。也就是说在这里，他被爱情出卖，你可以理解为爱情出卖。第46拍164分钟，他正式成为了检方的〔标疑，原转录作\"简化的\"〕卧底，回到公司，但是他还是不忍心出卖他的伙伴，后面被他的伙伴给出卖了。\n\n也就是说，上一拍是爱情出卖了他，下一拍是友情出卖了他——他不愿意出卖友情，但是友情出卖了他。第47拍167分钟，检方发现主角被那个伙伴出卖了，警方发现了，把他送进了监狱。但是呢，他也出卖了其他人，这些人也都被抓走了。\n\n然后第48拍170分钟，最终服刑三年。监狱里面的生活简单展示了一下。第49拍172分钟，用一个真人脱口秀结束全片，又回到了那个麦比〔待核〕的名场面。",
+      "corrections": [
+        {
+          "original": "44排",
+          "cleaned": "44拍",
+          "basis": "按前后拍号统一为\"拍\"，\"排\"为同音误识"
+        },
+        {
+          "original": "甚你想卡孩子逃跑",
+          "cleaned": "甚至想带孩子逃跑（标疑）",
+          "basis": "按语境推测，原转录破碎，无法精确还原"
+        },
+        {
+          "original": "简化的卧底",
+          "cleaned": "检方的卧底（待核）",
+          "basis": "按语境为主角配合检方戴窃听器回到公司，\"简化\"疑为\"检方\"误识，但未核原词"
+        },
+        {
+          "original": "麦比",
+          "cleaned": "麦比（待核，不明指代）",
+          "basis": "无法确定\"麦比\"指什么人物或场景，保留原词标待核"
+        }
+      ],
+      "id": "P080-B034",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 176,
+      "last_segment": 184,
+      "heading": "总体故事分析：一个人的坠落与传记体特点",
+      "text": "老师说，我们说这个电影，分钟数非常之长，我拉了49拍，接近50拍的一个情况，三个小时的片子。总体故事讲的是什么？总体的故事就是讲一个人的坠落。由于他的这个坠落并不是主动的——他是被人调查嘛，所以你可以理解他的主故事线确实没有那么的明确。他讲的是坠落。很多同学说是大起大落，其实不是，从高点一直在往下走，基本上是从高点一直在往下走。我们说这是一个传记体的一个故事，叫一个人半生的时光，这样的故事。\n\n那这样的故事有什么特点？老师说，第一个特点，首先是不是有大量的独白？第二，阶段性的目标或者困境不能断，否则就散掉了。因为它时间跨度很长，又没有主目标线，所以它阶段性的目标和困境一直没有断过，也是以此为推进剧情的。",
+      "corrections": [],
+      "id": "P080-B035",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 185,
+      "last_segment": 199,
+      "heading": "最重要的一点：烧钱换场堆出的爽感",
+      "text": "然后第三点，就是稍微用了一下非线性叙事，把后面的一场戏往前提了，因为没有悬念嘛。\n\n最后一点，老师强调是最重要的一点。很多同学可能看这个电影的时候没体会。老师问，我说这个电影好看，这个传记电影好看，最重要的一点是什么？是太花钱。拍了太多场戏了。有的场景就用了几秒，但是耗费了大量的人力物力去拍。同学们，这个电影换场实在是太多了，花了太多钱了，这是一部非常烧钱的电影。\n\n老师说，我们说烧钱的电影不是说做那种特效〔标疑，原转录作\"做段那个特效\"〕，同学们，打仗放炮飞机。是换场呀，换这么多场，消耗这么多人。同学们可以理解，这个戏很爽，其实跟这个非常有关系。消耗的演员可能当时都是创纪录的，消耗的场景和演员都是创纪录的，非常的花钱。这是钱堆出来的一个爽感，这个电影非常的奢侈，拍得非常奢侈。\n\n〔场景与演员用量“创纪录”以及花钱带来爽感，为讲师的判断，本轮未核制作数据或记录。〕",
+      "corrections": [
+        {
+          "original": "做段那个特效",
+          "cleaned": "做那种特效（标疑）",
+          "basis": "按语境推测，\"段\"疑为\"种\"之误识，原转录破碎"
+        }
+      ],
+      "id": "P080-B036",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 200,
+      "last_segment": 213,
+      "heading": "传记体手法：时代烙印的刻意叠加",
+      "text": "另外，我们再来研究一下。他用了一个小小的手法，同学们自己可以记一下。他拍一个传记电影的时候，集合了很多时代元素。拍传记电影，由于是回顾过去的情况，所以他结合了很多时代元素。他利用主角的视角告诉观众，你看当时大家都在用这种东西。比如说我们要拍一个传记电影，从90年代，我会告诉大家，当时大家都会穿什么样的衣服，当时大家都会去吃什么样的餐厅，当时大家会有什么样的零食。\n\n这种时代烙印，对于传记电影〔待核，原转录作\"转据天\"〕也是非常重要的。他是故意加上去的。同学们，你们仔细回顾一下，在这部片子里面，讲了很多当时的时代烙印，帮助大家去共情。",
+      "corrections": [
+        {
+          "original": "转据天",
+          "cleaned": "传记电影（待核）",
+          "basis": "按上下文语境推测为\"传记电影\"，但原词\"转据天\"无法确定，标待核"
+        }
+      ],
+      "id": "P080-B037",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 214,
+      "last_segment": 230,
+      "heading": "传记体怎么写：选取坠落段落与作业",
+      "text": "这个也是我们如果要写——我们说过，我们拉片是为了学习一类影片的写法——这个传记体怎么写？一个人那么漫长的一生，从哪选取哪一段？主故事线怎么去理？\n\n老师说，传记体的故事现在让你写，比如你写——咱们随便布置个作业——比如说你就回忆你们家亲戚，你们家的亲戚里面，你觉得谁最值得拍一个传记故事？当然了，未必够得上能在院线上映的那种级别，但是最起码从你们家的角度，你觉得这个人比较适合做一个传记电影，那你就想选取他的哪一段？\n\n这个电影很明显选取的是一个人的坠落，一个天才的坠落。他是个销售天才呀，很明显是这样子。所以你看，既然确定了我要拍一个销售天才的坠落，那我就拍他坠落的过程，起承转合四幕式。他先搞砸了自己的生活，然后又引起了FBI的注意。然后FBI来干他的时候，他又采取了连续两三次错误的选择——贿赂人家，然后还放纵自己身边的伙伴，然后最后又是给他机会，他不要，对吧？他坚持自己的原则，不去接受对方的和解。明白吗？\n\n我们说你看这个故事，他选的就是这个人的坠落过程。就是说这么屌的一个人，一个天才的销售员，是怎么把自己搞砸了的？\n\n这个主线，是拍传记电影最重要的、最难解决的一个问题，就是把这条主线理出来。另外，你自己要做传记电影的时候，也要记住，咱们说的时代的烙印呀，包括场景和人物的丰富度呀，这些都是……",
+      "corrections": [],
+      "id": "P080-B038",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c006"
+    },
+    {
+      "first_segment": 231,
+      "last_segment": 233,
+      "heading": "传记体电影的观看难点与解法",
+      "text": "挽救传记体电影的一些手法——否则一个传记电影如果没有如此大咖的演员来撑的话，实际上是很无聊的。如果没有这么多大咖演员的演技，再加上不断地转换场景、不断给新的视觉刺激，这种电影肯定是不好看的。",
+      "corrections": [
+        {
+          "original": "来称的话",
+          "cleaned": "来撑的话",
+          "basis": "口语误识，结合上下文订正"
+        }
+      ],
+      "id": "P080-B039",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    },
+    {
+      "first_segment": 234,
+      "last_segment": 236,
+      "heading": "本片观感与推荐缘起",
+      "text": "但是这部电影，没觉得闷是吧？大部分同学并没有觉得闷，三个小时觉得还挺快乐。好吧，这就是我们在这个电影当中要学的东西。传记体确实不那么主流。关于《华尔街之狼》这部电影，我推荐给大家，几个理由。",
+      "corrections": [
+        {
+          "original": "3个小时",
+          "cleaned": "三个小时",
+          "basis": "数字据原课定位理解，机器稿个别数字可能误识，未据此制作精确成片镜头表〔待核〕"
+        }
+      ],
+      "id": "P080-B040",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    },
+    {
+      "first_segment": 237,
+      "last_segment": 239,
+      "heading": "推荐理由一、二：传记写法与销售沟通",
+      "text": "第一个理由，我们借这个电影学习一下传记体怎么写，这个确实是可以写得好看的，未必非得很严肃，或者未必非得很悲情，可以是好看的，这是学的第一个点。\n\n第二个点呢，就是推荐给大家，大家去学习一下这部电影当中一些销售以及与人沟通的精神，我觉得是对我们生活是有帮助的。我们未必要做一个坏人，但是做一个能够……",
+      "corrections": [
+        {
+          "original": "传记题",
+          "cleaned": "传记体",
+          "basis": "同音误识，结合本段上下文订正"
+        }
+      ],
+      "id": "P080-B041",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    },
+    {
+      "first_segment": 240,
+      "last_segment": 240,
+      "heading": "推荐理由三：坏人主角如何让观众共情",
+      "text": "……拥有强大气场、强大商业感染力的一个人，也是不错的。〔承接上一块第二个推荐理由。〕\n\n第三点，我们也学习一下：如果一个故事的主角他不是个好人，对吧？这个电影的主角显然不是个好人，我们如何能够让观众共情，我们可以做一下调查。",
+      "corrections": [],
+      "id": "P080-B042",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    },
+    {
+      "first_segment": 241,
+      "last_segment": 242,
+      "heading": "现场提问与反派角色塑造",
+      "text": "来，同学们，你们有多少人是担心这个主角被抓走的？当然，这与由迪卡普里奥饰演他也有关系，对吧？我们当然知道他是个坏人，他做了太多缺德事了，对吧？但是呢，我们实际上还是站在他这一边的，对吧？很多同学还是站在他这一边的。\n\n就像这种角色怎么去塑造，对吧？怎么去塑造他还有良心的那一面，还是说有兄弟情的那一面，对吧？这个东西也是我们可以值得去研究的。再加上我刚才说过的，时代的这些元素，自己往上加一加。",
+      "corrections": [
+        {
+          "original": "抵卡布利奥",
+          "cleaned": "迪卡普里奥",
+          "basis": "人名同音误识，结合影片演员订正"
+        }
+      ],
+      "id": "P080-B043",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    },
+    {
+      "first_segment": 243,
+      "last_segment": 243,
+      "heading": "小节收束",
+      "text": "好吧。",
+      "corrections": [],
+      "id": "P080-B044",
+      "part": 80,
+      "disposition": "原生模型全文清洗，未逐句听校",
+      "source_job": "p080-c007"
+    }
+  ],
+  "native_threads": [
+    "01a07f33-4027-78b0-abcd-831ff6c3a7de",
+    "01a07f13-6b60-74e3-90e0-d0a333a54f88",
+    "01a07f2f-1601-77f1-9a7b-628d28d0456e",
+    "01a07f32-bb6d-7e60-9f8e-610c024ad933",
+    "01a07f1f-1923-7142-8ed8-7a92324743b6",
+    "01a07f16-194e-78d0-af5d-6de03c28d763",
+    "01a07f35-e4ca-74e2-9a72-1974d74ba3f9"
+  ],
+  "job_reviews": [
+    {
+      "job": "p080-c001",
+      "syntax_repair": null,
+      "boundary_merges": [],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S1—S39并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 1,
+        "last_segment": 39,
+        "segment_count": 39,
+        "block_count": 8,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c001-before-independent-full-review.json",
+        "before_sha256": "86f7e49a6b93bd066db7c25ef4096d49a60152da61fc35add7ca6a8cbdf8a83a",
+        "changes": [
+          "补回S15输给马修不冤的否定，S20第一分钟恢复；净化/进化版本名称显式标疑。",
+          "保留四部个人反复观看的片名来源及深渊人疑点、不猜影片；英文午餐片段原始难辨信息完整保留。",
+          "评分奖项、狼性文化、演员与公司经历等明确归讲师。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": []
+      },
+      "metadata_normalization": [],
+      "unassigned_corrections": []
+    },
+    {
+      "job": "p080-c002",
+      "syntax_repair": {
+        "library": "json-repair 0.63.4",
+        "kind": "Escape inner quotes in known string fields; JSON syntax only",
+        "non_structural_characters_preserved": true
+      },
+      "boundary_merges": [],
+      "lead_full_review": {
+        "reviewer": "Lead",
+        "scope": "P080 S40—S64全部本批次原识别与清洗全文",
+        "length_flag_resolution": "原文主要为英语字符，输出为中文暂译，约0.507字符比不能作为删掉一半内容的证据；已逐段文字对照。",
+        "changes": [
+          "显式标明英语暂译及人物归属",
+          "撤回cant tell误译；恢复两次具体所指",
+          "补回S40破碎原词"
+        ],
+        "limits": "无原音听校；英语识别的缺词与译法仍待核"
+      },
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S40—S64并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 40,
+        "last_segment": 64,
+        "segment_count": 25,
+        "block_count": 5,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c002-before-independent-full-review.json",
+        "before_sha256": "ba55b05690f4875450396318d1e442a5f258bc785bfb19b793cd3390c07705ff",
+        "changes": [
+          "完整核读S40—S64全部ASR与五块正文，未见需要再次改动正文的明确遗漏。",
+          "保留lead_full_review及中文暂译形式；8→16价格、佣金循环、两项所谓成功要素与数字均在；不以英文转中文字符比判断删减。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": [
+          "lead_full_review"
+        ]
+      }
+    },
+    {
+      "job": "p080-c003",
+      "syntax_repair": {
+        "library": "json-repair 0.63.4",
+        "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+        "non_structural_characters_preserved": true
+      },
+      "boundary_merges": [],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S65—S92并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 65,
+        "last_segment": 92,
+        "segment_count": 28,
+        "block_count": 7,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c003-before-independent-full-review.json",
+        "before_sha256": "747d683d42395421eebd49ee5d23549d10e24691d60621e57a94565e0265865d",
+        "changes": [
+          "撤销将450540任意分组，限定游戏时光蒙太奇的局部范围。",
+          "撤销Gestala→Gestapo等猜词；IPO演讲保留全部源英文，不把破碎设计师姓名和末尾台词补成确定名称/字幕。",
+          "仙股定义和时代销售判断保留讲师归属；创业、改卖富人、助理剃头、伴侣和管家段落完整。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": []
+      },
+      "metadata_normalization": [],
+      "unassigned_corrections": []
+    },
+    {
+      "job": "p080-c004",
+      "syntax_repair": null,
+      "boundary_merges": [],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S93—S114并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 93,
+        "last_segment": 114,
+        "segment_count": 22,
+        "block_count": 3,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c004-before-independent-full-review.json",
+        "before_sha256": "793e3aaf5fc176d24e242715e1937e027a6105fed877b3193ad699d826d396ad",
+        "changes": [
+          "两段英语逐段与源对照；撤回流利化补句和Pinto/Porsche等猜定车型，原文与可辨内容整理并存，不删原残句。",
+          "完整保留M16比喻、2000/40000金额、旧新车对比、信用卡/房东/女友三困境及10000股。",
+          "讲师golden ticket三段式论点完整，90%/10%明确为未核口述例。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": []
+      },
+      "metadata_normalization": [],
+      "unassigned_corrections": []
+    },
+    {
+      "job": "p080-c005",
+      "syntax_repair": {
+        "library": "json-repair 0.63.4",
+        "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+        "non_structural_characters_preserved": true
+      },
+      "boundary_merges": [],
+      "lead_review": [
+        "疑点数组内引号转义恢复，正文未改。"
+      ],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S115—S150并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 115,
+        "last_segment": 150,
+        "segment_count": 36,
+        "block_count": 8,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c005-before-independent-full-review.json",
+        "before_sha256": "1f3b0c1727cd1e8da270bf2017a3306e808f992f46dd53212d64d7de2c8eb2dc",
+        "changes": [
+          "中点/第三幕及主角意识到被调查的指代修复。",
+          "S122女呢不擅译妻子，家中冲突/急救/濒死过程保留。",
+          "辞职演说全部英文及单亲母亲金额案例完整；Kimmy/破碎belved不补姓氏或实体，保留原lead_review格式历史。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": [
+          "lead_review"
+        ]
+      },
+      "metadata_normalization": [],
+      "unassigned_corrections": []
+    },
+    {
+      "job": "p080-c006",
+      "syntax_repair": {
+        "library": "json-repair 0.63.4",
+        "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+        "non_structural_characters_preserved": true
+      },
+      "boundary_merges": [],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S151—S230并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 151,
+        "last_segment": 230,
+        "segment_count": 80,
+        "block_count": 7,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c006-before-independent-full-review.json",
+        "before_sha256": "ea52de554cd621d81d82b581d98d246afed8643ae4b2c945c77eb115db8e409b",
+        "changes": [
+          "继续演说时未签协议，不误称被处罚后；保留源英文与残片，不补banning或完整离职宣言。",
+          "1138误成1小时38分钟修为有依据的138分钟推测；欧洲阿姨由前文姨妈互证。",
+          "第三项非线性手法及传记如何取人生段落的提问回源块；原亲戚传记作业完整，无附加要求。",
+          "爱情/友情背叛与拍摄创纪录均标明讲师视角。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": []
+      }
+    },
+    {
+      "job": "p080-c007",
+      "syntax_repair": null,
+      "boundary_merges": [],
+      "independent_full_review": {
+        "date": "2026-09-08",
+        "reviewer": "clean_core_25_34",
+        "scope": "全文顺读P080 S231—S243并对照本文件全部正文块；全章243段均已读完。",
+        "first_segment": 231,
+        "last_segment": 243,
+        "segment_count": 13,
+        "block_count": 6,
+        "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+        "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c007-before-independent-full-review.json",
+        "before_sha256": "ab73a30a25384fa76c0c2a497cdc2685f0601862439db8e96f24b41cf4bc71cd",
+        "changes": [
+          "完整保留传记观影不闷、三项学习目的、坏人主角的共情调查与良心/兄弟情/时代元素讨论。",
+          "S240第二理由尾句移回源块，演员不等于角色本人；没有新增观影或写作作业。"
+        ],
+        "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+        "preserved_review_keys": []
+      },
+      "metadata_normalization": [],
+      "unassigned_corrections": []
+    }
+  ],
+  "length_review_flags": [
+    {
+      "job": "p080-c002",
+      "ratio": 0.6049,
+      "meaning": "Compression review required, not an automatic quality failure or pass."
+    }
+  ],
+  "uncertainties": [
+    "S003：“水肌精华”无法确定指代，保留原词标疑。",
+    "S0005：“深渊人”疑为丹泽尔·华盛顿某部影片名误识，无法确认具体片名。",
+    "S0022：“实几拍”原词不清，疑为“十几拍”，无法确定。",
+    "S0027：“下位史”疑为“发迹史”或“堕落史”误识，上下文提到“从巅峰开始写”“只是简单交代”，无法确定原词。",
+    "S0033—S0039：影片对白为机器转录，多句破碎难辨（如“cocaine anders”“a party firm”“re able to”等），未逐句听校原片，保留原识别文字并标疑，不编造对白。",
+    "S0007：老师说迪卡普利奥“败给谁了来着，我有点忘了”，随后在S0013确认“那一届给了马修”，即马修·麦康纳获最佳男主角，此处为老师课堂回忆，未逐一核对颁奖年份。",
+    "S40 'You got a girlfriend'm married have Thereesaulationesa'——原词严重破碎，疑含人名或对话碎片，无法复原",
+    "S41 fugazi一词机器转录为fuhazi、fuzi isgezi、fuuzzzi等多个变体，据影片台词订正但未逐句听校",
+    "S49 '多多支狗哎'——无法辨认是中文反应还是英语碎片",
+    "S53 'dayal high frequencies acidardeseing'——原词完全破碎，无法辨认",
+    "S54 'happen run bathroom anyll be about money'——原词破碎，后半段无法辨认",
+    "S58 'Revols you follows keep the clients on the fairs will'——原词破碎，仅后半句'park is open 24/7/365'可辨",
+    "S59 'than you'疑为'thank you'误识，未确认",
+    "S63 '误'——不确定是语气词还是'误'字",
+    "S64 '对面'指片中与乔丹对戏的另一方，具体指哪个角色未在本段明确说明，需结合前后文确认",
+    "S68\"麦比\"所指专有名词不确定，可能是公司名或术语，保留原词标疑",
+    "S72\"被动权的目标\"含义不明，保留原词标疑",
+    "S73原450540，分组不清，保持数字串；此前疑点段号写72。",
+    "S77保留E parts、Gestala等源词，不猜Gestapo。",
+    "S84\"对手毕届\"疑为\"对手逼近\"的误识，按语境订正但标注",
+    "S85—S92源英文完整保留；不猜设计师全名、不补Li fucking Waka等词。",
+    "S84\"抵卡李老钟\"疑为迪卡普里奥的误识，按语境订正但标注",
+    "S70\"PP了一个光头\"疑为\"剃了个光头\"，按语境订正但标注",
+    "S93原train re等词保留，不补trained soldier；not相关句式仍未听校。",
+    "S100 Let me there is原样保留，不加tell you。",
+    "S102 Thinks与why原样保留，不补条件句或where。",
+    "S105—S106 pinnel、poors、wild debe、raiseous、sleeveless mo、call load等保留，不猜车型、人物描述或衣着。",
+    "S109：'telephone fucking'后截断，无法确定后续词",
+    "S110：'常牛一戏'教师口语，无法确定原意",
+    "影片英文对白未逐句对照原片，多处误识已标疑但未声称准确",
+    "S115\"开口对策\"疑为\"开始对策\"或\"开口谈对策\"，原词保留",
+    "S116\"正式宣价\"订正为\"正式宣战\"，但原词可能为其他表述",
+    "S117\"闯货\"订正为\"闯祸\"，依据语境但未回原片验证",
+    "S118\"在这个店里\"订正为\"在这场戏里\"，但\"店\"也可能指银行机构本身",
+    "S118\"中帝国\"订正为\"中立国\"，依据瑞士为中立国，但原词待核",
+    "S120\"明场面的戏\"订正为\"名场面的戏\"，依据常用词但未验证",
+    "S122女呢主语不清，不补妻子；保留可辨动作。",
+    "S124\"司会协议\"疑为\"撕毁协议\"，依据上下文但原词待核",
+    "S125\"这场戏写来还是非常不错的\"中\"写来\"用法不确定，也可能是\"想来\"，原词保留",
+    "S127\"that I promise see\"末尾\"see\"疑为误识，原词保留",
+    "S128\"an int from Haiti\"疑为\"an immigrant from Haiti\"，但未逐句校原片",
+    "S129 Kimmy Bels are right称呼不清，不补Belfort或其他姓氏。",
+    "S129 Jimmymy称呼破碎，不补Jimmy或独立人物。",
+    "S132\"Something kid\"疑为\"Some kid\"，原词保留",
+    "S134 on the balls of a残句无法确定，不补惯用短语。",
+    "S138\"What do.\"疑为\"What did I do?\"或对话片段，原词保留",
+    "S142 belved的你残词无法确定，不猜Belvedere等实体。",
+    "S143\"Because I believed in you coming\"末尾\"coming\"疑为误识，原词保留",
+    "S145\"I love all youI love all you my my\"疑似重复误识，原词保留",
+    "S146—S150为影片对白结尾，未逐句校原片译文",
+    "大量英文对白为所播影片台词，未逐句复核原文",
+    "S151—S165完整保留源英文和混合残片；Baring、in a hypocrite、那不leaving均不补流利字幕。",
+    "S166 1138分钟按前132后139推测138分钟；原改1小时38分钟等于98分钟不符，已撤销。",
+    "S16749拍按序列推测39拍；欧洲阿姨由S118姨妈互证，不猜姓名；翻船原词仍待核。",
+    "S168：41拍139分钟中139分钟前文已出现，疑为其他数字误识，待核",
+    "S169：44排应为44拍，同音误识",
+    "S171：甚你想卡孩子逃跑原转录破碎，按语境推测为甚至想带孩子逃跑，标疑",
+    "S172：简化的卧底疑为检方的卧底误识，待核",
+    "S175：麦比的名场面中麦比指代不明，待核",
+    "S194：做段那个特效疑为做那种特效，原转录破碎标疑",
+    "S210：转据天疑为传记电影误识，待核",
+    "S234‘三个小时’据原课定位理解，机器稿个别数字可能误识，未据此制作精确成片镜头表〔待核〕",
+    "S241‘抵卡布利奥’订正为‘迪卡普里奥’，系结合影片演员推断，未逐句听校"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/补充-P080.md",
+  "output_sha256": "4f185587ad156f1c6662e6468703eeae5c00dd133fe7cd2533765805476f8289",
+  "limits": [
+    "Native full-machine-text cleaning with recorded Lead corrections, not full listening or visual review.",
+    "Lead independent review is confined to recorded scopes; no automatic semantic PASS."
+  ]
+}

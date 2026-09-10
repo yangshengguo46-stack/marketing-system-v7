@@ -1,0 +1,14 @@
+{
+  "label": "a-direct",
+  "valid_for_story_comparison": false,
+  "reason": "open included forbidden stage/body; then record without successful creation; model explored old work despite explicit material boundaries; interrupted before a valid story",
+  "native_tool_available": true,
+  "usage_total_including_diagnostics": {
+    "totalTokens": 253426,
+    "inputTokens": 249508,
+    "cachedInputTokens": 206976,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 3918,
+    "reasoningOutputTokens": 1916
+  }
+}

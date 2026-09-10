@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-08T04:35:27.596273+00:00",
+  "branch": "codex/marketing-work-chain",
+  "python_helpers_syntax_passed": 4,
+  "git_diff_check_exit": 0,
+  "updated_entry_links_valid": true,
+  "historical_roadmap_link_issues": [],
+  "book_bytes": 2277828,
+  "book_sha256": "b8f8995a1fb592b4c465534ab46bb6a448a371764798de8cab83733509e5df74",
+  "full_course_check": "full-course-final-checks.json",
+  "fmt_check": "fmt-check.json",
+  "committed_merged_or_pushed": false
+}

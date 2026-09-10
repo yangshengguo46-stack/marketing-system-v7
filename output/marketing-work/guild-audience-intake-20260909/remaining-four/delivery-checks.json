@@ -1,0 +1,110 @@
+{
+  "fruit": {
+    "turnId": "01a08699-d31c-7223-a5f6-bbe360cd8eac",
+    "status": "completed",
+    "durationMs": 51588,
+    "usage": {
+      "totalTokens": 10334,
+      "inputTokens": 8745,
+      "cachedInputTokens": 2872,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 1589,
+      "reasoningOutputTokens": 543
+    },
+    "toolCalls": 0,
+    "characters": 1564,
+    "originalExact": true,
+    "inputExact": true,
+    "memoryOff": true,
+    "sha256": "c8a2ebb9f447e191fd2a4a5c2c6367326dee9ea0ae6120d463834368a4e3d0d0",
+    "gpt6Reference": {
+      "model": "gpt-6-astra",
+      "fork_turns": "none",
+      "task": "/root/fruit_gpt6_reference",
+      "chars": 498,
+      "sha256": "e0866488248d80219b0fea5d8e714ce9f5a60a5cd9ab4c758591ddae174cecb9",
+      "source": "原样保存子智能体final；无完整API请求审计或可比用量"
+    }
+  },
+  "gold": {
+    "turnId": "01a08699-d757-7d03-aba3-c2548db884c4",
+    "status": "completed",
+    "durationMs": 92912,
+    "usage": {
+      "totalTokens": 11798,
+      "inputTokens": 8741,
+      "cachedInputTokens": 2872,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3057,
+      "reasoningOutputTokens": 608
+    },
+    "toolCalls": 0,
+    "characters": 3671,
+    "originalExact": true,
+    "inputExact": true,
+    "memoryOff": true,
+    "sha256": "8de88efb731a89175dba42f36c67ca6c3760ab671e1ca15c7c57a177191b50e4",
+    "gpt6Reference": {
+      "model": "gpt-6-astra",
+      "fork_turns": "none",
+      "task": "/root/gold_gpt6_reference",
+      "chars": 476,
+      "sha256": "03706443161debd9c021f41b8a8283239baf071349cc902633a329288a3015fe",
+      "source": "原样保存子智能体final；无完整API请求审计或可比用量"
+    }
+  },
+  "self": {
+    "turnId": "01a0869a-486c-76d0-b2f2-e7dec3aebe6f",
+    "status": "completed",
+    "durationMs": 163253,
+    "usage": {
+      "totalTokens": 13505,
+      "inputTokens": 8782,
+      "cachedInputTokens": 2872,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 4723,
+      "reasoningOutputTokens": 1031
+    },
+    "toolCalls": 0,
+    "characters": 5790,
+    "originalExact": true,
+    "inputExact": true,
+    "memoryOff": true,
+    "sha256": "62d042711e8f0fec1f87943df771a4e71c29af0f48e371f701c7e49897a78fc5",
+    "gpt6Reference": {
+      "model": "gpt-6-astra",
+      "fork_turns": "none",
+      "task": "/root/self_gpt6_reference",
+      "chars": 885,
+      "sha256": "5c1e872578a54e4685e62fbf63aa904234f64a854984100d7a30666fe959e8c2",
+      "source": "原样保存子智能体final；无完整API请求审计或可比用量"
+    }
+  },
+  "parent": {
+    "turnId": "01a0869a-4cbc-74d1-9a52-6a2604965e4d",
+    "status": "completed",
+    "durationMs": 26203,
+    "usage": {
+      "totalTokens": 9469,
+      "inputTokens": 8741,
+      "cachedInputTokens": 2872,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 728,
+      "reasoningOutputTokens": 122
+    },
+    "toolCalls": 0,
+    "characters": 894,
+    "originalExact": true,
+    "inputExact": true,
+    "memoryOff": true,
+    "sha256": "5ce12a950cf87220e79513fff27304e039d7da709cc6a38084079a9f3018e78d",
+    "gpt6Reference": {
+      "model": "gpt-6-astra",
+      "fork_turns": "none",
+      "task": "/root/parent_gpt6_reference",
+      "chars": 284,
+      "sha256": "5b51d5de84eed5ca4c016bc187a8443640cc0b0eefe48fbd252aabcb9b5880e4",
+      "source": "原样保存子智能体final；无完整API请求审计或可比用量"
+    }
+  }
+}

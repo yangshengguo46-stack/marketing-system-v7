@@ -1,0 +1,62 @@
+{
+  "parts": [
+    {
+      "part": 88,
+      "cid": 29821437004,
+      "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=88",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！.mp4",
+      "sha256": "955d4738354aa73e04906979b2a888703a012fbbbb9be861eff3f86d99369cfc",
+      "actual_duration_seconds": 1969.07898,
+      "duration_seconds": 1970,
+      "bytes": 84133585
+    },
+    {
+      "part": 90,
+      "cid": 29821570920,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=90",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》一.mp4",
+      "sha256": "795a8c00726c926edfb9f4415c18e0ac18c98063c72c8e3fbcb65db0f5cc303a",
+      "actual_duration_seconds": 1036.586984,
+      "duration_seconds": 1037,
+      "bytes": 30426927
+    },
+    {
+      "part": 91,
+      "cid": 29821699723,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》二",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=91",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》二.mp4",
+      "sha256": "a0ca60f747f83177740f65f4324b16e309b47a8e2e9b50567a1c9bfa4cdde2e0",
+      "actual_duration_seconds": 1914.117234,
+      "duration_seconds": 1915,
+      "bytes": 61232418
+    },
+    {
+      "part": 92,
+      "cid": 29821895749,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》三",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=92",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》三.mp4",
+      "sha256": "10823ca6ddea05c147103f7a54aa9d1ff08255a0ae804bf1c9c466bcb2c40e10",
+      "actual_duration_seconds": 2631.313379,
+      "duration_seconds": 2632,
+      "bytes": 74862208
+    }
+  ],
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "full_transcript_read_parts": [
+    88,
+    90,
+    91,
+    92
+  ],
+  "full_read_segment_counts": {
+    "88": 148,
+    "90": 126,
+    "91": 276,
+    "92": 454
+  },
+  "reviewed_at": "2026-09-06T12:26:13.134125+00:00"
+}

@@ -1,0 +1,177 @@
+{
+  "scope": "第1–17课p2–39完整机器稿已读，未逐句听校",
+  "full_read_lessons": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "edges": [
+    {
+      "from_lesson": 1,
+      "to_lesson": 2,
+      "relation": "teacher_explicit_reuse",
+      "material": "真实幻想与共情素材",
+      "evidence": "p5 04:42–05:00 回顾上次幻想作业；随后欲望与恐惧组合",
+      "result": "原幻想作为素材继续使用，未要求交新的完整故事"
+    },
+    {
+      "from_lesson": 2,
+      "to_lesson": 3,
+      "relation": "teacher_explicit_no_assignment_confirmation",
+      "material": "第2课八项教学",
+      "evidence": "p7 04:14–04:27 老师说上一节特意没布置作业",
+      "result": "不可登记一篇第2课八项填空作业"
+    },
+    {
+      "from_lesson": 4,
+      "to_lesson": 5,
+      "relation": "teacher_explicit_requirement_continuation",
+      "material": "自己的第一篇故事",
+      "evidence": "p9 00:17–00:33、05:36–05:52 开始自己的第一个故事；p11 15:09–15:55 具体要求一篇完整八项约1500字故事；p12 18:54–19:33 重复顺叙要求",
+      "result": "同一阶段任务逐步说具体，不算两篇独立作品"
+    },
+    {
+      "from_lesson": 5,
+      "to_lesson": 6,
+      "relation": "teacher_explicit_preparation",
+      "material": "后续将梗概写成剧本的格式准备",
+      "evidence": "第6课插入剧本格式；第7课开头明确从格式插讲回到主顺序",
+      "result": "方法准备，没有明确要求本次把全文改成剧本"
+    },
+    {
+      "from_lesson": 5,
+      "to_lesson": 7,
+      "relation": "teacher_explicit_reuse",
+      "material": "约1500字八项故事",
+      "evidence": "p14 00:16–00:49 明确称此前故事为梗概；19:28–19:35 回去比划表格",
+      "result": "同一自选故事从梗概尝试向五事件／八项大纲发展"
+    },
+    {
+      "from_lesson": 3,
+      "to_lesson": 8,
+      "relation": "teacher_explicit_case_version_change",
+      "material": "想殉职的警察",
+      "evidence": "p8 07:13–11:13 老师临时版女儿已死；p16 02:14–02:47 指采用课代表改写版、妻女在世、想留抚恤金",
+      "result": "后续十序列采用抚恤金版；不同动机不可合并，未展示课代表原稿"
+    },
+    {
+      "from_lesson": 7,
+      "to_lesson": 8,
+      "relation": "teacher_explicit_method_continuation_material_switch",
+      "material": "大纲方法续用，但作业改用共同警察故事",
+      "evidence": "p15 将五事件补到十序列；p17 31:46–33:02 你也不用自己创作了／就写这个故事",
+      "result": "新增一次指定材料的十序列大纲任务，不要求本次继续自选梗概"
+    },
+    {
+      "from_lesson": 8,
+      "to_lesson": 9,
+      "relation": "teacher_explicit_classroom_case_reuse",
+      "material": "警察夜摊场面",
+      "evidence": "p19 02:14–03:51 配角按欺负与被欺负等事件功能进入",
+      "result": "课堂案例续用，不构成老师已评学生警察大纲的证据"
+    },
+    {
+      "from_lesson": null,
+      "to_lesson": 9,
+      "relation": "teacher_explicit_anonymous_submission_feedback",
+      "material": "叛逆少年离家出走作业",
+      "evidence": "p18 09:55–11:03 明确说本班同学交来的作业，指出缺乏理解其行为的前情",
+      "result": "真实口头反馈；未指课号，未展示原稿和改后稿，不挂到第8课"
+    },
+    {
+      "from_lesson": 9,
+      "to_lesson": 10,
+      "relation": "teacher_explicit_theory_recap",
+      "material": "人物弧线作为分析尺",
+      "evidence": "p20 12:33–13:42 再用弧线判复合与独立人物",
+      "result": "理论续用，未要求把已有故事改成复杂叙事"
+    },
+    {
+      "from_lesson": 1,
+      "to_lesson": 11,
+      "relation": "teacher_explicit_reuse",
+      "material": "真实幻想",
+      "evidence": "p23 20:36–21:06 明确回顾第一课幻想并引入如愿以偿",
+      "result": "旧创意材料进入类型方法，没有重交幻想要求"
+    },
+    {
+      "from_lesson": 11,
+      "to_lesson": 12,
+      "relation": "teacher_explicit_method_continuation_classroom_material_change",
+      "material": "十种类型方法；改用共同小蝌蚪题目示范",
+      "evidence": "p25 00:14–00:35回应上课信息过密反馈，09:09–11:41另用简单题目捋类型",
+      "result": "老师现场同题十变，未要求学生交十篇，未续学生警察大纲"
+    },
+    {
+      "from_lesson": 12,
+      "to_lesson": 13,
+      "relation": "teacher_explicit_theory_reuse",
+      "material": "类型故事作为电视剧事件群的组织方法",
+      "evidence": "p31 05:51–06:50 类型故事可用于一段挫折或主角误会",
+      "result": "方法续用，未指定把某蝌蚪版本或旧稿扩成电视剧"
+    },
+    {
+      "from_lesson": 6,
+      "to_lesson": 14,
+      "relation": "teacher_explicit_method_continuation_material_switch",
+      "material": "格式与大纲落成场的困难；改用两段指定成片",
+      "evidence": "p32 00:02–01:46澄清之前格式问题；p33 48:28–49:07两场戏反写作业",
+      "result": "独立反写两场，不是继续警察大纲；课堂播片及讲解先于作业，不能当后续批改"
+    },
+    {
+      "from_lesson": 8,
+      "to_lesson": 15,
+      "relation": "teacher_explicit_feedback_driven_method_recap",
+      "material": "十序列后缺事件的学习困难及抚恤金警察案例",
+      "evidence": "p34 14:21–15:14卡住反馈；p36 11:00–13:39警察AB线",
+      "result": "补方法并续课堂案例；没有展示某份警察作业的改稿"
+    },
+    {
+      "from_lesson": 13,
+      "to_lesson": 15,
+      "relation": "teacher_explicit_theory_reuse",
+      "material": "单列人物关系线",
+      "evidence": "p37 20:47–23:39明确说此前在电视剧课讲过",
+      "result": "电影酌情，电视剧可单列；非强制四张表"
+    },
+    {
+      "from_lesson": 15,
+      "to_lesson": 16,
+      "relation": "teacher_explicit_method_boundary_recap",
+      "material": "类型与节拍分类如何使用",
+      "evidence": "p38 22:15–22:44说可在写完后检查修整",
+      "result": "理论使用边界；不构成新增作业或已讲评旧作业"
+    },
+    {
+      "from_lesson": 5,
+      "to_lesson": 17,
+      "relation": "teacher_explicit_review_arrangement_change",
+      "material": "早期逐份批改安排",
+      "evidence": "p39 01:07–03:37学生规模增加、积压千余份，改共性群批",
+      "result": "第17课不能视为第5课每份作业已批改；也不能继续声称一对一承诺不变"
+    },
+    {
+      "from_lesson": null,
+      "to_lesson": 17,
+      "relation": "teacher_explicit_general_submission_feedback",
+      "material": "已阅部分作业及过往批改经验",
+      "evidence": "p39 02:47–03:37共性群批；24:07–25:56匿名名字；26:43–28:25数份天外来财结局",
+      "result": "真实反馈，未指课号或展示改后稿；建议学员对照自改，无新指定题目"
+    }
+  ],
+  "editorial_inference_policy": "仅把老师明确续用的材料相连；未指课号的作业反馈独立登记，不强配对应作业。"
+}

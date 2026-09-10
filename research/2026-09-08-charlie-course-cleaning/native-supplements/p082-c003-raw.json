@@ -1,0 +1,38 @@
+{
+  "thread_id": "01a07f36-c4ae-7f70-8acf-1e7466b41e49",
+  "turn_start": {
+    "turn": {
+      "id": "01a07f36-c59d-7be0-8327-ef1b1e76ba74",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "messages": [
+    "{\"blocks\":[{\"first_segment\":156,\"last_segment\":158,\"heading\":\"准备在节目中自杀与同事来访\",\"text\":\"有些人的生可能没有意义，但是死可以比生更有意义。那么他在最开始的时候，在第一场戏里面就有这件事情。所以他准备在节目当中自杀。\\n\\n第28拍来到85分钟，同事来访，他把这个同事杀了，因为他现在已经疯了。\",\"corrections\":[{\"original\":\"同事来访同事来访\",\"cleaned\":\"同事来访\",\"basis\":\"同义重复，去重\"},{\"original\":\"已经疯了啊，已经疯了\",\"cleaned\":\"已经疯了\",\"basis\":\"同义重复，去重\"}]},{\"first_segment\":159,\"last_segment\":166,\"heading\":\"放走侏儒：极端心态下的怨恨逻辑\",\"text\":\"当然了，在这里杀人的时候，他放走了一个。一个侏儒，因为他说那是唯一一个对他好的人。很多同学不理解啊，说为什么小丑把女邻居给杀了，把妈妈都给杀了，但是会放过一个跟他同事过的侏儒。\\n\\n同学们是这样：在极端人的心态里，实际上他对母亲是怨恨的，他对那个小侏儒没有怨恨。但是他对那些不爱他的人是有怨恨的。\",\"corrections\":[{\"original\":\"跟她同事过\",\"cleaned\":\"跟他同事过\",\"basis\":\"语境为男性指代，但原词为\"她\"，存疑\"}]},{\"first_segment\":167,\"last_segment\":168,\"heading\":\"穿上战袍奔赴直播的名场面\",\"text\":\"第29拍90分钟，一个名场面，他配上这个BGM，然后穿上战袍奔赴直播，同时也展现了全程都是小丑〔待核〕，甚至追他的警察都被打、被杀。我们说这也是一个名场面，看一眼。这场戏是一个名场面。\",\"corrections\":[{\"original\":\"全程都是小偷\",\"cleaned\":\"全程都是小丑〔待核〕\",\"basis\":\"语境中街头暴动者多为小丑装扮者，但原词\"小偷\"无法确认\"}]},{\"first_segment\":169,\"last_segment\":174,\"heading\":\"直播中改主意：不自杀，杀主持人\",\"text\":\"好，这一拍结束之后，来到第30拍95分钟，正式参加节目。在节目当中面对羞辱，痛斥了一切，并且临时改变了主意，也不自杀了，把那个主持人给杀了。\\n\\n因为他说，没有什么可失去的了，现在已经没有人能伤害自己了，他把能杀害自己的人都杀光了〔待核〕，没有人能伤害自己。他认为自己被伤害了，才会做这些事情。\\n\\n我们看一下。他想象这个演播室，想象过很多次了，因为我们刚才说过，普通人确实是会幻想，站在公众〔待核〕面前，被自己仰视的人认可，确实会经常想象这种空间、这种场景，甚至想象自己领奖，想象自己上节目，对吧？\",\"corrections\":[{\"original\":\"把那个把那个主持人给杀了啊，那个主持人给杀了\",\"cleaned\":\"把那个主持人给杀了\",\"basis\":\"同义重复，去重\"},{\"original\":\"能杀害自己的人都杀杀光了\",\"cleaned\":\"能杀害自己的人都杀光了〔待核〕\",\"basis\":\"\"杀杀光了\"为口吃重复去重；\"杀害\"疑为\"伤害\"口误，但原词存疑不改\"},{\"original\":\"工众\",\"cleaned\":\"公众〔待核〕\",\"basis\":\"语境为站在公众面前，但原词\"工众\"无法确认\"}]},{\"first_segment\":175,\"last_segment\":195,\"heading\":\"节目对白片段与老师穿插点评\",\"text\":\"（影片对白）\"Tell us about this look. When you earlier, you mentioned that this look is not a political statement. All right, that's very not political. I just trying to make people wife and a second.\"〔疑〕\\n\\n又看了一遍这句话：我只希望我的死更有价值。但更我〔疑〕。女孩来了〔疑〕。\\n\\n他跳过了这个笑话，他决定不杀自己了。（影片对白）\"its the policeman dead.\"〔疑〕\\n\\n（影片对白）\"No, no, you cannot talk about that. Yeah, that's not funny. That's the kind of humor we do on the show. Okay, I—yeah I'm sorry, it's just, you know, it's been a few weeks, mu ever since I…\"〔疑〕\\n\\n（影片对白）\"Kill usly Wallt Street guys.\"〔疑〕\\n\\n我改2080万〔疑〕。拿了这个〔疑〕。\\n\\n（影片对白）\"上去当 kill you man on the subway and why should we believe it.\"〔疑〕\\n\\n那是给他个名吗〔疑〕？\\n\\n（影片对白）\"My life is nothing a comedy.\"〔疑〕\\n\\n（影片对白）\"Let's get this straight. You think that killing those guys is funny. I do and I'm tired of pretending it's not. You subject, what they say, all of you, the system that knows so much, you decide what's right or wrong the same way that you decide what's on or not.\"〔疑〕\\n\\n（影片对白）\"Okay, I think I might understand that you movement to become a their why is so guys sidewalk.\"〔疑〕\\n\\n（影片对白）\"You have a problem with Thomas Wayne. Yes, I do. Have you seen what it's like out there, Murray? Do you ever actually leave the studio? Everybody just yells and screams at each other. Nobody selling anymore. Nobody thinks what it's like to be the other guy.\"〔疑〕\\n\\n（影片对白）\"If they meant like Thomas Wayne, everything would fight to be someone like me, to be somebody but themselves, they don't. They think that we'll just sit there and like good little boys that we won't world the wild. I mean much self p making excuse for those young men, not everybody I'll tell you there'.\"〔疑〕\\n\\n哎，我我要上朋友〔疑〕。对个〔疑〕。你说应该是〔疑〕。\\n\\n（影片对白）\"You just wanted to make fun of me. Just like the rest of them, you're not first thing about you about. Look at that because is what you did. What alleged you, your riots out there, to police in critical condition. You're laughing. You're laughing. Someone was killed today because of what you did. I know.\"〔疑〕\",\"corrections\":[{\"original\":\"I just trying to make people wife and a second\",\"cleaned\":\"I just trying to make people wife and a second〔疑〕\",\"basis\":\"影片对白机器转录，后半句无法辨认\"},{\"original\":\"但更我\",\"cleaned\":\"但更我〔疑〕\",\"basis\":\"破碎语句，无法辨认\"},{\"original\":\"its the policeman dead\",\"cleaned\":\"its the policeman dead〔疑〕\",\"basis\":\"影片对白机器转录，无法辨认\"},{\"original\":\"Kill usly Wallt Street guys\",\"cleaned\":\"Kill usly Wallt Street guys〔疑〕\",\"basis\":\"影片对白机器转录，疑似\"Killing those Wall Street guys\"但无法确认\"},{\"original\":\"我改2080万\",\"cleaned\":\"我改2080万〔疑〕\",\"basis\":\"无法辨认语句\"},{\"original\":\"Marray\",\"cleaned\":\"Murray〔待核〕\",\"basis\":\"影片中主持人名为Murray，机器转录为Marray\"}]},{\"first_segment\":196,\"last_segment\":198,\"heading\":\"名声大噪与全城效仿\",\"text\":\"回什么拜来〔疑〕。\\n\\n这拍非常精彩。好，来到三十一拍〔待核〕106分钟啊，刚才这拍11分钟〔疑〕，他名声大噪啊，因为在直播里面办大事了，名声大噪，影响力也大增。然后呢，导致全城的很多效仿者，都在跟在他后面进行用暴力手段去对抗，他们认为可以对抗的东西。\",\"corrections\":[{\"original\":\"山西一拍\",\"cleaned\":\"三十一拍〔待核〕\",\"basis\":\"按拍号顺序应为第31拍，但原词\"山西\"无法确认\"},{\"original\":\"刚才这拍11分钟\",\"cleaned\":\"刚才这拍11分钟〔疑〕\",\"basis\":\"无法确认具体含义\"}]}],\"uncertainties\":[\"S168\"全程都是小偷\"疑为\"小丑\"，但无法确认原词\",\"S172\"杀害自己\"疑为\"伤害自己\"口误，语境为无人能伤害自己，但原词存疑不改\",\"S174\"工众\"疑为\"公众\"，但无法确认\",\"S175影片对白后半句\"I just trying to make people wife and a second\"无法辨认\",\"S177\"但更我\"为破碎语句，无法辨认\",\"S178\"女孩来了\"无法确认是指片中场景还是转录误差\",\"S179影片对白\"its the policeman dead\"无法辨认\",\"S181影片对白\"Kill usly Wallt Street guys\"疑似\"Killing those Wall Street guys\"但无法确认\",\"S182\"我改2080万\"无法辨认，不知是老师点评还是转录误差\",\"S183\"拿了这个\"为破碎片段，无法确认归属\",\"S184影片对白\"上去当 kill you man on the subway and why should we believe it\"严重破碎\",\"S185\"那是给他个名吗？\"无法确认是老师点评还是影片转录\",\"S186影片对白\"My life is nothing a comedy\"疑似\"My life is nothing but a comedy\"但无法确认\",\"S187影片对白\"You subject\"等处破碎，无法确认\",\"S188影片对白严重破碎，几乎整句无法辨认\",\"S189\"Marray\"疑为主持人名\"Murray\"的机器转录误差\",\"S190影片对白多处破碎，\"world the wild\"\"much self p\"等无法辨认\",\"S191—S193为破碎片段\"哎，我我要上朋友\"\"对个\"\"你说应该是\"，无法确认归属和含义\",\"S194影片对白\"you're not first thing about you about\"\"What alleged you\"等处破碎\",\"S196为空白段落\",\"S197\"回什么拜来\"无法辨认\",\"S198\"山西一拍\"疑为\"三十一拍\"，\"刚才这拍11分钟\"含义不明\",\"本段S175—S195大量影片英语对白为机器转录，未逐句听校原片，多处破碎无法辨认，均以〔疑〕标注\"]}"
+  ],
+  "usage": {
+    "total": {
+      "totalTokens": 19637,
+      "inputTokens": 10385,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 9252,
+      "reasoningOutputTokens": 7021
+    },
+    "last": {
+      "totalTokens": 19637,
+      "inputTokens": 10385,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 9252,
+      "reasoningOutputTokens": 7021
+    },
+    "modelContextWindow": 258400
+  },
+  "tool_items": []
+}

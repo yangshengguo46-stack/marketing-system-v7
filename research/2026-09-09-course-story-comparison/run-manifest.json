@@ -1,0 +1,61 @@
+{
+  "model": "gpt-6-astra",
+  "fork_turns": "none",
+  "reasoning_effort": "not explicitly overridden; inherited tool default",
+  "writers": [
+    {
+      "task": "/root/course_story_01_a",
+      "case": "01",
+      "arm": "a",
+      "state": "completed",
+      "first_delivery": "outputs/01-a/story.md"
+    },
+    {
+      "task": "/root/course_story_01_b",
+      "case": "01",
+      "arm": "b",
+      "state": "completed",
+      "first_delivery": "outputs/01-b/story.md"
+    },
+    {
+      "task": "/root/course_story_02_a",
+      "case": "02",
+      "arm": "a",
+      "state": "completed",
+      "first_delivery": "outputs/02-a/story.md"
+    },
+    {
+      "task": "/root/course_story_02_b",
+      "case": "02",
+      "arm": "b",
+      "state": "completed",
+      "first_delivery": "outputs/02-b/story.md"
+    }
+  ],
+  "readers": [
+    "/root/course_story_01_reader",
+    "/root/course_story_02_reader"
+  ],
+  "first_delivery_midturn_feedback": false,
+  "tools": "same available tools, constrained allowed files; writers self-check allowed, no external feedback/network/other agents",
+  "access_evidence": "instruction scope plus each writer/reader file-list self-report; no complete I/O or raw model-request audit",
+  "native_fork_end_to_end": false,
+  "measured_usage": null,
+  "comparable_latency": null,
+  "shared_filesystem_technical_isolation": false,
+  "readers_completed": true,
+  "scoped_revision_turns": [
+    {
+      "task": "/root/course_story_01_a",
+      "feedback": "feedback/01-a.md",
+      "output": "outputs/01-a/story-v2.md"
+    },
+    {
+      "task": "/root/course_story_02_b",
+      "feedback": "feedback/02-b.md",
+      "output": "outputs/02-b/story-v2.md"
+    }
+  ],
+  "total_agent_turns": 8,
+  "first_deliveries_preserved": true
+}

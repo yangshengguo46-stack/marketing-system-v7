@@ -1,0 +1,161 @@
+{
+  "lesson": 25,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 51,
+      "title": "二十五课-观影情绪节拍表25",
+      "cid": 272336072,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=51",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十五课-观影情绪节拍表25.mp4",
+      "sha256": "8d0dd3fc95304c6fc43a7fca9a2ad7bcbf8648183da4304a92f968a78f957044",
+      "duration_seconds": 3108
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "回指《战国》作业与四方面诊断；《加勒比海盗》《阿凡达》等比较结构与元素",
+      "part": 51,
+      "start_seconds": 10,
+      "end_seconds": 639
+    },
+    {
+      "label": "提问、学习与入行教务闲谈",
+      "part": 51,
+      "start_seconds": 643,
+      "end_seconds": 974
+    },
+    {
+      "label": "观影情绪模型范围：老师观点、一般情况；A故事/四幕轴，与B故事情感区分",
+      "part": 51,
+      "start_seconds": 975,
+      "end_seconds": 1111
+    },
+    {
+      "label": "开场吸引注意力，暂以兴奋代表直接刺激，不限单一情绪",
+      "part": 51,
+      "start_seconds": 1112,
+      "end_seconds": 1245
+    },
+    {
+      "label": "入戏：怜、信、爱，对应人物共情",
+      "part": 51,
+      "start_seconds": 1246,
+      "end_seconds": 1310
+    },
+    {
+      "label": "上路：期待或担忧，建立预期",
+      "part": 51,
+      "start_seconds": 1311,
+      "end_seconds": 1387
+    },
+    {
+      "label": "游戏时光：欢乐",
+      "part": 51,
+      "start_seconds": 1388,
+      "end_seconds": 1436
+    },
+    {
+      "label": "期待/担忧放大，观众思考人物未来和选择",
+      "part": 51,
+      "start_seconds": 1437,
+      "end_seconds": 1499
+    },
+    {
+      "label": "中点：第一次小满足，可高兴、惊讶或悲伤",
+      "part": 51,
+      "start_seconds": 1500,
+      "end_seconds": 1578
+    },
+    {
+      "label": "转折：发现前一满足是假，观众生气",
+      "part": 51,
+      "start_seconds": 1579,
+      "end_seconds": 1629
+    },
+    {
+      "label": "灵魂黑夜：难过；插谈伙伴死亡的一般示例",
+      "part": 51,
+      "start_seconds": 1630,
+      "end_seconds": 1724
+    },
+    {
+      "label": "蓄力想通后的欣慰，转向反击的激动",
+      "part": 51,
+      "start_seconds": 1726,
+      "end_seconds": 1803
+    },
+    {
+      "label": "结局大满足，可大高兴/悲伤，并可能反转",
+      "part": 51,
+      "start_seconds": 1804,
+      "end_seconds": 1854
+    },
+    {
+      "label": "悬念带来紧张：展开、加强、爆发、结尾反转，叠在主线轴上",
+      "part": 51,
+      "start_seconds": 1856,
+      "end_seconds": 2093
+    },
+    {
+      "label": "《摇滚校园》故事及逐节点观影情绪对照",
+      "part": 51,
+      "start_seconds": 2097,
+      "end_seconds": 2690
+    },
+    {
+      "label": "《摇滚校园》假身份悬念线：冒名、风险扩大、败露、成为真音乐老师",
+      "part": 51,
+      "start_seconds": 2691,
+      "end_seconds": 2903
+    },
+    {
+      "label": "使用表检查自己作品，重申一般规律；末尾电影演出片段",
+      "part": 51,
+      "start_seconds": 2905,
+      "end_seconds": 3108
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回指上课《战国》分析和已经布置的练习，提醒多练多写。",
+      "part": 51,
+      "start_seconds": 13.478,
+      "end_seconds": 34.148,
+      "submission_spec": "未新增或修改第24课梗概要求。",
+      "teacher_review": "没有呈现学生交稿或批改，只口头提醒已经布置。",
+      "uncertainty": "“我也布置了作业，大家可以自己练习练习”是回指，不是新的题目。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "不记得《摇滚校园》剧情的同学，可再看一次，对照观影情绪及假身份悬念线。",
+      "part": 51,
+      "start_seconds": 2889.35,
+      "end_seconds": 2902.828,
+      "submission_spec": "未规定拉片表、字数、提交。",
+      "teacher_review": "本课教师给对照分析，不是回收学生答案。",
+      "uncertainty": "复习观影建议。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "实际写作时，按本课情绪脉络/表检查情绪是否到位，自行体会。",
+      "part": 51,
+      "start_seconds": 2905.414,
+      "end_seconds": 2939.884,
+      "submission_spec": "课堂自查建议，未规定统一交表、故事题目或提交要求。",
+      "teacher_review": "未指定讲评。",
+      "uncertainty": "教师重申一般规律，不能每片百分百准确。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    51
+  ],
+  "limits": [
+    "P51全文机器稿已读，未逐句听校。",
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。此结论指本课新作业，不否认开头明确回指24课已有作业。",
+    "模型全部描述观众情绪，不能替换为角色心理；老师两次强调个人观点/一般情况，不适用于每部片百分之百。",
+    "“50万字磨合”、一晚8000字、男二65分钟等是举例/经验话语，不是本课量化提交标准。",
+    "34:15原帧核四幕与情感B/情绪A板书；50:00原帧核末尾为《摇滚校园》演出片段，非新增作业口述。"
+  ]
+}

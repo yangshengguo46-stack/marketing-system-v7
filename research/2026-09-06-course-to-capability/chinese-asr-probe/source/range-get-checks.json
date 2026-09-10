@@ -1,0 +1,44 @@
+{
+  "method": "Post-download 32-byte GET from the start of each original range; captures HTTP 206 and Content-Range, compares body to SHA-verified archive. Original 4 large GET response headers were not retained.",
+  "checks": [
+    {
+      "original_range_index": 0,
+      "requested_range": "73216000-73216031",
+      "exit_code": 28,
+      "headers": [],
+      "body_bytes": 0,
+      "matches_archive_slice": false
+    },
+    {
+      "original_range_index": 1,
+      "requested_range": "95662721-95662752",
+      "exit_code": 0,
+      "headers": [
+        "HTTP/2 302 ",
+        "content-length: 0",
+        "HTTP/2 206 ",
+        "accept-ranges: bytes",
+        "content-range: bytes 95662721-95662752/163002883",
+        "content-length: 32"
+      ],
+      "body_bytes": 32,
+      "matches_archive_slice": true
+    },
+    {
+      "original_range_index": 2,
+      "requested_range": "118109442-118109473",
+      "exit_code": 28,
+      "headers": [],
+      "body_bytes": 0,
+      "matches_archive_slice": false
+    },
+    {
+      "original_range_index": 3,
+      "requested_range": "140556163-140556194",
+      "exit_code": 28,
+      "headers": [],
+      "body_bytes": 0,
+      "matches_archive_slice": false
+    }
+  ]
+}

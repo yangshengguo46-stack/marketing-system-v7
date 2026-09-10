@@ -1,0 +1,231 @@
+{
+  "part": 92,
+  "title": "编剧视角拉片励志电影《肖申克的救赎》三",
+  "parts": [
+    92
+  ],
+  "source": {
+    "part": 92,
+    "cid": 29821895749,
+    "title": "编剧视角拉片励志电影《肖申克的救赎》三",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=92",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》三.mp4",
+    "sha256": "10823ca6ddea05c147103f7a54aa9d1ff08255a0ae804bf1c9c466bcb2c40e10",
+    "bytes": 74862208,
+    "mtime_ns": 1788682396632080848,
+    "actual_duration_seconds": 2631.313379
+  },
+  "full_transcript_read_parts": [
+    92
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p092.json",
+  "transcript_sha256": "c1f5e6578b56e053515347427faf53906c965f6fc7597c9983a395bb8849b192",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 454,
+    "total": 454
+  },
+  "reading_method": "最终JSON454段分1–100/101–200/201–320/321–454按原序完整阅读，非关键词抽样",
+  "reviewed_at": "2026-09-06T12:25:01.780058+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿；英文放映段失真，术语和人名有误识，未逐句听校",
+  "teaching_nodes": [
+    {
+      "label": "首中尾呼应与开场口误修正",
+      "part": 92,
+      "start_seconds": 11.782,
+      "end_seconds": 78.508,
+      "summary": "瑞德三假释，安迪银行家身份与终局呼应；开场地点随后纠正庭审。"
+    },
+    {
+      "label": "四阶段定义与第1–7包的起",
+      "part": 92,
+      "start_seconds": 79,
+      "end_seconds": 212,
+      "summary": "不用固定分钟切，进入制度的不适应。"
+    },
+    {
+      "label": "第8–21包的承",
+      "part": 92,
+      "start_seconds": 213,
+      "end_seconds": 328,
+      "summary": "主动寻希望、发挥才干、达到监狱内阶段顶点。"
+    },
+    {
+      "label": "第22–26包转与第27–31包合",
+      "part": 92,
+      "start_seconds": 329,
+      "end_seconds": 533,
+      "summary": "待遇背后的犯罪代价、汤米死亡、反思与自由。"
+    },
+    {
+      "label": "重串适应—代价—恢复自我的过程",
+      "part": 92,
+      "start_seconds": 534,
+      "end_seconds": 787,
+      "summary": "不要将初看信息一律改成逃狱任务。"
+    },
+    {
+      "label": "一句话与被制度化类型",
+      "part": 92,
+      "start_seconds": 787,
+      "end_seconds": 938,
+      "summary": "外来者与制度的关系；成片反推非普遍唯一模板。"
+    },
+    {
+      "label": "救赎主题讨论与庭审片段",
+      "part": 92,
+      "start_seconds": 939,
+      "end_seconds": 1241,
+      "summary": "教师宗教和道德解释；片名说法未核，不作事实。"
+    },
+    {
+      "label": "与金羊毛、伙伴之情区别",
+      "part": 92,
+      "start_seconds": 1241,
+      "end_seconds": 1424,
+      "summary": "区别叙述主线和暗中行动，不否认一直挖洞。"
+    },
+    {
+      "label": "瑞德旁白的需要与局限",
+      "part": 92,
+      "start_seconds": 1424,
+      "end_seconds": 1678,
+      "summary": "亲历感、二十年跨度、智慧表达，不是一概禁用旁白。"
+    },
+    {
+      "label": "圣经功能与旧练习宗教符号问题",
+      "part": 92,
+      "start_seconds": 1678,
+      "end_seconds": 1899,
+      "summary": "藏物、伏笔、信仰；机械搬用和机械替换都不足。"
+    },
+    {
+      "label": "唯一无辜主角与配角群像现场推演",
+      "part": 92,
+      "start_seconds": 1900,
+      "end_seconds": 2083,
+      "summary": "以罪责和适应状态差异构造配角；瑞德是讲述者。"
+    },
+    {
+      "label": "制度故事结构迁移示范",
+      "part": 92,
+      "start_seconds": 2084,
+      "end_seconds": 2317,
+      "summary": "转学生、医院、帮派；未来征稿条件句非新作业。"
+    },
+    {
+      "label": "激励事件例外",
+      "part": 92,
+      "start_seconds": 2318,
+      "end_seconds": 2398,
+      "summary": "入狱是现状，强设定人物自然求自由；本片激励不明显。"
+    },
+    {
+      "label": "AB与呈现/行动区分",
+      "part": 92,
+      "start_seconds": 2398,
+      "end_seconds": 2462,
+      "summary": "安迪外在与内在自由；瑞德成长不自动等于B。"
+    },
+    {
+      "label": "道具位置与催化剂主角答疑",
+      "part": 92,
+      "start_seconds": 2462,
+      "end_seconds": 2520,
+      "summary": "提前隐藏而不点透，安迪弧线不明显也可偏催化剂。"
+    },
+    {
+      "label": "非人反派外部化与翻案结局选择",
+      "part": 92,
+      "start_seconds": 2520,
+      "end_seconds": 2631.313379,
+      "summary": "钱等具体困难；邪恶制度对立下释放结局会削弱本片选择。"
+    }
+  ],
+  "examples": [
+    {
+      "label": "四阶段重组同一31个信息包",
+      "start_seconds": 79,
+      "end_seconds": 787,
+      "teaching_point": "按阶段目的、所得和代价重新聚合，不按固定分钟或仅把全部动作当逃狱任务"
+    },
+    {
+      "label": "圣经三重功能与机械替换反例",
+      "start_seconds": 1626,
+      "end_seconds": 1899,
+      "teaching_point": "道具实际用途、前后铺垫、人物生活关联；宗教名词本身不产生效果"
+    },
+    {
+      "label": "给无辜主角设计有差异的配角",
+      "start_seconds": 1932.422,
+      "end_seconds": 1986.636,
+      "teaching_point": "同一对立中用不同罪责、悔改及去留状态形成群像"
+    },
+    {
+      "label": "转学生进入班级的结构迁移",
+      "start_seconds": 2145.478,
+      "end_seconds": 2300,
+      "teaching_point": "不适应、适应获地位、代价、重找自己再离开；课堂示范非新交稿"
+    },
+    {
+      "label": "入狱不是激励事件",
+      "start_seconds": 2318.47,
+      "end_seconds": 2398.028,
+      "teaching_point": "老师明确本片原始目标激励不明显，不强行填早课训练表"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回顾练习/作业中机械照搬圣经等宗教元素、再机械替换佛经道经两类问题，说明名称替换仍未解决故事功能和生活关联。",
+      "part": 92,
+      "start_seconds": 1678,
+      "end_seconds": 1899,
+      "submission_spec": "既往练习的一般反馈；未给原题号、具名全文稿、当前新提交格式/字数/期限/渠道。",
+      "teacher_review": "29:04.966–29:07.820明确称这些问题出现在练习/作业；现场解释两类错误及例子，但没有逐稿对照改写。",
+      "uncertainty": "原作业对应关系未说明，不能据此标记某个编号作业完整回收；文化概括不作普遍事实。"
+    }
+  ],
+  "practice_suggestions": [
+    {
+      "kind": "classroom_exercise",
+      "task": "现场给监狱中唯一无辜的主角设计配角；从不同罪责、悔改与去留状态建立对照。",
+      "part": 92,
+      "start_seconds": 1932.422,
+      "end_seconds": 1986.636,
+      "submission_spec": "课堂设问，教师随即示范；未布置课后完整故事、字数、期限或渠道。",
+      "teacher_review": "示范有罪不悔改、悔改却出不去、不愿出去、执法外表下犯罪等人物。",
+      "uncertainty": "课堂互动无完整学生提交稿。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "用转学生进入班级的例子迁移外来者与制度的阶段关系，延伸想到医院、帮派。",
+      "part": 92,
+      "start_seconds": 2145.478,
+      "end_seconds": 2259.34,
+      "submission_spec": "课堂类比和未来使用建议；20/30拍及约100分钟不是当前作业规格。",
+      "teacher_review": "教师示范不适应、适应并获地位、付出代价、重找自己后离开的阶段。",
+      "uncertainty": "未来征稿/比赛/作业为条件句，没有当前正式征稿。"
+    }
+  ],
+  "actual_assignment_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校。一般旧作业反馈与课堂设问/迁移示范单列，没有新课后交稿。",
+  "connections": [
+    "接P90–91同片31个信息包，按阶段目的重新聚合并解释类型选择。",
+    "补充核心第28课中点、22课内外自由、27课视角；旁白需要不等于信息事件规则失效。",
+    "同片激励事件不明显、主角可偏催化剂，不能泛化早课初学训练约束。",
+    "P91允许瑞德男二/配角，本P又收紧称连男二都谈不上；稳定判断是安迪统率主行动，保留标签差异。"
+  ],
+  "uncertainties": [
+    "教师片名来源、原小说叙述方式、影视史及社会宗教普遍性说法未另核，不作为已核实事实。",
+    "前文无辜—共犯—恢复自我的较强变化与后文弧线不明显/催化剂说法存在侧重张力，保留。",
+    "电影对白英文ASR失真；不据此重建台本。",
+    "39:24截图截到被否定的引句，不能孤立解读；39:27字幕与整段否定上下文连读。"
+  ],
+  "limits": [
+    "最终454段全文顺读，未逐句听校；仅关键点字幕抽核。",
+    "成片解释为教师反推，非原作者实际创作过程记录。",
+    "文化和宗教概括不作元素禁用规则；罪责与能力贬义措辞不作现实人群判断。",
+    "翻案会削弱对立的说法只针对老师本片邪恶制度的选择，不一般化到现实或所有制度故事。"
+  ]
+}

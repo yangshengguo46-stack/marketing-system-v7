@@ -1,0 +1,624 @@
+{
+  "lesson": 3,
+  "source_parts": [
+    {
+      "part": 7,
+      "source_json_sha256": "a92861c862169ded217ec85cd26e1947a610b5cbd575e579baefa98c6884a00c",
+      "segment_count": 398
+    },
+    {
+      "part": 8,
+      "source_json_sha256": "c172614c951fc36fa60fd5145afd9238cfd23cb2572195fecddeaf8aaa7cae19",
+      "segment_count": 526
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L03-B001",
+      "part": 7,
+      "first_segment": 1,
+      "last_segment": 34,
+      "heading": "回顾三要素及其八个细项",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "分四分三个小要素",
+          "cleaned": "分四——分三个小要素",
+          "basis": "保留源 S012 的数量改口，后续只列身份、欲望、动作三项"
+        },
+        {
+          "original": "冀中的身份",
+          "cleaned": "人物的身份；原短句标疑",
+          "basis": "S013、S015 明确列身份；S014 修饰语无足够证据，未猜补"
+        },
+        {
+          "original": "主力／附驾值／勾壑",
+          "cleaned": "阻力／负价值／沟壑",
+          "basis": "S023–S034 同段已明示阻力、正负价值；“勾壑”与前述沟壑同词"
+        }
+      ]
+    },
+    {
+      "id": "L03-B002",
+      "part": 7,
+      "first_segment": 35,
+      "last_segment": 60,
+      "heading": "把八项串起来：原理简单，精彩还要另做功夫",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "九九八西斤呢",
+          "cleaned": "保留机稿并标疑",
+          "basis": "没有可靠上下文可确定这一举例，未猜成八十一难或取经"
+        },
+        {
+          "original": "抱上这个大锤",
+          "cleaned": "抱着人家的大腿",
+          "basis": "找错妈妈、抱上对象的局部语义；词形仍属上下文订正，未听校"
+        },
+        {
+          "original": "母子怜心",
+          "cleaned": "母子连心",
+          "basis": "紧接“母子情深”的惯用表达"
+        },
+        {
+          "original": "附加值",
+          "cleaned": "负价值",
+          "basis": "同课正负价值角力的明示上下文"
+        },
+        {
+          "original": "我上一节课啊，我特意没布置作业",
+          "cleaned": "我上一节课特意没布置作业",
+          "basis": "已有课程/第03课.md 记录 P007 04:16 已核字幕证据"
+        }
+      ]
+    },
+    {
+      "id": "L03-B003",
+      "part": 7,
+      "first_segment": 61,
+      "last_segment": 79,
+      "heading": "本课自己造故事：先选警察抓坏人",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "陈思成",
+          "cleaned": "陈思诚",
+          "basis": "中国演员、汉语、泰国唐人街探案片的明确人名语境；未补新作品名"
+        }
+      ]
+    },
+    {
+      "id": "L03-B004",
+      "part": 7,
+      "first_segment": 80,
+      "last_segment": 98,
+      "heading": "普通警察故事的欲望、动作、问题和阻力",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "盛个阳善",
+          "cleaned": "惩恶扬善",
+          "basis": "警察维护正义的同句固定表达"
+        },
+        {
+          "original": "卷弗",
+          "cleaned": "卷福",
+          "basis": "《神探夏洛克》、华生等明确语境"
+        },
+        {
+          "original": "生产离婚关系",
+          "cleaned": "家庭、离婚关系一类问题，并保留原词标疑",
+          "basis": "只整理可辨认的家庭阻力，无法确定的列举不猜"
+        }
+      ]
+    },
+    {
+      "id": "L03-B005",
+      "part": 7,
+      "first_segment": 99,
+      "last_segment": 134,
+      "heading": "八项都齐了，为什么还是不好看？",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "打扰了邪哥",
+          "cleaned": "打倒邪恶",
+          "basis": "S103–S107 明确“正义战胜邪恶”"
+        },
+        {
+          "original": "把个部分都卡上了",
+          "cleaned": "八个部分都对上了",
+          "basis": "本段回收八要素的明确上下文"
+        },
+        {
+          "original": "这一行给他保留，就是我们的曾经",
+          "cleaned": "先保留刚才原始版本",
+          "basis": "S133–S134 结合先列普通故事再修改的连续讲授动作；不扩写板书内容"
+        }
+      ]
+    },
+    {
+      "id": "L03-B006",
+      "part": 7,
+      "first_segment": 135,
+      "last_segment": 183,
+      "heading": "身份：加一个含负价值的定语，讲给朋友听",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "9乘5的几率",
+          "cleaned": "很大可能；概率原词标疑",
+          "basis": "数值不可靠，无字幕证据，未推断为九成五"
+        },
+        {
+          "original": "附加值／副价值",
+          "cleaned": "负价值",
+          "basis": "课程/第03课.md 记录 P007 16:22 板书“含负价值的定语”已核"
+        },
+        {
+          "original": "升班附加值",
+          "cleaned": "生搬负价值",
+          "basis": "前后“最简单粗暴”“直接”及邪恶的直接套入语境"
+        },
+        {
+          "original": "片面的争议",
+          "cleaned": "片面的正义",
+          "basis": "S173–S177 连续列举不同的正义"
+        }
+      ]
+    },
+    {
+      "id": "L03-B007",
+      "part": 7,
+      "first_segment": 184,
+      "last_segment": 210,
+      "heading": "用教师试验反差，并修正“加负价值”的说法",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "鬼位teach欧尼子反正龙师",
+          "cleaned": "作品名称保留机稿并标疑",
+          "basis": "无已核字幕或充分上下文，不猜具体作品名"
+        },
+        {
+          "original": "加一个负加值呃，不是加一个……含有主题里面附加值的定语",
+          "cleaned": "加一个负价值——不，是给人物身份加一个含有主题中负价值的定语",
+          "basis": "保留 S203–S207 改口，术语依据已核板书"
+        }
+      ]
+    },
+    {
+      "id": "L03-B008",
+      "part": 7,
+      "first_segment": 211,
+      "last_segment": 250,
+      "heading": "欲望：抽象正义为什么不够，香蕉为什么够",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "投子／捉狮子",
+          "cleaned": "猴子／捉虱子",
+          "basis": "同段猴子互相捉虱子的明确动作语境"
+        },
+        {
+          "original": "附加值",
+          "cleaned": "负价值",
+          "basis": "延续已核板书术语"
+        },
+        {
+          "original": "什么样的正义能让猴子抬头",
+          "cleaned": "什么东西能让猴子抬头",
+          "basis": "后续立即回答原始欲望并举饥饿；未将正义重新定义为具体欲望"
+        }
+      ]
+    },
+    {
+      "id": "L03-B009",
+      "part": 7,
+      "first_segment": 251,
+      "last_segment": 284,
+      "heading": "争偶、复仇、上位：继续检验原始欲望",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "他又逮走了，他没逮到",
+          "cleaned": "保留机稿并标疑",
+          "basis": "演示动作不清，不据爱情主题猜具体争偶细节"
+        }
+      ]
+    },
+    {
+      "id": "L03-B010",
+      "part": 7,
+      "first_segment": 285,
+      "last_segment": 315,
+      "heading": "动作要有对象，核心问题形成持续的悬念",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "极物动词",
+          "cleaned": "及物动词",
+          "basis": "S288–S289 已明确“及物”且后续“后面接名词”解释一致"
+        },
+        {
+          "original": "问题我到世界了",
+          "cleaned": "接下来到事件，说问题",
+          "basis": "S296 明确“我们事件这里来讲问题”"
+        }
+      ]
+    },
+    {
+      "id": "L03-B011",
+      "part": 7,
+      "first_segment": 316,
+      "last_segment": 361,
+      "heading": "三层阻力：环境、对手、自身",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "主力／主主力／副主力",
+          "cleaned": "阻力／主要阻力／次要阻力",
+          "basis": "S317–S328 明确讨论阻力与组合"
+        },
+        {
+          "original": "来自怀",
+          "cleaned": "来自环境",
+          "basis": "后段即展开警局工作环境"
+        },
+        {
+          "original": "叛念",
+          "cleaned": "某种念头；原词标疑",
+          "basis": "与正义斗争的关系明确，但具体词不能确认"
+        }
+      ]
+    },
+    {
+      "id": "L03-B012",
+      "part": 7,
+      "first_segment": 362,
+      "last_segment": 398,
+      "heading": "结果：绕过动作，实现欲望",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "欲网／结目",
+          "cleaned": "欲望／结果",
+          "basis": "S378–S379 及同课重复明确术语"
+        },
+        {
+          "original": "卖催饼的",
+          "cleaned": "卖炊饼的",
+          "basis": "同段偷饼、卖饼语境，炊饼作词形规范；未听校"
+        }
+      ]
+    },
+    {
+      "id": "L03-B013",
+      "part": 8,
+      "first_segment": 1,
+      "last_segment": 29,
+      "heading": "主题：使用朴素、明确的正价值",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "正价值负加值／唱门／门",
+          "cleaned": "正价值负价值／窍门",
+          "basis": "上下文继续逐项方法、后文明确谈主题窍门"
+        }
+      ]
+    },
+    {
+      "id": "L03-B014",
+      "part": 8,
+      "first_segment": 30,
+      "last_segment": 70,
+      "heading": "从邪恶、胆小，推进到迫切想牺牲的警察",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "附加值／刑径／定义",
+          "cleaned": "负价值／刑警／定语",
+          "basis": "前后重案组、人物定语的明确语境，负价值依据已核板书"
+        },
+        {
+          "original": "殉职殉职的殉是怎么写呢……换个词吧，想要牺牲",
+          "cleaned": "保留问字、否定双立人及改写牺牲的过程",
+          "basis": "S053–S058 的现场改口"
+        }
+      ]
+    },
+    {
+      "id": "L03-B015",
+      "part": 8,
+      "first_segment": 71,
+      "last_segment": 93,
+      "heading": "吸引注意之外，还要可信和共情",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "上山是人",
+          "cleaned": "上身是人",
+          "basis": "下身是狗的上下文对照"
+        },
+        {
+          "original": "但也不可能是要揍你",
+          "cleaned": "肯否关系标疑，只保留“揍你”的打趣",
+          "basis": "无充分证据确定“不”的有无，未替讲师补定"
+        },
+        {
+          "original": "第一要物",
+          "cleaned": "首要任务",
+          "basis": "S085–S086 明确解释共情是主角的第一要务"
+        },
+        {
+          "original": "啥样的死警察死瞎",
+          "cleaned": "保留原机稿标疑",
+          "basis": "无法可靠还原"
+        }
+      ]
+    },
+    {
+      "id": "L03-B016",
+      "part": 8,
+      "first_segment": 94,
+      "last_segment": 114,
+      "heading": "现场选择动机：让他失去女儿",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "硬汉救女儿、不救儿子等绝对性说法",
+          "cleaned": "以“我认为／我有一套小规律”归于讲师",
+          "basis": "这是讲师经验与心理判断；未删去比较或当作经核事实"
+        }
+      ]
+    },
+    {
+      "id": "L03-B017",
+      "part": 8,
+      "first_segment": 115,
+      "last_segment": 166,
+      "heading": "从父亲失职，到把因公殉职误当作保护的方法",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "42人上不了天",
+          "cleaned": "自杀的人上不了天堂",
+          "basis": "前句“可以自杀”、后句“自杀人要下地狱”共同明确"
+        },
+        {
+          "original": "因公殉旨／因公训斥",
+          "cleaned": "因公殉职",
+          "basis": "S150–S158 与人物此前反复明确的动机"
+        },
+        {
+          "original": "前使／隔离／附加值的定",
+          "cleaned": "前史／合理／含负价值的定语",
+          "basis": "补人物过去与合理化的上下文，末段回收身份方法"
+        }
+      ]
+    },
+    {
+      "id": "L03-B018",
+      "part": 8,
+      "first_segment": 167,
+      "last_segment": 204,
+      "heading": "检查欲望与动作，并现场演一场求死未遂",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "动作坏掉了／学死／寻习",
+          "cleaned": "动作换掉了／寻死",
+          "basis": "该段由原抓捕改为寻死，S183、S193 明确“寻死”"
+        },
+        {
+          "original": "韩判专家",
+          "cleaned": "谈判专家",
+          "basis": "现场处置炸弹威胁、“我是来帮你的”语境"
+        },
+        {
+          "original": "交警……不行……片儿警",
+          "cleaned": "保留交警被临时否定、改为片警",
+          "basis": "S196 明确现场改口，不统一警种"
+        }
+      ]
+    },
+    {
+      "id": "L03-B019",
+      "part": 8,
+      "first_segment": 205,
+      "last_segment": 241,
+      "heading": "主题逐渐出现：活着，才能守护更多女儿",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "路先生／牙签非常的足",
+          "cleaned": "路线方向／浅显、俗；后一原词标疑",
+          "basis": "前后说主题单说非常正能量、俗；P008 S005 已明确“最俗的词儿”"
+        }
+      ]
+    },
+    {
+      "id": "L03-B020",
+      "part": 8,
+      "first_segment": 242,
+      "last_segment": 283,
+      "heading": "悬念转接：从想死死不了，到想活活不了",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "连环强奸／连环抢劫",
+          "cleaned": "连环性侵、杀害女孩案件；罪名不一致标疑",
+          "basis": "前后女儿与同龄女孩遇害及后续同案明确；不增设抢劫支线"
+        },
+        {
+          "original": "他上次给他把枪没收了",
+          "cleaned": "上司把他的枪没收了",
+          "basis": "警察此前鲁莽被收枪、后续办案没枪的明确关系语境；未听校"
+        },
+        {
+          "original": "血死／转交",
+          "cleaned": "寻死／转接",
+          "basis": "前文反复明确寻死及两段悬念的转接"
+        }
+      ]
+    },
+    {
+      "id": "L03-B021",
+      "part": 8,
+      "first_segment": 284,
+      "last_segment": 305,
+      "heading": "把三层阻力落实到这个警察身上",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "犯罪率益为0，消零犯罪",
+          "cleaned": "犯罪率趋近于零",
+          "basis": "“片区治安往上”及“零犯罪”的夸张推演语境；未改为确证统计"
+        }
+      ]
+    },
+    {
+      "id": "L03-B022",
+      "part": 8,
+      "first_segment": 306,
+      "last_segment": 323,
+      "heading": "检查结果是否绕过了原来的动作",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "动作是垂死",
+          "cleaned": "动作是寻死",
+          "basis": "同 P 此前与后续均明确动作是寻死"
+        }
+      ]
+    },
+    {
+      "id": "L03-B023",
+      "part": 8,
+      "first_segment": 324,
+      "last_segment": 384,
+      "heading": "再串一次完整故事，保留现场发展的变动",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "普通的交警……调进了刑警队",
+          "cleaned": "保留交警到刑警队的本次推演",
+          "basis": "S337 原文明示交警，保留与前面片警的变动"
+        },
+        {
+          "original": "武刀弄枪／醍醐冠例",
+          "cleaned": "舞刀弄枪／醍醐灌顶",
+          "basis": "相应完整惯用语及被触动的语义"
+        },
+        {
+          "original": "发现这是想活。怎没也说到过这些",
+          "cleaned": "现在想活……并标疑后句",
+          "basis": "后句不可靠，不猜新事件"
+        },
+        {
+          "original": "开一个网大",
+          "cleaned": "拍一个网络大电影",
+          "basis": "本段“网大”与下一句拍电影的对比语境，展开缩略词"
+        }
+      ]
+    },
+    {
+      "id": "L03-B024",
+      "part": 8,
+      "first_segment": 385,
+      "last_segment": 428,
+      "heading": "学生疑问：没有结局？先试一箭双雕的结尾",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "一件／一键双雕",
+          "cleaned": "一箭双雕",
+          "basis": "S427 明确“一箭双雕”，保留写字过程提示"
+        },
+        {
+          "original": "结局其实不重要的",
+          "cleaned": "将“不重要”限定在这个故事已实现主题的前提下",
+          "basis": "S393–S397 与 S514–S515 明示“像这种故事／在这个片子里面”"
+        }
+      ]
+    },
+    {
+      "id": "L03-B025",
+      "part": 8,
+      "first_segment": 429,
+      "last_segment": 449,
+      "heading": "商业爽感的前提：先主动转变，再得到私人回报",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "报四仇／愁上加愁",
+          "cleaned": "报私仇／仇上加仇",
+          "basis": "发现对手也是杀女凶手、提前发现将损害主动转变的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L03-B026",
+      "part": 8,
+      "first_segment": 450,
+      "last_segment": 491,
+      "heading": "第三种结尾：获救的女孩及母亲填补他的孤独",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "小女孩相当于她女儿的",
+          "cleaned": "小女孩相当于女儿的位置",
+          "basis": "句尾不完整，依据后文女孩和妈妈补足主角人生的解释整理，不补确立亲属关系"
+        },
+        {
+          "original": "这就叫烂片，也不叫烂片啊",
+          "cleaned": "保留先说烂片再撤回、改说矫情与另一种爽片",
+          "basis": "S479–S485 的改口完整保留"
+        }
+      ]
+    },
+    {
+      "id": "L03-B027",
+      "part": 8,
+      "first_segment": 492,
+      "last_segment": 513,
+      "heading": "第四种及极端变体：想活时却死去",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "四点起所／宏位遇见／同归于见",
+          "cleaned": "死得其所／同归于尽",
+          "basis": "前后 S496–S497 明确同归于尽，S505 指明与凶手，属惯用语恢复"
+        }
+      ]
+    },
+    {
+      "id": "L03-B028",
+      "part": 8,
+      "first_segment": 514,
+      "last_segment": 526,
+      "heading": "收课：结局的变化与八要素的方法",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "主题打局",
+          "cleaned": "主题大局",
+          "basis": "S514 已明确主题大局；结课无另列作业"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "基于 P007/P008 的完整机器 segments 清洗；未逐句听校，非逐字原话，segments 覆盖不保证 VAD 未漏语音。",
+    "只采用第03课定位卡已有字幕记录：P007 04:16 未布置前课作业；P007 16:22 板书“含负价值的定语”。未重新看视频、未联网或调用付费模型。",
+    "无法确认词句已在正文标疑：P007 S014、S044、S096、S151、S201、S254、S351；P008 S082 的关键否定、S089、S233、S257 的罪名不一致、S373。",
+    "其余纠词以同段明确上下文为依据，仍可能需要听校；正文保留所有论证单元，口头赘词在正文块内部合并，未设单独弃置块。",
+    "警种在 P008 S196 由交警改片警，S337 又用交警，作为现场推演保留；第三种结尾追加单亲父亲与孤独设想，未倒灌为既定前史。",
+    "本课失女后求殉职的动机，与第8课妻女仍在、为抚恤金求殉职的后续改稿严格分开。",
+    "题材流行、审查、性别与亲子心理、宗教、创作规律及电影情节的讲师判断均归讲师，未独立查证；没有自拟作业或猜定语来源。",
+    "本课末尾仅回顾每项方法口诀并下课，完整机器稿未发现明确新作业；这不是经过逐句听校后的绝对断言。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第03课.md",
+  "output_sha256": "06268959109be52cc0247dcfab78a6b0d6ce2d2f50829a70c2b13297990b3421"
+}

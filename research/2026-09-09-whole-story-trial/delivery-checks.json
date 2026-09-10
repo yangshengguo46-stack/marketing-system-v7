@@ -1,0 +1,11 @@
+{
+  "memory_flags_false_in_fresh_server": true,
+  "v4_v5_unchanged_since_review": true,
+  "local_links_checked": 59,
+  "broken_links": [],
+  "python_syntax": "Passed before just fmt",
+  "project_toml": "Parsed and loaded by native App Server",
+  "just_fmt_exit": 0,
+  "product_rust_tests": "Not rerun; no product Rust behavior changed",
+  "runtime_clients": "Both exited normally"
+}

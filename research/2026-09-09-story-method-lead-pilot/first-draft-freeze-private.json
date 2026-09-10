@@ -1,0 +1,23 @@
+{
+  "frozen_at": "2026-09-09T13:08:03.361175+00:00",
+  "sha256": {
+    "outputs/01-a/notes.md": "0901178298013a79351a0df878031c4f194c67d762c0f62d3ed7a2c5437c5c15",
+    "outputs/01-a/story.md": "d5bd9d5448508d28d60527d4310cb888b0034e43a2db018f188a50638f219a0a",
+    "outputs/01-b/notes.md": "25f52f4455cff618933496464b9e1a6b4ba8cffc4f53340b8cd809cb6221a7ae",
+    "outputs/01-b/story.md": "05231850c39a9ab4e69b52d8dfb82503027ee0775b1a761e0cc1986dff70fb01",
+    "outputs/02-a/notes.md": "05d5264152e1eb92abaf59e245fda76c4ba3a1f8f203df2c06181ce56110b599",
+    "outputs/02-a/story.md": "c66bac664cb5b7c2006a2a9afb64982c32f2fd938e0b4d68c6afd5bcc45ccdf3",
+    "outputs/02-b/notes.md": "fac2e9db1b3bfa6fa98a6c07bb83e4b6f66d671902643fce4911c1b3a5bb73b0",
+    "outputs/02-b/story.md": "2ada598968da29498541b5ec5e637e84a15639d8c66a49245cd406971625762a"
+  },
+  "anonymous_mapping": {
+    "blind/reader-1/case-01-甲.md": "outputs/01-b/story.md",
+    "blind/reader-1/case-01-乙.md": "outputs/01-a/story.md",
+    "blind/reader-2/case-01-丙.md": "outputs/01-a/story.md",
+    "blind/reader-2/case-01-丁.md": "outputs/01-b/story.md",
+    "blind/reader-1/case-02-甲.md": "outputs/02-a/story.md",
+    "blind/reader-1/case-02-乙.md": "outputs/02-b/story.md",
+    "blind/reader-2/case-02-丙.md": "outputs/02-b/story.md",
+    "blind/reader-2/case-02-丁.md": "outputs/02-a/story.md"
+  }
+}

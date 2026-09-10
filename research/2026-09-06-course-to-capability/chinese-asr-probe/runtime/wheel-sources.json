@@ -1,0 +1,58 @@
+[
+  {
+    "package": "sherpa-onnx",
+    "version": "1.13.7",
+    "metadata_url": "https://pypi.org/pypi/sherpa-onnx/1.13.7/json",
+    "requires_dist": [
+      "sherpa-onnx-core==1.13.7"
+    ],
+    "matching_current_runtime_wheels": [
+      {
+        "filename": "sherpa_onnx-1.13.7-cp314-cp314-macosx_10_15_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/47/8a/f7596357d11117c31b2c044a65669e67225d4b0436ebe8df05f8e6835386/sherpa_onnx-1.13.7-cp314-cp314-macosx_10_15_x86_64.whl",
+        "size_bytes": 2343524,
+        "sha256": "3f58d2c3ece36b908cfb070ebe1b23c7bfaadd78a0ce205b412349c53375a4dd"
+      }
+    ]
+  },
+  {
+    "package": "sherpa-onnx-core",
+    "version": "1.13.7",
+    "metadata_url": "https://pypi.org/pypi/sherpa-onnx-core/1.13.7/json",
+    "requires_dist": null,
+    "matching_current_runtime_wheels": [
+      {
+        "filename": "sherpa_onnx_core-1.13.7-py3-none-macosx_10_15_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/ca/08/49bcf63aa98d8d94cc234398d7670447b3562796662f88dc3f28e43a2f80/sherpa_onnx_core-1.13.7-py3-none-macosx_10_15_x86_64.whl",
+        "size_bytes": 10835919,
+        "sha256": "c53a930543f3a0f1063956fd3d01081acd6cb66f46c9b1f544b4393d6cbc1893"
+      }
+    ]
+  },
+  {
+    "package": "numpy",
+    "version": "2.5.2",
+    "metadata_url": "https://pypi.org/pypi/numpy/2.5.2/json",
+    "requires_dist": null,
+    "matching_current_runtime_wheels": [
+      {
+        "filename": "numpy-2.5.2-cp314-cp314-macosx_10_15_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/ac/f8/c3b222bf075b50afd8e949a07a15c4b312a4a84bd8102a332bcd953cbbb4/numpy-2.5.2-cp314-cp314-macosx_10_15_x86_64.whl",
+        "size_bytes": 16885180,
+        "sha256": "d787cf769c3baeb5f6235e778edb52c08dfa923789b5958f28e6450f96107cb1"
+      },
+      {
+        "filename": "numpy-2.5.2-cp314-cp314-macosx_14_0_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/94/f0/6d3d933056440ebbc5e6bad92065fc6c26a48a84a36b1208580e94eea76c/numpy-2.5.2-cp314-cp314-macosx_14_0_x86_64.whl",
+        "size_bytes": 6679168,
+        "sha256": "60e902ac295855348a5ca2ea4c89108989a9f5fddfad3dfc0a8f36b10358567e"
+      },
+      {
+        "filename": "numpy-2.5.2-cp314-cp314t-macosx_14_0_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/89/3c/8df216d4a4a5422a3de045301cf7df8ea47286d76f5cb7160b0128ac26b7/numpy-2.5.2-cp314-cp314t-macosx_14_0_x86_64.whl",
+        "size_bytes": 6789276,
+        "sha256": "3a2f061cebd9e3d23bdcfaaded5e2293a4c6a5b60fa42df85d410a725ce621bf"
+      }
+    ]
+  }
+]

@@ -1,0 +1,37 @@
+{
+  "official_asset_digest": "sha256:7d1efa2138a65b0b488df37f8b89e3d91a60676e416f515b952358d83dfd347e",
+  "range_head_checks": [
+    {
+      "index": 0,
+      "requested_range": "73216000-95662720",
+      "exit_code": 28,
+      "headers": [],
+      "expected_content_range": "bytes 73216000-95662720/163002883",
+      "note": "Separate HEAD validation; GET validated by exact chunk lengths and complete-model official SHA-256 digest."
+    },
+    {
+      "index": 1,
+      "requested_range": "95662721-118109441",
+      "exit_code": 28,
+      "headers": [],
+      "expected_content_range": "bytes 95662721-118109441/163002883",
+      "note": "Separate HEAD validation; GET validated by exact chunk lengths and complete-model official SHA-256 digest."
+    },
+    {
+      "index": 2,
+      "requested_range": "118109442-140556162",
+      "exit_code": 28,
+      "headers": [],
+      "expected_content_range": "bytes 118109442-140556162/163002883",
+      "note": "Separate HEAD validation; GET validated by exact chunk lengths and complete-model official SHA-256 digest."
+    },
+    {
+      "index": 3,
+      "requested_range": "140556163-163002882",
+      "exit_code": 28,
+      "headers": [],
+      "expected_content_range": "bytes 140556163-163002882/163002883",
+      "note": "Separate HEAD validation; GET validated by exact chunk lengths and complete-model official SHA-256 digest."
+    }
+  ]
+}

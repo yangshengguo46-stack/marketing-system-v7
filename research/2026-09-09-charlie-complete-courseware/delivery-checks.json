@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-09-09T12:35:05.467041+00:00",
+  "branch": "codex/marketing-work-chain",
+  "lessons": {
+    "count": 34,
+    "exact_1_through_34": true
+  },
+  "supplements": {
+    "count": 33,
+    "exact_expected": true
+  },
+  "four_volume_han_chars": 41721,
+  "book": {
+    "bytes": 162022,
+    "all_parts_verbatim": true,
+    "parts_order_correct": true,
+    "parts": [
+      "README.md",
+      "第一卷-从材料到故事与人物.md",
+      "第二卷-从场面到情绪与整体修改.md",
+      "第三卷-从观众体验到具体创作.md",
+      "第四卷-补充案例与后期修正.md",
+      "作业与案例接续.md"
+    ]
+  },
+  "source_preservation": {
+    "count": 68,
+    "changed": []
+  },
+  "historical_frozen_input_story_note_hashes": {
+    "checked": 18,
+    "changed": []
+  },
+  "shoe_v1_to_v5": {
+    "output/course-learning/charlie-20260906/练习/第一份故事-v1.md": true,
+    "output/course-learning/charlie-20260906/练习/第一份故事-v2.md": true,
+    "output/course-learning/charlie-20260906/练习/第一份故事-v3.md": true,
+    "output/course-learning/charlie-20260906/练习/第一份故事-v4.md": true,
+    "output/course-learning/charlie-20260906/练习/第一份故事-v5.md": true
+  },
+  "local_links": {
+    "files": 20,
+    "count": 670,
+    "issues": [],
+    "method": "Static files, valid line suffixes, explicit HTML IDs and common Markdown heading slugs; not click-tested in every reader."
+  },
+  "artifacts": {
+    "output/course-learning/charlie-20260906/全课课件/作业与案例接续.md": "8b575e460b37280122c337dc4888ed3216d070681aa032d8367fa2eb099f3432",
+    "output/course-learning/charlie-20260906/全课课件/第二卷-从场面到情绪与整体修改.md": "87d88769f3d7e7e5863abe91117951fe87dd4729bfb66a07ea68ed5e8fdfb931",
+    "output/course-learning/charlie-20260906/全课课件/第三卷-从观众体验到具体创作.md": "28528f0d7a65de523fb95b2696752096c7f4c4775a99edb8dbc83aa28f28aaf1",
+    "output/course-learning/charlie-20260906/全课课件/第四卷-补充案例与后期修正.md": "f5a96666008ab6d803dcab09c0f81fa5725fe1a5dd91e20aaca37b859ed137a6",
+    "output/course-learning/charlie-20260906/全课课件/第一卷-从材料到故事与人物.md": "b9188576125fbee1b1474d30877db8be3c0de5521599d45c71b726cf38edfd82",
+    "output/course-learning/charlie-20260906/全课课件/全课课件-整册.md": "603fff66725d722fc94faa9a611517084b55c2b5890d2d3670f02e359a00d220",
+    "output/course-learning/charlie-20260906/全课课件/README.md": "601b1e5e7b3d3d56b72213e6e03f6f558dc76b265c813b817bd4fc6bc42a23c2",
+    "output/course-learning/charlie-20260906/全课课件/整理约定.md": "b6385e64631a4335983b19b352d909f6ddfbabda4a820ac0b5df05f8e12f759e",
+    "research/2026-09-09-charlie-complete-courseware/review-25-34.md": "6e77bc7671c2cb6635f138138697580cd07d3d2f829ca97d9f0263920fd8489d",
+    "research/2026-09-09-charlie-complete-courseware/review-supplements.md": "1f3e4fa4bfad78fac5ae29f41669eac50a88eabb590fb3718eeda4c7d4bfe59c",
+    "research/2026-09-09-charlie-complete-courseware/README.md": "1ba41352a0ba96fa6abeeb71e234839cf4ac16d20c3d11e5427f2342e01e6aa1",
+    "research/2026-09-09-charlie-complete-courseware/review-01-12.md": "c1427fe40e972ec335f86ae8d5237e062da05811adc24bbcf3ab34be91f2c804",
+    "research/2026-09-09-charlie-complete-courseware/review-13-24.md": "5417047b8bdd6502d4bb411ab8beb25375269a5e81196b9b1d451bc9779192d7"
+  },
+  "business_test_performed": false,
+  "new_story_or_comparison_performed": false,
+  "audiovisual_review_performed": false,
+  "product_code_modified_this_turn": false,
+  "all_declared_static_checks_passed": true
+}

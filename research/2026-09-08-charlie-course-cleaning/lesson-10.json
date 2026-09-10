@@ -1,0 +1,215 @@
+{
+  "lesson": 10,
+  "source_parts": [
+    {
+      "part": 20,
+      "source_json_sha256": "61a6e3a2d078a92005ab61248593d1c738493de31dc90e766cd2ac55313d8dd7",
+      "segment_count": 524
+    },
+    {
+      "part": 21,
+      "source_json_sha256": "336b26b2a3f8c533bf887137757c82143bfabe168bf9ed416ebd28ab2a520d5f",
+      "segment_count": 349
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L10-B001",
+      "part": 20,
+      "first_segment": 1,
+      "last_segment": 60,
+      "heading": "什么叫简单叙事；复杂叙事为什么“有点空”",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "现行虚势／非有非舞",
+          "cleaned": "线性叙事／非有非无",
+          "basis": "源中明确解释时间顺序及开场用语。"
+        }
+      ]
+    },
+    {
+      "id": "L10-B002",
+      "part": 20,
+      "first_segment": 61,
+      "last_segment": 96,
+      "heading": "渐悟与顿悟的学习比喻",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "见物／建物／践恶／动物",
+          "cleaned": "渐悟／顿悟",
+          "basis": "本段逐步积累与突然开窍的明确定义。"
+        }
+      ]
+    },
+    {
+      "id": "L10-B003",
+      "part": 20,
+      "first_segment": 97,
+      "last_segment": 153,
+      "heading": "复合型主角：两个人也可能仍是一条叙事",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B004",
+      "part": 20,
+      "first_segment": 154,
+      "last_segment": 200,
+      "heading": "再拆一人和《西游记》短暂离队；用弧线辅助判断",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B005",
+      "part": 20,
+      "first_segment": 201,
+      "last_segment": 229,
+      "heading": "《十一罗汉》《复仇者联盟》：人数多还不够",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B006",
+      "part": 20,
+      "first_segment": 230,
+      "last_segment": 294,
+      "heading": "团队成为共情对象，就能按一个主角组织",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B007",
+      "part": 20,
+      "first_segment": 295,
+      "last_segment": 354,
+      "heading": "真正各有弧线的两人：《泰坦尼克号》",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "附加女／卡布料／rosose",
+          "cleaned": "富家女／迪卡普里奥／露丝",
+          "basis": "同段Jack/Rose及主演反复指称，角色与演员称呼分清。"
+        }
+      ]
+    },
+    {
+      "id": "L10-B008",
+      "part": 20,
+      "first_segment": 355,
+      "last_segment": 425,
+      "heading": "同一事件，在两个人的序列中可以不同",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B009",
+      "part": 20,
+      "first_segment": 426,
+      "last_segment": 483,
+      "heading": "《泰囧》：两个主角，一个主要视角",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B010",
+      "part": 20,
+      "first_segment": 484,
+      "last_segment": 524,
+      "heading": "有缺口的主角与补足他的“零件”",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "前沿／十种亲情／雕科书",
+          "cleaned": "钱眼／只懂亲情／教科书",
+          "basis": "人物的赚钱与亲情反差及同段明确评价。"
+        }
+      ]
+    },
+    {
+      "id": "L10-B011",
+      "part": 21,
+      "first_segment": 1,
+      "last_segment": 39,
+      "heading": "非线性与倒叙：本课按写作过程归类",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B012",
+      "part": 21,
+      "first_segment": 40,
+      "last_segment": 92,
+      "heading": "《疯狂的石头》的五股力量与贯穿人物",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "张迅／稿费／岗位／戈涛",
+          "cleaned": "王迅／港匪／郭涛",
+          "basis": "同段演员、迅哥、香港角色及贯穿角色的指代链。"
+        }
+      ]
+    },
+    {
+      "id": "L10-B013",
+      "part": 21,
+      "first_segment": 93,
+      "last_segment": 148,
+      "heading": "从缺陷、欲望、动作和结果看郭涛这条线",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B014",
+      "part": 21,
+      "first_segment": 149,
+      "last_segment": 224,
+      "heading": "让对手提前连接，形成交错叙事",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B015",
+      "part": 21,
+      "first_segment": 225,
+      "last_segment": 266,
+      "heading": "厂长儿子、女朋友与巧合的风险",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B016",
+      "part": 21,
+      "first_segment": 267,
+      "last_segment": 306,
+      "heading": "观众被推到上帝视角；流畅呈现抵住了巧合风险",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L10-B017",
+      "part": 21,
+      "first_segment": 307,
+      "last_segment": 349,
+      "heading": "化繁为简去理解生长过程",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "讲师明确凭记忆转述影视案例，未逐片回看；《十一罗汉》的银行称呼及金额、《泰坦尼克号》视角受众划分、《疯狂的石头》开场和结果等保留课堂版本。",
+    "P020 S408“庇护史”；P021 S016–018韩国《情侣们》片名字形、港匪及富二代口头禅待核。",
+    "复合主角可能由前五稿一人到第六稿拆分、再邀演员等均为假设，不是原片真实制作经历。",
+    "本课将倒叙归在线性、称《疯狂的石头》假五线，是以写作方法为目的的讲师分类，不覆盖所有教材定义；未布置新成篇作业。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第10课.md",
+  "output_sha256": "468d32b907ad913d80d0034f2f5ec8567128874106fa67fa60b38f4876cc6c5d",
+  "reader_navigation_update": {
+    "previous_output_sha256": "7c7e213d845e2960de93aa1cb6b725d0f639b170c0e66a9597a265e74241f427",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

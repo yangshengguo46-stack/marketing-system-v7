@@ -1,0 +1,22 @@
+{
+  "model": "glm-5-2-260617",
+  "runtime": "existing native codex-app-server",
+  "files": {
+    "output/story-learning/foundation-20260906/trials/brief-new-story.md": {
+      "sha256": "1db373d7bc597c83c12a1b18ff2c1b57e30504bfa8663928b0a21bc6a2b95906",
+      "bytes": 818
+    },
+    "output/story-learning/foundation-20260906/trials/brief-revision.md": {
+      "sha256": "bebe6f7f610915992fedf23e2016abf93e33a1358609c11e376c4334196ee1c8",
+      "bytes": 1440
+    },
+    "output/story-learning/foundation-20260906/course-notes-v0.md": {
+      "sha256": "59f7adbf798053d3b1bcc33b30ab72f6b4a94414292cceb4518fecd20f814806",
+      "bytes": 1974
+    },
+    "output/story-learning/foundation-20260906/method-v0.md": {
+      "sha256": "ab228394486619e41fd3e593c8b167bc9255fb1d1f6bf0c1a8f70be2979e0345",
+      "bytes": 1756
+    }
+  }
+}

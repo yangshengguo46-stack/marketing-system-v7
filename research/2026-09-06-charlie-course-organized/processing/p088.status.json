@@ -1,0 +1,51 @@
+{
+  "part": 88,
+  "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+  "state": "completed",
+  "started_at": "2026-09-06T11:59:42.874035+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 88,
+    "cid": 29821437004,
+    "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=88",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！.mp4",
+    "sha256": "955d4738354aa73e04906979b2a888703a012fbbbb9be861eff3f86d99369cfc",
+    "bytes": 84133585,
+    "mtime_ns": 1788682363127614480,
+    "actual_duration_seconds": 1969.07898
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 1969.075375,
+  "segment_count": 148,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T12:08:05.349319+00:00",
+  "elapsed_seconds": 502.467,
+  "completed_at": "2026-09-06T12:08:05.349190+00:00",
+  "text_characters": 9646,
+  "rtf": 0.255179,
+  "max_rss_bytes_macos": 609624064,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 1969.075375,
+    "duration_delta_seconds": -0.003605,
+    "vad_speech_seconds": 1809.352,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p088.source-time.txt": "35c312e7373b587c07a7b36d3b3692cbc847257a00f537e3e43ccc5f45985f7d",
+    "p088.source-time.srt": "378aec463c980625a56ec7f5fd07a2ac789f96c8f46ae4b6c13fecf254a41add"
+  }
+}

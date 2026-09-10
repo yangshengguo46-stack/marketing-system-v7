@@ -1,0 +1,28 @@
+{
+  "date": "2026-09-09",
+  "author_model": "gpt-6-astra",
+  "fork_turns": "none",
+  "conditions": {
+    "a": "共同题面，无课程或项目对话；可正常自查",
+    "b": "相同题面和操作机会，额外冻结创作方法；允许方法链接回源，实际两者均未扩读"
+  },
+  "writers": {
+    "01-a": "/root/pilot_writer_01_a",
+    "01-b": "/root/pilot_writer_01_b",
+    "02-a": "/root/pilot_writer_02_a",
+    "02-b": "/root/pilot_writer_02_b"
+  },
+  "diagnostic": {
+    "a": "/root/pilot_diagnostic_a",
+    "b": "/root/pilot_diagnostic_b"
+  },
+  "blind_readers": [
+    "/root/pilot_reader_1",
+    "/root/pilot_reader_2"
+  ],
+  "native_lead": "/root/pilot_native_lead",
+  "isolation_limit": "fresh conversation, instruction-constrained shared filesystem; not OS isolation or full model-request audit",
+  "cost_limit": "subagent token usage and currency charges unavailable in collaboration result; do not infer from body length",
+  "native_model": "glm-5-2-260617",
+  "native_comparison_limit": "separate native course exercise; not GPT-6 arm of same-model comparison"
+}

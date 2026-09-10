@@ -1,0 +1,117 @@
+{
+  "lesson": 31,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 57,
+      "title": "三十一课-单元剧的创作理念31",
+      "cid": 385383259,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=57",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十一课-单元剧的创作理念31.mp4",
+      "sha256": "a53067980ceaa87d4bfa2eecad08783ac7ffbf6f17581e9b3f3be875f9e2e19b",
+      "duration_seconds": 4062
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "接30课遵循原理扬长避短；课程只教知识/方法/理念的自我限定",
+      "part": 57,
+      "start_seconds": 9,
+      "end_seconds": 508
+    },
+    {
+      "label": "定义、来源、三类单元剧及交叉性",
+      "part": 57,
+      "start_seconds": 509,
+      "end_seconds": 888
+    },
+    {
+      "label": "四优点与历史制作流程岔讲",
+      "part": 57,
+      "start_seconds": 889,
+      "end_seconds": 1517
+    },
+    {
+      "label": "四短处：黏度/模式/规模/人物成长与内涵",
+      "part": 57,
+      "start_seconds": 1519,
+      "end_seconds": 1755
+    },
+    {
+      "label": "单元剧与短视频、儿童观看习惯的个人趋势判断",
+      "part": 57,
+      "start_seconds": 1758,
+      "end_seconds": 2041
+    },
+    {
+      "label": "单元喜剧设定：共同场景、家、工作场所与4–6主角色",
+      "part": 57,
+      "start_seconds": 2042,
+      "end_seconds": 2431
+    },
+    {
+      "label": "人物关系连续与喜剧距离；关系是剧情发动来源",
+      "part": 57,
+      "start_seconds": 2432,
+      "end_seconds": 2634
+    },
+    {
+      "label": "竞争/追求/三角/反转/克制/报复及惹事平事关系",
+      "part": 57,
+      "start_seconds": 2635,
+      "end_seconds": 2876
+    },
+    {
+      "label": "观众选择和配对；situation与单集情节变化",
+      "part": 57,
+      "start_seconds": 2878,
+      "end_seconds": 3131
+    },
+    {
+      "label": "用关系/情境变化/暗线处理短处；不强求额外深刻",
+      "part": 57,
+      "start_seconds": 3132,
+      "end_seconds": 3321
+    },
+    {
+      "label": "任务类：明确目标、私事冲突、技能缺陷必须服务任务",
+      "part": 57,
+      "start_seconds": 3322,
+      "end_seconds": 3640
+    },
+    {
+      "label": "案件本身与主角牵引；强化私人关联而非只写爱情",
+      "part": 57,
+      "start_seconds": 3642,
+      "end_seconds": 3958
+    },
+    {
+      "label": "任务类可成长/改变关系并埋大暗线；收束",
+      "part": 57,
+      "start_seconds": 3959,
+      "end_seconds": 4058
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "多找适合单元喜剧的人物关系，补充自己的素材库。",
+      "part": 57,
+      "start_seconds": 2806.598,
+      "end_seconds": 2820,
+      "submission_spec": "“可以多去找一些”的建议；无数量、条目模板、交稿或期限要求。",
+      "teacher_review": "未说明。",
+      "uncertainty": "全文机器稿未逐句听校。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    57
+  ],
+  "limits": [
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。",
+    "主角4–6、场景5–8为老师一般建议；4–6板书已核，不把一时大于4小于6改成只能5人。",
+    "1500字梗概+300字思想内涵是录课时期行业流程叙述，不是课程作业；具体法律/审查/历史说法未核，不能当现行指南。",
+    "对情景喜剧的界定采用老师当课较窄制作模式，不扩为普遍定义；同课后段又宽称相关作品，保留口径变化。",
+    "关于儿童/年轻人、人性、犯罪题材比例等概括只记其教学观点，不当心理科学或统计。"
+  ]
+}

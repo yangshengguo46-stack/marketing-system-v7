@@ -1,0 +1,21 @@
+{
+  "label": "a-revised-v1",
+  "role": "targeted revision with specific editorial feedback; not part of condition comparison",
+  "turns": [
+    "completed"
+  ],
+  "thread_id": "01a075ec-7b03-73f1-8d81-a0f882bb4bc3",
+  "work_file": "output/marketing-work/story-a-revised-v1-20260906.json",
+  "all_stages_saved": true,
+  "matches_native_draft": true,
+  "chinese_character_count": 603,
+  "sha256": "416b17195bdbe98afdaf1907d4a561c2d6bbef7043df46e16b5911acb11cc074",
+  "usage": {
+    "totalTokens": 162414,
+    "inputTokens": 150619,
+    "cachedInputTokens": 107648,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 11795,
+    "reasoningOutputTokens": 8542
+  }
+}

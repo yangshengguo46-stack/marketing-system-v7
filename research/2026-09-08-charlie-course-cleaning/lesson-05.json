@@ -1,0 +1,248 @@
+{
+  "lesson": 5,
+  "source_parts": [
+    {
+      "part": 11,
+      "source_json_sha256": "1fe33af04c9165e8cab8955eb9987bb6bb78ff2a9eafe132856bb539cbe9dbec",
+      "segment_count": 331
+    },
+    {
+      "part": 12,
+      "source_json_sha256": "2974e529ddeb5b3415ef689b367f3c88187f5532ef1544bbc6578957a8ff6400",
+      "segment_count": 284
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L05-B001",
+      "part": 11,
+      "first_segment": 1,
+      "last_segment": 71,
+      "heading": "为什么加课；把八要素与五个突破口分清",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "吃饭／主力／副驾值",
+          "cleaned": "身份／阻力／负价值",
+          "basis": "板书回顾八要素，各项与同段后文、前课术语对应；S019–020为破碎识别。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B002",
+      "part": 11,
+      "first_segment": 72,
+      "last_segment": 91,
+      "heading": "学员提问：能不能直接告诉我剧本格式",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "阅偏无数",
+          "cleaned": "阅片无数",
+          "basis": "同段明确谈观看影片。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B003",
+      "part": 11,
+      "first_segment": 92,
+      "last_segment": 136,
+      "heading": "只拿格式回去，为什么写成了流水账",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B004",
+      "part": 11,
+      "first_segment": 137,
+      "last_segment": 167,
+      "heading": "小说创作与剧本创作之间还有一道门槛",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "激励事间／缸",
+          "cleaned": "激励事件／纲",
+          "basis": "上下文明确为电影剧本的结构纲。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B005",
+      "part": 11,
+      "first_segment": 168,
+      "last_segment": 193,
+      "heading": "七八页逗趣对白，为什么还不能成为剧本",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B006",
+      "part": 11,
+      "first_segment": 194,
+      "last_segment": 217,
+      "heading": "第一阶段作业；好故事比套格式更难得",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B007",
+      "part": 11,
+      "first_segment": 218,
+      "last_segment": 265,
+      "heading": "第二个提问：邪恶也会赢，为什么要求正义",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "正义战争邪恶／附加值",
+          "cleaned": "正义战胜邪恶／负价值",
+          "basis": "S252–255明确讨论主题正负价值。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B008",
+      "part": 11,
+      "first_segment": 266,
+      "last_segment": 282,
+      "heading": "想殉职的警察：人物蜕变不等于结局圆满",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B009",
+      "part": 11,
+      "first_segment": 283,
+      "last_segment": 331,
+      "heading": "用《杀人回忆》把疑问具体化",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B010",
+      "part": 12,
+      "first_segment": 1,
+      "last_segment": 52,
+      "heading": "四个嫌疑人的查案过程",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "警闭／警密／颈A",
+          "cleaned": "警B／警A",
+          "basis": "源文已明确A、B的两人命名，后文同音异写按人物关系规范。"
+        },
+        {
+          "original": "跟他不同意",
+          "cleaned": "与他不一致",
+          "basis": "S049–052 DNA样本比对及释放嫌疑人的因果。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B011",
+      "part": 12,
+      "first_segment": 53,
+      "last_segment": 96,
+      "heading": "多年后回到现场的结尾",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B012",
+      "part": 12,
+      "first_segment": 97,
+      "last_segment": 119,
+      "heading": "观众的难过与编剧的共情范围",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B013",
+      "part": 12,
+      "first_segment": 120,
+      "last_segment": 153,
+      "heading": "孤胆英雄杀小喽啰的例子；回收第一课共情训练",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "敌方老潮／小萝卜",
+          "cleaned": "敌方老巢／小喽啰",
+          "basis": "同段潜入反派据点及配角的明确语境。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B014",
+      "part": 12,
+      "first_segment": 154,
+      "last_segment": 192,
+      "heading": "换一条线看《杀人回忆》：两个相反的人",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "碳安平／刑讯弥鼓／得失／京诚合作",
+          "cleaned": "探案片／刑讯逼供／得势／精诚合作",
+          "basis": "分别由类型、逼供、轮流占上风与最后合作的连续语境订正。"
+        },
+        {
+          "original": "朱士帽尔／朱世茂",
+          "cleaned": "朱时茂",
+          "basis": "依同段反复人名及既有核读术语规范；非核实相貌与身高。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B015",
+      "part": 12,
+      "first_segment": 193,
+      "last_segment": 216,
+      "heading": "两人的方法如何走到各自极端",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "经验",
+          "cleaned": "精液",
+          "basis": "S202前后明确DNA和现场样本，非抽象办案经验。"
+        }
+      ]
+    },
+    {
+      "id": "L05-B016",
+      "part": 12,
+      "first_segment": 217,
+      "last_segment": 254,
+      "heading": "最后位置互换，主题从哪里显现",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L05-B017",
+      "part": 12,
+      "first_segment": 255,
+      "last_segment": 284,
+      "heading": "先用清楚的正向价值写作；再次落实作业",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "好知识点",
+          "cleaned": "好支撑点",
+          "basis": "承接五突破口及其他部分补齐的含义；原词字音仍未听校。"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "P011 S288–290影片距录课年份估数、S297导演姓名；P012 S196算命液体泼洒位置、S212破碎句、S233–238历史年份关联待核。",
+    "约1500字作业和一对一提交方式依本课保留；本轮未验证当时公众号或讲评服务今日状态。",
+    "本课直接以爱情片/兄弟情理解《杀人回忆》，保留当时版本；后课修正不倒灌改写本课。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第05课.md",
+  "output_sha256": "2012c74bbfcdec0fad174c2a105008ea7ab87c97b91a16927e8a334732e93505",
+  "reader_navigation_update": {
+    "previous_output_sha256": "efdb767361b1b694b27860863f60a82cb9de5d020d302652420b3c6f2c5a9c60",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

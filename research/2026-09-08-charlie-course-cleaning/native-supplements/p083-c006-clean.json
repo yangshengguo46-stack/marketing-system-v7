@@ -1,0 +1,104 @@
+{
+  "blocks": [
+    {
+      "first_segment": 400,
+      "last_segment": 402,
+      "heading": "ChatGPT写故事的基本指令：角色、内容、要求三部分",
+      "text": "什么样的要求，然后给他多少字儿，所以基本的指令就是角色，然后要求——角色、内容、要求这三部分。但是我实操下来，你还是用它一段一段写，不要用它写整个，你们用ChatGPT是有优势的，因为我给你们把故事拆解得已经非常细了。\n\n我给你们把故事已经拆解得非常细了，这一段干啥、这一段干啥、这一段干啥，你们已经非常明确了。所以说你们不要去依赖ChatGPT，你们自己先写段落，然后让他给你补充段落内容是可以尝试的。好吧，基本的指令就是三部分：第一部分让他扮演什么角色，他现在是谁；然后呢写一个什么样的内容。\n\n然后要求是什么？比如说要求是要感人，要求是要好笑，对吧？多少字以内——就这三部分，好不好？",
+      "corrections": [
+        {
+          "original": "猜的GPT",
+          "cleaned": "ChatGPT",
+          "basis": "结合前文语境与前文已出现的“chtGPT”，此处为同音误识，应为ChatGPT。"
+        }
+      ]
+    },
+    {
+      "first_segment": 403,
+      "last_segment": 404,
+      "heading": "不要让ChatGPT直接输出整段故事",
+      "text": "不要让他直接帮你输出整段故事。你们都学编剧了，如果他能直接帮你输出整段故事，那你们和路人小白有什么区别？\n\n你们肯定是让他精准地输出呀。",
+      "corrections": []
+    },
+    {
+      "first_segment": 405,
+      "last_segment": 407,
+      "heading": "具体指令示例：主角问妈妈要钱的三种方法",
+      "text": "比如说你看我会跟他提什么要求——我现在要我的主角去问他妈要钱，请你帮我想三个方法。\n\n我现在要写一个故事，我们这个角色是一个8岁的小朋友，现在他要问他妈要钱，你帮我写这么一段戏，希望他有三种以上的方法去尝试。你是这么具体的指令，那ChatGPT绝对可以帮到你呀，是不是？\n\n还是那句话，你不能说“给我写一个牛逼的故事”。那如果这样能写出来的话，那你也不用学编剧了。",
+      "corrections": [
+        {
+          "original": "车的GPT",
+          "cleaned": "ChatGPT",
+          "basis": "同音误识，结合上下文应为ChatGPT。"
+        },
+        {
+          "original": "三种常三种以上的方法方法",
+          "cleaned": "三种以上的方法",
+          "basis": "转录重复口误，去赘词后为“三种以上的方法去尝试”。"
+        }
+      ]
+    },
+    {
+      "first_segment": 408,
+      "last_segment": 410,
+      "heading": "课程收尾",
+      "text": "好吧，就这样吧，同学们，咱们下周见。",
+      "corrections": []
+    }
+  ],
+  "uncertainties": [
+    "S405—S406中“ChatGPT”原转录作“猜的GPT”“车的GPT”，据上下文订正为ChatGPT，但原语音确词未逐句听校。",
+    "S410为空白收尾段，仅含句号，已并入收尾块。"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [
+    {
+      "kind": "missing_empty_corrections",
+      "first_segment": 400
+    },
+    {
+      "kind": "missing_empty_corrections",
+      "first_segment": 403
+    },
+    {
+      "kind": "missing_empty_corrections",
+      "first_segment": 405
+    },
+    {
+      "kind": "missing_empty_corrections",
+      "first_segment": 408
+    },
+    {
+      "kind": "global_corrections_relocated_by_unique_source_match",
+      "unassigned_count": 0
+    }
+  ],
+  "unassigned_corrections": [],
+  "job": "p083-c006",
+  "part": 83,
+  "source_json_sha256": "8dbff298ae92cc9c4412d36c54ad381e6289420b3c371bbc39fdb07140eefc2f",
+  "output_text_characters": 563,
+  "length_ratio": 0.9894551845342706,
+  "review_length_flag": false,
+  "thread_id": "01a07f1e-3677-78c2-8789-5626cb9f5756",
+  "usage": {
+    "total": {
+      "totalTokens": 9952,
+      "inputTokens": 9294,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 658,
+      "reasoningOutputTokens": 20
+    },
+    "last": {
+      "totalTokens": 9952,
+      "inputTokens": 9294,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 658,
+      "reasoningOutputTokens": 20
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null
+}

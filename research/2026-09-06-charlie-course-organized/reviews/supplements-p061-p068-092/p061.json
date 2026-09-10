@@ -1,0 +1,169 @@
+{
+  "part": 61,
+  "title": "《让子弹飞》直播拉片",
+  "source": {
+    "part": 61,
+    "cid": 1118879677,
+    "title": "《让子弹飞》直播拉片",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=61",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/《让子弹飞》直播拉片.mp4",
+    "sha256": "58d008f275c0f9dfab57f4ad5cc3213bbeced83da1c7942df3385192786b0b1c",
+    "bytes": 138874247,
+    "mtime_ns": 1788682117003497508,
+    "actual_duration_seconds": 6397.817098
+  },
+  "full_transcript_read_parts": [
+    61
+  ],
+  "full_transcript_read_segments": 1087,
+  "transcript_sha256": "35b11edc67b4847f35893eab058bdc4fcfe08eb4434e82b8d94de7460d9afa0e",
+  "reading_verification": "Sequential growing journal ranges 1–101,102–190,191–287,288–502,503–770,771–1087 read without tool truncation; final JSON segments equal journal.",
+  "teaching_nodes": [
+    {
+      "label": "编剧拉片的目标与避免过度隐喻解读",
+      "part": 61,
+      "start_seconds": 0,
+      "end_seconds": 150
+    },
+    {
+      "label": "先提炼一句话故事，稍后回收",
+      "part": 61,
+      "start_seconds": 158,
+      "end_seconds": 218
+    },
+    {
+      "label": "信息包概念与第一幕，激励后目标争执",
+      "part": 61,
+      "start_seconds": 222,
+      "end_seconds": 830
+    },
+    {
+      "label": "第二幕交锋，起始目标实现与故事中点",
+      "part": 61,
+      "start_seconds": 830,
+      "end_seconds": 1385
+    },
+    {
+      "label": "第三幕困难、支线与假身份危机的位置",
+      "part": 61,
+      "start_seconds": 1389,
+      "end_seconds": 2214
+    },
+    {
+      "label": "低谷、末幕加速、伏笔回收、结尾呼应",
+      "part": 61,
+      "start_seconds": 2217,
+      "end_seconds": 2928
+    },
+    {
+      "label": "节拍与创作的关系，回到类型问题",
+      "part": 61,
+      "start_seconds": 2930,
+      "end_seconds": 3144
+    },
+    {
+      "label": "主要对抗决定类型，一句话故事归纳",
+      "part": 61,
+      "start_seconds": 3144,
+      "end_seconds": 3643
+    },
+    {
+      "label": "先尝试分辨A/B故事",
+      "part": 61,
+      "start_seconds": 3655,
+      "end_seconds": 3683
+    },
+    {
+      "label": "训练营招生与行业主张",
+      "part": 61,
+      "start_seconds": 3684,
+      "end_seconds": 3860
+    },
+    {
+      "label": "A/B/C层次、人物成长与取舍",
+      "part": 61,
+      "start_seconds": 3860,
+      "end_seconds": 4805
+    },
+    {
+      "label": "行动与精神目标的先后：对照肖申克",
+      "part": 61,
+      "start_seconds": 4805,
+      "end_seconds": 5174
+    },
+    {
+      "label": "隐喻过度解读与观众体验",
+      "part": 61,
+      "start_seconds": 5174,
+      "end_seconds": 5347
+    },
+    {
+      "label": "镜像人物与观众感受分析",
+      "part": 61,
+      "start_seconds": 5347,
+      "end_seconds": 5776
+    },
+    {
+      "label": "创作过程口述、推荐观摩和学习建议",
+      "part": 61,
+      "start_seconds": 5776,
+      "end_seconds": 6073
+    },
+    {
+      "label": "复盘类型、层次、人物与结束推广",
+      "part": 61,
+      "start_seconds": 6073,
+      "end_seconds": 6398
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "在分析前尝试用一句话概括《让子弹飞》：什么人在什么情况下想做什么",
+      "part": 61,
+      "start_seconds": 158.598,
+      "end_seconds": 218.0,
+      "submission_spec": "直播可打字或先自己想，无课后字数/提交期限",
+      "teacher_review": "3540–3643秒回收；老师将假身份归人物现状、报仇归主要目标，给出完整示范",
+      "uncertainty": "这是现场提问与示范，不是另交一篇新故事"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "跟着记录信息包/信息节拍，再自己重看片对照；留意双方交锋的起伏",
+      "part": 61,
+      "start_seconds": 259.91,
+      "end_seconds": 276.172,
+      "submission_spec": "有条件者记笔记；未要求固定文件或提交",
+      "teacher_review": "本节282–2928秒以33个信息包复盘；973–996秒另提醒数双方得分起伏",
+      "uncertainty": "33是老师本片划分结果，不是所有故事的固定配额"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "先想《让子弹飞》的A/B故事，再听讲师如何解释并扩展到第三层",
+      "part": 61,
+      "start_seconds": 3655.91,
+      "end_seconds": 3682.668,
+      "submission_spec": "现场思考与互动，没有独立交稿要求",
+      "teacher_review": "3860–4805秒从为儿子报仇、替众人报仇，到教众人反抗；是老师的影片解读",
+      "uncertainty": "不能据此要求初学者每部作品都增加C故事"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "课后可回看《鬼子来了》，比较老师提到的作品",
+      "part": 61,
+      "start_seconds": 5935.558,
+      "end_seconds": 5944.908,
+      "submission_spec": "推荐观摩，无报告或提交要求",
+      "teacher_review": "未在本分集继续讲评",
+      "uncertainty": "老师没有要求本节必须完成一次拉片报告"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿阅读未见本节新布置的提交作业；课堂互动与观摩建议已单列，未逐句听校。",
+  "limits": [
+    "全文为机器转录，未完整视听核查",
+    "片内时间与课程时间不同",
+    "老师对影片类型、角色背景、创作取舍的解释未以剧本初稿或独立访谈验证",
+    "激素/大脑皮层等教学分类未作为科学事实",
+    "原稿终点/中点、金腰毛/金羊毛等同音字按上下文标疑，不改原ASR"
+  ]
+}

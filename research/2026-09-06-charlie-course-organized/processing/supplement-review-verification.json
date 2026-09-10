@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-09-06T12:19:44.345937+00:00",
+  "count": 17,
+  "failures": [],
+  "checks": "Source title, SHA256, final segment count, bounded time ranges and canonical assignment fields; full-reading substance was authored after sequential reading.",
+  "results": [
+    {
+      "part": 1,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p001.json",
+      "errors": []
+    },
+    {
+      "part": 62,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p062.json",
+      "errors": []
+    },
+    {
+      "part": 63,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p063.json",
+      "errors": []
+    },
+    {
+      "part": 64,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p064.json",
+      "errors": []
+    },
+    {
+      "part": 65,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p065.json",
+      "errors": []
+    },
+    {
+      "part": 66,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p066.json",
+      "errors": []
+    },
+    {
+      "part": 67,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p001-p062-067/p067.json",
+      "errors": []
+    },
+    {
+      "part": 70,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p070-071/p070.json",
+      "errors": []
+    },
+    {
+      "part": 71,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p070-071/p071.json",
+      "errors": []
+    },
+    {
+      "part": 73,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p073/p073.json",
+      "errors": []
+    },
+    {
+      "part": 76,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p076/p076.json",
+      "errors": []
+    },
+    {
+      "part": 78,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p078/p078.json",
+      "errors": []
+    },
+    {
+      "part": 80,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p080-092/p080.json",
+      "errors": []
+    },
+    {
+      "part": 82,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p080-092/p082.json",
+      "errors": []
+    },
+    {
+      "part": 84,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p080-092/p084.json",
+      "errors": []
+    },
+    {
+      "part": 86,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p080-092/p086.json",
+      "errors": []
+    },
+    {
+      "part": 89,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p080-092/p089.json",
+      "errors": []
+    }
+  ]
+}

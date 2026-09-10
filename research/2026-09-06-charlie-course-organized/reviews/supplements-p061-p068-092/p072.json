@@ -1,0 +1,237 @@
+{
+  "part": 72,
+  "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+  "source": {
+    "part": 72,
+    "cid": 26454394257,
+    "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=72",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事.mp4",
+    "sha256": "8116f583120ffde48080157495b0d74c3a994677b25c7b3998da58445216bcf5",
+    "bytes": 121442267,
+    "mtime_ns": 1788682212691109732,
+    "actual_duration_seconds": 3136.742902
+  },
+  "full_transcript_read_parts": [
+    72
+  ],
+  "transcript_segment_count": 261,
+  "transcript_artifact_sha256": {
+    "p072.source-time.txt": "da25fe0e8c23ed4ebe034668b557a068e2eb9b1e752c7de6e9e2b5f3883b56c2",
+    "p072.source-time.srt": "9a3c8dcbbc51f4f1d75cd32a4d5cf947ca99b4463e9201b79813e25496eba589"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 72,
+      "start_seconds": 12,
+      "end_seconds": 90,
+      "label": "问开场为什么花一大段追无人机，而电池后面没有明显用途；随后先拆全片信息包。",
+      "application_limit": "一个场面可能承担人物、关系、整体基调等作用，不能只问道具后来是否再次出现。答案在片尾。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 91,
+      "end_seconds": 418,
+      "label": "第1—8包：家庭与末日处境、幽灵悬念、学校、异常坐标、找到NASA、接受任务的背景与计划。",
+      "application_limit": "技能、亲子关系、世界困境和谜题一起进入事件，不把开场只写成背景介绍。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 419,
+      "end_seconds": 616,
+      "label": "解释片中的A/B迁移计划；第9—11包接受任务、女儿抗拒、离家和升空。",
+      "application_limit": "女儿的反应承担拒绝召唤与情感压力；告别与出发可以合并或拆开，老师承认分包存在选择。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 617,
+      "end_seconds": 780,
+      "label": "第12—16包：伙伴、对接、联系地面、视频家书、穿虫洞。",
+      "application_limit": "大任务拆成一个个具体目标；新目标同时让伙伴的差异和关系出现。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 781,
+      "end_seconds": 1065,
+      "label": "第17—22包：选择探测地、降落水面、时间代价、抢救数据、伙伴死亡、返回后观看23年视频。",
+      "application_limit": "情节上的延误直接造成亲情损失，影片播放和表演使信息成为情绪经历。英文播放段的机器稿稀疏，不能当完整对白或表演记录。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 1066,
+      "end_seconds": 1285,
+      "label": "第23—27包：成年墨菲参与地面研究；燃料限制下选择目的地；地球情况恶化、教授去世、仅有B计划的真相揭开。",
+      "application_limit": "墨菲逐渐从父亲牵挂的人变成有主动任务的一条线；另一边选择错路也会产生后果。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 1286,
+      "end_seconds": 1575,
+      "label": "第28—40包：主角想回家、探险者背叛、地面与太空并行危机、救援、旋转对接、飞船受损、调整计划和自我牺牲。",
+      "application_limit": "价值冲突影响行动；两条线围绕相同问题推进，危机分别打到人物身上。连续解决问题又产生代价，不能只列一次“大危机”。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 1576,
+      "end_seconds": 1699,
+      "label": "第41—43包：进入特殊空间、联系机器人、以手表向女儿传递数据、女儿找到解法。",
+      "application_limit": "回收父母如幽灵、手表、父女沟通等此前内容，使亲情线参与解决主事。这里只讲影片内部设定，不作物理学解释。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 1700,
+      "end_seconds": 1859,
+      "label": "第44—47包：获救、重见机器人与女儿、再次出发；老师把这四包视为安放情绪的结局，并提出可讨论改写。",
+      "application_limit": "主事解决与结尾情绪安放分开观察；老师有玩笑式质疑，但并未要求必须删除结局。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 1860,
+      "end_seconds": 2155,
+      "label": "回顾表演；区分科幻题材与任务旅程的故事机制；列科幻八类；重新解释信息包。",
+      "application_limit": "本课用“金羊毛”分析主角接受任务、结伴、调整目标、牺牲与归来。科幻是题材，类型可混合，分包与老师不同也不自动算错。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 2156,
+      "end_seconds": 2433,
+      "label": "讨论父女情与主题；视频家书维持远距离关系；把忠诚/撒谎与个人/集体利益交叉，分析主角、伙伴、教授和背叛者。",
+      "application_limit": "多个角色面对同一个问题选择不同立场，能够形成有依据的冲突；四格是本片课堂分析，不是所有故事必须凑四个人。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 2434,
+      "end_seconds": 2666,
+      "label": "给科幻创作三点建议：宏大事件里有具体关系主题；原理解释控制篇幅；将陌生设定连接熟悉经验，如孩子害怕房间闹鬼。",
+      "application_limit": "观众需要理解行动条件和人的处境；知识讲解的密度要服务故事。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 2667,
+      "end_seconds": 2825,
+      "label": "四个开放思考：末日题材的吸引力；减弱父女特殊羁绊；改编成中国故事时如何调整儿子；结尾四包是否保留或改写。",
+      "application_limit": "这是可探索的选择，没有标准答案或规定交稿。老师的文化原因解释未作受众调查。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 2826,
+      "end_seconds": 3028,
+      "label": "回答AB故事、人物与环境反差、伙伴恋情为何影响选路、父女双线为何不混乱等问题。",
+      "application_limit": "AB故事在此讨论小家与更大责任的选择；太空A/B计划是另一组词。双线仍解决同一问题，并给成年墨菲明确的主动身份。"
+    },
+    {
+      "part": 72,
+      "start_seconds": 3028,
+      "end_seconds": 3131,
+      "label": "回答开场无人机问题：漂泊、被遗弃的飞行器与英雄小队产生类比；父亲扶女儿的手召回无人机，又与后面父女合作呼应。",
+      "application_limit": "这是老师对成片的比喻解读，同时承认该场有技能与家庭关系信息。没有原作者创作记录来证明这一意图。"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "记下科幻题材八类，同时理解可以混用",
+      "part": 72,
+      "start_seconds": 2001,
+      "end_seconds": 2051,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "观察四种价值立场对应的规律",
+      "part": 72,
+      "start_seconds": 2307,
+      "end_seconds": 2433,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "思考末日题材的吸引力及原因",
+      "part": 72,
+      "start_seconds": 2667,
+      "end_seconds": 2733,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "考虑减弱父女特殊羁绊后怎样处理故事",
+      "part": 72,
+      "start_seconds": 2733,
+      "end_seconds": 2754,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "改编成中国故事时如何调整儿子设定",
+      "part": 72,
+      "start_seconds": 2755,
+      "end_seconds": 2785,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "决定结尾四包是否保留或改写",
+      "part": 72,
+      "start_seconds": 2786,
+      "end_seconds": 2825,
+      "submission_spec": "课堂记笔记或开放思考，未规定独立提交、字数或期限",
+      "teacher_review": "本节没有该练习的后续交稿讲评",
+      "uncertainty": "机器稿全文核读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "父女关系成为共同解决任务的行动线",
+      "source_type": "teacher_film_analysis"
+    },
+    {
+      "label": "开场无人机的多重作用及全篇比喻",
+      "source_type": "teacher_interpretation_not_verified_creator_intent"
+    }
+  ],
+  "terminology_distinctions": [
+    {
+      "terms": [
+        "片中A/B计划",
+        "编剧AB故事"
+      ],
+      "source_seconds": [
+        419,
+        2826
+      ]
+    },
+    {
+      "terms": [
+        "题材分类",
+        "故事机制"
+      ],
+      "source_seconds": [
+        1930,
+        1979
+      ]
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "专名及中点等有同音误字；长片段电影对白未完整转写。"
+  },
+  "limits": [
+    "未核实背景、首创、文化因果与制作者意图。",
+    "47信息包是本次分析，不是所有写作任务的数量要求。",
+    "影片计划与教学AB故事须分别理解。"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "elapsed_seconds" : 14.192746996879578,
+  "end" : 260,
+  "engine" : "Apple Vision VNRecognizeTextRequest accurate zh-Hans en-US; no language correction",
+  "failures" : 0,
+  "frames" : 16,
+  "output" : "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/ocr/p010-probe-20-260.jsonl",
+  "roi_bottom_left_coordinates" : [
+    0,
+    0.014999999999999999,
+    1,
+    0.22
+  ],
+  "source" : "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第四课-第一个故事4.2.mp4",
+  "start" : 20,
+  "status" : "sampled",
+  "step" : 15
+}

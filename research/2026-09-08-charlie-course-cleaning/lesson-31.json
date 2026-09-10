@@ -1,0 +1,216 @@
+{
+  "lesson": 31,
+  "source_parts": [
+    {
+      "part": 57,
+      "source_json_sha256": "52d8bf84205cf2f7abdbd2205d22a32073a7bbf502566697ac70dc60927dbdb0",
+      "segment_count": 1018
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L31-B001",
+      "part": 57,
+      "first_segment": 1,
+      "last_segment": 55,
+      "heading": "从“遵循原理、扬长避短”研究单元剧",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B002",
+      "part": 57,
+      "first_segment": 56,
+      "last_segment": 106,
+      "heading": "关于弹幕的岔题：教知识和学习方法，不承担“教做人”",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B003",
+      "part": 57,
+      "first_segment": 107,
+      "last_segment": 150,
+      "heading": "单元剧的半闭合与半开放",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B004",
+      "part": 57,
+      "first_segment": 151,
+      "last_segment": 213,
+      "heading": "工业生产背景与三类常见单元剧",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B005",
+      "part": 57,
+      "first_segment": 214,
+      "last_segment": 253,
+      "heading": "优点之一：单集满足、故事多样、可以调整",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B006",
+      "part": 57,
+      "first_segment": 254,
+      "last_segment": 278,
+      "heading": "关于国内制作与审查流程的现场说明",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B007",
+      "part": 57,
+      "first_segment": 279,
+      "last_segment": 348,
+      "heading": "情景喜剧的舞台传统，以及“栏目”生产的岔题",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B008",
+      "part": 57,
+      "first_segment": 349,
+      "last_segment": 429,
+      "heading": "观看舒适与四个短处",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B009",
+      "part": 57,
+      "first_segment": 430,
+      "last_segment": 517,
+      "heading": "从短视频与儿童观看习惯推测单元剧的机会",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B010",
+      "part": 57,
+      "first_segment": 518,
+      "last_segment": 573,
+      "heading": "喜剧设定先从场景和聚集空间开始",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B011",
+      "part": 57,
+      "first_segment": 574,
+      "last_segment": 611,
+      "heading": "常驻主角约四到六人：让多条线能够说起来",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B012",
+      "part": 57,
+      "first_segment": 612,
+      "last_segment": 670,
+      "heading": "人物关系是喜剧长期运转的动力",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B013",
+      "part": 57,
+      "first_segment": 671,
+      "last_segment": 721,
+      "heading": "竞争、追求、反转与“惹事—平事”关系",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B014",
+      "part": 57,
+      "first_segment": 722,
+      "last_segment": 750,
+      "heading": "给处于“上帝视角”的观众选择人物和配对的空间",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B015",
+      "part": 57,
+      "first_segment": 751,
+      "last_segment": 783,
+      "heading": "每一集写什么：让固定人物遭遇不同情境",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B016",
+      "part": 57,
+      "first_segment": 784,
+      "last_segment": 830,
+      "heading": "逐项弥补：关系牵引、情境变化和连续暗线",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B017",
+      "part": 57,
+      "first_segment": 831,
+      "last_segment": 871,
+      "heading": "任务剧的核心是观众明确要看的行动",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B018",
+      "part": 57,
+      "first_segment": 872,
+      "last_segment": 917,
+      "heading": "团队私事要撞上任务，技能和缺陷要对任务有效",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B019",
+      "part": 57,
+      "first_segment": 918,
+      "last_segment": 969,
+      "heading": "为什么单元案件本身必须有吸引力",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B020",
+      "part": 57,
+      "first_segment": 970,
+      "last_segment": 1009,
+      "heading": "保住案件优势，再让主角真正卷入",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L31-B021",
+      "part": 57,
+      "first_segment": 1010,
+      "last_segment": 1018,
+      "heading": "本课收束",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "第 574–611 段人数先说“大于 4 小于 6”，后改用“四到六”，正文保留范围变化，未改成统一硬规则。",
+    "第 254–348 段监管、栏目生产及节目历史为录课时讲师叙述，不作为当前法律程序。",
+    "三十六种戏剧情境作者机器姓名“乔治 perie”未擅自补全；“废柴舅舅”等称呼未扩写成额外作品。",
+    "犯罪心理、性与暴力、儿童及成人观看心理、犯罪剧比例均为讲师看法或口头估数，非外部核验事实。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第31课.md",
+  "output_sha256": "393f51f879023f730e847b2d3b05218d4f7efbb85d90f8e02303374c29f685d3",
+  "reader_navigation_update": {
+    "previous_output_sha256": "410d16967acbb5d33c39ce4761e0d8d7fd77eb09ab80d4030486a6b703eb43ed",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

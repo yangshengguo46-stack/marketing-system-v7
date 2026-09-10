@@ -1,0 +1,18 @@
+{
+  "mission.md": {
+    "bytes": 1429,
+    "sha256": "0cb68ac682053282e342cfb73883d15f9eafda36a489758c9e55c428c3a6d19a"
+  },
+  "working-methods.md": {
+    "bytes": 2181,
+    "sha256": "4688947bef8a18662524deec1ae2aa17a3934d9f9ffcb563c8b9787520c12b20"
+  },
+  "source-observations.md": {
+    "bytes": 3115,
+    "sha256": "860fe6301e15fed7becb49c2c01c3cf2d620d9c3f800d0393328361841ef00e1"
+  },
+  "failure-review.md": {
+    "bytes": 842,
+    "sha256": "60cf3206c2ec9a09bf505c5cf9a8cad7dad787ff18e095e05ecf97f7ae71946a"
+  }
+}

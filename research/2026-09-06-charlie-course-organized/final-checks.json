@@ -1,0 +1,34 @@
+{
+  "checked_at_utc": "2026-09-06T13:11:05.435906+00:00",
+  "status": "passed",
+  "branch": "codex/marketing-work-chain",
+  "course_parts": 92,
+  "course_lessons": 34,
+  "supplement_pages": 33,
+  "markdown_files_checked": 187,
+  "vault_markdown_files": 183,
+  "additional_ledger_research_files": 4,
+  "local_link_count": 730,
+  "link_errors": [],
+  "python_syntax_files": [
+    "research/2026-09-06-charlie-course-organized/assemble_course.py",
+    "output/course-learning/charlie-20260906/run/native_client.py",
+    "research/2026-09-06-charlie-course-organized/tools/record_supplement.py",
+    "research/2026-09-06-charlie-course-organized/tools/transcribe_course.py",
+    "research/2026-09-06-charlie-course-organized/tools/verify_transcripts.py"
+  ],
+  "python_syntax": "passed; compile() only, no new execution",
+  "story_version_hashes": "all three match native-final-verification.json; v3 also matches independent review",
+  "just_fmt": {
+    "exit_code": 0,
+    "evidence": "Completed earlier in this same turn after persistent Python helper changes; exec session 10959. Subsequent changes are Markdown/JSON only."
+  },
+  "git_diff_check_exit_code": 0,
+  "git_diff_check_output": "",
+  "limits": [
+    "Link checks verify target existence, not heading anchors, external links or course semantic accuracy.",
+    "Native event behavior was already checked in native-final-verification.json; no provider HTTP capture.",
+    "No product Rust behavior changes in this round; no new Rust tests run.",
+    "Earlier uncommitted repository changes and all output/research are preserved; no commit, merge or push."
+  ]
+}

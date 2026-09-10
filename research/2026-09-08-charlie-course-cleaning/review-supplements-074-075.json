@@ -1,0 +1,194 @@
+{
+  "parts": [
+    74,
+    75
+  ],
+  "date": "2026-09-08",
+  "reviewer": "clean_core_25_34",
+  "file_count": 8,
+  "segment_count": 395,
+  "block_count": 64,
+  "scope": "按jobs.json确认P074五批277段及P075三批118段；按顺序全文读全部ASR并逐块对照全部64块正文。",
+  "limits": [
+    "仅依据ASR全文对照，未逐句听校；严重错识的台词、名字、数字和否定继续标疑。",
+    "讲师对电影、票房、社会事件、演员和创作经历的说法未作外部事实核验。",
+    "保留开放讨论、原推荐与课堂改写设想，没有额外硬性作业。"
+  ],
+  "history_note": "P074-c005 S265—S266女儿线原生正文已在263开头块第二段；已有lead_review只是段号漏归属修正，独立复核未把它报告为原模型漏写。",
+  "sources": [
+    {
+      "part": 74,
+      "path": "research/2026-09-06-charlie-course-organized/transcripts/p074.json",
+      "source_json_sha256": "2057b6242281a0c6641694a80bd355780e73dd882fd7f60bffefb4fa03427071",
+      "segment_count": 277,
+      "source_text_characters": 11697
+    },
+    {
+      "part": 75,
+      "path": "research/2026-09-06-charlie-course-organized/transcripts/p075.json",
+      "source_json_sha256": "4c2873c422ab735b621a5a798a1192121903ea08bc281a6ec25c3231c7898c06",
+      "segment_count": 118,
+      "source_text_characters": 6711
+    }
+  ],
+  "files": [
+    {
+      "part": 74,
+      "job": "p074-c001",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c001-clean.json",
+      "first_segment": 1,
+      "last_segment": 46,
+      "segment_count": 46,
+      "block_count": 7,
+      "output_text_characters": 2588,
+      "output_sha256": "3443a54294919167d82e124c800c3b58ee9e49d77845a866d2ae612c6cda3c1d",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c001-before-independent-full-review.json",
+      "before_sha256": "b856a986b6e89ee8ee6c5666e034264f6bc08273553dfa005b554f11f86914fc",
+      "issues": [
+        "旧车曾经错过订正阔过，保留邻居奔驰S/旧宾利与可买多套房的具体例子。",
+        "主线/辅线和观看直播指代修复；乔杉是角色指代；造成伤害的原因句不补漏失否定。",
+        "票房约数、创作交流与疑似院线片原词明确为讲师口述/标疑。"
+      ]
+    },
+    {
+      "part": 74,
+      "job": "p074-c002",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c002-clean.json",
+      "first_segment": 47,
+      "last_segment": 111,
+      "segment_count": 65,
+      "block_count": 14,
+      "output_text_characters": 2713,
+      "output_sha256": "51a3d405f30608d367988f9cd3a173cd840c800ecb0bed1e5e5828fa770d8838",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c002-before-independent-full-review.json",
+      "before_sha256": "b92503138a5399af3f326082a3ec459aff919c2b5204b3e3122ffdd4765d39ed",
+      "issues": [
+        "中点误作终点修复；S98整段原误放S92—S97块，移回对应块，未新增情节。",
+        "网暴谣言不被写成韩露已确认身份；女儿澄清事件谁承认什么保留疑点。",
+        "妹妹引蛇出洞不猜具体行为；黑红片段整理可辨信息，乱码不当字幕；平安哥/女儿黑夜指代修复。"
+      ]
+    },
+    {
+      "part": 74,
+      "job": "p074-c003",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c003-clean.json",
+      "first_segment": 112,
+      "last_segment": 156,
+      "segment_count": 45,
+      "block_count": 7,
+      "output_text_characters": 2485,
+      "output_sha256": "90beba996f80b282424a1fea64b6ccfe3d10cd09f55cf180949fee282fa3393b",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c003-before-independent-full-review.json",
+      "before_sha256": "77334387fd9183f3ffee78e03d732d2ff34c4b7bf4b51f6d9df6a918a52a383f",
+      "issues": [
+        "修复墓地销售职业及贾冰姓名/演员角色指代；S145开头动机问题移回源块。",
+        "恒大债务、几名女孩处境与网络暴力的强烈判断归讲师，不编个人结局。",
+        "保留鬼屋、性病检查、线索场景割裂与追车/步行追逐次数的完整论证及自我改口。"
+      ]
+    },
+    {
+      "part": 74,
+      "job": "p074-c004",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c004-clean.json",
+      "first_segment": 157,
+      "last_segment": 258,
+      "segment_count": 102,
+      "block_count": 8,
+      "output_text_characters": 2780,
+      "output_sha256": "38acef70db896737601ca8bff51982f36e4bd01ba747bcbc9628908b8fb51d9a",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c004-before-independent-full-review.json",
+      "before_sha256": "fd41a73428e5265b0cdab932dd1945df125e1735348b6aa1455a5f96d3917fcd",
+      "issues": [
+        "女儿成长第25分不误写确定25分钟，并保留第二幕/第三部分原有分幕差异；憨豆订正韩露。",
+        "找妹妹误标找贾冰、十五拍误作十五分钟修复；十分钟/15米不统一为两个确定时长。",
+        "重整两段播放片段的可辨对话、九号房、72/97号、遥控器/线索/排队过程；不造娟姐/杨宁、不猜病因或面谈状态。",
+        "S188—S192第三问题、S247障碍论点、S253—S254小丑答案回到各自源块；洒哥由S123互证。"
+      ]
+    },
+    {
+      "part": 74,
+      "job": "p074-c005",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c005-clean.json",
+      "first_segment": 259,
+      "last_segment": 277,
+      "segment_count": 19,
+      "block_count": 7,
+      "output_text_characters": 1463,
+      "output_sha256": "6718a60d299490f45fc14c31d75cb8ffb4fcd369670668013b164f76a8541bf4",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p074-c005-before-independent-full-review.json",
+      "before_sha256": "196e11f750a33de06e8459794547fc3e390ded775211120348cb601ee98d4048",
+      "issues": [
+        "保留已有lead_review：S265—S266女儿线正文原本完整，仅为此前段号归属修正，不误报漏写。",
+        "魏露按同章人物订正；街溜子作标疑整理；完整保留嫌弃父亲却看直播、父亲染发由女儿管的反写。",
+        "同主题另一角度、女儿线加分与键盘打人道具例完整；未添加作业。"
+      ]
+    },
+    {
+      "part": 75,
+      "job": "p075-c001",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c001-clean.json",
+      "first_segment": 1,
+      "last_segment": 55,
+      "segment_count": 55,
+      "block_count": 8,
+      "output_text_characters": 2443,
+      "output_sha256": "fc571431008aac8c51c97b3004f4f05beb577e2b61955e75c105c34eb08ed761",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c001-before-independent-full-review.json",
+      "before_sha256": "990f66ba506ddc8103ea828be8780666824db579944d41efe666cf75af7242b4",
+      "issues": [
+        "恢复爆米花电影这一原有分类；妇女之友、弄假成真由近邻明文互证，不保留无意义误识。",
+        "醉酒戏按可辨过程清洗，保留红酒/材料/反响/受刺激/请缨及重复，撤销有人感谢他与一生看不着归讲师的无依据归属。",
+        "名字职务、12345/54321与工8千等不猜；健康否认和演员评价完整保留。"
+      ]
+    },
+    {
+      "part": 75,
+      "job": "p075-c002",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c002-clean.json",
+      "first_segment": 56,
+      "last_segment": 98,
+      "segment_count": 43,
+      "block_count": 7,
+      "output_text_characters": 2512,
+      "output_sha256": "0b316f54d8ddb779648bd5011c6dc748b56055503dbda5d93eae962eabdee99c",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c002-before-independent-full-review.json",
+      "before_sha256": "52c61f6f097584bdb78352724d842e906ef20ef0c665c0abcef58fd39ca72037",
+      "issues": [
+        "故事中点修复，三层标题不误说全在第三幕；保留假→真→关心妻子的完整推演。",
+        "S86—S87三句半被误改二人转，恢复不同节目；妇女帮助主角的代词修复；老婆发飙不倒置主语。",
+        "舞台化表演具体动作保留，大学刚毕业明确为推测；检查团不来片段保留可辨过程，乱码数字不补含义。"
+      ]
+    },
+    {
+      "part": 75,
+      "job": "p075-c003",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c003-clean.json",
+      "first_segment": 99,
+      "last_segment": 118,
+      "segment_count": 20,
+      "block_count": 6,
+      "output_text_characters": 1705,
+      "output_sha256": "5118808c96ae77cbbe0cd7784285f61a30265c3152cd98dca4501b6863d2f729",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p075-c003-before-independent-full-review.json",
+      "before_sha256": "8f309b5e0fc13a76b4b01d3f1b44c043e9de2565057457efc0ef3601864e72fc",
+      "issues": [
+        "何老师误作葛老师修复；香港疑乡长与三胖子身份转换显式标疑，曲目全名不补。",
+        "S111时长评价移回源块，70来/80分钟不统一；主角做妇女工作代词修正。",
+        "保留合家欢欢乐为主与可加强误会危机的讨论，保留不会写有一腿的明确否定。",
+        "拓展小品片名的犹豫不扩成两部作品；仅保留原推荐与开放思考，无额外硬性作业。"
+      ]
+    }
+  ],
+  "validation": {
+    "status": "PASS",
+    "continuous_coverage_once": {
+      "P074": "1—277",
+      "P075": "1—118"
+    },
+    "jobs_ranges_match": true,
+    "source_hash_match": true,
+    "prior_lead_review_preserved": true,
+    "shared_md_modified": false,
+    "source_or_native_raw_response_modified": false
+  }
+}

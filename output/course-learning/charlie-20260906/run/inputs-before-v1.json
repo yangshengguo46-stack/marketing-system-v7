@@ -1,0 +1,865 @@
+{
+  "note": "Full package hashes at first trial start; actual read content is preserved in native event log. Later editorial changes need separate record.",
+  "files": [
+    {
+      "file": "output/course-learning/charlie-20260906/全课学习与作业路线.md",
+      "sha256": "5df60948eb89003ef52dba8866b7270a5590c05cbd6e7060070f9ab063c38dbc",
+      "bytes": 10134
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/原课作业.md",
+      "sha256": "889e2d83fd5248bb2f62ba5efaa8b6149c5c19839244bbcaf6081afd2b74e3ee",
+      "bytes": 54012
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/Agent入口.md",
+      "sha256": "9fdc8b7a07ed4c78314ca328fe6631c44de69f9bf1723ac6e56da0f2d7f6aff3",
+      "bytes": 3209
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/README.md",
+      "sha256": "e5bdd53ad907c52d7ca97981800801d40cbd8da1126e89adbfebace0cbe08f60",
+      "bytes": 2555
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/第一份故事的学习与作业路线.md",
+      "sha256": "b11c7d930650a139d4dd647ff5478528ae90b776bfb8e4556a05a3ebc7451be2",
+      "bytes": 6931
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/全套目录.md",
+      "sha256": "87475ed086e5e62efca3b4c64663bcf58eec765bf0df686ae0056dcc513dc70b",
+      "bytes": 14054
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/如何供Agent使用.md",
+      "sha256": "b3968b885c5be9cc50785886a3aa0bf8ebcfe5588473abe19e2c2aaad779ed6c",
+      "bytes": 4323
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/方法/沿因果返工.md",
+      "sha256": "13ca0406f55109a1d64ef334e0dd1d5604ecac236546158bb21a332cef08cfcc",
+      "bytes": 5341
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/方法/把一场戏写得具体.md",
+      "sha256": "268eb458eac4321f1fe2212d44b2e19761aea52c99f9d8af5b308db83011eaa7",
+      "bytes": 3225
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/方法/让读者想继续看.md",
+      "sha256": "a096239ca013780a0b6d52b9e6e0a2acdf52ad5226c56d6d2f8a04b973bf65c5",
+      "bytes": 4217
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+      "sha256": "75c8fc581d6e3e0ef63692d92be0254623cb78d8099e9358416caa8add2aa51a",
+      "bytes": 5004
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/方法/让信息变成事件.md",
+      "sha256": "4fb627ff3206f1db80f8e200d789db3f41e751e6cc8481614243f1ef8454bfbe",
+      "bytes": 3993
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P088.md",
+      "sha256": "f8cf7e23eeacab6e321e9a90ad5fda86151291ff91ecad40ec7238ba078d527b",
+      "bytes": 32485
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P089.md",
+      "sha256": "94169bc643a71f21cdd5fc45032336fb806083c03a07fe82663cc27ca30b5043",
+      "bytes": 72575
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P061.md",
+      "sha256": "41deba0d4e548ba8cc8914e8b13d452c3d312f7317f27d3542abacaa5564bca5",
+      "bytes": 106048
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P030.md",
+      "sha256": "4d97e6559db8bbaec190a26a645a6edf8a05edeec220e4a6c8c66aca74923713",
+      "bytes": 30596
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P092.md",
+      "sha256": "e724985052f84897987b8d477cb4311b7d9f2f00db5f7eddd9666d3021834ea5",
+      "bytes": 43179
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P004.md",
+      "sha256": "5f7f7ba14419ee2d4935e471d4f3c1e921776503649489ce3ee1c505f4bba8da",
+      "bytes": 12843
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P055.md",
+      "sha256": "fb933640159f151f84a0810f75c63d516d852db1dcdb766ae2f5e571b292ca9a",
+      "bytes": 39692
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P045.md",
+      "sha256": "ed7c5d11b09669bb3302cf97f441ae1393b1b184431788c1d5261668a800840d",
+      "bytes": 34558
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P014.md",
+      "sha256": "764e8634ffe9cbe3f1ee51c45704412b435a43b25085dda1441099feffdc576f",
+      "bytes": 19034
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P082.md",
+      "sha256": "0192ad571bf8df1888cf02d925f1fcd21c9704f0318122f8b43d7f372dd45407",
+      "bytes": 36260
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P020.md",
+      "sha256": "bb35cd7257d1350fb66fc19f0827f83f03e7e40e3390ea347e899b0ef9c1ffc2",
+      "bytes": 39234
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P071.md",
+      "sha256": "90b276f0bbec3d2b3118379572220b0ddb61b4554c4d0057726cefcd5b2e3224",
+      "bytes": 20764
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P051.md",
+      "sha256": "2a5c04d30ebaff7a4f8b4ba7306bafe075bbe246af54fc7994a153e0cfe4e32e",
+      "bytes": 49908
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P034.md",
+      "sha256": "dba8eae75fea382d920c57e36813a89af59128cbab8d1377c1e1a51ddc1e21c0",
+      "bytes": 32206
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P065.md",
+      "sha256": "83fef18ea9dcc5ee6f070b04bda39c38d4cfc9ab01f46f50841792f03795f7a0",
+      "bytes": 45058
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P086.md",
+      "sha256": "f0b263221f6b1d83ab8ec30e4e1d2626cb853f18fe9f4761f317da5e38bee7f1",
+      "bytes": 25119
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P075.md",
+      "sha256": "0a6ea6f28f428d11a7fdd16a537f09b9858219f849dd9d33f665a952d317f14c",
+      "bytes": 22980
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P024.md",
+      "sha256": "68e2d1ebb17d61c54284a4774b0ffe144da26e802d0115362e5aceda78624e97",
+      "bytes": 24348
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P010.md",
+      "sha256": "270138e7dbbedd9a36102a876c774b3d29d5f98e161a07c1281c29c957252f65",
+      "bytes": 26806
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P041.md",
+      "sha256": "cf0b222af13b8ceb7e43da2d6019d1e3a5370fd9a101f7f556381ece9d5b60b0",
+      "bytes": 62228
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P050.md",
+      "sha256": "ee8b71ce6f54efe5de8c5986374cc77c0ecadd1e89fbb8199de37822105137e5",
+      "bytes": 82269
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P001.md",
+      "sha256": "cbf663bd09ce241e1926ed2e9ce72bee9987e10b5028d3a710ef5a722aeabd31",
+      "bytes": 42236
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P035.md",
+      "sha256": "4e97335a20616953eb920c40c57f1b2fee0e32a41e412aa89b73f502a84246cd",
+      "bytes": 39105
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P064.md",
+      "sha256": "e3570662a865569e930481237ba3b1b274acbaa6f4c5a1faffad704ea3af6010",
+      "bytes": 53306
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P087.md",
+      "sha256": "4027648c13650057c8b5eff0b2ea3694442309e2a2ca02959849c8734f6d1071",
+      "bytes": 26720
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P074.md",
+      "sha256": "041b28e3534ab6214856c6b569291c7505a109072c96bef7e1ee19556cdea3fa",
+      "bytes": 41619
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P025.md",
+      "sha256": "e2bab05e239dcab3a0171043cddfe45712c2056e66c7c04d0af81387063a036b",
+      "bytes": 27397
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P011.md",
+      "sha256": "c5901e80f83bd83ca3c1f72f95eaf5ad7e043e77571b50dd3370547e5f05bfde",
+      "bytes": 26020
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P040.md",
+      "sha256": "a80598b1b856ba71472a7e5cdcc7331a342e8a34ada438861a5b818f4aa013ef",
+      "bytes": 40799
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P060.md",
+      "sha256": "98f4116bc927e6ee43036e2e1315fa09d8e86f71644ba76323ebdc09dc0caa3a",
+      "bytes": 48175
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P031.md",
+      "sha256": "d23b387495816b12c72b917a2c2da285f83109910f2abd02565e6dfd2db8c4ef",
+      "bytes": 30623
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P005.md",
+      "sha256": "572b1e9dd04d5e053b17e9ae447563f12af36508ad02cc68a51e56fef704b009",
+      "bytes": 21819
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P054.md",
+      "sha256": "b408f8d7261d5385a2c5f8932c84ee2946d4731a0081a163073de5c6b379a25b",
+      "bytes": 90400
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P044.md",
+      "sha256": "dddb576eb27e282682a6f5ba61ab1f4edcf9d919ff455aa72dc845920420b8cb",
+      "bytes": 41759
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P015.md",
+      "sha256": "7d4dc5c3ab224cb35eafde4b269b6a351e0f2fea2eefec901fcbb9afecd935d7",
+      "bytes": 37425
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P083.md",
+      "sha256": "54236a01ceeda7241a7f437558594765b02765d67bf0eea3ba3ef094c972ee83",
+      "bytes": 48984
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P021.md",
+      "sha256": "dcf14e22f9fa225c5d89df18569843ae4613b8d07b192b98377a8bd2806d9ca4",
+      "bytes": 24203
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P070.md",
+      "sha256": "a459f535e2b8b68a7a95e06abd57b6eb9fbddb936bd62e480ed20d30e6de7b91",
+      "bytes": 30481
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P002.md",
+      "sha256": "1b9a9b9b90477e81ce60e6783b64f273f1c228648f10718652c221fe0b5568f4",
+      "bytes": 18042
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P053.md",
+      "sha256": "566329b713fef774165d7de19339e72a0344eb30a78f11b868f3a4d291ade120",
+      "bytes": 68364
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P067.md",
+      "sha256": "b3e6004741f00e14c23e3eb616182c74902e008963ab6ea65ea20d500ee25781",
+      "bytes": 2603
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P036.md",
+      "sha256": "84a273264a60dbd59c59267c6e0ba3cc4affc4073877d900a956710d7fa7f5d0",
+      "bytes": 19858
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P026.md",
+      "sha256": "c5d4a96570259fd82afa8d0e05a90d325a6435c6519b4a258eed5217b648cd1a",
+      "bytes": 28527
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P077.md",
+      "sha256": "b98088f5dc12a46f010192af092ae4de01e9a80005a786ee5e9c2f73391ea97f",
+      "bytes": 63781
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P084.md",
+      "sha256": "db337752bedef8371f65e7eafb06390c93c2b5b4dbb22d7eb99945e2ab46205f",
+      "bytes": 48995
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P043.md",
+      "sha256": "cdb779af132e86480b1662af5d90a06ef05b80f3b02831ddf72bd27a83f07d79",
+      "bytes": 66077
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P012.md",
+      "sha256": "e8e70387bee08d96e2566ad86e39d215ed22ed2cfc4a9c15fee31d77368905ef",
+      "bytes": 20688
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P090.md",
+      "sha256": "6d95030f82ed120ebb209019ea6818ec94fc540af819f66c2234c08ab4588615",
+      "bytes": 17687
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P032.md",
+      "sha256": "bdb3609077bab8291adfee4ae5949c68d57048afd0a7aa4a08b9c2e2a18f28a4",
+      "bytes": 41693
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P063.md",
+      "sha256": "13bb0034d15fc22b58bbaf6f67bf1ba7a657e3144d62f079c5593fa525befa24",
+      "bytes": 35154
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P057.md",
+      "sha256": "0adec638126b6a6494f596fc88aeb093eef6181b34ca3b3d930c9d2af6a5092c",
+      "bytes": 77080
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P006.md",
+      "sha256": "a9079b89c82d70c8e7f655ad31f10e487e965f8d7813b08b4239ee7b88a6fd3d",
+      "bytes": 31156
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P016.md",
+      "sha256": "a47c5e6871faea0d39534fe1bf023f7a0ad48c2006e93096528efa3cfa33fe82",
+      "bytes": 28332
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P047.md",
+      "sha256": "1cb15f0845ddade07f562187a794de7e2de9773093a4fe9cc5416500badb973f",
+      "bytes": 26770
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P073.md",
+      "sha256": "0e37481ef9e559ca5d23e7d4e55e799725fb276ba3c685e53112052f60263eb1",
+      "bytes": 63513
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P022.md",
+      "sha256": "066c945d033ba1af00c24c59ad038c0bc64401e39ace089b78c4b79f7521f17d",
+      "bytes": 32772
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P080.md",
+      "sha256": "4cea033a578f3dc2f2a23be05d06d529b82f49cf1ce46ee26883c29f410ce4b0",
+      "bytes": 37735
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P091.md",
+      "sha256": "25a96f46f566459bd238af8d9fb3cdd2af57c9950956e6c2058af89500f1aaef",
+      "bytes": 28970
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P033.md",
+      "sha256": "48c67f1698942669941877ef0e6d2bab8b9463aa021a4d8a94cf2202c98a3d7d",
+      "bytes": 51215
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P062.md",
+      "sha256": "860e3a5ff69f3b812833f35bce1b5683ed833fbed06fc27b3948fa5438e8c9f8",
+      "bytes": 18453
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P056.md",
+      "sha256": "09b6bc31e4673f96714bfe0a9e1c6b0200b523dcc243edb086290924af349488",
+      "bytes": 87508
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P007.md",
+      "sha256": "4c5160dd0044f19ec848ac2d2ccfce079d4853ecbc3ad0d9a9b7fe55e596fce0",
+      "bytes": 27007
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P017.md",
+      "sha256": "de56911c4a7a30fc5526e57bc2b3fd3b2400c45d07a5cab00e41aa657d47040f",
+      "bytes": 35032
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P046.md",
+      "sha256": "7da4af5952c5da586be52d94f24d0e302202c9c26ea46a815b978c18e71a2093",
+      "bytes": 41043
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P072.md",
+      "sha256": "ad47f903adaa458133184a8fab54396197050347cf4322b23b04ca5a7103179f",
+      "bytes": 50575
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P023.md",
+      "sha256": "b3f9d2b6a14b9d5e3218dd299e04bfe8ce26a74b12be32895682dce022cbbdd7",
+      "bytes": 33176
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P081.md",
+      "sha256": "1c4c18701b1569b1166dad367902a2713361eaf4b4d963ece37006758857155d",
+      "bytes": 52706
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P003.md",
+      "sha256": "04dca069a8b6d9241e2e87850b5c8e8c1d0691f7d5e8bbfbbb8e6c49fb5f6ef7",
+      "bytes": 23570
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P052.md",
+      "sha256": "dcc502988095c74bc0eced84048ec3e51b12da7ae0d7df9e480e060dead10908",
+      "bytes": 67220
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P066.md",
+      "sha256": "4809c5a6ce3492c97009084f50df50dbc57e8fb4bbe00cd7982943165cc73777",
+      "bytes": 67059
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P037.md",
+      "sha256": "9a81efaa2acc55d9bb32922eb6c3497d088307d4c594170eb1f59089e371ce51",
+      "bytes": 24932
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P027.md",
+      "sha256": "3a698c53fb0e428c6a7505467bc7a954b68eebdb4666e1fc498f8a7c3d610524",
+      "bytes": 32341
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P076.md",
+      "sha256": "e25a993efd71c783be30b1e35bd510cc5ac457f44d93df4e6d6db59fb7fd3696",
+      "bytes": 40418
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P085.md",
+      "sha256": "7d7f8e62d79c2cff4f1f614bccca5b15b0c64cd3e1374f279c1e9574110b23d1",
+      "bytes": 35268
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P042.md",
+      "sha256": "0d307583e5afe0ffa96ad35dbe2a2b441832cc32b7f756db17a394bc282e38ef",
+      "bytes": 46582
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P013.md",
+      "sha256": "3c47fcd1202bfed5837fa58b128d2ed84c15d866920e19db07f9df02b3a4fb1a",
+      "bytes": 30901
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P008.md",
+      "sha256": "08bf9904c6d3b410ca58e1047009499e935bcdb50f8195361a84d4a31194543c",
+      "bytes": 33025
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P059.md",
+      "sha256": "2ce898a18bf09fbf7171de694f1d6779ea452d7b51b4f644a671392d09919bb4",
+      "bytes": 48456
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P049.md",
+      "sha256": "edced5108eedca4684edb78da7f31d59d0647ec388e32a699ef64e889c644acd",
+      "bytes": 49357
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P018.md",
+      "sha256": "5128d0d94d92ae233d66d3ded4108b61c8342027e3fd3b435161929a98ccd5cd",
+      "bytes": 48951
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P038.md",
+      "sha256": "74f9602d38d1d813fe154382ec52ddcabea49d8b4a2f66b8ff99614b0ee3f65f",
+      "bytes": 59422
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P069.md",
+      "sha256": "74e1b59c0c419bab64cc5c63cb6f929b5be2948f503e1ad21d54934037cd5b43",
+      "bytes": 20506
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P079.md",
+      "sha256": "8879f61ef009499dbc878251b015e116cae8da49af4b47dc4687d10c98fda16f",
+      "bytes": 53957
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P028.md",
+      "sha256": "969c035ebb74295ce41fb3a290b5ea0036dc4fab051b2a228fc8b0a97922490a",
+      "bytes": 33004
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P039.md",
+      "sha256": "799d1b6d8eeeb07ae110be5eb5101a5ca1db193418ee6305456767d4e4bc7cdd",
+      "bytes": 52306
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P068.md",
+      "sha256": "d478d395c5833268982d6d5cef6a859bee7a86cc8f9e6f2e9e1bb5acf20387a8",
+      "bytes": 37764
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P078.md",
+      "sha256": "bd653441490773a7a9e4aa38b8231f978adbd71bad2f6e63eff0c966704415d7",
+      "bytes": 54380
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P029.md",
+      "sha256": "a028eee5ebf75b976df0fe5a5bedb8ed0b46ebe6172230a76a5fd1f9bbddf337",
+      "bytes": 26953
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P009.md",
+      "sha256": "8e43f20167e042753fa5b5de10521410e5b6d4aa35492d3544bb1717d42cff45",
+      "bytes": 22972
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P058.md",
+      "sha256": "138f9c4310730b44098f0dc2e9951f0d1f467dad1ca7fbb764e56b476872ea79",
+      "bytes": 82831
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P048.md",
+      "sha256": "4667ff75d8e5e2c8fabf135f6f7af462e7e1ff08773ba6208286da008168cb15",
+      "bytes": 42689
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/转录/P019.md",
+      "sha256": "0416e3f3706d05f2f931612da9e92cb2ed25287dd41875fa379cf272d2ada26b",
+      "bytes": 37913
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第28课.md",
+      "sha256": "60ff2218b70cc9bc5b534b1a24a81dbd5936a5d0968030a0d1acc9560b2202d9",
+      "bytes": 7286
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第14课.md",
+      "sha256": "1b4c5e0daaf3a171ead9dbb32d43c5f0afa1bc3397f24d0f5426f2f84a0ec82d",
+      "bytes": 7702
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第15课.md",
+      "sha256": "e7f754fa2faf8a1428fe6061cdbc57ed58636977c10d5ba9d7eccfa6bc2b138b",
+      "bytes": 9180
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第01课.md",
+      "sha256": "d71bf194b52538267479dbe01fc4a16225e631fcabb0eefa2028739a62287120",
+      "bytes": 8585
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第29课.md",
+      "sha256": "e42c0d8da39eb827aeccd9e1b595f8906d8ffaba9bd109f9bf4f0cfd938fc041",
+      "bytes": 5226
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第17课.md",
+      "sha256": "8e5d4248c6c9c02e6c7c79cd556c97760caac9478fb285e824434490a1102dcb",
+      "bytes": 8057
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第03课.md",
+      "sha256": "cb258998287059fe076cbe31e9eea91f5a9d01f2749b5c8529deeb6bee51a84c",
+      "bytes": 7709
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第02课.md",
+      "sha256": "1b4334e27086dd83b915f2489bffea0eaa155dbcb31308f82a5c2b3f23f64094",
+      "bytes": 7613
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第16课.md",
+      "sha256": "9712127cb73c90b667606bc597b0e46a34d94695ab3708175112fd44d214488e",
+      "bytes": 6816
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第12课.md",
+      "sha256": "7e3528c655204f64ee28a73733a70555ce5d04024f355d1871eb30fef079cea8",
+      "bytes": 10249
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第06课.md",
+      "sha256": "70294be945b34a88a6602c722451cf26782ad18be8f1f7e07e2da9f397bd3b94",
+      "bytes": 5098
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第07课.md",
+      "sha256": "efb6828fe88068a8e44c98a73fa5dc474cbb64f4fc1843c3f765e98ca1fc89f4",
+      "bytes": 6042
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第13课.md",
+      "sha256": "f3411dd9b8fbbf6813829bb9ea057a86d61b91c75bcbcf10e9e3aae3c91c000f",
+      "bytes": 9535
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第05课.md",
+      "sha256": "80ada3d904c7d838ef674460b5f31dca7c51567c3a29345bd8c4ef07846e3260",
+      "bytes": 8052
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第11课.md",
+      "sha256": "6659ba6ee078393b47994790af01430c1fb193c2dfef6e1e01084326a397aa44",
+      "bytes": 8783
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第10课.md",
+      "sha256": "dbfac521df2e1eb0e66f5badbdb482f30fc4d3800a370ff3d3ccc59d03e8f6ec",
+      "bytes": 5783
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第04课.md",
+      "sha256": "9d9d7a6f033b18be7f405c8ccfa86c32d844572f91803fa3b53f0b5118d17447",
+      "bytes": 7412
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第09课.md",
+      "sha256": "ce6a12931914b3494070a49425e6b963d9b5e9de77e5cd26c5a7495ff4271219",
+      "bytes": 9472
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第21课.md",
+      "sha256": "db27e209ba09636f8d875eaace4f640c693ad069ddda7d2c0617b76ab8e17107",
+      "bytes": 7381
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第34课.md",
+      "sha256": "a9dc074d05632da5c2dd0f4e35e505df81ecb9d4ba447b49f7d793f9673c4604",
+      "bytes": 6620
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第20课.md",
+      "sha256": "5d35750aa0b817cdef6658d4f4b6576209c6537975ea4e46c161eeddeb3931af",
+      "bytes": 7058
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第08课.md",
+      "sha256": "73cba6f02673bc24d58f61934e745fbfed47d1c6652c2138c8d0333a042fb657",
+      "bytes": 11542
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第22课.md",
+      "sha256": "665dd94ac92d534e87e1e79f496da35a8e3edf7589c57c4c2b0a47ed31e74163",
+      "bytes": 5109
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第23课.md",
+      "sha256": "d83d83cf2c8be4b19988c3fbdb6332f6c26ff6b901b2cbc6aec388d44074d2a7",
+      "bytes": 7135
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第33课.md",
+      "sha256": "d7cd4a5fdf98663b3adcbdaa65cfd76871492d585343cb64de4e1680527728fa",
+      "bytes": 5490
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第27课.md",
+      "sha256": "4525a24cf26bc598178b8062406f1dc9736ace169a604a8b6f64309698380328",
+      "bytes": 5704
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第26课.md",
+      "sha256": "7809ee6016bb460b726afb31188ae5a987cdc0142c4bfa4ec31b188e81a8daac",
+      "bytes": 5776
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第32课.md",
+      "sha256": "164e0b16c71e9d2ab2b7d521cc46fed43397163bd624add058cb20c34233cf21",
+      "bytes": 6697
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第24课.md",
+      "sha256": "7308ac80785ae9c60bee6d29cb935e5882c8bab0fcb7c35d804666a5fc49477e",
+      "bytes": 6677
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第30课.md",
+      "sha256": "26983626d34ab65d2d79abc962d2806f10e5e25279c56e38d04a72a26495f0c2",
+      "bytes": 6422
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第18课.md",
+      "sha256": "c3fc2d7b773e78c485cf88189a24d7718a7293cf8c853ef358abcc72c229b5f0",
+      "bytes": 6766
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第19课.md",
+      "sha256": "cea9336eba184e93c648a7ce3aff8f6cc556d0e09f24ce75e9bad83e4f640f95",
+      "bytes": 6433
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第31课.md",
+      "sha256": "becddf5d37b35ec7398236852d8272ba58112fffac8f8040c04a3c86940ac4c3",
+      "bytes": 6742
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/课程/第25课.md",
+      "sha256": "b639b908f8b5a108168fbe2651705561d230797d2b7a10ba6116dbc116da7773",
+      "bytes": 5944
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/练习/第一份故事-题目.md",
+      "sha256": "9428ec5603e81855ff59394a20e5954d21f7073fd45c8bad047dcb92924c5c3a",
+      "bytes": 1838
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P088.md",
+      "sha256": "5b2e2048c9bc9bce2076e3bc4ef8f9a80e3869318c5765b404f81783eb6d5c98",
+      "bytes": 7280
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P089.md",
+      "sha256": "1807ded80e3f708276ba2e890766641820be565df3eaa57f3976d09fcfa1b264",
+      "bytes": 15618
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P061.md",
+      "sha256": "c174d36365ea4585cd8236367654633968c9460c1b59f766d0abb386d52ae389",
+      "bytes": 7142
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P092.md",
+      "sha256": "3c14cb644e01960a2baafb48a1d5de9575332600d1a4c325fcbc03ccd616da60",
+      "bytes": 11089
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P082.md",
+      "sha256": "8c94fbae7446da8256fd8dd0d6ef7260649113508689ce17c88fb0b2adfd8450",
+      "bytes": 9418
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P071.md",
+      "sha256": "52426db781f4d7b6b5c8f6b6f8fc305c4eb58146cb95654b3cd1ebd550c16050",
+      "bytes": 8163
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P065.md",
+      "sha256": "7b5f089ec9578d180a5756b9113fc6f36fac663501d8668a5e1f0017860000a3",
+      "bytes": 6208
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P086.md",
+      "sha256": "3f6a5b0083d66fc15cc055a9b7be4fc929410ca8875002dc4dda40c016f5c99d",
+      "bytes": 9284
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P075.md",
+      "sha256": "4ac977f042488d6f40d8e48e7fef9b8a2055438149ce73511de4ee942a3e0ec1",
+      "bytes": 6031
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P001.md",
+      "sha256": "49376a1c59ef4dd4e4fe9552f50306a1c3e3745df76edbe4ca006e8d933f6277",
+      "bytes": 7706
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P064.md",
+      "sha256": "69c82c6389917a75da5d96b52509b1059f0f72837b078771169a1452cedbca70",
+      "bytes": 8206
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P087.md",
+      "sha256": "7bb47b735fdd86f2897379e73f046eca2c14e668815393e7845e94914fe17137",
+      "bytes": 4005
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P074.md",
+      "sha256": "62bf4120ded41bfec2de711c5de9c9e128d9f924bdc5638f9266d8be344fff0e",
+      "bytes": 6157
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P083.md",
+      "sha256": "8b2fde0ef683935ca86f0faad7a1616fd091e5043be9a7247388a4a17d786e89",
+      "bytes": 6614
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P070.md",
+      "sha256": "57324584484286e5ea15256b6cbc0bbead1f74f426e15072659c329449e8f3ae",
+      "bytes": 7973
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P067.md",
+      "sha256": "78a0c4d62b538be057c0d234baf4579728148933c5b02bbe8664be42538d971d",
+      "bytes": 2746
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P077.md",
+      "sha256": "187314fdb0dd16efbcf67a2b1f597b246eb05466250488ca3b92c53ecf278f59",
+      "bytes": 6853
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P084.md",
+      "sha256": "241c57674978aff1519becb418bd2e5bd52776d37bc89192ce6083613342539f",
+      "bytes": 12071
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P090.md",
+      "sha256": "6acae61fecc756298f8cdf5d9654c52b87246169e8ad5dae4ddf8dd975216139",
+      "bytes": 5451
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P063.md",
+      "sha256": "645e70e043aa81dbeec736c203b63781a8ce5c46a3469c21eceb30a39b272613",
+      "bytes": 7402
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P073.md",
+      "sha256": "13e3f83efc7f34b71915a3c41212e9f0136e8bd09d12a596d74f42b2935c9042",
+      "bytes": 17394
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P080.md",
+      "sha256": "4bcdf190dbafd0459c80bf48b7094e84599a243a26f30b44b0babe4f7ba885ca",
+      "bytes": 9653
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P091.md",
+      "sha256": "7cc9ef8b3155a75dfa568f58d50c2ebdd42bae40a10d6caae83c5468b32932ec",
+      "bytes": 6229
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P062.md",
+      "sha256": "a8df0b9a7ead18ad313e0d79327851aea45ae9f2bfc5f28c9afd23ff7e637380",
+      "bytes": 5382
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P072.md",
+      "sha256": "051b50834813fc4c661aadb328e33be47675340742d1f412167a748e199e8a8a",
+      "bytes": 7967
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P081.md",
+      "sha256": "4f93e3fd7efff67bf642ca53bca5c52eac2f4e4e543ff6de98e60dc1e42d0216",
+      "bytes": 5533
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P066.md",
+      "sha256": "14904863b333454a3a145334e745a420e04c42dbedaee2a84cf560791f8a254b",
+      "bytes": 9190
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P076.md",
+      "sha256": "72ce55ad56808bad91ee40b85d28cb3b2b1efdf73b5b5781c5966b6484d7608a",
+      "bytes": 11287
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P085.md",
+      "sha256": "aeca7df33e47c34fbb5698d0078933331919b1fd54060d00af4f8bab5f6ac678",
+      "bytes": 4335
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P069.md",
+      "sha256": "d5f9a5eeb20e464b9b1c7830c55036b2292e1962b847619a2a5a9d0122d83e11",
+      "bytes": 5613
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P079.md",
+      "sha256": "46da6734ab4338f09a8b98a65677af11563eae76fd96f2bb2c173bbbafa3cf09",
+      "bytes": 7561
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P068.md",
+      "sha256": "bfc1c6a578062953b5520e2f9c1ed92ae1e278c9d8a0bb4ce81c6e2cd2e62f46",
+      "bytes": 7287
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/补充/P078.md",
+      "sha256": "222a89480f05d9cbe71189d793ec76bdf33d4aba812e4f8891672ba868ea0c7d",
+      "bytes": 17056
+    }
+  ]
+}

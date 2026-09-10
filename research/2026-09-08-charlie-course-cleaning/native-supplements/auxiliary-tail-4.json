@@ -1,0 +1,10 @@
+{
+  "jobs": [
+    "p092-c003",
+    "p091-c001",
+    "p089-c005"
+  ],
+  "source_shard": 4,
+  "pending_ahead_at_dispatch": 9,
+  "reason": "Original shard3 finished; use its free capacity for distant tail jobs. Main fixed worker skips already-completed files."
+}

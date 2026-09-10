@@ -1,0 +1,57 @@
+{
+  "verified_at": "2026-09-06T12:26:53.947483+00:00",
+  "result": "passed",
+  "parts": [
+    88,
+    90,
+    91,
+    92
+  ],
+  "total_full_read_segments": 1004,
+  "records": [
+    {
+      "part": 88,
+      "full_read_segments": 148,
+      "source_metadata_matches": true,
+      "actual_mp4_sha256_matches": true,
+      "final_transcript_sha256_matches": true,
+      "time_ranges_checked": 20
+    },
+    {
+      "part": 90,
+      "full_read_segments": 126,
+      "source_metadata_matches": true,
+      "actual_mp4_sha256_matches": true,
+      "final_transcript_sha256_matches": true,
+      "time_ranges_checked": 16
+    },
+    {
+      "part": 91,
+      "full_read_segments": 276,
+      "source_metadata_matches": true,
+      "actual_mp4_sha256_matches": true,
+      "final_transcript_sha256_matches": true,
+      "time_ranges_checked": 18
+    },
+    {
+      "part": 92,
+      "full_read_segments": 454,
+      "source_metadata_matches": true,
+      "actual_mp4_sha256_matches": true,
+      "final_transcript_sha256_matches": true,
+      "time_ranges_checked": 24
+    }
+  ],
+  "assignment_record_counts": {
+    "explicit_assignment": 1,
+    "classroom_exercise": 5,
+    "prior_assignment_recap": 1
+  },
+  "local_markdown_links_checked": 26,
+  "lesson20_explicit_submission_spec_non_null": true,
+  "problems": [],
+  "limits": [
+    "检查文件对应、完整阅读登记、源视频/最终转录哈希、引用存在与时间边界；不是对所有内容逐句听校。",
+    "课堂内容来自完整顺读，部分字幕抽核；验证脚本不能替代语义阅读。"
+  ]
+}

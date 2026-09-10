@@ -1,0 +1,188 @@
+{
+  "part": 63,
+  "title": "职业编剧怎么用ai写剧本",
+  "parts": [
+    63
+  ],
+  "source": {
+    "part": 63,
+    "cid": 30110452996,
+    "title": "职业编剧怎么用ai写剧本",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=63",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/职业编剧怎么用ai写剧本.mp4",
+    "sha256": "e8a0cce7392a0e7b334644569ce766a65f96d9c487e52f33b53be53d88890266",
+    "bytes": 62144559,
+    "mtime_ns": 1788682128930705378,
+    "actual_duration_seconds": 1853.884558
+  },
+  "full_transcript_read_parts": [
+    63
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p063.json",
+  "transcript_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 399,
+    "total": 399
+  },
+  "reading_method": "按原顺序完整阅读全部ASR段落；不是关键词命中代替全文阅读",
+  "reviewed_at": "2026-09-06T10:15:39.776583+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿，未逐句听校；ASR可能漏字、错字或误断句",
+  "teaching_nodes": [
+    {
+      "label": "开题、使用情况和技术替代观点",
+      "start_seconds": 0,
+      "end_seconds": 156,
+      "summary": "回答是否用AI写剧本，老师说自己从查资料转向深度使用；所给使用比例是个人观察/估计。对编剧职业会如何变化的说法属于老师预测。",
+      "part": 63
+    },
+    {
+      "label": "从四项创作能力到三项主导能力",
+      "start_seconds": 156,
+      "end_seconds": 389,
+      "summary": "先回顾共情、想象、表达、执行四项要求，再主张AI辅助后更需判断、沟通下指令、审美验收。老师对AI优于人的夸张比较不作事实背书。",
+      "part": 63
+    },
+    {
+      "label": "技术效率与尝试态度",
+      "start_seconds": 389,
+      "end_seconds": 537,
+      "summary": "以邮件、汽车、电商等作类比，鼓励学习工具；属于立场与劝学段，不是技术效果证明。",
+      "part": 63
+    },
+    {
+      "label": "本节选择通用语言模型",
+      "start_seconds": 537,
+      "end_seconds": 694,
+      "summary": "老师介绍自己在录课时更愿意用通用模型，列出对部分垂直产品的顾虑；不代表本次整理推荐某款现行产品。提到版权界定时未给法律依据。",
+      "part": 63
+    },
+    {
+      "label": "拒绝一次性成品指令包",
+      "start_seconds": 694,
+      "end_seconds": 801,
+      "summary": "不把一次指令输出整篇当成职业写作；认为仍需主导、筛选和修改。",
+      "part": 63
+    },
+    {
+      "label": "按创作步骤逐层沟通扩展",
+      "start_seconds": 801,
+      "end_seconds": 842,
+      "summary": "按选题→故事创意→故事梗概→人物（主角、伙伴、爱情、对手）→凑齐故事要素→按20个节拍铺排的顺序推进。可讨论、提问、下要求和扩展，本节没有逐项完整现场演示。",
+      "part": 63
+    },
+    {
+      "label": "检查连续性、重复与夸张",
+      "start_seconds": 842,
+      "end_seconds": 1095,
+      "summary": "强调即便分步产出也不能拿来就用；举人设前后不稳、固定获取信息方式、戏剧强度过头、所有角色都有创伤等问题。",
+      "part": 63
+    },
+    {
+      "label": "逐段修改台词和叙事风格",
+      "start_seconds": 1095,
+      "end_seconds": 1129,
+      "summary": "按角色调整说话风格、逐段改稿，使用者负责鉴赏和决定；不是让工具包办整篇。",
+      "part": 63
+    },
+    {
+      "label": "应用范围与图像提示说明",
+      "start_seconds": 1129,
+      "end_seconds": 1233,
+      "summary": "老师说自己也用于短剧、电影、小说、新媒体文、短视频脚本；补充把大白话要求交给语言模型整理为生图指令、从参考图反推指令的办法。",
+      "part": 63
+    },
+    {
+      "label": "先图后视频的稳定性思路",
+      "start_seconds": 1233,
+      "end_seconds": 1348,
+      "summary": "指出自己观察到直接文生视频的镜头、角色、风格不稳，建议先获得满意基准图，再要求运动和运镜；是本节录课时的使用经验。",
+      "part": 63
+    },
+    {
+      "label": "新技术窗口期与劝学",
+      "start_seconds": 1348,
+      "end_seconds": 1625,
+      "summary": "鼓励不要在犹豫中错过新工具，使用工业革命等类比；机会、收益与历史表述未核实。",
+      "part": 63
+    },
+    {
+      "label": "反思对新媒介的羞耻感",
+      "start_seconds": 1625,
+      "end_seconds": 1717,
+      "summary": "借电影台词的个人解释与自己进入不同内容领域的经历，主张学习新技术提高生产力。",
+      "part": 63
+    },
+    {
+      "label": "卖冰棍自述与结束",
+      "start_seconds": 1717,
+      "end_seconds": 1854,
+      "summary": "老师回忆小学卖冰棍时怕遇到同学，用今天的“人设—流量—变现”视角重述经历，作为克服自卑的劝学例子。",
+      "part": 63
+    }
+  ],
+  "examples": [
+    {
+      "label": "获取信息总靠偷听",
+      "start_seconds": 885,
+      "end_seconds": 914,
+      "teaching_point": "同一角色的人设特征被机械复用，每次取得信息都靠神出鬼没地偷听；用于说明重复性，而非给出新的固定人物公式。"
+    },
+    {
+      "label": "男二牺牲被推到夸张极限",
+      "start_seconds": 960,
+      "end_seconds": 1041,
+      "original_problem": "老师说某灾难片场景想让男二为团队付出代价，生成稿把他写成用身体接通电线。",
+      "teacher_change": "认为在真人片中戏剧性过头，应把强度收回来；牺牲不一定等于死亡。",
+      "teaching_point": "老师用此例说明单场戏的戏剧强度可能被推得过头，需要创作者判断并修改。"
+    },
+    {
+      "label": "所有角色都有创伤、所有人台词同一风格",
+      "start_seconds": 1050,
+      "end_seconds": 1127,
+      "teaching_point": "要求检查模板化设定和说话风格，按具体人设逐段改。"
+    },
+    {
+      "label": "卖冰棍的自述",
+      "start_seconds": 1717,
+      "end_seconds": 1854,
+      "teaching_point": "童年怕遇到同学的经历被用来解释新领域里的羞耻感；真实经历为老师自述，本次未独立核实。"
+    }
+  ],
+  "assignments": [],
+  "practice_suggestions": [
+    {
+      "kind": "general_method_demonstration",
+      "task": "按创作步骤与模型逐层讨论、扩展，再逐段审阅修改",
+      "start_seconds": 801,
+      "end_seconds": 842,
+      "submission_spec": "是写作方法介绍，没有规定本节必须提交故事或剧本，也未规定数量、截止日期。"
+    },
+    {
+      "kind": "optional_practice_suggestion",
+      "task": "生图时用大白话描述需求，再请语言模型整理指令；生视频先确定参考图",
+      "start_seconds": 1186,
+      "end_seconds": 1319,
+      "submission_spec": "是辅助技巧，没有本节必交材料。"
+    }
+  ],
+  "actual_assignment_result": "完整顺读399段机器稿；未找到明确课后提交作业。约13:21–14:02的选题到20节拍是方法顺序，未要求本节全部完成；19:46后的图像/视频技巧也没有提交规格。未逐句听校，不能保证无ASR漏字。",
+  "connections": [
+    "老师明确回顾：2:36起回顾早期课程对共情力、想象力、表达力、执行力的讨论；没有报出具体课号。",
+    "老师明确说明：13:21起要求沿用以前写剧本的步骤逐步扩展，提到20个节拍；本P没有重讲全部节拍。",
+    "整理者关联：可与原编号课的选题、人物、要素、节拍各节点对读；不据本段自动确立它们的全部课号或把它们压缩成指令包。",
+    "整理者比较：本节的图像/视频辅助说明与P001制作流程相关；是整理时建立的主题链接。"
+  ],
+  "uncertainties": [
+    "AI使用比例、效率倍数、能力排名、各产品表现及付费方式是老师当时的估计与评价，未查证也不推广为当前事实。",
+    "涉及版权归属的句子仅登记为课堂提醒，不构成法律结论；本卡没有扩展法律建议。",
+    "人物连续性、夸张程度等案例可回原视频确认上下文；专名与模型名的ASR存在错误，未据不清晰文本补写产品说明。",
+    "技术机制和工业革命年份等类比未独立核验，节点只概括其论述作用。"
+  ],
+  "limits": [
+    "本卡全文读的是机器稿，未完整逐句听看原片。",
+    "时间戳用于回查原视频，不是逐字对齐验证。",
+    "老师观点、行业观察、预测与招生材料均归属于课程原话语境，不是整理者背书。"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "created_at_utc": "2026-09-08T02:46:26.905691+00:00",
+  "scope": "Files present before full-course continuation; previous records preserved",
+  "first_four": [
+    {
+      "file": "output/course-learning/charlie-20260906/清洗讲义/第01课.md",
+      "sha256": "810f4c548ab708c160500307bd6c0c7649fb18f22a16b58418efe85c48fc4e6d"
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/清洗讲义/第02课.md",
+      "sha256": "496566e6ee7da74ff97a8237dd3d73417d1c13077caad7a36272dfbf7ae2fec7"
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/清洗讲义/第03课.md",
+      "sha256": "06268959109be52cc0247dcfab78a6b0d6ce2d2f50829a70c2b13297990b3421"
+    },
+    {
+      "file": "output/course-learning/charlie-20260906/清洗讲义/第04课.md",
+      "sha256": "0f6252fb2a1102faef66f3328510d04cc2c252d927c7b49589b0e52e5abc94e1"
+    }
+  ]
+}

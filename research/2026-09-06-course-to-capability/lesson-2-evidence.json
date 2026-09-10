@@ -1,0 +1,631 @@
+{
+  "review_date": "2026-09-06",
+  "lesson": 2,
+  "scope": "p005 + p006 only",
+  "sources_manifest": "research/2026-09-06-charlie-course-acquisition/download-verification.json",
+  "review_method": {
+    "asr": "whisper.cpp base multilingual zh; existing parent-run transcripts; no second transcription",
+    "complete_emitted_transcripts_read": true,
+    "segment_count": 1442,
+    "source_duration_seconds": 3222.301451,
+    "audio_listening": "none",
+    "continuous_full_video_viewing": false,
+    "frames_extracted_and_visually_reviewed": 6,
+    "ocr_used_for_this_review": false,
+    "limitations": "Full ASR text reading and six sampled original frames do not equal full audiovisual review. ASR timings are navigation aids, not verified word timings. No external film or factual claims checked."
+  },
+  "assets": [
+    {
+      "part": 5,
+      "title": "第二课-故事的要素2.1",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=5",
+      "video": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第二课-故事的要素2.1.mp4",
+      "duration_seconds": 1276.678889,
+      "source_sha256": "ae7fc5cf55ac7a986105ab85f4376d418331fa2b852c41690d7a30398cbfd0bf",
+      "source_hash_verified_this_review": true,
+      "asr_record": "research/2026-09-06-course-to-capability/asr/p005.record.json",
+      "asr_json": "research/2026-09-06-course-to-capability/asr/p005.json",
+      "asr_json_sha256": "ef9ae2ab66a6888bf9e39993608f6355c62190e5f9e536c1ef33037375c71d36",
+      "asr_artifact_hashes_match_record": true,
+      "segments_read": 565,
+      "all_emitted_segments_read": true,
+      "transcript_span": {
+        "from": "00:00:00,000",
+        "to": "00:21:12,580"
+      },
+      "trailing_seconds_outside_transcript_span": 4.099
+    },
+    {
+      "part": 6,
+      "title": "第二课-故事的要素2.2",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=6",
+      "video": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第二课-故事的要素2.2.mp4",
+      "duration_seconds": 1945.622562,
+      "source_sha256": "106f194736f875983bebd75396444a2c5dc8c0758dd5d591254e2a4db35dc2fc",
+      "source_hash_verified_this_review": true,
+      "asr_record": "research/2026-09-06-course-to-capability/asr/p006.record.json",
+      "asr_json": "research/2026-09-06-course-to-capability/asr/p006.json",
+      "asr_json_sha256": "51140648db2a6d29b066b759259a9d451c30dc408987a2f05752d3b8b7713f47",
+      "asr_artifact_hashes_match_record": true,
+      "segments_read": 877,
+      "all_emitted_segments_read": true,
+      "transcript_span": {
+        "from": "00:00:00,000",
+        "to": "00:32:23,560"
+      },
+      "trailing_seconds_outside_transcript_span": 2.063
+    }
+  ],
+  "frames": [
+    {
+      "id": "F1",
+      "part": 5,
+      "time_seconds": 330,
+      "timestamp": "05:30",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0330.jpg",
+      "sha256": "320fcb56dc87cef05aa8ca7c822f2ee5114de957906539aefdacee82d7889933",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "板书可见“灵感”“创意”“成于脑”；部分左侧内容被讲师遮挡，未据此补全所有板书。"
+    },
+    {
+      "id": "F2",
+      "part": 5,
+      "time_seconds": 540,
+      "timestamp": "09:00",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0540.jpg",
+      "sha256": "d160d06237f6812b03a620b737620e1ad1e1166ce7eb0b42ab68c0ca5f64edc1",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "右侧板书为“灵感来源”：肉体分出欲望、幻想、恐惧，另列共情。烧录字幕出现“他在幻想什么 他有什么欲望”。"
+    },
+    {
+      "id": "F3",
+      "part": 5,
+      "time_seconds": 1250,
+      "timestamp": "20:50",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-1250.jpg",
+      "sha256": "7f078fab874d0d14e39d5bfb83bd984c14185929fb3f26a904ab64ba9aa985a0",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "烧录字幕为“把你所有关于这件事情的素材搞一个矩阵”；板书有“两亿”与“偷”的组合示意，局部被手遮挡。"
+    },
+    {
+      "id": "F4",
+      "part": 6,
+      "time_seconds": 935,
+      "timestamp": "15:35",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg",
+      "sha256": "cb955258968093c3a6b4b30154259da88509e225df81b6069c51bf13a36983c9",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "板书显示人物的身份（事件中角色）、欲望（得到什么，want）、动作（行动）；事件的核心问题、障碍、结果；主题的正价值、负价值。"
+    },
+    {
+      "id": "F5",
+      "part": 6,
+      "time_seconds": 1265,
+      "timestamp": "21:05",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-1265.jpg",
+      "sha256": "58da53a66c0028da38dff6b6cab864a6e83ebf172c2e4ec048fc3d46d2c576bc",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "板书出现群演、梦想出人头地、跑组、机会难得等案例映射；讲师身体遮挡了右下部分，未称该帧验证了完整结局措辞。"
+    },
+    {
+      "id": "F6",
+      "part": 6,
+      "time_seconds": 1785,
+      "timestamp": "29:45",
+      "path": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-1785.jpg",
+      "sha256": "6700076e059a293d4fb4234f6665534bad2c6eb8aafc16f0043c552ac1f08b26",
+      "dimensions": "852x480",
+      "extraction": "ffmpeg -ss <seconds> -i <verified source> -frames:v 1 -q:v 2; full frame JPEG, no crop or OCR",
+      "view_image_reviewed": true,
+      "visible_evidence": "板书出现四人、普度众生、取经；烧录字幕为“是你们一路上做的善举善行”。"
+    }
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "先处理故事从哪里来，再处理故事的要素与剧本；灵感的直觉需要理性加工。",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "01:08.060",
+          "to": "03:16.900",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 5,
+          "from": "05:04.340",
+          "to": "05:55.820",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F1"
+      ],
+      "status": "课堂主张的转述"
+    },
+    {
+      "id": "C2",
+      "claim": "灵感从自身的欲望、幻想、恐惧与对他人的共情中积累；课堂建议初学者的第一个故事先从自身材料开始。",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "06:20.900",
+          "to": "09:41.860",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "00:00.000",
+          "to": "01:38.280",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F2"
+      ],
+      "status": "术语经画面核对；共情并未在此节展开成一套完整训练"
+    },
+    {
+      "id": "C3",
+      "claim": "把欲望和恐惧组合成基本冲突；“拥有两亿”只是愿望，加入钱或身份是偷来的，才产生行动、选择与可追问的走向。",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "12:10.380",
+          "to": "13:19.660",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 5,
+          "from": "15:05.020",
+          "to": "18:26.340",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F3"
+      ],
+      "status": "课堂现场构想扩展；不是完整稿件修改实验"
+    },
+    {
+      "id": "C4",
+      "claim": "把与当前想法相关的来源、花法、担心的事及生活观察列成素材矩阵，再提取故事。",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "19:34.940",
+          "to": "21:10.780",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F3"
+      ],
+      "status": "“矩阵”由烧录字幕核对；未展示固定行列模板或数据结构"
+    },
+    {
+      "id": "C5",
+      "claim": "下半节先讲人物、事件、主题三要素，再拆成八项：身份、欲望、动作；核心问题、障碍、结果；正价值、负价值。",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "01:38.280",
+          "to": "03:26.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "08:19.560",
+          "to": "15:35.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F4"
+      ],
+      "status": "实际完整转写与板书双重支持；不是依据课程标题推定"
+    },
+    {
+      "id": "C6",
+      "claim": "身份是人物在当前事件里的角色；欲望是此事中想得到什么；动作是为欲望付出的行动。侠客为父复仇时，事件身份可落在儿子或孝子。",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "08:28.560",
+          "to": "11:56.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F4"
+      ],
+      "status": "三项定义可核对；示例为课堂概括"
+    },
+    {
+      "id": "C7",
+      "claim": "事件要说清核心问题、障碍与结果；主题由正负价值的对抗和角色选择表现，讲师用放弃私人复仇的结局说明价值。",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "06:17.560",
+          "to": "07:55.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "12:03.560",
+          "to": "15:22.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F4"
+      ],
+      "status": "“必须正价值获胜”等限定另列，未当普遍定律采用"
+    },
+    {
+      "id": "C8",
+      "claim": "八项应连成“什么人想什么、为此行动、解决问题、遇到障碍、产生结果、体现价值”的叙述。讲师把它当初学者练习框架，并在结尾说明填出八项仍有技巧要学。",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "15:51.560",
+          "to": "16:54.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "31:08.560",
+          "to": "32:23.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F4"
+      ],
+      "status": "支持入门练习，不支持八项齐全即精彩"
+    },
+    {
+      "id": "C9",
+      "claim": "《喜剧之王》与师徒四人取经的拆解，用来展示愿望、外部行动、结果和价值之间的关系；主题要回到故事中实际做出的事。",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "17:05.560",
+          "to": "22:00.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "26:28.560",
+          "to": "31:08.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "frames": [
+        "F5",
+        "F6"
+      ],
+      "status": "讲师的作品解读；未另行观看原作品或核验具体版本情节"
+    }
+  ],
+  "classroom_examples": [
+    {
+      "id": "E1",
+      "name": "两亿愿望＋偷的恐惧",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "12:10.380",
+          "to": "18:26.340",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "function": "同一情绪组合扩展成银行取钱与继承者身份危机两种构想，示范从静态愿望到不确定走向。",
+      "boundary": "包含讲师自述作为素材示范；未核实生平，不据此要求使用者公开隐私；没有成稿前后对。"
+    },
+    {
+      "id": "E2",
+      "name": "侠客为父复仇",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "06:17.560",
+          "to": "15:22.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "31:19.560",
+          "to": "31:50.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "function": "把职业标签落到事件关系，并用私人仇恨与更大价值的冲突连接结果和主题。",
+      "boundary": "课堂临时构想；未指定为某一已上映作品的准确剧情。"
+    },
+    {
+      "id": "E3",
+      "name": "《喜剧之王》",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "17:05.560",
+          "to": "22:00.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "function": "将群演、出人头地、跑组和机会受阻映射到框架，并将平凡人的价值作为讲师对结局的解读。",
+      "boundary": "拆片演示；没有逐镜头论证，未独立核验影片。"
+    },
+    {
+      "id": "E4",
+      "name": "《西游记》师徒四人取经",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "22:17.560",
+          "to": "23:35.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "26:28.560",
+          "to": "31:08.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "function": "以共同目标把团队当作一个叙事单位，再用一路善行解释主题。",
+      "boundary": "题名据多次人物与取经叙述辨认，相关 ASR 错词多；具体影视版本与引述情节未核实。"
+    },
+    {
+      "id": "E5",
+      "name": "《疯狂的外星人》的两名角色",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "23:35.560",
+          "to": "26:26.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "function": "旁支说明可把内心的不同选择外化成不同人物，以推进情节；与人物关系相互影响的多主角区分。",
+      "boundary": "讲师明确作为题外话；“有无决裂”一段 ASR 不清，不提炼为通用分类判据。"
+    }
+  ],
+  "strong_assertion_boundaries": [
+    {
+      "id": "B1",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "09:43.260",
+          "to": "10:47.260",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "claim_in_class": "许多创作者处女作最好，因为自身材料最真实，后续共情技术不足。",
+      "handling": "教学性概括，未给出样本或反例；可支持从熟悉材料起步，不能推成作品质量因果定律。"
+    },
+    {
+      "id": "B2",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "13:44.180",
+          "to": "14:19.140",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 5,
+          "from": "17:23.900",
+          "to": "18:08.420",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "claim_in_class": "要面对自己的隐秘材料；把听者追问后来怎样作为故事是否成立的唯一标准。",
+      "handling": "不设暴露个人经历的要求；将追问当单一反馈信号，不能代替完整性或目标受众检验。"
+    },
+    {
+      "id": "B3",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "05:17.560",
+          "to": "07:55.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "14:54.560",
+          "to": "16:54.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "claim_in_class": "主题须正能量，正价值最终取胜；约 95% 可写成剧本的线性故事及入门前十个故事沿用此框。",
+      "handling": "保留其初学、线性叙事语境及老师口头提到的例外；95% 未有统计依据，不作为审稿规则或所有故事定义。"
+    },
+    {
+      "id": "B4",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "18:09.560",
+          "to": "18:21.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "22:40.560",
+          "to": "26:26.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "claim_in_class": "电影前 25 分钟一定点题；某些多主角等同一个人不同侧面的外化。",
+      "handling": "课堂分析启发，未验证普遍性；不据此给其他作品强制限时或消除人物差异。"
+    }
+  ],
+  "asr_uncertainties": [
+    {
+      "id": "A1",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "02:43.220",
+          "to": "11:24.980",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "零感",
+        "于我",
+        "坏下"
+      ],
+      "resolution": "板书 F1/F2 支持灵感、欲望、幻想、恐惧、共情等术语；只在概述中按画面归一，原 ASR 保留不改。",
+      "audio_checked": false
+    },
+    {
+      "id": "A2",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "20:06.260",
+          "to": "20:57.460",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "素材居正"
+      ],
+      "resolution": "F3 烧录字幕明确“矩阵”，视觉已核对；不声称逐字校听。",
+      "audio_checked": false
+    },
+    {
+      "id": "A3",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "21:05.780",
+          "to": "21:10.780",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "01:52.200",
+          "to": "02:10.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "故事的三要素"
+      ],
+      "resolution": "此处无需改成八要素：p006 的实际顺序是先三要素，再 3+3+2 拆分。",
+      "audio_checked": false
+    },
+    {
+      "id": "A4",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "10:20.560",
+          "to": "15:35.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "世界",
+        "炸案",
+        "复价值",
+        "正副价值"
+      ],
+      "resolution": "F4 板书支持事件、障碍、正价值、负价值；转写术语不作原话引用。",
+      "audio_checked": false
+    },
+    {
+      "id": "A5",
+      "source_spans": [
+        {
+          "part": 5,
+          "from": "17:39.780",
+          "to": "17:43.100",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "04:10.560",
+          "to": "04:30.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "13:21.560",
+          "to": "13:35.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        },
+        {
+          "part": 6,
+          "from": "25:50.560",
+          "to": "26:08.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "就杀路了",
+        "是叫人物",
+        "谁的城市",
+        "勾克",
+        "绝业"
+      ],
+      "resolution": "未用画面或音频核实，不猜写成逐字引文，不将这些词单独沉淀为方法术语。",
+      "audio_checked": false
+    },
+    {
+      "id": "A6",
+      "source_spans": [
+        {
+          "part": 6,
+          "from": "22:17.560",
+          "to": "30:31.560",
+          "basis": "raw ASR timestamps; navigation ranges, not word-level audio verification"
+        }
+      ],
+      "raw_forms": [
+        "细忽寂",
+        "休息",
+        "取精",
+        "普度重生",
+        "普通动生"
+      ],
+      "resolution": "F6 板书可核对普度众生、取经；对取经案例只总结课堂功能，不据 ASR 重建原作台词或宗教知识。",
+      "audio_checked": false
+    }
+  ],
+  "single_use_hypothesis": {
+    "status": "reviewer inference; not a demonstrated course outcome",
+    "hypothesis": "从同一素材包先组合欲望与恐惧，再用事件中的身份、为欲望采取的行动、障碍、选择与结果连接成简短因果梗概，可能比直接逐格填写八项更能减少空泛故事。",
+    "source_support": [
+      "C3",
+      "C4",
+      "C6",
+      "C7",
+      "C8"
+    ],
+    "test_next": "固定素材与篇幅，比较读者能否不看表格复述主角要什么、采取了什么行动、结果如何由选择产生；把追问仅作为辅助反馈。",
+    "not_tested_here": true
+  },
+  "artifacts_excluded_from_edit": [
+    "output/story-learning/foundation-20260906/method-v0.md",
+    "output/story-learning/foundation-20260906/course-notes-v0.md"
+  ],
+  "no_instructor_draft_revision_pair_observed": true
+}

@@ -1,0 +1,66 @@
+{
+  "editedAt": "2026-09-06T05:33:06.026330+00:00",
+  "origin": "current-task Lead, direct local editorial correction",
+  "reason": "Last native model turn failed with account-overdue HTTP 403 before generation",
+  "nativeMarketingWorkRecordForThisFinalEdit": false,
+  "nativeVersionPreserved": "run/work-native-before-final-edit.json",
+  "unchangedUpstreamStages": false,
+  "beforeDraftSha256": "32816ae4a9456808c9ddae51f8a8f8b633835cb2de02208be4a1b4e708e142a3",
+  "afterDraftSha256": "814f1fe8c97a5f927df306b58b47813451a213d522b37f5856fa3faf39608e39",
+  "finalBodyUtf8Bytes": 6839,
+  "spokenUnits": 225,
+  "shotTiming": [
+    {
+      "shot": 1,
+      "start": 0,
+      "end": 11,
+      "spokenUnits": 28,
+      "unitsPerSecond": 2.55
+    },
+    {
+      "shot": 2,
+      "start": 11,
+      "end": 27,
+      "spokenUnits": 46,
+      "unitsPerSecond": 2.88
+    },
+    {
+      "shot": 3,
+      "start": 27,
+      "end": 43,
+      "spokenUnits": 41,
+      "unitsPerSecond": 2.56
+    },
+    {
+      "shot": 4,
+      "start": 43,
+      "end": 56,
+      "spokenUnits": 36,
+      "unitsPerSecond": 2.77
+    },
+    {
+      "shot": 5,
+      "start": 56,
+      "end": 64,
+      "spokenUnits": 23,
+      "unitsPerSecond": 2.88
+    },
+    {
+      "shot": 6,
+      "start": 64,
+      "end": 80,
+      "spokenUnits": 33,
+      "unitsPerSecond": 2.06
+    },
+    {
+      "shot": 7,
+      "start": 80,
+      "end": 88,
+      "spokenUnits": 18,
+      "unitsPerSecond": 2.25
+    }
+  ],
+  "durationSecondsEstimate": 88,
+  "actualRehearsalOrRecording": false,
+  "upstreamCopyEdits": "Correct residual first-hand-source label and over-broad direction claims; preserve selected direction, evidence, and draft. Current Lead reviewed downstream for these copy edits."
+}

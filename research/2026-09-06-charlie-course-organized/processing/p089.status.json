@@ -1,0 +1,51 @@
+{
+  "part": 89,
+  "title": "编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！",
+  "state": "completed",
+  "started_at": "2026-09-06T12:01:18.980277+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 89,
+    "cid": 29817505131,
+    "title": "编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=89",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！.mp4",
+    "sha256": "8876ed2a3fdc79492c27dd0036bb9dda9b20edcd686590f9723a61b1682c6d19",
+    "bytes": 209286197,
+    "mtime_ns": 1788682403548690109,
+    "actual_duration_seconds": 4743.84576
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 4743.83675,
+  "segment_count": 618,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T12:15:33.213082+00:00",
+  "elapsed_seconds": 854.218,
+  "completed_at": "2026-09-06T12:15:33.213062+00:00",
+  "text_characters": 19371,
+  "rtf": 0.180069,
+  "max_rss_bytes_macos": 615817216,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 4743.83675,
+    "duration_delta_seconds": -0.00901,
+    "vad_speech_seconds": 3600.444,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p089.source-time.txt": "6273badd46ad23c4d030372c3ce8d6bcbba5f83e80a4405fcd6951851433ff78",
+    "p089.source-time.srt": "b0b6c9b480deda25aa41ee587eda9740dba5d59076af8414264d8a80c0e5546f"
+  }
+}

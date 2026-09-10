@@ -1,0 +1,167 @@
+{
+  "part": 90,
+  "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+  "parts": [
+    90
+  ],
+  "source": {
+    "part": 90,
+    "cid": 29821570920,
+    "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=90",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》一.mp4",
+    "sha256": "795a8c00726c926edfb9f4415c18e0ac18c98063c72c8e3fbcb65db0f5cc303a",
+    "bytes": 30426927,
+    "mtime_ns": 1788682366589727150,
+    "actual_duration_seconds": 1036.586984
+  },
+  "full_transcript_read_parts": [
+    90
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p090.json",
+  "transcript_sha256": "005856fb8ba94d4201e881c5b20addadff39bf1c05580db006b1155b72c02fec",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 126,
+    "total": 126
+  },
+  "reading_method": "先按JSONL1–125顺读，再按最终JSON补齐126，全部原序完整阅读；非关键词抽样",
+  "reviewed_at": "2026-09-06T12:08:29.350316+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿，未逐句听校",
+  "teaching_nodes": [
+    {
+      "label": "学习目标与影片背景",
+      "part": 90,
+      "start_seconds": 0,
+      "end_seconds": 215,
+      "summary": "学习受束缚情境的创作，不止鉴赏；背景史实为口述。"
+    },
+    {
+      "label": "先拆信息包再定类型和一句话",
+      "part": 90,
+      "start_seconds": 216,
+      "end_seconds": 269,
+      "summary": "建议记笔记；通常30几包非固定规格。"
+    },
+    {
+      "label": "第1包：疑似含冤的庭审回忆",
+      "part": 90,
+      "start_seconds": 271,
+      "end_seconds": 306,
+      "summary": "保持初看知情范围，不提前断言已知无罪。"
+    },
+    {
+      "label": "第2包：瑞德假释与伙伴群像",
+      "part": 90,
+      "start_seconds": 307,
+      "end_seconds": 365,
+      "summary": "首次驳回与旁白，后面还有呼应。"
+    },
+    {
+      "label": "第3包：下注制造相遇与互补",
+      "part": 90,
+      "start_seconds": 368,
+      "end_seconds": 446,
+      "summary": "赌局、熟练与生疏、环境合在同段。"
+    },
+    {
+      "label": "第4/5包：入狱仪式与首夜毅力",
+      "part": 90,
+      "start_seconds": 447,
+      "end_seconds": 515,
+      "summary": "痛苦入新世界，安迪不崩溃、胖子被打死。"
+    },
+    {
+      "label": "第6包：问死者名字才是本场救猫咪",
+      "part": 90,
+      "start_seconds": 515,
+      "end_seconds": 647,
+      "summary": "环境对抗与残余人性，姐妹帮威胁铺垫。"
+    },
+    {
+      "label": "第7包：洗澡延续此前危险",
+      "part": 90,
+      "start_seconds": 647,
+      "end_seconds": 677,
+      "summary": "允许提前出场立威胁，不硬划第一/二幕。"
+    },
+    {
+      "label": "第8包：石锤需求与正式危险",
+      "part": 90,
+      "start_seconds": 677,
+      "end_seconds": 774,
+      "summary": "自由尝试、越狱预期、伙伴提醒。"
+    },
+    {
+      "label": "第9包：物品流转与撤掉越狱预期",
+      "part": 90,
+      "start_seconds": 774,
+      "end_seconds": 897,
+      "summary": "600年说法消解期待，满足监狱生活想象。"
+    },
+    {
+      "label": "第10包：苦难也可属游戏时间",
+      "part": 90,
+      "start_seconds": 898,
+      "end_seconds": 971,
+      "summary": "反复欺凌蒙太奇满足题材预期，非字面玩乐。"
+    },
+    {
+      "label": "第11包：屋顶机会、回馈与自由",
+      "part": 90,
+      "start_seconds": 972,
+      "end_seconds": 1032,
+      "summary": "伙伴帮忙，安迪以税务能力换啤酒回馈；继续下P。"
+    }
+  ],
+  "examples": [
+    {
+      "label": "问死者名字而非喂鸟",
+      "start_seconds": 515,
+      "end_seconds": 590,
+      "teaching_point": "具体尊重人的行动承担救猫咪，防术语字面化"
+    },
+    {
+      "label": "石锤与600年",
+      "start_seconds": 726,
+      "end_seconds": 868,
+      "teaching_point": "给出越狱小预期后撤掉，仍以监狱生存与自由尝试牵引"
+    },
+    {
+      "label": "违禁品流程与反复欺凌",
+      "start_seconds": 869,
+      "end_seconds": 971,
+      "teaching_point": "游戏时间是兑现题材预期，可以是痛苦"
+    }
+  ],
+  "assignments": [],
+  "practice_suggestions": [
+    {
+      "kind": "classroom_exercise",
+      "task": "记下按序拆的信息包，供自己重看片子时对照。",
+      "part": 90,
+      "start_seconds": 250.438,
+      "end_seconds": 269.292,
+      "submission_spec": "建议；没有交稿、表格模板、数量或截止日期要求。",
+      "teacher_review": "课堂讨论表扬游戏时间回答，不是提交讲评。",
+      "uncertainty": "未逐句听校。"
+    }
+  ],
+  "actual_assignment_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校。笔记建议与课堂回答单列；P90非整堂终结，后两P另核。",
+  "connections": [
+    "回指关系相遇/互补；救猫咪与游戏时间均须按功能而非动物/玩乐字面理解。",
+    "旧21人物观念行动、22内外自由AB、27瑞德视角为相关不同观察角度。",
+    "P90–92连续专题，本P停在屋顶啤酒自由解释。"
+  ],
+  "uncertainties": [
+    "电影分钟数来自老师成片定位，不等本P时间。",
+    "作品排名/首次场面/原著鸟命运等未外核。",
+    "创作意图为成片反推，不是一手作者过程。"
+  ],
+  "limits": [
+    "126段最终机器稿已顺读，未逐句听校。",
+    "没有学生原稿可确认的旧题回收。",
+    "时间为原视频语音段边界，关键字幕只抽核所列帧。"
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "blocks": [
+    {
+      "first_segment": 226,
+      "last_segment": 234,
+      "heading": "平静交流与错过飞机——查理的世界即将崩塌",
+      "text": "第123分钟，两个人开始平静地交流，上校说出了自己的终极梦想。其实他想要一个能够厮守一生的爱人。查理把他哄得很开心，但是两个人错过了飞机。\n\n第24拍，126分钟。他们俩坐上了Manny开的礼宾车回去。查理的世界即将崩塌，因为他面对审判，而且他缺乏家人的支持——人家都是富家子弟，富家子弟都有家人支持，他没有。\n\n第25拍，129分钟，两个人在学校告别。这个告别单独一拍，因为这个告别还是蛮重要的。",
+      "corrections": [
+        {
+          "original": "man尼",
+          "cleaned": "Manny",
+          "basis": "影片中司机角色名，前后文S257亦作Manny"
+        },
+        {
+          "original": "查理哄他把他哄得很开心",
+          "cleaned": "查理把他哄得很开心",
+          "basis": "去除同义重复\"哄\""
+        }
+      ]
+    },
+    {
+      "first_segment": 235,
+      "last_segment": 245,
+      "heading": "听证会审判与阿尔·帕西诺的经典演讲",
+      "text": "两个人告别。\n\n第26拍，131分钟，听证会上，查理被审判。对方当然带了爸爸来，校长在那演讲。〔勾嘎旯的是吧〕〔待核〕，这时候我们的另外一个男主Frank入场，来支持查理，并且宣称自己是以家长的身份来支持查理，展现他的口才，随嘴胡扯。\n\n第27拍，审判开始。坐在对面那个有爸爸保护的对手供认了，出卖了朋友，而且把查理推到了前面。但是查理依然不愿意撒谎，不愿意出卖别人。\n\n第28拍，也就是144分钟。全篇最经典的场面，我们的阿尔·帕西诺的经典演讲——替查理出头的这段经典演讲，载入影史的这段经典演讲——是第28拍、第29拍，也就是第147分钟。纪律委员会判定查理无罪，正义得到了伸张，也就是查理的困境率先得到解除。",
+      "corrections": [
+        {
+          "original": "第二7拍",
+          "cleaned": "第27拍",
+          "basis": "S239原文，节拍序号应为\"27\"，\"二7\"系转录拆断"
+        },
+        {
+          "original": "给贡献了",
+          "cleaned": "供认了",
+          "basis": "上下文为对手在审判中供认、出卖朋友"
+        },
+        {
+          "original": "把而且把查理推到了前面",
+          "cleaned": "而且把查理推到了前面",
+          "basis": "去除重复的\"把\"字"
+        },
+        {
+          "original": "勾嘎旯的是吧",
+          "cleaned": "〔勾嘎旯的是吧〕〔待核〕",
+          "basis": "机器转录疑误，含义不清，上下文或为\"尴尬的是吧\"，无法确定"
+        },
+        {
+          "original": "萤史",
+          "cleaned": "影史",
+          "basis": "\"影史\"为正确用词，指电影史"
+        },
+        {
+          "original": "第2028拍，也就是1441分钟",
+          "cleaned": "第28拍，也就是144分钟",
+          "basis": "S239为第27拍，S244为第28拍第29拍即147分钟，故此处应为第28拍约144分钟，\"20\"\"1\"系转录多余字符"
+        }
+      ]
+    },
+    {
+      "first_segment": 246,
+      "last_segment": 266,
+      "heading": "Frank的困境奇迹解决与干脆的告别——互为彼此",
+      "text": "第30拍，149分钟。我们这个老Frank的困境竟然也奇迹般地解决了——政治老师跑过来向上校表达好感。上校泡妞，查理助攻。这场戏有两个作用：一个是完整了我们的Frank。第30拍149分钟这场戏，完成了我们的Frank。\n\n有时候好莱坞编剧也是挺犟气的呢。这场戏更重要的作用是什么？成为彼此，互为彼此——查理开始帮他助攻了，甚至帮他吹牛。我们说伙伴之行，两个人要成为彼此的呀，交换位置了。\n\n第31拍，151分钟。我们这个Frank回到家，两个人非常干脆地告别，没有什么依依不舍。为什么？因为是朋友嘛，明天还可以见嘛，那还样〔待核〕。\n\n你看这场戏非常明确，他跟那个司机Manny道别的时候，反而会多给对方点钱，跟对方客套几句。为什么呢？因为确实未必下次能见到了，但是对方是一个非常棒的人，所以多给对方点钱，说点很好的话，留下美好回忆的话。\n\n但是跟我们的主角查理呢？两个人已经是朋友了，而且住得又这么近，对吧？我住这儿，你在这儿上学，那么明天再见呗，后天再见呗，或者周末见呗，干嘛要客套呢？对不对？而且我们说在这部电影当中，长篇大论实在是太多了。在这里收那么一下，反而是挺高级的，对吧？在这部电影里面，长篇大段的台词已经说够了，两个人在这里确实也不需要再说了。\n\n当然了，上校回来之后，也开始跟孩子们很友善，呼应了开头——开头他跟孩子们很冷漠，在这里呢其实就是他已经开始热爱生活，发现自己的价值。",
+      "corrections": [
+        {
+          "original": "第30part",
+          "cleaned": "第30拍",
+          "basis": "全篇统一用\"拍\"计数节拍"
+        },
+        {
+          "original": "那还样",
+          "cleaned": "那还样〔待核〕",
+          "basis": "机器转录疑误，可能为\"那还行\"，无法确定"
+        }
+      ]
+    },
+    {
+      "first_segment": 267,
+      "last_segment": 277,
+      "heading": "名场面回顾——飞机上的人生观演讲",
+      "text": "同学们，就是这样一部电影，30多个节拍，153分钟，非常长，但是名场面也非常多。这部电影成为传世经典，它的名场面——当然了，这些名场面全都是阿尔·帕西诺的，全都是阿尔·帕西诺的。与此也有关系，所以我们挑几个名场面，看一下，回顾一下，好吧。\n\n第一个名场面——飞机上的演讲。也就是说，两个人在踏上征程、坐上头等舱飞机的时候，Frank向查理展现自己的人生观、价值观。这一场堪比《华尔街之狼》里那场人生观演讲，这场戏堪比《华尔街之狼》里面那一场，好吧，一场人生观大戏，一场人生观的演讲，看一下吧。",
+      "corrections": [
+        {
+          "original": "华尔街之郎",
+          "cleaned": "华尔街之狼",
+          "basis": "电影名《华尔街之狼》，S316原文亦作\"华尔街之狼\""
+        },
+        {
+          "original": "阿尔帕希诺",
+          "cleaned": "阿尔·帕西诺",
+          "basis": "同一句中先作\"阿尔帕希诺\"后作\"阿尔帕西诺\"，后者为通行译名，此处统一"
+        }
+      ]
+    },
+    {
+      "first_segment": 278,
+      "last_segment": 316,
+      "heading": "飞机演讲影片对白与老师点评",
+      "text": "【影片对白，机器转录，疑误较多，原识别文字保留如下】\n\n对，有。\n\"哦，本来这100万。\"\n\"我认为呢。\"\n\"你谁？\"\n\"不北的。\"〔待核〕\n\"这也是。\"\n\"谢得有谁别谁。\"〔待核〕\n\"They ever buried in news.\"\n\"In a mountain of curls just.\"\n\"Go to sleep forever.\"\n\"Or lips.\"\n\"And when they touched yours were like, at first.\"\n\"Swa of wine after he had just crossed the desert.\"〔待核〕\n\"开气。\"\n\"不啊。\"\n\"Big one, little one。\"\n\"Niples staring right out at you like secret search lights.\"〔待核〕\n\"Ls.\"〔待核〕\n\"I don't care if they're Greek columns.\"\n\"我 sick handsstein with.\"〔待核〕\n\"What's between him?\"\n\"Passport Devon.\"〔待核〕\n\"I need a drink.\"\n\"Yes, Miss Sim.\"〔待核〕\n\"There's only two syllables in this whole wide war.\"〔待核〕\n\"Here.\"\n\"我谁。\"\n\"Are you listening to me son, I'm giving you pearls here.\"\n\"I guess you really like women.\"\n\"Above all thing.\"\n\"A very, very distant second.\"\n\"Charlie.\"\n\"前面。\"〔待核〕\n\"This is just the story of your education son.\"\n\n这场戏，当年在银幕上的地位真的堪比《华尔街之狼》里面的那场戏。《华尔街之狼》大家记得吧？其实改天可以给大家拉一下《华尔街之狼》，《华尔街之狼》还是不错的。",
+      "corrections": [
+        {
+          "original": "Niples",
+          "cleaned": "Niples〔待核〕",
+          "basis": "影片对白机器转录疑误，原词照录标疑"
+        },
+        {
+          "original": "Swa of wine",
+          "cleaned": "Swa of wine〔待核〕",
+          "basis": "影片对白机器转录疑误，原词照录标疑"
+        },
+        {
+          "original": "whole wide war",
+          "cleaned": "whole wide war〔待核〕",
+          "basis": "影片对白机器转录疑误，原词照录标疑"
+        },
+        {
+          "original": "Passport Devon",
+          "cleaned": "Passport Devon〔待核〕",
+          "basis": "影片对白机器转录疑误，原词照录标疑"
+        }
+      ]
+    },
+    {
+      "first_segment": 317,
+      "last_segment": 332,
+      "heading": "第二著名名场面——探戈舞",
+      "text": "也有名场面啊。来，我们再看下一个名场面，也就是最著名的那场——啊，不是最著名的，第二著名的那场——泡妞戏。\n\n【影片对白，机器转录，疑误较多，原识别文字保留如下】\n\n\"Mistakes in the tango.\"\n\"Not like life.\"\n\"That's what makes tangles so great. If you make a mistake, get all tangled up.\"〔待核〕\n\"那就 try。\"\n\"All right, I'll give it a try.\"\n\"O down son.\"〔待核〕\n\"...the floor is about 20 by 30 and you're at the long end.\"〔待核〕\n\"这 was样扎，有 didn't大 the变 on right。\"〔待核〕\n\n\"A one incredible dance set.\"〔待核〕\n\n好。",
+      "corrections": [
+        {
+          "original": "tangles",
+          "cleaned": "tangles〔待核〕",
+          "basis": "影片对白机器转录疑误，上下文为探戈，可能为\"tango\"，原词照录标疑"
+        },
+        {
+          "original": "O down son",
+          "cleaned": "O down son〔待核〕",
+          "basis": "影片对白机器转录疑误，原词照录标疑"
+        },
+        {
+          "original": "s the floor is about 20 by 30",
+          "cleaned": "...the floor is about 20 by 30",
+          "basis": "句首\"s\"系转录残字，以省略号标注"
+        },
+        {
+          "original": "这 was样扎，有 didn't大 the变 on right。",
+          "cleaned": "这 was样扎，有 didn't大 the变 on right。〔待核〕",
+          "basis": "中英混录严重破碎，原词照录标疑"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S237\"勾嘎旯的是吧\"：机器转录严重疑误，上下文或为\"尴尬的是吧\"，无法确定原词",
+    "S256\"那还样\"：疑为\"那还行\"，但无法确定",
+    "S253\"犟气\"：口语含义不甚明确，原词保留",
+    "S278—S311为影片对白机器转录，英语原词与实际影片台词可能有较大出入，逐句未听校，不声称准确原话；S290\"Swa of wine\"、S294\"Niples\"、S297\"我 sick handsstein with\"、S299\"Passport Devon\"、S302\"whole wide war\"等处破碎尤为严重",
+    "S310\"前面。\"：不辨是影片对白还是老师旁注，原词照录标疑",
+    "S323\"tangles\"：上下文为探戈(tango)，此处\"tangles\"疑为转录错误，但属影片对白，原词照录标疑",
+    "S327句首\"s\"系残字，S328\"这 was样扎，有 didn't大 the变 on right。\"中英混录严重破碎，均原词照录标疑",
+    "S267\"阿尔帕希诺\"与\"阿尔帕西诺\"同一句出现两种译名，已统一为\"阿尔·帕西诺\"，但讲师口语中可能确有不同念法",
+    "S247\"政治老师\"：影片中向Frank表达好感的女性角色身份，原词保留",
+    "S254\"伙伴之行\"：含义或为\"伙伴之旅\"，原词保留",
+    "未逐句听校全段，所有影片对白原识别文字均未与影片原声核对，不声称准确原话"
+  ],
+  "boundary_merges": [],
+  "job": "p077-c004",
+  "part": 77,
+  "source_json_sha256": "709394cc61107067cd01ffe15ff225332c912d9457d71fd7d3e8e3a8660ba305",
+  "output_text_characters": 2680,
+  "length_ratio": 1.039162466072121,
+  "review_length_flag": false,
+  "thread_id": "01a07f08-6bc2-7953-88d2-294192cca55b",
+  "usage": {
+    "total": {
+      "totalTokens": 21971,
+      "inputTokens": 10829,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 11142,
+      "reasoningOutputTokens": 8358
+    },
+    "last": {
+      "totalTokens": 21971,
+      "inputTokens": 10829,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 11142,
+      "reasoningOutputTokens": 8358
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null
+}

@@ -1,0 +1,234 @@
+{
+  "part": 79,
+  "title": "编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！",
+  "source": {
+    "part": 79,
+    "cid": 29817176838,
+    "title": "编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=79",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！.mp4",
+    "sha256": "faba9414bec4cbb8d652fd3c67579f8b1a4edc77195fc4ce554f80368d364933",
+    "bytes": 181162557,
+    "mtime_ns": 1788682298687313266,
+    "actual_duration_seconds": 3451.443764
+  },
+  "full_transcript_read_parts": [
+    79
+  ],
+  "transcript_segment_count": 394,
+  "transcript_artifact_sha256": {
+    "p079.source-time.txt": "c368543231f71515d5ee6d681eae15227b508b2102aead27884b3cf165fce40a",
+    "p079.source-time.srt": "be826ec489fb46a717859f08a8a0ce2322a869454cb1e354b573c2efc29ffe24"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 79,
+      "start_seconds": 0,
+      "end_seconds": 226,
+      "label": "选片理由与真人事件改编目标"
+    },
+    {
+      "part": 79,
+      "start_seconds": 227,
+      "end_seconds": 499,
+      "label": "被困环境、人物与罐子"
+    },
+    {
+      "part": 79,
+      "start_seconds": 500,
+      "end_seconds": 772,
+      "label": "反派压力、申请与坚持等待"
+    },
+    {
+      "part": 79,
+      "start_seconds": 773,
+      "end_seconds": 965,
+      "label": "伙伴登场、生存与轻快视听"
+    },
+    {
+      "part": 79,
+      "start_seconds": 967,
+      "end_seconds": 1303,
+      "label": "主线被动与支线取舍"
+    },
+    {
+      "part": 79,
+      "start_seconds": 1306,
+      "end_seconds": 1585,
+      "label": "挣钱求职、渐近后落空的小结构"
+    },
+    {
+      "part": 79,
+      "start_seconds": 1585,
+      "end_seconds": 1805,
+      "label": "朋友信任、爱情与为救人改变"
+    },
+    {
+      "part": 79,
+      "start_seconds": 1805,
+      "end_seconds": 2087,
+      "label": "人物镜像、伙伴帮助、晚餐谈等待"
+    },
+    {
+      "part": 79,
+      "start_seconds": 2093,
+      "end_seconds": 2339,
+      "label": "关系推进、喷泉与爱情危机"
+    },
+    {
+      "part": 79,
+      "start_seconds": 2340,
+      "end_seconds": 2623,
+      "label": "回收、关系帮助与离开机场"
+    },
+    {
+      "part": 79,
+      "start_seconds": 2624,
+      "end_seconds": 2816,
+      "label": "慢场与短结尾的节奏配合"
+    },
+    {
+      "part": 79,
+      "start_seconds": 2817,
+      "end_seconds": 3109,
+      "label": "共同等待及文化象征的教师解释"
+    },
+    {
+      "part": 79,
+      "start_seconds": 3110,
+      "end_seconds": 3340,
+      "label": "五种改编方向是成片后的推测"
+    },
+    {
+      "part": 79,
+      "start_seconds": 3341,
+      "end_seconds": 3448,
+      "label": "替代结局、研究材料建议与结束"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "自行提前拉结构，或听后补看",
+      "start_seconds": 189,
+      "end_seconds": 226,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "学导演者研究受困环境中的长镜头",
+      "start_seconds": 376,
+      "end_seconds": 404,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "学习求职段的渐近与落空结构",
+      "start_seconds": 1331,
+      "end_seconds": 1585,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "思考爱情结局若自己写会如何处理",
+      "start_seconds": 2450,
+      "end_seconds": 2465,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "学习相似处境中的主角与对手设定",
+      "start_seconds": 2887,
+      "end_seconds": 2909,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 79,
+      "task": "记笔记，研究手里的真实新闻素材",
+      "start_seconds": 3429,
+      "end_seconds": 3440,
+      "submission_spec": "课堂讨论、学习或延伸观看建议，未规定提交、字数、期限",
+      "teacher_review": "当堂教师分析，不是新作业回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "被困中的行动目标、伙伴与主线取舍",
+      "source_type": "teacher_retroactive_film_analysis"
+    },
+    {
+      "label": "真实事件改编的五点方向",
+      "source_type": "teacher_speculation_not_verified_production_history"
+    }
+  ],
+  "frame_checks": [
+    {
+      "seconds": 1365,
+      "file": "frames/p079-1365.jpg",
+      "verified": "连续三次冲击目标；未核到术语完整字幕"
+    },
+    {
+      "seconds": 1351,
+      "file": "frames/p079-1351.jpg",
+      "verified": "找工作蒙太奇字幕"
+    },
+    {
+      "seconds": 1360,
+      "file": "frames/p079-1360.jpg",
+      "verified": "较轻快镜头的字幕"
+    },
+    {
+      "seconds": 1362,
+      "file": "frames/p079-1362.jpg",
+      "verified": "相应影片画面，未核到术语"
+    }
+  ],
+  "external_source_checks": [
+    {
+      "url": "https://amblin.com/movie/the-terminal/",
+      "role": "production_company_film_synopsis",
+      "supports": "电影人物及处境，不证明五项实际改编史"
+    },
+    {
+      "url": "https://books.google.com/books/about/The_Terminal_Man.html?id=Y8cuAQAAIAAJ",
+      "role": "subject_coauthored_book_description",
+      "supports": "Nasseri与巴黎戴高乐机场多年滞留，课上纽约数月描述有误差"
+    },
+    {
+      "url": "https://www.drjones.fr/articles.php?id=29&note=0&rubrique=notesproduction",
+      "role": "reproduction_of_attributed_2004_production_notes",
+      "supports": "虚构主角及创作参与者；转载托管，非当前官方页"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "英文播放段少字或破碎，四帧仅作局部核查。"
+  },
+  "limits": [
+    "未找到新独立提交作业",
+    "四幕时长与信息包数量不作通用配额",
+    "五项改编推测不是核实过的真实制作过程",
+    "政治、族群、移民规则及票房获奖因果不采为事实"
+  ]
+}

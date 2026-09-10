@@ -1,0 +1,59 @@
+{
+  "assigned_parts": [
+    1,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    70,
+    71,
+    73,
+    76,
+    78,
+    80,
+    82,
+    84,
+    86,
+    89
+  ],
+  "completed_review_parts": [
+    1,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    70,
+    71,
+    73,
+    76,
+    78,
+    80,
+    82,
+    84,
+    86,
+    89
+  ],
+  "current_reading": null,
+  "asr_session_id": 32491,
+  "asr_state": "completed_92_and_resume_reused_92",
+  "last_verification": "92 completed validated including journal agreement; 0 errors",
+  "notes": [
+    "P076将肖申克类型压缩为融入→逃离；完整拉片P90–92应保留其具体推进过程，不机械按影片分钟套前后半。"
+  ],
+  "transferred_unread_review_parts": [
+    81,
+    83,
+    85,
+    87,
+    88,
+    90,
+    91,
+    92
+  ],
+  "parallel_read_cursors": {},
+  "review_state": "completed_all_17_assigned_parts"
+}

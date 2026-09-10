@@ -1,0 +1,191 @@
+{
+  "lesson": 34,
+  "source_parts": [
+    {
+      "part": 60,
+      "source_json_sha256": "a743e06764debe2928609d922c9f6defee6cd981e38dd86aad3f4e24de956634",
+      "segment_count": 627
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L34-B001",
+      "part": 60,
+      "first_segment": 1,
+      "last_segment": 42,
+      "heading": "懂结构以后，为什么写出来仍然像流水账",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "顺片／顺皮",
+          "cleaned": "顺撇",
+          "basis": "全课反复解释为线性、顺着诉求直接给、缺乏变化的剧情，按该创作术语清洗。"
+        }
+      ]
+    },
+    {
+      "id": "L34-B002",
+      "part": 60,
+      "first_segment": 43,
+      "last_segment": 72,
+      "heading": "“妈妈很爱孩子”有了表达任务，还没有形成好情节",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B003",
+      "part": 60,
+      "first_segment": 73,
+      "last_segment": 114,
+      "heading": "方法一：检查核心对抗，至少抓住目标、对手、困境之一",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B004",
+      "part": 60,
+      "first_segment": 115,
+      "last_segment": 142,
+      "heading": "方法二、三：有转折，并让线索继续流动",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B005",
+      "part": 60,
+      "first_segment": 143,
+      "last_segment": 184,
+      "heading": "方法四：让事件体现人设，动作也可能写得很顺",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "柯真恶",
+          "cleaned": "柯镇恶",
+          "basis": "与猪八戒、银角大王并列作为已知人物性格例子的同音误识。"
+        }
+      ]
+    },
+    {
+      "id": "L34-B006",
+      "part": 60,
+      "first_segment": 185,
+      "last_segment": 226,
+      "heading": "四项检查之后，增加“正戏反写”的小三角",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "正系反写／正西反写／正息反析",
+          "cleaned": "正戏反写",
+          "basis": "同一方法被连续定义为表达目标不直接写、先绕相反方向再回来的语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L34-B007",
+      "part": 60,
+      "first_segment": 227,
+      "last_segment": 288,
+      "heading": "可怜的小女孩：从穷、哭，转向懂事和坚强",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B008",
+      "part": 60,
+      "first_segment": 289,
+      "last_segment": 312,
+      "heading": "三角还要走回来：用一个破防点露出真实需要",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B009",
+      "part": 60,
+      "first_segment": 313,
+      "last_segment": 335,
+      "heading": "写穷，可以先让他装大方",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B010",
+      "part": 60,
+      "first_segment": 336,
+      "last_segment": 404,
+      "heading": "夫妻关系不好与关系好，都能绕到相反的一边",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B011",
+      "part": 60,
+      "first_segment": 405,
+      "last_segment": 449,
+      "heading": "《耳朵大有福》片段：窘迫的人到小卖店摆阔",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B012",
+      "part": 60,
+      "first_segment": 450,
+      "last_segment": 505,
+      "heading": "逐项分析：困境、拆穿、饭盒、啤酒和旧身份",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B013",
+      "part": 60,
+      "first_segment": 506,
+      "last_segment": 551,
+      "heading": "《当幸福来敲门》片段：用冒险游戏带孩子寻找落脚处",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B014",
+      "part": 60,
+      "first_segment": 552,
+      "last_segment": 569,
+      "heading": "假欢乐被敲门声击破，回到真正的困境",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B015",
+      "part": 60,
+      "first_segment": 570,
+      "last_segment": 583,
+      "heading": "本课作业：先画三角公式，再写一场戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L34-B016",
+      "part": 60,
+      "first_segment": 584,
+      "last_segment": 627,
+      "heading": "关于公开课、收费班与为自己学习的收尾",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "S58“我们要用台词推进剧情”与连续批评纯台词相矛盾，疑漏否定；未写成正面方法。",
+    "课堂模型“查理小三角”原样保留；正戏反写与顺撇按连续语境订正。",
+    "《耳朵大有福》播放片段含电视历史对白、残损价格与不可辨末尾动作，均保留存在并标疑；未拼补完整台词或额外影像。",
+    "《当幸福来敲门》播放英文ASR混杂破损，仅清洗可辨游戏动作及讲师解释，非完整翻译字幕。",
+    "《夏洛特烦恼》服饰、车型、亲属关系，现场同学“云宽”姓名及尼采引语归属待核；不猜未给专名。",
+    "本课仅要求三角公式及对应单场两部分作业；网站和直播安排为录课时说明。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第34课.md",
+  "output_sha256": "142edd7bce64a5dda4f423a25f543c2718d38f182e5f6c00cce9ef9efd849c0e",
+  "reader_navigation_update": {
+    "previous_output_sha256": "e8c72e3cc4a775097ceffdf095709b5a2ef8c24ac08238e6dad961aaed9c0009",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

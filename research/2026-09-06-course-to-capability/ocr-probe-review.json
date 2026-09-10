@@ -1,0 +1,24 @@
+{
+  "macos": "Intel x86_64",
+  "engine": "Apple Vision accurate zh-Hans/en-US, language correction disabled",
+  "source_records": [
+    "ocr/p005-probe-590-650.jsonl.meta.json",
+    "ocr/p010-probe-20-260.jsonl.meta.json"
+  ],
+  "observed_failure": {
+    "part": 10,
+    "seconds": 35,
+    "ocr": "就是一个明显的这激行狗",
+    "visually_read_caption": "就是一个明显的过激行为",
+    "image": "ocr/p010-0035.jpg"
+  },
+  "visually_checked_board": {
+    "part": 10,
+    "seconds": 125,
+    "text": "过激行为 / 二次动作",
+    "image": "ocr/p010-0125.jpg"
+  },
+  "decision": "Do not use this OCR configuration for automatic whole-course cleaning. Use targeted original-frame checks alongside raw ASR. Empty or confident OCR can still be wrong.",
+  "inspection": "Lead visually inspected three original frames (35,125,185 seconds); no full video viewing claim.",
+  "coordinate_caution": "Vision boxes in output should not be treated as validated full-frame coordinates; no boxes are used for downstream alignment."
+}

@@ -1,0 +1,165 @@
+{
+  "blocks": [
+    {
+      "first_segment": 105,
+      "last_segment": 116,
+      "heading": "虚假胜利与灵魂黑夜",
+      "text": "他想通过寻找自己内心的平静来保持希望，以此来保证他在这里的生存。但没想到他混到顶峰，混到虚假的胜利，其实他也已经是一个罪人了。\n\n而且最有讽刺意味的是，他认为最有希望的东西，恰恰是他教别人要拥有希望、教别人要好好学习、教别人要重新做人。那个汤米，就是他影响别人、帮助别人的一个代表作——死了，而且因他而死。故事进入灵魂黑夜。",
+      "corrections": []
+    },
+    {
+      "first_segment": 117,
+      "last_segment": 128,
+      "heading": "调整目标与第四幕开端",
+      "text": "最终他决定还是要做一个正直的人。我们说故事终点要调整目标，对吧？他最早获得虚假胜利，后来成为了一个坏人，这是调整目标错误；然后再次回到正途，重新追求希望——这依旧是错误的，再次回到正途，重新追求希望。\n\n故事的第四幕，追求内心和肉体双重的希望。我们现在看到这场戏是第四幕的开始，他重新忏悔自己，想要重新做人。",
+      "corrections": [
+        {
+          "original": "获得虚假胜利然后后来呢就是成为了一个坏人调整目标错误依旧是错误的再次回到正途重新追求希望",
+          "cleaned": "获得虚假胜利，后来成为了一个坏人——调整目标错误；再次回到正途，重新追求希望",
+          "basis": "整理断句，原段反复强调目标调整的两次错误与回归"
+        }
+      ]
+    },
+    {
+      "first_segment": 129,
+      "last_segment": 140,
+      "heading": "一句话故事与救猫咪分类",
+      "text": "然后呢，在这场戏里他决定要出去，因为这场戏明确地表现出他跟Red已经开始交代后事了——\"你出去怎么找我\"。\n\n这个故事的一句话故事很显然是：一个含冤入狱的、被关在重刑犯监狱的老实人，面对腐败黑暗的狱警、典狱长以及凶恶残忍的狱友，仍然坚持寻找自由和希望。",
+      "corrections": []
+    },
+    {
+      "first_segment": 141,
+      "last_segment": 166,
+      "heading": "被制度化的故事类型分析",
+      "text": "从救猫咪的角度来说，这个故事属于\"被制度化\"。被制度化，对不对？我们说被制度化是这样一个困境。\n\n被制度化的定义是什么呢？就是一个闯入体制的外来者。我们说这一句词儿就基本上奠定了这部片子就是被制度化的典型代表了。一个闯入体制的外来者——他就是一个闯入体制的外来者呀，他是整个肖申克唯一一个没有罪的人。一个闯入体制的外来者，要么被这个体制吞噬，要么改变这个体制、逃离出去。逃离和改变，对吧？\n\n那我们就非常明确了。我们要创作一个被制度化的故事的时候，会设计一个闯入者，再设计一个体制，然后当局的对抗拉锯是什么？就是这个闯入者要么被体制吞噬，要么他改变和逃离体制。同学们，这个故事是不是这样的？一个闯入者进到一个体制，两种拉锯：要么被体制吞噬，要么改变和逃离这个体制。\n\n那我们看《肖申克的救赎》不就讲了这两件事吗？他前半段被体制吞噬了，后半段改变和逃离这个体制了，对不对？他就做了这两件事情——拉锯一直在这两件事里面拉锯：先吞噬这一半，然后改变了。非常明确的一个被制度化。它的一句话故事也非常明确，四幕式也非常明确。",
+      "corrections": [
+        {
+          "original": "没无罪的人",
+          "cleaned": "没有罪的人",
+          "basis": "\"没无罪\"为双重否定，语境为唯一无罪之人，应为口误重复"
+        },
+        {
+          "original": "被知乎制度化的故事",
+          "cleaned": "被制度化的故事",
+          "basis": "\"知乎\"疑为口误或转录错误，与上下文\"被制度化\"一致"
+        },
+        {
+          "original": "肖申克的旧书",
+          "cleaned": "《肖申克的救赎》",
+          "basis": "\"旧书\"疑为\"救赎\"的转录错误，上下文在讨论该片"
+        },
+        {
+          "original": "体质",
+          "cleaned": "体制",
+          "basis": "多处\"体质\"应为\"体制\"，与被制度化主题一致"
+        },
+        {
+          "original": "四目式",
+          "cleaned": "四幕式",
+          "basis": "\"四目式\"应为\"四幕式\"，指故事结构"
+        }
+      ]
+    },
+    {
+      "first_segment": 167,
+      "last_segment": 183,
+      "heading": "\"救赎\"之名与被救赎者",
+      "text": "那我们再来看一下\"救赎\"。这部片子，我们说中文翻译的这个名字要比它原版要高级。它原版就叫《肖申克》，对吧？中文翻译叫《肖申克的救赎》，我们说\"救赎\"更重要。\n\n都有谁被救赎了？首先，他妻子和那个奸夫——除了安迪和Red以外，还救赎了谁？安迪和Red比较好理解，其他的狱友也相对好理解，对吧？典狱长也好理解吧——典狱长最后是不是也罪有应得？Tommy也被救赎了。那同学们不要漏掉开场。",
+      "corrections": [
+        {
+          "original": "ay那就快",
+          "cleaned": "那就快进〔待核〕",
+          "basis": "该句破碎，疑为\"那就快进\"或过渡语，无法确定原词"
+        }
+      ]
+    },
+    {
+      "first_segment": 184,
+      "last_segment": 193,
+      "heading": "法庭开场戏：影片对白",
+      "text": "那我们就快进看开场。【影片对白】\n\n检控方：\"At the Snowden Hills Country Club, the man you had recently discovered was your wife's lover.\"\n\n安迪：\"A few bars first. Later I drove to his house to confront them. They weren't home.\"\n\n老师指出：自杀妻这里非常确信他没杀她，也明确自杀——同学们自己没看仔细。\n\n检控方：\"Where I get hazy is where the cleaning woman shows up the following morning and finds his wife in bed with her lover, riddled with .38 caliber bullets. Does that strike you as a fantastic coincidence, Mr. Dufresne? Is it just me? You still maintain you threw your gun into the river before the murders took place, that's very convenient.\"\n\n检控方：\"Drag that river for three days and no gun was found, so there could be no comparison made between your gun and the bullets taken from the bloodstained corpses of the victims. That also is very convenient, isn't it, Mr. Dufresne?\"\n\n安迪：\"Since I am innocent of this crime, sir, I find it decidedly inconvenient that the gun was never found.\"\n\n检控方最后陈词：\"Ladies and gentlemen, you've heard all the evidence, you know the facts. We have the accused at the scene of the crime, we have footprints, tire tracks, bullets strewn on the ground with their fingerprints, a broken bourbon bottle likewise with fingerprints, and most of all, we have a beautiful young woman and her lover lying dead in each other's arms.\"",
+      "corrections": [
+        {
+          "original": "Glf pro at the Snowden Hills Country Club",
+          "cleaned": "[the golf pro] at the Snowden Hills Country Club",
+          "basis": "影片中检控方提到高尔夫教练，开头\"Glf pro\"为破碎转录"
+        },
+        {
+          "original": "Confuse",
+          "cleaned": "Confessed〔待核〕",
+          "basis": "该词孤立出现，疑为影片对白残片，原词无法确定"
+        },
+        {
+          "original": "her wife",
+          "cleaned": "his wife",
+          "basis": "影片中安迪为男性，应为他妻子，\"her\"为转录错误"
+        },
+        {
+          "original": "na a gun was found",
+          "cleaned": "no gun was found",
+          "basis": "\"na\"疑为\"no\"的转录错误，语境为未找到枪"
+        },
+        {
+          "original": "Mr. Derainer",
+          "cleaned": "Mr. Dufresne",
+          "basis": "影片中安迪姓Dufresne，\"Derainer\"为转录错误"
+        },
+        {
+          "original": "Mr. Defr",
+          "cleaned": "Mr. Dufresne",
+          "basis": "同上，Dufresne的破碎转录"
+        },
+        {
+          "original": "bears fingerprints",
+          "cleaned": "their fingerprints〔待核〕",
+          "basis": "\"bears\"疑为\"their\"，语境为弹壳上的指纹"
+        },
+        {
+          "original": "broken bobon ball",
+          "cleaned": "broken bourbon bottle〔待核〕",
+          "basis": "\"bobon ball\"无法辨认，疑为bourbon bottle，影片中提到酒瓶"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S183 \"ay那就快\"极度破碎，疑为过渡语但无法确定原词",
+    "S186 \"Confuse\"孤立出现，疑为影片对白残片，原词及归属无法确定",
+    "S193 \"bears fingerprints\"与\"broken bobon ball\"均为难辨对白，按语音推测标注但未经逐句听校",
+    "S184开头\"Glf pro\"破碎，按影片内容推测为golf pro但未确认"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p092-c002",
+  "part": 92,
+  "source_json_sha256": "c1f5e6578b56e053515347427faf53906c965f6fc7597c9983a395bb8849b192",
+  "output_text_characters": 2389,
+  "length_ratio": 0.9191996921893035,
+  "review_length_flag": false,
+  "thread_id": "01a07f2c-1025-7571-b2ef-c2db55cbbb72",
+  "usage": {
+    "total": {
+      "totalTokens": 13199,
+      "inputTokens": 10520,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 2679,
+      "reasoningOutputTokens": 827
+    },
+    "last": {
+      "totalTokens": 13199,
+      "inputTokens": 10520,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 2679,
+      "reasoningOutputTokens": 827
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": {
+    "library": "json-repair 0.63.4",
+    "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+    "non_structural_characters_preserved": true
+  }
+}

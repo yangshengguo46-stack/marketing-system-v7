@@ -1,0 +1,61 @@
+{
+  "repo": "mizorewww/course2md",
+  "commit": "5a74063216a8e4dc9e4b2399d10a138883d2f1c4",
+  "files": [
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/LICENSE",
+      "bytes": 1066,
+      "sha256": "f588737788750da8ab407e66c13f5004f8933176307add92f64b6c458f486212"
+    },
+    {
+      "path": "readme.md",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/readme.md",
+      "bytes": 33887,
+      "sha256": "5d6ed34b364127c8f3f74ddf839d15609d2426fe63ffbe9b41b7b19fc0247d8d"
+    },
+    {
+      "path": "src/fetch.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/fetch.rs",
+      "bytes": 12168,
+      "sha256": "902cfaed7f184e15a0ea1b139cc8bd2bd6e257f45b4c4d978e98ec0073794da3"
+    },
+    {
+      "path": "src/scene.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/scene.rs",
+      "bytes": 11426,
+      "sha256": "bc551e1c5fa6f7b12174486941e6566ec5b3c68afe8d6694f76901d2b5d0afe6"
+    },
+    {
+      "path": "src/timeline.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/timeline.rs",
+      "bytes": 17910,
+      "sha256": "8fc1b850545a77e2146a60ddbf50af7f5ae47e5425e1f5325070896d27649dc9"
+    },
+    {
+      "path": "src/llm.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/llm.rs",
+      "bytes": 41927,
+      "sha256": "4844ef714402fc6870729cbdeeac4a2bc5c012c251e12934103fdb7effb7f4d0"
+    },
+    {
+      "path": "src/pipeline.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/pipeline.rs",
+      "bytes": 24791,
+      "sha256": "23f881c6895bd3bd28ef2ddd9cee25e5ba19d7a12d90f86e0846dd79b376c025"
+    },
+    {
+      "path": "src/render.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/render.rs",
+      "bytes": 9319,
+      "sha256": "ebf3f990a80ea1e2e323e1273aacad8d266d3b115c23fa295e4592a1e92b7a66"
+    },
+    {
+      "path": "src/checkpoint.rs",
+      "url": "https://raw.githubusercontent.com/mizorewww/course2md/5a74063216a8e4dc9e4b2399d10a138883d2f1c4/src/checkpoint.rs",
+      "bytes": 24579,
+      "sha256": "e5756a3cfda91123cbd9a8df10f09011e159eabcf1b43f720e8625691be8504f"
+    }
+  ],
+  "code_executed": false
+}

@@ -1,0 +1,170 @@
+{
+  "blocks": [
+    {
+      "first_segment": 333,
+      "last_segment": 354,
+      "heading": "关于跳舞戏争议的讨论",
+      "text": "看来这场戏争议很大，因为一旦涉及到男女朋友，同学们都很喜欢讨论。\n\n老师来说一下自己的观点，希望能够帮助大家理解这场戏。为什么很多人是喜欢的，或者说在很多人眼里会觉得这场戏很美、很优雅，并没有什么不适。\n\n如果你心里想这样的问题：比如说这个女的又不想跟她的男朋友分手，她为什么要接受别人的搭讪？那她是不是不要脸了？或者说这几个人明明知道人家有男朋友，还要去跟人家搭讪、跟人家跳舞，他们是不是坏人呢？是不是图谋不轨呢？\n\n你如果有这样的想法，其实就是略微有点直男癌了，实际上是这样：你面对一个有魅力的人，不管他是长相有魅力，还是说他的谈吐有魅力，还是说他的学问有魅力，你去想跟他结识、想跟他聊天，我觉得都是可以的。\n\n你如果想——那聊天就是想跟他睡觉，不想睡觉为什么要跟他聊天？你如果有这样的逻辑，那其实是你的想法会过于……其实有点对两性之间的理解有点窄了，有点窄。这么去想就非常传统。实际在现代社会里，我觉得人与人之间还是应该多多关注共同点。所以从这个角度来讲，实际上目前大部分观众、大部分年轻观众是能够接受这种戏的，所以你不用去担心，不用去担心。\n\n对，不要去总是从一个睡觉的逻辑去理解问题。",
+      "corrections": [
+        {
+          "original": "直男癌",
+          "cleaned": "直男癌〔待核〕",
+          "basis": "口语转述，保留原词，不做价值判断"
+        }
+      ]
+    },
+    {
+      "first_segment": 355,
+      "last_segment": 355,
+      "heading": "转入全剧最名场面",
+      "text": "总来看下一个名场面，下一个名场面，141分钟。全剧最名场面的名场面来了。",
+      "corrections": []
+    },
+    {
+      "first_segment": 356,
+      "last_segment": 364,
+      "heading": "斯莱德演讲开场",
+      "text": "影片对白：\n\n“Save your hide, anything short of that. Stay.”〔待核〕\n\n“When a shit hits the fan, some guys run and some guys stay. Here's Charlie facing the fire and George hiding in big Daddy's pocket.”\n\n“And what are you doing? You're gonna to reward George. Destroy〔待核〕.”\n\n——“Are you finished, Mr. Slade?”\n——“No, I'm just getting warmed up.”",
+      "corrections": [
+        {
+          "original": "save your hide anythingth short of that",
+          "cleaned": "Save your hide, anything short of that〔待核〕",
+          "basis": "破碎英语，按原识别文字标疑，不删"
+        },
+        {
+          "original": "Mr. Slaade",
+          "cleaned": "Mr. Slade〔待核〕",
+          "basis": "影片角色姓氏，转录拼写存疑"
+        },
+        {
+          "original": "Destroy charm",
+          "cleaned": "Destroy〔待核〕",
+          "basis": "原识别charm无法确认，标疑保留"
+        }
+      ]
+    },
+    {
+      "first_segment": 365,
+      "last_segment": 368,
+      "heading": "斯莱德痛斥学校精神已死",
+      "text": "影片对白续：\n\n“I don't know who went to this place—William Howard Taft, William Jennings〔待核〕, William Ta〔待核〕, whoever—their spirit is dead, if they ever had one, it's gone. You're building a rat ship here, a vessel for seago〔待核〕 and snitchches〔待核〕. And if you think you're preparing these minnows for manhood, you better think again, because I say you are killing the very spirit this institution proclaims it instills.”\n\n“What kind of a show are you guys putting on here today? I mean, the only class in this act is sitting next to me, and I'm here to tell you this boy's soul is intact, it's nonnegotiable. You know how I know? Someone here—and I'm not going to say who—offered to buy it. Only Charlie here wasn't selling.”\n\n——“Sir, you're out of order.”\n——“I don't—I show you? I order you? You don't know what that is, Mr. Tras〔待核〕. I'd show you but I'm too old, I'm too tired, I'm too fucking blind. If I were a man I was five years ago, I'd take a flame throw〔待核〕 at this place.”",
+      "corrections": [
+        {
+          "original": "William Jennings bride",
+          "cleaned": "William Jennings〔待核〕",
+          "basis": "bride疑为转录错误，但原词标疑不补齐"
+        },
+        {
+          "original": "William Ta",
+          "cleaned": "William Ta〔待核〕",
+          "basis": "破碎词，标疑保留"
+        },
+        {
+          "original": "seago and snitchches",
+          "cleaned": "seago〔待核〕 and snitchches〔待核〕",
+          "basis": "拼写存疑，原词标疑"
+        },
+        {
+          "original": "What I sham",
+          "cleaned": "删除，并入下句",
+          "basis": "What I sham为破碎片段，疑为语气词残片"
+        },
+        {
+          "original": "Mr. Tras",
+          "cleaned": "Mr. Tras〔待核〕",
+          "basis": "影片角色姓氏转录存疑"
+        },
+        {
+          "original": "flame throw",
+          "cleaned": "flame throw〔待核〕",
+          "basis": "疑为flamethrower，但不按常识补齐，标疑"
+        }
+      ]
+    },
+    {
+      "first_segment": 369,
+      "last_segment": 372,
+      "heading": "“被截肢的灵魂没有假肢”",
+      "text": "影片对白续：\n\n“I don't〔待核〕—who the hell do you think you're talking to? I've been around, you know. There was a time I could see, and I have seen boys like these, younger than these, their arms torn out, their legs ripped off. But there is nothing like the sight of an amputated spirit. There is no prosthetic for that.”\n\n“You think you're merely sending this splendid foot soldier back home to Oregon〔待核〕 with his tail between his legs, but I say you are executing his soul.”",
+      "corrections": [
+        {
+          "original": "I don't on",
+          "cleaned": "I don't〔待核〕",
+          "basis": "on疑为语气残片，标疑保留"
+        },
+        {
+          "original": "the argon",
+          "cleaned": "to Oregon〔待核〕",
+          "basis": "argon难辨，疑为Oregon但标疑不补齐"
+        }
+      ]
+    },
+    {
+      "first_segment": 373,
+      "last_segment": 378,
+      "heading": "斯莱德继续——查理不是坏人",
+      "text": "影片对白续：\n\n“Because he's not a bad man. Bad〔待核〕 men—you hurt this boy, you're going to be bad〔待核〕—bums, the〔待核〕〔待核〕〔待核〕, Harry, Jimmy, Trent, wherever you are out there, fuck you too.”\n\n——“Stand down, Mr. Slade.”\n——“I'm not finished.”\n\n“As I came in here, I heard those words—cradle of leadership.”",
+      "corrections": [
+        {
+          "original": "Bd men",
+          "cleaned": "Bad men〔待核〕",
+          "basis": "Bd疑为Bad转录残缺，标疑"
+        },
+        {
+          "original": "the Lodia",
+          "cleaned": "the〔待核〕〔待核〕",
+          "basis": "Lodia无法辨认为何人名，标疑不猜"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S356：'save your hide anythingth short of that'为破碎英语，无法确认完整台词",
+    "S359：'见了们'含义不明，疑为语气词或破碎片段",
+    "S363：'Destroy charm'中charm无法确认，疑为角色名或他词",
+    "S365：'William Jennings bride'中bride疑为转录错误；'William Ta'为破碎词",
+    "S366：'seago and snitchches'拼写存疑",
+    "S367：'What I sham'为破碎片段，已并入下句处理",
+    "S368：'Mr. Tras'角色姓氏转录存疑；'flame throw'疑为flamethrower但不补齐",
+    "S369：'I don't on'中on疑为残片",
+    "S372：'the argon'难辨，疑为to Oregon",
+    "S373：'哎，外'疑为老师语气词或破碎片段",
+    "S375：'Bd men'疑为Bad men；'the Lodia'人名无法辨认，不猜",
+    "S378至后续衔接处：本段止于'cradle of leadership'，后文演讲继续"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [
+    {
+      "kind": "missing_empty_corrections",
+      "first_segment": 355
+    }
+  ],
+  "unassigned_corrections": [],
+  "job": "p077-c005",
+  "part": 77,
+  "source_json_sha256": "709394cc61107067cd01ffe15ff225332c912d9457d71fd7d3e8e3a8660ba305",
+  "output_text_characters": 2610,
+  "length_ratio": 1.01953125,
+  "review_length_flag": false,
+  "thread_id": "01a07f2c-68da-77d0-ad2e-651fd7d97b6a",
+  "usage": {
+    "total": {
+      "totalTokens": 13193,
+      "inputTokens": 9976,
+      "cachedInputTokens": 2432,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3217,
+      "reasoningOutputTokens": 1393
+    },
+    "last": {
+      "totalTokens": 13193,
+      "inputTokens": 9976,
+      "cachedInputTokens": 2432,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3217,
+      "reasoningOutputTokens": 1393
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null
+}

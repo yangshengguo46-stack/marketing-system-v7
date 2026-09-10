@@ -1,0 +1,111 @@
+{
+  "lesson": 26,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 52,
+      "title": "二十六课-从容应对文艺凡尔赛26",
+      "cid": 275889704,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=52",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十六课-从容应对文艺凡尔赛26.mp4",
+      "sha256": "26150ee339509a4bdbd1e8756b2dc5035c4d9a9bd3ca7f07d2ab3fc6a21c37e7",
+      "duration_seconds": 4305
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "加课缘由与社交语境，三类讨论切入",
+      "part": 52,
+      "start_seconds": 18,
+      "end_seconds": 375
+    },
+    {
+      "label": "提人：小众远方；安全感/存在感解释和查导演建议",
+      "part": 52,
+      "start_seconds": 376,
+      "end_seconds": 950
+    },
+    {
+      "label": "提片：结合时代看作品；《教父》、默片有声片与《阳光小美女》社会象征解读",
+      "part": 52,
+      "start_seconds": 951,
+      "end_seconds": 1840
+    },
+    {
+      "label": "提场戏：从编剧角度；《霸王别姬》背《思凡》的片段及铺垫",
+      "part": 52,
+      "start_seconds": 1841,
+      "end_seconds": 2350
+    },
+    {
+      "label": "场景解读一：英雄、母亲保护/父权冲突，《千面英雄》；穿插神话血统说法",
+      "part": 52,
+      "start_seconds": 2351,
+      "end_seconds": 3381
+    },
+    {
+      "label": "解读二：旅程、召唤/拒绝/试炼/门槛，《作家之旅》；不必强定成长是向上或向下",
+      "part": 52,
+      "start_seconds": 3383,
+      "end_seconds": 3687
+    },
+    {
+      "label": "解读三：性与童年、精神分析视角；老师借用弗洛伊德关键词",
+      "part": 52,
+      "start_seconds": 3688,
+      "end_seconds": 3952
+    },
+    {
+      "label": "解读四：人格面具/集体潜意识，老师借用荣格关键词",
+      "part": 52,
+      "start_seconds": 3953,
+      "end_seconds": 4132
+    },
+    {
+      "label": "解读五：自我认同危机，老师借用埃里克森关键词",
+      "part": 52,
+      "start_seconds": 4133,
+      "end_seconds": 4178
+    },
+    {
+      "label": "同一场戏可有多种读法；创作不必先想全套术语，结课",
+      "part": 52,
+      "start_seconds": 4179,
+      "end_seconds": 4300
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "自己查俄国/前苏联导演的名字、作品和技法，查到可在弹幕分享，供其他同学了解。",
+      "part": 52,
+      "start_seconds": 844.742,
+      "end_seconds": 928.716,
+      "submission_spec": "课堂建议含弹幕分享；未规定名单、数量、文件、期限。老师临时杜撰的导演名字不是检索名单。",
+      "teacher_review": "未指定批改。",
+      "uncertainty": "社交话题的建议学习，不是本课正式编剧作业；本轮不发送弹幕。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "可研究《作家之旅》，结合《千面英雄》理解本课旅程/英雄关键词。",
+      "part": 52,
+      "start_seconds": 3427.526,
+      "end_seconds": 3499.02,
+      "submission_spec": "建议阅读，未规定章节、读后感或提交。",
+      "teacher_review": "无。",
+      "uncertainty": "本课对理论是口头转述，未与原书核对。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    52
+  ],
+  "limits": [
+    "P52全文机器稿已读，未逐句听校；70:20帧核三种讨论切口/理论板书。",
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。",
+    "课中电影史、心理学、人类学和名人评价是老师的口头阐释，不等于原著理论或经验证的事实；本卡不以其作科学/史实依据。",
+    "《阳光小美女》年代与家庭成员社会象征标签尤其需要外部核实：本课23分钟前后明确如此解读，但不能当影片的确证设定。",
+    "作者写作时是否想到所有解读是老师的推测，不当作可考创作过程。",
+    "不把剧中童年创伤/身份变化的精神分析，写成真实人类性取向或身份由暴力决定的规律。",
+    "未见第22课家人故事或第24课《战国》梗概回收讲评。"
+  ]
+}

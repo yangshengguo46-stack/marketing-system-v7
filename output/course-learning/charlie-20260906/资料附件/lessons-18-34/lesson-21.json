@@ -1,0 +1,166 @@
+{
+  "lesson": 21,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 44,
+      "title": "二十一课-谈几个进阶问题（上）21.1",
+      "cid": 239866710,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=44",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十一课-谈几个进阶问题（上）21.1.mp4",
+      "sha256": "2c4065db4fc85fdbd08c25467365d74189ee3bd1549ec71dc4c3125230d86107",
+      "duration_seconds": 2478
+    },
+    {
+      "part": 45,
+      "title": "二十一课-谈几个进阶问题（下）21.2",
+      "cid": 239868634,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=45",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十一课-谈几个进阶问题（下）21.2.mp4",
+      "sha256": "7218b44713d213a0b0ababfd15f7dc3b1924ac6a12c289a9f0a91079a5f3a688",
+      "duration_seconds": 2113
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "努力与天赋、产品/艺术属性、规则与创作、艺术真实/生活真实四组课前答疑",
+      "part": 44,
+      "start_seconds": 9,
+      "end_seconds": 1509
+    },
+    {
+      "label": "本课前提：看懂前课且已经动笔/写过全本，再谈常见实操问题",
+      "part": 44,
+      "start_seconds": 1510,
+      "end_seconds": 1642
+    },
+    {
+      "label": "进阶1：头大身子小，检查中点伪胜利/伪失败及转折",
+      "part": 44,
+      "start_seconds": 1654,
+      "end_seconds": 2038
+    },
+    {
+      "label": "进阶2：主角设定不具体，用价值/观点与态度/行动落实",
+      "part": 44,
+      "start_seconds": 2041,
+      "end_seconds": 2472
+    },
+    {
+      "label": "进阶3：主角出身，低开、有血统、回平凡；加勒比海盗练习回顾",
+      "part": 45,
+      "start_seconds": 9,
+      "end_seconds": 588
+    },
+    {
+      "label": "进阶4：上路与蜕变两处给主角真实选择机会",
+      "part": 45,
+      "start_seconds": 612,
+      "end_seconds": 734
+    },
+    {
+      "label": "进阶5：蜕变不限于死人；重生、牺牲、脱俗",
+      "part": 45,
+      "start_seconds": 735,
+      "end_seconds": 1084
+    },
+    {
+      "label": "进阶6：伙伴大目标与主线同向，私人小目标须影响/克制主线",
+      "part": 45,
+      "start_seconds": 1088,
+      "end_seconds": 1317
+    },
+    {
+      "label": "进阶7：反派要具体、有计划、能步步压迫",
+      "part": 45,
+      "start_seconds": 1323,
+      "end_seconds": 1421
+    },
+    {
+      "label": "进阶8：少讲道理；若讲主角小道理、反派大道理；人物事件先行",
+      "part": 45,
+      "start_seconds": 1422,
+      "end_seconds": 1622
+    },
+    {
+      "label": "进阶9：场景当作传递信息的元素，避免只有聊天地点",
+      "part": 45,
+      "start_seconds": 1623,
+      "end_seconds": 1779
+    },
+    {
+      "label": "进阶10：对白增加双方情绪/欲求/隐瞒的势能，须先有剧本再改",
+      "part": 45,
+      "start_seconds": 1780,
+      "end_seconds": 1998
+    },
+    {
+      "label": "鼓励按前课提案写项目；以后命题征集试点计划，尚未发题",
+      "part": 45,
+      "start_seconds": 2002,
+      "end_seconds": 2107
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回顾第20课让大家拉的《加勒比海盗》，讨论特纳为主角、平凡铁匠与海盗血统、爱情动机、起点和终点的呼应。",
+      "part": 45,
+      "start_seconds": 246,
+      "end_seconds": 588,
+      "submission_spec": null,
+      "teacher_review": "老师讲解主要人物/动机/结构，05:22–05:26明确说“我让大家拉片了”；没有展示个别学生的拉片结果或逐份批改。",
+      "uncertainty": "可明确回指 P43 69:42–70:10。本段未报系列部号，但口述特纳救伊丽莎白/杰克寻找黑珍珠的情节。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "写完梗概/大纲后，问自己中点是什么、是否有打点与转折，检查头大身子小。",
+      "part": 44,
+      "start_seconds": 2013,
+      "end_seconds": 2038,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "给写作者的自查建议，没有要求本课交稿。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "改看主角的价值/观点、态度/行动，减少只写性格形容词；可回看提案课的人物小传。",
+      "part": 44,
+      "start_seconds": 2453,
+      "end_seconds": 2470,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "实践建议；35:45–35:55有明确前课引用。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "写完剧本检查各场场景，把地点作为可传达信息和影响事件的元素；有对白初稿后再检查双方势能。",
+      "part": 45,
+      "start_seconds": 1759,
+      "end_seconds": 1998,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "应用检查建议，不是两项需上交的固定格式作业。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "按此前提案课的格式和思路自行策划一些项目，多写多练。",
+      "part": 45,
+      "start_seconds": 2043,
+      "end_seconds": 2068,
+      "submission_spec": "仅指回此前提案课的格式与思路，未指定本次题目、数量、字数或提交方式。",
+      "teacher_review": null,
+      "uncertainty": "随后命题提案征集为未来计划，未在本课发出可执行命题。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    44,
+    45
+  ],
+  "limits": [
+    "P44、P45按顺序全文读完机器稿，未逐句听校。",
+    "本课大量明确说法属于老师的经验规则和审美判断，未改写成普遍真理。",
+    "后续命题提案征集只有计划，不能声称本课已给题或已要求提交。"
+  ],
+  "explicit_assignment_status": "全文机器稿检索与阅读未找到明确布置，未逐句听校；有数项自查/应用建议和一次前课拉片回顾。"
+}

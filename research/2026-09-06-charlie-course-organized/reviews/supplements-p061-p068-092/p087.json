@@ -1,0 +1,95 @@
+{
+  "part": 87,
+  "title": "编剧视角拉片《千与千寻》！",
+  "source": {
+    "part": 87,
+    "cid": 29821305201,
+    "title": "编剧视角拉片《千与千寻》！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=87",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《千与千寻》！.mp4",
+    "sha256": "86138efd14d3e2a109af6051487f6ad03e445e3c025fc53cccf7a2bd1d16c2fc",
+    "bytes": 75933311,
+    "mtime_ns": 1788682360099154859,
+    "actual_duration_seconds": 1634.873515
+  },
+  "full_transcript_read_parts": [
+    87
+  ],
+  "transcript_segment_count": 162,
+  "transcript_artifact_sha256": {
+    "p087.source-time.txt": "daf81cfcf068c09780158f8571832372297c16055efe47e3ff5a52c7dd31f539",
+    "p087.source-time.srt": "9aeea3dcd32d6d01584ff59ea88ba45c09a062101bf987be5f6fdd4079e0fc27"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 87,
+      "start_seconds": 0,
+      "end_seconds": 173,
+      "label": "搬家与儿童视角"
+    },
+    {
+      "part": 87,
+      "start_seconds": 174,
+      "end_seconds": 423,
+      "label": "困住、求职及救父母"
+    },
+    {
+      "part": 87,
+      "start_seconds": 424,
+      "end_seconds": 618,
+      "label": "工作、伙伴和救助"
+    },
+    {
+      "part": 87,
+      "start_seconds": 619,
+      "end_seconds": 849,
+      "label": "互救与名字"
+    },
+    {
+      "part": 87,
+      "start_seconds": 851,
+      "end_seconds": 1033,
+      "label": "回归及解释的开放性"
+    },
+    {
+      "part": 87,
+      "start_seconds": 1035,
+      "end_seconds": 1279,
+      "label": "记忆、情感、视听"
+    },
+    {
+      "part": 87,
+      "start_seconds": 1280,
+      "end_seconds": 1472,
+      "label": "从担心和期待出发"
+    },
+    {
+      "part": 87,
+      "start_seconds": 1473,
+      "end_seconds": 1556,
+      "label": "延伸看片"
+    },
+    {
+      "part": 87,
+      "start_seconds": 1557,
+      "end_seconds": 1628,
+      "label": "动画形式与视角归纳"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "part": 87,
+      "task": "再看《绿野仙踪》《菊次郎的夏天》，体会儿童视角与旅途写法",
+      "start_seconds": 1532.8,
+      "end_seconds": 1556.1,
+      "submission_spec": "延伸观看建议，无新稿、报告、字数或提交要求；1595.7秒后重申学习视角",
+      "teacher_review": "教师推荐，未承诺逐人批改",
+      "uncertainty": "全文机器稿已读，未逐句听校",
+      "assignment_form": "延伸观看"
+    }
+  ],
+  "review_status": "full_machine_transcript_read_not_full_listen",
+  "uncertainty": "完整机器稿全文核读，不等于逐句听校或全片视听观看；教师解释不等于外部事实"
+}

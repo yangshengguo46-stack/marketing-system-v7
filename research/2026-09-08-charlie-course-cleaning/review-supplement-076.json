@@ -1,0 +1,120 @@
+{
+  "part": 76,
+  "reviewer": "/root/clean_core_15_24",
+  "reviewed_at": "2026-09-08",
+  "status": "complete",
+  "method": "完整顺读源稿 S1—S497；依据 jobs.json 确认4批，完整对照4份clean JSON共21块；保存修改前备份，再逐块修订正文与corrections、uncertainties，并新增independent_full_review。未听校、未观看影片。",
+  "source_path": "research/2026-09-06-charlie-course-organized/transcripts/p076.json",
+  "source_json_sha256": "86c3564ba72a84a6b249a1e373d918d6dc941c36ee4370b58c7c8fea65bfd964",
+  "source_segments": 497,
+  "source_characters": 9397,
+  "chunks": [
+    {
+      "job": "p076-c001",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c001-clean.json",
+      "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c001-before-independent-full-review.json",
+      "source_range": [
+        1,
+        81
+      ],
+      "blocks": 6,
+      "source_characters": 2541,
+      "output_characters": 2645,
+      "length_ratio": 1.0409,
+      "before_sha256": "332ad83061c0166538923b61eb8347a75b21cd0d30e5ffaca9da79c8a227fa02",
+      "after_sha256": "3dc70f968923c5232562ca7e9fd54863c101fd1551a4300bfba677e445a5dc82",
+      "changes": [
+        "补回S5修剪植物的临场改口。",
+        "录课时票房排名、市场规模、私下预判与股票话题均明确归讲师；保留数字原词与范围限制。",
+        "保留导演是否被排挤的问答、反驳与两个传闻案例，人名和院校疑点进正文，未把传闻写成核验事实。"
+      ]
+    },
+    {
+      "job": "p076-c002",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c002-clean.json",
+      "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c002-before-independent-full-review.json",
+      "source_range": [
+        82,
+        243
+      ],
+      "blocks": 6,
+      "source_characters": 2590,
+      "output_characters": 2789,
+      "length_ratio": 1.0768,
+      "before_sha256": "87677cf5393980914d01fcc73a10147dda3cccbc9e58077d734cac64b75b3738",
+      "after_sha256": "6e14db4c93f22d5b076a6165f6911b2c9b6c028247f997d63dcb5f1bc5fac74c",
+      "changes": [
+        "将S93—94商业片定义从前一块移回93—97，避免跨段提前搬移。",
+        "补回两面人的魔／仙身份问句；“系统”按连续语境订正为血统；还原一体两魂。",
+        "移除蜘蛛侠父子、熊猫抚养关系等无证据猜名；保留残词，未补完普通人遇到的残句。",
+        "制度对抗三细分在源段中已有连续解释，消除无谓歧义；保留讲师的绝对判断但标明其观点归属。"
+      ]
+    },
+    {
+      "job": "p076-c003",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c003-clean.json",
+      "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c003-before-independent-full-review.json",
+      "source_range": [
+        244,
+        381
+      ],
+      "blocks": 4,
+      "source_characters": 2585,
+      "output_characters": 2827,
+      "length_ratio": 1.0936,
+      "before_sha256": "8aed89466619f309fef08b8ea376c255fdaa6245bf469a3dc3264198b3fbd254",
+      "after_sha256": "5f777d3ea537f4bed73b9f59505f450c5eaf3280afea9972441775b7b0032209",
+      "changes": [
+        "撤销奇魂→奇缘的无依据猜词；父母遭遇的悬念保留碎词，防止错误切分成身份之谜。",
+        "医生宇依同批明确复述还原牺牲与成长，中点订正改用全文内部证据。",
+        "关键S351是／不是不再静默改成否定；明确机器稿与论证方向冲突，留待听校。",
+        "保留全部类型区分、申公豹从对手到觉醒者的解释，以及三个电影的过程；不补《幸福终点站》未知国名。"
+      ]
+    },
+    {
+      "job": "p076-c004",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c004-clean.json",
+      "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p076-c004-before-independent-full-review.json",
+      "source_range": [
+        382,
+        497
+      ],
+      "blocks": 5,
+      "source_characters": 1681,
+      "output_characters": 1991,
+      "length_ratio": 1.1844,
+      "before_sha256": "907939f8b691e479797d8c4130bf90aa3b3908fecef5ca06b070c0e2cd5fc911",
+      "after_sha256": "ab1590733f5a150182da17cdc4ee6f0e218bece6d2edbf0677877fcb1bd5382f",
+      "changes": [
+        "保留《幸福终点站》活下去、恋爱、退出体系与牺牲的完整过程及回看片单；所有解读明确归讲师。",
+        "撤销吸烟→仙翁乃至具体反派的猜测，保留模糊对白和要匙有等碎词。",
+        "三次考试与笔试面试进体制改为教师类比，避免误造第三场考试名；各片融入再对抗的过程完整保留。",
+        "未完句不添影响力或发现结论；也很不服保留指代不明；结尾希望与观影建议没有扩成新作业。"
+      ]
+    }
+  ],
+  "checks": {
+    "full_source_and_clean_read": true,
+    "jobs_match_four_chunks": true,
+    "contiguous_exactly_once_source_coverage": true,
+    "source_sha256_match": true,
+    "corrections_originals_are_contiguous_in_own_source_block": true,
+    "backup_and_independent_full_review_present": true,
+    "output_counts_and_length_ratios_match": true,
+    "compiled_markdown_modified": false
+  },
+  "substantive_findings": [
+    "角色商业元素：补回魔与仙身份矛盾的问句，依据反复表述将系统改血统，保留哪吒与敖丙合体及申公豹镜像关系。",
+    "人物、事件与情绪：保留申公豹虽为对手却讨人喜欢的原因——同为觉醒者；保留母亲之死、主角牺牲和成长，以及本片类型依主线展开方式判定而非只看是否含成长或谜题。",
+    "关键否定：S351机器稿“是围绕”与前后否定本片为人物成长类的论证冲突，不直接改为“不是”，正文呈现原词并标待听校。",
+    "误猜实体：撤销奇魂→奇缘、吸烟→仙翁的无据订正；删除蜘蛛侠对手、熊猫家庭关系和幸福终点站国名的常识补全。",
+    "事件与因果：父母遭遇的碎词不切成父母身份之谜；三次考试与笔试面试进体制明确为讲师类比；未完句不增写影响力或发现结论；也很不服不擅自归给制片方。",
+    "成功与观点归属：票房、市场大小、档期原因、私下交流与股票话题归讲师；导演和演员的困境传闻与讲师反驳分层保留；影片东西方、体制与族群比较作为课堂阐释。",
+    "原课堂边界：保留开场植物修剪改口、嗓子不适、前课回顾、查同档期影片建议、回看片单、下课鼓励；未新增作业数量或提交要求。"
+  ],
+  "remaining_limits": [
+    "全部基于机器稿文本复核，未逐句听校或看片；无法确认的专名、碎词、关键否定仍在正文及各批uncertainties中标疑。",
+    "影片商业数据、人物生平传闻和教师行业判断未作外部核验，不作为整理者背书。",
+    "S351是／不是、S159蜘蛛侠对手、S254奇魂、S284/S287父母遭遇残句、S406吸烟等优先回音画。"
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "lesson": 26,
+  "source_parts": [
+    {
+      "part": 52,
+      "source_json_sha256": "c90952e356ef663993580c6580bd02f9195fc0c97a14054a6c7ff782cf1fbf15",
+      "segment_count": 851
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L26-B001",
+      "part": 52,
+      "first_segment": 1,
+      "last_segment": 80,
+      "heading": "加课缘起：实战派怎样应对文艺社交",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B002",
+      "part": 52,
+      "first_segment": 81,
+      "last_segment": 114,
+      "heading": "第一种场景：提人，为什么总往小众和远方说",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "希嘘哥克／库布立克／费得尼／四皮胳膊／乌迪艾勒",
+          "cleaned": "希区柯克／库布里克／费里尼／斯皮尔伯格／伍迪·艾伦",
+          "basis": "同段常见导演姓名的音形及电影社交语境；未核验作品归属"
+        }
+      ]
+    },
+    {
+      "id": "L26-B003",
+      "part": 52,
+      "first_segment": 115,
+      "last_segment": 162,
+      "heading": "安全感与存在感：跟身边人不同，跟远方人相同",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B004",
+      "part": 52,
+      "first_segment": 163,
+      "last_segment": 208,
+      "heading": "提人的玩笑应对，转入提片的心虚",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "踩火车",
+          "cleaned": "《猜火车》",
+          "basis": "电影名的同音与前后反复提片语境"
+        }
+      ]
+    },
+    {
+      "id": "L26-B005",
+      "part": 52,
+      "first_segment": 209,
+      "last_segment": 269,
+      "heading": "评价经典要带着时代：教父与有声电影的例子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B006",
+      "part": 52,
+      "first_segment": 270,
+      "last_segment": 328,
+      "heading": "《阳光小美女》：一家上路，与爷爷、母亲、父亲的解读",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "欧弟／烂椒",
+          "cleaned": "吸毒过量／滥交",
+          "basis": "S308已明确吸毒过量死在路上；S316–319性解放列举语境"
+        }
+      ]
+    },
+    {
+      "id": "L26-B007",
+      "part": 52,
+      "first_segment": 329,
+      "last_segment": 382,
+      "heading": "舅舅、哥哥与小女孩：保留讲师的象征阅读",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "泥彩／尼踩／承叠一等人名异写",
+          "cleaned": "尼采；本课后文程蝶一",
+          "basis": "前者同段哲学家语境；后者《霸王别姬》角色反复出现"
+        }
+      ]
+    },
+    {
+      "id": "L26-B008",
+      "part": 52,
+      "first_segment": 383,
+      "last_segment": 420,
+      "heading": "第三种场景：具体聊《霸王别姬》一场戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B009",
+      "part": 52,
+      "first_segment": 421,
+      "last_segment": 460,
+      "heading": "课堂背词与插入影片：错词、惩罚、终于背对",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "男怕叶问／我本事女江娥／私凡",
+          "cleaned": "男怕《夜奔》〔待音画核校〕／我本是女娇娥／《思凡》",
+          "basis": "同段昆腔、戏曲唱词与后文讨论；关键男儿郎与女娇娥反转保持源意"
+        }
+      ]
+    },
+    {
+      "id": "L26-B010",
+      "part": 52,
+      "first_segment": 461,
+      "last_segment": 526,
+      "heading": "关键词一：英雄；母亲保护与父权的两次断裂",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "天赋／复权／蒋文丽／六侄儿",
+          "cleaned": "天父／父权／蒋雯丽／六指",
+          "basis": "师父与长兄如父及母亲角色的明确语境；原课姓名未听校"
+        }
+      ]
+    },
+    {
+      "id": "L26-B011",
+      "part": 52,
+      "first_segment": 527,
+      "last_segment": 580,
+      "heading": "坎贝尔的比较神话学，与父亲不详的英雄",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B012",
+      "part": 52,
+      "first_segment": 581,
+      "last_segment": 622,
+      "heading": "母系社会与巨人传说：讲师的即兴玩笑推演",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B013",
+      "part": 52,
+      "first_segment": 623,
+      "last_segment": 667,
+      "heading": "刘邦的龙种故事，以及回到英雄关键词",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "刘敖／刘继／千名英雄看美",
+          "cleaned": "刘媪／刘季／《千面英雄》、坎贝尔",
+          "basis": "同段称谓解释与反复书名作者语境；历史解说未外核"
+        }
+      ]
+    },
+    {
+      "id": "L26-B014",
+      "part": 52,
+      "first_segment": 668,
+      "last_segment": 725,
+      "heading": "关键词二：旅程，召唤、拒绝、试炼与跨门槛",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B015",
+      "part": 52,
+      "first_segment": 726,
+      "last_segment": 780,
+      "heading": "关键词三：性与童年，作为精神分析式解读",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "严格／口预期／口谕／口遇",
+          "cleaned": "阉割／口欲期／口欲",
+          "basis": "S751精神阉割及S759小时候通过嘴获得满足的连续解释"
+        }
+      ]
+    },
+    {
+      "id": "L26-B016",
+      "part": 52,
+      "first_segment": 781,
+      "last_segment": 823,
+      "heading": "人格面具、集体潜意识，以及讲师的自纠",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L26-B017",
+      "part": 52,
+      "first_segment": 824,
+      "last_segment": 851,
+      "heading": "自我认同危机；多种解释仍然回到同一场好戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "本课为戏谑的社交加课；没有新增实战作业。编造的前苏联导演名字、母系社会聚会、身高竞逐和刘邦父母对白均保留为讲师玩笑，不作为事实。",
+    "《阳光小美女》的时代、人物政治与历史象征、《教父》的首创性、卓别林立场、坎贝尔影响名单、沃格勒师生关系等均未核实。",
+    "《霸王别姬》插播S431–460存在多处误识与混叠；保留关键背错—受罚—背对过程，唱词字形及S439–443残句待音画复核。",
+    "S705–706、S712域/阈术语待核。心理学、性取向、人类学及动物行为论述为讲师框架与玩笑，不作为科学结论。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第26课.md",
+  "output_sha256": "3c1383111fc9f02b01dd156ba71024d01619e50a23e3b284d75f881243572589",
+  "reader_navigation_update": {
+    "previous_output_sha256": "cd0b16c6099fd08a8e26675b258ca6ed233f115aab97bb55adfdb1c09a9a3132",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

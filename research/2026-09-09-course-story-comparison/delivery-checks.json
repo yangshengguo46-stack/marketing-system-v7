@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-09-09T12:03:11.386213+00:00",
+  "frozen_input_files_unchanged": true,
+  "first_stories_and_notes_unchanged": true,
+  "four_stories_1000_to_2000_han_chars": true,
+  "anonymous_copies": [
+    {
+      "case": "01",
+      "label": "甲",
+      "unchanged": true
+    },
+    {
+      "case": "01",
+      "label": "乙",
+      "unchanged": true
+    },
+    {
+      "case": "02",
+      "label": "甲",
+      "unchanged": true
+    },
+    {
+      "case": "02",
+      "label": "乙",
+      "unchanged": true
+    }
+  ],
+  "targeted_revisions_exact_expected_delta": {
+    "01-a": 1,
+    "02-b": 2
+  },
+  "original_shoe_v1_to_v5_unchanged": true,
+  "checked_local_links": 59,
+  "frozen_course_links": "verbatim snapshots retain original relative links; authors instructed not to follow them; not treated as relocated reading bundle",
+  "revision_review_scope": "Lead checked exact diff, stated trial counts and the cited service transition; not full re-review or new business comparison",
+  "business_acceptance": false,
+  "product_runtime_end_to_end": false,
+  "paid_media_generated": false,
+  "modified_product_code": false
+}

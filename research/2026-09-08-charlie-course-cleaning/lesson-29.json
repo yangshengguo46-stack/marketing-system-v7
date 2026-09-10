@@ -1,0 +1,150 @@
+{
+  "lesson": 29,
+  "source_parts": [
+    {
+      "part": 55,
+      "source_json_sha256": "4cddcdb529e23acd3f05a0a1c0c7f4a4703dd81e513af57c7a6505974e8a6eb0",
+      "segment_count": 516
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L29-B001",
+      "part": 55,
+      "first_segment": 1,
+      "last_segment": 59,
+      "heading": "从上节课作业发现问题；学习群与公司的课堂说明",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B002",
+      "part": 55,
+      "first_segment": 60,
+      "last_segment": 135,
+      "heading": "为什么练习先守规则：艾弗森的篮球类比",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "巩小斌／埃弗森／f森／F3",
+          "cleaned": "巩晓彬／艾弗森",
+          "basis": "篮球名宿及同一球员的连续比喻；对其经历的评论未核实"
+        }
+      ]
+    },
+    {
+      "id": "L29-B003",
+      "part": 55,
+      "first_segment": 136,
+      "last_segment": 163,
+      "heading": "“救女孩”是讲师主张的概率选择，不是绝对禁令",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B004",
+      "part": 55,
+      "first_segment": 164,
+      "last_segment": 260,
+      "heading": "资助网站的选择次序，与讲师对自己的反省",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B005",
+      "part": 55,
+      "first_segment": 261,
+      "last_segment": 284,
+      "heading": "熟而后生：练时遵守，上场后化进自己的动作",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B006",
+      "part": 55,
+      "first_segment": 285,
+      "last_segment": 353,
+      "heading": "攻击源：环境与利益相冲的对手",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "攻击员／主力／周一威／逐急破继",
+          "cleaned": "攻击源／阻力／周一围／逐级迫近",
+          "basis": "本段反复列攻击来源与对手计划递进；非增加新的术语"
+        }
+      ]
+    },
+    {
+      "id": "L29-B007",
+      "part": 55,
+      "first_segment": 354,
+      "last_segment": 404,
+      "heading": "自己也会制造麻烦；攻击主角哪些东西",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "季度／金箍咒",
+          "cleaned": "嫉妒／紧箍咒",
+          "basis": "自身负面情绪列举及枷锁比喻上下文"
+        }
+      ]
+    },
+    {
+      "id": "L29-B008",
+      "part": 55,
+      "first_segment": 405,
+      "last_segment": 434,
+      "heading": "人物关系也能受攻击，但最后指向行动目标",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B009",
+      "part": 55,
+      "first_segment": 435,
+      "last_segment": 469,
+      "heading": "连线示范：自然环境如何针对具体设定",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "luy／起大悟／冰雪豹／雾器",
+          "cleaned": "路飞／起大雾／《冰雪暴》〔版本待核〕／武器",
+          "basis": "作品角色怕水、神枪手低能见度及武器受潮的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L29-B010",
+      "part": 55,
+      "first_segment": 470,
+      "last_segment": 496,
+      "heading": "社会、场景与人身自由，也能交叉组合",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L29-B011",
+      "part": 55,
+      "first_segment": 497,
+      "last_segment": 516,
+      "heading": "用排列组合改稿，但别把电影填满",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "本课回顾第28课并要求修改其作业，没有新增完整创作任务；不要求所有攻击组合逐一使用。",
+    "公益经历中年龄从二十五六改到二十四五，保留约数；机构有意匿名，未补名；例示藏族姓名字形待核，月费用只保留课堂明确数量不精算。",
+    "讲师将共情性别偏好限定为概率经验，艾弗森例子为类比、非体育核验；公益选择次序是个人回忆，未推广为群体统计。",
+    "S264书法家姓名按董其昌规范但引文出处未核；《冰雪暴》版本未明确。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第29课.md",
+  "output_sha256": "d07f1bd9eb62b6a367778c326669cb879437ad5b300d6798e182129f974c97d8",
+  "reader_navigation_update": {
+    "previous_output_sha256": "205f63b48b6f3b9dd6820b60696dd081cad5a24606cc46280124d2bf0da92b5d",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

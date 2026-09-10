@@ -1,0 +1,51 @@
+{
+  "part": 84,
+  "title": "编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？",
+  "state": "completed",
+  "started_at": "2026-09-06T11:48:49.620842+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 84,
+    "cid": 29820649585,
+    "title": "编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=84",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？.mp4",
+    "sha256": "a346623d55647e4853f2258416a2aaebd05103eedb478b947d7bda5f791cdc00",
+    "bytes": 100186181,
+    "mtime_ns": 1788682328783927450,
+    "actual_duration_seconds": 2777.552925
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 2777.54775,
+  "segment_count": 325,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T12:00:30.327027+00:00",
+  "elapsed_seconds": 700.7,
+  "completed_at": "2026-09-06T12:00:30.327006+00:00",
+  "text_characters": 13708,
+  "rtf": 0.252273,
+  "max_rss_bytes_macos": 606261248,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 2777.54775,
+    "duration_delta_seconds": -0.005175,
+    "vad_speech_seconds": 2517.454,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p084.source-time.txt": "61818fe4964e35b8336700fb95ac009ec6c84e5fdfb73067fb23070ac5672859",
+    "p084.source-time.srt": "799633888ad5227059b846550cc147dd1a7a7e2325c9b5b61d9adf268fc9b183"
+  }
+}

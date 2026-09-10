@@ -1,0 +1,101 @@
+{
+  "started_date": "2026-09-06",
+  "authorization": "Download all parts of the public Charlie screenwriting collection first; clean and distill only after acquisition.",
+  "catalog": "catalog.json",
+  "catalog_sha256": "df3f3c3491efed025af2dcf59d0a5ed738c49d5e659c870fcec42b50a87afeb4",
+  "collection_bvid": "BV1eE411F73t",
+  "parts_expected": 92,
+  "tool": {
+    "name": "yutto",
+    "version": "2.3.1",
+    "source": "https://github.com/yutto-dev/yutto",
+    "distribution": "PyPI via uv tool run; isolated cache environment",
+    "license": "GPL-3.0 per upstream repository",
+    "product_integration": false
+  },
+  "command": [
+    "uv",
+    "tool",
+    "run",
+    "--from",
+    "yutto==2.3.1",
+    "yutto",
+    "https://www.bilibili.com/video/BV1eE411F73t/",
+    "--batch",
+    "--proxy",
+    "no",
+    "--video-quality",
+    "64",
+    "--audio-quality",
+    "30232",
+    "--jobs",
+    "2",
+    "--num-workers",
+    "4",
+    "--fetch-workers",
+    "2",
+    "--download-interval",
+    "1",
+    "--no-danmaku",
+    "--no-cover",
+    "--with-metadata",
+    "--no-color",
+    "--no-progress",
+    "--dir",
+    "output/course-materials/charlie-screenwriting-20260906/raw"
+  ],
+  "network_observation": {
+    "default_urllib_route": "HTTP 412",
+    "urllib_proxy_handler_empty": "code 0, 92 parts",
+    "global_proxy_config_changed": false,
+    "downloader_proxy_setting": "no for this command only"
+  },
+  "authentication": "anonymous; no user cookies or account credentials accessed",
+  "quality": {
+    "requested": "720p, AAC 128 kbps",
+    "first_verified_download": "852x480 h264 + AAC 44100 Hz; source-selected guest fallback",
+    "no_upscaling": true,
+    "independent_subtitles": "0 subtitle files acquired; anonymous downloader reports login required. Burned-in subtitles remain in videos.",
+    "burned_in_subtitles": "Chinese subtitles visibly present at part 5, 600 s; not asserted for every part",
+    "visual_sample": "run/quality-checks/part-005-at-600s.jpg"
+  },
+  "raw_root": "../../output/course-materials/charlie-screenwriting-20260906/raw",
+  "log": "run/full-download.log",
+  "state": "acquired_and_file_verified",
+  "cleaning_started": false,
+  "paid_model_requests": 0,
+  "product_code_changed": false,
+  "downloader_exit_code": 0,
+  "download_finished_at": "2026-09-06T08:13:56.569811+00:00",
+  "unfinished_fragments": 0,
+  "first_download_log": "run/initial-download.log",
+  "logs": [
+    {
+      "path": "run/full-download.log",
+      "bytes": 65123,
+      "sha256": "97ee67f15133ffa0f521996f1346d293f8bd4566c842ce048e253568b3cb3414"
+    },
+    {
+      "path": "run/initial-download.log",
+      "bytes": 1071,
+      "sha256": "c9862d046d4d429fb4d65b9ff088a3f1614a67ef15dac15e8f7b5ce524e573b0"
+    }
+  ],
+  "verification_completed_at": "2026-09-06T08:16:29.356124+00:00",
+  "verification": "download-verification.json",
+  "catalog_unchanged_during_acquisition": true,
+  "verified_parts": 92,
+  "total_bytes": 12633632028,
+  "source_duration_seconds": 226782,
+  "downloaded_duration_seconds": 226737.646954,
+  "video_heights": {
+    "480": 92
+  },
+  "video_codecs": {
+    "h264": 92
+  },
+  "audio_codecs": {
+    "aac": 92
+  },
+  "full_course_transcription_started": false
+}

@@ -1,0 +1,265 @@
+{
+  "part": 66,
+  "title": "写了剧本怎么投稿",
+  "parts": [
+    66
+  ],
+  "source": {
+    "part": 66,
+    "cid": 31421369184,
+    "title": "写了剧本怎么投稿",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=66",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/写了剧本怎么投稿.mp4",
+    "sha256": "4b26ad960171ee1f171ca512b6682f6f4c3ade24eb07e6033289690d6f2d704f",
+    "bytes": 145837262,
+    "mtime_ns": 1788682166183868458,
+    "actual_duration_seconds": 3781.600726
+  },
+  "full_transcript_read_parts": [
+    66
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p066.json",
+  "transcript_sha256": "cfbcb2bd45953be5bf193cd416631c9ed0d84f316d840a2a8df5b558e622eab6",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 594,
+    "total": 594
+  },
+  "reading_method": "按原顺序完整阅读全部ASR段落；不是关键词命中代替全文阅读",
+  "reviewed_at": "2026-09-06T10:39:02.363968+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿，未逐句听校；ASR可能漏字、错字或误断句",
+  "teaching_nodes": [
+    {
+      "label": "开题：投稿的对象与命中问题",
+      "start_seconds": 0,
+      "end_seconds": 99,
+      "summary": "从短剧热度与收入传闻切入，明确本节讨论写完投给谁、怎样投，以及来稿中的共性问题。",
+      "part": 66
+    },
+    {
+      "label": "课程、人才库与对接背景",
+      "start_seconds": 99,
+      "end_seconds": 520,
+      "summary": "介绍课程起源、学习者进入行业的经历和对接服务变化；老师称当时短剧更侧重学员与甲方直接沟通、选择稿件、签合同。",
+      "part": 66
+    },
+    {
+      "label": "公众表达与个人经历岔题",
+      "start_seconds": 520,
+      "end_seconds": 1028,
+      "summary": "分享对网上批评的分类和个人见闻，说明从公众表达中观察人、采集素材。",
+      "part": 66
+    },
+    {
+      "label": "短剧入行的态度说明",
+      "start_seconds": 1028,
+      "end_seconds": 1190,
+      "summary": "再次解释老师支持新人尝试短剧的立场，然后进入具体来稿问题。",
+      "part": 66
+    },
+    {
+      "label": "误区一：观点代替故事",
+      "start_seconds": 1190,
+      "end_seconds": 1300,
+      "summary": "不要在故事未设计清楚时，只说要表达反校园霸凌、平等或其他立场；先写具体人物、处境和行动，观点可随故事显现。",
+      "part": 66
+    },
+    {
+      "label": "误区二：元素代替类型",
+      "start_seconds": 1300,
+      "end_seconds": 1699,
+      "summary": "校园是环境元素，可以容纳爱情、成长、惊悚或悬疑。应问观众会产生哪种期待；本节用人物成长、目标追寻、摆脱困境、梦幻愿望、悬疑五类说明。甲方只给元素时，继续问清风格和需求。",
+      "part": 66
+    },
+    {
+      "label": "人物小传是协作材料",
+      "start_seconds": 1699,
+      "end_seconds": 1793,
+      "summary": "不能只写心理标签；外形、服饰、言行、教育与社会位置等应使导演、服化道、演员理解人物。",
+      "part": 66
+    },
+    {
+      "label": "故事梗概要交代真正的故事",
+      "start_seconds": 1793,
+      "end_seconds": 1980,
+      "summary": "指出两种问题：写完前提到重生才结束，或只写可能探讨的议题。本节规定至少包含环境、人物、情境、行动、阻力、转折、解决、结局。八项已用39:20板书抽帧核对。",
+      "part": 66
+    },
+    {
+      "label": "依期待类型讨论大转折",
+      "start_seconds": 1980,
+      "end_seconds": 2378,
+      "summary": "本节归纳：成长类做回自己；目标追寻类换方法、必要时换目标；困境类直面困境；梦幻愿望类回归现实；悬疑类重新解读谜面。老师同时说这是理念，要回到具体故事。",
+      "part": 66
+    },
+    {
+      "label": "强设定的逻辑和兑现",
+      "start_seconds": 2378,
+      "end_seconds": 2570,
+      "summary": "避免为了显得新奇而复杂叠加；平衡新鲜感与信任感。设定引发多大期待，后续就要有相应兑现。",
+      "part": 66
+    },
+    {
+      "label": "主视角跟着观众情绪走",
+      "start_seconds": 2570,
+      "end_seconds": 2710,
+      "summary": "不要只因某角色在暗中观察，就认定她是主视角；检查观众在担心谁、跟谁经历困境和成长。",
+      "part": 66
+    },
+    {
+      "label": "现状的四项要求",
+      "start_seconds": 2710,
+      "end_seconds": 2912,
+      "summary": "要求短促精准地介绍现状，并具备记忆、共情、期待、隐患四项。老师明确说以后交来的现状按这四方面检查。",
+      "part": 66
+    },
+    {
+      "label": "基于人物关系和真实处境拉情绪",
+      "start_seconds": 2912,
+      "end_seconds": 3489,
+      "summary": "把“母亲骂、全公司欺负、放贷者打”三场低开戏，改成母亲道德施压、帮助实习生反遭上司责难、最后一碗面的微小幸福被破坏；不同关系使用不同动作。",
+      "part": 66
+    },
+    {
+      "label": "已报名学员的两种投稿形式",
+      "start_seconds": 3489,
+      "end_seconds": 3572,
+      "summary": "联系自己的助教对接：一种是1500字梗概、人物资料、前十集剧本；另一种是完稿剧本。老师建议完稿要求优先使用已有库存，具体格式与甲方沟通由助教协助。",
+      "part": 66
+    },
+    {
+      "label": "开放故事创意批改征集",
+      "start_seconds": 3572,
+      "end_seconds": 3745,
+      "summary": "面向想测试故事创意的观众，要求300字以内按八项写清故事，交给助教并进入学习小组；预告直播批改，每场若干篇，不保证每份都及时获得批改。",
+      "part": 66
+    },
+    {
+      "label": "收束",
+      "start_seconds": 3745,
+      "end_seconds": 3782,
+      "summary": "强调剧本要讲动人的故事、调动情绪和期待，结束课程。",
+      "part": 66
+    }
+  ],
+  "examples": [
+    {
+      "label": "校园只是环境元素",
+      "start_seconds": 1300,
+      "end_seconds": 1386,
+      "teaching_point": "同一校园可写爱情、成长、惊悚、凶杀；只报环境不足以决定如何写和面向谁。"
+    },
+    {
+      "label": "重生梗概只写重生之前",
+      "start_seconds": 1793,
+      "end_seconds": 1839,
+      "original_problem": "细写成长苦难、偷听、遇害，刚重生就结束梗概。",
+      "teacher_change": "真正要交代的是重生后如何行动、对抗、转折、解决和收束。",
+      "teaching_point": "前提不能代替主体故事。"
+    },
+    {
+      "label": "外星人设定的兑现不足",
+      "start_seconds": 2520,
+      "end_seconds": 2570,
+      "original_problem": "设为外星人，却只体现性格怪、不熟悉地球。",
+      "teacher_change": "检查为何需要这么强的设定；若普通久不出门的人也能完成同样剧情，应重新考虑设定的必要性。",
+      "teaching_point": "设定所抬高的期待要在情节中兑现。"
+    },
+    {
+      "label": "主视角不等于暗中观察者",
+      "start_seconds": 2602,
+      "end_seconds": 2710,
+      "teaching_point": "稿中女角色只在暗中观察，而男角色承担困境、行动和成长，老师认为观众实际随男角色的情绪走。"
+    },
+    {
+      "label": "三场低开戏的完整改法",
+      "start_seconds": 2930,
+      "end_seconds": 3471,
+      "original_problem": "母亲开口辱骂索要弟弟彩礼；领导泼咖啡且所有同事都骂；放贷者破门殴打。",
+      "teacher_change": "母亲表面关心、用过往供学牺牲让女儿自己答应；女主为新实习生解围才被上司责难，同时保留实习生的感激；回家煮最后一包喜欢的面，放贷者把这份小幸福轻慢地当作烟灰缸。",
+      "teaching_point": "老师强调情绪不等于不断扇耳光；通过具体关系、行动动机和被损害的珍贵东西，让观众感到痛。"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "participation": "optional_open_call",
+      "task": "自愿参加直播批改：用300字以内写一则完整故事创意，交代环境、人物、情境、行动、阻力、转折、解决、结局",
+      "part": 66,
+      "start_seconds": 3601,
+      "end_seconds": 3743,
+      "asr_excerpt": "这个故事创意我们要求300字……300字以内……依然是环境人物……情境、行动……阻力……大的转折……最后怎么解决……所有的人和事儿的归属",
+      "submission_spec": "300字以内；录课时说明交给助教、进入学习小组。未给确切截止日；预告接下来几个月夏秋进行，不换算为当前日期。",
+      "teacher_review": "预告在直播中批改故事创意，每次几十个；不能保证每份及时批改。",
+      "uncertainty": "这是录课时的公开征集，现行入口与活动是否仍开放未确认；未逐句听校。",
+      "assignment_form": "自愿公开征集，书面故事创意"
+    }
+  ],
+  "practice_suggestions": [
+    {
+      "kind": "classroom_self_check",
+      "task": "对照本节共性问题检查曾投但未中的稿件",
+      "start_seconds": 3473,
+      "end_seconds": 3487,
+      "submission_spec": "口头自查提醒，没有新增篇数或截止时间。"
+    }
+  ],
+  "submission_requirements": [
+    {
+      "kind": "submission_format",
+      "start_seconds": 3501,
+      "end_seconds": 3541,
+      "requirement": "1500字梗概 + 人物资料 + 前十集剧本",
+      "scope": "本节说有些甲方采用的征稿形式，报名学员联系助教；不是所有甲方统一规则。"
+    },
+    {
+      "kind": "submission_format",
+      "start_seconds": 3541,
+      "end_seconds": 3567,
+      "requirement": "完稿剧本",
+      "scope": "本节说另一些甲方需要；建议以已有完稿对接，不为此临时专写整部。"
+    },
+    {
+      "kind": "submission_quality_requirement",
+      "start_seconds": 1866,
+      "end_seconds": 1980,
+      "requirement": "梗概至少清楚写出环境、人物、情境、行动、阻力、转折、解决、结局。",
+      "source_visual_check_seconds": 2360
+    },
+    {
+      "kind": "submission_quality_requirement",
+      "start_seconds": 2710,
+      "end_seconds": 2912,
+      "requirement": "主角现状短促精准，包含记忆、共情、期待、隐患。"
+    }
+  ],
+  "actual_assignment_result": "完整顺读594段机器稿。除投稿规范与自查外，末尾明确找到自愿参加的故事创意征集：300字以内、按八项写清、交助教、后续直播批改。它不是要求所有观众立即完成一部剧本。1500字梗概加人物和前十集、以及完稿剧本，是另外两种甲方投稿形式，须分开记录。",
+  "connections": [
+    "老师明确回顾：1:39起请只见片段的观众回到课程合集；23:03起多次回顾以期待理解故事的逻辑；43:22附近回顾其早期对第一个剧本视角选择的建议。",
+    "整理者关联：本节八项梗概与早课的故事要素可对读，但用词与任务不同，不直接合并为同一份固定模板。",
+    "整理者关联：本节“真实地拉情绪”的三场改稿，可与P064增加期待和P001用事件传达信息相互补充；不是将“情绪拉满”推广为无条件极端化。",
+    "整理者关联：P067是平台升级通知；本P才有具体投稿材料与开放批改要求。"
+  ],
+  "uncertainties": [
+    "本卡流程和服务条款都来自录课时的说法。课程订单、稿费、市场规模、学员收入、对接效率及活动开放状态未核实现状。",
+    "关于合同、版权和立项，本P只说助教可协助，没有展开法律条款；本卡不补写未讲的合同规则。",
+    "1938秒板书被人物遮挡；2360秒已看清梗概八项。其他细节仍以机器稿为主要来源，未完整逐句听校。",
+    "本节对五类型大转折的概括保留为老师的方法，不硬化成所有作品必须具备同一位置或同一种转折。"
+  ],
+  "source_visual_checks": [
+    {
+      "source_seconds": 1938,
+      "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/processing/p066-frame-1938.jpg"
+    },
+    {
+      "source_seconds": 2360,
+      "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/processing/p066-frame-2360.jpg"
+    }
+  ],
+  "limits": [
+    "本卡全文读的是机器稿，未完整逐句听看原片。",
+    "时间戳用于回查原视频，不是逐字对齐验证。",
+    "老师观点、行业观察、预测与招生材料均归属于课程原话语境，不是整理者背书。"
+  ]
+}

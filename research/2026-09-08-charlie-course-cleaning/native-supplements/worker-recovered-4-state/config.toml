@@ -1,0 +1,29 @@
+model = "glm-5-2-260617"
+model_provider = "story_ark"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+web_search = "disabled"
+project_doc_max_bytes = 0
+model_reasoning_effort = "low"
+model_reasoning_summary = "none"
+[features]
+code_mode = false
+[orchestrator.skills]
+enabled = false
+[orchestrator.mcp]
+enabled = false
+[shell_environment_policy]
+inherit = "core"
+exclude = ["*KEY*", "*TOKEN*", "*SECRET*"]
+[model_providers.story_ark]
+name = "Story learning authorized Ark"
+base_url = "https://ark.cn-beijing.volces.com/api/v3"
+env_key = "COURSE_METHOD_ARK_API_KEY"
+wire_api = "responses"
+request_max_retries = 0
+stream_max_retries = 0
+stream_idle_timeout_ms = 180000
+supports_websockets = false
+
+[projects."/Users/yangyucheng/Documents/ChatGPT/第七版营销系统"]
+trust_level = "trusted"

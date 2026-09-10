@@ -1,0 +1,148 @@
+{
+  "part": 80,
+  "source": "research/2026-09-06-charlie-course-organized/transcripts/p080.json",
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "segment_count": 243,
+  "source_text_characters": 16030,
+  "file_count": 7,
+  "block_count": 44,
+  "date": "2026-09-08",
+  "reviewer": "clean_core_25_34",
+  "scope": "按jobs.json确认七批；完整顺读P080全部243源段，与44块全部清洗正文对照。",
+  "limits": [
+    "未听校或核对原著、影片字幕；破碎英文保留源词、可辨意思和具体疑点，不补流利台词。",
+    "人物、原著/电影情节、真人经历及讲师的营销/演技/制作判断区分归属，未作外部事实核验。",
+    "保留原亲戚传记取材作业、课堂调查和推荐，未添加新作业。"
+  ],
+  "history_note": "c002 Lead此前已全文核读；本轮核读全部25源段与五块正文，未再改正文，保留lead_full_review。",
+  "files": [
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c001-clean.json",
+      "job": "p080-c001",
+      "first_segment": 1,
+      "last_segment": 39,
+      "segment_count": 39,
+      "block_count": 8,
+      "output_text_characters": 2443,
+      "output_sha256": "b4fc895670e16c1a44f62ac2c81005faf5a69c46ffbe68cdf806925234ed5b76",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c001-before-independent-full-review.json",
+      "before_sha256": "86f7e49a6b93bd066db7c25ef4096d49a60152da61fc35add7ca6a8cbdf8a83a",
+      "issues": [
+        "补回S15输给马修不冤的否定，S20第一分钟恢复；净化/进化版本名称显式标疑。",
+        "保留四部个人反复观看的片名来源及深渊人疑点、不猜影片；英文午餐片段原始难辨信息完整保留。",
+        "评分奖项、狼性文化、演员与公司经历等明确归讲师。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c002-clean.json",
+      "job": "p080-c002",
+      "first_segment": 40,
+      "last_segment": 64,
+      "segment_count": 25,
+      "block_count": 5,
+      "output_text_characters": 1568,
+      "output_sha256": "ef3392c3cf8b99d8224f87d77193ad3806382addf6915382ad68dcf13b5900df",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c002-before-independent-full-review.json",
+      "before_sha256": "ba55b05690f4875450396318d1e442a5f258bc785bfb19b793cd3390c07705ff",
+      "issues": [
+        "完整核读S40—S64全部ASR与五块正文，未见需要再次改动正文的明确遗漏。",
+        "保留lead_full_review及中文暂译形式；8→16价格、佣金循环、两项所谓成功要素与数字均在；不以英文转中文字符比判断删减。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c003-clean.json",
+      "job": "p080-c003",
+      "first_segment": 65,
+      "last_segment": 92,
+      "segment_count": 28,
+      "block_count": 7,
+      "output_text_characters": 2831,
+      "output_sha256": "295b52e1c4a81027f6de0b1af0b9e08abdfe8ad1bc308a3b34cc40ec77ecc3d0",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c003-before-independent-full-review.json",
+      "before_sha256": "747d683d42395421eebd49ee5d23549d10e24691d60621e57a94565e0265865d",
+      "issues": [
+        "撤销将450540任意分组，限定游戏时光蒙太奇的局部范围。",
+        "撤销Gestala→Gestapo等猜词；IPO演讲保留全部源英文，不把破碎设计师姓名和末尾台词补成确定名称/字幕。",
+        "仙股定义和时代销售判断保留讲师归属；创业、改卖富人、助理剃头、伴侣和管家段落完整。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c004-clean.json",
+      "job": "p080-c004",
+      "first_segment": 93,
+      "last_segment": 114,
+      "segment_count": 22,
+      "block_count": 3,
+      "output_text_characters": 3426,
+      "output_sha256": "4f115f7bbe79eb720650282a3a7b78677c39663583bdbe5a6253f9e17a047037",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c004-before-independent-full-review.json",
+      "before_sha256": "793e3aaf5fc176d24e242715e1937e027a6105fed877b3193ad699d826d396ad",
+      "issues": [
+        "两段英语逐段与源对照；撤回流利化补句和Pinto/Porsche等猜定车型，原文与可辨内容整理并存，不删原残句。",
+        "完整保留M16比喻、2000/40000金额、旧新车对比、信用卡/房东/女友三困境及10000股。",
+        "讲师golden ticket三段式论点完整，90%/10%明确为未核口述例。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c005-clean.json",
+      "job": "p080-c005",
+      "first_segment": 115,
+      "last_segment": 150,
+      "segment_count": 36,
+      "block_count": 8,
+      "output_text_characters": 2785,
+      "output_sha256": "d6ca33665d53638c5ec63b366e7d11172bd91e5aee591507cfbc2b1933186dde",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c005-before-independent-full-review.json",
+      "before_sha256": "1f3b0c1727cd1e8da270bf2017a3306e808f992f46dd53212d64d7de2c8eb2dc",
+      "issues": [
+        "中点/第三幕及主角意识到被调查的指代修复。",
+        "S122女呢不擅译妻子，家中冲突/急救/濒死过程保留。",
+        "辞职演说全部英文及单亲母亲金额案例完整；Kimmy/破碎belved不补姓氏或实体，保留原lead_review格式历史。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c006-clean.json",
+      "job": "p080-c006",
+      "first_segment": 151,
+      "last_segment": 230,
+      "segment_count": 80,
+      "block_count": 7,
+      "output_text_characters": 3172,
+      "output_sha256": "4134e8a6ff9d249a583bb3755c877962decbe52909c4b2149387c38a7374e9e8",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c006-before-independent-full-review.json",
+      "before_sha256": "ea52de554cd621d81d82b581d98d246afed8643ae4b2c945c77eb115db8e409b",
+      "issues": [
+        "继续演说时未签协议，不误称被处罚后；保留源英文与残片，不补banning或完整离职宣言。",
+        "1138误成1小时38分钟修为有依据的138分钟推测；欧洲阿姨由前文姨妈互证。",
+        "第三项非线性手法及传记如何取人生段落的提问回源块；原亲戚传记作业完整，无附加要求。",
+        "爱情/友情背叛与拍摄创纪录均标明讲师视角。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c007-clean.json",
+      "job": "p080-c007",
+      "first_segment": 231,
+      "last_segment": 243,
+      "segment_count": 13,
+      "block_count": 6,
+      "output_text_characters": 651,
+      "output_sha256": "a50a698214cad304c4c190b8104f47620bd954cbb14f19f8f9a3bf69b29482da",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c007-before-independent-full-review.json",
+      "before_sha256": "ab73a30a25384fa76c0c2a497cdc2685f0601862439db8e96f24b41cf4bc71cd",
+      "issues": [
+        "完整保留传记观影不闷、三项学习目的、坏人主角的共情调查与良心/兄弟情/时代元素讨论。",
+        "S240第二理由尾句移回源块，演员不等于角色本人；没有新增观影或写作作业。"
+      ]
+    }
+  ],
+  "validation": {
+    "status": "PASS",
+    "continuous_coverage_once": "1—243",
+    "jobs_ranges_match": true,
+    "source_hash_match": true,
+    "c002_body_unchanged": true,
+    "prior_lead_reviews_preserved": true,
+    "shared_md_modified": false,
+    "source_or_native_raw_response_modified": false
+  }
+}

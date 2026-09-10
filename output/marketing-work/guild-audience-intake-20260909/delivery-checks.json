@@ -1,0 +1,100 @@
+{
+  "checks": {
+    "seed-direct memory off": true,
+    "seed-direct all turns complete": true,
+    "seed-method memory off": true,
+    "seed-method all turns complete": true,
+    "native config read memory off": true,
+    "native body matches actual tool argument": true,
+    "direction draft absent": true,
+    "brief exact": true,
+    "only two marketing tool calls": true,
+    "no literal credential in trial files": true,
+    "first answers exact": true,
+    "launcher syntax": true
+  },
+  "runs": {
+    "seed-direct": {
+      "thread": {
+        "threadId": "01a0867c-3746-7633-974d-6138bb02aa0b",
+        "model": "doubao-seed-evolving"
+      },
+      "turns": [
+        {
+          "id": "01a0867c-560f-7a13-9efa-1dd2de8c138f",
+          "status": "completed",
+          "durationMs": 74212
+        }
+      ],
+      "cumulativeUsage": {
+        "totalTokens": 10821,
+        "inputTokens": 8761,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 2060,
+        "reasoningOutputTokens": 657
+      },
+      "toolCalls": [],
+      "toolOutputCount": 0
+    },
+    "seed-method": {
+      "thread": {
+        "threadId": "01a0867d-04a7-78e1-bfa1-6572fa385289",
+        "model": "doubao-seed-evolving"
+      },
+      "turns": [
+        {
+          "id": "01a0867d-311b-7090-966f-efefe983449d",
+          "status": "completed",
+          "durationMs": 121367
+        },
+        {
+          "id": "01a0867f-eff7-7423-a425-4fe7e6f2208c",
+          "status": "completed",
+          "durationMs": 32754
+        }
+      ],
+      "cumulativeUsage": {
+        "totalTokens": 47747,
+        "inputTokens": 43871,
+        "cachedInputTokens": 31968,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 3876,
+        "reasoningOutputTokens": 1206
+      },
+      "toolCalls": [
+        {
+          "name": "marketing_work",
+          "arguments": {
+            "action": "open",
+            "workId": "guild-audience-seed-20260909",
+            "brief": "我是做直播公会的，想做一个公会品牌账号，让合适的达人看了内容以后愿意咨询并加入我们。这个账号应该怎么起步？",
+            "materials": []
+          }
+        },
+        {
+          "name": "marketing_work",
+          "arguments": {
+            "action": "record",
+            "workId": "guild-audience-seed-20260909",
+            "stage": "research",
+            "body": "接案状态：已知目标是从0起步打造直播公会品牌账号，让合适达人看内容后愿意咨询并加入。当前尚未知招募平台、面向地区、主播品类与阶段，也未知公会可实际交付的服务、资源、合同机制及可公开展示的案例/数据证据。目标受众和账号人设均尚未确定。本阶段仅为待补资料的接案笔记，不是已完成外部研究。"
+          }
+        }
+      ],
+      "toolOutputCount": 2
+    }
+  },
+  "firstAnswersSHA256": {
+    "seed-direct": "cb27500cdbb4ed306dac0dafd75d3f5adc384a4f3b14f163624ea2c3807b8039",
+    "seed-method": "95f0b7c890376940850a2a83c597409f6276bdeab8db5f77e9689418d9a2f39d",
+    "gpt6-reference": "97598f2065a5f956d8b7de228fb37e89e21edddc7062e13254370967d1f83d73"
+  },
+  "scope": "首轮接案及独立保存续轮；不是完整营销交付或业务效果验证",
+  "gpt6Reference": {
+    "model": "gpt-6-astra",
+    "fork_turns": "none",
+    "task": "/root/guild_intake_gpt6_reference",
+    "provenance": "child final message preserved verbatim; no full API request or comparable usage available"
+  }
+}

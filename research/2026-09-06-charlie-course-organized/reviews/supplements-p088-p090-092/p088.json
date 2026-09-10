@@ -1,0 +1,199 @@
+{
+  "part": 88,
+  "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+  "parts": [
+    88
+  ],
+  "source": {
+    "part": 88,
+    "cid": 29821437004,
+    "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=88",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！.mp4",
+    "sha256": "955d4738354aa73e04906979b2a888703a012fbbbb9be861eff3f86d99369cfc",
+    "bytes": 84133585,
+    "mtime_ns": 1788682363127614480,
+    "actual_duration_seconds": 1969.07898
+  },
+  "full_transcript_read_parts": [
+    88
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p088.json",
+  "transcript_sha256": "d394be3f5127deee90daa3802ae88a0dd29fb2405b443d01f6528e8bceab53ca",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 148,
+    "total": 148
+  },
+  "reading_method": "按增长JSONL1–148原序完整读，并与最终completed JSON148段验齐；非关键词代替全文",
+  "reviewed_at": "2026-09-06T12:11:51.211618+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿，未逐句听校",
+  "teaching_nodes": [
+    {
+      "label": "选片承接学生类型需求",
+      "part": 88,
+      "start_seconds": 0,
+      "end_seconds": 58,
+      "summary": "印度/体育/高分组合，教练项目行业口述。"
+    },
+    {
+      "label": "信息拍以新期待/求知欲牵引",
+      "part": 88,
+      "start_seconds": 58,
+      "end_seconds": 165,
+      "summary": "不是单纯增加事实数量。"
+    },
+    {
+      "label": "1–5拍：愿望、缺失与生儿子失败",
+      "part": 88,
+      "start_seconds": 165,
+      "end_seconds": 355,
+      "summary": "国际奖牌缺失，收起荣誉放弃。"
+    },
+    {
+      "label": "6–10拍：女儿能力激励、说服与训练",
+      "part": 88,
+      "start_seconds": 355,
+      "end_seconds": 481,
+      "summary": "恢复梦想、拒绝召唤、训练阻碍；歌舞/饮食岔讲。"
+    },
+    {
+      "label": "11拍：剃发仪式与把女孩当儿子的旧路",
+      "part": 88,
+      "start_seconds": 481,
+      "end_seconds": 650,
+      "summary": "提前以大主题解释后续需要女儿做自己。"
+    },
+    {
+      "label": "12–13拍：反抗、婚礼与B故事",
+      "part": 88,
+      "start_seconds": 650,
+      "end_seconds": 731,
+      "summary": "新娘交谈使女性处境成为成长维度。"
+    },
+    {
+      "label": "14–21拍：主动训练、冠军与父女渐远",
+      "part": 88,
+      "start_seconds": 732,
+      "end_seconds": 883,
+      "summary": "体育学院、教练、大学新生活和家庭对照。"
+    },
+    {
+      "label": "中点是父女分离的一组变化",
+      "part": 88,
+      "start_seconds": 888,
+      "end_seconds": 962,
+      "summary": "养成第二个自己却失去女儿；允许前后几拍划法。"
+    },
+    {
+      "label": "22–33拍：下降、和解、陪读、危机与远程指导",
+      "part": 88,
+      "start_seconds": 962,
+      "end_seconds": 1076,
+      "summary": "前述成长后的新路径继续遭体制阻力。"
+    },
+    {
+      "label": "34拍：为女孩战斗明确主题",
+      "part": 88,
+      "start_seconds": 1076,
+      "end_seconds": 1197,
+      "summary": "父亲从要儿子到接受女儿做自己。"
+    },
+    {
+      "label": "35–37拍：缺席、苦战、最初教诲与五分招",
+      "part": 88,
+      "start_seconds": 1197,
+      "end_seconds": 1273,
+      "summary": "危急回读早先提示，老师类比如来神掌。"
+    },
+    {
+      "label": "38–39拍：国歌传递结果与交金牌",
+      "part": 88,
+      "start_seconds": 1274,
+      "end_seconds": 1435,
+      "summary": "国歌、民族背景、仪式完成父亲愿望。"
+    },
+    {
+      "label": "结构归纳、官僚对抗与主角选择",
+      "part": 88,
+      "start_seconds": 1435,
+      "end_seconds": 1596,
+      "summary": "女儿角度非不行，本轮倾向父亲承担更多。"
+    },
+    {
+      "label": "形式取舍、评分与社会发声的阶段限制",
+      "part": 88,
+      "start_seconds": 1596,
+      "end_seconds": 1827,
+      "summary": "传记跨时段有对话推进；观点非事实背书。"
+    },
+    {
+      "label": "体育题材路径与计数作业",
+      "part": 88,
+      "start_seconds": 1827,
+      "end_seconds": 1966,
+      "summary": "数摔跤次数及频率对节奏影响，无标准答案。"
+    }
+  ],
+  "examples": [
+    {
+      "label": "剃短发在两次处境的意义不同",
+      "start_seconds": 481,
+      "end_seconds": 650,
+      "teaching_point": "最初被当儿子不是自主坚强；后面主动选择不可机械等同"
+    },
+    {
+      "label": "父女分离的几拍共同作中点",
+      "start_seconds": 888,
+      "end_seconds": 962,
+      "teaching_point": "结构节点可以是一组变化，非精确单秒"
+    },
+    {
+      "label": "父亲被隔开仍通过国歌得知胜利",
+      "start_seconds": 1274,
+      "end_seconds": 1435,
+      "teaching_point": "场面同时满足女儿独立与父亲知道结果/愿望回收"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "回看本片数摔跤展示次数，思考比赛场面次数与频率、多寡感及提/掉节奏。",
+      "part": 88,
+      "start_seconds": 1884.038,
+      "end_seconds": 1957.084,
+      "submission_spec": "计数+思考；未定是否计训练/蒙太奇的口径，无书面模板/字数/期限/渠道。",
+      "teacher_review": "未公布标准次数或批改承诺。",
+      "uncertainty": "31:27字幕核到留作业；计数指令为机器稿，未逐句听校。"
+    }
+  ],
+  "practice_suggestions": [
+    {
+      "kind": "classroom_exercise",
+      "task": "按目标/行动与男女平权解释再回看片子。",
+      "part": 88,
+      "start_seconds": 502.918,
+      "end_seconds": 514.796,
+      "submission_spec": "理解建议，非另交39拍表。",
+      "teacher_review": "无。",
+      "uncertainty": "老师的解释路径，非唯一读法。"
+    }
+  ],
+  "actual_assignment_result": "明确1项计数与思考作业：数本片摔跤多少次并思考场面频率/节奏；未交答案，无交稿格式或期限。",
+  "connections": [
+    "明确回指want/need、目标和两个行动路径、早铺能力/提示在高潮重读。",
+    "中点可由前后数拍共同表达，主角定位倾向父亲但不完全排除女儿角度。",
+    "重新限定新手社会说教建议；传记中的对话推进与让信息成事件需保留取舍。"
+  ],
+  "uncertainties": [
+    "字幕少量抽核；印度社会/历史/市场/审查等口述未验证。",
+    "ASR终点按上下文写中点，不声称逐字听校。",
+    "成片分钟有版本差，39拍非所有体育片硬数。"
+  ],
+  "limits": [
+    "148段最终机器稿完整顺读；未逐句听校。",
+    "教师成片反推不是原作者创作过程或真实人物经历的证据。",
+    "未见旧作业学生成品展示。"
+  ]
+}

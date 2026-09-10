@@ -2,7 +2,21 @@
 
 `codex app-server` is the interface Codex uses to power rich interfaces such as the [Codex VS Code extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt).
 
+## AI IP native marketing work (development slice)
+
+This fork adds the `marketing_work` model tool through the native extension registry, not a client-side agent or a new JSON-RPC method. Use ordinary `thread/start` and `turn/start` with a marketing assignment. The native Lead can:
+
+1. Call `{"action":"open","workId":"gift-first-work","brief":"The actual mission and constraints","materials":["materials/interview.md"]}`. Material paths must already exist relative to the selected execution workspace.
+2. Read the returned `workFile` and original material files using native tools. Research audience situations and proof; record actual findings with `{"action":"record","workId":"gift-first-work","stage":"research","body":"Findings, sources and unresolved questions"}`.
+3. Continue through `direction` and `draft`, retaining the reasons for the direction and delivering full words, audiovisual choices and practical production notes. Assemble the existing ContentPackage for the final response; this tool does not validate marketing quality.
+
+`open` without a brief reopens saved work. `startAt:"draft"` supports revising existing material without fabricating research. Recording an upstream stage retains downstream bodies and marks them `needsReview`; explicit review can reuse them. Saved `results` indexes are research, direction and draft. Tool previews are incomplete navigation aids, limited to a 900-byte serialized response; full bodies remain in the file. Briefs and stage bodies accept up to 8000 UTF-8 bytes each; keep large source material in separate files.
+
+Files are development artifacts at `output/marketing-work/<workId>.json`, not the finished encrypted customer-project store. Use a new workId for a different brief/material set. Only one writer should edit a workId; cross-process coordination and crash-atomic writes are not provided. Completed saves can be reopened from another thread sharing the workspace. Source-file changes are not automatically detected: reread materials and record revised findings. Native filesystem permissions apply. `environmentId` selects among multiple available environments. The upstream extension API currently omits foreign-platform working directories (for example Linux host with Windows executor); that existing limitation remains, without changing core.
+
 ## Table of Contents
+
+- [AI IP native marketing work](#ai-ip-native-marketing-work-development-slice)
 
 - [Protocol](#protocol)
 - [Message Schema](#message-schema)

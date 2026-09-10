@@ -1,0 +1,51 @@
+{
+  "part": 47,
+  "title": "二十二课-G潮上不去？（下）22.2",
+  "state": "completed",
+  "started_at": "2026-09-06T10:20:30.297478+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 47,
+    "cid": 252782284,
+    "title": "二十二课-G潮上不去？（下）22.2",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=47",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十二课-G潮上不去？（下）22.2.mp4",
+    "sha256": "c5b00bc3f40ff535ee4f4bb781625da9ad51d8accfd7bd056bfff98f83264eef",
+    "bytes": 245758750,
+    "mtime_ns": 1788681813775918926,
+    "actual_duration_seconds": 2909.290333
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 2909.290687,
+  "segment_count": 376,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T10:27:30.841197+00:00",
+  "elapsed_seconds": 420.541,
+  "completed_at": "2026-09-06T10:27:30.841160+00:00",
+  "text_characters": 9041,
+  "rtf": 0.144551,
+  "max_rss_bytes_macos": 609603584,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 2909.2906875,
+    "duration_delta_seconds": 0.000354,
+    "vad_speech_seconds": 1401.04,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p047.source-time.txt": "7ac68dd01ab8e345a496396062f632bdc4622b55f9c26eb27f25b19acba4d819",
+    "p047.source-time.srt": "8c70695e58f83c781ecd2eec5d92565d1a78f3d3285db7c5790393b784fec356"
+  }
+}

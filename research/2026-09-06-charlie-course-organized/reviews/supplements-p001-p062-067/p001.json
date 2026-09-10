@@ -1,0 +1,200 @@
+{
+  "part": 1,
+  "title": "一个人在家做AI漫剧能赚钱吗？",
+  "parts": [
+    1
+  ],
+  "source": {
+    "part": 1,
+    "cid": 39755975667,
+    "title": "一个人在家做AI漫剧能赚钱吗？",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=1",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/一个人在家做AI漫剧能赚钱吗？.mp4",
+    "sha256": "40cc25dcc096d7e95a1442e7db4967985e05932690836615e075fab104c21c45",
+    "bytes": 90253039,
+    "mtime_ns": 1788681225906112872,
+    "actual_duration_seconds": 2609.022426
+  },
+  "full_transcript_read_parts": [
+    1
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p001.json",
+  "transcript_sha256": "f305c10354aac7e0e6e58364980f64991dc2b62ab0f813edd29a9020b0db311c",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 176,
+    "total": 176
+  },
+  "reading_method": "按原顺序完整阅读全部ASR段落；不是关键词命中代替全文阅读",
+  "reviewed_at": "2026-09-06T10:12:10.046178+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿，未逐句听校；ASR可能漏字、错字或误断句",
+  "teaching_nodes": [
+    {
+      "label": "开题：一个人制作AI剧的可行性",
+      "part": 1,
+      "start_seconds": 0,
+      "end_seconds": 54,
+      "summary": "本节自称理念与流程介绍；覆盖动画、仿真人等不同风格，讨论个人制作，不是现场完整制作演示。"
+    },
+    {
+      "label": "所谓红利与内容竞争",
+      "part": 1,
+      "start_seconds": 54,
+      "end_seconds": 282,
+      "summary": "老师把早期低价收剧、填充库存解释为平台补贴与抢份额，主张长期看故事与内容。价格、市场阶段与因果均属授课时的判断。"
+    },
+    {
+      "label": "真人与AI影像共存的判断",
+      "part": 1,
+      "start_seconds": 282,
+      "end_seconds": 437,
+      "summary": "以艺术是人与人沟通、观众与角色发生连接，以及动画/三维与真人长期共存作论证；属于老师对未来的观点。"
+    },
+    {
+      "label": "AI融入制作环节的趋势判断",
+      "part": 1,
+      "start_seconds": 437,
+      "end_seconds": 529,
+      "summary": "讲真人、场景、特效混用，预测未来不必特意标榜AI剧；没有提供可核统计。"
+    },
+    {
+      "label": "课程定位与个人经历",
+      "part": 1,
+      "start_seconds": 529,
+      "end_seconds": 903,
+      "summary": "自述课程价值是帮助缺少门路的普通创作者入行，讲学员从写剧本到开公司的经历，并解释为何教授短剧/漫剧。属自述及个案。"
+    },
+    {
+      "label": "演员热点岔题",
+      "part": 1,
+      "start_seconds": 903,
+      "end_seconds": 1084,
+      "summary": "以演员形象争论解释自己不追泛流量；涉及剧组与舆论的回忆未独立核实，不转为人物事实条目。"
+    },
+    {
+      "label": "教学补充：让信息通过事件发生",
+      "part": 1,
+      "start_seconds": 1084,
+      "end_seconds": 1507,
+      "summary": "老师反思早期大量强调信息节拍，可能令学员只交代信息而不写行动；明确强调用事说话，并提出把课件的“信息节拍”改成“事件节拍”。"
+    },
+    {
+      "label": "创作门槛下降与入行路径",
+      "part": 1,
+      "start_seconds": 1507,
+      "end_seconds": 1682,
+      "summary": "以文字/图像/影像的工具普及解释个人创作机会；先进入行业再追求电影等个人目标是老师建议。"
+    },
+    {
+      "label": "三种能力",
+      "part": 1,
+      "start_seconds": 1682,
+      "end_seconds": 1763,
+      "summary": "编剧思维负责故事和剧本，导演思维负责想要的画面，工具使用负责调动制作资源；本节认为前两者的判断能力更重要。"
+    },
+    {
+      "label": "导演流程前置：剧本、风格、场景和角色",
+      "part": 1,
+      "start_seconds": 1763,
+      "end_seconds": 1998,
+      "summary": "已有剧本后先定美学风格，再生成主要场景及各角度，设计角色各角度与不同妆造，保持重复出现时的一致性。"
+    },
+    {
+      "label": "分镜与生成画面",
+      "part": 1,
+      "start_seconds": 1998,
+      "end_seconds": 2165,
+      "summary": "规定首尾帧、镜头景别与摄影机运动，组合场景/人物/分镜参考与文字指令；找不到参考时可自己拍摄或表演示范，再细调表演与空镜。"
+    },
+    {
+      "label": "配音配乐和剪辑",
+      "part": 1,
+      "start_seconds": 2165,
+      "end_seconds": 2280,
+      "summary": "画面之外准备声音与音乐，可先自己示范台词效果，再做声音迁移；素材齐备后进入剪辑软件完成作品。"
+    },
+    {
+      "label": "审美与目标判断",
+      "part": 1,
+      "start_seconds": 2280,
+      "end_seconds": 2394,
+      "summary": "指出使用者需要清楚自己想要的故事与画面，提出故事审美/画面审美的重要性。对AI能力上限的说法是老师主张。"
+    },
+    {
+      "label": "课程推广与投稿/分账渠道说法",
+      "part": 1,
+      "start_seconds": 2394,
+      "end_seconds": 2609,
+      "summary": "介绍双师陪跑课、招生和限额；对比剧本交给甲方拍摄与作者制作后上传的路径。平台分账、收益与渠道可用性均未核实现状。"
+    }
+  ],
+  "examples": [
+    {
+      "label": "房东催租：文字信息改成具体行动",
+      "start_seconds": 1216,
+      "end_seconds": 1318,
+      "original_problem": "手机不断弹出欠租数月、催款和威胁，交代主角穷但缺少可演的行动。",
+      "teacher_change": "让房东来到门口堵人；主角装不在家；房东掏钥匙，主角必须想办法躲。",
+      "teaching_point": "现场辱骂本身也未必形成事件；让人物采取行动、应对阻碍来传达困境。"
+    },
+    {
+      "label": "伪装身份：内心独白改成会露馅的动作",
+      "start_seconds": 1319,
+      "end_seconds": 1376,
+      "original_problem": "用大量内心OS说明女扮男装或男扮女装者害怕暴露。",
+      "teacher_change": "设计身体接触等会让身份产生疑点的动作与对方反应。",
+      "teaching_point": "把窘迫和危险转成观众能看到的表演；老师本人也说忘了原稿具体伪装方向。"
+    },
+    {
+      "label": "校园欺凌：辱骂改成整蛊或栽赃事件",
+      "start_seconds": 1376,
+      "end_seconds": 1446,
+      "original_problem": "一群人用台词骂主角穷，附加一个耳光。",
+      "teacher_change": "构思让主角在喜欢的人面前出丑的整蛊或栽赃事件。",
+      "teaching_point": "用可见事件表现被欺负的处境。"
+    },
+    {
+      "label": "重复教室场景与角色妆造",
+      "start_seconds": 1845,
+      "end_seconds": 1956,
+      "teaching_point": "用多次出现的教室与受伤妆举例，说明先锁定场景、角色角度和状态，以便镜头衔接。"
+    }
+  ],
+  "assignments": [],
+  "practice_suggestions": [
+    {
+      "task": "可以自行研究并参考本节的AI剧制作流程与工具类别",
+      "start_seconds": 2280,
+      "end_seconds": 2300,
+      "kind": "optional_practice_suggestion",
+      "submission_spec": "未给成片时长、数量、提交方式、截止时间或本课必交要求。"
+    },
+    {
+      "task": "自学者可参考介绍的流程",
+      "start_seconds": 2597,
+      "end_seconds": 2607,
+      "kind": "optional_practice_suggestion",
+      "submission_spec": "没有新增作业规格。"
+    }
+  ],
+  "actual_assignment_result": "完整阅读176段机器稿；未找到本节明确布置的课后提交作业。18:04–25:07出现的“这几天的作业”是老师所看学员稿的例子，不是向本节所有观众新布置的作业。未逐句听校，不能保证无ASR漏字。",
+  "connections": [
+    "老师明确回顾：18:04–25:07说早期课程讲过“用事儿说话”，反思信息节拍教学；本段没有明确报出第7课课号。",
+    "整理者关联：据概念将这一补充链接到第7课“拿事儿说话”及结构课；这一课号映射不是老师本段原话。",
+    "老师明确说明：29:22起说本节不展开编剧思维，整套公开课已讲如何写剧本，本节主要讲导演思维和制片流程；30:23附近再次强调先有剧本。",
+    "整理者判断：将AI流程作为已有剧本之后的制作专题，保留原编号课程的独立训练，不据本节推定可替代第1–34课。",
+    "老师明确说明：本节是理念介绍，片尾另行推广全流程陪跑服务。"
+  ],
+  "uncertainties": [
+    "工具专名在ASR里不稳定，如type now、t now等，未核原画面，不据此补写产品名称或安装指南。",
+    "“首帧/尾帧”“起幅/落幅”等在机器稿中音近误写；节点表用概括表述，专名仍需回源。",
+    "关于AI生成机制的降噪/做减法类比只作为老师的简化讲法，不当作技术说明。",
+    "未核对行业补贴、收剧价格、渠道、艺人争议、学员收入或招生承诺。"
+  ],
+  "limits": [
+    "本卡全文读的是机器稿，未完整逐句听看原片。",
+    "时间戳用于回查原视频，不是逐字对齐验证。",
+    "老师观点、行业观察、预测与招生材料均归属于课程原话语境，不是整理者背书。"
+  ]
+}

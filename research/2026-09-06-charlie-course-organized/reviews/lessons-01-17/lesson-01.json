@@ -1,0 +1,118 @@
+{
+  "lesson": 1,
+  "title": "劝学",
+  "parts": [
+    2,
+    3,
+    4
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    2,
+    3,
+    4
+  ],
+  "pending_parts": [],
+  "teaching_nodes": [
+    {
+      "label": "编剧手艺与实战课程定位",
+      "part": 2,
+      "start_seconds": 3.622,
+      "end_seconds": 450.668
+    },
+    {
+      "label": "回应行业、非科班、文学功底顾虑",
+      "part": 2,
+      "start_seconds": 451.206,
+      "end_seconds": 630.3
+    },
+    {
+      "label": "从白日梦发现灵感",
+      "part": 2,
+      "start_seconds": 631.078,
+      "end_seconds": 845.516
+    },
+    {
+      "label": "工作辛苦与讲师从业经验",
+      "part": 2,
+      "start_seconds": 846.662,
+      "end_seconds": 1006.572
+    },
+    {
+      "label": "行业立场及创作者职责",
+      "part": 3,
+      "start_seconds": 4.582,
+      "end_seconds": 469.196
+    },
+    {
+      "label": "电影电视剧驱动与观看形式",
+      "part": 3,
+      "start_seconds": 469.196,
+      "end_seconds": 870.828
+    },
+    {
+      "label": "编剧是讲故事的人；虚构意义",
+      "part": 3,
+      "start_seconds": 871.782,
+      "end_seconds": 1339.308
+    },
+    {
+      "label": "写作工具与素材记录准备",
+      "part": 4,
+      "start_seconds": 3.078,
+      "end_seconds": 419.212
+    },
+    {
+      "label": "共情的刻意训练与演示",
+      "part": 4,
+      "start_seconds": 420.838,
+      "end_seconds": 606.38
+    },
+    {
+      "label": "真实幻想作业",
+      "part": 4,
+      "start_seconds": 635.334,
+      "end_seconds": 721.356
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "写下一个真实的幻想，尽可能真实、具体地描述自己怎么想；以财富幻想为例，应包含钱怎么花及人物关系、亲疏的变化。",
+      "part": 4,
+      "start_seconds": 635.334,
+      "end_seconds": 721.356,
+      "asr_excerpt": "我给大家布置今天的作业…截下一个你的幻想…但是必须写真实的…最真实的描述你怎么想的都给我写下来…你会跟谁亲近，疏远谁…这就是第一课的作业。后面我会告诉你他有什么用",
+      "submission_spec": "写成文字；未说明字数、提交渠道、期限。",
+      "teacher_review": "p5 04:42–04:58 回收；p5 06:20–11:24 说明欲望/幻想的材料用途，12:10–18:26演示与恐惧组合；未发现逐份学生作业讲评。",
+      "uncertainty": "原机器稿10:46“截下”在原p4 10:47烧录字幕核为“写下”。未逐句听校。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "生活中刻意训练共情：进入对方处境，考虑他为什么这样做；也可用物的拟人化体验练习。",
+      "part": 4,
+      "start_seconds": 420.838,
+      "end_seconds": 606.38,
+      "asr_excerpt": "要做编剧，还有一个刻意的训练…叫共情…生活中做这种练习，试试着走进每一个人…你走到他的心里去替他想一想…共情也是一个刻意训练的方式",
+      "submission_spec": "未说明数量、文字交付或提交；不能改记为第二份需上交的课后作业。",
+      "teacher_review": "p5 08:40–08:45回顾此前共情训练，后续运用；未指定单独讲评课。",
+      "uncertainty": "空调叙述是拟人化课堂演示；“供气/生士”是原ASR误字，概述不用作逐字原话。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "准备键盘与随身小本/笔，记优秀影视作品中的材料及生活中的真实细节、台词、情绪。",
+      "part": 4,
+      "start_seconds": 13.574,
+      "end_seconds": 419.212,
+      "asr_excerpt": "每个人准备一个键盘…准备一个小本…记两种素材…大量的看片…记你生活中的素材",
+      "submission_spec": "课堂学习准备与持续积累习惯；未给本次数量与上交要求。",
+      "teacher_review": "p5/p6继续解释素材积累",
+      "uncertainty": "这是学习准备与积累建议，未单列为今天需交的作业。"
+    }
+  ],
+  "limits": [
+    "p2/p3/p4全文机器稿已阅读，未逐句听校",
+    "13帧原视频画面已视觉核对，详lesson-01-frames.json",
+    "行业与人类学概括仅记录为课堂观点；未作为当前事实核实"
+  ]
+}

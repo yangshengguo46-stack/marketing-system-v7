@@ -1,0 +1,147 @@
+{
+  "verifiedAt": "2026-09-06T05:35:13.413278+00:00",
+  "nativeContentPackageValidation": "ContentPackage::validate PASS",
+  "nativeJsonSchemaValidation": "PASS",
+  "workDraftPackageBodyShootingScriptEqual": true,
+  "stageExportsMatch": true,
+  "bodyUtf8Bytes": 6839,
+  "readiness": "draft",
+  "allNativeWorkStagesSavedBeforeLocalEdit": true,
+  "finalLocalEditThroughMarketingWork": false,
+  "actualRehearsal": false,
+  "actualPublication": false,
+  "marketingEffectVerified": false,
+  "nativeAttempt3ReportedUsage": {
+    "totalTokens": 1382242,
+    "inputTokens": 1343850,
+    "cachedInputTokens": 1153280,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 38392,
+    "reasoningOutputTokens": 15665
+  },
+  "usageMeaning": "Cumulative usage from native responses; cached tokens are repeated context, not unique source text. Billing cost unknown. Excludes root task usage and failed attempts without usage receipts.",
+  "diagnosticReportedTokens": 84,
+  "nativeTurns": [
+    {
+      "id": "01a07521-4a11-7ee3-900b-f95906f7ddd1",
+      "status": "completed",
+      "durationMs": 167797,
+      "error": null
+    },
+    {
+      "id": "01a07524-a066-72e1-9e88-fd1ef49146f5",
+      "status": "completed",
+      "durationMs": 92192,
+      "error": null
+    },
+    {
+      "id": "01a07526-d1cd-7d90-80ab-352e4fed69a4",
+      "status": "completed",
+      "durationMs": 200153,
+      "error": null
+    },
+    {
+      "id": "01a0752a-fdb5-7403-bc9d-95f639b2f12b",
+      "status": "completed",
+      "durationMs": 261964,
+      "error": null
+    },
+    {
+      "id": "01a07532-54d1-7ba2-8b22-b34a94d481c5",
+      "status": "failed",
+      "durationMs": 4927,
+      "error": {
+        "message": "unexpected status 403 Forbidden: The request failed because your account has an overdue balance. Request id: 0217886726309115f5f9cdf929782a5554623bbcd9b85d77ce6e9, url: https://ark.cn-beijing.volces.com/api/v3/responses, request id: 0217886726309115f5f9cdf929782a5554623bbcd9b85d77ce6e9",
+        "codexErrorInfo": "other",
+        "additionalDetails": null
+      }
+    }
+  ],
+  "nativeToolCallCounts": {
+    "exec_command": 22,
+    "marketing_work": 10
+  },
+  "nativeWorkCalls": [
+    {
+      "callId": "call_nynofpj4kglssanm6b72nyjd",
+      "action": "open",
+      "stage": "research",
+      "bodyBytes": 0,
+      "saved": false
+    },
+    {
+      "callId": "call_3c7an6waqt791zqs4jqrgl1r",
+      "action": "record",
+      "stage": "research",
+      "bodyBytes": 6965,
+      "saved": false
+    },
+    {
+      "callId": "call_pstrxez1a2rs0s9yahxefaux",
+      "action": "record",
+      "stage": "research",
+      "bodyBytes": 6934,
+      "saved": false
+    },
+    {
+      "callId": "call_picqgcgccjhzgjjhdbpugi4n",
+      "action": "open",
+      "stage": null,
+      "bodyBytes": 0,
+      "saved": true
+    },
+    {
+      "callId": "call_hroh3negv2idrzxolcs5roik",
+      "action": "record",
+      "stage": "research",
+      "bodyBytes": 6934,
+      "saved": true
+    },
+    {
+      "callId": "call_0b7e0g1qxx8rcvibptun7tuz",
+      "action": "record",
+      "stage": "research",
+      "bodyBytes": 7028,
+      "saved": true
+    },
+    {
+      "callId": "call_1jx62pg0w5jes5pafpgnmc6v",
+      "action": "record",
+      "stage": "direction",
+      "bodyBytes": 6634,
+      "saved": true
+    },
+    {
+      "callId": "call_ih74kjo3fib9bwb79msonpzg",
+      "action": "record",
+      "stage": "direction",
+      "bodyBytes": 4415,
+      "saved": true
+    },
+    {
+      "callId": "call_tltolyhppwnsh90m23ekmw9k",
+      "action": "record",
+      "stage": "draft",
+      "bodyBytes": 5686,
+      "saved": true
+    },
+    {
+      "callId": "call_xtr5gb37o36n6lf1ddj88xut",
+      "action": "record",
+      "stage": "draft",
+      "bodyBytes": 5978,
+      "saved": true
+    }
+  ],
+  "controlMessages": {
+    "turn/start": 5,
+    "turn/steer": 2
+  },
+  "artifactSha256": {
+    "research.md": "cdba8734ff690163aa82c2297c5845b11d1bad5956f0e7477348dd8e707e39a0",
+    "direction.md": "cb796edd0553c71f615bd5413b69a11c576dfbf85354f9a563d5214200302395",
+    "shooting-script.md": "814f1fe8c97a5f927df306b58b47813451a213d522b37f5856fa3faf39608e39",
+    "ContentPackage.json": "11d8ddd89549a6c278f90d0df80fb53b95c6b70db71fdf79f9efb6799b3f7345"
+  },
+  "workFileSha256": "497232b30d58bfc9bcc25ec805c807c92c73d656e5095fa60001497fbb6d2189"
+}

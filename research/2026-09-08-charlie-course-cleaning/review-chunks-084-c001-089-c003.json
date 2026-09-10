@@ -1,0 +1,72 @@
+{
+  "status": "complete",
+  "reviewer": "clean_core_05_14",
+  "scope": "指定两批完整源段与clean JSON独立复核，仅P084 S1—46和P089 S135—193；不是两章全文复核",
+  "source_segments_read": 105,
+  "blocks_compared": 18,
+  "chunks": [
+    {
+      "job": "p084-c001",
+      "part": 84,
+      "first_segment": 1,
+      "last_segment": 46,
+      "source_segments_read": 46,
+      "blocks_compared": 8,
+      "source_time_range_seconds": [
+        0.198,
+        480.972
+      ],
+      "source_json_sha256": "1c3450152e5f32b100c39797d2fb034badd88354b203b1c834e7ffb888911295",
+      "output": "research/2026-09-08-charlie-course-cleaning/native-supplements/p084-c001-clean.json",
+      "output_sha256": "173dd007fd0cc099ee53be678c8f55c6801611924564e5ca96661c9322a451c2",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p084-c001-before-independent-full-review.json",
+      "backup_sha256": "ddb48879e0bad0c37f2766cacd6153bb012cb99133edb56d9233802aa7d2d7c8",
+      "issues": [
+        "本批仅P084 S1—46。是枝裕和可由源JSON标题核对，章鱼滑梯及封存的梦想可由本批S14—15对照，不补其他专名。",
+        "“文艺青年”、年龄/经历影响共情、先写商业片谋生以及作者明示比喻均保留讲师归属；本批未涉及日本养老金等文化论断，删除从批外套入的元数据。",
+        "S24第四拍、第17分钟从S25—28块移回S20—24块；第三拍标题不再误称偷钱的父亲，正文保留男主想偷母亲的钱与要面子给钱的反差。",
+        "信息节拍同音订正；讲师30岁到三十几岁的改口保留；找画首目标落空、母亲学音乐的场景功能、赌博后老板骗钱帮主角挽回形象及记素材课堂追问完整核对。",
+        "本批分钟数为讲师所说影片内时间；源JSON时间为录课定位，两者不互相替代。"
+      ],
+      "validation": {
+        "continuous_exactly_once": true,
+        "source_and_output_hash_verified": true,
+        "backup_hash_verified": true,
+        "lead_review_preserved": true,
+        "correction_originals_source_substrings": true
+      }
+    },
+    {
+      "job": "p089-c003",
+      "part": 89,
+      "first_segment": 135,
+      "last_segment": 193,
+      "source_segments_read": 59,
+      "blocks_compared": 10,
+      "source_time_range_seconds": [
+        1098.214,
+        1606.444
+      ],
+      "source_json_sha256": "dce1bbba5436aee575d535b036f5d03444b88068fddd344b8aa873650831361b",
+      "output": "research/2026-09-08-charlie-course-cleaning/native-supplements/p089-c003-clean.json",
+      "output_sha256": "3af806fae0ef3b21aa5cf4cb8d295ac2cb204e8bee1541a0c621ca96e166b046",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p089-c003-before-independent-full-review.json",
+      "backup_sha256": "0204697d31f67edecb575e95c61cb76069251b17a72413355e840d6d855e79cd",
+      "issues": [
+        "本批仅P089 S135—193。S155“去壳”未提供可核实指代，撤销稻草人猜补及对应corrections，保留原词待核。",
+        "S178问“女主也在种植玉米吗”，S179紧接自答，正文同时保留问句与答句，不能只留肯定。",
+        "S165—166自闭症及S170—172回归正常属于讲师对虚构人物的描述，不转成临床诊断；S183认同危机为讲师的角色解释。",
+        "S137先说第20分钟后改第20拍、57分钟；S189先说第31分钟后改第31拍、89分钟，保留改口，勿混淆影片分钟、故事拍号与录课源时间。",
+        "S174—177模拟联系和见面邀请的独角戏性质明确保留；蒙面出街为何要拍变化、外卖拒绝却促进沟通、炸酱面与希望、收玉米/走出衣橱及假身份破裂过程完整。"
+      ],
+      "validation": {
+        "continuous_exactly_once": true,
+        "source_and_output_hash_verified": true,
+        "backup_hash_verified": true,
+        "lead_review_preserved": true,
+        "correction_originals_source_substrings": true
+      }
+    }
+  ],
+  "limits": "只编辑指定clean JSON，新增修改前备份和本报告。保留既有lead_review与原始记录；未改MD，未调用API，未逐句听校。"
+}

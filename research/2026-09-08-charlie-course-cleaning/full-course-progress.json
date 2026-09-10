@@ -1,0 +1,12 @@
+{
+  "updated_at": "2026-09-08T04:32:43.490978+00:00",
+  "status": "full_text_cleaning_first_pass_complete",
+  "core_completed": 34,
+  "supplements_assembled": 33,
+  "native_chunks_completed": 163,
+  "native_chunks_total": 163,
+  "limits": [
+    "Not full listening or visual verification",
+    "Semantic review scopes are recorded separately; coverage is not an accuracy PASS"
+  ]
+}

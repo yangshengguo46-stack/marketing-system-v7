@@ -1,0 +1,376 @@
+{
+  "lesson": 13,
+  "source_parts": [
+    {
+      "part": 28,
+      "source_json_sha256": "7a7e1a0aae3e699f1e00ba315a467a288537c3f798ee4ea6255f4fc5d79be15c",
+      "segment_count": 387
+    },
+    {
+      "part": 29,
+      "source_json_sha256": "adc5146c1d738c411a1ac915514d2ebc2d090c20f4e937d5c3eb04577c7b9c89",
+      "segment_count": 339
+    },
+    {
+      "part": 30,
+      "source_json_sha256": "e512d4422b6fcbff3099a12f3a1322510f1dfa3da400adcceb75efe70d4263ce",
+      "segment_count": 438
+    },
+    {
+      "part": 31,
+      "source_json_sha256": "31aa43befdbf8b9060f6e2152877bc20e75ce47922e6d3fb72ec0f889b85c913",
+      "segment_count": 364
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L13-B001",
+      "part": 28,
+      "first_segment": 1,
+      "last_segment": 29,
+      "heading": "为什么电影之后再讲电视剧",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B002",
+      "part": 28,
+      "first_segment": 30,
+      "last_segment": 74,
+      "heading": "媒介歧视链与创作者的选择",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B003",
+      "part": 28,
+      "first_segment": 75,
+      "last_segment": 138,
+      "heading": "从广告与陪伴理解早期电视剧形态",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B004",
+      "part": 28,
+      "first_segment": 139,
+      "last_segment": 199,
+      "heading": "关于教学的岔题：会分析好戏，不等于会从零写戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B005",
+      "part": 28,
+      "first_segment": 200,
+      "last_segment": 225,
+      "heading": "连续的可以是剧情、人物，也可以是场景",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B006",
+      "part": 28,
+      "first_segment": 226,
+      "last_segment": 264,
+      "heading": "经典国产剧与王志文时代的言情剧",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B007",
+      "part": 28,
+      "first_segment": 265,
+      "last_segment": 313,
+      "heading": "引进剧的刺激：武侠、爱情、歌唱与海滩救生员",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B008",
+      "part": 28,
+      "first_segment": 314,
+      "last_segment": 339,
+      "heading": "情景喜剧、TVB与琼瑶的贡献",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B009",
+      "part": 28,
+      "first_segment": 340,
+      "last_segment": 362,
+      "heading": "《士兵突击》：好看，却曾不符合台里的购买预期",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B010",
+      "part": 28,
+      "first_segment": 363,
+      "last_segment": 387,
+      "heading": "《刘老根》：不注水的打点与大胆的阻力设置",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "何庆坤／范围",
+          "cleaned": "何庆魁／范伟",
+          "basis": "《刘老根》编剧与主演语境、音近，未逐句听校。"
+        }
+      ]
+    },
+    {
+      "id": "L13-B011",
+      "part": 29,
+      "first_segment": 1,
+      "last_segment": 36,
+      "heading": "从过去的辉煌，谈录课时的国际差距",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B012",
+      "part": 29,
+      "first_segment": 37,
+      "last_segment": 76,
+      "heading": "他认为难处在于审核预期不明确",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B013",
+      "part": 29,
+      "first_segment": 77,
+      "last_segment": 108,
+      "heading": "送审回忆：十六页修改意见与一页“不建议播出”",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B014",
+      "part": 29,
+      "first_segment": 109,
+      "last_segment": 149,
+      "heading": "两个具体修改：亲吻后脑勺与厕所里的马桶",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "醇厚",
+          "cleaned": "纯后〔正后方后脑勺镜头〕",
+          "basis": "反复解释后脑勺挡住另一演员，语义明确。"
+        }
+      ]
+    },
+    {
+      "id": "L13-B015",
+      "part": 29,
+      "first_segment": 150,
+      "last_segment": 197,
+      "heading": "《庆余年》的钓鱼比喻；点播、付费和设备怎样改变剧集",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B016",
+      "part": 29,
+      "first_segment": 198,
+      "last_segment": 234,
+      "heading": "未来机会在技术变化中；早期视频网站的处境",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B017",
+      "part": 29,
+      "first_segment": 235,
+      "last_segment": 288,
+      "heading": "主动合作，版权费又在一年内跳了几次",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B018",
+      "part": 29,
+      "first_segment": 289,
+      "last_segment": 339,
+      "heading": "新平台起初不好看，也可能成为下一轮机会",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B019",
+      "part": 30,
+      "first_segment": 1,
+      "last_segment": 70,
+      "heading": "总口诀：整体编人物，单集编事件",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "三级编实劲儿／单机编事件",
+          "cleaned": "单集编事件",
+          "basis": "反复口述的明确口诀及后文逐集表格。"
+        }
+      ]
+    },
+    {
+      "id": "L13-B020",
+      "part": 30,
+      "first_segment": 71,
+      "last_segment": 119,
+      "heading": "第一张表：每个人物在整部剧里如何变化",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B021",
+      "part": 30,
+      "first_segment": 120,
+      "last_segment": 209,
+      "heading": "主角群先有共同目标，再用副线撕开",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "主线相声／腹线相克",
+          "cleaned": "主线相生／副线相克",
+          "basis": "随后解释合作促进主线，个人情感冲击主线。"
+        }
+      ]
+    },
+    {
+      "id": "L13-B022",
+      "part": 30,
+      "first_segment": 210,
+      "last_segment": 267,
+      "heading": "《绝命毒师》：共同事业清楚，各自问题却不断拆台",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B023",
+      "part": 30,
+      "first_segment": 268,
+      "last_segment": 307,
+      "heading": "一定另列主角群关系曲线",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B024",
+      "part": 30,
+      "first_segment": 308,
+      "last_segment": 344,
+      "heading": "《流星花园》与《纸牌屋》：关系本身推动观看",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B025",
+      "part": 30,
+      "first_segment": 345,
+      "last_segment": 378,
+      "heading": "整个人物仍可借十序列，但序列会重复",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B026",
+      "part": 30,
+      "first_segment": 379,
+      "last_segment": 438,
+      "heading": "第二张表：把本集人物任务装进两三件事",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B027",
+      "part": 31,
+      "first_segment": 1,
+      "last_segment": 60,
+      "heading": "人物弧线是球形；切一集出来，再用事件盖住任务",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B028",
+      "part": 31,
+      "first_segment": 61,
+      "last_segment": 107,
+      "heading": "篇幅撑不到头怎么办：类型、序列、弧线、主题反复",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B029",
+      "part": 31,
+      "first_segment": 108,
+      "last_segment": 136,
+      "heading": "第一集不要变成人物介绍幻灯片",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "原来A也是主角",
+          "cleaned": "原来B也是主角",
+          "basis": "S122—126设B为假反派、第二集反转；S131再次明确B原本为主角。"
+        }
+      ]
+    },
+    {
+      "id": "L13-B030",
+      "part": 31,
+      "first_segment": 137,
+      "last_segment": 200,
+      "heading": "宏大叙事并非不能写，但每一时代都像换一个主角",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B031",
+      "part": 31,
+      "first_segment": 201,
+      "last_segment": 236,
+      "heading": "反派也能很出彩；再强调关系单列的用途",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B032",
+      "part": 31,
+      "first_segment": 237,
+      "last_segment": 307,
+      "heading": "单元剧与情景剧：一个强事件，一组强关系",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B033",
+      "part": 31,
+      "first_segment": 308,
+      "last_segment": 345,
+      "heading": "用暗线补黏度：若即若离的爱情、秘密和未了心愿",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L13-B034",
+      "part": 31,
+      "first_segment": 346,
+      "last_segment": 364,
+      "heading": "两种形式要互相检查短板",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "行业历史、审核要求、交易金额和市场评价均为录课时个人回忆，不是现行规则或已核事实。",
+    "初次平台版权费一万五千/一千五百不一致，未擅定；影视作品年代、演员与角色疑处就地注明。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第13课.md",
+  "output_sha256": "75d7753c8760fbd587de4dc97e0bbc8ccbd4c91ac5d539ef091b65b7bc0100bc",
+  "reader_navigation_update": {
+    "previous_output_sha256": "f129a5d9025be93b632d15c5a9d94d5605de35fcc103af60d01f6f5fe9b6d8f4",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

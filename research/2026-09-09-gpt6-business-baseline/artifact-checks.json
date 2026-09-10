@@ -1,0 +1,91 @@
+{
+  "frozen_inputs_unchanged": true,
+  "outputs": [
+    {
+      "condition": "a",
+      "work_sha256": "24543ae1005fb72e050630ee1056b1f1c795c6e4c2f31c08045be7cf8766cc23",
+      "notes_sha256": "6b37910a0d9b9dc37f9bf018efec0b16939e4d00aec233edb2a28bb7f4326871",
+      "intervals": [
+        [
+          0,
+          8
+        ],
+        [
+          8,
+          20
+        ],
+        [
+          20,
+          32
+        ],
+        [
+          32,
+          48
+        ],
+        [
+          48,
+          61
+        ],
+        [
+          61,
+          72
+        ],
+        [
+          72,
+          85
+        ]
+      ],
+      "planned_duration_seconds": 85,
+      "notes_characters": 214,
+      "work_file_mtime_unix": 1788952254.5543156,
+      "timing_limit": "Continuous declared time blocks only; no performed read-through or shoot timing validation."
+    },
+    {
+      "condition": "b",
+      "work_sha256": "f49a7f473249e0b32e60185cb52cbc5a6f2a8b41d89d60b7e0dab1e1b27cedb2",
+      "notes_sha256": "fc381b589a37050ef2a88052aba1cb3ac20ae15963de8fe6b980548793caf0b8",
+      "intervals": [
+        [
+          0,
+          8
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          17,
+          29
+        ],
+        [
+          29,
+          43
+        ],
+        [
+          43,
+          55
+        ],
+        [
+          55,
+          65
+        ],
+        [
+          65,
+          73
+        ],
+        [
+          73,
+          82
+        ]
+      ],
+      "planned_duration_seconds": 82,
+      "notes_characters": 200,
+      "work_file_mtime_unix": 1788952269.2132084,
+      "timing_limit": "Continuous declared time blocks only; no performed read-through or shoot timing validation."
+    }
+  ],
+  "model": "gpt-6-astra explicitly requested for both",
+  "history": "fork_turns none for each",
+  "tool_trace_limit": "No complete subagent provider-request or file-access audit available; declared input boundaries and author file-read reports retained.",
+  "tokens": "Comparable per-agent token totals unavailable; no invented cost or uplift rate."
+}

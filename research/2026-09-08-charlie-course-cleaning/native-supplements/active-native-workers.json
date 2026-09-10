@@ -1,0 +1,14 @@
+{
+  "at": "2026-09-08T04:32:43.572971+00:00",
+  "state": "complete",
+  "workers": [
+    "final-single-p089-c001",
+    "final-single-p089-c007",
+    "final-single-p091-c003"
+  ],
+  "recovering_offline": [],
+  "all_previous_sessions_finished": true,
+  "note": "No duplicate native job in flight; remaining formatting repair uses existing raw only.",
+  "all_workers_finished": true,
+  "successful_jobs": 163
+}

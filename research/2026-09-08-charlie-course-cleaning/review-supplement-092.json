@@ -1,0 +1,59 @@
+{
+  "status": "complete",
+  "part": 92,
+  "source_segments": 454,
+  "scope": "All 454 existing ASR segments and all five native cleaned batches read against source; no listening or video verification",
+  "jobs": [
+    {
+      "job": "p092-c001",
+      "range": [
+        1,
+        104
+      ],
+      "sha256": "a03193e447bdcbbcc5d0ed0b6a4c9acb91f82eb4c54087cf566dd9ccd2379532",
+      "blocks": 7
+    },
+    {
+      "job": "p092-c002",
+      "range": [
+        105,
+        193
+      ],
+      "sha256": "7babf9f405d8b4c829f7c0e7c9547e30597c26216bf9e6bbff5895d545e45266",
+      "blocks": 6
+    },
+    {
+      "job": "p092-c003",
+      "range": [
+        194,
+        283
+      ],
+      "sha256": "43f5383e24f658fd32589ff3a85c806b17deea5591d9b5d9ae03d9f644dff62d",
+      "blocks": 5
+    },
+    {
+      "job": "p092-c004",
+      "range": [
+        284,
+        415
+      ],
+      "sha256": "7786a4be9e6ac9ed5b2f337270f615191f42b621cc9ff6627ab6ed5231c29d8c",
+      "blocks": 5
+    },
+    {
+      "job": "p092-c005",
+      "range": [
+        416,
+        454
+      ],
+      "sha256": "5ea88f81b7a12a420aa37ed2088bfecfaca271372eae991cbf852aa25f741a70",
+      "blocks": 5
+    }
+  ],
+  "key_limits": [
+    "Court dialogue retains imperfect ASR, not reconstructed official dialogue",
+    "Moral guilt and criminal innocence distinguished",
+    "Religion/culture, titles, original novel and awards attributed as classroom claims",
+    "Catalyst protagonist and non-obvious inciting incident preserved; no universal mandatory arc"
+  ]
+}

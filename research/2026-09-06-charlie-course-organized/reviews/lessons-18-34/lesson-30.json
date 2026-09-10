@@ -1,0 +1,133 @@
+{
+  "lesson": 30,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 56,
+      "title": "三十课-人类为什么需要影视剧30",
+      "cid": 383686698,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=56",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十课-人类为什么需要影视剧30.mp4",
+      "sha256": "df5e7224ccbb7655819337cfd86025020819fb337506d6ed565b7dd82c40a016",
+      "duration_seconds": 5042
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "更新与线下课说明、公开表达与学习心态",
+      "part": 56,
+      "start_seconds": 11,
+      "end_seconds": 643
+    },
+    {
+      "label": "本源问题：为什么看影视，不能只记技巧",
+      "part": 56,
+      "start_seconds": 644,
+      "end_seconds": 701
+    },
+    {
+      "label": "艺术为语言表达补充的老师定义；主流艺术与价值观",
+      "part": 56,
+      "start_seconds": 702,
+      "end_seconds": 1201
+    },
+    {
+      "label": "注意力/时间竞争；历史市场与旧片重看讨论",
+      "part": 56,
+      "start_seconds": 1203,
+      "end_seconds": 1601
+    },
+    {
+      "label": "影视综合性与梦的描绘；优势全面、劣势参与空间少",
+      "part": 56,
+      "start_seconds": 1602,
+      "end_seconds": 2071
+    },
+    {
+      "label": "审美为寻找自我认同的教学解释及慈善/海龟类比",
+      "part": 56,
+      "start_seconds": 2073,
+      "end_seconds": 2655
+    },
+    {
+      "label": "从吸引到追索型注意力：可验证的期待",
+      "part": 56,
+      "start_seconds": 2656,
+      "end_seconds": 3137
+    },
+    {
+      "label": "可预期范围内创新；限制新人先写悬疑的老师观点",
+      "part": 56,
+      "start_seconds": 3138,
+      "end_seconds": 3364
+    },
+    {
+      "label": "期待视域：文化/时代背景与观众差异",
+      "part": 56,
+      "start_seconds": 3370,
+      "end_seconds": 3650
+    },
+    {
+      "label": "三幕从观众角度：吸引、预期、满足",
+      "part": 56,
+      "start_seconds": 3651,
+      "end_seconds": 3820
+    },
+    {
+      "label": "生活模型：钓鱼欲望、下棋博弈、掉坑脱困、中奖爽感",
+      "part": 56,
+      "start_seconds": 3824,
+      "end_seconds": 4477
+    },
+    {
+      "label": "钓鱼扩写：人设、缺陷、目标放大、对手、时间锁",
+      "part": 56,
+      "start_seconds": 4478,
+      "end_seconds": 4754
+    },
+    {
+      "label": "技巧服务牵引观众；回看旧知识/旧稿建议",
+      "part": 56,
+      "start_seconds": 4757,
+      "end_seconds": 4949
+    },
+    {
+      "label": "补充真实感；收束",
+      "part": 56,
+      "start_seconds": 4952,
+      "end_seconds": 5038
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "课后记下本课概念并多想一想：什么样的期待使观众愿意验证。",
+      "part": 56,
+      "start_seconds": 3125.062,
+      "end_seconds": 3137.132,
+      "submission_spec": "学习建议，无交笔记要求、格式或期限。",
+      "teacher_review": "未说明。",
+      "uncertainty": "全文机器稿；无独立命题题目。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "带着牵引观众持续关注的理念，回看以前所学的类型/结构/技巧和自己写的东西。",
+      "part": 56,
+      "start_seconds": 4927.462,
+      "end_seconds": 4947.628,
+      "submission_spec": "复习/自查建议，未指定原作业或必须重交。",
+      "teacher_review": "未说明。",
+      "uncertainty": "不能等同第29课明确修改28课作业的布置。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    56
+  ],
+  "limits": [
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。",
+    "本课多用个人美学解释和宏观说法，未外部核验；不能将艺术/审美/人的动机定义写成唯一科学结论。",
+    "老师援引费里尼、黑格尔、余秋雨等的说法未核原书和原始出处；30:52附近的黑格尔/影视措辞尤其不宜作为名言引证。",
+    "钓鱼等扩写为教师示范；未见22/24/27/28/29题的具体学生作品回收讲评。",
+    "期待视域板书已核原帧3420秒，模型板书4960秒。"
+  ]
+}

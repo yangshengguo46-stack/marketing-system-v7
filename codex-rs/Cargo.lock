@@ -1943,10 +1943,14 @@ name = "codex-ai-ip-runtime"
 version = "0.0.0"
 dependencies = [
  "codex-ai-ip-domain",
+ "codex-extension-api",
+ "codex-file-system",
  "codex-skills",
  "codex-utils-cargo-bin",
+ "codex-utils-path-uri",
  "pretty_assertions",
  "schemars 0.8.22",
+ "serde",
  "serde_json",
  "thiserror 2.0.18",
 ]

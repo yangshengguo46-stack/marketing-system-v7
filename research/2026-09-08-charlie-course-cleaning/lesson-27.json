@@ -1,0 +1,193 @@
+{
+  "lesson": 27,
+  "source_parts": [
+    {
+      "part": 53,
+      "source_json_sha256": "e16c1c5d476650f081ebe120ec2981b30b4599fd6f8a02b8134d93e1ac725ad2",
+      "segment_count": 1050
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L27-B001",
+      "part": 53,
+      "first_segment": 1,
+      "last_segment": 59,
+      "heading": "牛年开课与一年学习环境",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B002",
+      "part": 53,
+      "first_segment": 60,
+      "last_segment": 156,
+      "heading": "招聘与剧本公司的计划，努力之外还有机会",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "鄙视／阿标",
+          "cleaned": "笔试／达标",
+          "basis": "招聘组织考试、优秀学生能力条件上下文"
+        }
+      ]
+    },
+    {
+      "id": "L27-B003",
+      "part": 53,
+      "first_segment": 157,
+      "last_segment": 252,
+      "heading": "谁在讲，站在哪里讲：从小说人称入手",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "希尔里昂／十里阳",
+          "cleaned": "Shirley杨",
+          "basis": "《鬼吹灯》胡八一、王胖子同组人物与同音语境"
+        }
+      ]
+    },
+    {
+      "id": "L27-B004",
+      "part": 53,
+      "first_segment": 253,
+      "last_segment": 322,
+      "heading": "全知视角与内视角：大于人物，还是等于人物",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "全职／全是／前肢／全真／等于0",
+          "cleaned": "全知；叙事者等于人物",
+          "basis": "上帝知道一切、S302–310明确内视角等于人物；保留课堂无视角这个别称"
+        }
+      ]
+    },
+    {
+      "id": "L27-B005",
+      "part": 53,
+      "first_segment": 323,
+      "last_segment": 358,
+      "heading": "外视角：像一台只记录的摄影机",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B006",
+      "part": 53,
+      "first_segment": 359,
+      "last_segment": 439,
+      "heading": "全知的自由全面，与内视角的浓烈流畅",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B007",
+      "part": 53,
+      "first_segment": 440,
+      "last_segment": 530,
+      "heading": "按故事需求选择；外视角的留白与两个美剧例子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B008",
+      "part": 53,
+      "first_segment": 531,
+      "last_segment": 604,
+      "heading": "战争片与《拯救大兵瑞恩》的回忆帽子",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "拯救大命主耶／拯牛拉边等",
+          "cleaned": "《拯救大兵瑞恩》",
+          "basis": "S572–575反复清晰给出片名和角色演员"
+        }
+      ]
+    },
+    {
+      "id": "L27-B009",
+      "part": 53,
+      "first_segment": 605,
+      "last_segment": 696,
+      "heading": "另一派说法：所有视角本质上都全知",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B010",
+      "part": 53,
+      "first_segment": 697,
+      "last_segment": 748,
+      "heading": "实战口诀：全知里找限制，限制里补全知",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B011",
+      "part": 53,
+      "first_segment": 749,
+      "last_segment": 817,
+      "heading": "《肖申克的救赎》：前史与来信如何补视角",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "red／re／安y／上级视角",
+          "cleaned": "瑞德／安迪／全知（上帝）视角",
+          "basis": "同段《肖申克的救赎》角色和已定义术语的连续语境"
+        }
+      ]
+    },
+    {
+      "id": "L27-B012",
+      "part": 53,
+      "first_segment": 818,
+      "last_segment": 878,
+      "heading": "《罗生门》《少年派》，以及本课看片作业",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B013",
+      "part": 53,
+      "first_segment": 879,
+      "last_segment": 960,
+      "heading": "技术在发展：从俯视讲述到平视、退后观察",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B014",
+      "part": 53,
+      "first_segment": 961,
+      "last_segment": 1023,
+      "heading": "游戏、驾驶与信息习惯；结课回到应用",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L27-B015",
+      "part": 53,
+      "first_segment": 1024,
+      "last_segment": 1050,
+      "heading": "结课后的学生周年祝福与未辨尾音",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "讲师牛年三月、一周年、当周招聘会与筹设公司的说法均属于录制时点，未验证是否实现或仍可参与。",
+    "本课明确为看片作业，不布置写作作业；片单按原课保留。",
+    "待核：S525外视角段内说无视角；S534–535残词未补片名；S563《灰猎犬号》据演员战争片上下文规范、未听校；游戏第一人称与叙事视角概念有混用。",
+    "结课祝福S1024–1050保留独立可辨信息；S1033成语、S1038–1039姓名年份片名、S1041班级前缀、S1045–1050尾句待核。",
+    "电影分类、小说史、知识水平与观影习惯、驾驶神经回路的判断均为讲师观点，未外部事实核验。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第27课.md",
+  "output_sha256": "20f466255788ead2ed047e224d0bf37e37ca31475987b6dc33f1255a57d3fe8e",
+  "reader_navigation_update": {
+    "previous_output_sha256": "ec99ca065f609c8314b16cf21a2bf5bdcc5ea34381b5d1b6e2f6bdf60f425edf",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

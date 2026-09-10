@@ -1,0 +1,11 @@
+{
+  "frozen_at": "2026-09-09T13:22:09.111687+00:00",
+  "files": {
+    "output/course-learning/charlie-20260906/练习/story-method-v1/scene-v2.md": "ed33756ca39d020028591040e3447c2b1a0660e88a184f15185e48d253883b1e",
+    "output/course-learning/charlie-20260906/练习/story-method-v1/notes-v2.md": "ca896a5c90630e11559891476f2e4e93483c502585d2b0975cb673b04a3afdce",
+    "output/course-learning/charlie-20260906/练习/story-method-v1/verification-v2.md": "af5b17a663da313cbc7d65ff2ff4ab3e5aaea3a1ec5ef265d8fea58bb285f904",
+    "output/course-learning/charlie-20260906/练习/story-method-v1/notes-v3-editorial.md": "98825b4d81e00cd40ec7940af28763e289133471604336fe74dfe073b93e0a41"
+  },
+  "native_work_sha256": "39c1d4ceb1020d3417de7f4c7f9f1e3c5c27130284cd358254799746e910b07a",
+  "local_editorial_changes": "notes-v3-editorial only; no story or work-file alteration"
+}

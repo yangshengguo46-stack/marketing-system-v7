@@ -1,0 +1,102 @@
+{
+  "lesson": 28,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 54,
+      "title": "二十八课-编剧课科目三28",
+      "cid": 327535922,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=54",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十八课-编剧课科目三28.mp4",
+      "sha256": "bcad727ba5dbaf6c7b7e9c834751ddb8c7354f9345c5c80ee3488096ad21b493",
+      "duration_seconds": 5411
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "不动笔的两类心理，驾校/舒适区比喻；科目三是亲自写",
+      "part": 54,
+      "start_seconds": 9,
+      "end_seconds": 944
+    },
+    {
+      "label": "《绿野仙踪》：欲望/动作/伙伴/阻碍、中点加码、起始道具重读",
+      "part": 54,
+      "start_seconds": 947,
+      "end_seconds": 1785
+    },
+    {
+      "label": "《菊次郎的夏天》：孤独找母亲、旅伴、假胜利、调整目标为爱",
+      "part": 54,
+      "start_seconds": 1789,
+      "end_seconds": 2980
+    },
+    {
+      "label": "全班命题作文，依共同结构写自己的故事，逐项规定节点",
+      "part": 54,
+      "start_seconds": 2985,
+      "end_seconds": 3381
+    },
+    {
+      "label": "强制主题要求其实都是我；用两片解释合一可能",
+      "part": 54,
+      "start_seconds": 3386,
+      "end_seconds": 3933
+    },
+    {
+      "label": "教师见网友故事示范：现状与召唤、伙伴、旅程、中点、回收",
+      "part": 54,
+      "start_seconds": 3939,
+      "end_seconds": 4483
+    },
+    {
+      "label": "教师示范两种其实都是我解法：自我认同或思念家人",
+      "part": 54,
+      "start_seconds": 4487,
+      "end_seconds": 5245
+    },
+    {
+      "label": "限定为精神层面合一可能，不要求鬼故事",
+      "part": 54,
+      "start_seconds": 5253,
+      "end_seconds": 5318
+    },
+    {
+      "label": "重申人人写、班委会检查，结课",
+      "part": 54,
+      "start_seconds": 5323,
+      "end_seconds": 5409
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "全班命题作文：借《绿野仙踪》《菊次郎的夏天》的旅程结构，写自己的故事；主角可用自己/变形原型。主角、不可接受现状、激励/远方召唤、上路并痛打看门狗、伙伴、中点不得少；前段旅程可自由发挥，中点以假胜/假败调整目标或加码，再出发、偿还前面并实现真正愿望。结尾须在理念/精神层面形成“其实都是我”的可能性，不必写成鬼故事或字面同一人。",
+      "part": 54,
+      "start_seconds": 2985.51,
+      "end_seconds": 5400.3,
+      "submission_spec": "每个同学必须写；本课没有规定字数、梗概/完整剧本等文体规格、截止日期或提交渠道。老师给的见网友情节供没有想法者沿用，非全班固定情节。",
+      "teacher_review": "89:56–90:00明确说班委会检查，未说明老师逐稿讲评、评分标准或回收时间。",
+      "uncertainty": "依据全文机器稿；ASR多处终点按后文明确中点和结构语义修正。5399.7秒帧确认班委会检查；5299秒帧确认其实都是我的可能性。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "可暂停课程先看《绿野仙踪》，再继续听结构分析。",
+      "part": 54,
+      "start_seconds": 987.46,
+      "end_seconds": 998.668,
+      "submission_spec": "观课准备建议，无笔记/提交要求。",
+      "teacher_review": "未规定。",
+      "uncertainty": "老师对出品公司、电影史地位的即兴说法未核，不纳入观影要求。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    54
+  ],
+  "limits": [
+    "完整机器稿顺序阅读，未逐句听校。",
+    "命题作文要求仅适用于本次训练；不要将此题结构与其实都是我强制为所有故事规则。",
+    "教师对电影心理象征、史实、拖延心理的口头解释未外部验证；课堂故事是虚构示范，不是生活行动建议。",
+    "本课未见第22/24写作题及第27看片题的提交回收讲评。"
+  ]
+}

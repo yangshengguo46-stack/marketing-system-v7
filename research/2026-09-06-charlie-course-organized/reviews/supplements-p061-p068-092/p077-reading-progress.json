@@ -1,0 +1,41 @@
+{
+  "part": 77,
+  "last_read_segment_index": 713,
+  "last_read_source_end_seconds": 4315,
+  "full_transcript_read": true,
+  "read_ranges": [
+    [
+      1,
+      126
+    ],
+    [
+      127,
+      250
+    ],
+    [
+      251,
+      420
+    ],
+    [
+      421,
+      491
+    ],
+    [
+      492,
+      571
+    ],
+    [
+      572,
+      592
+    ],
+    [
+      593,
+      655
+    ],
+    [
+      656,
+      713
+    ]
+  ],
+  "final_journal_matches": true
+}

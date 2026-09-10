@@ -1,0 +1,172 @@
+{
+  "part": 68,
+  "title": "无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）",
+  "source": {
+    "part": 68,
+    "cid": 26225279963,
+    "title": "无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=68",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）.mp4",
+    "sha256": "af72ac798c554c74ff29ccdaf3b4797c6232a77c3dddc0d42fd0313531e2787b",
+    "bytes": 104348798,
+    "mtime_ns": 1788682156798611089,
+    "actual_duration_seconds": 2348.981179
+  },
+  "full_transcript_read_parts": [
+    68
+  ],
+  "transcript_segment_count": 213,
+  "transcript_artifact_sha256": {
+    "p068.source-time.txt": "708233b7166ea8cdaebb0da434ae1d4d879b67483fbbd6d5a51e8a2285371270",
+    "p068.source-time.srt": "08ed62399af79141a63aa3af414936b1f694b91ae36f41d9cd8aa478141918a1"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "label": "影片与课程介绍；比较《绿皮书》《触不可及》《变形金刚》等双主角候选，说明人物可一主一次。",
+      "part": 68,
+      "start_seconds": 0,
+      "end_seconds": 425,
+      "application_limit": "电影史、技术、获奖及制作人背景属于老师介绍，未在本轮另核。不可据其讲法推断现实营销效果。"
+    },
+    {
+      "label": "在定义类型、主角和一句话故事之前，先拆信息包，获得实际事件依据；插讲早期制作中的儿童模型重复。",
+      "part": 68,
+      "start_seconds": 425,
+      "end_seconds": 550,
+      "application_limit": "拆片是观察现有作品，包数由本次分析产生；不是新故事必须满足的数量。"
+    },
+    {
+      "label": "第1—4包：主人玩玩具并偏爱胡迪；玩具醒来、领袖与群体技能性格；一周后搬家的时间限制；生日礼物引发被替代的担心，侦察行动展示技能。",
+      "part": 68,
+      "start_seconds": 551,
+      "end_seconds": 842,
+      "application_limit": "让世界规则、人物关系和后面会用的能力在事情中出现；临近最后一件礼物突然断信号，形成小范围变化。"
+    },
+    {
+      "label": "第5—8包：巴斯登场、各方面夺走关注，第一次似乎飞行成功；带音乐的蒙太奇放大胡迪失宠；正面冲突；邻家孩子虐待玩具，反派威胁提前出现。",
+      "part": 68,
+      "start_seconds": 843,
+      "end_seconds": 1163,
+      "application_limit": "牧羊女的好感在这里加强争宠压力，课堂并未把它发展成独立完整爱情线。巴斯的狂妄与愿意救助玩具并存。"
+    },
+    {
+      "label": "第9—11包：只能带一个玩具出门的新条件触发胡迪暗算；意外将巴斯弄到窗外，被同伴指责；两人在车外打架、同主人失联，出现回家与拯救宇宙的分歧。",
+      "part": 68,
+      "start_seconds": 1164,
+      "end_seconds": 1355,
+      "application_limit": "将抽象的“摆脱困境”落实为一个可采取行动的新机会；暂时得宠造成更大的失联后果。"
+    },
+    {
+      "label": "第12—16包：胡迪带巴斯上外卖车却自己吃苦；巴斯误事，胡迪寻找他；抓娃娃机里冒险相救、一起被抓；胡迪受折磨。老师分析这些事件怎样逐步抵消开头坑害他人的负面印象。",
+      "part": 68,
+      "start_seconds": 1356,
+      "end_seconds": 1614,
+      "application_limit": "不只口头道歉，要让后续行为改变观众判断。老师将“观众先原谅，巴斯稍后原谅”作为情绪拉扯的解释，尚非实测观众结论。"
+    },
+    {
+      "label": "第17—19包：重组玩具带来恐惧；切回原伙伴尝试营救；逃跑中两人首次真正合作，胡迪的拉线等身体特性带来失误。巴斯看广告认清自己是玩具，第二次试飞失败、手臂摔断。",
+      "part": 68,
+      "start_seconds": 1615,
+      "end_seconds": 1801,
+      "application_limit": "身体特点可以成为事件中的障碍；两人的失误和成长机会会交替，不能一直由同一人犯傻、另一人解围。"
+    },
+    {
+      "label": "第20—23包：巴斯精神低落；胡迪求助被断臂误会成加害者；重组玩具其实帮助修好手臂；反派改选巴斯绑火箭。",
+      "part": 68,
+      "start_seconds": 1802,
+      "end_seconds": 1976,
+      "application_limit": "后段再次制造胡迪愧疚，但这次来自自保的无意后果。若又主动恶意陷害，会破坏此前关系变化且需要重新处理。"
+    },
+    {
+      "label": "下雨延迟点火形成新倒计时，同搬家限制叠加；第24包将胡迪失去主人的危险也推到眼前；第25包进入两人交谈。",
+      "part": 68,
+      "start_seconds": 1976,
+      "end_seconds": 2088,
+      "application_limit": "两个危机分别击中两位人物在意的事情，而非只重复说“时间不够”。"
+    },
+    {
+      "label": "播放危机中相互鼓励的场面；老师认为处理较直接，同时解释此前没有大量依赖谈话，所以这里仍可成立。以暴露自身不足来谈台词中的劝说。",
+      "part": 68,
+      "start_seconds": 2089,
+      "end_seconds": 2343,
+      "application_limit": "这是一段影片分析与经验旁论，不是现实人际劝说的通用定律。机器稿在英文电影播放段有大片少字、碎句，不能据此重建全部表演和对白。"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "以拉片检验课堂知识，再用于自己的写作",
+      "part": 68,
+      "start_seconds": 45,
+      "end_seconds": 114,
+      "submission_spec": "持续实践建议，未要求本节独立交稿",
+      "teacher_review": "本次为教师影片分析或课堂观察，无个人交稿讲评记录",
+      "uncertainty": "据完整机器稿核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "记录本例开场技能展示的方法",
+      "part": 68,
+      "start_seconds": 822,
+      "end_seconds": 843,
+      "submission_spec": "课堂记笔记，未要求上交",
+      "teacher_review": "本次为教师影片分析或课堂观察，无个人交稿讲评记录",
+      "uncertainty": "据完整机器稿核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "观察巴斯三次飞行在不同阶段的作用",
+      "part": 68,
+      "start_seconds": 930,
+      "end_seconds": 952,
+      "submission_spec": "跨P068/P069观察，未要求另交报告",
+      "teacher_review": "本次为教师影片分析或课堂观察，无个人交稿讲评记录",
+      "uncertainty": "据完整机器稿核读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "争宠后的伤害与补偿改变关系",
+      "parts": [
+        68,
+        69
+      ],
+      "case_type": "teacher_film_analysis"
+    },
+    {
+      "label": "巴斯三次飞行，动作重复而情境和含义不同",
+      "parts": [
+        68,
+        69
+      ],
+      "case_type": "teacher_film_analysis"
+    }
+  ],
+  "source_relations": [
+    {
+      "kind": "explicit_continuation",
+      "other_part": 69,
+      "note": "同一电影拉片分为两段，信息包1–25与26–30连续"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "角色名有同音错字；片中英语和长播放片段转录稀少，不能据其还原全部视听内容。"
+  },
+  "limits": [
+    "观众反应是老师分析，未用实际读者检验。",
+    "电影史、名字来历和创作意图未独立查证。",
+    "影片信息包数量不作为全部写作任务的定额。"
+  ],
+  "visual_spotchecks": [
+    {
+      "seconds": 2105,
+      "file": "frames/p068-2105.jpg",
+      "scope": "selected subtitle location only; not full visual review"
+    }
+  ]
+}

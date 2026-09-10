@@ -1,0 +1,174 @@
+{
+  "lesson": 5,
+  "title": "剧本的正义",
+  "parts": [
+    11,
+    12
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    11,
+    12
+  ],
+  "teaching_nodes": [
+    {
+      "label": "回顾八项与五切入口",
+      "part": 11,
+      "start_seconds": 4.038,
+      "end_seconds": 279.18
+    },
+    {
+      "label": "回应直接要剧本格式的疑问",
+      "part": 11,
+      "start_seconds": 284.198,
+      "end_seconds": 895.0
+    },
+    {
+      "label": "完整故事作业及后续用途",
+      "part": 11,
+      "start_seconds": 901.062,
+      "end_seconds": 1011.692
+    },
+    {
+      "label": "主题正义与结果正义的区分",
+      "part": 11,
+      "start_seconds": 1013.414,
+      "end_seconds": 1298.7
+    },
+    {
+      "label": "杀人回忆结局问题",
+      "part": 11,
+      "start_seconds": 1301.382,
+      "end_seconds": 1481.996
+    },
+    {
+      "label": "杀人回忆案情梳理",
+      "part": 12,
+      "start_seconds": 3.334,
+      "end_seconds": 317.676
+    },
+    {
+      "label": "编剧共情每个人",
+      "part": 12,
+      "start_seconds": 319.206,
+      "end_seconds": 569.228
+    },
+    {
+      "label": "两警察关系成长与主题",
+      "part": 12,
+      "start_seconds": 571.27,
+      "end_seconds": 1129.644
+    },
+    {
+      "label": "重申1500字线性故事作业",
+      "part": 12,
+      "start_seconds": 1134.182,
+      "end_seconds": 1175.212
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "每人一篇约1500字的完整线性故事，从五入口选一项突破，补齐八要素；留作后续改剧本依据。",
+      "part": 11,
+      "start_seconds": 909.862,
+      "end_seconds": 955.724,
+      "asr_excerpt": "5个突破口选一个…把八要素写完整…每个人写一篇…1000到2000字…1500字左右…可以把作业交给我…一对一沟通，每一篇怎么怎么改",
+      "submission_spec": "约1500字，前段给1000–2000字范围；线性顺序；故事纲；可经公众号交流群交老师；无截止日期或文件格式",
+      "teacher_review": "老师承诺一对一沟通每篇如何改，未指定公开讲评集；p12 18:54–19:33重申并说写完开始剧本；第6课插讲格式，第7课p14 00:16–00:49明确这份作业就是梗概，接着发展事件大纲",
+      "uncertainty": "原字幕已核篇幅、提交和讲评用语；课程中的提交渠道是否仍开放未验证。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "未看过杀人回忆的同学课后观看",
+      "part": 11,
+      "start_seconds": 1394.63,
+      "end_seconds": 1399.628,
+      "asr_excerpt": "没有看过的，大家一定要去看一下…听完这堂课一定要看一下",
+      "submission_spec": "没有观后感或拉片报告要求",
+      "teacher_review": "本课已用该片示范",
+      "uncertainty": "明确看片建议，未单列为需提交作业"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回收第1课空调共情训练，要求理解剧中每个人",
+      "part": 12,
+      "start_seconds": 513.19,
+      "end_seconds": 527.148,
+      "asr_excerpt": "我之前第一课就跟你们说过，跟空调给我产生共情…你当开玩笑吗",
+      "submission_spec": "无新增独立交付",
+      "teacher_review": "本课整组人物分析",
+      "uncertainty": "共情训练回顾，非逐稿讲评"
+    }
+  ],
+  "limits": [
+    "全文机器稿已读，未逐句听校",
+    "7帧原画面已视觉核对",
+    "原课程渠道和一对一讲评是历史安排，未验证今日可用"
+  ],
+  "frames": [
+    {
+      "part": 11,
+      "source_seconds": 919,
+      "path": "frames/p011-0919.jpg",
+      "sha256": "4e706a393fc86bce59d3a85e7fa6c0d48ad33c23db4de825dea7e966c7e3ee44",
+      "visually_read": true
+    },
+    {
+      "part": 11,
+      "source_seconds": 941,
+      "path": "frames/p011-0941.jpg",
+      "sha256": "bef013ba33c6730b53655b799feccd50322b1d75d3aa40f7846bb402d6e5a402",
+      "visually_read": true
+    },
+    {
+      "part": 11,
+      "source_seconds": 946,
+      "path": "frames/p011-0946.jpg",
+      "sha256": "d0d5e47954e7f8953188c7a061facc1c34415b3158b4d00b398bac2f3204dde7",
+      "visually_read": true
+    },
+    {
+      "part": 12,
+      "source_seconds": 1136,
+      "path": "frames/p012-1136.jpg",
+      "sha256": "0424b4e66758bfed072ae39d1fe3a92873a79f7aa6b71ddf4e29b617fca5f408",
+      "visually_read": true
+    },
+    {
+      "part": 12,
+      "source_seconds": 1161,
+      "path": "frames/p012-1161.jpg",
+      "sha256": "0b532c9cd9cf2d8d9c10dfef2c849170e7066fa0678ef72bdb301069fb2fae28",
+      "visually_read": true
+    },
+    {
+      "part": 12,
+      "source_seconds": 1138,
+      "path": "frames/p012-1138.jpg",
+      "sha256": "1939cf5ba33aa0f7f02424d8b86071c224bdbe4ac5c7546f2813ccafefb2b790",
+      "visually_read": true
+    },
+    {
+      "part": 12,
+      "source_seconds": 1142,
+      "path": "frames/p012-1142.jpg",
+      "sha256": "345fd2203890bcad3af20b58085963c436eb2a61f33fac23928c27f4b172dc53",
+      "visually_read": true
+    }
+  ],
+  "later_interpretation_correction": {
+    "lesson": 11,
+    "part": 23,
+    "start_seconds": 559.91,
+    "end_seconds": 573.74,
+    "statement": "老师明确收窄此前称杀人回忆为爱情片的表述，改说情感故事处理方式"
+  },
+  "later_teacher_review_policy_change": {
+    "lesson": 17,
+    "part": 39,
+    "start_seconds": 67.91,
+    "end_seconds": 217.804,
+    "description": "早期逐份批改因人数增加、千余份积压改为共性群批；不证明本课每份已评"
+  }
+}

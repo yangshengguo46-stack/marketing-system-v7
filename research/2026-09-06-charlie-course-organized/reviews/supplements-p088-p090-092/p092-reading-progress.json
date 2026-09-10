@@ -1,0 +1,9 @@
+{
+  "part": 92,
+  "read_segment_index": 454,
+  "final_segment_count": 454,
+  "last_read_source_end_seconds": 2627.212,
+  "final_state": "completed",
+  "reading_complete": true,
+  "note": "全量顺序阅读并以最终JSON段数核尾；机器稿未逐句听校"
+}

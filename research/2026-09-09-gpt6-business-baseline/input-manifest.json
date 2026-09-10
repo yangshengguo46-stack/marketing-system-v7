@@ -1,0 +1,15 @@
+[
+  {
+    "path": "research/2026-09-09-gpt6-business-baseline/inputs/brief.md",
+    "sha256": "3c389606a0def944ab5d391e495f455f21b5a1daadb7ae39771f9afcf89cf469"
+  },
+  {
+    "path": "research/2026-09-09-gpt6-business-baseline/inputs/method-v0.md",
+    "sha256": "ed861094bd1a8147ecb0e3c7efb7c74fa202e3f2372655bd0ba6d67b196372a2"
+  },
+  {
+    "path": "research/2026-09-09-gpt6-business-baseline/README.md",
+    "sha256": "14ac4e0e417626e26b5877fdb2ecce421e8eee7f6a4b3b06e637071278cd369a",
+    "note": "Original pre-output criteria hash; README later appended explicit user north-star clarification. Original criteria are unchanged."
+  }
+]

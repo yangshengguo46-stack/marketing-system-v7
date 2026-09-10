@@ -1,0 +1,178 @@
+{
+  "part": 81,
+  "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+  "source": {
+    "part": 81,
+    "cid": 29818619846,
+    "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=81",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍.mp4",
+    "sha256": "95a24a987c9ccb696791ea6c07c846456f31382b071c0171d1cac145b1f8a355",
+    "bytes": 138294007,
+    "mtime_ns": 1788682317182677205,
+    "actual_duration_seconds": 3142.989297
+  },
+  "full_transcript_read_parts": [
+    81
+  ],
+  "transcript_segment_count": 436,
+  "transcript_artifact_sha256": {
+    "p081.source-time.txt": "c194720389a34719827555ef1902fd57a4efa68f33364ccddf8ade968494b4e8",
+    "p081.source-time.srt": "82715efccfb17bd839dbe2c1356349651e16c1148d1e5fbca6f692a4adf617ed"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 81,
+      "start_seconds": 12,
+      "end_seconds": 221,
+      "label": "选片与创新价值的教师判断"
+    },
+    {
+      "part": 81,
+      "start_seconds": 222,
+      "end_seconds": 340,
+      "label": "前史/对照与前置危险"
+    },
+    {
+      "part": 81,
+      "start_seconds": 340,
+      "end_seconds": 454,
+      "label": "童年悬念与日记"
+    },
+    {
+      "part": 81,
+      "start_seconds": 455,
+      "end_seconds": 696,
+      "label": "少年关系与后续对照"
+    },
+    {
+      "part": 81,
+      "start_seconds": 697,
+      "end_seconds": 999,
+      "label": "成年读日记验证与启动原因"
+    },
+    {
+      "part": 81,
+      "start_seconds": 1000,
+      "end_seconds": 1291,
+      "label": "主动改变、暂时获益、新代价与资源限制"
+    },
+    {
+      "part": 81,
+      "start_seconds": 1298,
+      "end_seconds": 1588,
+      "label": "改变关系与不同受害者"
+    },
+    {
+      "part": 81,
+      "start_seconds": 1589,
+      "end_seconds": 1822,
+      "label": "最后尝试、规则与导演版结局"
+    },
+    {
+      "part": 81,
+      "start_seconds": 1824,
+      "end_seconds": 2255,
+      "label": "两个主结局的比较与教师偏好"
+    },
+    {
+      "part": 81,
+      "start_seconds": 2256,
+      "end_seconds": 2437,
+      "label": "超长前史的观看负担与吸引方法"
+    },
+    {
+      "part": 81,
+      "start_seconds": 2438,
+      "end_seconds": 2544,
+      "label": "连续尝试、假胜利与后果"
+    },
+    {
+      "part": 81,
+      "start_seconds": 2545,
+      "end_seconds": 2875,
+      "label": "题材不等于类型：穿越作为手段"
+    },
+    {
+      "part": 81,
+      "start_seconds": 2876,
+      "end_seconds": 3138,
+      "label": "催化剂主角、话题与结论"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "part": 81,
+      "task": "记录前史悬念及四人关系",
+      "start_seconds": 451,
+      "end_seconds": 519,
+      "submission_spec": "当堂讨论或笔记建议，无新独立提交规格",
+      "teacher_review": "教师当堂回应与分析，非学生作品回收",
+      "uncertainty": "机器全文已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 81,
+      "task": "比较两种主结局的个人偏好",
+      "start_seconds": 1947,
+      "end_seconds": 1963,
+      "submission_spec": "当堂讨论或笔记建议，无新独立提交规格",
+      "teacher_review": "教师当堂回应与分析，非学生作品回收",
+      "uncertainty": "机器全文已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 81,
+      "task": "讨论长前史/对照的必要性与观看负担",
+      "start_seconds": 2270,
+      "end_seconds": 2427,
+      "submission_spec": "当堂讨论或笔记建议，无新独立提交规格",
+      "teacher_review": "教师当堂回应与分析，非学生作品回收",
+      "uncertainty": "机器全文已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 81,
+      "task": "从人物目标和行动讨论如愿以偿与金羊毛",
+      "start_seconds": 2553,
+      "end_seconds": 2781,
+      "submission_spec": "当堂讨论或笔记建议，无新独立提交规格",
+      "teacher_review": "教师当堂回应与分析，非学生作品回收",
+      "uncertainty": "机器全文已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 81,
+      "task": "记录题材与故事机制的区别",
+      "start_seconds": 2860,
+      "end_seconds": 2873,
+      "submission_spec": "当堂讨论或笔记建议，无新独立提交规格",
+      "teacher_review": "教师当堂回应与分析，非学生作品回收",
+      "uncertainty": "机器全文已读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "穿越可能只是寻找解法的工具，不自动等同如愿以偿",
+      "source_type": "teacher_explicit_limit_on_earlier_type_claim"
+    },
+    {
+      "label": "长前史兼作变化对照，仍有观看负担",
+      "source_type": "teacher_retroactive_film_analysis"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "专名易混，电影与理论解读按教师语境保留。"
+  },
+  "limits": [
+    "两个主结局分别记录，不否认微小发行尾声变体",
+    "物理、医学、宗教谱系和观众效果未核实",
+    "类型与信息包数量不作写作配额"
+  ]
+}

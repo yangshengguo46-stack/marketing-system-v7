@@ -1,0 +1,8 @@
+{
+  "command": "just fmt",
+  "cwd": "codex-rs",
+  "exit_code": 0,
+  "preexisting_tracked_product_files_checked": 9,
+  "changed_by_fmt": [],
+  "limits": "No new product Rust behavior in this course-cleaning turn; no repeated Rust tests"
+}

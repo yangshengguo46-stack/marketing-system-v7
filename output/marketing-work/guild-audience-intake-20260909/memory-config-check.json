@@ -1,0 +1,29 @@
+{
+  "model": "doubao-seed-evolving",
+  "model_provider": "story_ark",
+  "features": {
+    "auth_elicitation": true,
+    "code_mode": false,
+    "mcp_2026_07_28": false,
+    "memories": false,
+    "mentions_v2": true,
+    "network_proxy": null,
+    "remote_control": false,
+    "remote_plugin": true,
+    "tool_suggest": true
+  },
+  "memories": {
+    "consolidation_model": null,
+    "dedicated_tools": null,
+    "disable_on_external_context": null,
+    "extract_model": null,
+    "generate_memories": false,
+    "max_raw_memories_for_consolidation": null,
+    "max_rollout_age_days": null,
+    "max_rollouts_per_startup": null,
+    "max_unused_days": null,
+    "min_rate_limit_remaining_percent": null,
+    "min_rollout_idle_hours": null,
+    "use_memories": false
+  }
+}

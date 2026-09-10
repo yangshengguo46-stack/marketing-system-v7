@@ -1,0 +1,22 @@
+{
+  "command": [
+    "curl",
+    "--noproxy",
+    "*",
+    "-fL",
+    "-C",
+    "-",
+    "--retry",
+    "0",
+    "--max-time",
+    "180",
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2",
+    "-o",
+    "research/2026-09-06-course-to-capability/chinese-asr-probe/models/sensevoice-int8.tar.bz2"
+  ],
+  "reason": "Default route slow; public HEAD with per-command no-proxy succeeded in 0.917330 s and confirmed byte ranges. Interrupted only the original model curl and resumed same partial. No global proxy configuration changed.",
+  "initial_partial_bytes": 51695616,
+  "exit_code": -15,
+  "elapsed_seconds": 144.75427253398811,
+  "final_bytes": 73216000
+}

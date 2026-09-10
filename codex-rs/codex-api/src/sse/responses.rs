@@ -480,7 +480,20 @@ pub fn process_responses_event(
             }
         }
         "response.output_item.added" => {
-            if let Some(item_val) = event.item {
+            if let Some(mut item_val) = event.item {
+                // Some providers omit the not-yet-streamed array on added items.
+                // Preserve existing content and keep completed items strict.
+                let pending_field = match item_val.get("type").and_then(Value::as_str) {
+                    Some("reasoning") => Some("summary"),
+                    Some("message") => Some("content"),
+                    _ => None,
+                };
+                if let Some(field) = pending_field
+                    && let Some(item) = item_val.as_object_mut()
+                {
+                    item.entry(field)
+                        .or_insert_with(|| Value::Array(Vec::new()));
+                }
                 if let Ok(item) = serde_json::from_value::<ResponseItem>(item_val) {
                     return Ok(Some(ResponseEvent::OutputItemAdded(item)));
                 }
@@ -715,6 +728,10 @@ fn rate_limit_regex() -> &'static regex_lite::Regex {
         regex_lite::Regex::new(r"(?i)try again in\s*(\d+(?:\.\d+)?)\s*(s|ms|seconds?)").unwrap()
     })
 }
+
+#[cfg(test)]
+#[path = "responses_partial_item_tests.rs"]
+mod partial_item_tests;
 
 #[cfg(test)]
 mod tests {

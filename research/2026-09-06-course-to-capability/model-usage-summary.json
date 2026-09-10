@@ -1,0 +1,8 @@
+{
+  "six_comparison_trials": 663056,
+  "excluded_and_diagnostic": 460247,
+  "guided_revision": 162414,
+  "lead_final_native_save": 62401,
+  "total_reported_tokens": 1348118,
+  "meaning": "Cumulative native token usage includes repeated input and cached input; not unique content length or RMB billing. No current balance or invoice queried."
+}

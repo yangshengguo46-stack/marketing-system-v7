@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-06T10:55:06.882831+00:00",
+  "worker_thread_rows": 6,
+  "cpu_speed_limit_percent": 34,
+  "cpu_scheduler_limit_percent": 100,
+  "cpu_available": 16,
+  "rss_worker_mib": [
+    465,
+    558,
+    525,
+    518,
+    494,
+    474
+  ],
+  "observation": "6 ASR processes each about 98% CPU. pmset CPU_Speed_Limit 34, no recorded thermal warning. 32GB RAM, ~2.6GB compressor. top interval swapouts 0. No pipeline changes.",
+  "processed_audio_seconds": 106833.780814
+}

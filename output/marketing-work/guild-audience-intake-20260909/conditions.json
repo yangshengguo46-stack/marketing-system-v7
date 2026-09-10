@@ -1,0 +1,13 @@
+{
+  "model": "doubao-seed-evolving",
+  "runtime": "native Codex App Server Responses",
+  "briefOrigin": "新拟接案题；不是用户所贴GPT-6回答的原始prompt",
+  "groups": {
+    "direct": "共同基础指令＋同题",
+    "method": "共同基础指令＋同题＋candidate-method.txt"
+  },
+  "scope": "首轮接案；不代表完整营销交付",
+  "memory": false,
+  "web": "disabled both groups; no external facts requested",
+  "productionConfig": "isolated CODEX_HOME; project development provider unchanged"
+}

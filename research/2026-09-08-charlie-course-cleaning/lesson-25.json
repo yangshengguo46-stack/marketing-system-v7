@@ -1,0 +1,189 @@
+{
+  "lesson": 25,
+  "source_parts": [
+    {
+      "part": 51,
+      "source_json_sha256": "49f61e428c95b6ec4b3dd00d34dc2d1dcebb31e045df4698897cd6dc12c42765",
+      "segment_count": 557
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L25-B001",
+      "part": 51,
+      "first_segment": 1,
+      "last_segment": 55,
+      "heading": "从上节课的烂片练习，回到结构的力量",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "加勒比海报／我是人还是摸／齐强的两面半",
+          "cleaned": "《加勒比海盗》／我是人还是魔／骑墙、两面办事",
+          "basis": "同段片名重复及两方身份选择语境；末项按上下文整理，非听校定字"
+        }
+      ]
+    },
+    {
+      "id": "L25-B002",
+      "part": 51,
+      "first_segment": 56,
+      "last_segment": 111,
+      "heading": "元素、情感与情绪分别检验什么",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "一son／这医生",
+          "cleaned": "伊森",
+          "basis": "《碟中谍》同一主角与爬楼、飞机动作上下文"
+        }
+      ]
+    },
+    {
+      "id": "L25-B003",
+      "part": 51,
+      "first_segment": 112,
+      "last_segment": 173,
+      "heading": "问题从哪里来；学习组、气氛组与入行岔题",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B004",
+      "part": 51,
+      "first_segment": 174,
+      "last_segment": 223,
+      "heading": "情绪放到四幕式时间轴：先拿注意力",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "私目式／私募式／五戏／房大",
+          "cleaned": "四幕式／武戏／网大",
+          "basis": "起承转合轴、打斗开场及网络电影语境反复明确"
+        }
+      ]
+    },
+    {
+      "id": "L25-B005",
+      "part": 51,
+      "first_segment": 224,
+      "last_segment": 287,
+      "heading": "入戏、预期、欢乐，再让观众开始思考",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "连／气／联系爱",
+          "cleaned": "怜、信、爱",
+          "basis": "S234明确可怜可信可爱、S235怜你爱你信你；按对应关系整理"
+        }
+      ]
+    },
+    {
+      "id": "L25-B006",
+      "part": 51,
+      "first_segment": 288,
+      "last_segment": 322,
+      "heading": "中点的小满足、随后生气与真正难过",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "终点位置／小曼足／升旗／灵魂黑夜",
+          "cleaned": "中点位置／小满足／生气／灵魂黑夜",
+          "basis": "前后明确中段虚假胜利、进入转；生气在S307反复解释"
+        }
+      ]
+    },
+    {
+      "id": "L25-B007",
+      "part": 51,
+      "first_segment": 323,
+      "last_segment": 347,
+      "heading": "难过之后先欣慰，再激动，最后大满足",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B008",
+      "part": 51,
+      "first_segment": 348,
+      "last_segment": 402,
+      "heading": "另一条不能漏的线：悬念带来的紧张",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "悬而未觉／学习加强／不实",
+          "cleaned": "悬而未决／悬疑加强／不要忽视",
+          "basis": "定时炸弹比喻、S378重复悬疑加强、S397–398勿忽略此线的连续语境"
+        }
+      ]
+    },
+    {
+      "id": "L25-B009",
+      "part": 51,
+      "first_segment": 403,
+      "last_segment": 428,
+      "heading": "《摇滚校园》：故事结构与兴奋的开场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B010",
+      "part": 51,
+      "first_segment": 429,
+      "last_segment": 464,
+      "heading": "从缺钱与卖吉他入戏，到冒名教书产生预期",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B011",
+      "part": 51,
+      "first_segment": 465,
+      "last_segment": 488,
+      "heading": "学校里的欢乐、逐渐不安，以及暂时蒙混成功",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B012",
+      "part": 51,
+      "first_segment": 489,
+      "last_segment": 511,
+      "heading": "从失望、决裂，到孩子回来和真正的使命",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B013",
+      "part": 51,
+      "first_segment": 512,
+      "last_segment": 544,
+      "heading": "同一部电影的假身份悬念，如何从展开走到反转",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L25-B014",
+      "part": 51,
+      "first_segment": 545,
+      "last_segment": 557,
+      "heading": "用表格检查作品；结课与尾部未辨残句",
+      "disposition": "尾部残句保留并标疑",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "本课五十万字为讲师磨合期举例，八千字为熬夜劳动举例，不作为本课作业字数。",
+    "待核：S084“传设”、S104“张光照片”、S299提到悲剧情绪时仍说虚假胜利；尾部S555–557残句。",
+    "《摇滚校园》为讲师明确凭回忆复述；未借外部剧情纠正课堂版本。",
+    "复核时回读全部 S001–S557；《摇滚校园》完整情绪与假身份悬念两轮推演均逐项对照；S268原识“失恋”词形待核，未强订为“试炼”。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第25课.md",
+  "output_sha256": "99f5c7864ddcc61b28f28fb919840ae3cb0f1377685a67e4515f3ef9b441d648",
+  "reader_navigation_update": {
+    "previous_output_sha256": "dfa852c02cec3e5f421278a7f2beb5ef4eab63b78af03db7482289a22d732489",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

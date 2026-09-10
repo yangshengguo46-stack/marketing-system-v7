@@ -1,0 +1,97 @@
+{
+  "lesson": 19,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 42,
+      "title": "十九课-怎么撰写项目提案19",
+      "cid": 212090316,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=42",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十九课-怎么撰写项目提案19.mp4",
+      "sha256": "846214c5522ff7377c4490541b10f00db6bd8b623156173664efa58ef834a955",
+      "duration_seconds": 2636
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "课程录制闲谈与为何需要剧本项目提案",
+      "part": 42,
+      "start_seconds": 10,
+      "end_seconds": 441
+    },
+    {
+      "label": "提案读者、共情与对此前甲方说法的纠正",
+      "part": 42,
+      "start_seconds": 442,
+      "end_seconds": 635
+    },
+    {
+      "label": "提案六部分；标题与一句话故事",
+      "part": 42,
+      "start_seconds": 638,
+      "end_seconds": 925
+    },
+    {
+      "label": "标签墙：集中呈现项目关键词",
+      "part": 42,
+      "start_seconds": 926,
+      "end_seconds": 1086
+    },
+    {
+      "label": "人物小传的用途和五层思考：外在、内在、状态、行动、变化",
+      "part": 42,
+      "start_seconds": 1088,
+      "end_seconds": 1677
+    },
+    {
+      "label": "《我不是药神》程勇人物小传现场示范；交付正文不保留五个思考标签",
+      "part": 42,
+      "start_seconds": 1681,
+      "end_seconds": 2161
+    },
+    {
+      "label": "梗概：八要素、创意点、遐想空间和价值",
+      "part": 42,
+      "start_seconds": 2163,
+      "end_seconds": 2413
+    },
+    {
+      "label": "样场：主要角色在场且体现人物关系的文戏；回顾六部分",
+      "part": 42,
+      "start_seconds": 2414,
+      "end_seconds": 2631
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "点评此前学员提交物：格式混乱、几百字全是前史、或只给三场戏却不知为何选它们。未标明某次作业题目或课号。",
+      "part": 42,
+      "start_seconds": 245,
+      "end_seconds": 313,
+      "submission_spec": null,
+      "teacher_review": "内容选择应有逻辑，让未看过全剧本的人也能舒服阅读和理解项目。",
+      "uncertainty": "对多份旧提交的概括性回顾，不是本课新作业。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "自己的项目要给合作方/金主看时，按本课六部分写清楚：标题、一句话故事、标签墙、人物小传、梗概、样场。",
+      "part": 42,
+      "start_seconds": 2597,
+      "end_seconds": 2628,
+      "submission_spec": "课程建议 Word 整理后可转 PDF，纯文字也可以，不强制 PPT；标题可附电影时长/剧集集数；样场需有环境、动作、对白。未指定本课提交期限/字数。",
+      "teacher_review": null,
+      "uncertainty": "结尾为条件式应用建议，未见本课明确布置交作业。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    42
+  ],
+  "limits": [
+    "P42 已逐段全文阅读机器稿，未逐句听校。",
+    "提案六部分与人物小传五层是本课教学格式，并不自动构成本课应交作业。",
+    "P42 21:50/41:50原帧核对板书可读标签墙、样场、外在/内在/状态/行动/变化。",
+    "未复核老师演员合作经验或市场价格描述；课程卡不把它们当市场事实。"
+  ],
+  "explicit_assignment_status": "全文机器稿检索与阅读未找到明确布置，未逐句听校"
+}

@@ -1,0 +1,130 @@
+{
+  "part": 72,
+  "source": "research/2026-09-06-charlie-course-organized/transcripts/p072.json",
+  "source_json_sha256": "864215d9aa9e29e7472be118c36ad1c8bc4b0e78432c5391fe8a4b1106cd4d01",
+  "segment_count": 261,
+  "source_text_characters": 15129,
+  "file_count": 6,
+  "block_count": 55,
+  "date": "2026-09-08",
+  "reviewer": "clean_core_25_34",
+  "scope": "按jobs.json确认6批；完整顺读P072全部261源段并逐块核对全部正文，不是抽查。",
+  "limits": [
+    "未逐句听校，基于ASR全文对照；英文留言不补成准确字幕。",
+    "电影情节、科幻解释、创作史与末日文化均按讲师说法保留，未作外部事实核验。",
+    "四个拓展题为开放思考，后续问答未合并成额外硬性作业。"
+  ],
+  "files": [
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c001-clean.json",
+      "job": "p072-c001",
+      "first_segment": 1,
+      "last_segment": 37,
+      "segment_count": 37,
+      "block_count": 11,
+      "output_text_characters": 2536,
+      "output_sha256": "def85d9e344178ddf6bcde5f3b45d2cba750c595dd4ff9f15a2d51e4fb537b89",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c001-before-independent-full-review.json",
+      "before_sha256": "9d3bad841aeccdb7c1379ec8b094ddf72d7e4a83fb0c3f738333af7a60a31c63",
+      "issues": [
+        "全读无人机开头：自行开车→儿子开车→险落悬崖→以为跟丢却连接成功，过程完整保留。",
+        "小比喻由章末互证，不猜小片段；护独子订正护犊子；NASA/无人机背景解释归讲师。",
+        "修复跨块移入的S4及S16句子位置，保留160分钟与后文162分钟差异。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c002-clean.json",
+      "job": "p072-c002",
+      "first_segment": 38,
+      "last_segment": 93,
+      "segment_count": 56,
+      "block_count": 8,
+      "output_text_characters": 2748,
+      "output_sha256": "c725ca15f102b5a5da4b706095cc1c6dd4008a12369901f159cca66d746901cb",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c002-before-independent-full-review.json",
+      "before_sha256": "f8eaad6f7ad67ac0f98aa8af3da4c04f223466f558fafc3f45ff20bf17ee9af3",
+      "issues": [
+        "重动按同段明确目标虫洞订正；等到/等不到的视频否定疑点保留，不擅选。",
+        "女儿与父亲同岁代词修正；英语留言完整保留并给可辨大意，破碎中文不补字幕。",
+        "告别段不把要抱猜成确定拥抱，清理升空段破碎句，保留短镜头及成本评价。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c003-clean.json",
+      "job": "p072-c003",
+      "first_segment": 94,
+      "last_segment": 137,
+      "segment_count": 44,
+      "block_count": 11,
+      "output_text_characters": 2300,
+      "output_sha256": "09785bb61d8886b4801a3d64fce4cb384294208911550726877fec1749ccc434",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c003-before-independent-full-review.json",
+      "before_sha256": "5943730657c9328cbc454e1195e6df7292f7e0f3d9a6d7c1f7c416bb48f2c928",
+      "issues": [
+        "修复中点误作终点；安妮/马特的演员名称与角色指代分清，保留讲师自我改称伙伴。",
+        "澄清主角放下女儿利益优先的句法；137分钟为有语境的推测，补明依据与限度。",
+        "A/B计划真相、物种与亲情争执、双线至暗时刻、牺牲和回家目标均完整保留。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c004-clean.json",
+      "job": "p072-c004",
+      "first_segment": 138,
+      "last_segment": 197,
+      "segment_count": 60,
+      "block_count": 8,
+      "output_text_characters": 2193,
+      "output_sha256": "4c7b5804fcac29ccdebe089c52780d85fd92be6bd0c38f56215b827401951278",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c004-before-independent-full-review.json",
+      "before_sha256": "a237b11a12ad3b770e105a1c54837b47d6e983f164447eaa152b7a1e675e5dea",
+      "issues": [
+        "撤销由1515猜定151分钟；恢复美式结尾这一独立修饰并标疑。",
+        "保留120岁/操作系统等调侃的性质，以及四拍赠送结局、表演评价、八种题材和信息包定义。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c005-clean.json",
+      "job": "p072-c005",
+      "first_segment": 198,
+      "last_segment": 232,
+      "segment_count": 35,
+      "block_count": 7,
+      "output_text_characters": 2473,
+      "output_sha256": "54915d7af907d4d90bd5ec19de02cf5353a8151cb04ae1badc1d5c974a1c65b6",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c005-before-independent-full-review.json",
+      "before_sha256": "2d9b52f1d96c6742e770e28f2381251deed63c964bd75c08871a30b1bb9d8d52",
+      "issues": [
+        "保留四种价值观及宏大叙事小主题三点建议；演员与角色分清。",
+        "纸媒排名、诺兰首创视频家书归講师；小女孩翻译成ghost纠正指代，英文保留。",
+        "虎父无犬女作有依据推测标疑，不把乱码冒充确定成语。"
+      ]
+    },
+    {
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c006-clean.json",
+      "job": "p072-c006",
+      "first_segment": 233,
+      "last_segment": 261,
+      "segment_count": 29,
+      "block_count": 10,
+      "output_text_characters": 2131,
+      "output_sha256": "87c0a3eb96722cbd2d417f1ce8291fe504af7266a631135e46d427d2e4601c69",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p072-c006-before-independent-full-review.json",
+      "before_sha256": "12bf58de97eaf9e6c731774b4b5c1ccbae4c20d065ca7f65b658c7a4072238a1",
+      "issues": [
+        "补回S233观众更容易接受的承接句；宗教文化概括归讲师；开放性的修饰思考题而非宗教体系。",
+        "四个拓展题原样保持独立开放问题；未增交稿要求、额外作业或合并后续问答。",
+        "AB学生发言断句不确定，不擅派A/B；安妮感情关系问答发言者恢复；第三幕/中点误识修正。",
+        "保留无人机十年孤独漂流对应主角团队，以及父亲扶女儿手召回自己对应命运的两层比喻，前后完整呼应。"
+      ]
+    }
+  ],
+  "validation": {
+    "status": "PASS",
+    "continuous_coverage_once": "1—261",
+    "jobs_ranges_match": true,
+    "source_hash_match": true,
+    "prior_lead_reviews_preserved": true,
+    "shared_md_modified": false,
+    "source_or_native_raw_response_modified": false
+  }
+}

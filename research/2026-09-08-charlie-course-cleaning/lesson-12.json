@@ -1,0 +1,278 @@
+{
+  "lesson": 12,
+  "source_parts": [
+    {
+      "part": 25,
+      "source_json_sha256": "e9bd7db86ba188d68bd2c5b962a2c024fef2ddd866c1b5b2198c74204af93010",
+      "segment_count": 355
+    },
+    {
+      "part": 26,
+      "source_json_sha256": "2b114916d7f4a59db161e794788fbb0736289bb72b2710d1ccdb3dca618bad20",
+      "segment_count": 414
+    },
+    {
+      "part": 27,
+      "source_json_sha256": "7757ae797cec9ac070ee639e4a5184060f40fcb926dcf13ef9dac1c3a42343e5",
+      "segment_count": 476
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L12-B001",
+      "part": 25,
+      "first_segment": 1,
+      "last_segment": 42,
+      "heading": "再开一课：十类是可以组合的讲故事方法",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "金相毛／新花路放太久",
+          "cleaned": "金羊毛／《心花路放》《泰囧》",
+          "basis": "类别已定义；徐峥公路电影语境及音近。"
+        }
+      ]
+    },
+    {
+      "id": "L12-B002",
+      "part": 25,
+      "first_segment": 43,
+      "last_segment": 133,
+      "heading": "把十类再分辨一次",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B003",
+      "part": 25,
+      "first_segment": 134,
+      "last_segment": 196,
+      "heading": "不用现成电影：从原版《小蝌蚪找妈妈》开始",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B004",
+      "part": 25,
+      "first_segment": 197,
+      "last_segment": 248,
+      "heading": "把“找妈妈”变成动作，把身份认同变成欲望",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "生死／身死／绅士",
+          "cleaned": "身世",
+          "basis": "同段明确反复问自己是什么物种、来自哪里，语义为身世。"
+        }
+      ]
+    },
+    {
+      "id": "L12-B005",
+      "part": 25,
+      "first_segment": 249,
+      "last_segment": 278,
+      "heading": "给它一个拥有家庭、却想逃离家庭的伙伴",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B006",
+      "part": 25,
+      "first_segment": 279,
+      "last_segment": 330,
+      "heading": "绕过动作实现欲望：长出四肢，反过来救伙伴",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B007",
+      "part": 25,
+      "first_segment": 331,
+      "last_segment": 355,
+      "heading": "搭档也要成长；收拢金羊毛版本",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B008",
+      "part": 26,
+      "first_segment": 1,
+      "last_segment": 63,
+      "heading": "重录说明；爱情版本先把互相需要做实",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B009",
+      "part": 26,
+      "first_segment": 64,
+      "last_segment": 120,
+      "heading": "再拉开沟：物种、生命危险、家人和错过的解释",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B010",
+      "part": 26,
+      "first_segment": 121,
+      "last_segment": 185,
+      "heading": "超级英雄版本：蝌蚪侠的能力、命门、对手和使命",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B011",
+      "part": 26,
+      "first_segment": 186,
+      "last_segment": 253,
+      "heading": "鬼屋版本：封闭水塘中，妈妈被深水里的嘴拖走",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B012",
+      "part": 26,
+      "first_segment": 254,
+      "last_segment": 314,
+      "heading": "侦探版本：查到的凶手，恰好是自己的生母",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B013",
+      "part": 26,
+      "first_segment": 315,
+      "last_segment": 359,
+      "heading": "如愿以偿版本：重回少年，改走当年错过的海路",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B014",
+      "part": 26,
+      "first_segment": 360,
+      "last_segment": 414,
+      "heading": "别改坏历史：哪吒、龙太子与回家听妈妈的话",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B015",
+      "part": 27,
+      "first_segment": 1,
+      "last_segment": 48,
+      "heading": "麻烦家伙版本：妈妈被抓进川菜馆，孩子学习营救",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B016",
+      "part": 27,
+      "first_segment": 49,
+      "last_segment": 69,
+      "heading": "导师的经历与现场改设：所谓池塘其实是养殖场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B017",
+      "part": 27,
+      "first_segment": 70,
+      "last_segment": 113,
+      "heading": "变迁仪式版本：把正常母子矛盾，推向离家找亲妈",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B018",
+      "part": 27,
+      "first_segment": 114,
+      "last_segment": 178,
+      "heading": "养母有壳，自己没有：先经历蛙群的虚假胜利",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B019",
+      "part": 27,
+      "first_segment": 179,
+      "last_segment": 213,
+      "heading": "补出养育往事，让回归有真正的感情重量",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B020",
+      "part": 27,
+      "first_segment": 214,
+      "last_segment": 256,
+      "heading": "愚者成功版本：铁憨憨要当观赏鱼",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B021",
+      "part": 27,
+      "first_segment": 257,
+      "last_segment": 280,
+      "heading": "得到上场机会，却在演出前长出四条腿",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "今天你也上不去表演",
+          "cleaned": "今天你也上去表演",
+          "basis": "S261欣喜若狂、S264进入队伍、S300教头让其跟队，支持去除ASR多出的否定。未听校。"
+        }
+      ]
+    },
+    {
+      "id": "L12-B022",
+      "part": 27,
+      "first_segment": 281,
+      "last_segment": 307,
+      "heading": "孩子的笑不是嘲笑：靠青蛙动作成为领舞",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B023",
+      "part": 27,
+      "first_segment": 308,
+      "last_segment": 363,
+      "heading": "被制度化版本：水坑里的群体，把每天被吃当成规矩",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B024",
+      "part": 27,
+      "first_segment": 364,
+      "last_segment": 420,
+      "heading": "点点问“凭什么”，独自钻泥，再争取到一小队伙伴",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L12-B025",
+      "part": 27,
+      "first_segment": 421,
+      "last_segment": 476,
+      "heading": "成功前被压毁；大雨给出自由，点点却留在兄弟身边",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "本课全部改编为讲师现场构思，非原童话情节；保留候选、改口和未充分解释的转折。",
+    "变身补水十五分钟/五分钟为现场两个提议；被制度化版本的大雨结局未擅改因果。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第12课.md",
+  "output_sha256": "fd92b01166d50dd4d599121c0b9e591bf7c0acec36390c8bdca265a25aefe1a5",
+  "reader_navigation_update": {
+    "previous_output_sha256": "d1af35363fcba2873506af8b8250b9eb3fce6787552f13ccbad0f67882a96001",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

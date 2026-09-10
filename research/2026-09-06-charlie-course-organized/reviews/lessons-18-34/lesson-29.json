@@ -1,0 +1,96 @@
+{
+  "lesson": 29,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 55,
+      "title": "二十九课-剧情要有攻击性29",
+      "cid": 333133917,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=55",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十九课-剧情要有攻击性29.mp4",
+      "sha256": "5dbba6748263f98bf2986a913d53726633244ab0c966296176e408575f056ba0",
+      "duration_seconds": 2223
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "明确回收28课作业；历史学习群/班委/提交平台说明",
+      "part": 55,
+      "start_seconds": 9,
+      "end_seconds": 261
+    },
+    {
+      "label": "回应结构训练太死的疑问；篮球训练比喻",
+      "part": 55,
+      "start_seconds": 262,
+      "end_seconds": 527
+    },
+    {
+      "label": "限定早期救女不救男；公益经历与熟而后生训练说法",
+      "part": 55,
+      "start_seconds": 529,
+      "end_seconds": 1115
+    },
+    {
+      "label": "共性缺乏攻击性；从旧阻力理论换角度修改",
+      "part": 55,
+      "start_seconds": 1116,
+      "end_seconds": 1166
+    },
+    {
+      "label": "攻击源：环境、对手、自身；利益冲突不等于坏人",
+      "part": 55,
+      "start_seconds": 1167,
+      "end_seconds": 1532
+    },
+    {
+      "label": "攻击目标：主角本身、人物关系，归结行动目标",
+      "part": 55,
+      "start_seconds": 1534,
+      "end_seconds": 1852
+    },
+    {
+      "label": "连线组合：自然、社会、场景、对手攻击不同目标",
+      "part": 55,
+      "start_seconds": 1854,
+      "end_seconds": 2152
+    },
+    {
+      "label": "选择取舍，不要全塞；明确修改上课作业",
+      "part": 55,
+      "start_seconds": 2154,
+      "end_seconds": 2215
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "第28课公路旅程命题作文已收到多份；本课根据学生提交中的共性问题“缺乏攻击性”集中讲修改方法。",
+      "part": 55,
+      "start_seconds": 12.102,
+      "end_seconds": 279.052,
+      "submission_spec": "提到已有交作业平台和学习群，由班委运营；本课未提供具体网址/群号/有效期限，不能代作现行提交入口。",
+      "teacher_review": "00:46–01:12、04:22–04:39、18:36–18:47明确看过多份作业并总结问题；没有逐稿展示、点名评分。",
+      "uncertainty": "全文机器稿未逐句听校。"
+    },
+    {
+      "kind": "explicit_assignment",
+      "task": "修改第28课作业：从环境/对手/自身这三类攻击源，到主角本身/人物关系/行动目标的攻击对象连线，选择适用的冲突增强剧情攻击性；不要每种组合全塞进去。自查段也允许用以前的剧本练习。",
+      "part": 55,
+      "start_seconds": 2160.71,
+      "end_seconds": 2213.74,
+      "submission_spec": "明确让修改上节课作业；无新字数、格式、期限、重交渠道或修改说明文档要求。",
+      "teacher_review": "未说明本轮修改稿如何再次检查或讲评。",
+      "uncertainty": "30:41–30:52允许查28课或以前剧本；35:36–35:52明确不要全套塞满；36:47–36:53收束指定上节作业。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    55
+  ],
+  "limits": [
+    "全文机器稿顺序阅读，未逐句听校。",
+    "首次在此组明确收到第28课学生作业，是共性讲评，不是逐稿批改。",
+    "攻击是虚构叙事上的阻力，不等于暴力；老师明确自身攻击也不是字面自残。",
+    "对女性/族群共情概率、慈善经历与体育类比按老师口述观点/经历，不当外部已验证事实。"
+  ]
+}

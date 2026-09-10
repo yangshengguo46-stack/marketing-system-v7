@@ -1,0 +1,85 @@
+{
+  "method": "Agent visually read original extracted video frames; no numeric OCR confidence used; not a human transcription or full audio ground truth. Original subtitles themselves may paraphrase speech or mask words.",
+  "references": [
+    {
+      "source_seconds": 600,
+      "image": "review/p005-0600.jpg",
+      "visible_subtitle": "就说明他的第一个作品他的灵感是发自于他的肉体的",
+      "terms_to_check": [
+        "灵感",
+        "肉体"
+      ]
+    },
+    {
+      "source_seconds": 612,
+      "image": "review/p005-0612.jpg",
+      "visible_subtitle": "然后就是最好的 出道即巅峰 说的就是这种",
+      "terms_to_check": [
+        "出道即巅峰"
+      ]
+    },
+    {
+      "source_seconds": 630,
+      "image": "review/p005-0630.jpg",
+      "visible_subtitle": "他 天才有余技能不足",
+      "terms_to_check": [
+        "天才有余",
+        "技能不足"
+      ]
+    },
+    {
+      "source_seconds": 636,
+      "image": "review/p005-0636.jpg",
+      "visible_subtitle": "他把自己的身体用完了 等到共情的时候由于技能不足 达不到",
+      "terms_to_check": [
+        "共情",
+        "技能不足",
+        "达不到"
+      ]
+    },
+    {
+      "source_seconds": 640,
+      "image": "review/p005-0640.jpg",
+      "visible_subtitle": "他把自己的身体用完了 等到共情的时候由于技能不足 达不到",
+      "terms_to_check": [
+        "共情",
+        "技能不足",
+        "达不到"
+      ]
+    },
+    {
+      "source_seconds": 644,
+      "image": "review/p005-0644.jpg",
+      "visible_subtitle": "这个共情的技术 在后面的过程中我会不断的给大家训练",
+      "terms_to_check": [
+        "共情",
+        "不断"
+      ]
+    },
+    {
+      "source_seconds": 648,
+      "image": "review/p005-0648.jpg",
+      "visible_subtitle": "但是第一个我当然是希望你写一个发自内心的 对吧",
+      "terms_to_check": [
+        "发自内心"
+      ]
+    },
+    {
+      "source_seconds": 668,
+      "image": "review/p005-0668.jpg",
+      "visible_subtitle": "我现在已经天天在共情了 我的R体已经枯竭了",
+      "terms_to_check": [
+        "共情",
+        "枯竭"
+      ]
+    },
+    {
+      "source_seconds": 674,
+      "image": "review/p005-0674.jpg",
+      "visible_subtitle": "呵呵 是吧 所以说这是灵感的两大来源",
+      "terms_to_check": [
+        "灵感"
+      ]
+    }
+  ]
+}

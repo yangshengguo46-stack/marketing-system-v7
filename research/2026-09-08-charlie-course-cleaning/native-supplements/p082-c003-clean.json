@@ -1,0 +1,231 @@
+{
+  "blocks": [
+    {
+      "first_segment": 156,
+      "last_segment": 158,
+      "heading": "准备在节目中自杀与同事来访",
+      "text": "讲师继续解释影片人物的心理。他用“有些人的生可能没有意义，但是死可以比生更有意义”来概括这个角色的想法，并说第一场戏就有相应铺垫，因此人物准备在节目中自杀。〔这句话是课堂对角色极端心态的解读，不是整理者的价值判断。〕\n\n第28拍来到85分钟，同事来访，他报仇杀了这个同事；讲师认为此时人物已经疯了。",
+      "corrections": [
+        {
+          "original": "同事来访同事来访",
+          "cleaned": "同事来访",
+          "basis": "同义重复，去重"
+        },
+        {
+          "original": "已经疯了啊，已经疯了",
+          "cleaned": "已经疯了",
+          "basis": "同义重复，去重"
+        }
+      ]
+    },
+    {
+      "first_segment": 159,
+      "last_segment": 166,
+      "heading": "放走侏儒：极端心态下的怨恨逻辑",
+      "text": "当然了，在这里杀人的时候，他放走了一个。一个侏儒，因为他说那是唯一一个对他好的人。很多同学不理解啊，说为什么小丑把女邻居给杀了，把妈妈都给杀了，但是会放过一个跟他同事过的侏儒。\n\n同学们是这样：在极端人的心态里，实际上他对母亲是怨恨的，他对那个小侏儒没有怨恨。但是他对那些不爱他的人是有怨恨的。〔女邻居与母亲的遭遇、放走同事的原因，均按讲师在本段的剧情判断转述，未据影片核验。〕",
+      "corrections": [
+        {
+          "original": "跟她同事过",
+          "cleaned": "跟他同事过",
+          "basis": "语境为男性指代，但原词为\"她\"，存疑"
+        }
+      ]
+    },
+    {
+      "first_segment": 167,
+      "last_segment": 168,
+      "heading": "穿上战袍奔赴直播的名场面",
+      "text": "第29拍90分钟，一个名场面，他配上这个BGM，然后穿上战袍奔赴直播，同时也展现了“全程都是小偷”〔原识别词待核，不据街头场景猜成小丑〕，甚至追他的警察都被打、被杀。我们说这也是一个名场面，看一眼。",
+      "corrections": [
+        {
+          "original": "全程都是小偷",
+          "cleaned": "全程都是小偷〔原词待核〕",
+          "basis": "原词不能确定，不据熟悉的影片画面替换成小丑。"
+        }
+      ]
+    },
+    {
+      "first_segment": 169,
+      "last_segment": 174,
+      "heading": "直播中改主意：不自杀，杀主持人",
+      "text": "讲师再次称前一场是名场面。好，这一拍结束之后，来到第30拍95分钟，正式参加节目。在节目当中面对羞辱，痛斥了一切，并且临时改变了主意，也不自杀了，把那个主持人给杀了。\n\n因为他说，没有什么可失去的了，现在已经没有人能伤害自己了，他把能杀害自己的人都杀光了〔待核〕，没有人能伤害自己。他认为自己被伤害了，才会做这些事情。\n\n我们看一下。他想象这个演播室，想象过很多次了，因为我们刚才说过，普通人确实是会幻想，站在公众〔待核〕面前，被自己仰视的人认可，确实会经常想象这种空间、这种场景，甚至想象自己领奖，想象自己上节目，对吧？〔把能“杀害自己”的人都杀光，为讲师原识别用词；相邻句一直说伤害，可能存在误识或口误，未确定改字。〕",
+      "corrections": [
+        {
+          "original": "把那个把那个主持人给杀了啊，那个主持人给杀了",
+          "cleaned": "把那个主持人给杀了",
+          "basis": "同义重复，去重"
+        },
+        {
+          "original": "能杀害自己的人都杀杀光了",
+          "cleaned": "能杀害自己的人都杀光了〔待核〕",
+          "basis": "\"杀杀光了\"为口吃重复去重；\"杀害\"疑为\"伤害\"口误，但原词存疑不改"
+        },
+        {
+          "original": "工众",
+          "cleaned": "公众〔待核〕",
+          "basis": "语境为站在公众面前，但原词\"工众\"无法确认"
+        }
+      ]
+    },
+    {
+      "first_segment": 175,
+      "last_segment": 179,
+      "heading": "播放节目片段：回看死亡愿望与临时改主意",
+      "text": "接下来播放节目片段，英语对白机器稿有多处破碎，以下保留原识别文字，不补写影片台词。\n\n“Tell us about this look. When you earlier, you mentioned that this look is not a political statement. All right, That very not political. I just trying to make people wife and a second.”〔机器转录片段，待听校〕\n\n讲师说，又看了一遍这句话：“我只希望我的死更有价值。”这里是在回看人物的原计划。随后源中出现“但更我”“女孩来了”两个碎片，无法确认是讲师插话、播放内容还是识别错误，保留待核。\n\n讲师指出，他跳过了这个笑话，决定不杀自己了。接着一小段英语为“its the policeman dead.”〔机器转录原词，待听校〕。",
+      "corrections": [
+        {
+          "original": "I just trying to make people wife and a second",
+          "cleaned": "I just trying to make people wife and a second〔疑〕",
+          "basis": "影片对白机器转录，后半句无法辨认"
+        },
+        {
+          "original": "但更我",
+          "cleaned": "但更我〔疑〕",
+          "basis": "破碎语句，无法辨认"
+        },
+        {
+          "original": "its the policeman dead",
+          "cleaned": "its the policeman dead〔疑〕",
+          "basis": "影片对白机器转录，无法辨认"
+        }
+      ]
+    },
+    {
+      "first_segment": 180,
+      "last_segment": 186,
+      "heading": "播放节目片段：笑话、地铁事件与喜剧自述",
+      "text": "“,, no, no you cannot talk about that. Yeah, that's not funny., that's the kind of humor we do on the show. Okay, I Yeah I'm sorry, it's just, you know, it's been a few weeks, Mu ever since I.”〔机器转录片段，待听校〕\n\n“Kill usly Wallt Street guys.”〔机器转录片段，待听校〕\n\n夹杂的中文原识别为“我改2080万”“拿了这个”，归属与意思都不能确定，不据数字补写事实。\n\n“上去当 kill you man on the subway and why should we believe it.”〔机器转录片段，待听校〕\n\n又出现“那是给他个名吗？”〔原词与说话者待核〕。\n\n“My life is nothing a comedy.”〔机器转录片段，待听校〕",
+      "corrections": [
+        {
+          "original": "Kill usly Wallt Street guys",
+          "cleaned": "Kill usly Wallt Street guys〔疑〕",
+          "basis": "影片对白机器转录，疑似\"Killing those Wall Street guys\"但无法确认"
+        },
+        {
+          "original": "我改2080万",
+          "cleaned": "我改2080万〔疑〕",
+          "basis": "无法辨认语句"
+        }
+      ]
+    },
+    {
+      "first_segment": 187,
+      "last_segment": 190,
+      "heading": "播放节目片段：对是非标准与托马斯·韦恩的争论",
+      "text": "这一段继续播放对白。下面涉及是非标准、外面的处境和Thomas Wayne等原识别内容；英语不完整，不译成已经确认的完整论证。\n\n“Let' get this straight. You think that killing those guys is funny. I do and I'm tired of pretending it's not. you subject, what they say all of you, the system that knows so much you decide what's right or wrong the same way that you decide what's on or not.”〔机器转录片段，待听校〕\n\n“Okay, I think I might understand that you movement to become a their why is so guys sidewalk.”〔机器转录片段，待听校〕\n\n“You have a problem with Thomas Wayne. Yes, I do. Have you seen what it's like out there, Marray, Do you ever actually leave the studio. Everybody just yells and screams at each other. Nobody selling anymore. Nobody thinks what it's like to be the other guy.”〔机器转录片段，待听校〕\n\n“If they meant like Thomas Wayne, everything would fight to be someone like me, to be somebody but themselves, they don't. They think that we'll just sit there and like good little boys that we won't world the wild. I mean much self p making excuse for those young men, not everybody I'll tell you there'.”〔机器转录片段，待听校〕\n\n〔S189称呼原识别为“Marray”，未按已知角色名改成“Murray”。〕",
+      "corrections": [
+        {
+          "original": "Marray",
+          "cleaned": "Marray〔原词待核〕",
+          "basis": "源稿S189如此识别；未听校，不按已知主持人名字补写。"
+        }
+      ]
+    },
+    {
+      "first_segment": 191,
+      "last_segment": 195,
+      "heading": "播放节目片段：被取笑的指责与暴力后果",
+      "text": "接着混入“哎，我我要上朋友”“对个”“你说应该是”三个中文碎片，无法确定说话者和意思，保留原词。\n\n“You just wanted to make fun of me.”〔机器转录片段，待听校〕\n\n“Just like the rest of them, youre not first thing about you about. Look at that because is what you did. what alleged you, your riots out there to police in critical condition. You're laughing. You're laughing. Someone was killed today because of what you did. I know.”〔机器转录片段，待听校〕",
+      "corrections": []
+    },
+    {
+      "first_segment": 196,
+      "last_segment": 198,
+      "heading": "名声大噪与全城效仿",
+      "text": "源稿S196只有一个句号，没有可整理的实词。下一段识别为“回什么拜来”〔原词待核，归属不明〕。\n\n讲师称这拍非常精彩，接着报出第31拍、106分钟，并说刚才这一拍用了11分钟。〔“山西一拍”依前面的第30拍及次序整理为第31拍；95分钟到106分钟也与11分钟相应，未据影片重新计时。〕\n\n他继续解释：人物在直播里做了这件大事，因而名声大噪，影响力也大增。城里的很多效仿者跟在后面，使用暴力去对抗他们认为可以对抗的东西。〔保留讲师对影片社会效应的分析，并非赞许暴力。〕",
+      "corrections": [
+        {
+          "original": "山西一拍",
+          "cleaned": "三十一拍〔待核〕",
+          "basis": "按拍号顺序应为第31拍，但原词\"山西\"无法确认"
+        },
+        {
+          "original": "刚才这拍11分钟",
+          "cleaned": "刚才这一拍用了11分钟",
+          "basis": "同批S169报95分钟，S198报106分钟，两时点相差11分钟；未依据原片计时。"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S161关于女邻居被杀是讲师本批说法，未观看影片核验，不据常识纠剧情。",
+    "S168“全程都是小偷”保留原词，不猜成全城小丑。",
+    "S172“能杀害自己的人”与相邻伤害用词不同，保留原词标疑。",
+    "S174“工众”按上下文暂写公众，未听校。",
+    "S175—195播放片段含大量破碎英语及中文插话，逐段保留原识别，无法确认归属者不指定为影片对白或教师点评。",
+    "S177、178、182、183、185、191—193、197的中文碎词保留；2080万不扩成金额、收入或其他事实。",
+    "S189“Marray”未改成已知角色名；英语里的缺词、语法与拼写未按熟悉影片补全。",
+    "S196只有句号；S198第31拍依连续节拍整理，11分钟由同批95—106分钟相互印证，未核画面。",
+    "所有人物极端心态、杀人动机及影片社会效应均为讲师的剧情阐释，非整理者赞同或独立事实核验。"
+  ],
+  "job": "p082-c003",
+  "part": 82,
+  "source_json_sha256": "2d15afbf52f7f9b199b097fbe790d4d01592edebcce48fe127b2a64f26da1e57",
+  "output_text_characters": 3289,
+  "length_ratio": 1.2664613015017328,
+  "review_length_flag": false,
+  "thread_id": "01a07f36-c4ae-7f70-8acf-1e7466b41e49",
+  "usage": {
+    "total": {
+      "totalTokens": 19637,
+      "inputTokens": 10385,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 9252,
+      "reasoningOutputTokens": 7021
+    },
+    "last": {
+      "totalTokens": 19637,
+      "inputTokens": 10385,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 9252,
+      "reasoningOutputTokens": 7021
+    },
+    "modelContextWindow": 258400
+  },
+  "raw_turn_start": {
+    "turn": {
+      "id": "01a07f36-c59d-7be0-8327-ef1b1e76ba74",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "raw_tool_items": [],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "syntax_repair": {
+    "kind": "Offline schema-delimited field extraction and escaping of unescaped inner quotes",
+    "raw_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p082-c003-raw.json",
+    "raw_sha256": "7eea1dd91161691335a1b9633a7274ad1c97af45c484392976c905443b62609b",
+    "complete_raw_responses_read": 1,
+    "source_block_count": 6,
+    "source_uncertainty_count": 23,
+    "every_field_boundary_and_separator_verified": true,
+    "non_structural_characters_preserved": true,
+    "normalization_check": "Before semantic review, strip JSON structural tokens and whitespace from raw and reserialized object; remaining characters exactly equal.",
+    "restored_pre_semantic_snapshot": "research/2026-09-08-charlie-course-cleaning/native-supplements/p082-c003-syntax-restored-before-semantic-review.json",
+    "restored_pre_semantic_sha256": "a7b54a9cac5228816078cd060753daf75868c66b747e65129b79f645451f58eb",
+    "api_calls": 0,
+    "worker_started": false
+  },
+  "independent_full_review": {
+    "reviewer": "/root/clean_core_15_24",
+    "reviewed_at": "2026-09-08",
+    "source_read": "P082 S156—S198全部43段与完整raw全文逐块核读",
+    "changes": [
+      "未转义的内引号逐字段离线恢复；完整原始对象及元数据留存，语义改动前非结构字符一致性通过。",
+      "S175—195拆成四个连续块；所有英语播放片段改为源稿原识别，撤销未经依据的英文补词及Marray→Murray。",
+      "保留全部中文碎片和数字，不擅自指定说话者或补全事实；S196注明只有句号。",
+      "全程小偷不猜成小丑；杀害／伤害保留疑点；邻居被杀等剧情主张归讲师。",
+      "第31拍按前后顺序整理，11分钟由本批95—106分钟印证；保留节目自杀计划变化、同事来访、放走另一同事、节目杀人及效仿者的发展过程。"
+    ],
+    "limits": "未听校、未观看原片，不重建正确台词、不作影片或现实事实核验；未调用API或运行worker。"
+  }
+}

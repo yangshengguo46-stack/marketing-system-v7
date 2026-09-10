@@ -1,0 +1,160 @@
+{
+  "lesson": 33,
+  "source_parts": [
+    {
+      "part": 59,
+      "source_json_sha256": "32578492cf700177f0aa070bf9e12d9f7596c541c898d0bf5f03455b03c8e451",
+      "segment_count": 642
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L33-B001",
+      "part": 59,
+      "first_segment": 1,
+      "last_segment": 40,
+      "heading": "停更说明与训练营的课程安排",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B002",
+      "part": 59,
+      "first_segment": 41,
+      "last_segment": 94,
+      "heading": "完整作品怎样证明新人的完成能力",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B003",
+      "part": 59,
+      "first_segment": 95,
+      "last_segment": 117,
+      "heading": "课程网站与答疑留底的说明",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B004",
+      "part": 59,
+      "first_segment": 118,
+      "last_segment": 183,
+      "heading": "写作纪律与“完美以后再开始”的借口",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B005",
+      "part": 59,
+      "first_segment": 184,
+      "last_segment": 258,
+      "heading": "从即时满足到延迟满足的不确定性",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B006",
+      "part": 59,
+      "first_segment": 259,
+      "last_segment": 311,
+      "heading": "从假期作业到内在冲动与社会要求",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B007",
+      "part": 59,
+      "first_segment": 312,
+      "last_segment": 397,
+      "heading": "方法一：把大奖励具体化，让小奖励及时出现",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B008",
+      "part": 59,
+      "first_segment": 398,
+      "last_segment": 444,
+      "heading": "方法二：接到任务就拆解，别用最高纪录倒算最后冲刺",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B009",
+      "part": 59,
+      "first_segment": 445,
+      "last_segment": 481,
+      "heading": "方法三：关闭干扰，以及一份游戏生涯回顾带来的转变",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B010",
+      "part": 59,
+      "first_segment": 482,
+      "last_segment": 513,
+      "heading": "方法四：先写十分钟，降低开始时的恐惧",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "1分钟法则／先写1分钟",
+          "cleaned": "十分钟法则／先写十分钟",
+          "basis": "S486、491–495、499、507、509及514反复明确十分钟，孤立一字识别与连续语境不符。"
+        }
+      ]
+    },
+    {
+      "id": "L33-B011",
+      "part": 59,
+      "first_segment": 514,
+      "last_segment": 530,
+      "heading": "方法五：先写自己最喜欢的一场戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B012",
+      "part": 59,
+      "first_segment": 531,
+      "last_segment": 589,
+      "heading": "方法六：“为了谁”——借助在意的人形成外部推动",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B013",
+      "part": 59,
+      "first_segment": 590,
+      "last_segment": 620,
+      "heading": "方法七：找搭档，互相监督和交换意见",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L33-B014",
+      "part": 59,
+      "first_segment": 621,
+      "last_segment": 642,
+      "heading": "最终仍要让写作本身成为享受",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "本课为讲师写作经验整理；拖延“就是懒”、动物性与基因、内驱力等解释非临床或科学核验结论。",
+    "S184“既然不是懒”与此前肯定定性相冲突，保留否定待核，未静默纠正。",
+    "十分钟法则在ASR中零星出现一分钟，按多次明确的十分钟及上下文订正并记录。",
+    "稿酬、收入、项目制作周期、新编剧比例、训练营规模与成果为讲师当时自述；非当前报价或招生信息。",
+    "网站仅保留“编剧课点CN”课堂口述名，未添加未验证链接；搭档轶事不表述为抑郁症治疗建议。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第33课.md",
+  "output_sha256": "9b17ca735cf25297655d91e5d2e2c7e54ae8b23fa118b457367ffc14b355de6a",
+  "reader_navigation_update": {
+    "previous_output_sha256": "e7042479aa9b251809873032a81c0878d9ccdc051fb7864918b5cbb01b8a86d3",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

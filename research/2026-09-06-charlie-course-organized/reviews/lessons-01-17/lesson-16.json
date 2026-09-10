@@ -1,0 +1,208 @@
+{
+  "lesson": 16,
+  "title": "悬念与反转",
+  "parts": [
+    38
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    38
+  ],
+  "teaching_nodes": [
+    {
+      "part": 38,
+      "start_seconds": 8,
+      "end_seconds": 482,
+      "label": "学习信心"
+    },
+    {
+      "part": 38,
+      "start_seconds": 483,
+      "end_seconds": 996,
+      "label": "手艺职业观"
+    },
+    {
+      "part": 38,
+      "start_seconds": 997,
+      "end_seconds": 1496,
+      "label": "事前事后知识"
+    },
+    {
+      "part": 38,
+      "start_seconds": 1502,
+      "end_seconds": 1944,
+      "label": "悬念三特点"
+    },
+    {
+      "part": 38,
+      "start_seconds": 1945,
+      "end_seconds": 2069,
+      "label": "炸弹说明场"
+    },
+    {
+      "part": 38,
+      "start_seconds": 2071,
+      "end_seconds": 2506,
+      "label": "三种信息关系"
+    },
+    {
+      "part": 38,
+      "start_seconds": 2509,
+      "end_seconds": 2588,
+      "label": "大小嵌套"
+    },
+    {
+      "part": 38,
+      "start_seconds": 2589,
+      "end_seconds": 2828,
+      "label": "反转方法"
+    },
+    {
+      "part": 38,
+      "start_seconds": 2839,
+      "end_seconds": 3393,
+      "label": "老太太与盲侠例"
+    },
+    {
+      "part": 38,
+      "start_seconds": 3394,
+      "end_seconds": 3652,
+      "label": "边界与观众信任"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "理解并体会悬念三特点及与反转区别",
+      "part": 38,
+      "start_seconds": 1932.07,
+      "end_seconds": 1944.108,
+      "asr_excerpt": "同学们去理解一下",
+      "submission_spec": "无指定故事、个数、交付",
+      "teacher_review": "未说明",
+      "uncertainty": "理解建议，非正式作业"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "课后体会悬念与反转",
+      "part": 38,
+      "start_seconds": 3643.27,
+      "end_seconds": 3648.492,
+      "asr_excerpt": "大家去体会一下悬念和反转",
+      "submission_spec": "无明确提交",
+      "teacher_review": "未说明",
+      "uncertainty": "课堂建议"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "material_continuity": {
+    "relation": "teacher_explicit_theory_reuse",
+    "evidence": "p38 22:15–22:44回顾斯奈德作为事后检查；57:38–58:49观众关系从拉车到风筝",
+    "no_fixed_assignment_reuse": true
+  },
+  "examples": [
+    {
+      "case_version": "phone_omission_and_flashback_lesson16",
+      "source_relation": "老师同一设定两种信息分配示范",
+      "part": 38,
+      "start_seconds": 2193,
+      "end_seconds": 2337,
+      "input": "见女友途中接电话后行动骤变",
+      "change": "省略电话内容或先呈结果再回到此前亲密",
+      "effect": "观众追问原因及所见关系；未完成案情解答"
+    },
+    {
+      "case_version": "restaurant_bomb_lesson16",
+      "source_relation": "教师课堂对照",
+      "part": 38,
+      "start_seconds": 1967,
+      "end_seconds": 2069,
+      "input": "情侣只用对话交代关系的场面",
+      "change": "先让观众知道桌下炸弹和倒计时，角色不知道",
+      "effect": "观众多出离场是否及时的牵挂"
+    },
+    {
+      "case_version": "bus_widow_hidden_motive_lesson16",
+      "source_relation": "老师临时构想，非新闻验证",
+      "part": 38,
+      "start_seconds": 2839,
+      "end_seconds": 3119,
+      "input": "占座整天与乘客司机冲突的老太太",
+      "change": "作者另知亡夫播报及即将更换，暂不告知观众；先投币又改老年卡",
+      "effect": "揭示动机后对同一行为改判，后可让先争吵者帮录音",
+      "limits": "未写完整分镜与提示回收，误导和隐藏在例中非严格互斥"
+    }
+  ],
+  "limits": [
+    "全文机器稿已读，未逐句听校",
+    "53:46不是加法已按原字幕纠正ASR不是减法的解释；原稿保留",
+    "片名ASR盲侠做头饰未从选帧核实版本；老师记忆不确定",
+    "悬念周期数字与信息三分为课堂方法，不扩大为全部作品硬定义",
+    "理论分类作为检查与前课按类型创作示范存在教学张力，分别呈现"
+  ],
+  "frames": [
+    {
+      "part": 38,
+      "source_seconds": 1940,
+      "path": "frames/p038-1940.jpg",
+      "sha256": "26fc36a7e37cefae63689352f55d74756fb904b133c7cb4d0cf75a6de8947233",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 2490,
+      "path": "frames/p038-2490.jpg",
+      "sha256": "273ece9e060631106b185bb0b313489eea921521c184b8e194e82e57f38d428d",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3206,
+      "path": "frames/p038-3206.jpg",
+      "sha256": "aabb91b603cac4d171a6a6395b83a47c6e82a54c2daf6482186dfcb8a643e988",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3220,
+      "path": "frames/p038-3220.jpg",
+      "sha256": "5d0388472c4807179ba04d53926ca892eb1477a83787bb3a3f69a6d9726313b3",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3226,
+      "path": "frames/p038-3226.jpg",
+      "sha256": "407a347421b59b58da1113ee891cf4ea284acd2f5e2f6c8f0c10f939e5ddb55f",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3238,
+      "path": "frames/p038-3238.jpg",
+      "sha256": "b7b1229a77ae41530c9cae00c17f2a4aaf422b382d083fa1e73f906be4dae508",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3241,
+      "path": "frames/p038-3241.jpg",
+      "sha256": "528cdb95446e431c66ddf5ab205f2c360fac4e875bda2805362d37cecd348b5e",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3242,
+      "path": "frames/p038-3242.jpg",
+      "sha256": "a0072faecc91f6091009f7bcf68fa4a3cbc3df266b2ab0291ef3641484353ba4",
+      "visually_read": true
+    },
+    {
+      "part": 38,
+      "source_seconds": 3244,
+      "path": "frames/p038-3244.jpg",
+      "sha256": "0f2d7ea9bea01700b15500517066fa3bcb89db07a4b51e09bc75b758a605106d",
+      "visually_read": true
+    }
+  ]
+}

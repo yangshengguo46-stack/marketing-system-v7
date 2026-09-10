@@ -1,0 +1,122 @@
+{
+  "blocks": [
+    {
+      "first_segment": 231,
+      "last_segment": 233,
+      "heading": "传记体电影的观看难点与解法",
+      "text": "挽救传记体电影的一些手法——否则一个传记电影如果没有如此大咖的演员来撑的话，实际上是很无聊的。如果没有这么多大咖演员的演技，再加上不断地转换场景、不断给新的视觉刺激，这种电影肯定是不好看的。",
+      "corrections": [
+        {
+          "original": "来称的话",
+          "cleaned": "来撑的话",
+          "basis": "口语误识，结合上下文订正"
+        }
+      ]
+    },
+    {
+      "first_segment": 234,
+      "last_segment": 236,
+      "heading": "本片观感与推荐缘起",
+      "text": "但是这部电影，没觉得闷是吧？大部分同学并没有觉得闷，三个小时觉得还挺快乐。好吧，这就是我们在这个电影当中要学的东西。传记体确实不那么主流。关于《华尔街之狼》这部电影，我推荐给大家，几个理由。",
+      "corrections": [
+        {
+          "original": "3个小时",
+          "cleaned": "三个小时",
+          "basis": "数字据原课定位理解，机器稿个别数字可能误识，未据此制作精确成片镜头表〔待核〕"
+        }
+      ]
+    },
+    {
+      "first_segment": 237,
+      "last_segment": 239,
+      "heading": "推荐理由一、二：传记写法与销售沟通",
+      "text": "第一个理由，我们借这个电影学习一下传记体怎么写，这个确实是可以写得好看的，未必非得很严肃，或者未必非得很悲情，可以是好看的，这是学的第一个点。\n\n第二个点呢，就是推荐给大家，大家去学习一下这部电影当中一些销售以及与人沟通的精神，我觉得是对我们生活是有帮助的。我们未必要做一个坏人，但是做一个能够……",
+      "corrections": [
+        {
+          "original": "传记题",
+          "cleaned": "传记体",
+          "basis": "同音误识，结合本段上下文订正"
+        }
+      ]
+    },
+    {
+      "first_segment": 240,
+      "last_segment": 240,
+      "heading": "推荐理由三：坏人主角如何让观众共情",
+      "text": "……拥有强大气场、强大商业感染力的一个人，也是不错的。〔承接上一块第二个推荐理由。〕\n\n第三点，我们也学习一下：如果一个故事的主角他不是个好人，对吧？这个电影的主角显然不是个好人，我们如何能够让观众共情，我们可以做一下调查。",
+      "corrections": []
+    },
+    {
+      "first_segment": 241,
+      "last_segment": 242,
+      "heading": "现场提问与反派角色塑造",
+      "text": "来，同学们，你们有多少人是担心这个主角被抓走的？当然，这与由迪卡普里奥饰演他也有关系，对吧？我们当然知道他是个坏人，他做了太多缺德事了，对吧？但是呢，我们实际上还是站在他这一边的，对吧？很多同学还是站在他这一边的。\n\n就像这种角色怎么去塑造，对吧？怎么去塑造他还有良心的那一面，还是说有兄弟情的那一面，对吧？这个东西也是我们可以值得去研究的。再加上我刚才说过的，时代的这些元素，自己往上加一加。",
+      "corrections": [
+        {
+          "original": "抵卡布利奥",
+          "cleaned": "迪卡普里奥",
+          "basis": "人名同音误识，结合影片演员订正"
+        }
+      ]
+    },
+    {
+      "first_segment": 243,
+      "last_segment": 243,
+      "heading": "小节收束",
+      "text": "好吧。",
+      "corrections": []
+    }
+  ],
+  "uncertainties": [
+    "S234‘三个小时’据原课定位理解，机器稿个别数字可能误识，未据此制作精确成片镜头表〔待核〕",
+    "S241‘抵卡布利奥’订正为‘迪卡普里奥’，系结合影片演员推断，未逐句听校"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p080-c007",
+  "part": 80,
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "output_text_characters": 651,
+  "length_ratio": 0.9545,
+  "review_length_flag": false,
+  "thread_id": "01a07f35-e4ca-74e2-9a72-1974d74ba3f9",
+  "usage": {
+    "total": {
+      "totalTokens": 10233,
+      "inputTokens": 9483,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 750,
+      "reasoningOutputTokens": 15
+    },
+    "last": {
+      "totalTokens": 10233,
+      "inputTokens": 9483,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 750,
+      "reasoningOutputTokens": 15
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null,
+  "independent_full_review": {
+    "date": "2026-09-08",
+    "reviewer": "clean_core_25_34",
+    "scope": "全文顺读P080 S231—S243并对照本文件全部正文块；全章243段均已读完。",
+    "first_segment": 231,
+    "last_segment": 243,
+    "segment_count": 13,
+    "block_count": 6,
+    "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+    "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c007-before-independent-full-review.json",
+    "before_sha256": "ab73a30a25384fa76c0c2a497cdc2685f0601862439db8e96f24b41cf4bc71cd",
+    "changes": [
+      "完整保留传记观影不闷、三项学习目的、坏人主角的共情调查与良心/兄弟情/时代元素讨论。",
+      "S240第二理由尾句移回源块，演员不等于角色本人；没有新增观影或写作作业。"
+    ],
+    "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+    "preserved_review_keys": []
+  }
+}

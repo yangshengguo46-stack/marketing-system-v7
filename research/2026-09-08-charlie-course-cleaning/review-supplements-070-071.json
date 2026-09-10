@@ -1,0 +1,174 @@
+{
+  "reviewer": "/root/clean_core_15_24",
+  "reviewed_at": "2026-09-08",
+  "status": "complete",
+  "method": "完整顺读 P070 121 段与 P071 97 段机器源稿，再逐块对照全部 7 份 clean JSON；保留修改前备份，修正文并逐批写入 lead_full_review。未听校、未看片或外部核验。",
+  "parts": [
+    {
+      "part": 70,
+      "source_path": "research/2026-09-06-charlie-course-organized/transcripts/p070.json",
+      "source_json_sha256": "e9fab80db79a7b0d9bc35c07f1f4598bdd9a684514807500ab0ff9b394d4d6fc",
+      "segment_count": 121,
+      "source_characters": 9181,
+      "chunks": [
+        {
+          "job": "p070-c001",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c001-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c001-before-independent-full-review.json",
+          "first_segment": 1,
+          "last_segment": 29,
+          "blocks": 7,
+          "output_characters": 2105,
+          "before_sha256": "b4958a3f33a1cbf017b1bbafacf9b168453e1e91ba2e32ea37faf7f1e731c2c9",
+          "after_sha256": "423e1c46fcc7bfca923d95b7b5a1b962b3bea0a77bd63f30507e0dcf9f36ef4f",
+          "changes": [
+            "将开头强类型改为有上下集连续语境支持的强设定喜剧；统一起承转合术语。",
+            "撤回“骑视对手→竞争对手”“赚钱脑→赚钱”的无标疑定稿；还原为有限转述。",
+            "修整句子、合并口头重复，保留每一拍、穿越现状问答、咒语偏轻及拒绝召唤过程。",
+            "讲师有关市场、评分、穿越结构的主张注明其课堂口径。"
+          ]
+        },
+        {
+          "job": "p070-c002",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c002-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c002-before-independent-full-review.json",
+          "first_segment": 30,
+          "last_segment": 55,
+          "blocks": 7,
+          "output_characters": 2129,
+          "before_sha256": "aa0c60a2510ad669a68c58b3c5ea0ac7d58183862ef0a157c97779f06aafd82a",
+          "after_sha256": "760f8d407d00ca2c241aa7d128c6e2c0c11a488b80b91280784c7258ea2a5a02",
+          "changes": [
+            "修复关键术语“故事终点→中点”，不沿用旧清洗无证据声称看过烧录字幕的依据。",
+            "将相约酒吧订正为歌曲《相约九八》；匠气、钉是钉铆是铆按语义整理。",
+            "修复S38开头评价越入33—37块的范围问题；讲解性“得奖”不再误标电影对白。",
+            "保留第十四至十九拍的对比、马冬梅牺牲铺垫、误会和主线目标；不扩写未见情节。",
+            "校正corrections中的复合原词记录，每项只引用本块源文实际连续出现的原词。"
+          ]
+        },
+        {
+          "job": "p070-c003",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c003-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c003-before-independent-full-review.json",
+          "first_segment": 56,
+          "last_segment": 90,
+          "blocks": 11,
+          "output_characters": 2160,
+          "before_sha256": "fc729ca95c7b191869c54309ed185df9f1b3106e30800f9f73071f961cf5743b",
+          "after_sha256": "5e841414dd9291ab1fce5a7f8ba1505ce186adbd31be202fd29448b3e9f3986f",
+          "changes": [
+            "修复S73舆论危机与歌曲变少被写入70—72块，移回73—75块。",
+            "纠正同一人物的代词误判；一姐梅→一剪梅、回乡面→茴香面、灵欢之也→灵魂黑夜。",
+            "保留先说对比戏作用小、随后承认含背叛信息的自我补充，不断章取义。",
+            "修正82—83标题，不把寻找马冬梅失败误标成第二十六拍主体。",
+            "保留整段主线判点问答、卧底堂主类比、标枪道具与连续三重打击。",
+            "校正corrections中的复合原词记录，每项只引用本块源文实际连续出现的原词。"
+          ]
+        },
+        {
+          "job": "p070-c004",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c004-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p070-c004-before-independent-full-review.json",
+          "first_segment": 91,
+          "last_segment": 121,
+          "blocks": 5,
+          "output_characters": 1240,
+          "before_sha256": "5d176c9785217eebe37ab58d996e33f4614ba68aca272d10cb52c886e8ee9821",
+          "after_sha256": "9a93c9e66e4cf8f7ea199a10d41cd51c9165c994c13e3cf5dea2c3e7bb781a64",
+          "changes": [
+            "修复S96的比较与背叛句越写进91—95块；恢复到96—97块，并纠正“全都被背叛”的主被动错误。",
+            "统一HRV→HIV，撤销“这是教师原话”的无证据认定。",
+            "修复S103第一句越写进98—102块、S112首句越入103—111块；源段范围不改。",
+            "保留母亲、助理、沈腾三人表演点评和对“喜剧演员”称呼的自我纠正。",
+            "不把残破对白连成看似完整原台词；保留探望、回现实、末尾蒙太奇三段过程。"
+          ]
+        }
+      ]
+    },
+    {
+      "part": 71,
+      "source_path": "research/2026-09-06-charlie-course-organized/transcripts/p071.json",
+      "source_json_sha256": "3543cc96719ac9f86f7854af37e4e91fae7dd98a28eb396c6e3548bbaa95dea7",
+      "segment_count": 97,
+      "source_characters": 6056,
+      "chunks": [
+        {
+          "job": "p071-c001",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c001-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c001-before-independent-full-review.json",
+          "first_segment": 1,
+          "last_segment": 46,
+          "blocks": 11,
+          "output_characters": 2099,
+          "before_sha256": "ebf7f7ffbc1a8b975e0667ab6a8102c06bae3185acb938f24af04a8986909ab2",
+          "after_sha256": "55907c8c6c78ee73452cbd43778cbc4cf33f19bd82012c1f1ae0c97a840c0455",
+          "changes": [
+            "修复S7前半评价误移入5—6块，以及S21明确说学生思路没错被移入22—24块的问题。",
+            "纠正相约酒吧、大英实体；保留难兄难弟准确片名待核，不另猜影片。",
+            "完整保留老师/校长/家长对抗也可行的论点与舞台改编约束的取舍。",
+            "不把前期目标关系、茴香汤误会等过度概括成只列方法名称。",
+            "校正corrections中的复合原词记录，每项只引用本块源文实际连续出现的原词。"
+          ]
+        },
+        {
+          "job": "p071-c002",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c002-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c002-before-independent-full-review.json",
+          "first_segment": 47,
+          "last_segment": 85,
+          "blocks": 14,
+          "output_characters": 2431,
+          "before_sha256": "181f0f4b9ba92856d4443c305fe06456a7c5d7c134598d127cd7b1861c09b101",
+          "after_sha256": "c93cf4b3302d35f544822e5028c510c9d407d23d081423e7398fd94c5b7791fd",
+          "changes": [
+            "纠正两次赋尸→两次赋诗、现实报→现世报、大英→那英，清除无依据实体疑问。",
+            "撤销“没人巧合→没有巧合”的错误关键否定。",
+            "修复S79 callback与作者侧重被搬进76—78块，移回79—80。",
+            "保留学生对冒犯提出少用、老师明确赞同，以及小树林假设改动的烈度/喜剧感取舍。",
+            "保留十四种方法的例子和原练习，未只剩方法名摘要。",
+            "校正corrections中的复合原词记录，每项只引用本块源文实际连续出现的原词。"
+          ]
+        },
+        {
+          "job": "p071-c003",
+          "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c003-clean.json",
+          "backup_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p071-c003-before-independent-full-review.json",
+          "first_segment": 86,
+          "last_segment": 97,
+          "blocks": 2,
+          "output_characters": 927,
+          "before_sha256": "59d5648b168221b4df0000d637cabd07412bf8b791c2890032048c94b7557246",
+          "after_sha256": "b1464d97ad50b2f93800df9fc92d4a46cf994d407457775bdb4822e60a96f8a4",
+          "changes": [
+            "修复“孟特娇最后变性成孟特娇”的实体错误和错误corrections依据。",
+            "订正挂历、赋诗、下落不明、现世报；保留不清词而不猜新的事实。",
+            "将只有第四/第五的标题改为能覆盖末尾完整回顾范围的标题。",
+            "保留课尾目标关系答疑、讲师自我调侃，以及原源重复的十四种方法回顾，不删成一行摘要。"
+          ]
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "all_source_segments_read": true,
+    "all_clean_blocks_compared": true,
+    "ordered_contiguous_exactly_once_coverage": true,
+    "source_sha256_verified": true,
+    "seven_original_backups_preserved": true,
+    "seven_lead_full_review_records_present": true,
+    "text_character_counts_verified": true,
+    "compiled_markdown_modified": false,
+    "correction_originals_match_own_source_blocks": true
+  },
+  "principal_corrections": [
+    "P070 将“全都被叛了了”的错误被动关系订正为众人背叛夏洛，依据 S91 与 S98；HRV 按本课多次出现订正为 HIV，仍为课堂剧情转述。",
+    "P070 保留全部32拍发展与讲师改口，调整若干跨块提前搬移和重复；订正中点、灵魂黑夜、歌曲名等上下文可确认词。",
+    "P071 撤销“没有巧合”的不可靠否定，还原孟特与孟特娇的前后称呼区别；保留14种喜剧手段、具体例子、学生反驳与讲师不建议采用的笑料。",
+    "P071 修复少数跨段重复，保留结尾逐项复述，不把回顾写成新增作业。"
+  ],
+  "remaining_uncertainties": [
+    "没有逐句听校、没有观看电影片段；涉及播放对白的碎词保留标疑。",
+    "孟／梦特的字形、陈凯等姓名、个别模糊术语、句子否定和影片名仍需回音画确认。",
+    "影片时间点、年份、音乐版权、商业与文化判断为讲师说法；未进行独立事实核查。"
+  ]
+}

@@ -1,0 +1,364 @@
+{
+  "lesson": 8,
+  "source_parts": [
+    {
+      "part": 15,
+      "source_json_sha256": "66885e42af6fa546ac9feddce63b6659a4a5e6877456a8fbce29d80c2eebe878",
+      "segment_count": 510
+    },
+    {
+      "part": 16,
+      "source_json_sha256": "9f170558dd59f244404ce023880817089f5f77858dad9c7092830c85dfa1dee2",
+      "segment_count": 383
+    },
+    {
+      "part": 17,
+      "source_json_sha256": "a9448ad8a7c9c98010820f0cbf533529658d789c7098845580f0916d472bd571",
+      "segment_count": 469
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L08-B001",
+      "part": 15,
+      "first_segment": 1,
+      "last_segment": 26,
+      "heading": "梗概为什么还要经过大纲",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B002",
+      "part": 15,
+      "first_segment": 27,
+      "last_segment": 63,
+      "heading": "性格和前史都要找得到呈现方式",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B003",
+      "part": 15,
+      "first_segment": 64,
+      "last_segment": 84,
+      "heading": "不修边幅、貌合神离怎样勾勒成画面",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B004",
+      "part": 15,
+      "first_segment": 85,
+      "last_segment": 150,
+      "heading": "五个关键事件之间，还要有过渡单位",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "四目式／赚着／启程转合／木／长",
+          "cleaned": "四幕式／转折／起承转合／幕／场",
+          "basis": "前课结构名称和本段明确对照。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B005",
+      "part": 15,
+      "first_segment": 151,
+      "last_segment": 189,
+      "heading": "为什么不同教材会有不同分法",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "文人相亲／5人／刘霞／节牌器",
+          "cleaned": "文人相轻／武人／刘翔／节拍器",
+          "basis": "本段用竞赛对比文学判断，人物先在S164明确。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B006",
+      "part": 15,
+      "first_segment": 190,
+      "last_segment": 232,
+      "heading": "从五件大事补成十个序列",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B007",
+      "part": 15,
+      "first_segment": 233,
+      "last_segment": 280,
+      "heading": "开场、切入、激励、进展、转折的任务",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "附加值／激利／吉理／依次动作",
+          "cleaned": "负价值／激励／激励／一次动作",
+          "basis": "身份定语语境及前课已定义的一次、二次动作。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B008",
+      "part": 15,
+      "first_segment": 281,
+      "last_segment": 338,
+      "heading": "再转、危机、导入、高潮、结局的任务",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B009",
+      "part": 15,
+      "first_segment": 339,
+      "last_segment": 389,
+      "heading": "旁白为什么暂时不建议初学者使用",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B010",
+      "part": 15,
+      "first_segment": 390,
+      "last_segment": 403,
+      "heading": "回忆可以有，别只为补一条信息突然闪回",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B011",
+      "part": 15,
+      "first_segment": 404,
+      "last_segment": 444,
+      "heading": "“他们刚吵过架”怎样从感觉改成可见细节",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "地上一滩雪",
+          "cleaned": "地上一摊血",
+          "basis": "S434随后菜刀、出大事、报警的完整对比语境。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B012",
+      "part": 15,
+      "first_segment": 445,
+      "last_segment": 510,
+      "heading": "把八要素放回十序列的纵轴",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "主力／副驾驶／世接",
+          "cleaned": "阻力／负价值／事件",
+          "basis": "同段已明确八要素的回顾与板书。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B013",
+      "part": 16,
+      "first_segment": 1,
+      "last_segment": 38,
+      "heading": "把课堂警察故事填入十序列",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B014",
+      "part": 16,
+      "first_segment": 39,
+      "last_segment": 78,
+      "heading": "从人物弧线确定开场；配角随事件出现",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B015",
+      "part": 16,
+      "first_segment": 79,
+      "last_segment": 152,
+      "heading": "开场演示：夜市看见欺凌，却关掉对讲机",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B016",
+      "part": 16,
+      "first_segment": 153,
+      "last_segment": 180,
+      "heading": "切入先延续痛苦，再为钱的问题铺路",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "切肉洗／以身殉之／前七／恕罪",
+          "cleaned": "切入戏／因公殉职／前妻／宿醉",
+          "basis": "既定序列与夫妻关系、前夜喝酒次日登门语境。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B017",
+      "part": 16,
+      "first_segment": 181,
+      "last_segment": 236,
+      "heading": "切入的现场推演：前妻的新伴侣还有一个儿子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B018",
+      "part": 16,
+      "first_segment": 237,
+      "last_segment": 253,
+      "heading": "切入还要明确缺钱：女儿想上音乐学院",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B019",
+      "part": 16,
+      "first_segment": 254,
+      "last_segment": 297,
+      "heading": "激励：不情愿的捐款让他发现一条路",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B020",
+      "part": 16,
+      "first_segment": 298,
+      "last_segment": 333,
+      "heading": "进展：求死失败，反而得到荣誉；现场取消加薪",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B021",
+      "part": 16,
+      "first_segment": 334,
+      "last_segment": 383,
+      "heading": "把爆炸案后移，多次失败以后再给短暂甜头",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "升值／升职加息／报价",
+          "cleaned": "升职／升职加薪／爆炸案",
+          "basis": "同段当场先提出再调整奖励，爆炸案向后移动的顺序清楚。"
+        }
+      ]
+    },
+    {
+      "id": "L08-B022",
+      "part": 17,
+      "first_segment": 1,
+      "last_segment": 55,
+      "heading": "转折打落虚假胜利：过去放走的人又犯重罪",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B023",
+      "part": 17,
+      "first_segment": 56,
+      "last_segment": 113,
+      "heading": "再转：调查、失败，发现自己的荣誉只是表面",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B024",
+      "part": 17,
+      "first_segment": 114,
+      "last_segment": 175,
+      "heading": "危机、导入和高潮：把想做真男人推到生死考验",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B025",
+      "part": 17,
+      "first_segment": 176,
+      "last_segment": 231,
+      "heading": "结局的多个选择；暂定女儿回到病床旁",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B026",
+      "part": 17,
+      "first_segment": 232,
+      "last_segment": 260,
+      "heading": "回捋开场：先隐瞒身份，再用对讲机刺激观众",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B027",
+      "part": 17,
+      "first_segment": 261,
+      "last_segment": 306,
+      "heading": "回捋切入和激励；若求死突兀，就提前埋下火种",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B028",
+      "part": 17,
+      "first_segment": 307,
+      "last_segment": 335,
+      "heading": "回捋进展与虚假胜利：救人失败在于自己没死",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B029",
+      "part": 17,
+      "first_segment": 336,
+      "last_segment": 389,
+      "heading": "回捋打击：让原罪戳破泡沫，重新决定补过",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B030",
+      "part": 17,
+      "first_segment": 390,
+      "last_segment": 417,
+      "heading": "回捋最后阻碍、高潮与喜剧收口",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L08-B031",
+      "part": 17,
+      "first_segment": 418,
+      "last_segment": 469,
+      "heading": "八要素在序列里变化；本课明确作业",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "负加值／1个训练／无法变现",
+          "cleaned": "负价值／十个序列／无法变成画面",
+          "basis": "本段明说八项在十个序列中变化及画面呈现。"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "全部P015/P016/P017顺读并保留再次回捋中增加的细节；同课现场改口、备选情节与暂定版本分清，未将所有备选拼成同一个定稿。",
+    "P015 S430破碎语句、S436–440招呼原句字数；P016 S013破碎词；P017 S037破碎词、S100父亲身份的否定、S120/S152银行与地铁口误待核。",
+    "本课警察为抚恤金留妻女的版本，未强行替换为其他课动机。金额、装置时空限制、装备安排均为现场虚构设想，未核验现实制度/技术。",
+    "作业为按课堂警察故事十个关节写大纲，不是另创故事；未新增字数硬门槛、提交渠道或截止时间。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第08课.md",
+  "output_sha256": "6f17ff70012bebae2fc8c33776171be529d9fa63d33ec3f7ab4a24c67fc21f76",
+  "reader_navigation_update": {
+    "previous_output_sha256": "68ebe7edc6b6c1b237243aec24dd49cb745f2ef7b1ce79cfd71b892cb795db0a",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

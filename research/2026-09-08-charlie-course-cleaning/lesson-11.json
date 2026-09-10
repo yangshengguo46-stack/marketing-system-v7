@@ -1,0 +1,249 @@
+{
+  "lesson": 11,
+  "source_parts": [
+    {
+      "part": 22,
+      "source_json_sha256": "788203152995e5ed6c9d2c296b10c2c1e0e61199c35f03c69f1629230f383018",
+      "segment_count": 439
+    },
+    {
+      "part": 23,
+      "source_json_sha256": "2231c8b225248949fd2b13e3713b44a4312fa019c21433c02b47b3c7d06ef1a2",
+      "segment_count": 470
+    },
+    {
+      "part": 24,
+      "source_json_sha256": "4f53326eba91df733d913db69c391b7578e64c07fb2f0201ba03d4ecf68f6994",
+      "segment_count": 295
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L11-B001",
+      "part": 22,
+      "first_segment": 1,
+      "last_segment": 41,
+      "heading": "分类为了研究；商业与文艺不是好看与不好看",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B002",
+      "part": 22,
+      "first_segment": 42,
+      "last_segment": 115,
+      "heading": "量产车与概念车；别把文艺当遮羞布",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B003",
+      "part": 22,
+      "first_segment": 116,
+      "last_segment": 198,
+      "heading": "视频网站的类别，来自观看承诺",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "百变星军／非自然力量滚",
+          "cleaned": "《百变星君》／超自然力量、鬼",
+          "basis": "明确片名及鬼怪举例语境。"
+        }
+      ]
+    },
+    {
+      "id": "L11-B004",
+      "part": 22,
+      "first_segment": 199,
+      "last_segment": 229,
+      "heading": "李连杰转文戏与奥利奥轮胎的比喻",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B005",
+      "part": 22,
+      "first_segment": 230,
+      "last_segment": 278,
+      "heading": "《救猫咪》的十类，适合怎样使用",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B006",
+      "part": 22,
+      "first_segment": 279,
+      "last_segment": 353,
+      "heading": "与教师喝茶的争论；把十类看成十种创作思路",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B007",
+      "part": 22,
+      "first_segment": 354,
+      "last_segment": 439,
+      "heading": "列出十类；先从金羊毛进入",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "金耀王／金样毛／金阳毛／便签仪式",
+          "cleaned": "金羊毛／变迁仪式",
+          "basis": "本课列出的类别名称，金羊毛由希腊传说明确；变迁仪式后P023详释。"
+        }
+      ]
+    },
+    {
+      "id": "L11-B008",
+      "part": 23,
+      "first_segment": 1,
+      "last_segment": 53,
+      "heading": "金羊毛：路径、团队、奖品",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "心花怒放／新华路况",
+          "cleaned": "《心花路放》",
+          "basis": "上下文明确为去大理的公路片，同课反复提及。"
+        },
+        {
+          "original": "绿叶仙踪／陶老师",
+          "cleaned": "《绿野仙踪》／陶乐丝",
+          "basis": "黄砖路、奥兹魔法师及同行角色上下文。"
+        }
+      ]
+    },
+    {
+      "id": "L11-B009",
+      "part": 23,
+      "first_segment": 54,
+      "last_segment": 137,
+      "heading": "爱情故事与关于爱情概念的岔题",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B010",
+      "part": 23,
+      "first_segment": 138,
+      "last_segment": 196,
+      "heading": "改口：《杀人回忆》采用情感故事的方法；互补怎样成立",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B011",
+      "part": 23,
+      "first_segment": 197,
+      "last_segment": 246,
+      "heading": "鬼屋：封闭空间、强大威胁与原罪",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B012",
+      "part": 23,
+      "first_segment": 247,
+      "last_segment": 314,
+      "heading": "超级英雄与侦探：从能力使命到探秘者的牺牲",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "宋词",
+          "cleaned": "宋慈",
+          "basis": "与包公、福尔摩斯并列，谈古代探案人物。"
+        }
+      ]
+    },
+    {
+      "id": "L11-B013",
+      "part": 23,
+      "first_segment": 315,
+      "last_segment": 377,
+      "heading": "如愿以偿：愿望、咒语和教训",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B014",
+      "part": 23,
+      "first_segment": 378,
+      "last_segment": 409,
+      "heading": "麻烦家伙：普通人突然遭遇生死麻烦",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B015",
+      "part": 23,
+      "first_segment": 410,
+      "last_segment": 470,
+      "heading": "变迁仪式：正常的人生问题，被过激方法绕了一圈",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B016",
+      "part": 24,
+      "first_segment": 1,
+      "last_segment": 48,
+      "heading": "愚者成功：保留自己，完成看似不属于自己的伟业",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "绿正俏佳人",
+          "cleaned": "《律政俏佳人》",
+          "basis": "片名音近，且后文以女主进入法学院举例。"
+        }
+      ]
+    },
+    {
+      "id": "L11-B017",
+      "part": 24,
+      "first_segment": 49,
+      "last_segment": 116,
+      "heading": "被制度化：群体束缚下，选择自己还是集体",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B018",
+      "part": 24,
+      "first_segment": 117,
+      "last_segment": 194,
+      "heading": "用《半个喜剧》检查：为什么需要彼此，沟又够不够大",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B019",
+      "part": 24,
+      "first_segment": 195,
+      "last_segment": 240,
+      "heading": "《梅花烙》：把相爱的代价推到整个家族",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L11-B020",
+      "part": 24,
+      "first_segment": 241,
+      "last_segment": 295,
+      "heading": "回到实际写作：鬼屋为什么不能随时离开",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "《梅花烙》身份称谓、《触不可及》动机及爱情史数字均保留课堂转述疑点；未替换为外部剧情或历史。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第11课.md",
+  "output_sha256": "8ac4bc3d61f8cb93659ce0d08723dff469156f497b36330f248189d622e0c232",
+  "reader_navigation_update": {
+    "previous_output_sha256": "6e713b43b671fa7383f90103d565111caebd3b84c2ad2da68b5f3f002a36a7b2",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "part": 83,
+  "title": "编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！",
+  "source": {
+    "part": 83,
+    "cid": 29820388979,
+    "title": "编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=83",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！.mp4",
+    "sha256": "c2fd6383538bd3597079249d09430ec5953dc2cd995cb837b2eb270afe620b3c",
+    "bytes": 139821845,
+    "mtime_ns": 1788682346333619486,
+    "actual_duration_seconds": 2886.338639
+  },
+  "full_transcript_read_parts": [
+    83
+  ],
+  "transcript_segment_count": 410,
+  "transcript_artifact_sha256": {
+    "p083.source-time.txt": "7a7235a5b20da72c1aef7f83209e794ac6ad8eeec537a0529ac0cf9e10263e64",
+    "p083.source-time.srt": "28da7e6acae292f6d306574fddae55642e74963185d57901e8b249d61b8c1fba"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 83,
+      "start_seconds": 0,
+      "end_seconds": 152,
+      "label": "集中时间、多视角与拆包边界"
+    },
+    {
+      "part": 83,
+      "start_seconds": 152,
+      "end_seconds": 414,
+      "label": "环境、司机、疏忽与困境"
+    },
+    {
+      "part": 83,
+      "start_seconds": 415,
+      "end_seconds": 696,
+      "label": "调度补救与人物关系交叉"
+    },
+    {
+      "part": 83,
+      "start_seconds": 697,
+      "end_seconds": 969,
+      "label": "失误的后果及不同视角"
+    },
+    {
+      "part": 83,
+      "start_seconds": 972,
+      "end_seconds": 1236,
+      "label": "避险转追救与计划失败"
+    },
+    {
+      "part": 83,
+      "start_seconds": 1236,
+      "end_seconds": 1437,
+      "label": "连续计划、最后救援及关系变化"
+    },
+    {
+      "part": 83,
+      "start_seconds": 1438,
+      "end_seconds": 1578,
+      "label": "有成长空间的互补与共同点"
+    },
+    {
+      "part": 83,
+      "start_seconds": 1580,
+      "end_seconds": 1822,
+      "label": "主角选择与前半段主动性"
+    },
+    {
+      "part": 83,
+      "start_seconds": 1823,
+      "end_seconds": 2064,
+      "label": "当前对话与表演承载前史"
+    },
+    {
+      "part": 83,
+      "start_seconds": 2065,
+      "end_seconds": 2456,
+      "label": "换主角/改任务的两种改法与代价"
+    },
+    {
+      "part": 83,
+      "start_seconds": 2457,
+      "end_seconds": 2623,
+      "label": "1500字作业及集中时间扩展宽度"
+    },
+    {
+      "part": 83,
+      "start_seconds": 2624,
+      "end_seconds": 2747,
+      "label": "已知结局仍保留方案期待、延伸看片"
+    },
+    {
+      "part": 83,
+      "start_seconds": 2748,
+      "end_seconds": 2881,
+      "label": "录课时ChatGPT局部协助建议"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "part": 83,
+      "task": "按保留双司机并驾驶儿童参观列车的改法，写约1500字故事/梗概",
+      "start_seconds": 2457,
+      "end_seconds": 2519,
+      "submission_spec": "两司机先救车上孩子，再追救失控列车；矛盾、失误等自行配套调整。无提交渠道、期限。45:26–45:47再次鼓励同题梗概，非新题。",
+      "teacher_review": "当堂教师给出改法，未展示改写成品或后续批改",
+      "uncertainty": "1500字与尝试改写字幕已核；完整机器稿未逐句听校",
+      "assignment_form": "完整故事梗概",
+      "restated_at": [
+        2726,
+        2747
+      ]
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 83,
+      "task": "研究镜头的速度、压迫及纪实感",
+      "start_seconds": 152,
+      "end_seconds": 215,
+      "submission_spec": "课堂讨论或延伸学习，无报告提交要求",
+      "teacher_review": "教师当堂讨论，不是新作品回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 83,
+      "task": "讨论能进入人物成长的互补",
+      "start_seconds": 1438,
+      "end_seconds": 1578,
+      "submission_spec": "课堂讨论或延伸学习，无报告提交要求",
+      "teacher_review": "教师当堂讨论，不是新作品回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 83,
+      "task": "比较两种主角视角",
+      "start_seconds": 1580,
+      "end_seconds": 1822,
+      "submission_spec": "课堂讨论或延伸学习，无报告提交要求",
+      "teacher_review": "教师当堂讨论，不是新作品回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 83,
+      "task": "延伸观看《迫降航班》《生死时速》《理查德·朱维尔的哀歌》",
+      "start_seconds": 2680,
+      "end_seconds": 2723,
+      "submission_spec": "课堂讨论或延伸学习，无报告提交要求",
+      "teacher_review": "教师当堂讨论，不是新作品回收",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "主角前段弱：换调度人物为主角或重新分配双司机任务",
+      "source_type": "teacher_proposed_rewrite_not_tested"
+    },
+    {
+      "label": "已有结局用不同补救方案维持期待",
+      "source_type": "teacher_retroactive_film_analysis"
+    }
+  ],
+  "frame_checks": [
+    {
+      "seconds": 2463,
+      "file": "frames/p083-2463.jpg",
+      "verified": "尝试用这个方式"
+    },
+    {
+      "seconds": 2466,
+      "file": "frames/p083-2466.jpg",
+      "verified": "1500字故事"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false
+  },
+  "limits": [
+    "教师改版未产生成片或写作效果验证",
+    "影片救援、真实事故及课堂推测分开",
+    "多视角与方案数量不作所有作品的配额",
+    "AI口头用法未实测，不能当能力已验证"
+  ]
+}

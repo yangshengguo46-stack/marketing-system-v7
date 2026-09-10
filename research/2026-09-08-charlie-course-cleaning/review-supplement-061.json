@@ -1,0 +1,210 @@
+{
+  "part": 61,
+  "source": "research/2026-09-06-charlie-course-organized/transcripts/p061.json",
+  "source_json_sha256": "35b11edc67b4847f35893eab058bdc4fcfe08eb4434e82b8d94de7460d9afa0e",
+  "segment_count": 1087,
+  "source_text_characters": 26802,
+  "file_count": 11,
+  "block_count": 80,
+  "reviewer": "clean_core_25_34",
+  "date": "2026-09-08",
+  "scope": "完整顺读P061 S1—S1087，并逐块对照c001—c011共80块全文；不是抽查或只校段号。",
+  "limits": [
+    "仅对ASR文本全文复核，未连续看视频或逐句听校。",
+    "片段严重错识处保留可辨过程及疑点，不猜实体、外语、数字或补台词。",
+    "讲师观点、创作经历、宣传和分级等未作外部核验。",
+    "保留原问答、改口与报名引导，未添加作业。"
+  ],
+  "history_note": "c002原生响应本来包含S133—S180，早期schema修复嵌套错误造成误判；本次不是把这段记作原模型漏写。",
+  "files": [
+    {
+      "job": "p061-c001",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c001-clean.json",
+      "first_segment": 1,
+      "last_segment": 87,
+      "segment_count": 87,
+      "block_count": 9,
+      "output_text_characters": 2276,
+      "output_sha256": "7a49d42991453dfe5bbf05ec4f8d066304a2faeec47eaa2b7fa038f01f2a2b8e",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c001-before-second-independent-review.json",
+      "before_sha256": "23a8fe480c96a1b10c4c69174542a071c0a5119325e59b66f960fb6e826cc0bc",
+      "issues": [
+        "补明演员名指代角色；补回S46残片提示；明确全章讲师说法和未听校界限。"
+      ]
+    },
+    {
+      "job": "p061-c002",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c002-clean.json",
+      "first_segment": 88,
+      "last_segment": 180,
+      "segment_count": 93,
+      "block_count": 10,
+      "output_text_characters": 2251,
+      "output_sha256": "0507075f1947d738e0eed428dd6163111822b255b6964c5eb045cf0ad20cf602",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c002-before-second-independent-review.json",
+      "before_sha256": "2e047c54b5a17fb26bd15be0cf56873d8c5da0fa9dae7cce38ca5fbea6f65fa2",
+      "issues": [
+        "修复演员/角色混称、争执结束误改第一幕结束、中点误作终点；对白保留原否定。",
+        "保留lead_review关于schema修复的准确历史：原生响应S133—S180完整，不报告为原模型漏写。"
+      ]
+    },
+    {
+      "job": "p061-c003",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c003-clean.json",
+      "first_segment": 181,
+      "last_segment": 278,
+      "segment_count": 98,
+      "block_count": 5,
+      "output_text_characters": 2559,
+      "output_sha256": "f829774022569cac6cc73f4f07ef6b82ac86b3133d3a9d1709513534d5f16251",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c003-before-second-independent-review.json",
+      "before_sha256": "537ff1286387a9dcc30f9e5316649720c6e16a668206baeb475af7088ce6639f",
+      "issues": [
+        "重整第二幕结尾、八岁儿子和卧室片段的乱码对白，保留所有可辨争执/讨债/人质/承诺动作，不猜台词。",
+        "恢复S256制片人称谓并标疑；八岁与六岁不统一；恢复亲妈/亲爹问话信息。"
+      ]
+    },
+    {
+      "job": "p061-c004",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c004-clean.json",
+      "first_segment": 279,
+      "last_segment": 380,
+      "segment_count": 102,
+      "block_count": 6,
+      "output_text_characters": 2335,
+      "output_sha256": "81db4ffcecf5b70f20dff7a08d3569d6d76d72ecae18f929b68d1c16e91e3e8e",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c004-before-second-independent-review.json",
+      "before_sha256": "39470c9e66ebdba2098f019351d8fa8b3110489e2fb899afee31291422fb1289",
+      "issues": [
+        "修复资金提供者及出征剿匪用途、老二被写成二姐；GPM11不猜人名数量。",
+        "清理身份危机/坦白骗局/临终对白的乱码拼接，保留证件照片、两种骗局结果、死亡原因等可辨内容，数字和否定不强补。"
+      ]
+    },
+    {
+      "job": "p061-c005",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c005-clean.json",
+      "first_segment": 381,
+      "last_segment": 496,
+      "segment_count": 116,
+      "block_count": 10,
+      "output_text_characters": 2505,
+      "output_sha256": "7aa8a537ecbab7459c65b0bb273b31f9f77b574600e52ac90b780b4dbcbeb5fa",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c005-before-second-independent-review.json",
+      "before_sha256": "5d1577218ba70a8275c6aa331d667acf7bcbbd7a2af9d704befa543b426304ab",
+      "issues": [
+        "修复匠气被猜成降格、中点写成终点；首尾相似而非相同的意思恢复。",
+        "斩首对象补明为替身；倒计时疑似外语不补原词；上映年份和作者意图仍归讲师口述。"
+      ]
+    },
+    {
+      "job": "p061-c006",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c006-clean.json",
+      "first_segment": 497,
+      "last_segment": 621,
+      "segment_count": 125,
+      "block_count": 8,
+      "output_text_characters": 2212,
+      "output_sha256": "1bcd88788729d028974e13e4237a26416fe0fc255500aa8a09c5a636934effd2",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c006-before-second-independent-review.json",
+      "before_sha256": "8141b4bc1d7d7f70aa8f7e1e6bd4395a282c68788a6230bc725cbce554a95a21",
+      "issues": [
+        "据中间的中修复真假身份结构分析中的全部终点误识。",
+        "撤销将S61434个拉片统一为30次的无依据清洗，保留数量差异。",
+        "补记夹入的难辨声音，不以一万残片创建金额事实。"
+      ]
+    },
+    {
+      "job": "p061-c007",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c007-clean.json",
+      "first_segment": 622,
+      "last_segment": 746,
+      "segment_count": 125,
+      "block_count": 4,
+      "output_text_characters": 2585,
+      "output_sha256": "877a389c5ae1b12dae8c71ea8139b83bf4d546cf98f2d372d404731537c422b5",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c007-before-second-independent-review.json",
+      "before_sha256": "5b09435d1f032728a9cb68bb6076402329c6dc8b79762808f2b8cfb91faa62d5",
+      "issues": [
+        "保留已有lead_review；重播葬礼乱码对白改成可辨内容整理，与S98—S107互证并保留否定疑点。",
+        "课程规模与电影评分仍归讲师当时口述。"
+      ]
+    },
+    {
+      "job": "p061-c008",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c008-clean.json",
+      "first_segment": 747,
+      "last_segment": 884,
+      "segment_count": 138,
+      "block_count": 8,
+      "output_text_characters": 2743,
+      "output_sha256": "20612303f8a5acba725dd736aa057332d94aeace2c95d5a911e4aae968f6f3ea",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c008-before-second-independent-review.json",
+      "before_sha256": "cf6256fa57a86593ae6f6dc1a51c4e00a324352ef3084c3fd5d9cf9c3dde356c",
+      "issues": [
+        "撤销伪称已核画面的片段说明，不将我成起身了猜成我成替身了；保留喊群众取物的可辨内容。",
+        "恢复天下为公；蔡姓将军未核全名，否定范围不强补；ABC、创作取舍及肖申克案例过程保留。"
+      ]
+    },
+    {
+      "job": "p061-c009",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c009-clean.json",
+      "first_segment": 885,
+      "last_segment": 1014,
+      "segment_count": 130,
+      "block_count": 5,
+      "output_text_characters": 2482,
+      "output_sha256": "cf32b00eb9e4d6de7519f97debf50a227fb7d8b972ef893eda9cc0251a9847b0",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c009-before-second-independent-review.json",
+      "before_sha256": "f5ccf39ed26f225093dc4718618e6e6938a05476d13d1a521bce9623d8d0fe60",
+      "issues": [
+        "修复体面误作体验、观众心理学误作关注心理学；履历断言归讲师。",
+        "全读确认绿衣红椅/三次后靠的过度解读举例，以及激素层级和振奋层级分析完整。"
+      ]
+    },
+    {
+      "job": "p061-c010",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c010-clean.json",
+      "first_segment": 1015,
+      "last_segment": 1060,
+      "segment_count": 46,
+      "block_count": 9,
+      "output_text_characters": 2291,
+      "output_sha256": "008e10829564a279b3c065b8d1f02fc80d2d4a22692c66d494502620f6ecb716",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c010-before-second-independent-review.json",
+      "before_sha256": "ead2fc5169793d34f3f72e0b6452e99e4edfffb0bb40669f0613a5d269da8952",
+      "issues": [
+        "美国分级和终身观看等主张归讲师；不擅外部更正。",
+        "恢复捡到→抢到、七八十几个→十几个的口述改口，不将夸张数量静默统一。",
+        "恢复跨块句子位置；武状元成为武状元的矛盾标疑。"
+      ]
+    },
+    {
+      "job": "p061-c011",
+      "path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c011-clean.json",
+      "first_segment": 1061,
+      "last_segment": 1087,
+      "segment_count": 27,
+      "block_count": 6,
+      "output_text_characters": 1286,
+      "output_sha256": "d189331b88ddb745be211580b6811779ffec0b5170278b12eff1be3a5b81c0f7",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c011-before-second-independent-review.json",
+      "before_sha256": "5962b1423a6aea45dc53620faa55cab3885dba4178a1e9e3f32236a68a725abd",
+      "issues": [
+        "角色出彩误作决策出台，按上下文订正并保留能/不能疑点。",
+        "汤师爷误作康师爷；配角缺乏对抗的截断不补完整判断。",
+        "34拉片不猜三四次；fly monkey与最后公众号报名三步保留。"
+      ]
+    }
+  ],
+  "validation": {
+    "status": "PASS",
+    "source_segment_coverage": "1—1087连续覆盖一次",
+    "json_files": 11,
+    "blocks": 80,
+    "source_hash_match": true,
+    "prior_lead_reviews_preserved": true,
+    "backup_before_mutation": true,
+    "shared_md_modified": false,
+    "source_or_native_raw_response_modified": false
+  }
+}

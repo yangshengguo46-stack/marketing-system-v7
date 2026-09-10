@@ -1,0 +1,30 @@
+{
+  "mission.md": {
+    "completeBodyObservedInNativeToolOutput": true,
+    "callIds": [
+      "call_indha81cg2pd1g6vvuconzuo"
+    ],
+    "bytes": 2721
+  },
+  "business-facts.md": {
+    "completeBodyObservedInNativeToolOutput": true,
+    "callIds": [
+      "call_fhmewrn4vd3x7i1vndls9ok8"
+    ],
+    "bytes": 1844
+  },
+  "director-process-evidence.md": {
+    "completeBodyObservedInNativeToolOutput": true,
+    "callIds": [
+      "call_pdb1z59tg4gahsfik6zylhft"
+    ],
+    "bytes": 3735
+  },
+  "failure-review.md": {
+    "completeBodyObservedInNativeToolOutput": true,
+    "callIds": [
+      "call_cji1rjf6rpe2kuyothikoonf"
+    ],
+    "bytes": 842
+  }
+}

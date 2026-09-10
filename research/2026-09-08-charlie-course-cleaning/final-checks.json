@@ -1,0 +1,89 @@
+{
+  "checked_at_utc": "2026-09-08T02:33:49.430880+00:00",
+  "scope": "First four continuous cleaned lectures only; no full listening or claim of semantic completeness",
+  "lessons": [
+    {
+      "lesson": 1,
+      "parts": [
+        2,
+        3,
+        4
+      ],
+      "segments": 652,
+      "source_text_characters": 12681,
+      "blocks": 27,
+      "output_characters_including_notes_and_navigation": 10802,
+      "output_sha256": "810f4c548ab708c160500307bd6c0c7649fb18f22a16b58418efe85c48fc4e6d",
+      "source_and_order_checks": "passed"
+    },
+    {
+      "lesson": 2,
+      "parts": [
+        5,
+        6
+      ],
+      "segments": 721,
+      "source_text_characters": 11717,
+      "blocks": 28,
+      "output_characters_including_notes_and_navigation": 12270,
+      "output_sha256": "496566e6ee7da74ff97a8237dd3d73417d1c13077caad7a36272dfbf7ae2fec7",
+      "source_and_order_checks": "passed"
+    },
+    {
+      "lesson": 3,
+      "parts": [
+        7,
+        8
+      ],
+      "segments": 924,
+      "source_text_characters": 12442,
+      "blocks": 28,
+      "output_characters_including_notes_and_navigation": 12600,
+      "output_sha256": "06268959109be52cc0247dcfab78a6b0d6ce2d2f50829a70c2b13297990b3421",
+      "source_and_order_checks": "passed"
+    },
+    {
+      "lesson": 4,
+      "parts": [
+        9,
+        10
+      ],
+      "segments": 648,
+      "source_text_characters": 11258,
+      "blocks": 25,
+      "output_characters_including_notes_and_navigation": 13801,
+      "output_sha256": "0f6252fb2a1102faef66f3328510d04cc2c252d927c7b49589b0e52e5abc94e1",
+      "source_and_order_checks": "passed"
+    }
+  ],
+  "totals": {
+    "cleaned_lessons": 4,
+    "pending_numbered_lessons": 30,
+    "cleaned_supplements": 0,
+    "pending_supplements": 33,
+    "parts": 9,
+    "segments": 2945,
+    "source_text_characters": 48098,
+    "blocks": 108
+  },
+  "preservation": {
+    "all_92_source_json_hashes_unchanged": true,
+    "all_67_raw_chapter_hashes_unchanged": true,
+    "raw_book_hash_unchanged": true,
+    "story_v1_v2_v3_hashes_unchanged": true
+  },
+  "local_link_check": {
+    "files": 10,
+    "links": 205,
+    "checks_file_path_only_not_anchors": true,
+    "errors": []
+  },
+  "branch": "codex/marketing-work-chain",
+  "git_diff_check_exit": 0,
+  "rust_tests_and_fmt": "Not run: this batch only changes Markdown/JSON",
+  "limits": [
+    "Coverage and hashes do not establish semantic or audiovisual accuracy.",
+    "Each assigned agent read its entire lesson machine text; Lead read every cleaned lecture. Independent review was confined to recorded passages.",
+    "No new full ASR, audio listening, paid transcription, native ARK writing or media run."
+  ]
+}

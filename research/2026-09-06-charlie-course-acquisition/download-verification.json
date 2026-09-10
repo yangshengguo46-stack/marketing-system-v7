@@ -1,0 +1,3047 @@
+{
+  "checked_at": "2026-09-06T08:14:25.171071+00:00",
+  "bvid": "BV1eE411F73t",
+  "expected_parts": 92,
+  "verified_parts": 92,
+  "complete": true,
+  "total_verified_bytes": 12633632028,
+  "total_verified_duration_seconds": 226737.646954,
+  "parts": [
+    {
+      "part": 1,
+      "cid": 39755975667,
+      "title": "一个人在家做AI漫剧能赚钱吗？",
+      "duration_seconds": 2610,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=1",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/一个人在家做AI漫剧能赚钱吗？.mp4",
+      "bytes": 90253039,
+      "mtime_ns": 1788681225906112872,
+      "actual_duration_seconds": 2609.022426,
+      "duration_delta_seconds": -0.977574,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2609.000000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2609.022426"
+        }
+      ],
+      "sha256": "40cc25dcc096d7e95a1442e7db4967985e05932690836615e075fab104c21c45",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 2,
+      "cid": 167845774,
+      "title": "第一课-劝学1.1",
+      "duration_seconds": 1010,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=2",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第一课-劝学1.1.mp4",
+      "bytes": 64379682,
+      "mtime_ns": 1788681175260137799,
+      "actual_duration_seconds": 1009.85839,
+      "duration_delta_seconds": -0.14161,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1009.767000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1009.858390"
+        }
+      ],
+      "sha256": "d26e7368006cf96f51858eb7cfb8bc013656be3f2f26539e2a6fb85b0f275252",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 3,
+      "cid": 167847370,
+      "title": "第一课-劝学1.2",
+      "duration_seconds": 1343,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=3",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第一课-劝学1.2.mp4",
+      "bytes": 87341921,
+      "mtime_ns": 1788681240845793421,
+      "actual_duration_seconds": 1341.973401,
+      "duration_delta_seconds": -1.026599,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1341.867000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1341.973401"
+        }
+      ],
+      "sha256": "88a6be72a8801e5fab993fc7f6f876e63e57e03463a88a45414fe6e598ba6b09",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 4,
+      "cid": 167849613,
+      "title": "第一课-劝学1.3",
+      "duration_seconds": 726,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=4",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第一课-劝学1.3.mp4",
+      "bytes": 49515874,
+      "mtime_ns": 1788681233017758993,
+      "actual_duration_seconds": 725.948005,
+      "duration_delta_seconds": -0.051995,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "725.867000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "725.948005"
+        }
+      ],
+      "sha256": "92f00104f44b306d101d3cb01f1cd9bc6afaf7eec46c2e0bc93e5e44385ca84f",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 5,
+      "cid": 167850841,
+      "title": "第二课-故事的要素2.1",
+      "duration_seconds": 1277,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=5",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第二课-故事的要素2.1.mp4",
+      "bytes": 80878517,
+      "mtime_ns": 1788681240573348430,
+      "actual_duration_seconds": 1276.678889,
+      "duration_delta_seconds": -0.321111,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1276.567000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1276.678889"
+        }
+      ],
+      "sha256": "ae7fc5cf55ac7a986105ab85f4376d418331fa2b852c41690d7a30398cbfd0bf",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 6,
+      "cid": 167853069,
+      "title": "第二课-故事的要素2.2",
+      "duration_seconds": 1946,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=6",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第二课-故事的要素2.2.mp4",
+      "bytes": 132008940,
+      "mtime_ns": 1788681266819582027,
+      "actual_duration_seconds": 1945.622562,
+      "duration_delta_seconds": -0.377438,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1945.533000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1945.622562"
+        }
+      ],
+      "sha256": "106f194736f875983bebd75396444a2c5dc8c0758dd5d591254e2a4db35dc2fc",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 7,
+      "cid": 167856598,
+      "title": "第三课-八要素的实战应用3.1",
+      "duration_seconds": 1674,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=7",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第三课-八要素的实战应用3.1.mp4",
+      "bytes": 113379853,
+      "mtime_ns": 1788681266305365086,
+      "actual_duration_seconds": 1673.298934,
+      "duration_delta_seconds": -0.701066,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1673.233000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1673.298934"
+        }
+      ],
+      "sha256": "37811fe1f7c44abbca9c2ef0202e3aa74f94b3df1d8614fb735c054cec7925b0",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 8,
+      "cid": 167859809,
+      "title": "第三课-八要素的实战应用3.2",
+      "duration_seconds": 2030,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=8",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第三课-八要素的实战应用3.2.mp4",
+      "bytes": 145416659,
+      "mtime_ns": 1788681281291427837,
+      "actual_duration_seconds": 2029.423379,
+      "duration_delta_seconds": -0.576621,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2029.333000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2029.423379"
+        }
+      ],
+      "sha256": "8f9258099f3c79e4d70bd1840dc61163bfdaa6c81b10e2a9d71ece8f11dde093",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 9,
+      "cid": 167864038,
+      "title": "第四课-第一个故事4.1",
+      "duration_seconds": 1397,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=9",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第四课-第一个故事4.1.mp4",
+      "bytes": 131377354,
+      "mtime_ns": 1788681291940845645,
+      "actual_duration_seconds": 1396.656395,
+      "duration_delta_seconds": -0.343605,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1396.567000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1396.656395"
+        }
+      ],
+      "sha256": "1db09122dd581f9000004a24fb0c1755e2bf74c30282b4a06020edd74abd5765",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 10,
+      "cid": 167867112,
+      "title": "第四课-第一个故事4.2",
+      "duration_seconds": 1525,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=10",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第四课-第一个故事4.2.mp4",
+      "bytes": 146001004,
+      "mtime_ns": 1788681314648091708,
+      "actual_duration_seconds": 1524.551905,
+      "duration_delta_seconds": -0.448095,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1524.467000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1524.551905"
+        }
+      ],
+      "sha256": "af8a26f2ac5b58868a20c8fed3f1ba79c2d36892be52a12dda96ff0b96c8b0de",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 11,
+      "cid": 167870818,
+      "title": "第五课-剧本的正义5.1",
+      "duration_seconds": 1488,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=11",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第五课-剧本的正义5.1.mp4",
+      "bytes": 158218880,
+      "mtime_ns": 1788681308472145562,
+      "actual_duration_seconds": 1487.330317,
+      "duration_delta_seconds": -0.669683,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1487.233000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1487.330317"
+        }
+      ],
+      "sha256": "856c51029752ff06089982e4a14aa9ec79ebcb7886cb30cdc6907ddec6d5d40f",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 12,
+      "cid": 167874116,
+      "title": "第五课-剧本的正义5.2",
+      "duration_seconds": 1182,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=12",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第五课-剧本的正义5.2.mp4",
+      "bytes": 119278242,
+      "mtime_ns": 1788681335826453496,
+      "actual_duration_seconds": 1181.686054,
+      "duration_delta_seconds": -0.313946,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1181.600000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1181.686054"
+        }
+      ],
+      "sha256": "967eaacb9181b7632b1d035fd179641ae582b15b91a3aff685316f279973449c",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 13,
+      "cid": 167877064,
+      "title": "第六课-剧本的格式6",
+      "duration_seconds": 1850,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=13",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第六课-剧本的格式6.mp4",
+      "bytes": 122936115,
+      "mtime_ns": 1788681340319486691,
+      "actual_duration_seconds": 1849.74737,
+      "duration_delta_seconds": -0.25263,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1849.700000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1849.747370"
+        }
+      ],
+      "sha256": "6c081651506265a9544cea6b2c2553118bbf5ce94b6a5b3f1022e8a5669b09d0",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 14,
+      "cid": 167881562,
+      "title": "第七课-拿事儿说话7",
+      "duration_seconds": 1185,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=14",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第七课-拿事儿说话7.mp4",
+      "bytes": 80610658,
+      "mtime_ns": 1788681353684643691,
+      "actual_duration_seconds": 1184.751088,
+      "duration_delta_seconds": -0.248912,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1184.667000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1184.751088"
+        }
+      ],
+      "sha256": "a47234aa7cfe8959b10811d58570889c01f483c3fc71b99cb362e5ad4a787c50",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 15,
+      "cid": 167884665,
+      "title": "第八课-勾勒画面8.1",
+      "duration_seconds": 2318,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=15",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第八课-勾勒画面8.1.mp4",
+      "bytes": 144797348,
+      "mtime_ns": 1788681353973089406,
+      "actual_duration_seconds": 2317.327596,
+      "duration_delta_seconds": -0.672404,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2317.267000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2317.327596"
+        }
+      ],
+      "sha256": "bd5aa89f3394a71240e23e971eabf08aef3485ba549e00ae14b246cd0a8caba3",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 16,
+      "cid": 168276930,
+      "title": "第八课-勾勒画面8.2",
+      "duration_seconds": 1623,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=16",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第八课-勾勒画面8.2.mp4",
+      "bytes": 104819981,
+      "mtime_ns": 1788681372184407173,
+      "actual_duration_seconds": 1622.447234,
+      "duration_delta_seconds": -0.552766,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1622.367000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1622.447234"
+        }
+      ],
+      "sha256": "564cc97ef0d711c6cd75be5045ec721bb304a93fc5e8c7897dba8ee65d59ff0d",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 17,
+      "cid": 168277841,
+      "title": "第八课-勾勒画面8.3",
+      "duration_seconds": 1993,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=17",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第八课-勾勒画面8.3.mp4",
+      "bytes": 132906614,
+      "mtime_ns": 1788681372311848512,
+      "actual_duration_seconds": 1992.85195,
+      "duration_delta_seconds": -0.14805,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1992.767000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1992.851950"
+        }
+      ],
+      "sha256": "baa383e01087d9ca72129049a3cddbe5e7c22fa0e7805b0cf79845eaffa56212",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 18,
+      "cid": 170763096,
+      "title": "第九课-谈谈人物9.1",
+      "duration_seconds": 2564,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=18",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第九课-谈谈人物9.1.mp4",
+      "bytes": 126435892,
+      "mtime_ns": 1788681399235693475,
+      "actual_duration_seconds": 2563.691315,
+      "duration_delta_seconds": -0.308685,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2563.627000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2563.691315"
+        }
+      ],
+      "sha256": "19d92692647c258e01a062c54abf94f54f70297ecd063630a3fb9a820823b389",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 19,
+      "cid": 170789570,
+      "title": "第九课-谈谈人物9.2",
+      "duration_seconds": 2018,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=19",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第九课-谈谈人物9.2.mp4",
+      "bytes": 103430174,
+      "mtime_ns": 1788681394063896558,
+      "actual_duration_seconds": 2017.465102,
+      "duration_delta_seconds": -0.534898,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2017.395000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2017.465102"
+        }
+      ],
+      "sha256": "caa48c8a16b489750a2671015ecfe35d2fb30bfe1c930e594b49f65870a5b558",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 20,
+      "cid": 171645463,
+      "title": "第十课-复杂叙事10.1",
+      "duration_seconds": 2252,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=20",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第十课-复杂叙事10.1.mp4",
+      "bytes": 112333444,
+      "mtime_ns": 1788681407081181538,
+      "actual_duration_seconds": 2251.940204,
+      "duration_delta_seconds": -0.059796,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2251.928000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2251.940204"
+        }
+      ],
+      "sha256": "78a430657540cc3792eaed6a70534904cb185179122cdd03dea8dbf44e83c15f",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 21,
+      "cid": 171668148,
+      "title": "第十课-复杂叙事10.2",
+      "duration_seconds": 1427,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=21",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第十课-复杂叙事10.2.mp4",
+      "bytes": 73218192,
+      "mtime_ns": 1788681420655590956,
+      "actual_duration_seconds": 1426.610136,
+      "duration_delta_seconds": -0.389864,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1426.596000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1426.610136"
+        }
+      ],
+      "sha256": "bc09ce03da5493738b3d07a2e9e8d336cb80cafccccd07caaabe05d35cd9a1ad",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 22,
+      "cid": 173862838,
+      "title": "十一课-类型片11.1",
+      "duration_seconds": 1901,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=22",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十一课-类型片11.1.mp4",
+      "bytes": 119131193,
+      "mtime_ns": 1788681431066147960,
+      "actual_duration_seconds": 1900.62229,
+      "duration_delta_seconds": -0.37771,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1900.600000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1900.622290"
+        }
+      ],
+      "sha256": "af64702ef007143c1b946c5531ec334bdd3be1badba6a8613b545534f90cfeb8",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 23,
+      "cid": 173863407,
+      "title": "十一课-类型片11.2",
+      "duration_seconds": 1909,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=23",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十一课-类型片11.2.mp4",
+      "bytes": 127979426,
+      "mtime_ns": 1788681450691311701,
+      "actual_duration_seconds": 1908.517075,
+      "duration_delta_seconds": -0.482925,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1908.500000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1908.517075"
+        }
+      ],
+      "sha256": "41efb3d590247c7d836559ed90329a54fab5cf3206deab265f8f956f8ca0b720",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 24,
+      "cid": 173861080,
+      "title": "十一课-类型片11.3",
+      "duration_seconds": 1357,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=24",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十一课-类型片11.3.mp4",
+      "bytes": 99457793,
+      "mtime_ns": 1788681442057326330,
+      "actual_duration_seconds": 1356.601973,
+      "duration_delta_seconds": -0.398027,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1356.600000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1356.601973"
+        }
+      ],
+      "sha256": "fc4117928e8c7289d35b3f020c84db35f75745bf2751c73cd2377619f28762ef",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 25,
+      "cid": 174056852,
+      "title": "十二课-小蝌蚪找妈妈12.1",
+      "duration_seconds": 1594,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=25",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十二课-小蝌蚪找妈妈12.1.mp4",
+      "bytes": 122164786,
+      "mtime_ns": 1788681469833609506,
+      "actual_duration_seconds": 1593.44551,
+      "duration_delta_seconds": -0.55449,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1593.433000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1593.445510"
+        }
+      ],
+      "sha256": "8edd6c88edf1b3a2c7b070c7eaf31a503928e12334f0da4c3d06927138c15c3b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 26,
+      "cid": 174057044,
+      "title": "十二课-小蝌蚪找妈妈12.2",
+      "duration_seconds": 1704,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=26",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十二课-小蝌蚪找妈妈12.2.mp4",
+      "bytes": 124518440,
+      "mtime_ns": 1788681474204675418,
+      "actual_duration_seconds": 1703.275896,
+      "duration_delta_seconds": -0.724104,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1703.267000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1703.275896"
+        }
+      ],
+      "sha256": "91bad7ec7532d5fd236f88532ee03800dcabb3f143ac29d77912756952b79535",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 27,
+      "cid": 174057108,
+      "title": "十二课-小蝌蚪找妈妈12.3",
+      "duration_seconds": 1908,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=27",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十二课-小蝌蚪找妈妈12.3.mp4",
+      "bytes": 138404429,
+      "mtime_ns": 1788681494678402788,
+      "actual_duration_seconds": 1907.147098,
+      "duration_delta_seconds": -0.852902,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1907.133000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1907.147098"
+        }
+      ],
+      "sha256": "40c08b3f8edaae7f9ce37287988988813cd36ad94f1456974cf6404ade85d541",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 28,
+      "cid": 177384361,
+      "title": "十三课-电视剧13.1",
+      "duration_seconds": 1867,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=28",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十三课-电视剧13.1.mp4",
+      "bytes": 92467774,
+      "mtime_ns": 1788681492455762520,
+      "actual_duration_seconds": 1866.512177,
+      "duration_delta_seconds": -0.487823,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1866.496000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1866.512177"
+        }
+      ],
+      "sha256": "0e8f0e3f7b8bdd76c4e2fec2fb16e999e3d1414fe6c7e329d7ef5ea83320cbe4",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 29,
+      "cid": 177383899,
+      "title": "十三课-电视剧13.2",
+      "duration_seconds": 1489,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=29",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十三课-电视剧13.2.mp4",
+      "bytes": 74928949,
+      "mtime_ns": 1788681507563193317,
+      "actual_duration_seconds": 1488.282336,
+      "duration_delta_seconds": -0.717664,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1488.263000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1488.282336"
+        }
+      ],
+      "sha256": "ad67524f07dcd68e3f2de61641b1029028807e0a8de0f8749362855b82a64d27",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 30,
+      "cid": 177384367,
+      "title": "十三课-电视剧13.3",
+      "duration_seconds": 1816,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=30",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十三课-电视剧13.3.mp4",
+      "bytes": 94854935,
+      "mtime_ns": 1788681513107155551,
+      "actual_duration_seconds": 1815.451497,
+      "duration_delta_seconds": -0.548503,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1815.428000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1815.451497"
+        }
+      ],
+      "sha256": "d25b5de88a8be6fc90d552eb6a87eed2d0425a27213d956c7342de3d3367678b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 31,
+      "cid": 177384393,
+      "title": "十三课-电视剧13.4",
+      "duration_seconds": 1723,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=31",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十三课-电视剧13.4.mp4",
+      "bytes": 90649506,
+      "mtime_ns": 1788681527194335170,
+      "actual_duration_seconds": 1722.455578,
+      "duration_delta_seconds": -0.544422,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1722.429000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1722.455578"
+        }
+      ],
+      "sha256": "b4364df80510c0d3f45082ef2eab0950c0bec0217f3ac625baa4e18e0de215d5",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 32,
+      "cid": 181727234,
+      "title": "十四课-场景与对白14.1",
+      "duration_seconds": 2449,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=32",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.1.mp4",
+      "bytes": 170675773,
+      "mtime_ns": 1788681554940972230,
+      "actual_duration_seconds": 2448.84542,
+      "duration_delta_seconds": -0.15458,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2448.800000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2448.845420"
+        }
+      ],
+      "sha256": "9000277988599c352f30c945e3a51a41786519224203aa462fbab5f748225a8f",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 33,
+      "cid": 181763918,
+      "title": "十四课-场景与对白14.2",
+      "duration_seconds": 2956,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=33",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.2.mp4",
+      "bytes": 205991678,
+      "mtime_ns": 1788681566256917607,
+      "actual_duration_seconds": 2955.57449,
+      "duration_delta_seconds": -0.42551,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2955.534000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2955.574490"
+        }
+      ],
+      "sha256": "800ec7bda7b267df2fe58fab6bffbedfb02cc0095e8dd2a88d56fd052256146e",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 34,
+      "cid": 190273161,
+      "title": "十五课-节拍器15.1",
+      "duration_seconds": 1931,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=34",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十五课-节拍器15.1.mp4",
+      "bytes": 103084693,
+      "mtime_ns": 1788681579756307942,
+      "actual_duration_seconds": 1930.877891,
+      "duration_delta_seconds": -0.122109,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1930.862000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1930.877891"
+        }
+      ],
+      "sha256": "d49a311f98b6c59bacf3ffb0d0b83ca8a42243b82736f58d18da082d7169b6c2",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 35,
+      "cid": 190303059,
+      "title": "十五课-节拍器15.2",
+      "duration_seconds": 2302,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=35",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十五课-节拍器15.2.mp4",
+      "bytes": 127305308,
+      "mtime_ns": 1788681602953557246,
+      "actual_duration_seconds": 2301.76,
+      "duration_delta_seconds": -0.24,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2301.760000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2301.747007"
+        }
+      ],
+      "sha256": "85079d1274510a69db6f670e573915fcf7ac5665dbb50afaf09ef9e9d8fd2dbf",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 36,
+      "cid": 190316428,
+      "title": "十五课-节拍器15.3",
+      "duration_seconds": 1148,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=36",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十五课-节拍器15.3.mp4",
+      "bytes": 69264664,
+      "mtime_ns": 1788681586702524940,
+      "actual_duration_seconds": 1147.23,
+      "duration_delta_seconds": -0.77,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1147.230000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1147.227642"
+        }
+      ],
+      "sha256": "2582c41c032bc237c6c96322b07fc14ef3a4bf4f85756beeefd6ee39b0418f57",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 37,
+      "cid": 190331356,
+      "title": "十五课-节拍器15.4",
+      "duration_seconds": 1447,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=37",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十五课-节拍器15.4.mp4",
+      "bytes": 82147190,
+      "mtime_ns": 1788681608193387925,
+      "actual_duration_seconds": 1446.595,
+      "duration_delta_seconds": -0.405,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1446.595000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1446.579297"
+        }
+      ],
+      "sha256": "5993c16f3eec2afdf25ecafef65aae2c7fd176910841918808ea61c1547e2c84",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 38,
+      "cid": 202189245,
+      "title": "十六课-悬念与反转16",
+      "duration_seconds": 3658,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=38",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十六课-悬念与反转16.mp4",
+      "bytes": 184389849,
+      "mtime_ns": 1788681626462544064,
+      "actual_duration_seconds": 3657.0261,
+      "duration_delta_seconds": -0.9739,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3656.925000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3657.026100"
+        }
+      ],
+      "sha256": "db7c58257802fa24aeafcbfdad84fbb4ab9c0926098c76857f174557d5586ed2",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 39,
+      "cid": 202545835,
+      "title": "十七课-新手跳坑17",
+      "duration_seconds": 3201,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=39",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十七课-新手跳坑17.mp4",
+      "bytes": 158027699,
+      "mtime_ns": 1788681625980310445,
+      "actual_duration_seconds": 3200.916531,
+      "duration_delta_seconds": -0.083469,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3200.827000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3200.916531"
+        }
+      ],
+      "sha256": "7e96b07bb4336f97344f4d269a0f50aef4acdee1f14cca603b3c0b7014cca47d",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 40,
+      "cid": 207918303,
+      "title": "十八课-拿人的开场18.1",
+      "duration_seconds": 3065,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=40",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十八课-拿人的开场18.1.mp4",
+      "bytes": 162382357,
+      "mtime_ns": 1788681670919337283,
+      "actual_duration_seconds": 3064.243878,
+      "duration_delta_seconds": -0.756122,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3064.214000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3064.243878"
+        }
+      ],
+      "sha256": "670b8270f8a8d58d02158771a2bc8485347be0a00ab27eb37417f2e8abb96072",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 41,
+      "cid": 207918389,
+      "title": "十八课-拿人的开场18.2",
+      "duration_seconds": 5217,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=41",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十八课-拿人的开场18.2.mp4",
+      "bytes": 298602400,
+      "mtime_ns": 1788681693969542522,
+      "actual_duration_seconds": 5216.199592,
+      "duration_delta_seconds": -0.800408,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "5216.176000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "5216.199592"
+        }
+      ],
+      "sha256": "1de95aafd44f9c72013abe2ab006e43cd7a6f080b8dd85e31f0140acb3a72827",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 42,
+      "cid": 212090316,
+      "title": "十九课-怎么撰写项目提案19",
+      "duration_seconds": 2636,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=42",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十九课-怎么撰写项目提案19.mp4",
+      "bytes": 134496429,
+      "mtime_ns": 1788681688963035539,
+      "actual_duration_seconds": 2635.157167,
+      "duration_delta_seconds": -0.842833,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2635.068000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2635.157167"
+        }
+      ],
+      "sha256": "846214c5522ff7377c4490541b10f00db6bd8b623156173664efa58ef834a955",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 43,
+      "cid": 227072905,
+      "title": "二十课-编剧拉片20",
+      "duration_seconds": 4218,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=43",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十课-编剧拉片20.mp4",
+      "bytes": 321741911,
+      "mtime_ns": 1788681749715248555,
+      "actual_duration_seconds": 4217.6425,
+      "duration_delta_seconds": -0.3575,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4217.264000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "4217.642500"
+        }
+      ],
+      "sha256": "e4033027c4ed5f08d60c527e2f9eef2120480a49d99f9a029e5b32cbdcdca59c",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 44,
+      "cid": 239866710,
+      "title": "二十一课-谈几个进阶问题（上）21.1",
+      "duration_seconds": 2478,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=44",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十一课-谈几个进阶问题（上）21.1.mp4",
+      "bytes": 164809920,
+      "mtime_ns": 1788681734621281808,
+      "actual_duration_seconds": 2477.738333,
+      "duration_delta_seconds": -0.261667,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2477.666000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2477.738333"
+        }
+      ],
+      "sha256": "2c4065db4fc85fdbd08c25467365d74189ee3bd1549ec71dc4c3125230d86107",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 45,
+      "cid": 239868634,
+      "title": "二十一课-谈几个进阶问题（下）21.2",
+      "duration_seconds": 2113,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=45",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十一课-谈几个进阶问题（下）21.2.mp4",
+      "bytes": 151761916,
+      "mtime_ns": 1788681765086596027,
+      "actual_duration_seconds": 2112.767667,
+      "duration_delta_seconds": -0.232333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2112.700000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2112.767667"
+        }
+      ],
+      "sha256": "7218b44713d213a0b0ababfd15f7dc3b1924ac6a12c289a9f0a91079a5f3a688",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 46,
+      "cid": 252711256,
+      "title": "二十二课-G潮上不去？（上）22.1",
+      "duration_seconds": 2560,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=46",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十二课-G潮上不去？（上）22.1.mp4",
+      "bytes": 178988901,
+      "mtime_ns": 1788681783642517351,
+      "actual_duration_seconds": 2559.551833,
+      "duration_delta_seconds": -0.448167,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2559.433000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2559.551833"
+        }
+      ],
+      "sha256": "b9d0ff82a460b8618adf925555bb1cff7133306552c95ebbcc96a31dda09aa1a",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 47,
+      "cid": 252782284,
+      "title": "二十二课-G潮上不去？（下）22.2",
+      "duration_seconds": 2910,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=47",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十二课-G潮上不去？（下）22.2.mp4",
+      "bytes": 245758750,
+      "mtime_ns": 1788681813775918926,
+      "actual_duration_seconds": 2909.290333,
+      "duration_delta_seconds": -0.709667,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2909.200000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2909.290333"
+        }
+      ],
+      "sha256": "c5b00bc3f40ff535ee4f4bb781625da9ad51d8accfd7bd056bfff98f83264eef",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 48,
+      "cid": 254049644,
+      "title": "二十三课-怎么写喜剧？(上）23.1",
+      "duration_seconds": 2562,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=48",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十三课-怎么写喜剧？(上）23.1.mp4",
+      "bytes": 187870902,
+      "mtime_ns": 1788681832405266906,
+      "actual_duration_seconds": 2561.301167,
+      "duration_delta_seconds": -0.698833,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2561.200000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2561.301167"
+        }
+      ],
+      "sha256": "e43a8971541575554c55e0ec652878c2de1d30e268e7588de3e64cf43012df1a",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 49,
+      "cid": 254051910,
+      "title": "二十三课-怎么写喜剧？（下）23.2",
+      "duration_seconds": 2945,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=49",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十三课-怎么写喜剧？（下）23.2.mp4",
+      "bytes": 250587663,
+      "mtime_ns": 1788681860359505061,
+      "actual_duration_seconds": 2944.789167,
+      "duration_delta_seconds": -0.210833,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2944.700000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2944.789167"
+        }
+      ],
+      "sha256": "16a6f9c95ec2f426edb770a451755933236fe758ef37a86ffbe8424da1115e26",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 50,
+      "cid": 266235698,
+      "title": "二十四课-剖析烂片24",
+      "duration_seconds": 4619,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=50",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十四课-剖析烂片24.mp4",
+      "bytes": 344468864,
+      "mtime_ns": 1788681923396222012,
+      "actual_duration_seconds": 4618.410333,
+      "duration_delta_seconds": -0.589667,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4618.333000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "4618.410333"
+        }
+      ],
+      "sha256": "774a1d8c55812c91f96f24ab9a32657b62696624a831da7476a8052c2e16f732",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 51,
+      "cid": 272336072,
+      "title": "二十五课-观影情绪节拍表25",
+      "duration_seconds": 3108,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=51",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十五课-观影情绪节拍表25.mp4",
+      "bytes": 252265976,
+      "mtime_ns": 1788681893000585671,
+      "actual_duration_seconds": 3107.711667,
+      "duration_delta_seconds": -0.288333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3107.600000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "3107.711667"
+        }
+      ],
+      "sha256": "8d0dd3fc95304c6fc43a7fca9a2ad7bcbf8648183da4304a92f968a78f957044",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 52,
+      "cid": 275889704,
+      "title": "二十六课-从容应对文艺凡尔赛26",
+      "duration_seconds": 4305,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=52",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十六课-从容应对文艺凡尔赛26.mp4",
+      "bytes": 205495054,
+      "mtime_ns": 1788681932049756096,
+      "actual_duration_seconds": 4304.021,
+      "duration_delta_seconds": -0.979,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4303.933000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "4304.021000"
+        }
+      ],
+      "sha256": "26150ee339509a4bdbd1e8756b2dc5035c4d9a9bd3ca7f07d2ab3fc6a21c37e7",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 53,
+      "cid": 310082561,
+      "title": "二十七课-剧本的叙事视角27",
+      "duration_seconds": 3868,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=53",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十七课-剧本的叙事视角27.mp4",
+      "bytes": 190326940,
+      "mtime_ns": 1788681967128179584,
+      "actual_duration_seconds": 3867.839667,
+      "duration_delta_seconds": -0.160333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3867.730000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "3867.839667"
+        }
+      ],
+      "sha256": "f0ecf56d1f05f4b424a7b60bf033d85568f5890a493708b1a8d3adf5678a2b68",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 54,
+      "cid": 327535922,
+      "title": "二十八课-编剧课科目三28",
+      "duration_seconds": 5411,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=54",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十八课-编剧课科目三28.mp4",
+      "bytes": 416989744,
+      "mtime_ns": 1788681977475035103,
+      "actual_duration_seconds": 5411.797,
+      "duration_delta_seconds": 0.797,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "5411.706000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "5411.797000"
+        }
+      ],
+      "sha256": "bcad727ba5dbaf6c7b7e9c834751ddb8c7354f9345c5c80ee3488096ad21b493",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 55,
+      "cid": 333133917,
+      "title": "二十九课-剧情要有攻击性29",
+      "duration_seconds": 2223,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=55",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十九课-剧情要有攻击性29.mp4",
+      "bytes": 120581774,
+      "mtime_ns": 1788681978610977974,
+      "actual_duration_seconds": 2222.357,
+      "duration_delta_seconds": -0.643,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2222.253000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2222.357000"
+        }
+      ],
+      "sha256": "5dbba6748263f98bf2986a913d53726633244ab0c966296176e408575f056ba0",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 56,
+      "cid": 383686698,
+      "title": "三十课-人类为什么需要影视剧30",
+      "duration_seconds": 5042,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=56",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十课-人类为什么需要影视剧30.mp4",
+      "bytes": 386077642,
+      "mtime_ns": 1788682061029889347,
+      "actual_duration_seconds": 5041.706333,
+      "duration_delta_seconds": -0.293667,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "5041.603000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "5041.706333"
+        }
+      ],
+      "sha256": "df5e7224ccbb7655819337cfd86025020819fb337506d6ed565b7dd82c40a016",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 57,
+      "cid": 385383259,
+      "title": "三十一课-单元剧的创作理念31",
+      "duration_seconds": 4062,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=57",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十一课-单元剧的创作理念31.mp4",
+      "bytes": 279714852,
+      "mtime_ns": 1788682022582702019,
+      "actual_duration_seconds": 4061.439667,
+      "duration_delta_seconds": -0.560333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4061.333000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "4061.439667"
+        }
+      ],
+      "sha256": "a53067980ceaa87d4bfa2eecad08783ac7ffbf6f17581e9b3f3be875f9e2e19b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 58,
+      "cid": 425876128,
+      "title": "三十二课-跟《鱿鱼游戏》学写强设定",
+      "duration_seconds": 4911,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=58",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十二课-跟《鱿鱼游戏》学写强设定.mp4",
+      "bytes": 355693685,
+      "mtime_ns": 1788682063220524761,
+      "actual_duration_seconds": 4910.903651,
+      "duration_delta_seconds": -0.096349,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4910.833000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "4910.903651"
+        }
+      ],
+      "sha256": "cb227f0ec42dc29efb775e77f20bed696f23f44f514f2dcede65574289570107",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 59,
+      "cid": 542014362,
+      "title": "三十三课-怎样克服拖延症",
+      "duration_seconds": 2536,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=59",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十三课-怎样克服拖延症.mp4",
+      "bytes": 108620364,
+      "mtime_ns": 1788682086324440289,
+      "actual_duration_seconds": 2535.018167,
+      "duration_delta_seconds": -0.981833,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2534.999000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2535.018167"
+        }
+      ],
+      "sha256": "4827174ce92498b86f2e7ca0b0742251b65068466be7edd563d64114d256639e",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 60,
+      "cid": 713227009,
+      "title": "三十四课-查理小三角创作法",
+      "duration_seconds": 2844,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=60",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十四课-查理小三角创作法.mp4",
+      "bytes": 180329806,
+      "mtime_ns": 1788682109563883403,
+      "actual_duration_seconds": 2843.754333,
+      "duration_delta_seconds": -0.245667,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2843.666000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000",
+          "duration": "2843.754333"
+        }
+      ],
+      "sha256": "8614f394e619f763777124605d5e11513d1729eb103aa78fc7c94ead6810a2d9",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 61,
+      "cid": 1118879677,
+      "title": "《让子弹飞》直播拉片",
+      "duration_seconds": 6398,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=61",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/《让子弹飞》直播拉片.mp4",
+      "bytes": 138874247,
+      "mtime_ns": 1788682117003497508,
+      "actual_duration_seconds": 6397.817098,
+      "duration_delta_seconds": -0.182902,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "6397.700000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "6397.817098"
+        }
+      ],
+      "sha256": "58d008f275c0f9dfab57f4ad5cc3213bbeced83da1c7942df3385192786b0b1c",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 62,
+      "cid": 1348722777,
+      "title": "查理老师告诉你，短剧为什么这么火！",
+      "duration_seconds": 951,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=62",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/查理老师告诉你，短剧为什么这么火！.mp4",
+      "bytes": 37244202,
+      "mtime_ns": 1788682116378393203,
+      "actual_duration_seconds": 950.34771,
+      "duration_delta_seconds": -0.65229,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "950.299000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "950.347710"
+        }
+      ],
+      "sha256": "a05e26501fa760e344bcfcecd91528ecaf88b0947cbb593adade74e0aad894e5",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 63,
+      "cid": 30110452996,
+      "title": "职业编剧怎么用ai写剧本",
+      "duration_seconds": 1854,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=63",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/职业编剧怎么用ai写剧本.mp4",
+      "bytes": 62144559,
+      "mtime_ns": 1788682128930705378,
+      "actual_duration_seconds": 1853.884558,
+      "duration_delta_seconds": -0.115442,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1853.866000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1853.884558"
+        }
+      ],
+      "sha256": "e8a0cce7392a0e7b334644569ce766a65f96d9c487e52f33b53be53d88890266",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 64,
+      "cid": 26532774570,
+      "title": "如何写好单场戏，让每一集都有钩子？",
+      "duration_seconds": 2709,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=64",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/如何写好单场戏，让每一集都有钩子？.mp4",
+      "bytes": 98462439,
+      "mtime_ns": 1788682136398816451,
+      "actual_duration_seconds": 2708.751859,
+      "duration_delta_seconds": -0.248141,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2708.599000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2708.751859"
+        }
+      ],
+      "sha256": "a5fec8e260dc6770cd43873e873cc7d4a6a8fdcbafdfe8fc067456af4a13f61c",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 65,
+      "cid": 28739110936,
+      "title": "编剧的第一性原理",
+      "duration_seconds": 2367,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=65",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧的第一性原理.mp4",
+      "bytes": 85631217,
+      "mtime_ns": 1788682139555289497,
+      "actual_duration_seconds": 2366.489274,
+      "duration_delta_seconds": -0.510726,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2366.466000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2366.489274"
+        }
+      ],
+      "sha256": "449fa78c61e242f8cf12b0f13cb3758a1dd23179fb8deb553e62d21995b75d34",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 66,
+      "cid": 31421369184,
+      "title": "写了剧本怎么投稿",
+      "duration_seconds": 3782,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=66",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/写了剧本怎么投稿.mp4",
+      "bytes": 145837262,
+      "mtime_ns": 1788682166183868458,
+      "actual_duration_seconds": 3781.600726,
+      "duration_delta_seconds": -0.399274,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3781.566000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3781.600726"
+        }
+      ],
+      "sha256": "4b26ad960171ee1f171ca512b6682f6f4c3ade24eb07e6033289690d6f2d704f",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 67,
+      "cid": 33428148085,
+      "title": "编剧库3.0大升级来了！快来参与普查，订单主动找你对接",
+      "duration_seconds": 128,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=67",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧库3.0大升级来了！快来参与普查，订单主动找你对接.mp4",
+      "bytes": 4272063,
+      "mtime_ns": 1788682141178989816,
+      "actual_duration_seconds": 127.105805,
+      "duration_delta_seconds": -0.894195,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "127.100000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "127.105805"
+        }
+      ],
+      "sha256": "b8c50d3d6b4954166ed183234239923f9e6d6efc253f371edbf6f399ab2d4ec0",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 68,
+      "cid": 26225279963,
+      "title": "无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）",
+      "duration_seconds": 2350,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=68",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）.mp4",
+      "bytes": 104348798,
+      "mtime_ns": 1788682156798611089,
+      "actual_duration_seconds": 2348.981179,
+      "duration_delta_seconds": -1.018821,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2348.833000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2348.981179"
+        }
+      ],
+      "sha256": "af72ac798c554c74ff29ccdaf3b4797c6232a77c3dddc0d42fd0313531e2787b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 69,
+      "cid": 26255689411,
+      "title": "【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）",
+      "duration_seconds": 1158,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=69",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）.mp4",
+      "bytes": 67281033,
+      "mtime_ns": 1788682171212985876,
+      "actual_duration_seconds": 1157.377211,
+      "duration_delta_seconds": -0.622789,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1157.266000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1157.377211"
+        }
+      ],
+      "sha256": "182b72f7d8ea206a52016f1a1e77e9a56eb4f6d079c18116b5a663b38d555cdd",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 70,
+      "cid": 26314736392,
+      "title": "【编剧拉片】麻花喜剧巅峰神作！《夏洛特烦恼》逐帧分析创作思路，颠覆你的认知！（一）",
+      "duration_seconds": 1853,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=70",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【编剧拉片】麻花喜剧巅峰神作！《夏洛特烦恼》逐帧分析创作思路，颠覆你的认知！（一）.mp4",
+      "bytes": 95714768,
+      "mtime_ns": 1788682186223289787,
+      "actual_duration_seconds": 1852.607234,
+      "duration_delta_seconds": -0.392766,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1852.500000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1852.607234"
+        }
+      ],
+      "sha256": "04d64c047198445db52cc50a7f3019ee74b269d35d3ac0a4e9cd4a8ce7b2b86b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 71,
+      "cid": 29819406039,
+      "title": "编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））",
+      "duration_seconds": 1144,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=71",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））.mp4",
+      "bytes": 58171584,
+      "mtime_ns": 1788682185151638081,
+      "actual_duration_seconds": 1143.44542,
+      "duration_delta_seconds": -0.55458,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1143.433000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1143.445420"
+        }
+      ],
+      "sha256": "710425654af931bf89fb1426f13cf8505480a06f430a55bd147fcd8adc40c384",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 72,
+      "cid": 26454394257,
+      "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+      "duration_seconds": 3137,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=72",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事.mp4",
+      "bytes": 121442267,
+      "mtime_ns": 1788682212691109732,
+      "actual_duration_seconds": 3136.742902,
+      "duration_delta_seconds": -0.257098,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3136.566000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3136.742902"
+        }
+      ],
+      "sha256": "8116f583120ffde48080157495b0d74c3a994677b25c7b3998da58445216bcf5",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 73,
+      "cid": 27089243632,
+      "title": "编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！",
+      "duration_seconds": 4222,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=73",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！.mp4",
+      "bytes": 128695912,
+      "mtime_ns": 1788682205593848448,
+      "actual_duration_seconds": 4221.813492,
+      "duration_delta_seconds": -0.186508,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4221.733000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "4221.813492"
+        }
+      ],
+      "sha256": "5d3f507074cbdb14f9e8aa791658bd3e24b63d4c45737603b09a560021165169",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 74,
+      "cid": 27089765971,
+      "title": "编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧",
+      "duration_seconds": 2682,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=74",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧.mp4",
+      "bytes": 109402971,
+      "mtime_ns": 1788682218328628937,
+      "actual_duration_seconds": 2681.282608,
+      "duration_delta_seconds": -0.717392,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2681.133000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2681.282608"
+        }
+      ],
+      "sha256": "57894f2128a78ef730b5da1112bab3d058dce964731b8aa98056ee44d8fb0dfb",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 75,
+      "cid": 27433699594,
+      "title": "编剧视角拉片《男妇女主任》小品型电影看完你就会写了！",
+      "duration_seconds": 1597,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=75",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《男妇女主任》小品型电影看完你就会写了！.mp4",
+      "bytes": 100661001,
+      "mtime_ns": 1788682230675663111,
+      "actual_duration_seconds": 1596.374535,
+      "duration_delta_seconds": -0.625465,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1596.200000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1596.374535"
+        }
+      ],
+      "sha256": "574db593645d04ba4d0f79c6d25ce3c2d51f8fd7ada7afc4e2aa50e5cab8eb37",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 76,
+      "cid": 28280883637,
+      "title": "《哪吒2》为啥这么爆？查理老师新年第一讲，一起写好中国故事！",
+      "duration_seconds": 2176,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=76",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/《哪吒2》为啥这么爆？查理老师新年第一讲，一起写好中国故事！.mp4",
+      "bytes": 77473294,
+      "mtime_ns": 1788682236656770178,
+      "actual_duration_seconds": 2175.853061,
+      "duration_delta_seconds": -0.146939,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2175.833000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2175.853061"
+        }
+      ],
+      "sha256": "17760c42c314c97028300291f7affa4e832af2cab33489e03b90bcde4d1f82b8",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 77,
+      "cid": 29816391796,
+      "title": "编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!",
+      "duration_seconds": 4322,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=77",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!.mp4",
+      "bytes": 142492402,
+      "mtime_ns": 1788682265634808339,
+      "actual_duration_seconds": 4321.172086,
+      "duration_delta_seconds": -0.827914,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4321.166000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "4321.172086"
+        }
+      ],
+      "sha256": "5404854a0abc1bb04b5edf4650663402c69704a38afc4644b0391286503b5fb9",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 78,
+      "cid": 29816848633,
+      "title": "编剧视角拉片《猩球崛起》，人猿对战背后的隐喻！",
+      "duration_seconds": 3364,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=78",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《猩球崛起》，人猿对战背后的隐喻！.mp4",
+      "bytes": 127033731,
+      "mtime_ns": 1788682266747717778,
+      "actual_duration_seconds": 3363.439977,
+      "duration_delta_seconds": -0.560023,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3363.433000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3363.439977"
+        }
+      ],
+      "sha256": "13f427bb3cb9ad4a1b7f3cf1a3627175ed97f93368345ff83ef1104356be1766",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 79,
+      "cid": 29817176838,
+      "title": "编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！",
+      "duration_seconds": 3452,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=79",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！.mp4",
+      "bytes": 181162557,
+      "mtime_ns": 1788682298687313266,
+      "actual_duration_seconds": 3451.443764,
+      "duration_delta_seconds": -0.556236,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3451.433000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3451.443764"
+        }
+      ],
+      "sha256": "faba9414bec4cbb8d652fd3c67579f8b1a4edc77195fc4ce554f80368d364933",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 80,
+      "cid": 29818162710,
+      "title": "编剧视角拉片经典传记片《华尔街之狼》",
+      "duration_seconds": 2671,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=80",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片经典传记片《华尔街之狼》.mp4",
+      "bytes": 111010292,
+      "mtime_ns": 1788682280231291462,
+      "actual_duration_seconds": 2670.3,
+      "duration_delta_seconds": -0.7,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2670.300000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2670.299751"
+        }
+      ],
+      "sha256": "6cc1df30ee18f0a073da3d282a97469a43abb61f5693b46805d058ef43deb27b",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 81,
+      "cid": 29818619846,
+      "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+      "duration_seconds": 3144,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=81",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍.mp4",
+      "bytes": 138294007,
+      "mtime_ns": 1788682317182677205,
+      "actual_duration_seconds": 3142.989297,
+      "duration_delta_seconds": -1.010703,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "3142.966000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "3142.989297"
+        }
+      ],
+      "sha256": "95a24a987c9ccb696791ea6c07c846456f31382b071c0171d1cac145b1f8a355",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 82,
+      "cid": 29819538208,
+      "title": "编剧视角拉片《小丑》从内耗走向癫狂，从边缘跨上“神坛”「影史现象级」是怎样炼成的？",
+      "duration_seconds": 2605,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=82",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《小丑》从内耗走向癫狂，从边缘跨上“神坛”「影史现象级」是怎样炼成的？.mp4",
+      "bytes": 108751751,
+      "mtime_ns": 1788682315083645039,
+      "actual_duration_seconds": 2604.378163,
+      "duration_delta_seconds": -0.621837,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2604.366000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2604.378163"
+        }
+      ],
+      "sha256": "f565a0ae77e0f035713a8b8b07ae55f501b259706937deabc6eed28fc98c3f50",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 83,
+      "cid": 29820388979,
+      "title": "编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！",
+      "duration_seconds": 2887,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=83",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！.mp4",
+      "bytes": 139821845,
+      "mtime_ns": 1788682346333619486,
+      "actual_duration_seconds": 2886.338639,
+      "duration_delta_seconds": -0.661361,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2886.333000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2886.338639"
+        }
+      ],
+      "sha256": "c2fd6383538bd3597079249d09430ec5953dc2cd995cb837b2eb270afe620b3c",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 84,
+      "cid": 29820649585,
+      "title": "编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？",
+      "duration_seconds": 2778,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=84",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？.mp4",
+      "bytes": 100186181,
+      "mtime_ns": 1788682328783927450,
+      "actual_duration_seconds": 2777.552925,
+      "duration_delta_seconds": -0.447075,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2777.533000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2777.552925"
+        }
+      ],
+      "sha256": "a346623d55647e4853f2258416a2aaebd05103eedb478b947d7bda5f791cdc00",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 85,
+      "cid": 29820912258,
+      "title": "编剧视角拉片烧脑神作《致命ID》",
+      "duration_seconds": 2265,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=85",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片烧脑神作《致命ID》.mp4",
+      "bytes": 84254295,
+      "mtime_ns": 1788682340277660692,
+      "actual_duration_seconds": 2264.901769,
+      "duration_delta_seconds": -0.098231,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2264.900000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2264.901769"
+        }
+      ],
+      "sha256": "48dcb253d177c60ff680abf368c8c2ad6e6318361ab0d13282ecef9f98207d5e",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 86,
+      "cid": 29821110472,
+      "title": "编剧视角拉片《生死狙击》！男频爽片创作要点",
+      "duration_seconds": 1422,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=86",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《生死狙击》！男频爽片创作要点.mp4",
+      "bytes": 86544386,
+      "mtime_ns": 1788682351666281020,
+      "actual_duration_seconds": 1421.179841,
+      "duration_delta_seconds": -0.820159,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1421.166000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1421.179841"
+        }
+      ],
+      "sha256": "5b12c1114b335a2612d499cbfb9eb09166e4f42ba010d9b9d0943e07d2f57661",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 87,
+      "cid": 29821305201,
+      "title": "编剧视角拉片《千与千寻》！",
+      "duration_seconds": 1635,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=87",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《千与千寻》！.mp4",
+      "bytes": 75933311,
+      "mtime_ns": 1788682360099154859,
+      "actual_duration_seconds": 1634.873515,
+      "duration_delta_seconds": -0.126485,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1634.866000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1634.873515"
+        }
+      ],
+      "sha256": "86138efd14d3e2a109af6051487f6ad03e445e3c025fc53cccf7a2bd1d16c2fc",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 88,
+      "cid": 29821437004,
+      "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+      "duration_seconds": 1970,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=88",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！.mp4",
+      "bytes": 84133585,
+      "mtime_ns": 1788682363127614480,
+      "actual_duration_seconds": 1969.07898,
+      "duration_delta_seconds": -0.92102,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1969.066000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1969.078980"
+        }
+      ],
+      "sha256": "955d4738354aa73e04906979b2a888703a012fbbbb9be861eff3f86d99369cfc",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 89,
+      "cid": 29817505131,
+      "title": "编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！",
+      "duration_seconds": 4744,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=89",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！.mp4",
+      "bytes": 209286197,
+      "mtime_ns": 1788682403548690109,
+      "actual_duration_seconds": 4743.84576,
+      "duration_delta_seconds": -0.15424,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "4743.833000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "4743.845760"
+        }
+      ],
+      "sha256": "8876ed2a3fdc79492c27dd0036bb9dda9b20edcd686590f9723a61b1682c6d19",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 90,
+      "cid": 29821570920,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+      "duration_seconds": 1037,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=90",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》一.mp4",
+      "bytes": 30426927,
+      "mtime_ns": 1788682366589727150,
+      "actual_duration_seconds": 1036.586984,
+      "duration_delta_seconds": -0.413016,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1036.566000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1036.586984"
+        }
+      ],
+      "sha256": "795a8c00726c926edfb9f4415c18e0ac18c98063c72c8e3fbcb65db0f5cc303a",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 91,
+      "cid": 29821699723,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》二",
+      "duration_seconds": 1915,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=91",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》二.mp4",
+      "bytes": 61232418,
+      "mtime_ns": 1788682381500058776,
+      "actual_duration_seconds": 1914.117234,
+      "duration_delta_seconds": -0.882766,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "1914.100000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "1914.117234"
+        }
+      ],
+      "sha256": "a0ca60f747f83177740f65f4324b16e309b47a8e2e9b50567a1c9bfa4cdde2e0",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    },
+    {
+      "part": 92,
+      "cid": 29821895749,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》三",
+      "duration_seconds": 2632,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=92",
+      "state": "verified",
+      "independent_subtitles": "not_retrieved_in_anonymous_download",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》三.mp4",
+      "bytes": 74862208,
+      "mtime_ns": 1788682396632080848,
+      "actual_duration_seconds": 2631.313379,
+      "duration_delta_seconds": -0.686621,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 852,
+          "height": 480,
+          "duration": "2631.300000"
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100",
+          "duration": "2631.313379"
+        }
+      ],
+      "sha256": "10823ca6ddea05c147103f7a54aa9d1ff08255a0ae804bf1c9c466bcb2c40e10",
+      "packet_scan_exit": 0,
+      "packet_scan_stderr": "",
+      "checks": "audio/video tracks, duration within 2 s of catalog, full packet demux/stream-copy scan; no full pixel/audio decoding or complete viewing"
+    }
+  ]
+}

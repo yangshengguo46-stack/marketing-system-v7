@@ -1,0 +1,404 @@
+{
+  "at": "2026-09-08T04:34:47.804085+00:00",
+  "scope": "Explicit review fields only. Other scoped review can be syntax-only. P001 complete Lead review is recorded in lead_review and full-course-run.md. No audio/visual verification.",
+  "numbered_lessons": "All 34 existing source texts read and organized by Codex/agents; source/output hashes separately checked. Secondary review scopes in per-lesson records.",
+  "supplements": [
+    {
+      "part": 1,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p001-c002",
+        "p001-c004",
+        "p001-c005"
+      ],
+      "other_scoped_review_jobs": [
+        "p001-c001",
+        "p001-c003"
+      ],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 61,
+      "jobs_total": 11,
+      "explicit_full_text_review_jobs": [
+        "p061-c001",
+        "p061-c002",
+        "p061-c003",
+        "p061-c004",
+        "p061-c005",
+        "p061-c006",
+        "p061-c007",
+        "p061-c008",
+        "p061-c009",
+        "p061-c010",
+        "p061-c011"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 62,
+      "jobs_total": 2,
+      "explicit_full_text_review_jobs": [
+        "p062-c001",
+        "p062-c002"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 63,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [
+        "p063-c001",
+        "p063-c002",
+        "p063-c003",
+        "p063-c004"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 64,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p064-c001",
+        "p064-c002",
+        "p064-c003",
+        "p064-c004",
+        "p064-c005"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 65,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p065-c001",
+        "p065-c002",
+        "p065-c003",
+        "p065-c004",
+        "p065-c005"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 66,
+      "jobs_total": 7,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 67,
+      "jobs_total": 1,
+      "explicit_full_text_review_jobs": [
+        "p067-c001"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 68,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p068-c001",
+        "p068-c002",
+        "p068-c003",
+        "p068-c004",
+        "p068-c005"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 69,
+      "jobs_total": 3,
+      "explicit_full_text_review_jobs": [
+        "p069-c001",
+        "p069-c002",
+        "p069-c003"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 70,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [
+        "p070-c001",
+        "p070-c002",
+        "p070-c003",
+        "p070-c004"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 71,
+      "jobs_total": 3,
+      "explicit_full_text_review_jobs": [
+        "p071-c001",
+        "p071-c002",
+        "p071-c003"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 72,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [
+        "p072-c001",
+        "p072-c002",
+        "p072-c003",
+        "p072-c004",
+        "p072-c005",
+        "p072-c006"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 73,
+      "jobs_total": 7,
+      "explicit_full_text_review_jobs": [
+        "p073-c001",
+        "p073-c002",
+        "p073-c003",
+        "p073-c004",
+        "p073-c005",
+        "p073-c006",
+        "p073-c007"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 74,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p074-c001",
+        "p074-c002",
+        "p074-c003",
+        "p074-c004",
+        "p074-c005"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 75,
+      "jobs_total": 3,
+      "explicit_full_text_review_jobs": [
+        "p075-c001",
+        "p075-c002",
+        "p075-c003"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 76,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [
+        "p076-c001",
+        "p076-c002",
+        "p076-c003",
+        "p076-c004"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 77,
+      "jobs_total": 8,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 78,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [
+        "p078-c001",
+        "p078-c002",
+        "p078-c003",
+        "p078-c004",
+        "p078-c005",
+        "p078-c006"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 79,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 80,
+      "jobs_total": 7,
+      "explicit_full_text_review_jobs": [
+        "p080-c001",
+        "p080-c002",
+        "p080-c003",
+        "p080-c004",
+        "p080-c005",
+        "p080-c006",
+        "p080-c007"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 81,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [
+        "p081-c001",
+        "p081-c002",
+        "p081-c003",
+        "p081-c004",
+        "p081-c005",
+        "p081-c006"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    },
+    {
+      "part": 82,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p082-c003"
+      ],
+      "other_scoped_review_jobs": [
+        "p082-c005"
+      ],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 83,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [
+        "p083-c003"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 84,
+      "jobs_total": 6,
+      "explicit_full_text_review_jobs": [
+        "p084-c001",
+        "p084-c004"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 85,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 86,
+      "jobs_total": 3,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 87,
+      "jobs_total": 3,
+      "explicit_full_text_review_jobs": [
+        "p087-c002"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 88,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [
+        "p088-c001"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 89,
+      "jobs_total": 8,
+      "explicit_full_text_review_jobs": [
+        "p089-c003"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 90,
+      "jobs_total": 2,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 91,
+      "jobs_total": 4,
+      "explicit_full_text_review_jobs": [],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": false
+    },
+    {
+      "part": 92,
+      "jobs_total": 5,
+      "explicit_full_text_review_jobs": [
+        "p092-c001",
+        "p092-c002",
+        "p092-c003",
+        "p092-c004",
+        "p092-c005"
+      ],
+      "other_scoped_review_jobs": [],
+      "generation_pending": [],
+      "entire_part_has_explicit_full_review": true
+    }
+  ]
+}

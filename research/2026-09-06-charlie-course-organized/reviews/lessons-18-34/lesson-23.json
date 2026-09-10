@@ -1,0 +1,175 @@
+{
+  "lesson": 23,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 48,
+      "title": "二十三课-怎么写喜剧？(上）23.1",
+      "cid": 254049644,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=48",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十三课-怎么写喜剧？(上）23.1.mp4",
+      "sha256": "e43a8971541575554c55e0ec652878c2de1d30e268e7588de3e64cf43012df1a",
+      "duration_seconds": 2562
+    },
+    {
+      "part": 49,
+      "title": "二十三课-怎么写喜剧？（下）23.2",
+      "cid": 254051910,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=49",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十三课-怎么写喜剧？（下）23.2.mp4",
+      "sha256": "16a6f9c95ec2f426edb770a451755933236fe758ef37a86ffbe8424da1115e26",
+      "duration_seconds": 2945
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "课前减重闲谈，用坚持比喻学习；浅谈喜剧的范围与个人知识体系",
+      "part": 48,
+      "start_seconds": 9,
+      "end_seconds": 963
+    },
+    {
+      "label": "多种喜剧定义、主体/客体距离与喜悲可转换；均为老师个人理解",
+      "part": 48,
+      "start_seconds": 964,
+      "end_seconds": 1611
+    },
+    {
+      "label": "回指斯奈德十种类型：喜剧风格可叠加不同故事类型",
+      "part": 48,
+      "start_seconds": 1612,
+      "end_seconds": 1799
+    },
+    {
+      "label": "人物身份、欲望、动作；观众俯视与小人物/不合理人物",
+      "part": 48,
+      "start_seconds": 1800,
+      "end_seconds": 2031
+    },
+    {
+      "label": "身份不适配、含附加值定语、标签和外化特征；马大帅教书示例",
+      "part": 48,
+      "start_seconds": 2032,
+      "end_seconds": 2279
+    },
+    {
+      "label": "身份与欲望的落差驱动荒诞选择",
+      "part": 48,
+      "start_seconds": 2280,
+      "end_seconds": 2359
+    },
+    {
+      "label": "压力下行动：观众不认同错误选择，但理解这种人物为何如此选",
+      "part": 48,
+      "start_seconds": 2360,
+      "end_seconds": 2557
+    },
+    {
+      "label": "动作示例：《定制伴郎》《狱前教育》《录取通知》，错误但符合人物的选择",
+      "part": 49,
+      "start_seconds": 11,
+      "end_seconds": 312
+    },
+    {
+      "label": "事件：小人物遇大事、大人物遇小事、巧合；核心是困境和不适",
+      "part": 49,
+      "start_seconds": 313,
+      "end_seconds": 574
+    },
+    {
+      "label": "主题中的黑色幽默，以及不必给人物/事件/主题喜剧硬排高下",
+      "part": 49,
+      "start_seconds": 575,
+      "end_seconds": 1014
+    },
+    {
+      "label": "具体场次元素一：反转，《老爸老妈浪漫史》寻父兼有笑与悲",
+      "part": 49,
+      "start_seconds": 1015,
+      "end_seconds": 1372
+    },
+    {
+      "label": "元素二：排比递进及双组对比；课堂群像与《老友记》吻后分享",
+      "part": 49,
+      "start_seconds": 1373,
+      "end_seconds": 1565
+    },
+    {
+      "label": "元素三：解构经典，唐僧与桃园结义假设例",
+      "part": 49,
+      "start_seconds": 1566,
+      "end_seconds": 1644
+    },
+    {
+      "label": "元素四：台词由人物情境生长，另谈平常情境写幽默对白",
+      "part": 49,
+      "start_seconds": 1645,
+      "end_seconds": 1869
+    },
+    {
+      "label": "台词方法：预期破除、思维错位、重复/callback、类比、流行元素",
+      "part": 49,
+      "start_seconds": 1870,
+      "end_seconds": 2527
+    },
+    {
+      "label": "无厘头工作经验与限制建议；喜悲无绝对边界、观众反应需自己拿捏",
+      "part": 49,
+      "start_seconds": 2532,
+      "end_seconds": 2941
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "从事件角度琢磨困境/不适，找相关参考片；大小人物和巧合是示例路径。",
+      "part": 49,
+      "start_seconds": 557.286,
+      "end_seconds": 574.54,
+      "submission_spec": "未规定片名、产物或提交。",
+      "teacher_review": "未说明讲评。",
+      "uncertainty": "属于随堂研习建议。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "可看《斯大林之死》《独裁者》等理解老师所谓黑色幽默。",
+      "part": 49,
+      "start_seconds": 711.174,
+      "end_seconds": 779.02,
+      "submission_spec": "未规定观后作业或提交；另提德国希特勒复活影片但正文未报片名，不擅补。",
+      "teacher_review": "未说明讲评。",
+      "uncertainty": "推荐观影，非明确布置。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "回看前面反转课的具体方法。",
+      "part": 49,
+      "start_seconds": 1360.646,
+      "end_seconds": 1372.044,
+      "submission_spec": "回看建议，未定新产物。",
+      "teacher_review": "未说明讲评。",
+      "uncertainty": "直接前课引用。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "自己观察研究经典人物/故事在喜剧中的解构。",
+      "part": 49,
+      "start_seconds": 1609.958,
+      "end_seconds": 1644.684,
+      "submission_spec": "未规定作品清单、数量或提交。",
+      "teacher_review": "未说明讲评。",
+      "uncertainty": "课堂建议，非统一作业。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    48,
+    49
+  ],
+  "limits": [
+    "P48、P49全文机器稿顺序阅读，未逐句听校。",
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。",
+    "P49 26:12帧校“解构经典”，不是机器稿的“结构经典”。",
+    "历史定义、心理/行业判断、地域概括与减重闲谈均按老师当堂观点记录，不作为外部事实或健康建议。",
+    "老师不建议学员写无厘头是本课工作经验判断，不把其“品类绝种”等说法写成当前行业事实。"
+  ]
+}

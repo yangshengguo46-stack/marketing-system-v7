@@ -1,0 +1,75 @@
+{
+  "thread_id": "01a08657-ea71-7f52-a5cd-63a3b71dfdc8",
+  "model": "glm-5-2-260617",
+  "events": "output/course-learning/charlie-20260906/run/method-v1-delivery-final-20260909-events.ndjson",
+  "status": "completed",
+  "duration_ms": 293676,
+  "usage": {
+    "totalTokens": 372275,
+    "inputTokens": 360451,
+    "cachedInputTokens": 302144,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 11824,
+    "reasoningOutputTokens": 3020
+  },
+  "combined_two_threads_usage": {
+    "totalTokens": 1659571,
+    "inputTokens": 1628817,
+    "cachedInputTokens": 1408896,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 30754,
+    "reasoningOutputTokens": 8471
+  },
+  "marketing_work_calls": [
+    {
+      "id": "call_gf0bd65ubq88prmjgdab32zu",
+      "action": "open",
+      "stage": null,
+      "response": "{\"briefPreview\":\"第34课原题形式开发试作。构造\\\"小三角\\\"情节，交两部分：(1)公式与\",\"nextStage\":null,\"results\":[{\"needsReview\":false,\"preview\":\"## 第二轮来源补读与旧漏读修正\\n\\n### 首轮漏读补正\\n首轮用 sed 130—250\"},{\"needsReview\":false,\"preview\":\"## 第二轮返工取舍\\n\\n### 修改方向确定\\n\\n采用独立报告提出\\\"惦念女儿演\"},{\"needsReview\":false,\"preview\":\"# 第34课小三角试作 v2 · 完整场面与公式\\n\\n---\\n\\n## 一、三角公式与关键\"}],\"task\":\"Review full results with the user and assemble the existing ContentPackage. Saved work is not proven marketing quality or published content. Rework only what needs changing.\",\"workFile\":\"output/marketing-work/charlie-method-v1-homework34.json\"}"
+    },
+    {
+      "id": "call_6mi2wvjitjtgci5yfm93xbmm",
+      "action": "record",
+      "stage": "draft",
+      "response": "{\"briefPreview\":\"第34课原题形式开发试作。构造\\\"小三角\\\"情节，交两部分：(1)公式与\",\"nextStage\":null,\"results\":[{\"needsReview\":false,\"preview\":\"## 第二轮来源补读与旧漏读修正\\n\\n### 首轮漏读补正\\n首轮用 sed 130—250\"},{\"needsReview\":false,\"preview\":\"## 第二轮返工取舍\\n\\n### 修改方向确定\\n\\n采用独立报告提出\\\"惦念女儿演\"},{\"needsReview\":false,\"preview\":\"# 收摊\\n\\n陈师傅的修鞋摊支在社区东门内侧，三面铁皮围成半人高的\"}],\"task\":\"Review full results with the user and assemble the existing ContentPackage. Saved work is not proven marketing quality or published content. Rework only what needs changing.\",\"workFile\":\"output/marketing-work/charlie-method-v1-homework34.json\"}"
+    },
+    {
+      "id": "call_39t02d616gtocizpamgwrnx3",
+      "action": "record",
+      "stage": "draft",
+      "response": "{\"briefPreview\":\"第34课原题形式开发试作。构造\\\"小三角\\\"情节，交两部分：(1)公式与\",\"nextStage\":null,\"results\":[{\"needsReview\":false,\"preview\":\"## 第二轮来源补读与旧漏读修正\\n\\n### 首轮漏读补正\\n首轮用 sed 130—250\"},{\"needsReview\":false,\"preview\":\"## 第二轮返工取舍\\n\\n### 修改方向确定\\n\\n采用独立报告提出\\\"惦念女儿演\"},{\"needsReview\":false,\"preview\":\"# 收摊\\n\\n陈师傅的修鞋摊支在社区东门内侧，三面铁皮围成半人高的\"}],\"task\":\"Review full results with the user and assemble the existing ContentPackage. Saved work is not proven marketing quality or published content. Rework only what needs changing.\",\"workFile\":\"output/marketing-work/charlie-method-v1-homework34.json\"}"
+    }
+  ],
+  "command_count": 16,
+  "nonzero_commands": [],
+  "actual_truncated_returns": [],
+  "v2_stage_complete_body_in_exec_returns": {
+    "0": [
+      "call_e3ap6szwuspp1fa50px6scyg"
+    ],
+    "1": [
+      "call_t511v22w440o1x3zfwtvd92y"
+    ],
+    "2": [
+      "call_uhq4n65c458p7f4olpil1777"
+    ]
+  },
+  "final_expected_full_text_in_exec_return": true,
+  "complete_string_equality": true,
+  "normalization": "scene.rstrip() + two LF + --- + two LF + notes.rstrip(); strips only trailing whitespace",
+  "research_direction_preserved": true,
+  "final_review_flags": [
+    false,
+    false,
+    false
+  ],
+  "exact_match_initially_failed": true,
+  "exact_match_later_passed": true,
+  "scope_deviation": "Model wrote /tmp/expected-body.txt to assemble text outside the test-specific output directory; retained as an execution-scope failure, not strict isolation success. It did not replace the work JSON using shell.",
+  "final_work_sha256": "5dbd04853e3efb2bf3fbb732f61fcb862e262a72a631ee6ce54beeebe55901a1",
+  "limits": [
+    "Root specified each delivery correction; not autonomous gain evidence",
+    "Root made two local notes wording corrections; story remained native v2",
+    "No human or business effectiveness evidence; no separate outbound HTTP body capture"
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "lesson": 3,
+  "title": "八要素的实战应用",
+  "parts": [
+    7,
+    8
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    7,
+    8
+  ],
+  "teaching_nodes": [
+    {
+      "label": "回顾八项及前课未布置作业",
+      "part": 7,
+      "start_seconds": 3.622,
+      "end_seconds": 282.476
+    },
+    {
+      "label": "标准警察故事的完整但乏味基线",
+      "part": 7,
+      "start_seconds": 300.198,
+      "end_seconds": 679.82
+    },
+    {
+      "label": "人物身份加负价值定语",
+      "part": 7,
+      "start_seconds": 712.102,
+      "end_seconds": 1003.66
+    },
+    {
+      "label": "原始欲望与猴子比喻",
+      "part": 7,
+      "start_seconds": 1004.198,
+      "end_seconds": 1224.428
+    },
+    {
+      "label": "及物动作与持续核心悬念",
+      "part": 7,
+      "start_seconds": 1232.742,
+      "end_seconds": 1340.748
+    },
+    {
+      "label": "环境对手自身阻力",
+      "part": 7,
+      "start_seconds": 1347.814,
+      "end_seconds": 1524.108
+    },
+    {
+      "label": "绕过动作实现欲望",
+      "part": 7,
+      "start_seconds": 1525.03,
+      "end_seconds": 1668.908
+    },
+    {
+      "label": "朴素正价值主题",
+      "part": 8,
+      "start_seconds": 2.822,
+      "end_seconds": 102.892
+    },
+    {
+      "label": "警察定语的吸引力与合理化",
+      "part": 8,
+      "start_seconds": 105.158,
+      "end_seconds": 673.132
+    },
+    {
+      "label": "同一故事逐项展开并保持悬念",
+      "part": 8,
+      "start_seconds": 674.95,
+      "end_seconds": 1499.052
+    },
+    {
+      "label": "同一主题下的结尾变体",
+      "part": 8,
+      "start_seconds": 1503.91,
+      "end_seconds": 2025.868
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "老师确认第2课刻意没布置作业",
+      "part": 7,
+      "start_seconds": 254.598,
+      "end_seconds": 267.18,
+      "asr_excerpt": "我上一节课啊，我特意没布置作业…我就是怕打击你们的信心",
+      "submission_spec": "无",
+      "teacher_review": "无学生作业讲评",
+      "uncertainty": "原字幕已核实"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "向朋友介绍人物身份，观察是否想听；同时保持合理性与共情",
+      "part": 7,
+      "start_seconds": 732.006,
+      "end_seconds": 749.996,
+      "asr_excerpt": "讲给你身边一个朋友说…他想听就成了…他不想听，你就得再重新琢磨琢",
+      "submission_spec": "未要求记录表、人数或上交",
+      "teacher_review": "未说明",
+      "uncertainty": "课堂建议检验，不是独立课后提交作业"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "跟随课堂警察构想逐项对照八项修改方法",
+      "part": 8,
+      "start_seconds": 125.766,
+      "end_seconds": 135.308,
+      "asr_excerpt": "八要素的修改方式，我们来每一个都来对一下",
+      "submission_spec": "课堂演示，没有学生交稿指令",
+      "teacher_review": "课堂内逐步演示",
+      "uncertainty": "不把讲师示范冒记成学生同题作业"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "limits": [
+    "完整机器稿已读，未逐句听校",
+    "p7 256/261/982秒原画面已视觉核对",
+    "课堂方法保留本例范围，结局变体是老师现场演示"
+  ],
+  "frames": [
+    {
+      "part": 7,
+      "source_seconds": 256,
+      "path": "frames/p007-0256.jpg",
+      "sha256": "f68c7f2664e22ba45649d5faab45f20e3c40867b949a09f288f285604314be41",
+      "visually_read": true
+    },
+    {
+      "part": 7,
+      "source_seconds": 261,
+      "path": "frames/p007-0261.jpg",
+      "sha256": "934a4f6e3c950f3b5d1c447b592ad24084b1ea393ebcc840ab398afdc6cd6e91",
+      "visually_read": true
+    },
+    {
+      "part": 7,
+      "source_seconds": 982,
+      "path": "frames/p007-0982.jpg",
+      "sha256": "2e4ff000b1e75fd42fa3b9acb4a4e33534f052d9b351f67e1e0e85abdefc97e3",
+      "visually_read": true
+    }
+  ],
+  "examples": [
+    {
+      "case_version": "police_teacher_live_lesson03",
+      "label": "想殉职的警察：女儿已死版",
+      "part": 8,
+      "start_seconds": 433.51,
+      "end_seconds": 673.132,
+      "source_relation": "老师在本课现场构想；吸引人的警察定语称此前见过，但未给原作者/作品名",
+      "motivation": "未能保护女儿而内疚，希望因公殉职后继续保护女儿",
+      "later_variant": {
+        "case_version": "police_class_representative_lesson08",
+        "part": 16,
+        "start_seconds": 134.886,
+        "end_seconds": 168.588,
+        "source_relation": "老师明确以课代表最后改出的例子为后续十序列示范来源",
+        "changed_motivation": "妻女仍在，想以殉职抚恤金留钱给妻女",
+        "verification_frames": [
+          "frames/p016-0136.jpg",
+          "frames/p016-0139.jpg"
+        ]
+      }
+    }
+  ]
+}

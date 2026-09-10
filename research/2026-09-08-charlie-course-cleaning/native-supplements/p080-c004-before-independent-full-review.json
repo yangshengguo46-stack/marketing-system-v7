@@ -1,0 +1,147 @@
+{
+  "blocks": [
+    {
+      "first_segment": 93,
+      "last_segment": 102,
+      "heading": "影片对白：贝尔福特动员演说——电话不会自己拨号",
+      "text": "【影片对白】All right, I want all of you to focus for a second. See those little black boxes? They're called telephones. I'm going to let you in on a little secret about these telephones: they're not going to dial themselves, okay? Without you, they're just worthless hunks of plastic, like a loaded M16 without a trained〔待核〕 to pull the trigger.\n\nAnd in the case of the telephone, it's up to each and every one of you—my highly trained Strattonites, my killers, my killers who will not take no for an answer, fucking warriors who will not hang up the phone until their client either buys or fucking dies.\n\nLet me tell you〔待核〕: there is no nobility in poverty. I have been a rich man and I have been a poor man, and I choose rich every fucking time.\n\nWhen I have to face my problems, I show up in the back of a limo, wearing a $2,000 suit and a $40,000 gold fucking watch.\n\nThinks〔待核〕 I'm superficial or materialistic? Go get a job at fucking McDonald's, because that's where〔待核〕 you fucking belong.",
+      "corrections": [
+        {
+          "original": "let you on a little secret",
+          "cleaned": "let you in on a little secret",
+          "basis": "固定搭配let someone in on a secret，on前疑漏in"
+        },
+        {
+          "original": "train re",
+          "cleaned": "trained〔待核〕",
+          "basis": "M16比喻需有人扣扳机，train re疑似机器误识，疑为trained soldier之类，未确定"
+        },
+        {
+          "original": "Let me there is",
+          "cleaned": "Let me tell you〔待核〕：there is",
+          "basis": "口语不完整，tell you疑被吞音，未逐句听校"
+        },
+        {
+          "original": "Thinks I'm superficial",
+          "cleaned": "If anyone thinks I'm superficial〔待核〕",
+          "basis": "Thinks前疑有省略条件句，无法确定完整原句"
+        },
+        {
+          "original": "that's why you fucking belong",
+          "cleaned": "that's where you fucking belong〔待核〕",
+          "basis": "why疑为where，但未听校"
+        }
+      ]
+    },
+    {
+      "first_segment": 103,
+      "last_segment": 109,
+      "heading": "影片对白：贝尔福特动员演说——看看你身边的人，把Steve Madden股票塞进客户嘴里",
+      "text": "But before you depart this room full of winners, I want you to take a good look at the person next to you. Go on.\n\n'Cause sometime in the not so distant future, you're going to be pulling up to a red light in your beat-up old fucking Pinto〔待核〕, and that person is going to be pulling up right alongside you in a brand new Porsche〔待核〕.\n\nSome disgusting wild degenerate〔待核〕 with three days' growth〔待核〕 of stubble in a sleeveless〔待核〕 shirt, crammed into a carload〔待核〕 full of groceries from a fucking Price Club. That's who you're going to be sitting next to.\n\nSo you listen to me and you listen well: Are you behind on your credit card bills? Go pick up the phone and start dialing. Is your landlord ready to evict you? Good, pick up the phone and start dialing. Does your girlfriend think you're a fucking worthless loser? Good, pick up the phone and start dialing. I want you to deal with your problems by becoming rich. All you have to do today is pick up that phone.\n\nSpeak〔待核〕 the words that I have taught you, and I will make you richer than the most powerful CEO in the United States of fucking America. I want you to go out there. I want you to ram Steve Madden stock down your clients' throats till they fucking choke on it—till they choke on it and they buy ten thousand shares. That's what I want. You be ferocious. You be relentless. You be telephone fucking〔待核〕.",
+      "corrections": [
+        {
+          "original": "pinnel",
+          "cleaned": "Pinto〔待核〕",
+          "basis": "上下文是破旧老车，pinnel疑为Ford Pinto误识，未确定"
+        },
+        {
+          "original": "poors",
+          "cleaned": "Porsche〔待核〕",
+          "basis": "上下文是崭新豪车，poors疑为Porsche误识"
+        },
+        {
+          "original": "wild debe",
+          "cleaned": "wild degenerate〔待核〕",
+          "basis": "wild debe无法辨认，疑为degenerate或类似贬义词"
+        },
+        {
+          "original": "raiseous",
+          "cleaned": "growth〔待核〕",
+          "basis": "three days' growth of stubble为固定说法，raiseous疑为growth误识"
+        },
+        {
+          "original": "sleeveless mo",
+          "cleaned": "sleeveless〔待核〕",
+          "basis": "mo后截断，无法确定原词，疑为muscle shirt之类"
+        },
+        {
+          "original": "a call load full",
+          "cleaned": "a carload full〔待核〕",
+          "basis": "call load疑为carload误识，指满车杂物"
+        },
+        {
+          "original": "peak the words",
+          "cleaned": "speak the words〔待核〕",
+          "basis": "peak疑为speak误识"
+        },
+        {
+          "original": "Maddenstock",
+          "cleaned": "Madden stock",
+          "basis": "Steve Madden股票，两词连写"
+        },
+        {
+          "original": "F America",
+          "cleaned": "fucking America",
+          "basis": "F疑为fucking缩略误识"
+        },
+        {
+          "original": "telephone fucking",
+          "cleaned": "telephone fucking〔待核〕",
+          "basis": "原句在此截断，后续词无法确定"
+        }
+      ]
+    },
+    {
+      "first_segment": 110,
+      "last_segment": 114,
+      "heading": "老师讲解：这场戏的正面意义——用三段式说服别人",
+      "text": "老师：常牛一戏〔待核〕啊。\n\n跟大家说一下，你看像刚才这个，同学们，我为什么说这场电影其实它有些地方还是有正面意义的，它最起码说对了一件事情，就是关于赚钱——如何快速地获得别人的注意力。他刚才说golden ticket啊，这个非常对。你用三段式怎么回答、说服别人？第一段、第一段——\n\n你赚不到钱，是因为你没有买票。先讲一个让他思考、觉得奇怪的事实。什么票呢？坐在有钱人那桌的门票。你没有这个门票，你就没有坐在有钱人那桌。因为有钱人里面有90%的人并不知道咱自己是怎么赚到钱的。\n\n他只是坐对了桌。因为发明方法论的只有10%的人。第三点，你也不需要知道方法论，你不需要知道世界运行的规律，你只需要坐在有钱人那一桌。\n\n这就是三段式啊，三段式正好结合他在讲赚钱，大家去体会一下如何用三段式写台词，包括去说服别人。",
+      "corrections": [
+        {
+          "original": "常牛一戏",
+          "cleaned": "常牛一戏〔待核〕",
+          "basis": "教师口语，常牛一词无法确定原意，疑为一场牛戏之类说法"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S93：'train re'无法辨认，疑为trained soldier之类，标疑未补",
+    "S100：'Let me there is'口语不完整，疑为Let me tell you，未听校",
+    "S102：'Thinks I'm'前疑有省略条件句，'why'疑为'where'，均标疑",
+    "S105：'pinnel'疑为车型Pinto，'poors'疑为Porsche，'wild debe'无法辨认，'raiseous'疑为growth，'sleeveless mo'后词截断，'call load'疑为carload，多个专名均标疑未按常识补齐",
+    "S109：'telephone fucking'后截断，无法确定后续词",
+    "S110：'常牛一戏'教师口语，无法确定原意",
+    "影片英文对白未逐句对照原片，多处误识已标疑但未声称准确"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p080-c004",
+  "part": 80,
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "output_text_characters": 2722,
+  "length_ratio": 1.0542215336948102,
+  "review_length_flag": false,
+  "thread_id": "01a07f32-bb6d-7e60-9f8e-610c024ad933",
+  "usage": {
+    "total": {
+      "totalTokens": 15663,
+      "inputTokens": 10044,
+      "cachedInputTokens": 8640,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5619,
+      "reasoningOutputTokens": 3919
+    },
+    "last": {
+      "totalTokens": 15663,
+      "inputTokens": 10044,
+      "cachedInputTokens": 8640,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5619,
+      "reasoningOutputTokens": 3919
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null
+}

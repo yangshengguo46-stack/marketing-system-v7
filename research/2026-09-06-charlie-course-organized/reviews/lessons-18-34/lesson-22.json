@@ -1,0 +1,106 @@
+{
+  "lesson": 22,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 46,
+      "title": "二十二课-G潮上不去？（上）22.1",
+      "cid": 252711256,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=46",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十二课-G潮上不去？（上）22.1.mp4",
+      "sha256": "b9d0ff82a460b8618adf925555bb1cff7133306552c95ebbcc96a31dda09aa1a",
+      "duration_seconds": 2560
+    },
+    {
+      "part": 47,
+      "title": "二十二课-G潮上不去？（下）22.2",
+      "cid": 252782284,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=47",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十二课-G潮上不去？（下）22.2.mp4",
+      "sha256": "c5b00bc3f40ff535ee4f4bb781625da9ad51d8accfd7bd056bfff98f83264eef",
+      "duration_seconds": 2910
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "班级教务与计划恢复作业；仍要求先学前课并已写剧本",
+      "part": 46,
+      "start_seconds": 9,
+      "end_seconds": 372
+    },
+    {
+      "label": "高潮问题：不可一句话带过或全部丢给武指；高潮可先设计也可写到时再解决",
+      "part": 46,
+      "start_seconds": 373,
+      "end_seconds": 986
+    },
+    {
+      "label": "高潮七个考量：观众期待、节奏、伏笔、意外、烈度、主角抉择/牺牲、自我挖潜与AB合题",
+      "part": 46,
+      "start_seconds": 990,
+      "end_seconds": 2017
+    },
+    {
+      "label": "《定制伴郎》结尾插播与复盘，假朋友/真朋友合题，主角选择和牺牲",
+      "part": 46,
+      "start_seconds": 2019,
+      "end_seconds": 2555
+    },
+    {
+      "label": "《肖申克的救赎》结尾片段与AB分析：内在救赎与外在自由",
+      "part": 47,
+      "start_seconds": 9,
+      "end_seconds": 997
+    },
+    {
+      "label": "《阳光小美女》结尾片段与AB分析：家人共同选择，自我认同与他人认可",
+      "part": 47,
+      "start_seconds": 998,
+      "end_seconds": 2028
+    },
+    {
+      "label": "《加勒比海盗》高潮片段与复盘：伏笔、反转、行动选择与海盗身份",
+      "part": 47,
+      "start_seconds": 2033,
+      "end_seconds": 2789
+    },
+    {
+      "label": "总结与布置家人故事作业：耳闻目见素材、艺术加工、第三视角",
+      "part": 47,
+      "start_seconds": 2789,
+      "end_seconds": 2903
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "写一位家人的故事，不写自己，也不写镜花水月的人物。由耳闻目见的相关故事挖掘素材，允许创作和艺术加工，用第三视角写，直接写人物的故事，不以“我的舅舅”等学生自己的视角叙述。",
+      "part": 47,
+      "start_seconds": 2831.622,
+      "end_seconds": 2902.924,
+      "submission_spec": "老师指定对象、素材来源与第三视角；未规定字数、文件格式、是否必须完整剧本、截止日期、提交渠道。",
+      "teacher_review": "此处未说明批改或讲评方式。",
+      "uncertainty": "依据全文机器稿；关键作业结束语及不写镜花水月人物已抽帧核实，未逐句听校。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "学习群同学可向班委查找两次旧选拔考试试卷，用已讲烈度方法回看题目。",
+      "part": 46,
+      "start_seconds": 1420,
+      "end_seconds": 1448,
+      "submission_spec": "未指定新作业或提交要求。",
+      "teacher_review": "提到以前两次考试和已讲方法，没有本课新增题目。",
+      "uncertainty": "这是取阅旧考卷的建议，不列为本课新布置。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    46,
+    47
+  ],
+  "limits": [
+    "P46、P47全文机器稿顺序阅读，未逐句听校。",
+    "高潮七项是老师个人考量，老师明说不一定严格并列，不是固定法则。",
+    "P46 31:40原帧核实“AB合题”；P47 47:32、48:18帧核实作业部分；电影情节与价值判断按老师当堂分析记录。",
+    "本课明确作业是家人故事；不可额外加上必须逐项落实七条高潮考量的要求。"
+  ]
+}

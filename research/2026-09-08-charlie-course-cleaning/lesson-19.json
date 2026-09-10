@@ -1,0 +1,299 @@
+{
+  "lesson": 19,
+  "source_parts": [
+    {
+      "part": 42,
+      "source_json_sha256": "3d852b82758a1a6f8184e4eff9402285ba97d7a6e8f472a28ac6a4a3c53e9245",
+      "segment_count": 675
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L19-B001",
+      "part": 42,
+      "first_segment": 1,
+      "last_segment": 37,
+      "heading": "盛夏录课与片场降温的岔题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "同栖生",
+          "cleaned": "同期声",
+          "basis": "棚内拍摄须控制空调噪音的语境"
+        }
+      ]
+    },
+    {
+      "id": "L19-B002",
+      "part": 42,
+      "first_segment": 38,
+      "last_segment": 72,
+      "heading": "为什么需要剧本项目提案",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "前十／没有竞争文",
+          "cleaned": "前史／没有进正文",
+          "basis": "前半全写人物以前故事的明确对照"
+        }
+      ]
+    },
+    {
+      "id": "L19-B003",
+      "part": 42,
+      "first_segment": 73,
+      "last_segment": 122,
+      "heading": "提案考验逻辑，也考验对阅读者的共情",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L19-B004",
+      "part": 42,
+      "first_segment": 123,
+      "last_segment": 167,
+      "heading": "修正对甲方的说法；提案的六部分",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "标签卡",
+          "cleaned": "标签墙",
+          "basis": "S214以后反复明确标签墙及关键词作用"
+        },
+        {
+          "original": "等待",
+          "cleaned": "梗概",
+          "basis": "后文明确八要素梗概内容"
+        }
+      ]
+    },
+    {
+      "id": "L19-B005",
+      "part": 42,
+      "first_segment": 168,
+      "last_segment": 213,
+      "heading": "标题与一句话故事：先让人抬头",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "单向懦弱的前解",
+          "cleaned": "胆小懦弱的警察",
+          "basis": "紧接想殉职的警察例子与性格语境"
+        },
+        {
+          "original": "格列位／青洁药",
+          "cleaned": "格列卫／天价药",
+          "basis": "前后同一白血病药与天价药说法"
+        }
+      ]
+    },
+    {
+      "id": "L19-B006",
+      "part": 42,
+      "first_segment": 214,
+      "last_segment": 264,
+      "heading": "标签墙把综合卖点迅速摊开",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "经营费",
+          "cleaned": "警匪",
+          "basis": "想殉职警察故事的类型标签语境"
+        }
+      ]
+    },
+    {
+      "id": "L19-B007",
+      "part": 42,
+      "first_segment": 265,
+      "last_segment": 303,
+      "heading": "人物小传既是设计蓝图，也给合作方看",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "人物小篆／小张／小账",
+          "cleaned": "人物小传",
+          "basis": "同一文种连续定义"
+        },
+        {
+          "original": "变好",
+          "cleaned": "变化",
+          "basis": "S391之后明确角色前后状态变化，不只字面变好"
+        }
+      ]
+    },
+    {
+      "id": "L19-B008",
+      "part": 42,
+      "first_segment": 304,
+      "last_segment": 369,
+      "heading": "外在、内在和状态：三个静态层面",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "应急反应／应执反",
+          "cleaned": "应激反应",
+          "basis": "S361及随后明确遇事第一反应、行为常态"
+        }
+      ]
+    },
+    {
+      "id": "L19-B009",
+      "part": 42,
+      "first_segment": 370,
+      "last_segment": 406,
+      "heading": "行动与变化：从初始状态走向人物弧光",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "报酬／小课楼",
+          "cleaned": "报仇／小蝌蚪",
+          "basis": "目标示例的连续语境"
+        },
+        {
+          "original": "主力",
+          "cleaned": "阻力",
+          "basis": "明确阻碍行动成功的力量"
+        },
+        {
+          "original": "湖光／胡光",
+          "cleaned": "弧光",
+          "basis": "随后定义人物成长变化"
+        }
+      ]
+    },
+    {
+      "id": "L19-B010",
+      "part": 42,
+      "first_segment": 407,
+      "last_segment": 467,
+      "heading": "程勇小传示范：身份与内在缺陷",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "陈勇／曾用",
+          "cleaned": "程勇",
+          "basis": "S498清楚出现程勇，同角色异写"
+        },
+        {
+          "original": "打女人的男人是最疯的",
+          "cleaned": "讲师认为打女人暴露怂与懦弱",
+          "basis": "S444–445、448上下文明确讨论怂，原“疯”待核"
+        }
+      ]
+    },
+    {
+      "id": "L19-B011",
+      "part": 42,
+      "first_segment": 468,
+      "last_segment": 515,
+      "heading": "程勇的状态、资源与命门",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L19-B012",
+      "part": 42,
+      "first_segment": 516,
+      "last_segment": 545,
+      "heading": "把人物变化写完整，但别把草稿框架原样交出去",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L19-B013",
+      "part": 42,
+      "first_segment": 546,
+      "last_segment": 572,
+      "heading": "梗概用八要素串成完整故事",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "发要素／花要素",
+          "cleaned": "八要素",
+          "basis": "紧接逐项列出八项"
+        },
+        {
+          "original": "附加值",
+          "cleaned": "负价值",
+          "basis": "S557及S611明确正负价值对抗"
+        }
+      ]
+    },
+    {
+      "id": "L19-B014",
+      "part": 42,
+      "first_segment": 573,
+      "last_segment": 614,
+      "heading": "梗概突出创意，保留遐想，别丢主题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "锚店／二次动物",
+          "cleaned": "锚点／二次动作",
+          "basis": "此前故事入口方法与同段例子"
+        },
+        {
+          "original": "什么鸡巴你",
+          "cleaned": "什么激发你〔词按上下文整理〕",
+          "basis": "前后追问促使动笔的创意，原碎词未当引文"
+        }
+      ]
+    },
+    {
+      "id": "L19-B015",
+      "part": 42,
+      "first_segment": 615,
+      "last_segment": 641,
+      "heading": "样场提供能真正写戏的证据",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "不一样／一个样",
+          "cleaned": "样场",
+          "basis": "后文S657明确样场与写具体一场戏"
+        },
+        {
+          "original": "吻喜",
+          "cleaned": "文戏",
+          "basis": "与武戏、万马奔腾相对"
+        }
+      ]
+    },
+    {
+      "id": "L19-B016",
+      "part": 42,
+      "first_segment": 642,
+      "last_segment": 675,
+      "heading": "主要角色范围与样场示例；六项形成提案",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "拿出／大叔",
+          "cleaned": "达叔",
+          "basis": "与星仔、钟丽缇、断水流并列的角色示例"
+        },
+        {
+          "original": "朱丽缇／中立体／钟立体",
+          "cleaned": "钟丽缇",
+          "basis": "同一爱情对象演员称呼异写"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "P042 S254–255小蝌蚪例子“投为不导演”“娃娃”、S330“直播”、S413“乐里勒特”未听校、语义或称谓待核；未拼入其他课情节。",
+    "P042 S512“不胆小”与S513“贪财，但是胆小”矛盾，按紧接清楚表述整理并注明；程勇既有孝心又未尽责两层评价均保留。",
+    "讲师修正对甲方“阅读障碍”的武断措辞，解释为工作忙、时间有限；片酬2000万/2500万是假设，非市场报价。警察故事本课明确说不想死时反而死，保留该课版本。",
+    "本课是剧本项目提案，不是导演/制片共同完成的影视项目提案。六项为呈现建议，五个人物层面是内部起草逻辑，不把标签强加给对外文稿。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第19课.md",
+  "output_sha256": "4ef1486390b970470ec42d415458891b7c55c09b2dfeef4bdbf9e5b881e6431c",
+  "reader_navigation_update": {
+    "previous_output_sha256": "0defaf490b0e1d082e01bb28eb0bd07250b19e42c7fea223804e989a2024221e",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

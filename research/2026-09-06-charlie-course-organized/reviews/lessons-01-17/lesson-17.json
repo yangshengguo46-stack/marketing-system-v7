@@ -1,0 +1,267 @@
+{
+  "lesson": 17,
+  "title": "新手跳坑",
+  "parts": [
+    39
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    39
+  ],
+  "teaching_nodes": [
+    {
+      "part": 39,
+      "start_seconds": 7,
+      "end_seconds": 281,
+      "label": "作业积压与改用群批"
+    },
+    {
+      "part": 39,
+      "start_seconds": 286,
+      "end_seconds": 717,
+      "label": "选材太自我"
+    },
+    {
+      "part": 39,
+      "start_seconds": 720,
+      "end_seconds": 1170,
+      "label": "苦难误区"
+    },
+    {
+      "part": 39,
+      "start_seconds": 1172,
+      "end_seconds": 1705,
+      "label": "主角共情与核心行动"
+    },
+    {
+      "part": 39,
+      "start_seconds": 1707,
+      "end_seconds": 2254,
+      "label": "具体对手及自洽动机"
+    },
+    {
+      "part": 39,
+      "start_seconds": 2256,
+      "end_seconds": 2758,
+      "label": "铺垫当前处境"
+    },
+    {
+      "part": 39,
+      "start_seconds": 2761,
+      "end_seconds": 2890,
+      "label": "事件流动性"
+    },
+    {
+      "part": 39,
+      "start_seconds": 2892,
+      "end_seconds": 3195,
+      "label": "情绪变化与涂色"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "早期逐份批改后来积压，改为七项共性群批",
+      "part": 39,
+      "start_seconds": 67.91,
+      "end_seconds": 217.804,
+      "asr_excerpt": "手里的作业已经积压了1000多份…帮大家群批一下",
+      "submission_spec": "未指作业课号",
+      "teacher_review": "结合已看部分作业与以往批改经验",
+      "uncertainty": "数量为教师当时自述；积压与群批字幕已核"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "按共性问题自查已有稿，有问题就改",
+      "part": 39,
+      "start_seconds": 179.27,
+      "end_seconds": 194.092,
+      "asr_excerpt": "大家自己去看看自己有没有犯这样的问题，有则改制，无则加勉",
+      "submission_spec": "未指定旧稿编号，无重新提交要求",
+      "teacher_review": "本课共性讲评，无逐份改后稿",
+      "uncertainty": ""
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "匿名同学角色名罗伯特戴安娜影响生活感",
+      "part": 39,
+      "start_seconds": 1447.526,
+      "end_seconds": 1556.204,
+      "asr_excerpt": "不点名的说一个同学交上来的剧文",
+      "submission_spec": "原稿未展示",
+      "teacher_review": "本课口头点评",
+      "uncertainty": "未指课号及改后名字"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "数份富家女及岳父给钱解困的结局问题",
+      "part": 39,
+      "start_seconds": 1603.494,
+      "end_seconds": 1705.9,
+      "asr_excerpt": "有好几个同学不约而同的写了同一个情节",
+      "submission_spec": "原稿未展示",
+      "teacher_review": "指出应由主角亲自解决核心问题",
+      "uncertainty": "未指具体作业课号"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "回看主角课的共情方法",
+      "part": 39,
+      "start_seconds": 1559.046,
+      "end_seconds": 1571.308,
+      "asr_excerpt": "回去回去回看一下…讲主角的那一节课",
+      "submission_spec": "无新增角色表要求",
+      "teacher_review": "本课共性讲评，无逐份改后稿",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "自查加强对手、试提前出场",
+      "part": 39,
+      "start_seconds": 2137.382,
+      "end_seconds": 2251.052,
+      "asr_excerpt": "把这些坑都跳过去…可不可以往前再提几场戏…试一试",
+      "submission_spec": "按自己剧本试改，未要求所有对手必须前移",
+      "teacher_review": "本课共性讲评，无逐份改后稿",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "用情绪色块检查大纲场次分布",
+      "part": 39,
+      "start_seconds": 3018.022,
+      "end_seconds": 3156.844,
+      "asr_excerpt": "大家用色块去涂一下自己的这个大纲…有所偏重，但是要有所调剂",
+      "submission_spec": "红高兴黄紧张蓝悲伤为示例；无固定比例或提交彩色文件要求",
+      "teacher_review": "本课方法建议，未展示学生涂色前后",
+      "uncertainty": "涂色与悲伤蓝色字幕已核"
+    }
+  ],
+  "explicit_assignment_search_result": "关于新增独立交稿任务：全文机器稿检索与阅读未找到明确布置，未逐句听校；已有稿自查修改建议另列",
+  "teacher_review_policy_change": {
+    "earlier": "早期约四十名学生时逐份看改",
+    "later": "群里三千人、积压千余份，无法逐份处理",
+    "current_lesson": "共性群批与学员自查",
+    "part": 39,
+    "start_seconds": 67.91,
+    "end_seconds": 217.804,
+    "linked_lesson": 5,
+    "not_current_service": true
+  },
+  "examples": [
+    {
+      "case_version": "traits_to_action_lesson17",
+      "source_relation": "教师举例说明，非完整稿对照",
+      "part": 39,
+      "start_seconds": 1222,
+      "end_seconds": 1287,
+      "input": "勤奋、粗心的抽象优缺点",
+      "change": "具体成爱做什么或忘记重要生日",
+      "effect": "人物特征有具体可理解依据"
+    },
+    {
+      "case_version": "father_in_law_money_student_pattern_lesson17",
+      "source_relation": "老师明确数名学生出现的相似结局",
+      "part": 39,
+      "start_seconds": 1603,
+      "end_seconds": 1706,
+      "input": "男主受苦后由富家女岳父钱包解决所有问题",
+      "change": "要求核心问题回到主角亲自解决",
+      "effect": "课堂未提供各稿改写结果"
+    },
+    {
+      "case_version": "emotion_color_check_lesson17",
+      "source_relation": "老师推荐的已有大纲自查方法",
+      "part": 39,
+      "start_seconds": 3018,
+      "end_seconds": 3157,
+      "input": "苦难片一苦到底或喜剧一乐到底",
+      "change": "按场次主情绪涂色，检查分布和调剂",
+      "effect": "能看出情绪单一的位置；尚非观众效果验证"
+    }
+  ],
+  "material_continuity": {
+    "relation": "teacher_explicit_general_homework_feedback_and_theory_reuse",
+    "sources": [
+      1,
+      3,
+      9,
+      14,
+      15
+    ],
+    "evidence": "明确前课可怜只人设一部分；回看主角课；场景问答；节拍游戏时光",
+    "no_identified_specific_assignment": true
+  },
+  "limits": [
+    "全文机器稿已读，未逐句听校",
+    "共性反馈不等于指定某课逐份讲评，无学生原稿与改后稿",
+    "一个人作对手、少坐聊与避自传是初学练习建议，非普遍艺术禁令",
+    "电影警察因审查删戏为教师未举证的说法，不作已证制作史",
+    "颜色与场次数字示例不等于量化效果标准"
+  ],
+  "frames": [
+    {
+      "part": 39,
+      "source_seconds": 111,
+      "path": "frames/p039-111.jpg",
+      "sha256": "5cf945f04b0a0d01eddbca422a19b92ae6202106c517d7d0d73d470b7bbbcde1",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 113,
+      "path": "frames/p039-113.jpg",
+      "sha256": "c7ab958348bcfe2ae15680affa36da09a5db93718c9444bb713593e042263825",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 188,
+      "path": "frames/p039-188.jpg",
+      "sha256": "a091189778314d5c63f1f715df1f4ae7b6d59f1e0e9e91f19b6cf9a5819c8082",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 213,
+      "path": "frames/p039-213.jpg",
+      "sha256": "b74652d60bcb25e8778ad8d0597402ac7cd7834211141c13007d7d368c7e80c2",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 216,
+      "path": "frames/p039-216.jpg",
+      "sha256": "6e7fcea4a8de6398e0ef0a2f8066c8a5172171ea87789344696aa90d5dc1dcfb",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 3027,
+      "path": "frames/p039-3027.jpg",
+      "sha256": "832bc006595b9a5abb70a50fc31d0525d75397141d0b02771103ac8dade77b54",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 3030,
+      "path": "frames/p039-3030.jpg",
+      "sha256": "4f42e9623d066647561ed1c9436dbd4a17b58adc584733927dc46c75ab832fa9",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 3040,
+      "path": "frames/p039-3040.jpg",
+      "sha256": "7cbf357976dbd9a656c3e853e7a16c4078869571e49f912d728aa2d64c9e90cc",
+      "visually_read": true
+    },
+    {
+      "part": 39,
+      "source_seconds": 3143,
+      "path": "frames/p039-3143.jpg",
+      "sha256": "72b9c45a14ca247f6f1b790db91594d09b4a270c57b1d441bf6f1431f42e646d",
+      "visually_read": true
+    }
+  ]
+}

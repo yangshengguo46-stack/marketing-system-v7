@@ -1,0 +1,171 @@
+{
+  "part": 74,
+  "title": "编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧",
+  "source": {
+    "part": 74,
+    "cid": 27089765971,
+    "title": "编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=74",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧.mp4",
+    "sha256": "57894f2128a78ef730b5da1112bab3d058dce964731b8aa98056ee44d8fb0dfb",
+    "bytes": 109402971,
+    "mtime_ns": 1788682218328628937,
+    "actual_duration_seconds": 2681.282608
+  },
+  "full_transcript_read_parts": [
+    74
+  ],
+  "transcript_segment_count": 277,
+  "transcript_artifact_sha256": {
+    "p074.source-time.txt": "7273fb4218c574c4958bdf2954b9efbac90f8855e6a5a40462eb8be00649f29b",
+    "p074.source-time.srt": "e4e9435eeed895aa46f4bf4432986f66d313616da3efbc6ae18bb8eb45f72bdf"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 74,
+      "start_seconds": 12,
+      "end_seconds": 119,
+      "label": "选片理由及与导演复盘的自述。",
+      "application_limit": "老师认为完整度与商业性值得学，同时认为评价不足；没有给可核市场数据。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 120,
+      "end_seconds": 513,
+      "label": "第1—9包：旧车和女儿演出交代现状；迁坟事件、告别回忆、初查失败、亲属照片；发现墓旁正是韩露男友，决定阻止。",
+      "application_limit": "正式承诺行动之前，材料和关系逐步改变主角对事情的理解；不用默认从家中起床开始介绍一天。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 514,
+      "end_seconds": 723,
+      "label": "第10—21包：争取四天时间，沿线索寻找传播者，妹妹参与，外部压力与女儿校园线穿插；雨夜迁坟成为中点。",
+      "application_limit": "主副线同为澄清事实，通过亲子沟通关联；女儿并非与父亲等量的主角线。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 724,
+      "end_seconds": 963,
+      "label": "第22—30包：得知对方迁走的是自己弟弟，主角仍升级为不愿拆散情侣墓；抢走骨灰继续追查；女儿澄清校园事件却遭报复，父亲车坏、人困荒野。",
+      "application_limit": "中点后目标与行动升级。老师也提出观众可能在这里不再理解主角为何仍坚持。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 964,
+      "end_seconds": 1242,
+      "label": "第31—41包：白马、牧民、联系女儿、获得新线索、半小时限制、追赶与抓获、解释谣言、父女结尾及彩蛋。",
+      "application_limit": "多项威胁汇聚到高潮，但老师认为重复追逐使最后解法乏力；彩蛋另补两人过去的联系。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 1243,
+      "end_seconds": 1493,
+      "label": "网络暴力主题及老师自身经历、社会案例旁论。",
+      "application_limit": "只保留其阐释主题的用途；未独立核实相关现实事件与广泛判断。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 1494,
+      "end_seconds": 1712,
+      "label": "指出动机、前长后短、无关阻碍、场段割裂、后段反复追逐，以及女儿获得认可/成长较早的问题。",
+      "application_limit": "不是只问有没有困难，而是问困难是否值得花这么多篇幅、是否影响主线，以及后续解法是否在重复。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 1713,
+      "end_seconds": 1887,
+      "label": "转述与导演讨论：两人原先觉得义气与承诺足以支撑主角，但也认为对受众理解过于自信；提出演员配置、韩露身世、主角情感动机三个开放问题。",
+      "application_limit": "作者认可动机不等于观众一定接受；讨论尚无唯一答案或已验证改版。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 1888,
+      "end_seconds": 2314,
+      "label": "回放找妹妹、找金总的两段，分析为何节奏停下来；建议把创意和篇幅更多用于主线后半段的解决。",
+      "application_limit": "老师明确没说不能写这类笑料，而是避免前半恋战、后半只会追。完整电影播放内容未由机器稿充分还原。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 2315,
+      "end_seconds": 2441,
+      "label": "彩蛋、装束、白马等解释；比较小人物遇事、分阶段改变目标、付出代价和成长的一类故事。",
+      "application_limit": "同类结构可对照《我不是药神》；致敬、网名来源等仍是讲师说法。"
+    },
+    {
+      "part": 74,
+      "start_seconds": 2442,
+      "end_seconds": 2677,
+      "label": "总结副线与父女关系的长处：同一主题换儿童角度，女儿管父亲染发、嫌他不靠谱却仍关心直播；道具与造型细节。",
+      "application_limit": "角色关系通过具体相处体现；指出不足与保留有效设计可以同时进行。"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "讨论是否继续集中使用喜剧演员",
+      "part": 74,
+      "start_seconds": 1780,
+      "end_seconds": 1831,
+      "submission_spec": "开放讨论或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "课堂分析与建议；未展示改写成品或后续提交讲评",
+      "uncertainty": "完整机器稿核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "讨论改变韩露经历后故事怎样变化",
+      "part": 74,
+      "start_seconds": 1832,
+      "end_seconds": 1876,
+      "submission_spec": "开放讨论或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "课堂分析与建议；未展示改写成品或后续提交讲评",
+      "uncertainty": "完整机器稿核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "讨论主角是否可以喜欢韩露以加强动机",
+      "part": 74,
+      "start_seconds": 1877,
+      "end_seconds": 1907,
+      "submission_spec": "开放讨论或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "课堂分析与建议；未展示改写成品或后续提交讲评",
+      "uncertainty": "完整机器稿核读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "减少与主线关系薄弱的阻碍，增加后段解法的变化",
+      "source_type": "teacher_retroactive_film_analysis"
+    },
+    {
+      "label": "调整女儿认可与成长的位置",
+      "source_type": "teacher_retroactive_film_analysis"
+    },
+    {
+      "label": "义气动机是否足以让观众接受",
+      "source_type": "teacher_retroactive_film_analysis"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "电影播放段存在少字、重复和混说，不能据ASR还原全部表演；专名有同音误字。"
+  },
+  "limits": [
+    "课堂判断与替代方案没有改版效果验证。",
+    "演员/市场/社会背景说法未独立核验。",
+    "信息包数量与案例结构不作为所有写作任务的定额。"
+  ],
+  "creator_process_evidence": {
+    "type": "lecturer_reports_conversation_with_director",
+    "source_seconds": [
+      58,
+      119,
+      1730,
+      1885
+    ],
+    "original_conversation_record_available": false
+  }
+}

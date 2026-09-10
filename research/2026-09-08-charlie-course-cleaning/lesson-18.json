@@ -1,0 +1,496 @@
+{
+  "lesson": 18,
+  "source_parts": [
+    {
+      "part": 40,
+      "source_json_sha256": "5923d94c00ac14145b4c0766d32f8c163c265b15641f3da77cf236d14acf8b7f",
+      "segment_count": 491
+    },
+    {
+      "part": 41,
+      "source_json_sha256": "4bc33b8dfb50e332584a732c40744178c67631bbf6bfc3d59c9ae9837cc859a2",
+      "segment_count": 780
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L18-B001",
+      "part": 40,
+      "first_segment": 1,
+      "last_segment": 54,
+      "heading": "从《隐秘的角落》资源讨论说到版权自省",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B002",
+      "part": 40,
+      "first_segment": 55,
+      "last_segment": 102,
+      "heading": "推下悬崖的开场：课堂问题从这里来",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "秦浩",
+          "cleaned": "秦昊",
+          "basis": "同一演员前文S059已明确"
+        },
+        {
+          "original": "男人的开场",
+          "cleaned": "拿人的开场",
+          "basis": "本课标题及北方口语解释"
+        }
+      ]
+    },
+    {
+      "id": "L18-B003",
+      "part": 40,
+      "first_segment": 103,
+      "last_segment": 144,
+      "heading": "“拿人”是一种效果，不是评价开场好坏的唯一尺度",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B004",
+      "part": 40,
+      "first_segment": 145,
+      "last_segment": 192,
+      "heading": "电影、电视剧与明星：开场强度的经验判断",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B005",
+      "part": 40,
+      "first_segment": 193,
+      "last_segment": 226,
+      "heading": "课堂播放《我不是药神》：债务、父亲、儿子与前妻",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B006",
+      "part": 40,
+      "first_segment": 227,
+      "last_segment": 243,
+      "heading": "不猛烈也能成立；常规与拿人不是互斥分类",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B007",
+      "part": 40,
+      "first_segment": 244,
+      "last_segment": 280,
+      "heading": "世界本身吸引人，常规建制就足以拿人",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "一子而食",
+          "cleaned": "易子而食",
+          "basis": "饥荒叙述固定词组"
+        },
+        {
+          "original": "技实／纪实片",
+          "cleaned": "纪实风格的例子",
+          "basis": "讲师将现实题材作为世界吸引力的分类，并非把《寄生虫》认定纪录片"
+        }
+      ]
+    },
+    {
+      "id": "L18-B008",
+      "part": 40,
+      "first_segment": 281,
+      "last_segment": 305,
+      "heading": "课堂播放《寄生虫》：找信号与敞窗熏虫",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B009",
+      "part": 40,
+      "first_segment": 306,
+      "last_segment": 350,
+      "heading": "人物本身特殊：《逍遥医生》与超市醒来的女子",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "单身毒马",
+          "cleaned": "《单身毒妈》",
+          "basis": "已讲人物入口、毒贩母亲的课程语境"
+        },
+        {
+          "original": "孙女翻身／所以女翻身",
+          "cleaned": "“衰女翻身”〔片名待核〕",
+          "basis": "本课反复提及同一超市宿醉女子例子，未外部核验"
+        }
+      ]
+    },
+    {
+      "id": "L18-B010",
+      "part": 40,
+      "first_segment": 351,
+      "last_segment": 375,
+      "heading": "《橘子郡男孩》：混乱现状也能成为开场",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "橘子俊男孩／橘子君男孩",
+          "cleaned": "《橘子郡男孩》",
+          "basis": "同一美剧及贫民少年进入富人区语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B011",
+      "part": 40,
+      "first_segment": 376,
+      "last_segment": 417,
+      "heading": "《纸牌屋》：既救狗又杀狗的反常人物动作",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "纸牌物／只排污",
+          "cleaned": "《纸牌屋》",
+          "basis": "后文多次明确片名"
+        },
+        {
+          "original": "旧猫咪／救方咪",
+          "cleaned": "救猫咪",
+          "basis": "持续讲建立人物的同一方法"
+        }
+      ]
+    },
+    {
+      "id": "L18-B012",
+      "part": 40,
+      "first_segment": 418,
+      "last_segment": 439,
+      "heading": "课堂播放《风骚律师》：辩护辞与证据的落差",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B013",
+      "part": 40,
+      "first_segment": 440,
+      "last_segment": 491,
+      "heading": "一场戏同时写世界、人物、现状；再转非常规方式",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B014",
+      "part": 41,
+      "first_segment": 1,
+      "last_segment": 50,
+      "heading": "非常规方式之一：把激励事件提前",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "激励世界／积累事件",
+          "cleaned": "激励事件",
+          "basis": "本段明确推落引发后续系列情况的结构功能"
+        }
+      ]
+    },
+    {
+      "id": "L18-B015",
+      "part": 41,
+      "first_segment": 51,
+      "last_segment": 86,
+      "heading": "《外包服务》：公司无人，工作被移到印度",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B016",
+      "part": 41,
+      "first_segment": 87,
+      "last_segment": 120,
+      "heading": "《保镖》：火车炸弹先于人物履历",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B017",
+      "part": 41,
+      "first_segment": 121,
+      "last_segment": 167,
+      "heading": "《金氏漂流记》：先跳江，再补现状",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "金世漂流记",
+          "cleaned": "《金氏漂流记》",
+          "basis": "同段韩国跳江困岛电影及既有课卡语境"
+        },
+        {
+          "original": "湖心道",
+          "cleaned": "湖心岛/河中小岛",
+          "basis": "大桥桥墩附近岛状地带的连续说明"
+        },
+        {
+          "original": "好朋友爬下来",
+          "cleaned": "好不容易爬上来",
+          "basis": "被淹后自行回岸、打电话求救的语境；未增加好朋友救人"
+        }
+      ]
+    },
+    {
+      "id": "L18-B018",
+      "part": 41,
+      "first_segment": 168,
+      "last_segment": 199,
+      "heading": "非常规方式之二：有趣的前史；《泰迪熊》",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B019",
+      "part": 41,
+      "first_segment": 200,
+      "last_segment": 233,
+      "heading": "《拉丁情人》：童年怎样解释成年后的选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B020",
+      "part": 41,
+      "first_segment": 234,
+      "last_segment": 259,
+      "heading": "《银河护卫队》：前史解释星爵的来处",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B021",
+      "part": 41,
+      "first_segment": 260,
+      "last_segment": 306,
+      "heading": "《爸爸的好儿子》：荒唐前史留下父子关系问题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B022",
+      "part": 41,
+      "first_segment": 307,
+      "last_segment": 349,
+      "heading": "《暴君》与少用前史的真正理由",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "前十／前使",
+          "cleaned": "前史",
+          "basis": "明确童年与当前处境的先后关系"
+        },
+        {
+          "original": "闪悔",
+          "cleaned": "闪回",
+          "basis": "回忆片段手法的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B023",
+      "part": 41,
+      "first_segment": 350,
+      "last_segment": 396,
+      "heading": "非常规方式之三：把结局或最大悬念提到前面",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "恕罪／宿罪",
+          "cleaned": "《宿醉》",
+          "basis": "新郎失踪、伴郎断片及英文道格菲尔的同一影片语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B024",
+      "part": 41,
+      "first_segment": 397,
+      "last_segment": 430,
+      "heading": "《盗梦空间》《黑色星期一》：先给一个不明结果",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B025",
+      "part": 41,
+      "first_segment": 431,
+      "last_segment": 444,
+      "heading": "传记题材也能先给死亡结局",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B026",
+      "part": 41,
+      "first_segment": 445,
+      "last_segment": 474,
+      "heading": "第四种：选择能代表基调、主题的中段片段",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "逆境",
+          "cleaned": "意境",
+          "basis": "后文反复并列色调、价值、主题及中段代表场"
+        },
+        {
+          "original": "招摇过世",
+          "cleaned": "招摇过市",
+          "basis": "花轿出巡与围观群众语境"
+        },
+        {
+          "original": "群阿姨／林夕如",
+          "cleaned": "琼瑶阿姨／林心如",
+          "basis": "《还珠格格》作者称呼与紫薇演员语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B027",
+      "part": 41,
+      "first_segment": 475,
+      "last_segment": 493,
+      "heading": "课堂播放《还珠格格》：身份错置的冲突",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "夏雨河",
+          "cleaned": "夏雨荷",
+          "basis": "《还珠格格》紫薇身世语境"
+        },
+        {
+          "original": "为服出巡",
+          "cleaned": "微服出巡",
+          "basis": "群众议论皇帝行踪的固定说法"
+        }
+      ]
+    },
+    {
+      "id": "L18-B028",
+      "part": 41,
+      "first_segment": 494,
+      "last_segment": 512,
+      "heading": "美版《触不可及》：豪车闯灯与两人胡闹的基调",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B029",
+      "part": 41,
+      "first_segment": 513,
+      "last_segment": 539,
+      "heading": "《绝命毒师》：窘迫小人物冒险的预示",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B030",
+      "part": 41,
+      "first_segment": 540,
+      "last_segment": 578,
+      "heading": "《狱前教育》：先哭，再看富豪的风光",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "御前教育",
+          "cleaned": "《狱前教育》",
+          "basis": "入狱前培训的故事与同音片名"
+        },
+        {
+          "original": "白日富豪",
+          "cleaned": "白人富豪",
+          "basis": "与黑人洗车工相对的角色语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B031",
+      "part": 41,
+      "first_segment": 579,
+      "last_segment": 607,
+      "heading": "《情侣们》：采访蒙太奇先点爱情与缘分",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "情侣门",
+          "cleaned": "《情侣们》",
+          "basis": "S584明确片名"
+        },
+        {
+          "original": "魂简",
+          "cleaned": "混剪/采访剪辑",
+          "basis": "前文连续采访多对情侣的组接语境"
+        }
+      ]
+    },
+    {
+      "id": "L18-B032",
+      "part": 41,
+      "first_segment": 608,
+      "last_segment": 630,
+      "heading": "把本课几种关系重新排清楚",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B033",
+      "part": 41,
+      "first_segment": 631,
+      "last_segment": 663,
+      "heading": "假设改《我不是药神》：法庭结局前置",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B034",
+      "part": 41,
+      "first_segment": 664,
+      "last_segment": 691,
+      "heading": "第二种假设：以码头逃追代表整部戏的处境",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B035",
+      "part": 41,
+      "first_segment": 692,
+      "last_segment": 737,
+      "heading": "第三种假设：把吕受益来访改得更有看头",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L18-B036",
+      "part": 41,
+      "first_segment": 738,
+      "last_segment": 780,
+      "heading": "第四种假设：童年买不起药的前史；仍以原开场为佳",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "P040含大段影片播放：S069–088、193–226、281–305、331–345、350、398–407、424–439等仅据可辨ASR整理，并非逐字字幕或本轮视听核验。多语种及方言破损原词在正文标记，不用已知电影情节补满。",
+    "《隐秘的角落》老人亲属关系沿用讲师“父母/二老”而不自作核定；《纸牌屋》砸砖头因果为其回忆未核；“衰女翻身”片名待核。",
+    "P041《爸爸的好儿子》播放段涉及未成年人遭成人性侵，讲义仅保留非露骨的情节因果、讲师对“师生恋”的自纠及法庭明确犯罪性质，不重现露骨台词。",
+    "P041《保镖》人名、地点、号码及时间、《情侣们》日期、《最响亮的声音》开场新闻形式等不确定处保留；各剧获奖和出品归属为讲师说法未核。",
+    "本课四种《我不是药神》改开场均是讲师现场假设，绝非电影原剧情或用户新增故事任务；保留其最后评价原开场更适合的结论。",
+    "大段影片播放的原ASR存在空白、外语误识与重叠对白；已逐段分配并保留可辨内容与缺损说明，无法把不可辨语音清洗成完整台词。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第18课.md",
+  "output_sha256": "8bb2cd6812b593e94fabde177ccb368e86da57eb7c2c51f3f8cb8d3c34b14f18",
+  "reader_navigation_update": {
+    "previous_output_sha256": "704cdc63e31068e91a1415c4332e714c060d0332ccf8a8c527f8a94a7c5820ce",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

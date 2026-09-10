@@ -1,0 +1,190 @@
+{
+  "lesson": 11,
+  "title": "类型片",
+  "parts": [
+    22,
+    23,
+    24
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    22,
+    23,
+    24
+  ],
+  "teaching_nodes": [
+    {
+      "label": "商业文艺与课程立场",
+      "part": 22,
+      "start_seconds": 3,
+      "end_seconds": 470
+    },
+    {
+      "label": "观看期待分类",
+      "part": 22,
+      "start_seconds": 471,
+      "end_seconds": 978
+    },
+    {
+      "label": "创作者角度及救猫咪",
+      "part": 22,
+      "start_seconds": 982,
+      "end_seconds": 1572
+    },
+    {
+      "label": "十类与金羊毛导入",
+      "part": 22,
+      "start_seconds": 1573,
+      "end_seconds": 1895
+    },
+    {
+      "label": "金羊毛三项",
+      "part": 23,
+      "start_seconds": 4,
+      "end_seconds": 184
+    },
+    {
+      "label": "情感需要互补与阻隔",
+      "part": 23,
+      "start_seconds": 187,
+      "end_seconds": 744
+    },
+    {
+      "label": "鬼屋三项",
+      "part": 23,
+      "start_seconds": 745,
+      "end_seconds": 920
+    },
+    {
+      "label": "超级英雄回顾",
+      "part": 23,
+      "start_seconds": 921,
+      "end_seconds": 971
+    },
+    {
+      "label": "侦探与视角对比",
+      "part": 23,
+      "start_seconds": 976,
+      "end_seconds": 1231
+    },
+    {
+      "label": "如愿以偿与幻想回顾",
+      "part": 23,
+      "start_seconds": 1233,
+      "end_seconds": 1497
+    },
+    {
+      "label": "麻烦家伙",
+      "part": 23,
+      "start_seconds": 1498,
+      "end_seconds": 1638
+    },
+    {
+      "label": "变迁仪式",
+      "part": 23,
+      "start_seconds": 1640,
+      "end_seconds": 1902
+    },
+    {
+      "label": "愚者成功",
+      "part": 24,
+      "start_seconds": 3,
+      "end_seconds": 203
+    },
+    {
+      "label": "被制度化与类型组合",
+      "part": 24,
+      "start_seconds": 206,
+      "end_seconds": 450
+    },
+    {
+      "label": "情感要点与反例分析",
+      "part": 24,
+      "start_seconds": 452,
+      "end_seconds": 1119
+    },
+    {
+      "label": "鬼屋反例与结课",
+      "part": 24,
+      "start_seconds": 1120,
+      "end_seconds": 1349
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "判断自己故事接近哪种类型思路，检查对应重点是否由事件建立。",
+      "part": 24,
+      "start_seconds": 1111.334,
+      "end_seconds": 1119.788,
+      "asr_excerpt": "你看一下打眼，看一下你的故事，大概属于哪种类型。然后你去看一看它这几种元素，你有没有完成任务。",
+      "submission_spec": "未指定哪份旧稿、分析表、字数或期限",
+      "teacher_review": "未说明逐份讲评",
+      "uncertainty": "课堂自查建议，不登记为独立新交付"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "material_continuity": [
+    {
+      "from_lesson": 1,
+      "part": 23,
+      "start_seconds": 1236.87,
+      "end_seconds": 1266.028,
+      "relation": "teacher_explicit_reuse",
+      "material": "个人幻想作为如愿以偿的创意材料；没有重交要求"
+    },
+    {
+      "from_lesson": 9,
+      "part": 23,
+      "start_seconds": 946.918,
+      "end_seconds": 971.66,
+      "relation": "teacher_explicit_theory_recap",
+      "material": "英雄的能力命门对手使命"
+    }
+  ],
+  "examples": [
+    {
+      "case_version": "bank_robbery_two_viewpoints_lesson11",
+      "part": 23,
+      "start_seconds": 1086.95,
+      "end_seconds": 1176.332,
+      "source_relation": "课堂构想对比，非学生作业",
+      "input": "银行失窃同题材",
+      "change": "盗贼实现目标改为警察查不明案件",
+      "effect": "寻宝任务重点改为带观众探秘"
+    },
+    {
+      "case_version": "memories_of_murder_emotional_method_correction_lesson11",
+      "part": 23,
+      "start_seconds": 559.91,
+      "end_seconds": 573.74,
+      "source_relation": "老师明确收窄此前称爱情片的表述",
+      "input": "此前称杀人回忆爱情片",
+      "change": "改为情感故事的处理方式",
+      "effect": "保留人物关系分析，不强制整片唯一分类"
+    }
+  ],
+  "limits": [
+    "三P全文机器稿已读，未逐句听校",
+    "两帧板书已查看，部分字被人遮挡",
+    "影片口述与历史市场旁论未外核，不当事实结论",
+    "本课是查理对十种思路的转述，非斯奈德原书逐字版本",
+    "类型可重叠；生死阻隔等为老师戏剧强度判断"
+  ],
+  "frames": [
+    {
+      "part": 22,
+      "source_seconds": 1680,
+      "path": "frames/p022-1680.jpg",
+      "sha256": "6d1424b6e0f64d6d4cd328d99a803485815308fb72cffe870e7b12d3f7b3f7fa",
+      "visually_read": true
+    },
+    {
+      "part": 23,
+      "source_seconds": 1890,
+      "path": "frames/p023-1890.jpg",
+      "sha256": "01e5e4512812e9b0b0bd6e1263384484973c678e957e147bf1467347fc4ef658",
+      "visually_read": true
+    }
+  ]
+}

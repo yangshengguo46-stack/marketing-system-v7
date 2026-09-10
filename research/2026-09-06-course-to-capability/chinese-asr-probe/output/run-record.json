@@ -1,0 +1,41 @@
+{
+  "recorded_at_utc": "2026-09-06T09:03:06.648375+00:00",
+  "exit_code": 0,
+  "command": [
+    "/usr/bin/time",
+    "-l",
+    "research/2026-09-06-course-to-capability/chinese-asr-probe/runtime/.venv/bin/python",
+    "research/2026-09-06-course-to-capability/chinese-asr-probe/run_probe.py"
+  ],
+  "wall_time_seconds_from_time_l": 21.96,
+  "user_cpu_seconds": 17.34,
+  "system_cpu_seconds": 1.19,
+  "audio_seconds": 90,
+  "asr_threads": 1,
+  "vad_threads": 1,
+  "segment_count": 19,
+  "stdout": "output/run.stdout.log",
+  "stderr": "output/run.stderr.log",
+  "quality_status": "raw ASR; selected visual subtitle term checks only; no full human transcript accuracy measurement",
+  "verification": {
+    "output_hashes_match": true,
+    "model_hash_matches_official": true,
+    "readme_local_links_exist": true,
+    "timestamps_and_token_counts": {
+      "audio_seconds_is_90": true,
+      "segment_count": 19,
+      "all_segments_inside_original_clip": true,
+      "all_boundaries_monotonic": true,
+      "all_token_timestamp_counts_match": true,
+      "all_token_positions_within_vad_segment": true,
+      "srt_entry_count": 19,
+      "sha256": {
+        "output/sensevoice.json": "3d72fa2f38f445c2d876882089c9c257603c283df72abe134206bca2b74fddaf",
+        "output/sensevoice.txt": "38b638c5a2c32354b7b9cef58fcb7e6416f7746e32c4634c89468ae398bfe7ec",
+        "output/run.stdout.log": "204c5e30d61db96cece3dcd48e14654364b24639cae363a5668ced710c45af71",
+        "output/run.stderr.log": "7d3f5bdbf9faf1b4454f53ce725bd4edb61e5ca0e4b36e3ba22d3eabc67771ac",
+        "output/sensevoice.source-time.srt": "230170dfcadaad4cb581fc6a786a14147e4f5e8312b1d797a9455617b6d18128"
+      }
+    }
+  }
+}

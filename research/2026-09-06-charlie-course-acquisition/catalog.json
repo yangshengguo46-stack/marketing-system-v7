@@ -1,0 +1,657 @@
+{
+  "captured_at": "2026-09-06T07:52:47.503078+00:00",
+  "source_url": "https://www.bilibili.com/video/BV1eE411F73t/",
+  "uploader": "查理老师的编剧课",
+  "uploader_id": 221524811,
+  "bvid": "BV1eE411F73t",
+  "aid": 98350214,
+  "part_count": 92,
+  "total_duration_seconds": 226782,
+  "scope": "All 92 parts exposed by this public collection at capture time, including newer additions. No title-based exclusion.",
+  "parts": [
+    {
+      "part": 1,
+      "cid": 39755975667,
+      "title": "一个人在家做AI漫剧能赚钱吗？",
+      "duration_seconds": 2610,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=1"
+    },
+    {
+      "part": 2,
+      "cid": 167845774,
+      "title": "第一课-劝学1.1",
+      "duration_seconds": 1010,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=2"
+    },
+    {
+      "part": 3,
+      "cid": 167847370,
+      "title": "第一课-劝学1.2",
+      "duration_seconds": 1343,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=3"
+    },
+    {
+      "part": 4,
+      "cid": 167849613,
+      "title": "第一课-劝学1.3",
+      "duration_seconds": 726,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=4"
+    },
+    {
+      "part": 5,
+      "cid": 167850841,
+      "title": "第二课-故事的要素2.1",
+      "duration_seconds": 1277,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=5"
+    },
+    {
+      "part": 6,
+      "cid": 167853069,
+      "title": "第二课-故事的要素2.2",
+      "duration_seconds": 1946,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=6"
+    },
+    {
+      "part": 7,
+      "cid": 167856598,
+      "title": "第三课-八要素的实战应用3.1",
+      "duration_seconds": 1674,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=7"
+    },
+    {
+      "part": 8,
+      "cid": 167859809,
+      "title": "第三课-八要素的实战应用3.2",
+      "duration_seconds": 2030,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=8"
+    },
+    {
+      "part": 9,
+      "cid": 167864038,
+      "title": "第四课-第一个故事4.1",
+      "duration_seconds": 1397,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=9"
+    },
+    {
+      "part": 10,
+      "cid": 167867112,
+      "title": "第四课-第一个故事4.2",
+      "duration_seconds": 1525,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=10"
+    },
+    {
+      "part": 11,
+      "cid": 167870818,
+      "title": "第五课-剧本的正义5.1",
+      "duration_seconds": 1488,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=11"
+    },
+    {
+      "part": 12,
+      "cid": 167874116,
+      "title": "第五课-剧本的正义5.2",
+      "duration_seconds": 1182,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=12"
+    },
+    {
+      "part": 13,
+      "cid": 167877064,
+      "title": "第六课-剧本的格式6",
+      "duration_seconds": 1850,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=13"
+    },
+    {
+      "part": 14,
+      "cid": 167881562,
+      "title": "第七课-拿事儿说话7",
+      "duration_seconds": 1185,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=14"
+    },
+    {
+      "part": 15,
+      "cid": 167884665,
+      "title": "第八课-勾勒画面8.1",
+      "duration_seconds": 2318,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=15"
+    },
+    {
+      "part": 16,
+      "cid": 168276930,
+      "title": "第八课-勾勒画面8.2",
+      "duration_seconds": 1623,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=16"
+    },
+    {
+      "part": 17,
+      "cid": 168277841,
+      "title": "第八课-勾勒画面8.3",
+      "duration_seconds": 1993,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=17"
+    },
+    {
+      "part": 18,
+      "cid": 170763096,
+      "title": "第九课-谈谈人物9.1",
+      "duration_seconds": 2564,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=18"
+    },
+    {
+      "part": 19,
+      "cid": 170789570,
+      "title": "第九课-谈谈人物9.2",
+      "duration_seconds": 2018,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=19"
+    },
+    {
+      "part": 20,
+      "cid": 171645463,
+      "title": "第十课-复杂叙事10.1",
+      "duration_seconds": 2252,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=20"
+    },
+    {
+      "part": 21,
+      "cid": 171668148,
+      "title": "第十课-复杂叙事10.2",
+      "duration_seconds": 1427,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=21"
+    },
+    {
+      "part": 22,
+      "cid": 173862838,
+      "title": "十一课-类型片11.1",
+      "duration_seconds": 1901,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=22"
+    },
+    {
+      "part": 23,
+      "cid": 173863407,
+      "title": "十一课-类型片11.2",
+      "duration_seconds": 1909,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=23"
+    },
+    {
+      "part": 24,
+      "cid": 173861080,
+      "title": "十一课-类型片11.3",
+      "duration_seconds": 1357,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=24"
+    },
+    {
+      "part": 25,
+      "cid": 174056852,
+      "title": "十二课-小蝌蚪找妈妈12.1",
+      "duration_seconds": 1594,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=25"
+    },
+    {
+      "part": 26,
+      "cid": 174057044,
+      "title": "十二课-小蝌蚪找妈妈12.2",
+      "duration_seconds": 1704,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=26"
+    },
+    {
+      "part": 27,
+      "cid": 174057108,
+      "title": "十二课-小蝌蚪找妈妈12.3",
+      "duration_seconds": 1908,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=27"
+    },
+    {
+      "part": 28,
+      "cid": 177384361,
+      "title": "十三课-电视剧13.1",
+      "duration_seconds": 1867,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=28"
+    },
+    {
+      "part": 29,
+      "cid": 177383899,
+      "title": "十三课-电视剧13.2",
+      "duration_seconds": 1489,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=29"
+    },
+    {
+      "part": 30,
+      "cid": 177384367,
+      "title": "十三课-电视剧13.3",
+      "duration_seconds": 1816,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=30"
+    },
+    {
+      "part": 31,
+      "cid": 177384393,
+      "title": "十三课-电视剧13.4",
+      "duration_seconds": 1723,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=31"
+    },
+    {
+      "part": 32,
+      "cid": 181727234,
+      "title": "十四课-场景与对白14.1",
+      "duration_seconds": 2449,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=32"
+    },
+    {
+      "part": 33,
+      "cid": 181763918,
+      "title": "十四课-场景与对白14.2",
+      "duration_seconds": 2956,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=33"
+    },
+    {
+      "part": 34,
+      "cid": 190273161,
+      "title": "十五课-节拍器15.1",
+      "duration_seconds": 1931,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=34"
+    },
+    {
+      "part": 35,
+      "cid": 190303059,
+      "title": "十五课-节拍器15.2",
+      "duration_seconds": 2302,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=35"
+    },
+    {
+      "part": 36,
+      "cid": 190316428,
+      "title": "十五课-节拍器15.3",
+      "duration_seconds": 1148,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=36"
+    },
+    {
+      "part": 37,
+      "cid": 190331356,
+      "title": "十五课-节拍器15.4",
+      "duration_seconds": 1447,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=37"
+    },
+    {
+      "part": 38,
+      "cid": 202189245,
+      "title": "十六课-悬念与反转16",
+      "duration_seconds": 3658,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=38"
+    },
+    {
+      "part": 39,
+      "cid": 202545835,
+      "title": "十七课-新手跳坑17",
+      "duration_seconds": 3201,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=39"
+    },
+    {
+      "part": 40,
+      "cid": 207918303,
+      "title": "十八课-拿人的开场18.1",
+      "duration_seconds": 3065,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=40"
+    },
+    {
+      "part": 41,
+      "cid": 207918389,
+      "title": "十八课-拿人的开场18.2",
+      "duration_seconds": 5217,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=41"
+    },
+    {
+      "part": 42,
+      "cid": 212090316,
+      "title": "十九课-怎么撰写项目提案19",
+      "duration_seconds": 2636,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=42"
+    },
+    {
+      "part": 43,
+      "cid": 227072905,
+      "title": "二十课-编剧拉片20",
+      "duration_seconds": 4218,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=43"
+    },
+    {
+      "part": 44,
+      "cid": 239866710,
+      "title": "二十一课-谈几个进阶问题（上）21.1",
+      "duration_seconds": 2478,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=44"
+    },
+    {
+      "part": 45,
+      "cid": 239868634,
+      "title": "二十一课-谈几个进阶问题（下）21.2",
+      "duration_seconds": 2113,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=45"
+    },
+    {
+      "part": 46,
+      "cid": 252711256,
+      "title": "二十二课-G潮上不去？（上）22.1",
+      "duration_seconds": 2560,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=46"
+    },
+    {
+      "part": 47,
+      "cid": 252782284,
+      "title": "二十二课-G潮上不去？（下）22.2",
+      "duration_seconds": 2910,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=47"
+    },
+    {
+      "part": 48,
+      "cid": 254049644,
+      "title": "二十三课-怎么写喜剧？(上）23.1",
+      "duration_seconds": 2562,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=48"
+    },
+    {
+      "part": 49,
+      "cid": 254051910,
+      "title": "二十三课-怎么写喜剧？（下）23.2",
+      "duration_seconds": 2945,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=49"
+    },
+    {
+      "part": 50,
+      "cid": 266235698,
+      "title": "二十四课-剖析烂片24",
+      "duration_seconds": 4619,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=50"
+    },
+    {
+      "part": 51,
+      "cid": 272336072,
+      "title": "二十五课-观影情绪节拍表25",
+      "duration_seconds": 3108,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=51"
+    },
+    {
+      "part": 52,
+      "cid": 275889704,
+      "title": "二十六课-从容应对文艺凡尔赛26",
+      "duration_seconds": 4305,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=52"
+    },
+    {
+      "part": 53,
+      "cid": 310082561,
+      "title": "二十七课-剧本的叙事视角27",
+      "duration_seconds": 3868,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=53"
+    },
+    {
+      "part": 54,
+      "cid": 327535922,
+      "title": "二十八课-编剧课科目三28",
+      "duration_seconds": 5411,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=54"
+    },
+    {
+      "part": 55,
+      "cid": 333133917,
+      "title": "二十九课-剧情要有攻击性29",
+      "duration_seconds": 2223,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=55"
+    },
+    {
+      "part": 56,
+      "cid": 383686698,
+      "title": "三十课-人类为什么需要影视剧30",
+      "duration_seconds": 5042,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=56"
+    },
+    {
+      "part": 57,
+      "cid": 385383259,
+      "title": "三十一课-单元剧的创作理念31",
+      "duration_seconds": 4062,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=57"
+    },
+    {
+      "part": 58,
+      "cid": 425876128,
+      "title": "三十二课-跟《鱿鱼游戏》学写强设定",
+      "duration_seconds": 4911,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=58"
+    },
+    {
+      "part": 59,
+      "cid": 542014362,
+      "title": "三十三课-怎样克服拖延症",
+      "duration_seconds": 2536,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=59"
+    },
+    {
+      "part": 60,
+      "cid": 713227009,
+      "title": "三十四课-查理小三角创作法",
+      "duration_seconds": 2844,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=60"
+    },
+    {
+      "part": 61,
+      "cid": 1118879677,
+      "title": "《让子弹飞》直播拉片",
+      "duration_seconds": 6398,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=61"
+    },
+    {
+      "part": 62,
+      "cid": 1348722777,
+      "title": "查理老师告诉你，短剧为什么这么火！",
+      "duration_seconds": 951,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=62"
+    },
+    {
+      "part": 63,
+      "cid": 30110452996,
+      "title": "职业编剧怎么用ai写剧本",
+      "duration_seconds": 1854,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=63"
+    },
+    {
+      "part": 64,
+      "cid": 26532774570,
+      "title": "如何写好单场戏，让每一集都有钩子？",
+      "duration_seconds": 2709,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=64"
+    },
+    {
+      "part": 65,
+      "cid": 28739110936,
+      "title": "编剧的第一性原理",
+      "duration_seconds": 2367,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=65"
+    },
+    {
+      "part": 66,
+      "cid": 31421369184,
+      "title": "写了剧本怎么投稿",
+      "duration_seconds": 3782,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=66"
+    },
+    {
+      "part": 67,
+      "cid": 33428148085,
+      "title": "编剧库3.0大升级来了！快来参与普查，订单主动找你对接",
+      "duration_seconds": 128,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=67"
+    },
+    {
+      "part": 68,
+      "cid": 26225279963,
+      "title": "无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）",
+      "duration_seconds": 2350,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=68"
+    },
+    {
+      "part": 69,
+      "cid": 26255689411,
+      "title": "【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）",
+      "duration_seconds": 1158,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=69"
+    },
+    {
+      "part": 70,
+      "cid": 26314736392,
+      "title": "【编剧拉片】麻花喜剧巅峰神作！《夏洛特烦恼》逐帧分析创作思路，颠覆你的认知！（一）",
+      "duration_seconds": 1853,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=70"
+    },
+    {
+      "part": 71,
+      "cid": 29819406039,
+      "title": "编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））",
+      "duration_seconds": 1144,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=71"
+    },
+    {
+      "part": 72,
+      "cid": 26454394257,
+      "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+      "duration_seconds": 3137,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=72"
+    },
+    {
+      "part": 73,
+      "cid": 27089243632,
+      "title": "编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！",
+      "duration_seconds": 4222,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=73"
+    },
+    {
+      "part": 74,
+      "cid": 27089765971,
+      "title": "编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧",
+      "duration_seconds": 2682,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=74"
+    },
+    {
+      "part": 75,
+      "cid": 27433699594,
+      "title": "编剧视角拉片《男妇女主任》小品型电影看完你就会写了！",
+      "duration_seconds": 1597,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=75"
+    },
+    {
+      "part": 76,
+      "cid": 28280883637,
+      "title": "《哪吒2》为啥这么爆？查理老师新年第一讲，一起写好中国故事！",
+      "duration_seconds": 2176,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=76"
+    },
+    {
+      "part": 77,
+      "cid": 29816391796,
+      "title": "编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!",
+      "duration_seconds": 4322,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=77"
+    },
+    {
+      "part": 78,
+      "cid": 29816848633,
+      "title": "编剧视角拉片《猩球崛起》，人猿对战背后的隐喻！",
+      "duration_seconds": 3364,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=78"
+    },
+    {
+      "part": 79,
+      "cid": 29817176838,
+      "title": "编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！",
+      "duration_seconds": 3452,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=79"
+    },
+    {
+      "part": 80,
+      "cid": 29818162710,
+      "title": "编剧视角拉片经典传记片《华尔街之狼》",
+      "duration_seconds": 2671,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=80"
+    },
+    {
+      "part": 81,
+      "cid": 29818619846,
+      "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+      "duration_seconds": 3144,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=81"
+    },
+    {
+      "part": 82,
+      "cid": 29819538208,
+      "title": "编剧视角拉片《小丑》从内耗走向癫狂，从边缘跨上“神坛”「影史现象级」是怎样炼成的？",
+      "duration_seconds": 2605,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=82"
+    },
+    {
+      "part": 83,
+      "cid": 29820388979,
+      "title": "编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！",
+      "duration_seconds": 2887,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=83"
+    },
+    {
+      "part": 84,
+      "cid": 29820649585,
+      "title": "编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？",
+      "duration_seconds": 2778,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=84"
+    },
+    {
+      "part": 85,
+      "cid": 29820912258,
+      "title": "编剧视角拉片烧脑神作《致命ID》",
+      "duration_seconds": 2265,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=85"
+    },
+    {
+      "part": 86,
+      "cid": 29821110472,
+      "title": "编剧视角拉片《生死狙击》！男频爽片创作要点",
+      "duration_seconds": 1422,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=86"
+    },
+    {
+      "part": 87,
+      "cid": 29821305201,
+      "title": "编剧视角拉片《千与千寻》！",
+      "duration_seconds": 1635,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=87"
+    },
+    {
+      "part": 88,
+      "cid": 29821437004,
+      "title": "编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+      "duration_seconds": 1970,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=88"
+    },
+    {
+      "part": 89,
+      "cid": 29817505131,
+      "title": "编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！",
+      "duration_seconds": 4744,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=89"
+    },
+    {
+      "part": 90,
+      "cid": 29821570920,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+      "duration_seconds": 1037,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=90"
+    },
+    {
+      "part": 91,
+      "cid": 29821699723,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》二",
+      "duration_seconds": 1915,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=91"
+    },
+    {
+      "part": 92,
+      "cid": 29821895749,
+      "title": "编剧视角拉片励志电影《肖申克的救赎》三",
+      "duration_seconds": 2632,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=92"
+    }
+  ]
+}

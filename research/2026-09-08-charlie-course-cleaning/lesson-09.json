@@ -1,0 +1,346 @@
+{
+  "lesson": 9,
+  "source_parts": [
+    {
+      "part": 18,
+      "source_json_sha256": "1327e5d785381a18b83048412cb929a246df1199ff48dd0a739c8870f8f65f69",
+      "segment_count": 716
+    },
+    {
+      "part": 19,
+      "source_json_sha256": "7bb812d79bac9db9beb6a29b306dba42ad7cce794f77916477d56cfe51f8659e",
+      "segment_count": 557
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L09-B001",
+      "part": 18,
+      "first_segment": 1,
+      "last_segment": 42,
+      "heading": "恢复更新；提问与交流安排",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B002",
+      "part": 18,
+      "first_segment": 43,
+      "last_segment": 90,
+      "heading": "人物是自我探索；主角以推动故事来定义",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "西诃夫／四目视",
+          "cleaned": "契诃夫／四幕式",
+          "basis": "前课同一归属引文、同一结构术语。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B003",
+      "part": 18,
+      "first_segment": 91,
+      "last_segment": 144,
+      "heading": "《哆啦A梦》和灾难片：主角不按片名或被动处境判断",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "大熊／强夫／景象／胖怕虎",
+          "cleaned": "大雄／小夫／静香／胖虎",
+          "basis": "《哆啦A梦》同一人物语境及前课案例。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B004",
+      "part": 18,
+      "first_segment": 145,
+      "last_segment": 206,
+      "heading": "主角带观众经历故事；叛逆学员作业缺了什么",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B005",
+      "part": 18,
+      "first_segment": 207,
+      "last_segment": 260,
+      "heading": "从身份、欲望、动作三方面加强共情；先说可怜",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "可惜",
+          "cleaned": "可信",
+          "basis": "S305–312随后明确解释让观众信服，三项口诀非惋惜。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B006",
+      "part": 18,
+      "first_segment": 261,
+      "last_segment": 300,
+      "heading": "《小丑》《泰迪熊》：同样可怜，不同处理",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B007",
+      "part": 18,
+      "first_segment": 301,
+      "last_segment": 350,
+      "heading": "可信：给特别的角色一个日常缺陷",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B008",
+      "part": 18,
+      "first_segment": 351,
+      "last_segment": 401,
+      "heading": "可爱与《救猫咪》：给观众爱他的理由",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "斯戴德／办个喜剧／救妈咪",
+          "cleaned": "斯奈德／《半个喜剧》／救猫咪",
+          "basis": "S401反复姓氏、本段明确书名和片名。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B009",
+      "part": 18,
+      "first_segment": 402,
+      "last_segment": 434,
+      "heading": "为什么小人物未必还要再救一只猫；《苏乞儿》",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B010",
+      "part": 18,
+      "first_segment": 435,
+      "last_segment": 477,
+      "heading": "欲望要原始：荒野求生、吃播与《疯狂的麦克斯》",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "Md max",
+          "cleaned": "Mad Max",
+          "basis": "同段中文片名《疯狂的麦克斯》明确。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B011",
+      "part": 18,
+      "first_segment": 478,
+      "last_segment": 516,
+      "heading": "动作需要观众接受；课堂的极端反例",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "民间／迷间／让雷洛／徐克",
+          "cleaned": "侵犯／让·雷诺／许可",
+          "basis": "本段分别指下药性侵犯、片中演员与观众许可；正文用非露骨转述，不改写成正当行为。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B012",
+      "part": 18,
+      "first_segment": 517,
+      "last_segment": 557,
+      "heading": "抢银行的递进示范；共情不能半路断开",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B013",
+      "part": 18,
+      "first_segment": 558,
+      "last_segment": 588,
+      "heading": "明星的共情效应；写作不能预设这张底牌",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B014",
+      "part": 18,
+      "first_segment": 589,
+      "last_segment": 647,
+      "heading": "英雄片的四属性：技能、命门、对手、使命",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B015",
+      "part": 18,
+      "first_segment": 648,
+      "last_segment": 716,
+      "heading": "济公、反派与牙刷大肠比喻",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B016",
+      "part": 19,
+      "first_segment": 1,
+      "last_segment": 60,
+      "heading": "配角从序列事件中带着功能出场",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "人物小说",
+          "cleaned": "人物小传",
+          "basis": "列人物前史、性格和关系的语境。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B017",
+      "part": 19,
+      "first_segment": 61,
+      "last_segment": 89,
+      "heading": "整理配角：合并功能相近的人",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B018",
+      "part": 19,
+      "first_segment": 90,
+      "last_segment": 150,
+      "heading": "加强记忆点：眼罩是比喻，不必总用身体残疾",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B019",
+      "part": 19,
+      "first_segment": 151,
+      "last_segment": 171,
+      "heading": "再以看车人和卖油条的人演示合并",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B020",
+      "part": 19,
+      "first_segment": 172,
+      "last_segment": 226,
+      "heading": "人物关系图：身份关系以外，还要画作用力",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B021",
+      "part": 19,
+      "first_segment": 227,
+      "last_segment": 261,
+      "heading": "对手的父亲为什么未必需要再展开",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B022",
+      "part": 19,
+      "first_segment": 262,
+      "last_segment": 320,
+      "heading": "人物弧光：用起终点和中间选择检查成长",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "人物湖光／成人物",
+          "cleaned": "人物弧光／人物成长",
+          "basis": "本课明确定义成长蜕变与弧线。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B023",
+      "part": 19,
+      "first_segment": 321,
+      "last_segment": 370,
+      "heading": "系列故事、情景剧为何可能没有明显弧线",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "张回体／召回体／张辉体",
+          "cleaned": "章回体",
+          "basis": "对系列复现结构的同一课堂用语。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B024",
+      "part": 19,
+      "first_segment": 371,
+      "last_segment": 420,
+      "heading": "名字最后起；别陷入“琼瑶陷阱”",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "穷瑶现金／重要陷阱",
+          "cleaned": "琼瑶陷阱",
+          "basis": "S395明确定名，随后同词异写。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B025",
+      "part": 19,
+      "first_segment": 421,
+      "last_segment": 472,
+      "heading": "名字的代际来源：标语、诗歌、言情剧",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L09-B026",
+      "part": 19,
+      "first_segment": 473,
+      "last_segment": 509,
+      "heading": "常用但不常用于姓名的字；两个艺人例子",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "李宪",
+          "cleaned": "李现",
+          "basis": "S480明确“现在的现”。"
+        },
+        {
+          "original": "萨顶鼎／萨丁丁",
+          "cleaned": "萨顶顶〔“顶／鼎”口头字形讨论待核〕",
+          "basis": "同段艺名多次近音异写，未将鼎字讨论当作正式字形证据。"
+        }
+      ]
+    },
+    {
+      "id": "L09-B027",
+      "part": 19,
+      "first_segment": 510,
+      "last_segment": 557,
+      "heading": "随手翻书起名的现场演示",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "P018关于以羞辱等铺垫换取对性侵犯的观众认可、明星效应的两个犯罪假设均按课堂转述，明确不能等同受害者同意或现实正当性，也非演员真实行为。",
+    "P018 S272影片级别、S283英文缩称、S612技能否定、S669形容词；P019 S290–292不完整弧线终点、S484–503顶/鼎混写、S528–541候选姓名均就地待核。",
+    "本课给出人物设计与自查办法，未新布置独立成篇作业、篇数或截止时间；提问群和更新承诺仅属原课时期。",
+    "人物关系图的推力/阻力指对主角目标的功能，不等于道德好坏；系列片与情景剧固定性、人物群体与姓名来源皆为课堂概括。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第09课.md",
+  "output_sha256": "87f04523214bc75b70a539bf3bf424493a634031b147a2176839191afeab392f",
+  "reader_navigation_update": {
+    "previous_output_sha256": "622f39fe8b62a3a79ae7aafbddcbafa08c477cd5153ff0f77c9a45cac7f0f235",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

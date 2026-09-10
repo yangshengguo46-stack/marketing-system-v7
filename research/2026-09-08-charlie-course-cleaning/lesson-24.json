@@ -1,0 +1,320 @@
+{
+  "lesson": 24,
+  "source_parts": [
+    {
+      "part": 50,
+      "source_json_sha256": "dc6487a3f370441dc7387aeef955f59a31b10adf5c5c9b5cee39202063a2af0d",
+      "segment_count": 1174
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L24-B001",
+      "part": 50,
+      "first_segment": 1,
+      "last_segment": 37,
+      "heading": "为什么讨论“不太好看的片子”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B002",
+      "part": 50,
+      "first_segment": 38,
+      "last_segment": 73,
+      "heading": "选《战国》作案例，以及讲师的准备过程",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B003",
+      "part": 50,
+      "first_segment": 74,
+      "last_segment": 97,
+      "heading": "速看片段：只能确认的零散对白",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B004",
+      "part": 50,
+      "first_segment": 98,
+      "last_segment": 145,
+      "heading": "课堂复盘：以孙膑与田夕爱情组织的历史题材",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "前夕／田西／田希",
+          "cleaned": "田夕",
+          "basis": "景甜在《战国》中角色语境及同音反复。"
+        },
+        {
+          "original": "庞娟／唐娟",
+          "cleaned": "庞涓",
+          "basis": "孙膑的对手语境明确。"
+        },
+        {
+          "original": "跑瓦／庞婉",
+          "cleaned": "庞婉",
+          "basis": "同段后续清晰出现庞婉。"
+        },
+        {
+          "original": "吴振宇／惊喜战／欣喜善",
+          "cleaned": "吴镇宇／金喜善",
+          "basis": "片中演员及角色对应明确。"
+        },
+        {
+          "original": "田记／田季",
+          "cleaned": "田忌",
+          "basis": "将军、父女关系及姜武角色语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L24-B005",
+      "part": 50,
+      "first_segment": 146,
+      "last_segment": 179,
+      "heading": "成品失利的第一类原因：项目另有优先目标",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B006",
+      "part": 50,
+      "first_segment": 180,
+      "last_segment": 211,
+      "heading": "第二类原因：多人协作失控",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B007",
+      "part": 50,
+      "first_segment": 212,
+      "last_segment": 244,
+      "heading": "“一般锚定”：先以普通条件判断自己",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "一般毛定／一般矛盾／一般铆定／一般保定",
+          "cleaned": "一般锚定",
+          "basis": "讲师反复定义为判断自己的前提与基准，可确定统一术语。"
+        }
+      ]
+    },
+    {
+      "id": "L24-B008",
+      "part": 50,
+      "first_segment": 245,
+      "last_segment": 300,
+      "heading": "“我脑子里想法很多”，还不足以证明特殊",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B009",
+      "part": 50,
+      "first_segment": 301,
+      "last_segment": 366,
+      "heading": "高中同学照镜子的故事：先建立讲述者的偏见",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B010",
+      "part": 50,
+      "first_segment": 367,
+      "last_segment": 420,
+      "heading": "笑了几秒后：同样的自我感觉也可能发生在自己身上",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B011",
+      "part": 50,
+      "first_segment": 421,
+      "last_segment": 469,
+      "heading": "介绍对象的故事：双方都觉得被低估",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B012",
+      "part": 50,
+      "first_segment": 470,
+      "last_segment": 509,
+      "heading": "所谓“三成修正”只是讲师估计，落点仍是努力",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B013",
+      "part": 50,
+      "first_segment": 510,
+      "last_segment": 558,
+      "heading": "成品尴尬，为何不能立即归罪演员",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B014",
+      "part": 50,
+      "first_segment": 559,
+      "last_segment": 600,
+      "heading": "复杂情绪的表演：笑着说话，心里却难过",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B015",
+      "part": 50,
+      "first_segment": 601,
+      "last_segment": 618,
+      "heading": "回到职责：表演的强度必须与全片相合",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B016",
+      "part": 50,
+      "first_segment": 619,
+      "last_segment": 664,
+      "heading": "四个检查方向，先看爱情结构的互补",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B017",
+      "part": 50,
+      "first_segment": 665,
+      "last_segment": 693,
+      "heading": "齐王这一道阻力，为什么来得晚又消得快",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B018",
+      "part": 50,
+      "first_segment": 694,
+      "last_segment": 717,
+      "heading": "父亲的阻力与草率相爱，削弱了关系重量",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B019",
+      "part": 50,
+      "first_segment": 718,
+      "last_segment": 781,
+      "heading": "爱情写法之一：渊源与弱小的承诺",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B020",
+      "part": 50,
+      "first_segment": 782,
+      "last_segment": 819,
+      "heading": "另外两种方法：互相牺牲与共同秘密",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B021",
+      "part": 50,
+      "first_segment": 820,
+      "last_segment": 865,
+      "heading": "元素与看点：让题材本身提供可观看的内容",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B022",
+      "part": 50,
+      "first_segment": 866,
+      "last_segment": 910,
+      "heading": "情感：人物出场行为有没有帮助观众进入",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B023",
+      "part": 50,
+      "first_segment": 911,
+      "last_segment": 929,
+      "heading": "情绪与情感不同：观众当下有没有被调动",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B024",
+      "part": 50,
+      "first_segment": 930,
+      "last_segment": 976,
+      "heading": "四项可以有所侧重，但要知道靠什么支撑",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B025",
+      "part": 50,
+      "first_segment": 977,
+      "last_segment": 1018,
+      "heading": "若必须拍爱情：改写对象为什么选庞婉",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B026",
+      "part": 50,
+      "first_segment": 1019,
+      "last_segment": 1064,
+      "heading": "庞婉成为中间人：童年渊源与双向阻力",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B027",
+      "part": 50,
+      "first_segment": 1065,
+      "last_segment": 1096,
+      "heading": "如果不限定爱情：写同门兄弟走向决裂",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B028",
+      "part": 50,
+      "first_segment": 1097,
+      "last_segment": 1139,
+      "heading": "第三个方向：从复仇走向更大的责任",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L24-B029",
+      "part": 50,
+      "first_segment": 1140,
+      "last_segment": 1174,
+      "heading": "本课作业：选择一个方向，先写故事梗概",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "《战国》速看段识别严重残缺，未据碎片重建完整场景；后文均明确区分电影复盘与讲师提出的假设改写。",
+    "一般锚定为讲师命名；自我评价30%、分工比例、奖榜与剧组规模皆为未核验口头说法。",
+    "高中的镜子故事与相亲故事完整保留因果和讲师自省，涉及外貌的贬损仅归于其主观叙述。",
+    "本课作业为在三个参考方向或自选方向中择一，先写故事梗概；没有要求三份。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第24课.md",
+  "output_sha256": "db30947e3303289c989959e7f1c9590652ccec87ca8e462c0c19ee07a77a086d",
+  "reader_navigation_update": {
+    "previous_output_sha256": "5ff65a3e6ac50efba4195804710e16f37f7b85dcfdcd299ce5f16644002bdf29",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

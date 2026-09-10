@@ -1,0 +1,250 @@
+{
+  "lesson": 32,
+  "source_parts": [
+    {
+      "part": 58,
+      "source_json_sha256": "add88771ce849f7af91f43ee2b97fcd2c916fc2b637b3eab66e2359c2ca62612",
+      "segment_count": 791
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L32-B001",
+      "part": 58,
+      "first_segment": 1,
+      "last_segment": 38,
+      "heading": "晚上录课与《鱿鱼游戏》的出圈",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B002",
+      "part": 58,
+      "first_segment": 39,
+      "last_segment": 72,
+      "heading": "故事梗概与熟悉的“大逃杀模式”",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "赌博启示录／弥留之际的爱丽丝",
+          "cleaned": "《赌博默示录》／《弥留之国的爱丽丝》",
+          "basis": "与课堂紧接的《动物世界》改编、剪刀石头布及游戏题材语境相符的明显片名识别误差。"
+        }
+      ]
+    },
+    {
+      "id": "L32-B003",
+      "part": 58,
+      "first_segment": 73,
+      "last_segment": 114,
+      "heading": "关于韩国阶层题材的解释",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B004",
+      "part": 58,
+      "first_segment": 115,
+      "last_segment": 163,
+      "heading": "游戏类属于选材和世界设定：空间、参与者、规则、奖惩",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "庄稼",
+          "cleaned": "庄家",
+          "basis": "与玩家相对、制定游戏规则的角色语境明确。"
+        },
+        {
+          "original": "中产者",
+          "cleaned": "终产者",
+          "basis": "《赡养人类》及全部财富集中于一个人的连续语境支持术语订正。"
+        }
+      ]
+    },
+    {
+      "id": "L32-B005",
+      "part": 58,
+      "first_segment": 164,
+      "last_segment": 193,
+      "heading": "规则怎样成为社会比喻",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B006",
+      "part": 58,
+      "first_segment": 194,
+      "last_segment": 234,
+      "heading": "什么叫强设定：人物、对手与穿越",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B007",
+      "part": 58,
+      "first_segment": 235,
+      "last_segment": 267,
+      "heading": "时间变化的其他玩法，以及本课的“魔幻现实主义”口径",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B008",
+      "part": 58,
+      "first_segment": 268,
+      "last_segment": 315,
+      "heading": "A、B 级片与制作趋势的课堂判断",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B009",
+      "part": 58,
+      "first_segment": 316,
+      "last_segment": 356,
+      "heading": "强设定容易卖出一句话，但持续吸引有难度",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "失之愈合／资之愈合",
+          "cleaned": "是枝裕和",
+          "basis": "连续讨论现实主义导演及家庭日常题材的同音 ASR 误识；未补认具体影片。"
+        }
+      ]
+    },
+    {
+      "id": "L32-B010",
+      "part": 58,
+      "first_segment": 357,
+      "last_segment": 391,
+      "heading": "《西部世界》《不死法医》与规则越具体、可写空间越窄",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B011",
+      "part": 58,
+      "first_segment": 392,
+      "last_segment": 445,
+      "heading": "学习时不要造神：从《教父》到汽车的岔题",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B012",
+      "part": 58,
+      "first_segment": 446,
+      "last_segment": 482,
+      "heading": "规则要让观众理解：《时间规划局》的比喻",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B013",
+      "part": 58,
+      "first_segment": 483,
+      "last_segment": 543,
+      "heading": "共同愿望与共同恐惧，以及《大白鲨》《侏罗纪公园》",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B014",
+      "part": 58,
+      "first_segment": 544,
+      "last_segment": 576,
+      "heading": "在已有大类里创新，而不是只追求没见过",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B015",
+      "part": 58,
+      "first_segment": 577,
+      "last_segment": 606,
+      "heading": "现实题材的来源：新闻与生活浓缩",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B016",
+      "part": 58,
+      "first_segment": 607,
+      "last_segment": 635,
+      "heading": "现实与强设定的边界：《西虹市首富》",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B017",
+      "part": 58,
+      "first_segment": 636,
+      "last_segment": 668,
+      "heading": "《疑犯追踪》的技术想象，以及另一个岛屿游戏例子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B018",
+      "part": 58,
+      "first_segment": 669,
+      "last_segment": 698,
+      "heading": "选材不等于故事类型，穿越不能只是水平搬家",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B019",
+      "part": 58,
+      "first_segment": 699,
+      "last_segment": 713,
+      "heading": "本课作业：设计自己的游戏题材提案",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B020",
+      "part": 58,
+      "first_segment": 714,
+      "last_segment": 755,
+      "heading": "作业被误当成拍摄承诺：一位学员的经历",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B021",
+      "part": 58,
+      "first_segment": 756,
+      "last_segment": 781,
+      "heading": "练习、投资与个人收入的边界",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L32-B022",
+      "part": 58,
+      "first_segment": 782,
+      "last_segment": 791,
+      "heading": "收束：认真做练习，两类题材都要会写",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "《北京折叠》作者关联、旧港片“难兄难弟”、演员“阿诗伦 cuccher”未擅自补认；黄渤岛屿片及是枝裕和家庭片未补片名。",
+    "“魔幻现实主义”按讲师宽泛口径保留，不等同严格文学分类；A级/B级片历史及市场判断未核验。",
+    "《西部世界》停播史、《疑犯追踪》季数和技术实现说法有明显待核项；《鱿鱼游戏》后续命运保留为录课时预测。",
+    "《西虹市首富》继承金额先两亿后二十亿，未统一或代入外部剧情数字。",
+    "韩国社会文化、怪兽票房、鲨鱼伤亡及电影开创史等均为讲师观点或未提供来源的说法。",
+    "本课作业仅为游戏题材提案；点评不构成投资或购买承诺；约三千字及三百万元来自学员轶事，不是作业要求。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第32课.md",
+  "output_sha256": "a2a9c5bd2c11f8cdea014226d9f554523abfdfd41edbdf85d84a81276b750d1b",
+  "reader_navigation_update": {
+    "previous_output_sha256": "7881a844448ed2fa6ae8f7f78720db30cd1dd38fda5e67db4fcfe697fdde236a",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

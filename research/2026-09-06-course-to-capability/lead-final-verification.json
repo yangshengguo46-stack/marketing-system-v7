@@ -1,0 +1,30 @@
+{
+  "label": "a-lead-final",
+  "authorship": "Lead edited existing model revision; real native model saved it through marketing_work",
+  "turn_status": [
+    "completed"
+  ],
+  "work_file": "output/marketing-work/story-a-lead-final-20260906.json",
+  "all_stages_saved": true,
+  "text_identical_ignoring_one_terminal_lf": true,
+  "source_has_one_extra_terminal_lf": true,
+  "source_sha256": "5164349df020824ada02c2e1a438e1e5e490ff237a7280669ca38ed31239da46",
+  "native_body_sha256": "15dc9e60ab28652abcfa0a2a91ad437d0b354b1043963b65a82ebd2ff5991f4c",
+  "chinese_character_count": 597,
+  "usage": {
+    "totalTokens": 62401,
+    "inputTokens": 60542,
+    "cachedInputTokens": 41472,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 1859,
+    "reasoningOutputTokens": 399
+  },
+  "changes": [
+    "opening 14:42, planned departure14:52 gives ten minutes; interim clock14:46 and actual departure14:56",
+    "customer inspects damage and checks shoe, receives refund and written contact; removed whole-leather replacement/instant repair guarantee"
+  ],
+  "limits": [
+    "No new independent reader review of Lead final copy",
+    "Not a real merchant story, audience test, shooting test or marketing result"
+  ]
+}

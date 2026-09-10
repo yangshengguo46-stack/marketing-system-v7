@@ -1,0 +1,16 @@
+{"actual_seconds":20,"lines":[],"requested_seconds":20}
+{"actual_seconds":35,"lines":[{"box":[0.33333333149452271,0.39622641415094351,0.33098591549295764,0.28301886792452824],"confidence":0.5,"text":"就是一个明显的这激行狗"}],"requested_seconds":35}
+{"actual_seconds":50,"lines":[],"requested_seconds":50}
+{"actual_seconds":65,"lines":[],"requested_seconds":65}
+{"actual_seconds":80,"lines":[{"box":[0.43889654541983375,0.41284742784134976,0.12924916083823906,0.26864478273211789],"confidence":0.30000001192092896,"text":"昨天识过"}],"requested_seconds":80}
+{"actual_seconds":95,"lines":[],"requested_seconds":95}
+{"actual_seconds":110,"lines":[{"box":[0.31924882267605642,0.41509433886792457,0.36150234741784032,0.26415094339622636],"confidence":1,"text":"你看到一个姑娘哇太漂亮了"}],"requested_seconds":110}
+{"actual_seconds":125,"lines":[{"box":[0.41079812216633127,0.41509434150943403,0.17840375586854462,0.26415094339622636],"confidence":1,"text":"不同意嫌你丑"}],"requested_seconds":125}
+{"actual_seconds":140,"lines":[{"box":[0.34976526009389669,0.39622641615566034,0.30046948356807507,0.28301886792452824],"confidence":0.30000001192092896,"text":"二次动佢就是这激行内"}],"requested_seconds":140}
+{"actual_seconds":155,"lines":[{"box":[0.36619718159885239,0.41509433857442357,0.2699530516431925,0.26415094339622636],"confidence":0.5,"text":"我们说那非得是二次"}],"requested_seconds":155}
+{"actual_seconds":170,"lines":[{"box":[0.41784037401408453,0.41509433886792457,0.15727699530516431,0.26415094339622636],"confidence":0.5,"text":"一次动作是"}],"requested_seconds":170}
+{"actual_seconds":185,"lines":[{"box":[0.38028168843058352,0.41509433854447442,0.23943661971830987,0.26415094339622647],"confidence":0.5,"text":"有个片子非常好看"}],"requested_seconds":185}
+{"actual_seconds":200,"lines":[{"box":[0.44366197210485137,0.37735848805031458,0.10328638497652587,0.30188679245283012],"confidence":0.5,"text":"讯什么"}],"requested_seconds":200}
+{"actual_seconds":215,"lines":[{"box":[0.33098591307847081,0.39622641415094351,0.3380281690140845,0.28301886792452824],"confidence":0.5,"text":"大学 连社区大学都没专上"}],"requested_seconds":215}
+{"actual_seconds":230,"lines":[{"box":[0.38028168854460093,0.39622641792452828,0.23943661971830993,0.28301886792452824],"confidence":1,"text":"你造了录取通知书"}],"requested_seconds":230}
+{"actual_seconds":245,"lines":[{"box":[0.44366197256874584,0.39622641630727762,0.10328638497652587,0.28301886792452835],"confidence":0.5,"text":"呃这个"}],"requested_seconds":245}

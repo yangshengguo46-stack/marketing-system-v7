@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-08T03:48:10.539272+00:00",
+  "workers": [
+    "resumed-5",
+    "recovered-again-1",
+    "length-retry-4",
+    "recovered-again-2",
+    "metadata-recovered-3"
+  ],
+  "from": "low",
+  "to": "high",
+  "source": "https://recipes.vllm.ai/zai-org/GLM-5.2",
+  "reason": "Official model serving recipe says GLM-5.2 only high selects lower thinking; low/medium may fall through to max. ARK hosted mapping not confirmed. Native low runs still emitted up to 18105 reasoning tokens and a length failure; high selected for subsequent real tasks, no current request interrupted.",
+  "limits": "Local native setting confirmation is not proof of provider internal reasoning mode."
+}

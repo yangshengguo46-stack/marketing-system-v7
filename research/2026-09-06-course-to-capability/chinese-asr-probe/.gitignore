@@ -1,0 +1,4 @@
+runtime/.venv/
+models/
+audio/*.wav
+__pycache__/

@@ -1,5 +1,9 @@
 mod prompt;
 mod schema;
+mod work_chain;
+mod work_tool;
+
+pub use work_tool::install;
 
 pub use prompt::ADDITIONAL_CONTEXT_KEY;
 pub use prompt::EVALUATION_CONTEXT_MAX_TOKENS;

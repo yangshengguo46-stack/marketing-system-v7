@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-09-09T11:43:55.620366+00:00",
+  "model": "gpt-6-astra",
+  "fork_turns": "none",
+  "inputs_sha256": {
+    "inputs/case-01.md": "18bea2ab32823e825f62ce6222b36279a0813c263153290b59d113d75ad39b2b",
+    "inputs/case-02.md": "39c79f2d9243f976b95a7b38ebeed042172343cefa4b10b17efd0b84b01ea919",
+    "inputs/common.md": "ac335b3272003d73350f8ffb703257c3c5bcd0bcf4297d145ced90d2dfad5aa5",
+    "inputs/course/lesson-01.md": "d71bf194b52538267479dbe01fc4a16225e631fcabb0eefa2028739a62287120",
+    "inputs/course/lesson-02.md": "1b4334e27086dd83b915f2489bffea0eaa155dbcb31308f82a5c2b3f23f64094",
+    "inputs/course/lesson-03.md": "cb258998287059fe076cbe31e9eea91f5a9d01f2749b5c8529deeb6bee51a84c",
+    "inputs/course/lesson-04.md": "9d9d7a6f033b18be7f405c8ccfa86c32d844572f91803fa3b53f0b5118d17447",
+    "inputs/course/lesson-05.md": "80ada3d904c7d838ef674460b5f31dca7c51567c3a29345bd8c4ef07846e3260",
+    "inputs/course/method.md": "993269571a60bae88936c2e359c9831b3e2a9e3368284b8fd224bdb17085150e",
+    "inputs/criteria.md": "948707af27bdaf397a278f37afccba72c7c81437b743962af222a1976356dc1b"
+  },
+  "conditions": {
+    "A": "common + one case",
+    "B": "same common + same case + six course files"
+  },
+  "limits": "same filesystem with declared read scope, not technical isolation; no full request audit"
+}

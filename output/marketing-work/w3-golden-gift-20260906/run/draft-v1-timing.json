@@ -1,0 +1,15 @@
+{
+  "spokenUnitsByShot": [
+    20,
+    35,
+    60,
+    72,
+    91,
+    38,
+    46
+  ],
+  "totalSpokenUnits": 362,
+  "plannedSeconds": 75,
+  "estimatedSpeechSecondsAt3_5PerSecond": 103,
+  "method": "count CJK/alphanumeric characters in \u53f0\u8bcd lines; estimate only, no actual performance"
+}

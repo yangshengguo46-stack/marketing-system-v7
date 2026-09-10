@@ -1,0 +1,7 @@
+{
+  "jobs": [
+    "p092-c001",
+    "p092-c005"
+  ],
+  "reason": "Distant tail jobs; primary shards skip completed files; no duplicate in-flight job at dispatch"
+}

@@ -1,0 +1,772 @@
+{
+  "chapters": [
+    {
+      "file": "第01课.md",
+      "label": "第01课 · 第一课-劝学1.1",
+      "parts": [
+        2,
+        3,
+        4
+      ],
+      "record": "lesson-01.json",
+      "raw": "正课-01.md",
+      "ready": true,
+      "sha256": "810f4c548ab708c160500307bd6c0c7649fb18f22a16b58418efe85c48fc4e6d"
+    },
+    {
+      "file": "第02课.md",
+      "label": "第02课 · 第二课-故事的要素2.1",
+      "parts": [
+        5,
+        6
+      ],
+      "record": "lesson-02.json",
+      "raw": "正课-02.md",
+      "ready": true,
+      "sha256": "496566e6ee7da74ff97a8237dd3d73417d1c13077caad7a36272dfbf7ae2fec7"
+    },
+    {
+      "file": "第03课.md",
+      "label": "第03课 · 第三课-八要素的实战应用3.1",
+      "parts": [
+        7,
+        8
+      ],
+      "record": "lesson-03.json",
+      "raw": "正课-03.md",
+      "ready": true,
+      "sha256": "06268959109be52cc0247dcfab78a6b0d6ce2d2f50829a70c2b13297990b3421"
+    },
+    {
+      "file": "第04课.md",
+      "label": "第04课 · 第四课-第一个故事4.1",
+      "parts": [
+        9,
+        10
+      ],
+      "record": "lesson-04.json",
+      "raw": "正课-04.md",
+      "ready": true,
+      "sha256": "b131524ef45bf16a677c6d3469bd818ad570f76121661861f398a23e545279ae"
+    },
+    {
+      "file": "第05课.md",
+      "label": "第05课 · 第五课-剧本的正义5.1",
+      "parts": [
+        11,
+        12
+      ],
+      "record": "lesson-05.json",
+      "raw": "正课-05.md",
+      "ready": true,
+      "sha256": "2012c74bbfcdec0fad174c2a105008ea7ab87c97b91a16927e8a334732e93505"
+    },
+    {
+      "file": "第06课.md",
+      "label": "第06课 · 第六课-剧本的格式6",
+      "parts": [
+        13
+      ],
+      "record": "lesson-06.json",
+      "raw": "正课-06.md",
+      "ready": true,
+      "sha256": "78010d6f099224daa4f38a77d398201ee1f68486a591a5e2213aef2ba64e6b32"
+    },
+    {
+      "file": "第07课.md",
+      "label": "第07课 · 第七课-拿事儿说话7",
+      "parts": [
+        14
+      ],
+      "record": "lesson-07.json",
+      "raw": "正课-07.md",
+      "ready": true,
+      "sha256": "9c25fe671daff2021acac422e713add2e539698c04b2ae25c78e3c7101283d7b"
+    },
+    {
+      "file": "第08课.md",
+      "label": "第08课 · 第八课-勾勒画面8.1",
+      "parts": [
+        15,
+        16,
+        17
+      ],
+      "record": "lesson-08.json",
+      "raw": "正课-08.md",
+      "ready": true,
+      "sha256": "6f17ff70012bebae2fc8c33776171be529d9fa63d33ec3f7ab4a24c67fc21f76"
+    },
+    {
+      "file": "第09课.md",
+      "label": "第09课 · 第九课-谈谈人物9.1",
+      "parts": [
+        18,
+        19
+      ],
+      "record": "lesson-09.json",
+      "raw": "正课-09.md",
+      "ready": true,
+      "sha256": "87f04523214bc75b70a539bf3bf424493a634031b147a2176839191afeab392f"
+    },
+    {
+      "file": "第10课.md",
+      "label": "第10课 · 第十课-复杂叙事10.1",
+      "parts": [
+        20,
+        21
+      ],
+      "record": "lesson-10.json",
+      "raw": "正课-10.md",
+      "ready": true,
+      "sha256": "468d32b907ad913d80d0034f2f5ec8567128874106fa67fa60b38f4876cc6c5d"
+    },
+    {
+      "file": "第11课.md",
+      "label": "第11课 · 十一课-类型片11.1",
+      "parts": [
+        22,
+        23,
+        24
+      ],
+      "record": "lesson-11.json",
+      "raw": "正课-11.md",
+      "ready": true,
+      "sha256": "8ac4bc3d61f8cb93659ce0d08723dff469156f497b36330f248189d622e0c232"
+    },
+    {
+      "file": "第12课.md",
+      "label": "第12课 · 十二课-小蝌蚪找妈妈12.1",
+      "parts": [
+        25,
+        26,
+        27
+      ],
+      "record": "lesson-12.json",
+      "raw": "正课-12.md",
+      "ready": true,
+      "sha256": "fd92b01166d50dd4d599121c0b9e591bf7c0acec36390c8bdca265a25aefe1a5"
+    },
+    {
+      "file": "第13课.md",
+      "label": "第13课 · 十三课-电视剧13.1",
+      "parts": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "record": "lesson-13.json",
+      "raw": "正课-13.md",
+      "ready": true,
+      "sha256": "75d7753c8760fbd587de4dc97e0bbc8ccbd4c91ac5d539ef091b65b7bc0100bc"
+    },
+    {
+      "file": "第14课.md",
+      "label": "第14课 · 十四课-场景与对白14.1",
+      "parts": [
+        32,
+        33
+      ],
+      "record": "lesson-14.json",
+      "raw": "正课-14.md",
+      "ready": true,
+      "sha256": "ae24d3a8c9b8b4f58fab1764bef5d83ae2f241fbe06a1076a492832f925c10d4"
+    },
+    {
+      "file": "第15课.md",
+      "label": "第15课 · 十五课-节拍器15.1",
+      "parts": [
+        34,
+        35,
+        36,
+        37
+      ],
+      "record": "lesson-15.json",
+      "raw": "正课-15.md",
+      "ready": true,
+      "sha256": "72322bae77442e7bbba063c0fd9d737a800ed1496790fd95753f8256a4e329b7"
+    },
+    {
+      "file": "第16课.md",
+      "label": "第16课 · 十六课-悬念与反转16",
+      "parts": [
+        38
+      ],
+      "record": "lesson-16.json",
+      "raw": "正课-16.md",
+      "ready": true,
+      "sha256": "30d9dae97e95251720a0490fb8c58e89abe2033942e3459b1d5e8222052747a8"
+    },
+    {
+      "file": "第17课.md",
+      "label": "第17课 · 十七课-新手跳坑17",
+      "parts": [
+        39
+      ],
+      "record": "lesson-17.json",
+      "raw": "正课-17.md",
+      "ready": true,
+      "sha256": "50fa5212726703f03f10fb476892e80830b97800a1cf7a1509762fea63566703"
+    },
+    {
+      "file": "第18课.md",
+      "label": "第18课 · 十八课-拿人的开场18.1",
+      "parts": [
+        40,
+        41
+      ],
+      "record": "lesson-18.json",
+      "raw": "正课-18.md",
+      "ready": true,
+      "sha256": "8bb2cd6812b593e94fabde177ccb368e86da57eb7c2c51f3f8cb8d3c34b14f18"
+    },
+    {
+      "file": "第19课.md",
+      "label": "第19课 · 十九课-怎么撰写项目提案19",
+      "parts": [
+        42
+      ],
+      "record": "lesson-19.json",
+      "raw": "正课-19.md",
+      "ready": true,
+      "sha256": "4ef1486390b970470ec42d415458891b7c55c09b2dfeef4bdbf9e5b881e6431c"
+    },
+    {
+      "file": "第20课.md",
+      "label": "第20课 · 二十课-编剧拉片20",
+      "parts": [
+        43
+      ],
+      "record": "lesson-20.json",
+      "raw": "正课-20.md",
+      "ready": true,
+      "sha256": "df8be172efe86e48adaffef228a94477909c1e6d4c6e9dd07a5fa231c6b0e196"
+    },
+    {
+      "file": "第21课.md",
+      "label": "第21课 · 二十一课-谈几个进阶问题（上）21.1",
+      "parts": [
+        44,
+        45
+      ],
+      "record": "lesson-21.json",
+      "raw": "正课-21.md",
+      "ready": true,
+      "sha256": "276bcceb54728fee7d7a8b36a938d683e81151db4f2b90a42c16df5a50eade87"
+    },
+    {
+      "file": "第22课.md",
+      "label": "第22课 · 二十二课-G潮上不去？（上）22.1",
+      "parts": [
+        46,
+        47
+      ],
+      "record": "lesson-22.json",
+      "raw": "正课-22.md",
+      "ready": true,
+      "sha256": "8299442bf2990b8dc60107638c13977d678ab1baab49ca44e0ba948b745ba4f7"
+    },
+    {
+      "file": "第23课.md",
+      "label": "第23课 · 二十三课-怎么写喜剧？(上）23.1",
+      "parts": [
+        48,
+        49
+      ],
+      "record": "lesson-23.json",
+      "raw": "正课-23.md",
+      "ready": true,
+      "sha256": "1944062cfdbb88143ff35fbfbbff29679b30868b1b9af3e8ba031af9754f4e62"
+    },
+    {
+      "file": "第24课.md",
+      "label": "第24课 · 二十四课-剖析烂片24",
+      "parts": [
+        50
+      ],
+      "record": "lesson-24.json",
+      "raw": "正课-24.md",
+      "ready": true,
+      "sha256": "db30947e3303289c989959e7f1c9590652ccec87ca8e462c0c19ee07a77a086d"
+    },
+    {
+      "file": "第25课.md",
+      "label": "第25课 · 二十五课-观影情绪节拍表25",
+      "parts": [
+        51
+      ],
+      "record": "lesson-25.json",
+      "raw": "正课-25.md",
+      "ready": true,
+      "sha256": "99f5c7864ddcc61b28f28fb919840ae3cb0f1377685a67e4515f3ef9b441d648"
+    },
+    {
+      "file": "第26课.md",
+      "label": "第26课 · 二十六课-从容应对文艺凡尔赛26",
+      "parts": [
+        52
+      ],
+      "record": "lesson-26.json",
+      "raw": "正课-26.md",
+      "ready": true,
+      "sha256": "3c1383111fc9f02b01dd156ba71024d01619e50a23e3b284d75f881243572589"
+    },
+    {
+      "file": "第27课.md",
+      "label": "第27课 · 二十七课-剧本的叙事视角27",
+      "parts": [
+        53
+      ],
+      "record": "lesson-27.json",
+      "raw": "正课-27.md",
+      "ready": true,
+      "sha256": "20f466255788ead2ed047e224d0bf37e37ca31475987b6dc33f1255a57d3fe8e"
+    },
+    {
+      "file": "第28课.md",
+      "label": "第28课 · 二十八课-编剧课科目三28",
+      "parts": [
+        54
+      ],
+      "record": "lesson-28.json",
+      "raw": "正课-28.md",
+      "ready": true,
+      "sha256": "1167cdaff8353a58787bea1d7323a18ebfc9ee47e58478314858c1a1622add24"
+    },
+    {
+      "file": "第29课.md",
+      "label": "第29课 · 二十九课-剧情要有攻击性29",
+      "parts": [
+        55
+      ],
+      "record": "lesson-29.json",
+      "raw": "正课-29.md",
+      "ready": true,
+      "sha256": "d07f1bd9eb62b6a367778c326669cb879437ad5b300d6798e182129f974c97d8"
+    },
+    {
+      "file": "第30课.md",
+      "label": "第30课 · 三十课-人类为什么需要影视剧30",
+      "parts": [
+        56
+      ],
+      "record": "lesson-30.json",
+      "raw": "正课-30.md",
+      "ready": true,
+      "sha256": "d67bf2134a635c2d80c9661a9605ffda232302598e7b1f9cf81bc27f06aa6f03"
+    },
+    {
+      "file": "第31课.md",
+      "label": "第31课 · 三十一课-单元剧的创作理念31",
+      "parts": [
+        57
+      ],
+      "record": "lesson-31.json",
+      "raw": "正课-31.md",
+      "ready": true,
+      "sha256": "393f51f879023f730e847b2d3b05218d4f7efbb85d90f8e02303374c29f685d3"
+    },
+    {
+      "file": "第32课.md",
+      "label": "第32课 · 三十二课-跟《鱿鱼游戏》学写强设定",
+      "parts": [
+        58
+      ],
+      "record": "lesson-32.json",
+      "raw": "正课-32.md",
+      "ready": true,
+      "sha256": "a2a9c5bd2c11f8cdea014226d9f554523abfdfd41edbdf85d84a81276b750d1b"
+    },
+    {
+      "file": "第33课.md",
+      "label": "第33课 · 三十三课-怎样克服拖延症",
+      "parts": [
+        59
+      ],
+      "record": "lesson-33.json",
+      "raw": "正课-33.md",
+      "ready": true,
+      "sha256": "9b17ca735cf25297655d91e5d2e2c7e54ae8b23fa118b457367ffc14b355de6a"
+    },
+    {
+      "file": "第34课.md",
+      "label": "第34课 · 三十四课-查理小三角创作法",
+      "parts": [
+        60
+      ],
+      "record": "lesson-34.json",
+      "raw": "正课-34.md",
+      "ready": true,
+      "sha256": "142edd7bce64a5dda4f423a25f543c2718d38f182e5f6c00cce9ef9efd849c0e"
+    },
+    {
+      "file": "补充-P001.md",
+      "label": "P001 · 一个人在家做AI漫剧能赚钱吗？",
+      "parts": [
+        1
+      ],
+      "record": "supplement-001.json",
+      "raw": "补充-P001.md",
+      "ready": true,
+      "sha256": "1f82c7bacd06a9ea1cb9b127028eae1de528889173b9891a023e91f95213d5e2"
+    },
+    {
+      "file": "补充-P061.md",
+      "label": "P061 · 《让子弹飞》直播拉片",
+      "parts": [
+        61
+      ],
+      "record": "supplement-061.json",
+      "raw": "补充-P061.md",
+      "ready": true,
+      "sha256": "b35d937f98a40482e657e21fca52db6172dfebb3d194ed4cba40272c1179ee91"
+    },
+    {
+      "file": "补充-P062.md",
+      "label": "P062 · 查理老师告诉你，短剧为什么这么火！",
+      "parts": [
+        62
+      ],
+      "record": "supplement-062.json",
+      "raw": "补充-P062.md",
+      "ready": true,
+      "sha256": "acfe405eda7a4c9d9e16c773ef86ee1cf5dc68bcca273cbdd5e654a5b5c77c8b"
+    },
+    {
+      "file": "补充-P063.md",
+      "label": "P063 · 职业编剧怎么用ai写剧本",
+      "parts": [
+        63
+      ],
+      "record": "supplement-063.json",
+      "raw": "补充-P063.md",
+      "ready": true,
+      "sha256": "861a5d3dca8d00ee60a8f8895fe749e1351dd54eeb92da206e9335e2b118aa43"
+    },
+    {
+      "file": "补充-P064.md",
+      "label": "P064 · 如何写好单场戏，让每一集都有钩子？",
+      "parts": [
+        64
+      ],
+      "record": "supplement-064.json",
+      "raw": "补充-P064.md",
+      "ready": true,
+      "sha256": "673f944f9bda10423c9ce2f4e881a6dcec3651f072edbca096e970c3f1336f53"
+    },
+    {
+      "file": "补充-P065.md",
+      "label": "P065 · 编剧的第一性原理",
+      "parts": [
+        65
+      ],
+      "record": "supplement-065.json",
+      "raw": "补充-P065.md",
+      "ready": true,
+      "sha256": "0ffb0fe20f61f383ece75c3f971e0c6a70254402b96180f58070c6b3ddb18764"
+    },
+    {
+      "file": "补充-P066.md",
+      "label": "P066 · 写了剧本怎么投稿",
+      "parts": [
+        66
+      ],
+      "record": "supplement-066.json",
+      "raw": "补充-P066.md",
+      "ready": true,
+      "sha256": "03de15c690415322a81a819589c1ed26b3cd83c064602402462033bf675b100c"
+    },
+    {
+      "file": "补充-P067.md",
+      "label": "P067 · 编剧库3.0大升级来了！快来参与普查，订单主动找你对接",
+      "parts": [
+        67
+      ],
+      "record": "supplement-067.json",
+      "raw": "补充-P067.md",
+      "ready": true,
+      "sha256": "bf972f01b915df6204baf116c0ae39be5d06e2578c7f73cfeef817eb01147132"
+    },
+    {
+      "file": "补充-P068.md",
+      "label": "P068 · 无论看多少次都觉得超级！无敌！治愈！《玩具总动员》拉片解读，独特视角（一）",
+      "parts": [
+        68
+      ],
+      "record": "supplement-068.json",
+      "raw": "补充-P068.md",
+      "ready": true,
+      "sha256": "17104e2c3ddc80946836947db944fd718754a8a3a44972712f3b11451664c764"
+    },
+    {
+      "file": "补充-P069.md",
+      "label": "P069 · 【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）",
+      "parts": [
+        69
+      ],
+      "record": "supplement-069.json",
+      "raw": "补充-P069.md",
+      "ready": true,
+      "sha256": "bec2b5b4712b391272983e97ae7c7e30e4948a41bf216c695ff42b80f197dfce"
+    },
+    {
+      "file": "补充-P070.md",
+      "label": "P070 · 【编剧拉片】麻花喜剧巅峰神作！《夏洛特烦恼》逐帧分析创作思路，颠覆你的认知！（一）",
+      "parts": [
+        70
+      ],
+      "record": "supplement-070.json",
+      "raw": "补充-P070.md",
+      "ready": true,
+      "sha256": "fc5536b8275a7227a46b1dfc8011710956bb598c3c33d75e40d4fa8064ecacdb"
+    },
+    {
+      "file": "补充-P071.md",
+      "label": "P071 · 编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））",
+      "parts": [
+        71
+      ],
+      "record": "supplement-071.json",
+      "raw": "补充-P071.md",
+      "ready": true,
+      "sha256": "9458b397d8699026839dac39fea5970b154cf5293c67957d8edf79dd406f6084"
+    },
+    {
+      "file": "补充-P072.md",
+      "label": "P072 · 【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+      "parts": [
+        72
+      ],
+      "record": "supplement-072.json",
+      "raw": "补充-P072.md",
+      "ready": true,
+      "sha256": "661edf08f7cb4dc1a17a0accfc9ae3eb412caef72a0c04ad96073b55fd37eaa5"
+    },
+    {
+      "file": "补充-P073.md",
+      "label": "P073 · 编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！",
+      "parts": [
+        73
+      ],
+      "record": "supplement-073.json",
+      "raw": "补充-P073.md",
+      "ready": true,
+      "sha256": "f268f85bafaaf38de7a4baf4ef9a164856facc1b97adfd4f9e109be5151bbb52"
+    },
+    {
+      "file": "补充-P074.md",
+      "label": "P074 · 编剧视角拉片《保你平安》集结喜剧半壁江山，大鹏黑马口碑喜剧",
+      "parts": [
+        74
+      ],
+      "record": "supplement-074.json",
+      "raw": "补充-P074.md",
+      "ready": true,
+      "sha256": "82b310f46e03d96f54509e94e9a52838e15e3d588cf3c3aaeb98cd608dd49bd5"
+    },
+    {
+      "file": "补充-P075.md",
+      "label": "P075 · 编剧视角拉片《男妇女主任》小品型电影看完你就会写了！",
+      "parts": [
+        75
+      ],
+      "record": "supplement-075.json",
+      "raw": "补充-P075.md",
+      "ready": true,
+      "sha256": "8391bfa0e5946f2f0323edd18c20eaa3ea84d438be8d72d7735f36f522391431"
+    },
+    {
+      "file": "补充-P076.md",
+      "label": "P076 · 《哪吒2》为啥这么爆？查理老师新年第一讲，一起写好中国故事！",
+      "parts": [
+        76
+      ],
+      "record": "supplement-076.json",
+      "raw": "补充-P076.md",
+      "ready": true,
+      "sha256": "bc41e95f093717fc8a0477961d16cefd376fae4c52eb5626c1579d0988b6da9b"
+    },
+    {
+      "file": "补充-P077.md",
+      "label": "P077 · 编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!",
+      "parts": [
+        77
+      ],
+      "record": "supplement-077.json",
+      "raw": "补充-P077.md",
+      "ready": true,
+      "sha256": "d65c28a0e880564e2965258d5d96c865d7cacb16f56f745217de9fe042f3def8"
+    },
+    {
+      "file": "补充-P078.md",
+      "label": "P078 · 编剧视角拉片《猩球崛起》，人猿对战背后的隐喻！",
+      "parts": [
+        78
+      ],
+      "record": "supplement-078.json",
+      "raw": "补充-P078.md",
+      "ready": true,
+      "sha256": "48985f280d62e27ea82fb10459ba42d85d0f68ed7621894c64a778f4e7c6bd9a"
+    },
+    {
+      "file": "补充-P079.md",
+      "label": "P079 · 编剧视角拉片《幸福终点站》等待未必是坏事，在等待中寻找生活的转机！",
+      "parts": [
+        79
+      ],
+      "record": "supplement-079.json",
+      "raw": "补充-P079.md",
+      "ready": true,
+      "sha256": "f978a2d90b9318198c9a97e43d6ee2ac684a3148c8db8569fd648d2e64ad2fe9"
+    },
+    {
+      "file": "补充-P080.md",
+      "label": "P080 · 编剧视角拉片经典传记片《华尔街之狼》",
+      "parts": [
+        80
+      ],
+      "record": "supplement-080.json",
+      "raw": "补充-P080.md",
+      "ready": true,
+      "sha256": "4f185587ad156f1c6662e6468703eeae5c00dd133fe7cd2533765805476f8289"
+    },
+    {
+      "file": "补充-P081.md",
+      "label": "P081 · 编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+      "parts": [
+        81
+      ],
+      "record": "supplement-081.json",
+      "raw": "补充-P081.md",
+      "ready": true,
+      "sha256": "4787c0771a0427c27a40920f7f14d986e4feb3d9c0e72ab4e1b6e43944adabfc"
+    },
+    {
+      "file": "补充-P082.md",
+      "label": "P082 · 编剧视角拉片《小丑》从内耗走向癫狂，从边缘跨上“神坛”「影史现象级」是怎样炼成的？",
+      "parts": [
+        82
+      ],
+      "record": "supplement-082.json",
+      "raw": "补充-P082.md",
+      "ready": true,
+      "sha256": "f9a2658da409565d2436630ee0866974b1fc70b5c1d86cb811cab6f7f5c8a412"
+    },
+    {
+      "file": "补充-P083.md",
+      "label": "P083 · 编剧视角拉片《危情时速》：神级叙事+真实事件改编，影视从业者不可错过的一部电影！",
+      "parts": [
+        83
+      ],
+      "record": "supplement-083.json",
+      "raw": "补充-P083.md",
+      "ready": true,
+      "sha256": "408b9fd3684999466c8bf8c0f0604346f18b0d92409b101e1c4aab160a1a829d"
+    },
+    {
+      "file": "补充-P084.md",
+      "label": "P084 · 编剧视角拉片是枝裕和《比海更深》：文艺片的“克制叙事”高级在哪？怎么学？",
+      "parts": [
+        84
+      ],
+      "record": "supplement-084.json",
+      "raw": "补充-P084.md",
+      "ready": true,
+      "sha256": "818a71023d389f4f3d2776eba9aa7400768ba4e47dc4c43c4fd83df42937d7f8"
+    },
+    {
+      "file": "补充-P085.md",
+      "label": "P085 · 编剧视角拉片烧脑神作《致命ID》",
+      "parts": [
+        85
+      ],
+      "record": "supplement-085.json",
+      "raw": "补充-P085.md",
+      "ready": true,
+      "sha256": "dc68f1393dad196de66b4f30266327e6fece7c2410093a318cec373d0a57307a"
+    },
+    {
+      "file": "补充-P086.md",
+      "label": "P086 · 编剧视角拉片《生死狙击》！男频爽片创作要点",
+      "parts": [
+        86
+      ],
+      "record": "supplement-086.json",
+      "raw": "补充-P086.md",
+      "ready": true,
+      "sha256": "3db715eb56d079b789d98906c5ddf0867546b862645c40d3fb7ee45ad12615fe"
+    },
+    {
+      "file": "补充-P087.md",
+      "label": "P087 · 编剧视角拉片《千与千寻》！",
+      "parts": [
+        87
+      ],
+      "record": "supplement-087.json",
+      "raw": "补充-P087.md",
+      "ready": true,
+      "sha256": "aead244e2598b3c6dbf40941cd38157c05b525f6edc903915493c99b7024c984"
+    },
+    {
+      "file": "补充-P088.md",
+      "label": "P088 · 编剧视角拉片《摔跤吧爸爸》9分励志体育佳作，为苦难中的亿万女性发声！",
+      "parts": [
+        88
+      ],
+      "record": "supplement-088.json",
+      "raw": "补充-P088.md",
+      "ready": true,
+      "sha256": "bc11a5a9e7cf1d53afcef11d1705fec2c4f676e42cc80b7481692252b0bb0af7"
+    },
+    {
+      "file": "补充-P089.md",
+      "label": "P089 · 编剧视角拉片韩国喜剧【金氏漂流记】两个孤独灵魂的相互救赎！",
+      "parts": [
+        89
+      ],
+      "record": "supplement-089.json",
+      "raw": "补充-P089.md",
+      "ready": true,
+      "sha256": "5563cb8a2bddefa6adbeb5fe347477dd96b1ac3f0f1d824c96734bd9b8c7b6d6"
+    },
+    {
+      "file": "补充-P090.md",
+      "label": "P090 · 编剧视角拉片励志电影《肖申克的救赎》一",
+      "parts": [
+        90
+      ],
+      "record": "supplement-090.json",
+      "raw": "补充-P090.md",
+      "ready": true,
+      "sha256": "04bb0234ff8505642a7bbaba6ca7c416941c65c50c3e82b034900197b1ffe0ca"
+    },
+    {
+      "file": "补充-P091.md",
+      "label": "P091 · 编剧视角拉片励志电影《肖申克的救赎》二",
+      "parts": [
+        91
+      ],
+      "record": "supplement-091.json",
+      "raw": "补充-P091.md",
+      "ready": true,
+      "sha256": "515997b9790fb05ebecefa18ca628c7c67349766c23c74765591ae990bc3d929"
+    },
+    {
+      "file": "补充-P092.md",
+      "label": "P092 · 编剧视角拉片励志电影《肖申克的救赎》三",
+      "parts": [
+        92
+      ],
+      "record": "supplement-092.json",
+      "raw": "补充-P092.md",
+      "ready": true,
+      "sha256": "87a4c4c951fffd16541b8cbd6bbf1f66c11ab7750cf7a47028e035c7a85dac71"
+    }
+  ],
+  "book": "output/course-learning/charlie-20260906/清洗讲义/课程清洗讲义-整册.md",
+  "book_sha256": "b8f8995a1fb592b4c465534ab46bb6a448a371764798de8cab83733509e5df74",
+  "limits": [
+    "Not full listening or visual verification",
+    "Semantic review scopes are recorded separately; coverage is not an accuracy PASS"
+  ]
+}

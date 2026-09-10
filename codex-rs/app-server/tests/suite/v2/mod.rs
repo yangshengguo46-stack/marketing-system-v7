@@ -1,6 +1,7 @@
 mod account;
 mod account_thread_usage;
 mod ai_ip_strict_output;
+mod ai_ip_work_chain;
 mod analytics;
 mod app_installed;
 mod app_list;

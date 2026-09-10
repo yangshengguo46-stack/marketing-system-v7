@@ -1,0 +1,38 @@
+{
+  "thread_id": "01a07f29-30ba-7672-986a-cc439201760f",
+  "turn_start": {
+    "turn": {
+      "id": "01a07f29-318d-7812-98b7-2f6a417ea0a5",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "messages": [
+    "{\"blocks\":[{\"first_segment\":379,\"last_segment\":398,\"heading\":\"演讲高潮·正直与勇气·纪律委员会休庭\",\"text\":\"（影片对白，斯莱德中校演讲续）\\n\\n“Well, when the bough breaks, the cradle will fall, and it has fallen here, it has fallen. Make you men—creators of leaders—be careful what kind of leaders you're producing here. I don't know if Charlie's silence here today is right or wrong. I'm not a judge or jury, but I can tell you this: he won't sell anybody out to buy his future. And that, my friends, is called integrity. That's called courage. Now that's the stuff leaders should be made of.\\n\\nI have come to the crossroads in my life. I always knew what the right path was. Without exception, I knew. But I never took it. You know why? It was too damn hard.\\n\\nNow here's Charlie, he's come to the crossroads. He has chosen a path, it's the right path, it's a path made of principle that leads to character. Let him continue on his journey. You hold this boy's future in your hands, committee. It's a valuable future. Believe me. Don't destroy it. Protect it. Embrace it. It's going to make you proud one day, I promise you.”\\n\\n〔此处疑似有其他对白，原识别为“放多我”“兄弟们，请来”，无法辨认〕\\n\\n“Disciplinary committee will take this matter under advisement in closed session.”\",\"corrections\":[{\"original\":\"when the bow breaks\",\"cleaned\":\"when the bough breaks\",\"basis\":\"摇篮曲Rock-a-bye Baby原文为bough（树枝），非bow\"},{\"original\":\"make us a men creators of leaders\",\"cleaned\":\"make you men, creators of leaders〔待核〕\",\"basis\":\"影片对白常见版本为make you men，但原词待核\"},{\"original\":\"不ieve me\",\"cleaned\":\"believe me〔疑〕\",\"basis\":\"转写断裂，应为believe me\"},{\"original\":\"放多我\",\"cleaned\":\"原词无法辨认〔疑〕\",\"basis\":\"无法确定对白内容与说话人\"},{\"original\":\"兄弟们，请来\",\"cleaned\":\"原词无法辨认〔疑〕\",\"basis\":\"无法确定对白内容与说话人\"},{\"original\":\"disciplinaryary\",\"cleaned\":\"disciplinary\",\"basis\":\"多出ary音节，应为disciplinary committee\"},{\"original\":\"a path made a principle\",\"cleaned\":\"a path made of principle〔待核〕\",\"basis\":\"常见版本为made of principle，原词待核\"}]},{\"first_segment\":399,\"last_segment\":429,\"heading\":\"查理为什么不能告密——中西方组织结构的文化差异\",\"text\":\"好，最大的名场面，回答一下同学们的问题。有人觉得查理告密这件事情设计得不好，觉得查理其实可以告密，告密也没什么，对吧？有些同学会觉得查理告密这件事情，查理有点过于坚持了，其实可以告发那三个小子——那三个小子又不是好东西，对吧？我们会有同学有这样的担心，会有这样的想法。这个问题为什么会是这样？我来给大家解释一下，这是文化决定的。\\n\\n你们在理解一个东西的时候，一定要从宏观上了解。因为西方国家的组织结构是从下而上的。也就是说，我们这一群人先组成一个团体，然后我们再推选一个人组成上面一个团体，然后上面这一群人再推选一个人，组成再上面一个团体，它是这样一个结构。所以你要对你团体的人负责。你不可能向上面那个管理你们这个团体的人告密，因为他不是你的人，他不是你们的人。这就是自下而上的组织结构。\\n\\n而咱们呢，是自上而下的组织结构，先有这个人，然后他安排下面的事情、安排下面的人，然后他再安排下一层面的人。所以我们需要向上负责。咱们的文化里，我们需要向上负责。咱们在一个班级里，需要对老师负责，对班干部负责，而不是对同僚负责。\\n\\n这个问题就是文化不太一样。明白这个意思吧？没有对错，文化不一样。同学们，没有对错，文化不一样。所以在西方这种组织结构里面，告密是一个非常非常大的事。在西方这个文化里，告密是个非常非常大的事，因为你出卖的是你的同僚。上面那个人是另外一拨人，他不是我们的管理者。你能理解这个意思吗？同学们，你能理解这个意思吗？这是组织结构造成的。咱们是另外一种结构，咱们需要对上负责，对吧？我们的文化里，我们对上面那个人负责，所以上面那个人问我们什么，我们必须告诉他。所以说这个没有什么好争论的，你要理解它是文化不同，没有什么好争论的。\",\"corrections\":[]},{\"first_segment\":430,\"last_segment\":459,\"heading\":\"演讲中的主题揭示——正直、勇气与人生十字路口\",\"text\":\"来，我们就着这段演讲。由于这段演讲是全篇的高潮，最最著名的名场面，就着这段演讲，他已经几乎把这个片子的主题喷到我们脸上了，说了两遍。同学们，来理解一下这个电影的主题。\\n\\n有同学说是忠诚——怎么可能是忠诚呢？我们双男主，上校那边有忠诚可言吗？什么忠诚啊，怎么能是忠诚呢？上校那边有忠诚可言吗？我再跟你们说一下什么正直、原则，我跟你们说一下——\\n\\n“When the shit hits the fan, some guys run and some guys stay.”\\n\\n出事情的时候，有的人会面对，有的人会逃跑。这句话在前面也说过，后面又说了一遍。再看一下：\\n\\n“That's courage. Now that's the stuff leaders should be made of.”\\n\\n然后又说：“I have come to the crossroads in my life. I always knew what the right path was. Without exception, I knew. But I never took it. You know why? It was too damn hard.”\\n\\n然后又说：“Now here's Charlie, he's come to the crossroads. He has chosen a path. It's the right path. It's a path made of principle that leads to character.”\\n\\n在这里又说了一遍。面对问题的时候，或者遇到人生十字路口的时候——\",\"corrections\":[{\"original\":\"Thats好 courage\",\"cleaned\":\"That's courage〔疑〕\",\"basis\":\"应为That's courage，中间“好”疑为转写夹入\"},{\"original\":\"来喂\",\"cleaned\":\"转写失真〔疑〕\",\"basis\":\"疑为老师口吻词，无法确定原词\"},{\"original\":\"学了\",\"cleaned\":\"转写失真〔疑〕\",\"basis\":\"疑为老师口吻词，无法确定原词\"},{\"original\":\"a path made a principle\",\"cleaned\":\"a path made of principle〔待核〕\",\"basis\":\"同前段，常见版本为made of principle\"}]}],\"uncertainties\":[\"S379：转写为“make us a men”，影片对白常见版本为“make you men”，原词待核\",\"S379：转写为“bow”，应为“bough”（摇篮曲Rock-a-bye Baby原文，指树枝），但未逐帧校音确认\",\"S388与S455：转写为“made a principle”，常见版本为“made of principle”，原词待核\",\"S392：“不ieve me”转写断裂，应为“believe me”，但首音节缺失\",\"S396—S397：“放多我”“兄弟们，请来”原词无法辨认，无法确定说话人与对白内容〔疑〕\",\"S436—S437：“来喂”“学了”疑为老师口吻词转写失真，无法确定原词〔疑〕\",\"S444：“Thats好 courage”中间“好”疑为转写夹入，应为“That's courage”，未逐帧校音确认\"]}"
+  ],
+  "usage": {
+    "total": {
+      "totalTokens": 21511,
+      "inputTokens": 10332,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 11179,
+      "reasoningOutputTokens": 9503
+    },
+    "last": {
+      "totalTokens": 21511,
+      "inputTokens": 10332,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 11179,
+      "reasoningOutputTokens": 9503
+    },
+    "modelContextWindow": 258400
+  },
+  "tool_items": []
+}

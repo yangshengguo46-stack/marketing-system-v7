@@ -1,0 +1,226 @@
+{
+  "lesson": 28,
+  "source_parts": [
+    {
+      "part": 54,
+      "source_json_sha256": "f3d261230e1ad8eab398390a3aa135df3a06ff843fa11f997200bea99ef9565f",
+      "segment_count": 1370
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L28-B001",
+      "part": 54,
+      "first_segment": 1,
+      "last_segment": 58,
+      "heading": "一年还没落笔：不敢上路与只想上F1赛场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B002",
+      "part": 54,
+      "first_segment": 59,
+      "last_segment": 109,
+      "heading": "舒适、学习、恐慌三个区，怎样在练习中变化",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B003",
+      "part": 54,
+      "first_segment": 110,
+      "last_segment": 205,
+      "heading": "读写怎样退回不舒服；讲师的演讲经验",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B004",
+      "part": 54,
+      "first_segment": 206,
+      "last_segment": 267,
+      "heading": "这节课要上路：用影片模型做命题作文",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B005",
+      "part": 54,
+      "first_segment": 268,
+      "last_segment": 347,
+      "heading": "《绿野仙踪》前段：回家欲望、黄砖路与三个伙伴",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "陶乐斯／小儿国／欧Z国",
+          "cleaned": "桃乐丝／小人国〔讲师临时称呼〕／奥兹国",
+          "basis": "同一影片角色、地名音形与S310自述忘名；不另补小人国正式名称"
+        }
+      ]
+    },
+    {
+      "id": "L28-B006",
+      "part": 54,
+      "first_segment": 348,
+      "last_segment": 399,
+      "heading": "中点重新谈条件，最后绕过动作实现欲望",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "终点／行动员／其实道具",
+          "cleaned": "中点／行动目标／起始道具",
+          "basis": "该段明确虚假胜利、加大赌注、后半剧情；S413及后续教学明确中点位置"
+        }
+      ]
+    },
+    {
+      "id": "L28-B007",
+      "part": 54,
+      "first_segment": 400,
+      "last_segment": 443,
+      "heading": "回看梦与结构：彩虹之外、看门狗及归来",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B008",
+      "part": 54,
+      "first_segment": 444,
+      "last_segment": 513,
+      "heading": "《菊次郎的夏天》：孤独的正男怎样上路",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "郑南／正南／蒸南／北野舞／菊次郎的外婆",
+          "cleaned": "正男／北野武／正男的外婆",
+          "basis": "全段同一男孩及带孩子离开外婆的剧情，指代依前后明确关系规范"
+        }
+      ]
+    },
+    {
+      "id": "L28-B009",
+      "part": 54,
+      "first_segment": 514,
+      "last_segment": 568,
+      "heading": "旅途阻碍与找到母亲却找不到爱",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B010",
+      "part": 54,
+      "first_segment": 569,
+      "last_segment": 658,
+      "heading": "目标换成天使：铃铛、表演和新书包",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B011",
+      "part": 54,
+      "first_segment": 659,
+      "last_segment": 741,
+      "heading": "互相成为天使，菊次郎看母亲与两人的自爱",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B012",
+      "part": 54,
+      "first_segment": 742,
+      "last_segment": 845,
+      "heading": "命题作文的路线与第一组刚性要求",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B013",
+      "part": 54,
+      "first_segment": 846,
+      "last_segment": 881,
+      "heading": "最后的硬要求：“其实都是我”与桃乐丝的三个短板",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B014",
+      "part": 54,
+      "first_segment": 882,
+      "last_segment": 987,
+      "heading": "菊次郎与正男，两个方向都可以读成一个人",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B015",
+      "part": 54,
+      "first_segment": 988,
+      "last_segment": 1055,
+      "heading": "课堂示范一：不被待见的学生，远方网友与看门狗",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B016",
+      "part": 54,
+      "first_segment": 1056,
+      "last_segment": 1118,
+      "heading": "伙伴、共同上路、中点落空和后半偿还",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B017",
+      "part": 54,
+      "first_segment": 1119,
+      "last_segment": 1204,
+      "heading": "第一种收束：优秀女孩是自我理想，旧我退场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B018",
+      "part": 54,
+      "first_segment": 1205,
+      "last_segment": 1242,
+      "heading": "第二种铺垫：路上救人与被救的四种遭遇",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B019",
+      "part": 54,
+      "first_segment": 1243,
+      "last_segment": 1319,
+      "heading": "另一种收束：车祸旧伤与一路家人的影子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L28-B020",
+      "part": 54,
+      "first_segment": 1320,
+      "last_segment": 1370,
+      "heading": "“都是我”是精神可能性，不必写成鬼故事；检查作业",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "全部1370个源segment已顺读；影片、心理模型、寿命和行业评价均按讲师课堂版本，未外核。",
+    "1939年影片出品方讲师自己不确定；小人国正式名称未记起；S345飞猴插话及S775残词未强行复原。",
+    "硬作业：每个学生写一个命题故事，保留指定节点、中点调整，精神上有“其实都是我”的可能性，班委检查；未给字数期限。五十万字不是本作业字数。",
+    "示范包含爱情／自我身份与家庭创伤两个收束方向，未自行拼为一个已定故事；落水女孩后续对应未明确，不脑补。",
+    "本课允许以自己或变形为主角，与其他课不同要求不作统一；“其实都是我”不要求明写幻觉、鬼或所有角色物理上不存在。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第28课.md",
+  "output_sha256": "1167cdaff8353a58787bea1d7323a18ebfc9ee47e58478314858c1a1622add24",
+  "reader_navigation_update": {
+    "previous_output_sha256": "592d444947dd603a60664fb4ab579ca5e2b83ad2604790a168c0fe9c5364ec32",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

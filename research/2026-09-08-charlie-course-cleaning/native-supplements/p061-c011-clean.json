@@ -1,0 +1,196 @@
+{
+  "blocks": [
+    {
+      "first_segment": 1061,
+      "last_segment": 1064,
+      "heading": "三个主要角色为何出彩：同根而生，选择不同",
+      "text": "这节课还学到了什么？还学到了角色设定。最重要的三个角色为什么能出彩？〔S1061两次写成“决策……出台”，且“能/不能”不一致；以下紧接三个角色名、S1073说明主要角色有魅力，按语境整理为这一提问，确切口语待核。〕\n\n张麻子、黄四郎、汤师爷，这三个人本是同根生。同样的角色，面对不同遭遇，选择了不同的路。本质上，在电影里，或者说现实主义题材电影里，我不主张写大恶大善之人。",
+      "corrections": [
+        {
+          "original": "康世演",
+          "cleaned": "汤师爷",
+          "basis": "同章反复出现汤师爷，指同一人物。"
+        },
+        {
+          "original": "本是同人生呀",
+          "cleaned": "本是同根生呀",
+          "basis": "教师重复确认，且成语为\"本是同根生\""
+        },
+        {
+          "original": "决策设定／三个决策／出台",
+          "cleaned": "角色设定／三个角色／出彩〔待核〕",
+          "basis": "紧随三个人物名字，并用S1073主要角色有魅力、S1080人物创造下功夫互证。"
+        }
+      ]
+    },
+    {
+      "first_segment": 1065,
+      "last_segment": 1070,
+      "heading": "主角张麻子并非完人：杀人、劫道、捞钱",
+      "text": "不主张写完美人格和十恶不赦的人，为什么嘞？没有那样的人呀。主角张麻子，他虽然是个好人，但是他也劫道啊，他也杀人呀，他也抢钱呀。你们说他杀的那些人是坏人吗？\n\n他上来就掀翻了列车，杀了那么多人，那些人不也就是普通的打工仔嘛，对吧？给县长开开车的打工仔。\n\n然后呢，进了城，然后最后砍了那个黄四郎的替身。我们说黄四郎的替身，说实话不也是个苦命人吗，对不对？理论上是这样吧。\n\n所以说你看主角啊，他也并不是一个完人，对吧？他本来也是打算来捞钱的，甚至呢，他在完全没有了解汤师爷的人品的情况下，对吧？就把人媳妇给睡了，是吧？也不太好，咱说实话。\n\n〔以上主角行为及夫人关系的评价保留讲师说法。〕",
+      "corrections": [
+        {
+          "original": "张麻虎",
+          "cleaned": "张麻子",
+          "basis": "据影片角色名及上下文订正"
+        },
+        {
+          "original": "给给县场开开车的",
+          "cleaned": "给县长开开车的",
+          "basis": "去口吃，\"县场\"据上下文应为\"县长\""
+        },
+        {
+          "original": "卡了那个",
+          "cleaned": "砍了那个",
+          "basis": "据影片情节为砍黄四郎替身，疑为\"砍\""
+        },
+        {
+          "original": "人康师爷",
+          "cleaned": "汤师爷",
+          "basis": "同章反复出现汤师爷，指同一人物。"
+        }
+      ]
+    },
+    {
+      "first_segment": 1071,
+      "last_segment": 1073,
+      "heading": "黄四郎亦有来路：革命出身、为刘督统办事",
+      "text": "〔S1071开头另有“克制”孤立词，所指未明。〕\n\n然后呢，这个坏人呢，我们说黄四郎，他也是给刘督统办事的一个人嘛，他早年也是参加革命，想要振兴北洋的嘛，明白这意思吧？所以说大家都是同一个枝头上开出的花朵而已，不同的境遇。你看，这就是主角团的魅力。\n\n我们说这几个角色啊，是主要角色，它有魅力啊，有魅力。",
+      "corrections": [
+        {
+          "original": "克制。然后呢。",
+          "cleaned": "然后呢，",
+          "basis": "\"克制\"疑为口误插入，前后为同一句衔接"
+        },
+        {
+          "original": "刘督统",
+          "cleaned": "刘督统〔待核〕",
+          "basis": "影片中人物称谓，据音记，未逐句听校"
+        }
+      ]
+    },
+    {
+      "first_segment": 1074,
+      "last_segment": 1080,
+      "heading": "其他角色都是NPC：花姐、老二老三老四都是零件",
+      "text": "但是，我们说你看其他角色，就全都是NPC。\n\n我们说除了这三个人啊，其他角色全都是NPC，包括所有的女一号花姐，对吧？包括他的那些亲兄弟，老二老三老四，戏份比较重的，你像老三……都是NPC啊。为啥？从头到尾啊，没有什么对抗，而且也不是……〔S1078—S1079后半截断，未补对象或另一项缺失条件〕，他们真的就是零件啊，就是大家就是主角拆出来的一些小零件而已。\n\n好吧，这就是你要理解人物创造到底哪几个人物是下功夫的，哪几个人物是投入了力气〔原“赌上劲儿了”，确切口语待核〕。同学问陈坤的角色，那陈坤的角色那更是NPC了，虽然戏份很多，但他就是黄四郎的团队而已啊。",
+      "corrections": [
+        {
+          "original": "全都是MP",
+          "cleaned": "全都是NPC",
+          "basis": "教师随后反复确认是NPC"
+        },
+        {
+          "original": "老二老三老四戏份比较中的",
+          "cleaned": "老二老三老四戏份比较重的",
+          "basis": "\"中的\"据上下文应为\"重的\""
+        },
+        {
+          "original": "都是MPC啊",
+          "cleaned": "都是NPC啊",
+          "basis": "教师全程称NPC，此处为口误"
+        },
+        {
+          "original": "被抗啊",
+          "cleaned": "被抗争啊",
+          "basis": "据上下文补全，标疑"
+        },
+        {
+          "original": "黄黄四郎",
+          "cleaned": "黄四郎",
+          "basis": "去口吃"
+        },
+        {
+          "original": "赌上劲儿了",
+          "cleaned": "赌上劲儿了〔待核〕",
+          "basis": "口语音记，疑为\"铆上劲儿了\"或\"用上劲儿了\"，保留原词标疑"
+        }
+      ]
+    },
+    {
+      "first_segment": 1081,
+      "last_segment": 1083,
+      "heading": "恶人要有团队：飞猴角色的戏份与创作投入",
+      "text": "我们说，恶人啊是要有团队的啊，飞猴，fly monkey，对吧？飞猴。\n\n团队啊，他这个角色没有具体的自己的那个诉求呀。所以说这种角色啊，虽然戏份挺多的啊，跑来跑去戏份挺多的，但是从我们角色创造上来说啊，实在是，就是根本跟那三个人没法比。跟那三个人没法比，",
+      "corrections": [
+        {
+          "original": "他他没有具体的那个呀他没有具体的以自己的那个诉求的呀",
+          "cleaned": "他这个角色没有具体的自己的那个诉求呀",
+          "basis": "去重复与口吃，保留原意"
+        }
+      ]
+    },
+    {
+      "first_segment": 1084,
+      "last_segment": 1087,
+      "heading": "直播收尾与报名引导",
+      "text": "从咱们角色创作、倾注的心血来说，跟那三个角色就没法比了。\n\n好吧，还有想要报名咱们今年训练营的同学，想要参与后面34个拉片〔S1084原“34拉片”，与S614的34和其他处30次/30部并存，数量与原词待核，不猜三四次〕的同学啊，赶紧在评论里面说一下自己的诉求。没有的话，我要下播了，好吧。\n\n那咱们今天的直播课差不多就这样了，咱们下次直播再见啊，咱们下次直播再见。拜拜。\n\n第一步，搜索公众号\"查理的编剧课\"。第二步，点击关注公众号。第三步，点击右下方课程，查看课程详情，赶紧行动吧。",
+      "corrections": [
+        {
+          "original": "后面34拉片",
+          "cleaned": "后面三四拉片",
+          "basis": "\"34\"据音记应为\"三四\"，指后续拉片场次"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S1063康世演按同章反复明确汤师爷订正，未另造康师爷。",
+    "S1067\"卡了那个\"据情节疑为\"砍了那个\"，保留标疑",
+    "S1073\"刘督统\"为音记称谓，未核实官方字幕",
+    "S1078\"赌上劲儿了\"口语确切用字待核",
+    "S1084为34拉片，不猜三四次；与前文30次/30部不同说法并存。",
+    "本次第二轮独立全文复核的现行判定见independent_full_review；旧lead_review/lead_full_review保留原有历史，修改前全部文字见before-second-independent-review备份。"
+  ],
+  "boundary_merges": [],
+  "job": "p061-c011",
+  "part": 61,
+  "source_json_sha256": "35b11edc67b4847f35893eab058bdc4fcfe08eb4434e82b8d94de7460d9afa0e",
+  "output_text_characters": 1286,
+  "length_ratio": 1.1627,
+  "review_length_flag": false,
+  "thread_id": "01a07ef5-19f0-7ca3-9bf7-bf5151e027f1",
+  "usage": {
+    "total": {
+      "totalTokens": 11336,
+      "inputTokens": 9763,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 1573,
+      "reasoningOutputTokens": 14
+    },
+    "last": {
+      "totalTokens": 11336,
+      "inputTokens": 9763,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 1573,
+      "reasoningOutputTokens": 14
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": {
+    "library": "json-repair 0.63.4",
+    "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+    "non_structural_characters_preserved": true
+  },
+  "independent_full_review": {
+    "date": "2026-09-08",
+    "reviewer": "clean_core_25_34",
+    "scope": "逐段顺读S1061—S1087全部源ASR并与本文件所有正文块全文对照；P061全章1087段均已读完。",
+    "first_segment": 1061,
+    "last_segment": 1087,
+    "segment_count": 27,
+    "block_count": 6,
+    "source_json_sha256": "35b11edc67b4847f35893eab058bdc4fcfe08eb4434e82b8d94de7460d9afa0e",
+    "before_sha256": "5962b1423a6aea45dc53620faa55cab3885dba4178a1e9e3f32236a68a725abd",
+    "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p061-c011-before-second-independent-review.json",
+    "changes": [
+      "角色出彩误作决策出台，按上下文订正并保留能/不能疑点。",
+      "汤师爷误作康师爷；配角缺乏对抗的截断不补完整判断。",
+      "34拉片不猜三四次；fly monkey与最后公众号报名三步保留。"
+    ],
+    "preserved_review_keys": [],
+    "remaining": "未逐句听校；不清楚的电影对白、实体、数字与否定维持疑点。"
+  }
+}

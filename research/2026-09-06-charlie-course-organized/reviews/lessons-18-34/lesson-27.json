@@ -1,0 +1,126 @@
+{
+  "lesson": 27,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 53,
+      "title": "二十七课-剧本的叙事视角27",
+      "cid": 310082561,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=53",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十七课-剧本的叙事视角27.mp4",
+      "sha256": "f0ecf56d1f05f4b424a7b60bf033d85568f5890a493708b1a8d3adf5678a2b68",
+      "duration_seconds": 3868
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "周年寄语、完整学习与机会，旧招聘说明",
+      "part": 53,
+      "start_seconds": 10,
+      "end_seconds": 526
+    },
+    {
+      "label": "叙事视角问题；从小说第一/第三人称引入",
+      "part": 53,
+      "start_seconds": 527,
+      "end_seconds": 845
+    },
+    {
+      "label": "全知、内视角、外视角的知识关系",
+      "part": 53,
+      "start_seconds": 846,
+      "end_seconds": 1214
+    },
+    {
+      "label": "全知的自由/全面；检查自身写作的视角",
+      "part": 53,
+      "start_seconds": 1218,
+      "end_seconds": 1386
+    },
+    {
+      "label": "内视角的主观与参与感，《阿凡达》等",
+      "part": 53,
+      "start_seconds": 1387,
+      "end_seconds": 1647
+    },
+    {
+      "label": "外视角的留白与客观感，《副总统》《摩登家庭》等",
+      "part": 53,
+      "start_seconds": 1648,
+      "end_seconds": 1952
+    },
+    {
+      "label": "《拯救大兵瑞恩》的回忆框架；另一种一切皆全知的理论",
+      "part": 53,
+      "start_seconds": 1954,
+      "end_seconds": 2367
+    },
+    {
+      "label": "先锚定，再在全知中限制/限制中补全知",
+      "part": 53,
+      "start_seconds": 2370,
+      "end_seconds": 2468
+    },
+    {
+      "label": "《摩登家庭》《肖申克》演示补充内心/越过知情限制",
+      "part": 53,
+      "start_seconds": 2476,
+      "end_seconds": 2814
+    },
+    {
+      "label": "《罗生门》《少年派》复合及不可靠叙述",
+      "part": 53,
+      "start_seconds": 2816,
+      "end_seconds": 2960
+    },
+    {
+      "label": "明确看片作业；不留写作题",
+      "part": 53,
+      "start_seconds": 2962,
+      "end_seconds": 2985
+    },
+    {
+      "label": "回顾与适用边界，媒介/观众经验变化",
+      "part": 53,
+      "start_seconds": 2986,
+      "end_seconds": 3533
+    },
+    {
+      "label": "周年学生祝福片段；不是作业展示讲评",
+      "part": 53,
+      "start_seconds": 3592,
+      "end_seconds": 3863
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "看片作业：至少看《罗生门》《肖申克的救赎》《少年派》，以及《摩登家庭》《副总统》这类作品，观察大师如何运用叙事视角。老师明确本课不留写作作业。",
+      "part": 53,
+      "start_seconds": 2962.47,
+      "end_seconds": 2985.132,
+      "submission_spec": "未规定书面笔记、字数、交稿渠道/期限；电视剧未指定季、集或观看总量，不推成整剧必看。",
+      "teacher_review": "本课未说明批改安排。",
+      "uncertainty": "机器稿未逐句听校；2965秒帧确认不留写作作业，2976秒帧确认《摩登家庭》。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "回看自己的写作，辨认是否自然采用全知视角。",
+      "part": 53,
+      "start_seconds": 1363,
+      "end_seconds": 1381,
+      "submission_spec": "自查建议；无提交要求。",
+      "teacher_review": "未指定。",
+      "uncertainty": "依据全文机器稿。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    53
+  ],
+  "limits": [
+    "全文机器稿顺序阅读，未逐句人工听校；第27课看片作业为明确布置。",
+    "文学视角与游戏体验分类是老师通俗化说明，不能视为普遍严密定义；影史、认知科学与作品分类未外部核实。",
+    "1250秒原帧确认全知/内/外视角板书；2965、2976秒核看片作业。",
+    "未见第22课家人故事或第24课《战国》梗概的学生提交回收讲评。"
+  ]
+}

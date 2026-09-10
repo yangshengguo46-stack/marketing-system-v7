@@ -1,0 +1,950 @@
+{
+  "scope": "Original fields may include grouped source fragments or previous cleaned text. These flags do not automatically prove an incorrect edit, but the field must not be treated as a verbatim ASR quotation. Use source part and segment IDs to verify.",
+  "flags": [
+    {
+      "job": "p001-c002",
+      "first_segment": 46,
+      "last_segment": 50,
+      "original_field": "四个爱说第一性原理",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p001-c003",
+      "first_segment": 92,
+      "last_segment": 96,
+      "original_field": "叭巴什么",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p001-c004",
+      "first_segment": 122,
+      "last_segment": 125,
+      "original_field": "庄造",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p001-c004",
+      "first_segment": 133,
+      "last_segment": 135,
+      "original_field": "升升这个分镜头",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p001-c005",
+      "first_segment": 160,
+      "last_segment": 171,
+      "original_field": "AIG的平权",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c001",
+      "first_segment": 54,
+      "last_segment": 65,
+      "original_field": "礼帽/送礼帽/送礼貌",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c002",
+      "first_segment": 162,
+      "last_segment": 180,
+      "original_field": "故事终点／终点",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c004",
+      "first_segment": 279,
+      "last_segment": 285,
+      "original_field": "星期节拍",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c004",
+      "first_segment": 303,
+      "last_segment": 312,
+      "original_field": "二姐／二哥",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c005",
+      "first_segment": 481,
+      "last_segment": 496,
+      "original_field": "没有问呃肯定的",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c006",
+      "first_segment": 530,
+      "last_segment": 548,
+      "original_field": "定制伴郎",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c008",
+      "first_segment": 747,
+      "last_segment": 772,
+      "original_field": "他非要那些",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c008",
+      "first_segment": 747,
+      "last_segment": 772,
+      "original_field": "不想屠龙",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c008",
+      "first_segment": 792,
+      "last_segment": 809,
+      "original_field": "天下围攻／线下围攻",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c008",
+      "first_segment": 820,
+      "last_segment": 834,
+      "original_field": "先诛心再杀",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c008",
+      "first_segment": 835,
+      "last_segment": 850,
+      "original_field": "三个学生让我这三个学生",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c011",
+      "first_segment": 1061,
+      "last_segment": 1064,
+      "original_field": "决策设定／三个决策／出台",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p061-c011",
+      "first_segment": 1081,
+      "last_segment": 1083,
+      "original_field": "他他没有具体的那个呀他没有具体的以自己的那个诉求的呀",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p062-c001",
+      "first_segment": 9,
+      "last_segment": 15,
+      "original_field": "短句",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p062-c002",
+      "first_segment": 65,
+      "last_segment": 71,
+      "original_field": "重付费",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p062-c002",
+      "first_segment": 94,
+      "last_segment": 103,
+      "original_field": "教鸭子的",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p063-c002",
+      "first_segment": 182,
+      "last_segment": 192,
+      "original_field": "后面的人设和后面的热",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p063-c002",
+      "first_segment": 182,
+      "last_segment": 192,
+      "original_field": "前面的人设和后面的人设",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p063-c003",
+      "first_segment": 268,
+      "last_segment": 293,
+      "original_field": "短视频刚刚出来时候直播刚刚出来的时",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p063-c003",
+      "first_segment": 294,
+      "last_segment": 319,
+      "original_field": "让子子弹飞",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p064-c001",
+      "first_segment": 1,
+      "last_segment": 13,
+      "original_field": "短句",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p064-c001",
+      "first_segment": 1,
+      "last_segment": 13,
+      "original_field": "最近因为咱们在搞这个创投营",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p064-c001",
+      "first_segment": 14,
+      "last_segment": 15,
+      "original_field": "短讯太low了",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p064-c001",
+      "first_segment": 16,
+      "last_segment": 23,
+      "original_field": "耻鱼去做短剧",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p064-c001",
+      "first_segment": 79,
+      "last_segment": 90,
+      "original_field": "他很小了",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c001",
+      "first_segment": 60,
+      "last_segment": 79,
+      "original_field": "第义性原理",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c001",
+      "first_segment": 80,
+      "last_segment": 109,
+      "original_field": "类底",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c002",
+      "first_segment": 115,
+      "last_segment": 125,
+      "original_field": "第一型原理",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c002",
+      "first_segment": 126,
+      "last_segment": 164,
+      "original_field": "第一星原理",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c003",
+      "first_segment": 244,
+      "last_segment": 268,
+      "original_field": "低性原理",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p065-c003",
+      "first_segment": 332,
+      "last_segment": 355,
+      "original_field": "以最高效为单位而为为依托",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c001",
+      "first_segment": 1,
+      "last_segment": 11,
+      "original_field": "15000万美金，10亿人民币",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c003",
+      "first_segment": 162,
+      "last_segment": 186,
+      "original_field": "师兄啊",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c004",
+      "first_segment": 260,
+      "last_segment": 266,
+      "original_field": "瘕疑",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c005",
+      "first_segment": 321,
+      "last_segment": 330,
+      "original_field": "正男",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c005",
+      "first_segment": 331,
+      "last_segment": 346,
+      "original_field": "套那个秋雅",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c006",
+      "first_segment": 485,
+      "last_segment": 519,
+      "original_field": "所以你才假装进去倒咖啡嘛，所以他才会把咖啡给泼了呀",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p066-c007",
+      "first_segment": 587,
+      "last_segment": 594,
+      "original_field": "考稿",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 1,
+      "last_segment": 5,
+      "original_field": "如果说威利号汽船赋予了动画片声音，《白雪公主》赋予了动画片色彩，",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 12,
+      "last_segment": 27,
+      "original_field": "如果叫你们选，你们选的——绿皮书、触不可及、变形金刚一，然后玩具总动员一。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 12,
+      "last_segment": 27,
+      "original_field": "特别是《变形金刚》那个大黄蜂刺得很厉害。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 28,
+      "last_segment": 40,
+      "original_field": "这部动画的导演还获得了奥斯卡终身成就奖。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 51,
+      "last_segment": 64,
+      "original_field": "在这部电影之前，动画片基本上都是拍给小朋友看的。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 70,
+      "last_segment": 78,
+      "original_field": "徒弟〔待核〕。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c001",
+      "first_segment": 70,
+      "last_segment": 78,
+      "original_field": "那肯定从92年93年就开始做了。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 79,
+      "last_segment": 82,
+      "original_field": "所以复用模型、让小朋友都长得一模一样，是有时代原因的。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 86,
+      "last_segment": 88,
+      "original_field": "所以用第二拍花茶〔待核〕——所有的玩具都醒了，",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 89,
+      "last_segment": 93,
+      "original_field": "湖底",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 89,
+      "last_segment": 93,
+      "original_field": "那肯定不存在血统问题，不存在出身问题、地域问题，交代的是他们的技能缺陷，",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 89,
+      "last_segment": 93,
+      "original_field": "特别射牛的〔待核〕那个土豆子",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 89,
+      "last_segment": 93,
+      "original_field": "芭比娃娃就把女主角的位置抢掉了。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 94,
+      "last_segment": 96,
+      "original_field": "立fl",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 103,
+      "last_segment": 106,
+      "original_field": "回到他的星球回到外星。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 103,
+      "last_segment": 106,
+      "original_field": "因为我们的这个胡迪是个提线木偶，",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c002",
+      "first_segment": 107,
+      "last_segment": 110,
+      "original_field": "护狸",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c003",
+      "first_segment": 128,
+      "last_segment": 133,
+      "original_field": "他又抢了别人的位置。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c004",
+      "first_segment": 150,
+      "last_segment": 153,
+      "original_field": "让你下死手〔待核〕",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c004",
+      "first_segment": 154,
+      "last_segment": 157,
+      "original_field": "第44分钟〔待核〕",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c004",
+      "first_segment": 167,
+      "last_segment": 172,
+      "original_field": "（给我水吧？）",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c004",
+      "first_segment": 173,
+      "last_segment": 177,
+      "original_field": "也就45分钟这里",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c005",
+      "first_segment": 195,
+      "last_segment": 196,
+      "original_field": "所以说这里第24拍过渡到第25拍。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p068-c005",
+      "first_segment": 201,
+      "last_segment": 209,
+      "original_field": "原清洗段正文",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c001",
+      "first_segment": 7,
+      "last_segment": 8,
+      "original_field": "在同一个大厂〔待核〕里面",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c001",
+      "first_segment": 9,
+      "last_segment": 13,
+      "original_field": "用什么魔法战胜弄生〔待核〕的呢",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c001",
+      "first_segment": 18,
+      "last_segment": 20,
+      "original_field": "去扒着垃圾车追击",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c001",
+      "first_segment": 21,
+      "last_segment": 25,
+      "original_field": "也就是第69分钟。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c001",
+      "first_segment": 33,
+      "last_segment": 41,
+      "original_field": "这部电影本来原名叫\"You Are Toy\"，懂吗？",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 53,
+      "last_segment": 54,
+      "original_field": "提线木偶嘛，拉弦的。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 53,
+      "last_segment": 54,
+      "original_field": "而且从身份上也比他新，他是个牛仔，人家是个宇航员。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 57,
+      "last_segment": 61,
+      "original_field": "但是闯入者又不一定是troublemaker。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 62,
+      "last_segment": 67,
+      "original_field": "取得获取",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 62,
+      "last_segment": 67,
+      "original_field": "记住啊，两个人成为彼此，只是一个概念化的成为彼此，并不能真正地成为对方。真正地成为对方呢，他的缺陷我也继承了，互相汲取对方的优点。那么在成为彼此之前，我们先得弥补自己的缺陷嘛。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 68,
+      "last_segment": 73,
+      "original_field": "来，我们这部戏，我们看一下两个人物的成长。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 74,
+      "last_segment": 76,
+      "original_field": "我们记着这句话，生活当中灵活运用好不好？",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 77,
+      "last_segment": 78,
+      "original_field": "信息拍",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 77,
+      "last_segment": 78,
+      "original_field": "捋信息场",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 79,
+      "last_segment": 81,
+      "original_field": "宇航员代表俄罗斯，讲的是两个超级大国之间应该和平共处、互相帮助。很多同学说这部电影有政治隐喻。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c002",
+      "first_segment": 82,
+      "last_segment": 86,
+      "original_field": "你想多了。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p069-c003",
+      "first_segment": 95,
+      "last_segment": 97,
+      "original_field": "你就突然前面都很好，自己告诉大家以前强调。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p072-c006",
+      "first_segment": 250,
+      "last_segment": 253,
+      "original_field": "第三部／终点",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p073-c004",
+      "first_segment": 209,
+      "last_segment": 219,
+      "original_field": "这个这个迪卡普利奥",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p073-c004",
+      "first_segment": 220,
+      "last_segment": 241,
+      "original_field": "是谁太太多？\n在了动这样放我家里前",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p073-c004",
+      "first_segment": 286,
+      "last_segment": 298,
+      "original_field": "那个那个大灯非常不讲究",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p074-c004",
+      "first_segment": 169,
+      "last_segment": 187,
+      "original_field": "为平安哥",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p074-c004",
+      "first_segment": 169,
+      "last_segment": 187,
+      "original_field": "喜欢海璐",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p074-c004",
+      "first_segment": 169,
+      "last_segment": 187,
+      "original_field": "我们说了，喜剧演员也带来了很多",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p074-c004",
+      "first_segment": 194,
+      "last_segment": 222,
+      "original_field": "花姐",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p074-c004",
+      "first_segment": 223,
+      "last_segment": 246,
+      "original_field": "假边人知导障碍",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p075-c001",
+      "first_segment": 6,
+      "last_segment": 11,
+      "original_field": "完犊子了啊",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p075-c002",
+      "first_segment": 70,
+      "last_segment": 77,
+      "original_field": "处着不就12345嘛",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p075-c002",
+      "first_segment": 84,
+      "last_segment": 87,
+      "original_field": "张哥说好了讲点信誉",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p075-c002",
+      "first_segment": 84,
+      "last_segment": 87,
+      "original_field": "唱三句吧／唱三句班",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p077-c008",
+      "first_segment": 635,
+      "last_segment": 654,
+      "original_field": "变签仪式",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c001",
+      "first_segment": 35,
+      "last_segment": 39,
+      "original_field": "投渡",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c002",
+      "first_segment": 99,
+      "last_segment": 103,
+      "original_field": "第十二趴",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c002",
+      "first_segment": 104,
+      "last_segment": 106,
+      "original_field": "第1四拍",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c003",
+      "first_segment": 167,
+      "last_segment": 179,
+      "original_field": "别提经典吐槽",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c004",
+      "first_segment": 196,
+      "last_segment": 207,
+      "original_field": "greates of all time",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c004",
+      "first_segment": 196,
+      "last_segment": 207,
+      "original_field": "greatestest of all time",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c005",
+      "first_segment": 277,
+      "last_segment": 283,
+      "original_field": "100呃06分钟",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c005",
+      "first_segment": 299,
+      "last_segment": 305,
+      "original_field": "萨ax斯风",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p079-c006",
+      "first_segment": 368,
+      "last_segment": 373,
+      "original_field": "收集父亲的尖名",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p083-c001",
+      "first_segment": 25,
+      "last_segment": 26,
+      "original_field": "做不相识，相识完了做互补",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p083-c001",
+      "first_segment": 27,
+      "last_segment": 28,
+      "original_field": "二火车呢",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p083-c004",
+      "first_segment": 166,
+      "last_segment": 201,
+      "original_field": "1206的一个视角",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p083-c005",
+      "first_segment": 288,
+      "last_segment": 303,
+      "original_field": "宰着",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p083-c005",
+      "first_segment": 288,
+      "last_segment": 303,
+      "original_field": "至于危险",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p084-c003",
+      "first_segment": 116,
+      "last_segment": 122,
+      "original_field": "残疾了很多东西",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p084-c006",
+      "first_segment": 318,
+      "last_segment": 325,
+      "original_field": "克耻",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p084-c006",
+      "first_segment": 318,
+      "last_segment": 325,
+      "original_field": "不发满力去po使",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p085-c001",
+      "first_segment": 1,
+      "last_segment": 5,
+      "original_field": "虐啊虐呃虐感爽感啊",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p085-c002",
+      "first_segment": 52,
+      "last_segment": 55,
+      "original_field": "神秘力了",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p085-c004",
+      "first_segment": 162,
+      "last_segment": 199,
+      "original_field": "剧本玩",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p086-c003",
+      "first_segment": 114,
+      "last_segment": 119,
+      "original_field": "还咋看嘛",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p086-c003",
+      "first_segment": 120,
+      "last_segment": 126,
+      "original_field": "事机问题",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p087-c001",
+      "first_segment": 7,
+      "last_segment": 11,
+      "original_field": "他生活当中",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p087-c001",
+      "first_segment": 7,
+      "last_segment": 11,
+      "original_field": "他想象的东西",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p087-c001",
+      "first_segment": 25,
+      "last_segment": 29,
+      "original_field": "陈寻",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p088-c002",
+      "first_segment": 42,
+      "last_segment": 44,
+      "original_field": "第十三拍。",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p088-c002",
+      "first_segment": 48,
+      "last_segment": 50,
+      "original_field": "十八牌来到54分钟",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p088-c003",
+      "first_segment": 71,
+      "last_segment": 79,
+      "original_field": "A呀呢搞了一个升华",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p088-c004",
+      "first_segment": 109,
+      "last_segment": 119,
+      "original_field": "功德不良",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p089-c005",
+      "first_segment": 311,
+      "last_segment": 339,
+      "original_field": "向城市示威",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p089-c006",
+      "first_segment": 369,
+      "last_segment": 391,
+      "original_field": "活件",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p089-c006",
+      "first_segment": 418,
+      "last_segment": 446,
+      "original_field": "成长活件",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p089-c006",
+      "first_segment": 464,
+      "last_segment": 469,
+      "original_field": "중력처름 예쁜내리로 가벼워.",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p091-c004",
+      "first_segment": 251,
+      "last_segment": 257,
+      "original_field": "信谑",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p092-c002",
+      "first_segment": 117,
+      "last_segment": 128,
+      "original_field": "获得虚假胜利然后后来呢就是成为了一个坏人调整目标错误依旧是错误的再次回到正途重新追求希望",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p092-c005",
+      "first_segment": 425,
+      "last_segment": 433,
+      "original_field": "安y",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    },
+    {
+      "job": "p092-c005",
+      "first_segment": 448,
+      "last_segment": 454,
+      "original_field": "对抗这个制度就这个制度是恶的",
+      "status": "not_an_exact_substring_of_assigned_source_block"
+    }
+  ]
+}

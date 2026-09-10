@@ -1,0 +1,75 @@
+{
+  "lesson": 6,
+  "title": "剧本的格式",
+  "parts": [
+    13
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    13
+  ],
+  "teaching_nodes": [
+    {
+      "label": "第二阶段与插入格式课",
+      "part": 13,
+      "start_seconds": 3.11,
+      "end_seconds": 133.932
+    },
+    {
+      "label": "场头四项",
+      "part": 13,
+      "start_seconds": 138.246,
+      "end_seconds": 291.532
+    },
+    {
+      "label": "场景换场及内外工作用途",
+      "part": 13,
+      "start_seconds": 292.486,
+      "end_seconds": 601.484
+    },
+    {
+      "label": "描述行动对白",
+      "part": 13,
+      "start_seconds": 607.494,
+      "end_seconds": 866.508
+    },
+    {
+      "label": "台词格式与时长估算",
+      "part": 13,
+      "start_seconds": 868.582,
+      "end_seconds": 1102.332
+    },
+    {
+      "label": "语言与歌曲旁支",
+      "part": 13,
+      "start_seconds": 1102.758,
+      "end_seconds": 1531.276
+    },
+    {
+      "label": "格式经验估算及长镜场面例外",
+      "part": 13,
+      "start_seconds": 1532.55,
+      "end_seconds": 1843.596
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "阅读老师计划在学习小组分享的参考剧本，揣摩格式",
+      "part": 13,
+      "start_seconds": 96.902,
+      "end_seconds": 119.628,
+      "asr_excerpt": "我也可以分享一份剧本给大家…照着一份剧本去看一看研究研究…我会在里面分享…剧本格式",
+      "submission_spec": "未指定片名、分析报告或提交；参考剧本未在本轮取得",
+      "teacher_review": "未说明",
+      "uncertainty": "原课程群内分享安排，未核实今日仍可获取"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "limits": [
+    "全文ASR已读，未逐句听校",
+    "格式和时间估算按课堂经验记录，不作统一标准",
+    "未新增原视频帧核对",
+    "群内剧本未取得"
+  ]
+}

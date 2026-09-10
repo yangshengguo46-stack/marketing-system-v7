@@ -1,0 +1,639 @@
+{
+  "lesson": 15,
+  "source_parts": [
+    {
+      "part": 34,
+      "source_json_sha256": "8a4d12859790c5e45ec9b00bd70e74492cee5a7ae32c30d301db9a9399f49900",
+      "segment_count": 374
+    },
+    {
+      "part": 35,
+      "source_json_sha256": "1a4239fbf6710979c5edc7709dcf7e3b8b26d44de905037845c0b05e60b5772c",
+      "segment_count": 496
+    },
+    {
+      "part": 36,
+      "source_json_sha256": "cc2851d5953281fd88eb643b62f33195425567879681bc2b6caf7c53bf2e3d47",
+      "segment_count": 219
+    },
+    {
+      "part": 37,
+      "source_json_sha256": "8539f8e0efe8209bb04bb75529efb7c41b0aabedbffed5eae0bea2df1833f9ff",
+      "segment_count": 285
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L15-B001",
+      "part": 34,
+      "first_segment": 1,
+      "last_segment": 22,
+      "heading": "网课的延迟反馈与本课的查漏补缺",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B002",
+      "part": 34,
+      "first_segment": 23,
+      "last_segment": 69,
+      "heading": "不要用特例代替对一般规律的学习",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "智个男人来自地球／这个男人来斯击球",
+          "cleaned": "《这个男人来自地球》",
+          "basis": "同段完整片名及单房间交谈情境相互确认"
+        }
+      ]
+    },
+    {
+      "id": "L15-B003",
+      "part": 34,
+      "first_segment": 70,
+      "last_segment": 108,
+      "heading": "汽车设计的比方与逻辑教育的岔题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "锋利的",
+          "cleaned": "风力的",
+          "basis": "与烧油、烧电、烧酒精并列的汽车动力语境，未听校"
+        },
+        {
+          "original": "嫁／鱼",
+          "cleaned": "驾／吁",
+          "basis": "赶车声控笑话的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B004",
+      "part": 34,
+      "first_segment": 109,
+      "last_segment": 146,
+      "heading": "先做出量产车，再发展自己的设计",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B005",
+      "part": 34,
+      "first_segment": 147,
+      "last_segment": 179,
+      "heading": "“知道十序列，还是不知道写什么事”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "时序练／十0个序列",
+          "cleaned": "十序列／十个序列",
+          "basis": "上下文持续回顾已讲的十序列体系"
+        },
+        {
+          "original": "220天了",
+          "cleaned": "“220天了”〔具体时长待核〕",
+          "basis": "机器稿数字歧义，未凭推算更改"
+        },
+        {
+          "original": "共琴／触类旁东",
+          "cleaned": "共情／触类旁通",
+          "basis": "积累观影片段及生活素材的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B006",
+      "part": 34,
+      "first_segment": 180,
+      "last_segment": 216,
+      "heading": "为什么补讲斯奈德节拍表，又要谨慎使用",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "旧猫咪",
+          "cleaned": "《救猫咪》",
+          "basis": "斯奈德十五节拍体系及既有课程标题语境"
+        },
+        {
+          "original": "斯耐德／斯戴德",
+          "cleaned": "斯奈德",
+          "basis": "同一节拍表作者的译名异写统一"
+        }
+      ]
+    },
+    {
+      "id": "L15-B007",
+      "part": 34,
+      "first_segment": 217,
+      "last_segment": 275,
+      "heading": "把十五节拍与起承转合、十序列放在一条轴上",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "启程转合／起程转合",
+          "cleaned": "起承转合",
+          "basis": "本段明确四段名称及既有课程框架"
+        },
+        {
+          "original": "朝梁型",
+          "cleaned": "桥梁型",
+          "basis": "风向标事件间补连接事件的上下文"
+        }
+      ]
+    },
+    {
+      "id": "L15-B008",
+      "part": 34,
+      "first_segment": 276,
+      "last_segment": 320,
+      "heading": "前二十五分钟：开场、铺垫、主题、推动和争执",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "铺店",
+          "cleaned": "铺垫",
+          "basis": "前十分钟建制术语"
+        },
+        {
+          "original": "增止／争值",
+          "cleaned": "争执",
+          "basis": "第12至25分钟阶段反复命名"
+        },
+        {
+          "original": "依次动作",
+          "cleaned": "一次动作",
+          "basis": "先尝试、后升级的动作层级语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B009",
+      "part": 34,
+      "first_segment": 321,
+      "last_segment": 350,
+      "heading": "开场画面要让观众进入影片的气质",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "枪战片开场画面一定是高楼大厦",
+          "cleaned": "商战片开场以高楼大厦建立气质〔前词待核〕",
+          "basis": "S330–331明确接商战片、《华尔街之狼》"
+        }
+      ]
+    },
+    {
+      "id": "L15-B010",
+      "part": 34,
+      "first_segment": 351,
+      "last_segment": 374,
+      "heading": "铺垫：建立人物、主题和世界",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B011",
+      "part": 35,
+      "first_segment": 1,
+      "last_segment": 42,
+      "heading": "同是高中，世界观也可以完全不同",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B012",
+      "part": 35,
+      "first_segment": 43,
+      "last_segment": 71,
+      "heading": "推动之后的争执：先试正常办法，再升级动作",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "捡炮弹儿／捡破盖",
+          "cleaned": "捡破烂",
+          "basis": "S259明确捡破烂辛苦挣钱与零钱"
+        },
+        {
+          "original": "一思／依次动作",
+          "cleaned": "一次动作",
+          "basis": "与过激行为相对，先正常尝试"
+        },
+        {
+          "original": "12到15",
+          "cleaned": "12到25〔保留自纠〕",
+          "basis": "S070明确纠正争执时间范围"
+        }
+      ]
+    },
+    {
+      "id": "L15-B013",
+      "part": 35,
+      "first_segment": 72,
+      "last_segment": 136,
+      "heading": "二十五分钟衔接点：让观众知道人物开启新旅程",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "终点",
+          "cleaned": "中点",
+          "basis": "第55分钟处于110分钟中间，后文明确对应转折点"
+        },
+        {
+          "original": "衔金点",
+          "cleaned": "衔接点",
+          "basis": "25分钟转入新阶段的反复命名"
+        }
+      ]
+    },
+    {
+      "id": "L15-B014",
+      "part": 35,
+      "first_segment": 137,
+      "last_segment": 172,
+      "heading": "A故事是外在进展，B故事是内心旅程",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "B50／闭故式／庇护是",
+          "cleaned": "B故事",
+          "basis": "本段连续定义A/B故事"
+        },
+        {
+          "original": "人物湖光",
+          "cleaned": "人物弧光",
+          "basis": "紧接人物弧线与内在成长解释"
+        }
+      ]
+    },
+    {
+      "id": "L15-B015",
+      "part": 35,
+      "first_segment": 173,
+      "last_segment": 187,
+      "heading": "感情线如何成为内心成长的依托",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B016",
+      "part": 35,
+      "first_segment": 188,
+      "last_segment": 236,
+      "heading": "游戏时间：以少年远行为例兑现题材想象",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "菊次郎／沮丧的夏天",
+          "cleaned": "《菊次郎的夏天》",
+          "basis": "同一电影名重复及既有课程语境"
+        },
+        {
+          "original": "找他亲吧",
+          "cleaned": "找亲爸〔随后改为亲妈〕",
+          "basis": "S212明确随后改说亲妈"
+        },
+        {
+          "original": "25分钟的游戏时间",
+          "cleaned": "20分钟〔保留口误说明〕",
+          "basis": "S189–190与196及30—50范围一致"
+        }
+      ]
+    },
+    {
+      "id": "L15-B017",
+      "part": 35,
+      "first_segment": 237,
+      "last_segment": 263,
+      "heading": "训练段落与“拍海报上的画面”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "钻石流亚石油",
+          "cleaned": "断水流大师兄",
+          "basis": "S239完整称呼，紧接同一对战例子"
+        },
+        {
+          "original": "中国股权法",
+          "cleaned": "中国古拳法",
+          "basis": "星仔训练和无敌风火轮的同一语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B018",
+      "part": 35,
+      "first_segment": 264,
+      "last_segment": 318,
+      "heading": "第五十五分钟的中点：得到的也可能是假胜利",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "终点／伪胜率",
+          "cleaned": "中点／伪胜利",
+          "basis": "55分钟的明确位置与随后的虚假成功解释"
+        }
+      ]
+    },
+    {
+      "id": "L15-B019",
+      "part": 35,
+      "first_segment": 319,
+      "last_segment": 343,
+      "heading": "坏蛋逼近：阻力需要从前面埋下",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "坏蛋逼进／逼竟",
+          "cleaned": "坏蛋逼近",
+          "basis": "本节阶段标题"
+        },
+        {
+          "original": "买福利",
+          "cleaned": "埋伏笔",
+          "basis": "前段预先铺设对手与危机的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B020",
+      "part": 35,
+      "first_segment": 344,
+      "last_segment": 386,
+      "heading": "一无所有与灵魂黑夜：外在重创到精神蜕变",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "拿二／男儿",
+          "cleaned": "男二",
+          "basis": "角色死亡与主角蜕变的上下文"
+        },
+        {
+          "original": "重叛轻的一",
+          "cleaned": "众叛亲离",
+          "basis": "随后明确所有朋友不理睬、误解"
+        },
+        {
+          "original": "1分钟／15分钟",
+          "cleaned": "十分钟〔保留口误说明〕",
+          "basis": "75—85及S378、380明确十分钟"
+        }
+      ]
+    },
+    {
+      "id": "L15-B021",
+      "part": 35,
+      "first_segment": 387,
+      "last_segment": 427,
+      "heading": "第八十五分钟：新方案，或终于肯走最难的路",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B022",
+      "part": 35,
+      "first_segment": 428,
+      "last_segment": 453,
+      "heading": "高潮把此前承诺的那场大事兑现",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "定制半郎",
+          "cleaned": "《定制伴郎》",
+          "basis": "既有课程片名与婚礼情境"
+        },
+        {
+          "original": "花生酱英雄／花生酱猎鹰",
+          "cleaned": "《花生酱猎鹰》〔保留先后改口〕",
+          "basis": "S445现场给出后一个片名"
+        },
+        {
+          "original": "是源人",
+          "cleaned": "《伸冤人》",
+          "basis": "丹泽尔·华盛顿、射钉枪决斗与既有课程片名"
+        }
+      ]
+    },
+    {
+      "id": "L15-B023",
+      "part": 35,
+      "first_segment": 454,
+      "last_segment": 496,
+      "heading": "终场画面：回到相似画面，让变化可见",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "中场画面",
+          "cleaned": "终场画面",
+          "basis": "明确为110分钟最后一幅，与开场呼应"
+        },
+        {
+          "original": "四而不同",
+          "cleaned": "似而不同",
+          "basis": "相同池塘、变化人物的明确解释"
+        }
+      ]
+    },
+    {
+      "id": "L15-B024",
+      "part": 36,
+      "first_segment": 1,
+      "last_segment": 46,
+      "heading": "补讲A/B故事：外在与内在，不是主要与次要",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "B护事／庇护室／人物湖光",
+          "cleaned": "B故事／人物弧光",
+          "basis": "连续定义外在行动、内心成长的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B025",
+      "part": 36,
+      "first_segment": 47,
+      "last_segment": 69,
+      "heading": "单独拉出成长线，并认识want与need",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "忘的／旺他／逆的",
+          "cleaned": "want／need",
+          "basis": "本段先给出英文，后续同词音译识别错误"
+        }
+      ]
+    },
+    {
+      "id": "L15-B026",
+      "part": 36,
+      "first_segment": 70,
+      "last_segment": 125,
+      "heading": "小蝌蚪的两条线：寻找妈妈与成为更好的伙伴",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B027",
+      "part": 36,
+      "first_segment": 126,
+      "last_segment": 150,
+      "heading": "想殉职的警察：拿到抚恤金不是他真正缺少的东西",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B028",
+      "part": 36,
+      "first_segment": 151,
+      "last_segment": 185,
+      "heading": "《回到17岁》：重新打球与重新理解家人",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "原意识",
+          "cleaned": "园艺师",
+          "basis": "妻子装饰后院、展示园艺才华的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B029",
+      "part": 36,
+      "first_segment": 186,
+      "last_segment": 219,
+      "heading": "《定制伴郎》：租来的朋友与真正的友情",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "凯伐哈特／凯伦哈特／凯罗哈特",
+          "cleaned": "凯文·哈特",
+          "basis": "S194首先给出凯文哈特，后续同一人物异写"
+        },
+        {
+          "original": "故人假装自己的伴郎",
+          "cleaned": "雇人假装自己的伴郎",
+          "basis": "付费租伴郎的明确故事行动"
+        }
+      ]
+    },
+    {
+      "id": "L15-B030",
+      "part": 37,
+      "first_segment": 1,
+      "last_segment": 24,
+      "heading": "受雇伴郎同样缺朋友：B线中的相互需要",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B031",
+      "part": 37,
+      "first_segment": 25,
+      "last_segment": 64,
+      "heading": "《摇滚校园》：挣钱参赛与成为更好的音乐人",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "大渔网／大欲网",
+          "cleaned": "大欲望",
+          "basis": "随后明确成名、出人头地这一原始动机"
+        },
+        {
+          "original": "成名成二／成名成万／成名成外",
+          "cleaned": "成名成腕",
+          "basis": "反复配合明星、大腕与出人头地语境"
+        }
+      ]
+    },
+    {
+      "id": "L15-B032",
+      "part": 37,
+      "first_segment": 65,
+      "last_segment": 90,
+      "heading": "通过教学重新认识摇滚精神",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B033",
+      "part": 37,
+      "first_segment": 91,
+      "last_segment": 145,
+      "heading": "周星驰的A/B反差：《功夫》与苏乞儿例子",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "火云邪生",
+          "cleaned": "火云邪神",
+          "basis": "《功夫》同段角色语境"
+        },
+        {
+          "original": "九匹芝麻官那个苏乞儿",
+          "cleaned": "先说《九品芝麻官》，转到苏乞儿例子",
+          "basis": "原课连说两者，不静默合并为同片"
+        }
+      ]
+    },
+    {
+      "id": "L15-B034",
+      "part": 37,
+      "first_segment": 146,
+      "last_segment": 207,
+      "heading": "《喜剧之王》：从想当明星到向街坊传递表演",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "纯真",
+          "cleaned": "陈真",
+          "basis": "紧接“我们中国人不是东亚病夫”的演出语境"
+        },
+        {
+          "original": "十足青年",
+          "cleaned": "失足青年",
+          "basis": "同段明确用该称谓指痞子与性工作者等角色"
+        }
+      ]
+    },
+    {
+      "id": "L15-B035",
+      "part": 37,
+      "first_segment": 208,
+      "last_segment": 238,
+      "heading": "关于创作者孤独的延伸判断与回题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L15-B036",
+      "part": 37,
+      "first_segment": 239,
+      "last_segment": 285,
+      "heading": "实际运用：两线分别检查，必要时补事件",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "AD故事／AB股式",
+          "cleaned": "A/B故事",
+          "basis": "全段两线方法的同一术语"
+        },
+        {
+          "original": "此禧彼伏",
+          "cleaned": "此起彼伏",
+          "basis": "正负价值轮番占优语境"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "P034 S154“220天了”时长待核；P035 S183“哥哥温了”词句不清；P035摔跤手/拳击手及家具厂/家具城混称保留。节拍分钟数按本课板书及讲师最终自纠整理，不当作影片实际时间或唯一标准。",
+    "P036 S078–079关于“没有妈”的句子否定识别不完整，以后续S098明确解释转述并标疑，未补原话；S151演员名“牵着了”待核。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第15课.md",
+  "output_sha256": "72322bae77442e7bbba063c0fd9d737a800ed1496790fd95753f8256a4e329b7",
+  "reader_navigation_update": {
+    "previous_output_sha256": "849109710e541f23e56affe3ae5316327d1c9fbcf860c5851536906646b2138b",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

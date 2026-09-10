@@ -1,0 +1,68 @@
+{
+  "date": "2026-09-06",
+  "scope": "Research only: lesson 3 public secondary notes and lesson 4 public lecture audio via local ASR; no new native storytelling trial.",
+  "bilibili": {
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/",
+    "directory": "Observed in web search index",
+    "attempted_part": "https://www.bilibili.com/video/BV1eE411F73t?p=6",
+    "web_access": "HTTP 412",
+    "watch_result": "exit 1; video metadata HTTP 412; no captions or media obtained"
+  },
+  "secondary_notes": {
+    "url": "https://www.duitang.com/article/?id=857760",
+    "author": "刘权儿",
+    "published": "2020-08-05",
+    "read": "Full web text; not certified verbatim lecture"
+  },
+  "lecture": {
+    "page": "https://www.xiaoyuzhoufm.com/episode/67cfea6a0766616acd25f03e",
+    "publisher_display_name": "查理老师的编剧课",
+    "title": "4、第一个故事",
+    "media_url": "https://media.xyzcdn.net/67ce884c7b7f34c4b0700c3f/lr3ug8lwOlnxhEIANCSbvIN8ZCbr.m4a",
+    "source_mode": "PUBLIC",
+    "duration_seconds": 2919.313991,
+    "audio": {
+      "path": "/var/folders/vm/g05xtp4x72q6c6365sw3d2sm0000gn/T/charlie-course-research-4gnqfv0e/lesson-4.m4a",
+      "bytes": 47213976,
+      "sha256": "94120e7818f9894871a8137ff08d44269261d45c4a2ea2247f0d85e492ea5653"
+    }
+  },
+  "local_asr": {
+    "tool": "whisper.cpp / whisper-cli 1.8.4",
+    "model": "base multilingual",
+    "model_source": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
+    "model_sha1": "465707469ff3a37a2b9b8d8f89f2f99de7299dac",
+    "language": "zh",
+    "threads": 6,
+    "beam_size": 1,
+    "best_of": 1,
+    "exit_code": 0,
+    "wall_seconds": 604.6,
+    "srt": {
+      "path": "/var/folders/vm/g05xtp4x72q6c6365sw3d2sm0000gn/T/charlie-course-research-4gnqfv0e/lesson-4-base.srt",
+      "bytes": 80026,
+      "sha256": "328f9c7b7bb0486feaf52a3a82f4002256ffcc544bff9f309f4f698a21936d8e"
+    },
+    "log": {
+      "path": "/var/folders/vm/g05xtp4x72q6c6365sw3d2sm0000gn/T/charlie-course-research-4gnqfv0e/lesson-4-asr.log",
+      "bytes": 80119,
+      "sha256": "c830e37071eaf621611964ef2765a416e676236f12cb6a1730f2b602787a3985"
+    },
+    "reading": "All generated transcript read in sequential overlapping time ranges, from 00:00 to last speech at 48:32.28. No direct audiovisual review.",
+    "limitations": [
+      "Homophone errors",
+      "Some language drift",
+      "Not manually corrected verbatim",
+      "No board or video-frame verification"
+    ]
+  },
+  "outcome": {
+    "new_paid_model_requests": 0,
+    "new_native_story_trial": false,
+    "new_content_package": false,
+    "new_video": false,
+    "product_code_changed": false,
+    "code_tests_run": false,
+    "storytelling_capability_validated": false
+  }
+}

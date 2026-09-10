@@ -1,0 +1,35 @@
+{
+  "part": 6,
+  "source_video": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第二课-故事的要素2.2.mp4",
+  "source_sha256": "106f194736f875983bebd75396444a2c5dc8c0758dd5d591254e2a4db35dc2fc",
+  "source_duration_seconds": 1945.622562,
+  "command": [
+    "whisper-cli",
+    "-m",
+    "/Users/yangyucheng/.cache/whisper/ggml-base.bin",
+    "-f",
+    "/tmp/charlie-foundation-p006-20260906.wav",
+    "-l",
+    "zh",
+    "-t",
+    "6",
+    "-bs",
+    "1",
+    "-bo",
+    "1",
+    "-otxt",
+    "-osrt",
+    "-oj",
+    "-of",
+    "research/2026-09-06-course-to-capability/asr/p006"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 481.72292470932007,
+  "quality": "raw machine ASR, not manually corrected",
+  "artifacts": {
+    "research/2026-09-06-course-to-capability/asr/p006.json": "51140648db2a6d29b066b759259a9d451c30dc408987a2f05752d3b8b7713f47",
+    "research/2026-09-06-course-to-capability/asr/p006.srt": "2368f2cc91a3fdd556ad5d9b8d63bc333e01b2d9a5f85ec5084cda04a9383c74",
+    "research/2026-09-06-course-to-capability/asr/p006.txt": "95c4d18a3da4f2d83950b65389fd9d6c54f02f00ac146aa9e2e62919a3ad17c3",
+    "research/2026-09-06-course-to-capability/asr/p006.log": "3cf169a47146337f015fbf65718e889d18ab5e2cea4054d2f99f93685b094fc7"
+  }
+}

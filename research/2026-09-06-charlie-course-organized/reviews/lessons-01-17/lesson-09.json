@@ -1,0 +1,214 @@
+{
+  "lesson": 9,
+  "title": "谈谈人物",
+  "parts": [
+    18,
+    19
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    18,
+    19
+  ],
+  "teaching_nodes": [
+    {
+      "label": "课务背景与人物自知",
+      "part": 18,
+      "start_seconds": 2.662,
+      "end_seconds": 198
+    },
+    {
+      "label": "主角定义和激励后的主动",
+      "part": 18,
+      "start_seconds": 199.238,
+      "end_seconds": 461.42
+    },
+    {
+      "label": "主角视角共情与匿名作业反馈",
+      "part": 18,
+      "start_seconds": 462.374,
+      "end_seconds": 682.828
+    },
+    {
+      "label": "身份可怜可信可爱",
+      "part": 18,
+      "start_seconds": 684.262,
+      "end_seconds": 1464.396
+    },
+    {
+      "label": "原始欲望与共情",
+      "part": 18,
+      "start_seconds": 1466.086,
+      "end_seconds": 1633.772
+    },
+    {
+      "label": "动作的观众许可",
+      "part": 18,
+      "start_seconds": 1634.662,
+      "end_seconds": 1969.356
+    },
+    {
+      "label": "明星认同例外的课堂假设",
+      "part": 18,
+      "start_seconds": 1970.118,
+      "end_seconds": 2106.156
+    },
+    {
+      "label": "英雄片共情极限",
+      "part": 18,
+      "start_seconds": 2108.23,
+      "end_seconds": 2557.516
+    },
+    {
+      "label": "配角从事件功能产生",
+      "part": 19,
+      "start_seconds": 2.534,
+      "end_seconds": 231.34
+    },
+    {
+      "label": "配角合并与加强",
+      "part": 19,
+      "start_seconds": 233.318,
+      "end_seconds": 618.412
+    },
+    {
+      "label": "人物关系与作用力图",
+      "part": 19,
+      "start_seconds": 620.134,
+      "end_seconds": 940.844
+    },
+    {
+      "label": "人物弧光检查与类型例外",
+      "part": 19,
+      "start_seconds": 941.414,
+      "end_seconds": 1349.58
+    },
+    {
+      "label": "取名时机与琼瑶陷阱",
+      "part": 19,
+      "start_seconds": 1350.342,
+      "end_seconds": 1722.348
+    },
+    {
+      "label": "常用但少用于名字的字及翻书演示",
+      "part": 19,
+      "start_seconds": 1723.302,
+      "end_seconds": 2011.004
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "匿名叛逆少年稿只写酷与离家出走，老师指出缺少观众可理解的理由，建议补行动前情。",
+      "part": 18,
+      "start_seconds": 595.398,
+      "end_seconds": 663.788,
+      "asr_excerpt": "咱班的有个同学我就不点名了，交上来的作业…很叛逆的少年…你给我个理由啊…你先取得观众的理解和支持呀",
+      "submission_spec": "未展示原稿、作者或对应作业课号",
+      "teacher_review": "本课已给口头反馈；没有后续改稿展示",
+      "uncertainty": "未说明是哪个作业，不能挂到第8课警察大纲；关键作业身份句抽帧没有字幕，仍依ASR，未听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "以起点终点和中间几个变化层次检查主角弧线。",
+      "part": 19,
+      "start_seconds": 1129.222,
+      "end_seconds": 1147.212,
+      "asr_excerpt": "定好你的起点和终点…在中间的环节中给他打几个点，让它变化有层次…检查一下你的人",
+      "submission_spec": "没有新指定素材、字数、检查表或提交日期",
+      "teacher_review": "本课讲述检查法，无逐份讲评安排",
+      "uncertainty": "课堂自查建议，非明确新作业"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "取名时可翻白话文书，挑常用但较少用于人名的字。",
+      "part": 19,
+      "start_seconds": 1968.038,
+      "end_seconds": 2011.004,
+      "asr_excerpt": "提供一个简单思路…翻开一本白话文的书…常用字儿，但是不常用在名字里的，拿过来用…大家自己去体会",
+      "submission_spec": "没有交名字列表或读指定书要求",
+      "teacher_review": "本课现场翻书示范",
+      "uncertainty": "命名方法建议，不登记为一次命名作业"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "examples": [
+    {
+      "case_version": "police_class_representative_lesson08_supporting_roles_lesson09",
+      "part": 19,
+      "start_seconds": 134.342,
+      "end_seconds": 231.34,
+      "source_relation": "续用第8课警察夜摊课堂事件，讲配角随功能产生；未说是在点评同学上交的警察大纲",
+      "input": "夜摊有人欺负、有人被欺负的事件需求",
+      "change": "闹事者与夫妻作为配角进入，再按功能具体化",
+      "effect": "配角带功能出现而非先写庞大人物小传"
+    },
+    {
+      "case_version": "anonymous_rebellious_youth_submission_lesson09",
+      "part": 18,
+      "start_seconds": 595.398,
+      "end_seconds": 663.788,
+      "source_relation": "老师明确说本班同学交来的作业，匿名且未指课号",
+      "input": "叛逆少年离家出走、强调个性很酷",
+      "change": "补能让观众理解离家的原因",
+      "effect": "建立共情；未展示实际改后稿"
+    }
+  ],
+  "limits": [
+    "两P全文机器稿已读，未逐句听校",
+    "7帧已查看；关键作业身份句没有可见字幕，仍依ASR",
+    "动作许可和明星极端假设中带偏见的观众判断不登记为可靠普遍规律",
+    "电影解读未核原作，人物弧线不强制套所有作品"
+  ],
+  "frames": [
+    {
+      "part": 18,
+      "source_seconds": 598,
+      "path": "frames/p018-0598.jpg",
+      "sha256": "79570bd59a49f895cde50c89da2416103c2d3d0e212dadeb9cead75edc343936",
+      "visually_read": true
+    },
+    {
+      "part": 18,
+      "source_seconds": 600,
+      "path": "frames/p018-0600.jpg",
+      "sha256": "6f7dbd472c6d0ec683067418041c258856c9762fdfc7ab7c90f4a213b12e5c3e",
+      "visually_read": true
+    },
+    {
+      "part": 18,
+      "source_seconds": 604,
+      "path": "frames/p018-0604.jpg",
+      "sha256": "6cfe8e67d07762bb95422832481f74b0e6e6f45570c5458d58a5b9ccfb62afa9",
+      "visually_read": true
+    },
+    {
+      "part": 18,
+      "source_seconds": 1466,
+      "path": "frames/p018-1466.jpg",
+      "sha256": "b31bc17374449dbc76da79f705852873eb0cedc69a2d1ece5efad4d428ee6626",
+      "visually_read": true
+    },
+    {
+      "part": 18,
+      "source_seconds": 2355,
+      "path": "frames/p018-2355.jpg",
+      "sha256": "1eaed83e699a5ee739631f681f5cf62c887e88819fc70f561c84b5e1070d9f92",
+      "visually_read": true
+    },
+    {
+      "part": 19,
+      "source_seconds": 935,
+      "path": "frames/p019-0935.jpg",
+      "sha256": "d602a2b6e721a2c7294dbcc03e3f0511ffda4cd610318344a8bdd0a9fa9c9561",
+      "visually_read": true
+    },
+    {
+      "part": 19,
+      "source_seconds": 1965,
+      "path": "frames/p019-1965.jpg",
+      "sha256": "8a18b0acc0f8044627ea3902d689b5e3493482d5a75a18a2c23aad1d94c7158a",
+      "visually_read": true
+    }
+  ]
+}

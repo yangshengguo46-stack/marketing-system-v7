@@ -1,0 +1,13 @@
+{
+  "model_requested": "gpt-6-astra",
+  "fork_turns": "none",
+  "agents": {
+    "a": "/root/gpt6_fresh_business_a_20260909",
+    "b": "/root/gpt6_fresh_business_b_20260909"
+  },
+  "assignment_recorded_at_unix": 1788952142.062419,
+  "common_input": "inputs/brief.md",
+  "additional_input_b": "inputs/method-v0.md",
+  "comparison_type": "same-model first-delivery method probe; not forked App Server end-to-end",
+  "user_clarification": "First use must deliver useful business value; customer accumulation/learning/trial-and-error cannot be a prerequisite."
+}

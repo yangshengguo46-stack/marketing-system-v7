@@ -1,0 +1,46 @@
+{
+  "fruit": {
+    "thread": {
+      "threadId": "01a08699-1b9d-7a12-aab7-01fba9581e76",
+      "model": "doubao-seed-evolving"
+    },
+    "briefSHA256": "f5575622fb52cce2dd7225935208b9c7719e152e602c8df86f6ededf44ee7cd5",
+    "baseInstructionsSHA256": "ddde041fddbd85e4194db69632810e48c12c8462ee9e4e61678feba98694f792",
+    "developerInstructionsSHA256": "9a206eb68aa6367b15a72d9fd48eef17c323b8675ca2fee4e2879d41a9d4bf76",
+    "freshThread": true,
+    "exactInput": true
+  },
+  "gold": {
+    "thread": {
+      "threadId": "01a08699-1e41-7ad0-9cca-8a599c7f9185",
+      "model": "doubao-seed-evolving"
+    },
+    "briefSHA256": "9dd33fd2682104d1d0a7cbd50a0b521c13a4f93a3f3df5ba2b77d48213670d97",
+    "baseInstructionsSHA256": "ddde041fddbd85e4194db69632810e48c12c8462ee9e4e61678feba98694f792",
+    "developerInstructionsSHA256": "9a206eb68aa6367b15a72d9fd48eef17c323b8675ca2fee4e2879d41a9d4bf76",
+    "freshThread": true,
+    "exactInput": true
+  },
+  "self": {
+    "thread": {
+      "threadId": "01a0869a-0700-7f42-80ff-8baa42182946",
+      "model": "doubao-seed-evolving"
+    },
+    "briefSHA256": "5c17fe883ba348a777d36dce0425d5ebc1ef974aa8486385946c299fe833ad99",
+    "baseInstructionsSHA256": "ddde041fddbd85e4194db69632810e48c12c8462ee9e4e61678feba98694f792",
+    "developerInstructionsSHA256": "9a206eb68aa6367b15a72d9fd48eef17c323b8675ca2fee4e2879d41a9d4bf76",
+    "freshThread": true,
+    "exactInput": true
+  },
+  "parent": {
+    "thread": {
+      "threadId": "01a0869a-0bce-7590-9922-282ff991adde",
+      "model": "doubao-seed-evolving"
+    },
+    "briefSHA256": "55cad0ffc2789d85e3c29604c879d168121db8a3842fd826a45d9caa5126b8fb",
+    "baseInstructionsSHA256": "ddde041fddbd85e4194db69632810e48c12c8462ee9e4e61678feba98694f792",
+    "developerInstructionsSHA256": "9a206eb68aa6367b15a72d9fd48eef17c323b8675ca2fee4e2879d41a9d4bf76",
+    "freshThread": true,
+    "exactInput": true
+  }
+}

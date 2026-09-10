@@ -1,0 +1,147 @@
+{
+  "lesson": 10,
+  "title": "复杂叙事",
+  "parts": [
+    20,
+    21
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    20,
+    21
+  ],
+  "teaching_nodes": [
+    {
+      "label": "简单叙事与复杂叙事",
+      "part": 20,
+      "start_seconds": 2,
+      "end_seconds": 363
+    },
+    {
+      "label": "复合型主角与弧线",
+      "part": 20,
+      "start_seconds": 365,
+      "end_seconds": 846
+    },
+    {
+      "label": "团队作为整体",
+      "part": 20,
+      "start_seconds": 847,
+      "end_seconds": 1356
+    },
+    {
+      "label": "双主角与泰坦尼克号",
+      "part": 20,
+      "start_seconds": 1357,
+      "end_seconds": 1800
+    },
+    {
+      "label": "泰囧的双人物单视角",
+      "part": 20,
+      "start_seconds": 1803,
+      "end_seconds": 2245
+    },
+    {
+      "label": "非线性引入及倒叙教学分类",
+      "part": 21,
+      "start_seconds": 3,
+      "end_seconds": 196
+    },
+    {
+      "label": "疯狂石头五方与郭涛主线",
+      "part": 21,
+      "start_seconds": 197,
+      "end_seconds": 610
+    },
+    {
+      "label": "各方提前出场和交叉关联",
+      "part": 21,
+      "start_seconds": 613,
+      "end_seconds": 1055
+    },
+    {
+      "label": "观众信息优势与回归简单关系",
+      "part": 21,
+      "start_seconds": 1057,
+      "end_seconds": 1419
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "推荐观看韩国电影，机器稿片名为“情侣门”，片名待核。",
+      "part": 21,
+      "start_seconds": 62.406,
+      "end_seconds": 72.428,
+      "asr_excerpt": "还有一个电影叫情侣门…挺好看的，你们可以去下载看一下韩国电影叫情侣门。",
+      "submission_spec": "未要求观后感或分析表",
+      "teacher_review": "未说明",
+      "uncertainty": "ASR片名未听校；01:05和01:10抽帧无片名字幕，不据推测修正"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "material_continuity": {
+    "type": "teacher_explicit_theory_recap",
+    "sources": [
+      3,
+      7,
+      9
+    ],
+    "evidence": "p20 12:33–13:42再次用人物弧线作为分析尺；本课未要求改写原梗概或警察大纲"
+  },
+  "examples": [
+    {
+      "case_version": "compound_protagonist_crazy_alien_lesson10",
+      "source_relation": "课堂电影分析与临时假想，不是实际制作记录",
+      "part": 20,
+      "start_seconds": 365,
+      "end_seconds": 846
+    },
+    {
+      "case_version": "crazy_stone_five_forces_lesson10",
+      "source_relation": "老师明说凭记忆分析已完成电影",
+      "part": 21,
+      "start_seconds": 197,
+      "end_seconds": 1419,
+      "input": "郭涛护玉主线与其他作用力",
+      "change": "让各方在主线碰面前先出场并互相联系，切换各方信息",
+      "effect": "形成交叉叙事及观众信息优势；非原片创作史"
+    }
+  ],
+  "limits": [
+    "两P全文机器稿已读，未逐句听校",
+    "4帧已查看，推荐韩国电影名未获得字幕确认",
+    "电影讲解含凭记忆分析和临时假想，不能当实际创作记录",
+    "倒叙归入线性是本课写作分类，不替代通用叙事学定义"
+  ],
+  "frames": [
+    {
+      "part": 20,
+      "source_seconds": 2140,
+      "path": "frames/p020-2140.jpg",
+      "sha256": "0f4da510a9cf6c413b727a1d70945bba2214076bfb16c8db33b82f9b278ddd01",
+      "visually_read": true
+    },
+    {
+      "part": 21,
+      "source_seconds": 65,
+      "path": "frames/p021-0065.jpg",
+      "sha256": "2105cee959dcfd331f4e7dea1bfdde252bed338ea951bf3c8c6a2087742bf6ba",
+      "visually_read": true
+    },
+    {
+      "part": 21,
+      "source_seconds": 70,
+      "path": "frames/p021-0070.jpg",
+      "sha256": "209cb8dafbb6b7548944cd0c05a514bed4c3e35b0dfe2a5cc25cd140ab57407a",
+      "visually_read": true
+    },
+    {
+      "part": 21,
+      "source_seconds": 1050,
+      "path": "frames/p021-1050.jpg",
+      "sha256": "a23670d89239ea7bdf9f48622b2f452b82307c45c4c47f45edb14aa8cb0382ce",
+      "visually_read": true
+    }
+  ]
+}

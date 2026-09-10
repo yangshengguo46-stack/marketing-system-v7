@@ -1,0 +1,182 @@
+{
+  "part": 81,
+  "title": "《蝴蝶效应》",
+  "date": "2026-09-08",
+  "reviewer": "clean_core_25_34",
+  "scope": {
+    "source": "research/2026-09-06-charlie-course-organized/transcripts/p081.json",
+    "source_json_sha256": "45d147e09446e97d8038b5f297f44c7767103fa03078e882a39ae4ee39d03b2f",
+    "first_segment": 1,
+    "last_segment": 436,
+    "segment_count": 436,
+    "batch_count": 6,
+    "block_count": 55,
+    "all_source_segments_read": true,
+    "all_clean_blocks_compared": true,
+    "source_text_characters": 14167,
+    "output_text_characters": 13599
+  },
+  "method": "按源ASR顺序全文核读六批，不依据范围或长度宣称内容完整；未读取外部资料、未听校、无API调用。保留原模型响应、原有review、原block范围，仅修订clean并保存修改前完整备份。",
+  "content_review": [
+    {
+      "range": [
+        1,
+        57
+      ],
+      "checked": "以小博大与超级商业片选片比较；007/碟中谍/谍影重重正反例及评分理由；两段前史与对照组；第一至第九拍全部悬念、行动和四人关系。"
+    },
+    {
+      "range": [
+        58,
+        150
+      ],
+      "checked": "爷爷病例、催眠、影院改口、搬家、虐狗、成年研究记忆、日记触发与确认、烫疤、母亲和算命、旧情人创伤及自杀、首次主动改变与校园新时间线。"
+    },
+    {
+      "range": [
+        151,
+        228
+      ],
+      "checked": "短暂红利、误杀汤米、监狱两本日记被抢、普通画画节点造疤与狱友夺日记、救狗失败、记忆代价、兰尼控诉、父亲解谜、凯莉沦落、炸弹失手致残、他人幸福、自杀未遂、母病、持刀被打断、误杀凯莉各过程与因果解释。"
+    },
+    {
+      "range": [
+        229,
+        304
+      ],
+      "checked": "无日记困境到家庭录像新线索、开场呼应；两种结局完整结果与兄妹随母亲搬走；讲师结局偏好四个理由、关键节点/平行宇宙的反证、27分钟前史争议。"
+    },
+    {
+      "range": [
+        305,
+        398
+      ],
+      "checked": "悬念与尺度两种留人办法及其局限；四次拯救和七八次穿越不同计法；如愿以偿的红利/诅咒/维持原状；金羊毛的寻找解法、工具/愿望区别；假如按教科书写的全部福利—失控—挽救动作保留。"
+    },
+    {
+      "range": [
+        399,
+        436
+      ],
+      "checked": "催化剂主角/英雄、耶稣意象及恐怖游轮插问；话题是完美人生，结论/表达是没有完美人生与无人能扮演上帝；红利与痛苦的平衡、冒险与非常规写法、选片理由及结束语。"
+    }
+  ],
+  "key_findings": [
+    "S345—347源文跨段否定被断错，clean原来“我不要这个，如愿以偿是最好的”反转意思，已恢复“我不要这个如愿以偿，才是最好的”，与珍惜眼前人、维持原状相接。",
+    "S417—421话题/topic与结论/表达本已写出；未把本段改成方法摘要，保留S305—398事件归纳、类型正反比较和S411—416范围引入，并补回原文“价值观”。",
+    "恢复S48四人名单中漏列的汤米、S69人数改口、S258哥哥共同搬走；S185源稿将汤米/兰尼混称保留原称并说明上下文疑点。",
+    "前十/前戏/潜史据全章27分钟语境订正前史，金刚猫据金羊毛类型分析订正；S387终点按其后尚有失控/挽救暂辨中点并明示未听校。",
+    "撤回邮箱和神迹的确定补猜；母亲病名、结尾晦色的治愈与全让探索保留原词待核。S108母女/S210母子不统一。",
+    "将S215、289、337、356、382、429的跨块句子归回覆盖它的正文块；block段号范围未改。",
+    "修正corrections中不在所属块的伪原词与跨块原词，逐条验证原词为源ASR实际连续文本。",
+    "未发现需新增的作业要求；保留数悬念、选结局、讨论分类、记住知识点等课堂提问/建议，未添加提交次数、字数、期限或硬性作业。"
+  ],
+  "validation": {
+    "json_parse": "PASS",
+    "source_hash": "PASS",
+    "full_contiguous_coverage_once": "PASS",
+    "all_55_block_ranges_unchanged": "PASS",
+    "corrections_originals_present_in_own_source_blocks": "PASS",
+    "before_backups": "PASS",
+    "prior_metadata_and_review_preserved": "PASS",
+    "compiled_markdown_modified": false,
+    "raw_model_responses_modified": false
+  },
+  "limits": [
+    "仅ASR文字对照，不是逐字原话认证；source未听校。",
+    "影片、宗教、文化、审查、评分及自杀因果的主张均归讲师；未外部核验。",
+    "仍不确定的原词均留标疑，不因常识填充片段。"
+  ],
+  "files": [
+    {
+      "job": "p081-c001",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c001-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c001-before-independent-full-review.json",
+      "first_segment": 1,
+      "last_segment": 57,
+      "segment_count": 57,
+      "block_count": 10,
+      "output_text_characters": 2496,
+      "output_sha256": "e9c5ed330f0a35fc106d64a73755f77e99a7aee721a1e2e9d6872c033fdaf16b",
+      "before_sha256": "128d01ccc4c79d52a383ad6356ac3f361181d37142df257b6f82cd57c0696647",
+      "changes": [
+        "恢复四人组漏列的汤米；安米不另造人物；片名、爆炸物件及评分/商业判断注明来源与不确定性。"
+      ]
+    },
+    {
+      "job": "p081-c002",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c002-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c002-before-independent-full-review.json",
+      "first_segment": 58,
+      "last_segment": 150,
+      "segment_count": 93,
+      "block_count": 16,
+      "output_text_characters": 2382,
+      "output_sha256": "90bb119be67909257df7e73f18f869e0fa4affb5575b797409c9c38be57903f9",
+      "before_sha256": "044e1797e42ce0245971269ab1be5b9d4dd84668465fe3248448bd4a8872d237",
+      "changes": [
+        "保留人数改口及疑似穿越阶段，修复烫疤和重复字，明确自杀因果为讲师解释，儿童受害事件非露骨保留。"
+      ]
+    },
+    {
+      "job": "p081-c003",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c003-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c003-before-independent-full-review.json",
+      "first_segment": 151,
+      "last_segment": 228,
+      "segment_count": 78,
+      "block_count": 9,
+      "output_text_characters": 2248,
+      "output_sha256": "004b5037697a47c47b1a680ad9fe0dec1c10aac5a723a9420be90ac746a1a22e",
+      "before_sha256": "ce138a2de449cfe9ae1ebd4dc316d1be4a7d874955859e6631a604c6730a7852",
+      "changes": [
+        "标明救狗段汤米/兰尼混称，撤回邮箱的外部事实认定；补回小胖子指认，将S215句归回本段；病名保留原词待核。"
+      ]
+    },
+    {
+      "job": "p081-c004",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c004-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c004-before-independent-full-review.json",
+      "first_segment": 229,
+      "last_segment": 304,
+      "segment_count": 76,
+      "block_count": 11,
+      "output_text_characters": 2491,
+      "output_sha256": "e448c7012e9c7982e33f6749ac4eb9a438c170c5da5db0cd64628c8f3e6c133f",
+      "before_sha256": "0d3e7f90858564d8c476df805f2a81c5ea0169f4a8e1f0cce44a1f5a13720a40",
+      "changes": [
+        "恢复第二结局凯莉与哥哥随母亲搬走；保留两结局四理由并明确讲师归属；修前史术语、逻辑否定断句及S289跨块归属。"
+      ]
+    },
+    {
+      "job": "p081-c005",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c005-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c005-before-independent-full-review.json",
+      "first_segment": 305,
+      "last_segment": 398,
+      "segment_count": 94,
+      "block_count": 5,
+      "output_text_characters": 2585,
+      "output_sha256": "b413f17f7ef4c9414c267c40cc8e24df9929d65ada3acca7e137df7a386f82d5",
+      "before_sha256": "f570aea6fdbe91a07a3a8c5ba5a922986d0408d5ae8ae5a9decfc0f6a668e6a7",
+      "changes": [
+        "修复关键否定“不要如愿以偿”、前史/进戏/中点；保留四次拯救与七八次穿越区别、如愿以偿假设写法全部动作、金羊毛推演；S337/356/382归回所属块。"
+      ]
+    },
+    {
+      "job": "p081-c006",
+      "file": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c006-clean.json",
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p081-c006-before-independent-full-review.json",
+      "first_segment": 399,
+      "last_segment": 436,
+      "segment_count": 38,
+      "block_count": 4,
+      "output_text_characters": 1397,
+      "output_sha256": "92e96a5c8f5d5d890a46e84ec56f4a2f9600f9f4d91b4ff4f8225a99e5ad01b0",
+      "before_sha256": "f6372315c1129a77f88c98fc3e93d5d22acdf2d1c19743a244871955fed3d66f",
+      "changes": [
+        "保留主题范围/topic与结论/表达的区别及其前文事件依据；恢复价值观一词，修金羊毛/前史/红利，标疑扮相、圣奇、探索、晦色的治愈；宗教解读归讲师。"
+      ]
+    }
+  ]
+}

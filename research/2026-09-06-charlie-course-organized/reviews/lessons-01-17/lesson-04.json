@@ -1,0 +1,98 @@
+{
+  "lesson": 4,
+  "title": "第一个故事",
+  "parts": [
+    9,
+    10
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    9,
+    10
+  ],
+  "teaching_nodes": [
+    {
+      "label": "首个故事目标与题材提醒",
+      "part": 9,
+      "start_seconds": 3.11,
+      "end_seconds": 352.588
+    },
+    {
+      "label": "人设作为创作起点",
+      "part": 9,
+      "start_seconds": 353.414,
+      "end_seconds": 758.252
+    },
+    {
+      "label": "激励干扰事件与倒推人物",
+      "part": 9,
+      "start_seconds": 760.006,
+      "end_seconds": 1393.836
+    },
+    {
+      "label": "过激行为二次动作",
+      "part": 10,
+      "start_seconds": 13.222,
+      "end_seconds": 520.908
+    },
+    {
+      "label": "悬念危机假身份时间锁",
+      "part": 10,
+      "start_seconds": 522.118,
+      "end_seconds": 951.884
+    },
+    {
+      "label": "环境与五类支点回收",
+      "part": 10,
+      "start_seconds": 953.51,
+      "end_seconds": 1256.876
+    },
+    {
+      "label": "从强点起笔兼顾观众预期",
+      "part": 10,
+      "start_seconds": 1258.214,
+      "end_seconds": 1520.652
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "本课后开始写一个自己的故事，从五种可用起点中找到下手之处；本次不只凭本能重写自己的青春或街头经历。",
+      "part": 9,
+      "start_seconds": 336.998,
+      "end_seconds": 352.588,
+      "asr_excerpt": "这节课结束的时候，我是希望大家开始写一个自己的故事，但是不要给我写青春…不要给我写街头…我们创作一个故事，我们有方法",
+      "submission_spec": "一个文字故事；未规定字数、页数、剧本格式、提交渠道、期限；五起点不等于交五篇。",
+      "teacher_review": "第5课p11 15:09–15:55补充约1500字及可交老师一对一沟通修改；p12 18:54–19:33重申线性故事后开始剧本。第4课本身未说明这些。",
+      "uncertainty": "明确写作要求位于前段，结尾未另用“作业”标题；原 p9 339/344秒字幕已视觉核对。"
+    }
+  ],
+  "limits": [
+    "Bili两P完整机器稿已读，未逐句听校",
+    "小宇宙同作者音源未用于Bili时间锚点",
+    "原片案例未独立核验；未命名美剧不补猜名称"
+  ],
+  "frames": [
+    {
+      "part": 9,
+      "source_seconds": 22,
+      "path": "frames/p009-0022.jpg",
+      "sha256": "66638960dfd5225d3698ad327c8b15febf25c69c370c742bad26f1d8bda6fce2",
+      "visually_read": true
+    },
+    {
+      "part": 9,
+      "source_seconds": 339,
+      "path": "frames/p009-0339.jpg",
+      "sha256": "c120c7ce73897a8a3b4ac0f610d3862805e630182e20ce8c49f7d01e69f4a1e8",
+      "visually_read": true
+    },
+    {
+      "part": 9,
+      "source_seconds": 344,
+      "path": "frames/p009-0344.jpg",
+      "sha256": "8105c975bed62233df5a3882ee5c2203b459be5df9e6b3b7284d2033107d3289",
+      "visually_read": true
+    }
+  ]
+}

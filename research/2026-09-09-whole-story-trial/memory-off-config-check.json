@@ -1,0 +1,85 @@
+{
+  "error": null,
+  "features_memories": false,
+  "memories": {
+    "consolidation_model": null,
+    "dedicated_tools": null,
+    "disable_on_external_context": null,
+    "extract_model": null,
+    "generate_memories": false,
+    "max_raw_memories_for_consolidation": null,
+    "max_rollout_age_days": null,
+    "max_rollouts_per_startup": null,
+    "max_unused_days": null,
+    "min_rate_limit_remaining_percent": null,
+    "min_rollout_idle_hours": null,
+    "use_memories": false
+  },
+  "memory_origins": {
+    "memories.use_memories": {
+      "name": {
+        "type": "sessionFlags"
+      },
+      "version": "sha256:23bb0f97d482e22cb9c602ef898d9bca7becf5946642596919a8e15b18c8aaf1"
+    },
+    "features.memories": {
+      "name": {
+        "type": "sessionFlags"
+      },
+      "version": "sha256:23bb0f97d482e22cb9c602ef898d9bca7becf5946642596919a8e15b18c8aaf1"
+    },
+    "memories.generate_memories": {
+      "name": {
+        "type": "sessionFlags"
+      },
+      "version": "sha256:23bb0f97d482e22cb9c602ef898d9bca7becf5946642596919a8e15b18c8aaf1"
+    }
+  },
+  "layers": [
+    {
+      "name": {
+        "type": "sessionFlags"
+      },
+      "disabledReason": null,
+      "memories": {
+        "generate_memories": false,
+        "use_memories": false
+      },
+      "feature_memories": false
+    },
+    {
+      "name": {
+        "type": "project",
+        "dotCodexFolder": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/.codex"
+      },
+      "disabledReason": null,
+      "memories": {
+        "generate_memories": false,
+        "use_memories": false
+      },
+      "feature_memories": false
+    },
+    {
+      "name": {
+        "type": "user",
+        "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/run/memory-off-check-20260909-state/config.toml",
+        "profile": null
+      },
+      "disabledReason": null,
+      "memories": {
+        "generate_memories": false,
+        "use_memories": false
+      },
+      "feature_memories": false
+    },
+    {
+      "name": {
+        "type": "system",
+        "file": "/etc/codex/config.toml"
+      },
+      "disabledReason": null,
+      "memories": null,
+      "feature_memories": null
+    }
+  ]
+}

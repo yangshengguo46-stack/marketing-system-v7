@@ -1,0 +1,55 @@
+{
+  "teaching_nodes": [
+    {
+      "label": "宣布教学与接单平台转型",
+      "start_seconds": 0,
+      "end_seconds": 35,
+      "summary": "通知由单纯教学转向编剧教学加剧本接单的综合平台，定位于帮助学习者进入创作与接单。"
+    },
+    {
+      "label": "课程与编剧库情况自述",
+      "start_seconds": 35,
+      "end_seconds": 71,
+      "summary": "讲课程运行年限、学员规模、作品上线与甲方需求，说明建立编剧人才库的背景。"
+    },
+    {
+      "label": "本轮侧重短剧板块",
+      "start_seconds": 71,
+      "end_seconds": 107,
+      "summary": "以短剧订单需求和新人入行机会解释本次升级的方向。"
+    },
+    {
+      "label": "AI与短剧机会；邀请咨询",
+      "start_seconds": 107,
+      "end_seconds": 127,
+      "summary": "讲创作门槛变化，邀请有创作梦想的人加入；片尾抽帧可见“咨询联系助教”字样。"
+    }
+  ],
+  "examples": [],
+  "assignments": [],
+  "practice_suggestions": [],
+  "actual_assignment_result": "完整阅读22段机器稿。这是平台转型通知，没有写作教学作业；标题中的“参与普查”不等于本段已给出普查字段或操作步骤。可听文本没有提供具体表单填法、交稿格式或考核要求。",
+  "connections": [
+    "老师明确回顾：称本平台一直奉行帮助普通学习者写剧本和拥有作品的教学理念。",
+    "整理者关联：归入投稿/接单与平台服务资料，与P066投稿专题相邻阅读；不是故事创作训练课。"
+  ],
+  "uncertainties": [
+    "订单量、学员数量、行业排名和接单效果均为平台方在录课时的自述/宣传，未核当前有效性。",
+    "仅抽看10、75、119秒三帧：前两帧为讲述与字幕，119秒画面有助教咨询字样；这不等于全片逐帧核查。",
+    "未从标题“普查”补出音频未讲的登记流程。"
+  ],
+  "source_visual_checks": [
+    {
+      "source_seconds": 10,
+      "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/processing/p067-frame-010.jpg"
+    },
+    {
+      "source_seconds": 75,
+      "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/processing/p067-frame-075.jpg"
+    },
+    {
+      "source_seconds": 119,
+      "file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/processing/p067-frame-119.jpg"
+    }
+  ]
+}

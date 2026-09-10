@@ -1,0 +1,157 @@
+{
+  "lesson": 32,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 58,
+      "title": "三十二课-跟《鱿鱼游戏》学写强设定",
+      "cid": 425876128,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=58",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十二课-跟《鱿鱼游戏》学写强设定.mp4",
+      "sha256": "cb227f0ec42dc29efb775e77f20bed696f23f44f514f2dcede65574289570107",
+      "duration_seconds": 4911
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "时代语境与鱿鱼游戏简介；不作完整拉片",
+      "part": 58,
+      "start_seconds": 12,
+      "end_seconds": 392
+    },
+    {
+      "label": "相关游戏类作品、社会隐喻与选材维度",
+      "part": 58,
+      "start_seconds": 397,
+      "end_seconds": 828
+    },
+    {
+      "label": "空间/庄家玩家/规则/奖惩；规则映射社会",
+      "part": 58,
+      "start_seconds": 830,
+      "end_seconds": 1169
+    },
+    {
+      "label": "强设定四方向与市场岔讲；现实题材仍有效",
+      "part": 58,
+      "start_seconds": 1174,
+      "end_seconds": 1891
+    },
+    {
+      "label": "卖点与持续力；规则压缩发展空间",
+      "part": 58,
+      "start_seconds": 1898,
+      "end_seconds": 2312
+    },
+    {
+      "label": "评价作品不造神的岔讲",
+      "part": 58,
+      "start_seconds": 2315,
+      "end_seconds": 2695
+    },
+    {
+      "label": "强设定优缺点；连接一般期待与现实经验",
+      "part": 58,
+      "start_seconds": 2696,
+      "end_seconds": 2908
+    },
+    {
+      "label": "四方向的创新；研究代表作与现实约束",
+      "part": 58,
+      "start_seconds": 2915,
+      "end_seconds": 3544
+    },
+    {
+      "label": "现实题材来源与两者边界",
+      "part": 58,
+      "start_seconds": 3548,
+      "end_seconds": 4092
+    },
+    {
+      "label": "选材不是故事类型；穿越创造期待或担忧",
+      "part": 58,
+      "start_seconds": 4094,
+      "end_seconds": 4366
+    },
+    {
+      "label": "游戏类方案正式作业",
+      "part": 58,
+      "start_seconds": 4367,
+      "end_seconds": 4440
+    },
+    {
+      "label": "旧作业个案及反馈不等于购买拍摄",
+      "part": 58,
+      "start_seconds": 4443,
+      "end_seconds": 4845
+    },
+    {
+      "label": "重申作业、旧题补练与现实题材",
+      "part": 58,
+      "start_seconds": 4846,
+      "end_seconds": 4907
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "设计自己的游戏类题材方案：先选择社会规则的比喻，再设计游戏规则、空间、参与者及奖惩；结尾亦称游戏类小故事。",
+      "part": 58,
+      "start_seconds": 4367.622,
+      "end_seconds": 4440.108,
+      "submission_spec": "提案/方案；无字数、期限、提交渠道、完整剧本或第19课六项模板要求。",
+      "teacher_review": "74:19起明确不能读完每人的作业；无本题逐稿反馈承诺。",
+      "uncertainty": "完整机器稿已读，73:57字幕核到构建一个方案；未逐句听校。"
+    },
+    {
+      "kind": "explicit_assignment",
+      "task": "条件补做旧题：假设可以拥有一种超能力，你要什么；只要求没做过的同学补做。",
+      "part": 58,
+      "start_seconds": 2928,
+      "end_seconds": 2943,
+      "submission_spec": "旧题补练，非新命题；无新增格式/交稿/期限。",
+      "teacher_review": "未说明。",
+      "uncertainty": "未在本课确定旧题原始课号；81:02后又以建议语气重提。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "没看过的可以看《蝴蝶效应》，理解时间选材。",
+      "part": 58,
+      "start_seconds": 3327,
+      "end_seconds": 3359,
+      "submission_spec": "看片参考；未要求书面分析或提交。",
+      "teacher_review": "无。",
+      "uncertainty": "未逐句听校。"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回指旧穿越只能带一件物品与超能力题，结尾建议未做者琢磨。",
+      "part": 58,
+      "start_seconds": 4168,
+      "end_seconds": 4186,
+      "submission_spec": "本课未定原课号；81:02–81:23建议补练。",
+      "teacher_review": "没有可识别学生文本讲评。",
+      "uncertainty": "不可假定原题完整要求仅如此。"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "讲曾给一份不具名旧作业建议补冲突、学员次日改回却误以为要拍摄购买的个案。",
+      "part": 58,
+      "start_seconds": 4454,
+      "end_seconds": 4845,
+      "submission_spec": "未识别原题；3000字是个案回忆，不是本课格式。",
+      "teacher_review": "确实回忆读稿及一次笼统改稿建议，未展示原稿或修改详情；反馈不等于购买/拍摄承诺。",
+      "uncertainty": "不能挂到家人/战国/科目三作业。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    58
+  ],
+  "limits": [
+    "全P机器稿逐段读完，未逐句听校。",
+    "游戏/强设定是世界观选材维度，不是新斯奈德故事类型。",
+    "魔幻现实主义为老师宽泛课堂用法，不当严格文学术语。",
+    "历史市场、影视季数/停播、科技完全实现预测犯罪等未核，不作为事实指南。",
+    "新作业没有字数/期限/渠道/六项模板；旧题补做单列，不算全新命题。"
+  ]
+}

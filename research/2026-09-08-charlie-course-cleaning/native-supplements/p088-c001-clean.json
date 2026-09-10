@@ -1,0 +1,264 @@
+{
+  "blocks": [
+    {
+      "first_segment": 1,
+      "last_segment": 3,
+      "heading": "选片缘由：印度+体育+高分",
+      "text": "讲师说明选片缘由：这部片子知名度和评分都很高。以下保留他的课堂讲述口吻。为什么选了这部片子呢？因为上次下课的时候，很多同学说没有拉过印度片，也没有拉过体育片——印度加体育，完美是吧？印度加体育加高分，正好符合大家的要求，这个片子非常值得一看。\n这部电影很显而易见，运动题材这种类型的片子其实国内这几年也很多，经常有人拿给我看这样的剧本或者是这样的项目。我也可以剧透一下，国内最顶流的几个导演，还有演员，都拿过教练类型的剧本给我看，都在他们计划内。所以说像这一类题材，演员特别有发挥的空间，我们今天就学习一下这种类型电影的写法。\n接下来先看这部片子有多少信息拍。讲师准备再次说明划分原则，说有些同学也会自己拉节拍。〔源段到这里尚未说完，下一块接续。〕",
+      "corrections": []
+    },
+    {
+      "first_segment": 4,
+      "last_segment": 6,
+      "heading": "节拍原则：一个故事要牵着观众走",
+      "text": "承接前句，讲师说同学们“预袭电影”〔原词待核，可能指预习或拉片，不确定替换〕时，也会自己拉节拍。他再次强调原则是什么——它的原则是带给观众一个新的期待。大家记住，我们说一个故事，追本溯源，一个故事到了本身你还是要牵着观众走。\n很多同学有没有这样的经历，就是你在当面给你的朋友或者给一群受众讲一个故事的时候，如果有一段讲着讲着观众明显走神了，你就会知道这一段是废戏。故事的本质是永远牵着观众走。但是由于我们搞创作的时候，不管是电影也好，电视剧也好，你看不到观众，对吧？你看不到观众的时候，你有时候就会肆意妄为。",
+      "corrections": [
+        {
+          "original": "预袭电影",
+          "cleaned": "预袭电影〔原词待核〕",
+          "basis": "原词无法确定为预习还是拉片，正文保留不擅改。"
+        }
+      ]
+    },
+    {
+      "first_segment": 7,
+      "last_segment": 10,
+      "heading": "美国喜剧演员的启示：时时刻刻为观众服务",
+      "text": "你就会讲一些观众根本不想看的东西、不想听的东西、牵引不住观众的东西，这就是你的问题。我为什么说呢？我很喜欢美国的一些脱口秀演员，因为按讲师的说法，美国的脱口秀演员也都做电影〔源词“坚职配电影”，具体措辞待听校〕——因为他们在做喜剧的时候，他们特别怕失去观众，他们需要每时每刻有梗，每一分钟都不能让观众走神。美国有很多这样的喜剧演员，凯哇哈特〔待核〕是吧，d于speelle〔待核〕是吧，这些喜剧演员都有做影视，包括现在很火的黑人兄弟。\n我们讲故事写剧本，时时刻刻记住，你是为观众服务。我在课上、在不同的教程里面都强调过这个问题，千万不要太自我，千万不要觉得我是搞艺术的。那么我们的节拍就是这么分的——能不能带给观众一个新的期待，能不能带给观众一个新的‘哦哦，原来是这样’的求知欲〔源词‘求治愈’，按期待新信息的语境整理，待听校〕。",
+      "corrections": [
+        {
+          "original": "坚职配电影",
+          "cleaned": "兼做电影〔待核〕",
+          "basis": "S7原文'坚职配电影'语义不通，疑为'兼做/兼职拍电影'，未确证"
+        },
+        {
+          "original": "凯哇哈特",
+          "cleaned": "凯哇哈特〔姓名待核〕",
+          "basis": "仅能确认讲师在举喜剧演员例子，未听校，不能按熟悉演员补姓名。"
+        },
+        {
+          "original": "d于speelle",
+          "cleaned": "d于speelle〔姓名待核〕",
+          "basis": "原识别名字难辨，原样保留，不删成空白标记。"
+        },
+        {
+          "original": "求治愈",
+          "cleaned": "求知欲〔待核〕",
+          "basis": "S10原词'求治愈'在语境中疑为'求知欲'，未确证"
+        }
+      ]
+    },
+    {
+      "first_segment": 11,
+      "last_segment": 12,
+      "heading": "第一拍与印度电影的特点",
+      "text": "讲师接着说，这样就算一个有效的信息。好，看一下这部电影是如何一步一步吸引我们的。第一拍，来到第一分钟，男主的一个出场，交代他的环境。我们说开场是交代主角和主角的环境的。这部电影是一部印度电影，印度电影有个特点，它首先受西方影响也是比较明显的，但是它保留自己的民族传统也是非常坚决的。由于印度电影有大量的歌舞，我们说歌舞这个东西不是全世界通行的，所以说我们可以观察一下这部电影，它在歌舞处理方面的一些自己的技巧。",
+      "corrections": []
+    },
+    {
+      "first_segment": 13,
+      "last_segment": 15,
+      "heading": "第一至第三拍：出场、技能展示与主角的缺失",
+      "text": "好，第一拍，男主角一个出场先交代他的环境——他现在是一个普通的民间人士，看电视，看摔跤比赛，非常希望印度能够拿到奖牌，希望自己的国家能够拿到奖牌。这上来是一个主角的出场。\n第二拍，第三分钟，技能展示，配合电影的解说，他跟人比赛摔跤，展示他会摔跤这个技能。另外补充一下人设，交代一下他过往的经历。\n第三拍，第6分钟开始，训练一些小孩子，继续交代主角的缺失。他的缺失是什么呢？就是没有拿过国际奖牌。他是个全国冠军，但是没有拿过国际奖，简单说就是没有为国争光。因为什么？年轻的时候被迫放弃了，听了父亲的话，“向先生妥协了”〔原词待核，所指对象不能确认，不补写另一个人物或确定改成“现实”〕。基于这个缺失，他就有一个梦想——想要一个儿子能够子承父业、为国争光。他的梦想是为国争光，想要个儿子，但是呢却生了个女儿。",
+      "corrections": [
+        {
+          "original": "向先生妥协了",
+          "cleaned": "向先生妥协了〔对象待核〕",
+          "basis": "原识别不顺，不按语境直接猜现实或另一人物。"
+        }
+      ]
+    },
+    {
+      "first_segment": 16,
+      "last_segment": 18,
+      "heading": "第四拍：为生儿子搞蒙太奇",
+      "text": "到第四拍，第8分钟，为了生儿子各种努力，搞了一组蒙太奇。我们说印度电影蒙太奇很多，能理解为什么吗？第一，他们喜欢音乐，一配乐就忍不住；第二，阿米尔·汗也确实有钱，他拍电影镜头数非常多，碎的镜头特别特别多，其实都很费钱的。我们说一个镜头就是一场置景，就是一笔钱。拍过戏的同学就知道这种蒙太奇有多费钱，这就是有钱的电影和没钱的电影最大的区别。\n也就是说第四拍里面，这个为了生儿子搞了一组蒙太奇各种努力，结果第二胎还是女儿。因为他在这时候依然认为只有儿子能实现自己的梦想，他用台词说出来了。我们说这部戏并不是——虽然评分高，但我们平常跟你说并不深奥，是很显性的一些主题，没有什么深刻的东西，好吧。\n接下来进入第五拍。〔关于蒙太奇成本、阿米尔·汗投入与影片主题深浅，是讲师的分析，并未独立核查。〕",
+      "corrections": []
+    },
+    {
+      "first_segment": 19,
+      "last_segment": 20,
+      "heading": "第五拍：放弃梦想",
+      "text": "承接第五拍，来到11分钟，几年以后，他这个信念依然没有变，但是三胎四胎都还是女儿，导致他彻底放弃了。他放弃自己的梦想了，放弃梦想的标志性动作是什么呢？满墙的荣誉全都收起来了，满墙的那些纪念——奖牌呀、照片啊全都收起来了。这里有一个放弃梦想的动作。讲师随后报出第六拍，时间是13分钟。",
+      "corrections": []
+    },
+    {
+      "first_segment": 21,
+      "last_segment": 21,
+      "heading": "第六拍：激励事件——发现女儿也能摔跤",
+      "text": "承接第六拍，父亲被“找门子”告状——我们北方话叫找门子——两个女儿在学校打男生，结果他发现女儿也能摔跤，也能继续梦想。我们说第六拍算是个激励事件〔待核〕。随后就进入第七拍的召唤与拒绝。",
+      "corrections": [
+        {
+          "original": "激利事件",
+          "cleaned": "激励事件〔待核〕",
+          "basis": "S21原词'激利事件'疑为编剧术语'激励事件'(inciting incident)"
+        }
+      ]
+    },
+    {
+      "first_segment": 22,
+      "last_segment": 23,
+      "heading": "第七拍：召唤与拒绝——说服母亲",
+      "text": "第七拍来到15分钟，必须说服自己的孩子的妈，对吧？然后带两个女儿训练一年。包括与孩子的母亲讨论女儿该不该为父亲的梦想放弃原本的人生这件事情，进行了一个讨论。在这时候，孩子的母亲认为女儿在为父亲的梦想牺牲自己的人生〔源中“他的母亲”指代混乱，依S22“自己的孩子的妈”整理〕。",
+      "corrections": [
+        {
+          "original": "他的母亲",
+          "cleaned": "孩子的母亲",
+          "basis": "S22明说自己的孩子的妈，讨论女儿是否牺牲人生，故不是男主母亲。"
+        }
+      ]
+    },
+    {
+      "first_segment": 24,
+      "last_segment": 25,
+      "heading": "第八拍：开始训练与歌舞克制",
+      "text": "第八拍17分钟，带两个女儿吃最后一顿零食，开始训练，两个女儿非常崩溃，然后又来了一个BGM。但是我们强调一下，在这部电影当中，阿米尔·汗非常的克制，只放了欢快的印度音乐，但是一直没有跳舞——除了婚礼那场戏，婚礼那场戏是合法跳舞。\n同学们能理解，印度人拍电影他很难忍住不进行唱跳。但是在这部电影创作者非常克制，为了国际化，为了国际票房，非常的克制，忍不住跳舞就放在婚礼那场了，是为了国际市场，这很正常。\n随后报出第九拍，来到25分钟，父亲带着两个女儿……〔下一段接续训练队伍。歌舞安排的国际市场动机为讲师解释。〕",
+      "corrections": []
+    },
+    {
+      "first_segment": 26,
+      "last_segment": 26,
+      "heading": "第九拍：带侄子一起训练，初战受挫",
+      "text": "这一拍还带上侄子，和两个女儿一起训练，出战受挫。",
+      "corrections": []
+    },
+    {
+      "first_segment": 27,
+      "last_segment": 28,
+      "heading": "第十至第十一拍：逼女儿吃肉与剃短发",
+      "text": "第十拍来了，26分钟，给女儿做肉吃，把女儿的力气问题与吃肉联系起来。〔源句为“认为女儿没有力气是吃肉”，与随后做肉、让女儿吃肉的行为不顺，是否漏识“没”属于关键否定，不能直接补成已确认原话。〕这里要交代一下，按讲师的说法，印度大部分普通家庭是吃素的，所以这里他逼女儿吃肉，这个孩子的妈妈很崩溃——买鸡肉做鸡肉，他们本来吃素。那这件事情，同学们，我自己一直没有去过印度，但我有个好朋友一直在印度工作，所以我经常问他，确实有这个情况。但是我一直搞不清楚，完全吃素这身体能行吗？其实就是想说这个父亲的决心很重，让孩子吃肉。很多故事，你要结合人家的社会背景去看。\n好，来到第十一拍，29分钟，给女儿剃短发。〔饮食习惯、朋友见闻与纯素身体是否能行的疑问，均为讲师原课堂说法，没有转化为营养结论；本批未布置额外作业。〕",
+      "corrections": [
+        {
+          "original": "没有力气是吃肉",
+          "cleaned": "力气问题与吃肉相关〔否定待核〕",
+          "basis": "原句疑漏没，但不能确定；正文保留原句，连贯叙述只采用确定的做肉、让女儿吃肉。"
+        },
+        {
+          "original": "他比女儿吃肉",
+          "cleaned": "他逼女儿吃肉",
+          "basis": "相邻原稿描述孩子妈妈崩溃、买鸡做鸡及父亲决心，按行动语境整理。"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S4“预袭电影”、S7“坚职配电影”按原词标疑，不把候选订正当已听校。",
+    "S9“凯哇哈特”“d于speelle”保留原识别姓名，不补熟悉演员；“黑人兄弟”沿用讲师称法，未扩成具体作品。",
+    "S10“求治愈”疑为求知欲，S21“激利事件”按节拍语境暂作激励事件，未听校。",
+    "S15“向先生妥协了”对象不清，保留原词；不编出新的先生角色，也不确定改为现实。",
+    "S23“他的母亲”依S22孩子的妈整理为孩子母亲。",
+    "S27“没有力气是吃肉”疑漏关键否定，正文展示原句，不直接确认为没有吃肉。",
+    "运动片项目、蒙太奇成本、印度文化与饮食习惯、国际票房创作动机均为讲师说法；未观看影片或外部核验。"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [
+    {
+      "kind": "source_mismatched_corrections_relocated",
+      "records": [
+        {
+          "original": "预袭电影",
+          "from_first_segment": 1,
+          "to_first_segment": 4
+        },
+        {
+          "original": "坚职配电影",
+          "from_first_segment": 1,
+          "to_first_segment": 7
+        },
+        {
+          "original": "凯哇哈特",
+          "from_first_segment": 1,
+          "to_first_segment": 7
+        },
+        {
+          "original": "d于speelle",
+          "from_first_segment": 1,
+          "to_first_segment": 7
+        },
+        {
+          "original": "求治愈",
+          "from_first_segment": 1,
+          "to_first_segment": 7
+        },
+        {
+          "original": "激利事件",
+          "from_first_segment": 1,
+          "to_first_segment": 21
+        }
+      ]
+    }
+  ],
+  "unassigned_corrections": [],
+  "job": "p088-c001",
+  "part": 88,
+  "source_json_sha256": "d394be3f5127deee90daa3802ae88a0dd29fb2405b443d01f6528e8bceab53ca",
+  "output_text_characters": 2846,
+  "thread_id": "01a07f30-ca28-7b32-8780-4fc14c10a8f2",
+  "usage": {
+    "total": {
+      "totalTokens": 16514,
+      "inputTokens": 10678,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5836,
+      "reasoningOutputTokens": 1310
+    },
+    "last": {
+      "totalTokens": 16514,
+      "inputTokens": 10678,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5836,
+      "reasoningOutputTokens": 1310
+    },
+    "modelContextWindow": 258400
+  },
+  "raw_turn_start": {
+    "turn": {
+      "id": "01a07f30-ca98-7920-89d6-812fb7b26aed",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "raw_tool_items": [],
+  "length_ratio": 1.1073929961089495,
+  "review_length_flag": false,
+  "syntax_repair": {
+    "kind": "Offline JSONDecoder.raw_decode of two concatenated identical complete JSON objects; retain one canonical copy",
+    "raw_path": "research/2026-09-08-charlie-course-cleaning/native-supplements/p088-c001-raw.json",
+    "raw_sha256": "e3211504269723baf94a1cff7a43762b64af6083d5d53609bb2213ea9e1bcee4",
+    "raw_message_count": 1,
+    "complete_object_count": 2,
+    "objects_structurally_identical": true,
+    "object_serialized_text_identical": true,
+    "object_character_lengths": [
+      4367,
+      4367
+    ],
+    "blocks_per_object": 12,
+    "all_unique_blocks_preserved": true,
+    "canonical_pre_semantic_snapshot": "research/2026-09-08-charlie-course-cleaning/native-supplements/p088-c001-syntax-restored-before-semantic-review.json",
+    "canonical_pre_semantic_sha256": "f053ee926b0b3a78f1f77cf6df682dd87909a2cc71bb943fca2b21b8f169a84a",
+    "non_structural_content": "No content characters changed in syntax recovery; only the byte-identical duplicated whole object was deduplicated. Semantic review is separately recorded below.",
+    "api_calls": 0,
+    "worker_started": false
+  },
+  "independent_full_review": {
+    "reviewer": "/root/clean_core_15_24",
+    "reviewed_at": "2026-09-08",
+    "source_read": "P088 S1—S28全部源稿与原始返回中两个完整JSON对象全文核读",
+    "changes": [
+      "原始对象重复输出两次，12块并无差异；仅去除完整重复对象，不跨对象拼块。",
+      "保留全部正文与原始元数据快照，6条误放首块的订正移到实际源块。",
+      "调整S3/4、S10/11、S18/19、S20/21、S21/22、S25/26的跨段内容归属，保留完整连续叙述。",
+      "孩子母亲的指代订正；关键否定没有力气是吃肉标疑；向先生妥协保留疑点。",
+      "撤销按熟悉演员补姓名的猜测，保留全部原识别名字；讲师文化、商业与饮食判断归其本人。"
+    ],
+    "limits": "只核本批28段；未听校、未看片或外部核验；未调用API，未启动或恢复worker。"
+  }
+}

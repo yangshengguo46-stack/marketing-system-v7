@@ -1,0 +1,11 @@
+{
+  "codex-rs/Cargo.lock": "9c2cb7d7396204c7da2fa379686e138c68f41011c92072e64a099bb524b1976b",
+  "codex-rs/ai-ip-runtime/Cargo.toml": "a6a56a321e0c2135876b446d0490de76045e6534de44c2ad4f83b475e070e626",
+  "codex-rs/ai-ip-runtime/src/lib.rs": "10a6d207ae0f7d135318b06a176910f9cdf01e22c42fd396fcd94b325f411294",
+  "codex-rs/app-server/Cargo.toml": "79c931384e0beafb5fce021cda359364303d5c59b15761742e065437123f7ed0",
+  "codex-rs/app-server/README.md": "3b930552d6f5bf4e11c8a6cf48216107a97c001e8325fc59c454a406ead9ee69",
+  "codex-rs/app-server/src/extensions.rs": "210fad061dac55f6c35afe29b2262a0e8b916355bd212330e1f19930eff284cc",
+  "codex-rs/app-server/tests/suite/v2/ai_ip_strict_output.rs": "5b0fae2aec17c74d1cab10376bb047a145d92a949c5dab85b6a0e8ac4ecf813b",
+  "codex-rs/app-server/tests/suite/v2/mod.rs": "f73b1772345607b69dde8ec6deded4108c03f1b6fd3b77f1c2c392b11b971ea5",
+  "codex-rs/codex-api/src/sse/responses.rs": "9cc7b68e94f4cecceb736814514bf8db0458db25c4dec71db0d6b53ea0889c49"
+}

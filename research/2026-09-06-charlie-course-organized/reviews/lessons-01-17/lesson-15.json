@@ -1,0 +1,238 @@
+{
+  "lesson": 15,
+  "title": "节拍器",
+  "parts": [
+    34,
+    35,
+    36,
+    37
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    34,
+    35,
+    36,
+    37
+  ],
+  "teaching_nodes": [
+    {
+      "part": 34,
+      "start_seconds": 22,
+      "end_seconds": 841,
+      "label": "网课反馈与教学规律"
+    },
+    {
+      "part": 34,
+      "start_seconds": 852,
+      "end_seconds": 1169,
+      "label": "十序列卡住与细分边界"
+    },
+    {
+      "part": 34,
+      "start_seconds": 1178,
+      "end_seconds": 1926,
+      "label": "节拍对照、开场与铺垫"
+    },
+    {
+      "part": 35,
+      "start_seconds": 1,
+      "end_seconds": 343,
+      "label": "世界观、主题、推动争执"
+    },
+    {
+      "part": 35,
+      "start_seconds": 348,
+      "end_seconds": 1298,
+      "label": "新阶段、B故事、游戏"
+    },
+    {
+      "part": 35,
+      "start_seconds": 1299,
+      "end_seconds": 1849,
+      "label": "中点到灵魂黑夜"
+    },
+    {
+      "part": 35,
+      "start_seconds": 1850,
+      "end_seconds": 2296,
+      "label": "最终方案、高潮和终场"
+    },
+    {
+      "part": 36,
+      "start_seconds": 30,
+      "end_seconds": 437,
+      "label": "AB补解与want/need"
+    },
+    {
+      "part": 36,
+      "start_seconds": 440,
+      "end_seconds": 819,
+      "label": "蝌蚪、警察旧例"
+    },
+    {
+      "part": 36,
+      "start_seconds": 822,
+      "end_seconds": 1144,
+      "label": "回到17岁与伴郎"
+    },
+    {
+      "part": 37,
+      "start_seconds": 2,
+      "end_seconds": 145,
+      "label": "伴郎两人友情"
+    },
+    {
+      "part": 37,
+      "start_seconds": 149,
+      "end_seconds": 534,
+      "label": "摇滚校园"
+    },
+    {
+      "part": 37,
+      "start_seconds": 536,
+      "end_seconds": 1087,
+      "label": "周星驰AB跨度"
+    },
+    {
+      "part": 37,
+      "start_seconds": 1104,
+      "end_seconds": 1442,
+      "label": "单捋AB及关系线"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "收作业与群反馈总述",
+      "part": 34,
+      "start_seconds": 204.87,
+      "end_seconds": 211.18,
+      "asr_excerpt": "得有一两百份作业了…没有时间…看完",
+      "submission_spec": "未指课号、材料",
+      "teacher_review": "不等于已经批完第14课",
+      "uncertainty": "匿名总量回顾"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "十序列后想不出具体事件的共同困难",
+      "part": 34,
+      "start_seconds": 861.478,
+      "end_seconds": 918.444,
+      "asr_excerpt": "自从听完十序列就原地踏步到现在…什么事儿呢？事在哪呢？",
+      "submission_spec": "没有展示个人稿",
+      "teacher_review": "本课以节拍细分补课",
+      "uncertainty": ""
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "用小本积累电影触动与生活观察",
+      "part": 34,
+      "start_seconds": 920.998,
+      "end_seconds": 982.252,
+      "asr_excerpt": "要靠小本儿…要靠素材…常年的积累",
+      "submission_spec": "持续训练，无新篇数",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "重看定制伴郎，只看B故事打点",
+      "part": 37,
+      "start_seconds": 45.35,
+      "end_seconds": 50.636,
+      "asr_excerpt": "再把顶制伴郎看一遍，只看比故事",
+      "submission_spec": "看片建议，无报告",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "电影单捋AB；电视剧可单捋人物关系",
+      "part": 37,
+      "start_seconds": 1397.926,
+      "end_seconds": 1428.972,
+      "asr_excerpt": "一个电影的话，你把AB分开捋一遍还是很有用的…自己去揣摩，自己去运用",
+      "submission_spec": "未指定旧稿或交表要求",
+      "teacher_review": "方法讲解已演示，未定逐份讲评",
+      "uncertainty": ""
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "examples": [
+    {
+      "case_version": "police_compensation_ab_lesson15",
+      "source_relation": "第8课抚恤金版续用，新增仪表做饭等生活例，未展示学生修改稿",
+      "part": 36,
+      "start_seconds": 660,
+      "end_seconds": 819,
+      "input": "以为有钱才能照顾女儿，寻找殉职赔偿",
+      "change": "立功之后增加负责工作与生活的内在变化打点",
+      "effect": "赢回亲情解释落在成为好父亲而非骗抚恤成功"
+    },
+    {
+      "case_version": "ab_separate_planning_lesson15",
+      "source_relation": "老师推荐的构架方法",
+      "part": 37,
+      "start_seconds": 1104,
+      "end_seconds": 1246,
+      "input": "只有A外部事件线，人物成长节点模糊",
+      "change": "单捋B；可用A事件承载，缺载体再补事",
+      "effect": "检查成长是否连贯、哪些事兼顾内外",
+      "limits": "不是要求两条故事分别发生或四条线都强制单写"
+    }
+  ],
+  "material_continuity": {
+    "relation": "teacher_explicit_theory_and_case_reuse",
+    "sources": [
+      8,
+      9,
+      12,
+      13
+    ],
+    "evidence": "p34明确因十序列困难补课；p36蝌蚪及抚恤金警察；p37明确回顾电视剧关系线"
+  },
+  "limits": [
+    "四P全文机器稿已读，未逐句听校",
+    "本课转述斯奈德，不代表已核原书定义或权威译文",
+    "110分钟与十五节点为本课示例，老师明示初学勿框死",
+    "ASR中点/终场误字，板书确认中点55；争执12–25与口述12–15、游戏30–50与口称25分钟有差异",
+    "电影案例为老师解读和回忆，非逐镜核验或实际创作记录"
+  ],
+  "frames": [
+    {
+      "part": 35,
+      "source_seconds": 2250,
+      "path": "frames/p035-2250.jpg",
+      "sha256": "5d291021977081c1ab167296268fb8f715cbb6852a54fdc8f5d02ec32f15f079",
+      "visually_read": true
+    },
+    {
+      "part": 35,
+      "source_seconds": 331,
+      "path": "frames/p035-331.jpg",
+      "sha256": "53a7b31edb558502adf7cfbfe41176514b87fd69e515e3bffa4935e58b2ba5f1",
+      "visually_read": true
+    },
+    {
+      "part": 36,
+      "source_seconds": 321,
+      "path": "frames/p036-321.jpg",
+      "sha256": "08d13fd9fa589936ca276582d0b9c26e164f31e547a2bf977be98c7860c57274",
+      "visually_read": true
+    },
+    {
+      "part": 36,
+      "source_seconds": 379,
+      "path": "frames/p036-379.jpg",
+      "sha256": "a8d0fa8f2e081cdb8f547480c7463cc824d09d1e821b065d8874157254dac339",
+      "visually_read": true
+    },
+    {
+      "part": 36,
+      "source_seconds": 815,
+      "path": "frames/p036-815.jpg",
+      "sha256": "c2ff7641881600be05f4ee2941deea40aa20adc33cf5eee350b758ab3c4d1284",
+      "visually_read": true
+    }
+  ]
+}

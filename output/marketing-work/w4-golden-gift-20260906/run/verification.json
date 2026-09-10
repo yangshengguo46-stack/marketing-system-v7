@@ -1,0 +1,240 @@
+{
+  "scope": "真实模型开发试验；非真实商家验证；最终稿由Lead直接修订，未获用户质量认可",
+  "attempts": [
+    {
+      "label": "attempt-a",
+      "thread": {
+        "threadId": "01a0755a-4629-7351-ac90-c0d99a188f0d",
+        "model": "glm-5-2-260617"
+      },
+      "turns": [
+        {
+          "id": "01a0755a-b3cd-7990-8254-63da55bc71ff",
+          "status": "completed",
+          "error": null,
+          "durationMs": 217143
+        },
+        {
+          "id": "01a0755f-88cb-7bc1-86d0-bda1f4bcfb74",
+          "status": "completed",
+          "error": null,
+          "durationMs": 70228
+        }
+      ],
+      "marketingWorkCalls": [
+        {
+          "callId": "call_qlhv6lbattox5lnp1emhexwn",
+          "action": "open",
+          "stage": "research",
+          "success": false,
+          "error": "Use record to save a stage body"
+        },
+        {
+          "callId": "call_obidyutqg8n0jph8syiy4bpe",
+          "action": "record",
+          "stage": "research",
+          "success": false,
+          "error": "No such file or directory (os error 2)"
+        },
+        {
+          "callId": "call_nemrmx6big9cwpq7125telo8",
+          "action": "open",
+          "stage": "research",
+          "success": false,
+          "error": "Use record to save a stage body"
+        },
+        {
+          "callId": "call_o4sjk137mwbx1w4k9vb52tyl",
+          "action": "record",
+          "stage": "research",
+          "success": false,
+          "error": "No such file or directory (os error 2)"
+        },
+        {
+          "callId": "call_zoea0ghl6srl4zg12gtmkjsg",
+          "action": "open",
+          "stage": null,
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_iym66anonikt0ydkic9tnpvh",
+          "action": "record",
+          "stage": "research",
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_7tpm5cnngxstov6ui6wwvv2k",
+          "action": "record",
+          "stage": "research",
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_calept4glfk12nd7z1c5vqcj",
+          "action": "record",
+          "stage": "direction",
+          "success": true,
+          "error": null
+        }
+      ],
+      "execCalls": 10,
+      "turnSteers": 1,
+      "usage": {
+        "totalTokens": 329333,
+        "inputTokens": 316162,
+        "cachedInputTokens": 243456,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 13171,
+        "reasoningOutputTokens": 5395
+      }
+    },
+    {
+      "label": "attempt-b",
+      "thread": {
+        "threadId": "01a07567-11ba-7810-a6ad-060802e2175d",
+        "model": "glm-5-2-260617"
+      },
+      "turns": [
+        {
+          "id": "01a07567-9ac1-76b0-8dcb-fb9fc491250c",
+          "status": "completed",
+          "error": null,
+          "durationMs": 92924
+        },
+        {
+          "id": "01a0756b-fe66-7b60-be03-f7a66eda1b32",
+          "status": "completed",
+          "error": null,
+          "durationMs": 17436
+        }
+      ],
+      "marketingWorkCalls": [
+        {
+          "callId": "call_dourlibaykkc8fvte9sgnmx0",
+          "action": "open",
+          "stage": null,
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_27rvvjc0nt55dkg726crwgg4",
+          "action": "record",
+          "stage": "research",
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_tyj3ja1zp0c1z6dr1m5do33c",
+          "action": "record",
+          "stage": "direction",
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_hq2v61sdfqren66pskovdvhy",
+          "action": "record",
+          "stage": "draft",
+          "success": true,
+          "error": null
+        },
+        {
+          "callId": "call_eancxnkv4zk2gaej6oqmgqg3",
+          "action": "record",
+          "stage": "draft",
+          "success": true,
+          "error": null
+        }
+      ],
+      "execCalls": 2,
+      "turnSteers": 0,
+      "usage": {
+        "totalTokens": 110261,
+        "inputTokens": 105727,
+        "cachedInputTokens": 64192,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 4534,
+        "reasoningOutputTokens": 2757
+      }
+    }
+  ],
+  "usageTotal": {
+    "totalTokens": 439594,
+    "inputTokens": 421889,
+    "cachedInputTokens": 307648,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 17705,
+    "reasoningOutputTokens": 8152
+  },
+  "fullReads": {
+    "mission.md": {
+      "completeBodyObservedInNativeToolOutput": true,
+      "callIds": [
+        "call_indha81cg2pd1g6vvuconzuo"
+      ],
+      "bytes": 2721
+    },
+    "business-facts.md": {
+      "completeBodyObservedInNativeToolOutput": true,
+      "callIds": [
+        "call_fhmewrn4vd3x7i1vndls9ok8"
+      ],
+      "bytes": 1844
+    },
+    "director-process-evidence.md": {
+      "completeBodyObservedInNativeToolOutput": true,
+      "callIds": [
+        "call_pdb1z59tg4gahsfik6zylhft"
+      ],
+      "bytes": 3735
+    },
+    "failure-review.md": {
+      "completeBodyObservedInNativeToolOutput": true,
+      "callIds": [
+        "call_cji1rjf6rpe2kuyothikoonf"
+      ],
+      "bytes": 842
+    },
+    "content-finding.md": {
+      "completeBodyObservedInNativeToolOutput": true,
+      "callIds": [
+        "call_bbe4wj7b168pgcok9dig5ku1"
+      ],
+      "bytes": 3081
+    }
+  },
+  "stages": {
+    "research": {
+      "bytes": 1242,
+      "within8000ByteLimit": true,
+      "sha256": "87399454c3aa5d44ed0fdc0e367d8cdae372c6d8dfd7eb1da91321a93a92ff37",
+      "exportEqualsNativeBody": true
+    },
+    "direction": {
+      "bytes": 1412,
+      "within8000ByteLimit": true,
+      "sha256": "440a2ff642ecb5ec5755a12f814cd8190cda85d177431aced0a110afcdf04243",
+      "exportEqualsNativeBody": true
+    },
+    "draft": {
+      "bytes": 1249,
+      "within8000ByteLimit": true,
+      "sha256": "64cc5c18dfcae76a2d58a0da53ce660ca44cd01ba6c32cadeaebe13e18f4ac8a",
+      "exportEqualsNativeBody": true
+    }
+  },
+  "finalDraftSuccessfullySavedByNativeRecord": true,
+  "finalDraftMatchesLeadSuppliedText": true,
+  "localManualWorkJsonEdit": false,
+  "videoGenerated": false,
+  "published": false,
+  "newContentPackageProduced": false,
+  "businessAccepted": false,
+  "autonomousEditorialCapabilityPassed": false,
+  "newProductRustCode": false,
+  "freshCodeTests": false,
+  "fmtExitCode": 0,
+  "providerHttpCapture": false,
+  "actualCnyBill": "unknown"
+}

@@ -1,0 +1,289 @@
+{
+  "lesson": 14,
+  "source_parts": [
+    {
+      "part": 32,
+      "source_json_sha256": "7c04898961043e6b3308de8ad3d3462fad5236dd0465626ad8e4709757cce5b6",
+      "segment_count": 486
+    },
+    {
+      "part": 33,
+      "source_json_sha256": "c2f04fa02d7500b1838ed5906725d395378348f3fe64be1b90ad1104e8df24a9",
+      "segment_count": 669
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L14-B001",
+      "part": 32,
+      "first_segment": 1,
+      "last_segment": 42,
+      "heading": "大家问“格式”，真正卡住的可能是怎样写一场戏",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B002",
+      "part": 32,
+      "first_segment": 43,
+      "last_segment": 86,
+      "heading": "场是时空概念，不必每换一道门就另起一场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B003",
+      "part": 32,
+      "first_segment": 87,
+      "last_segment": 148,
+      "heading": "场景像小故事；第一项任务是传达有用信息",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B004",
+      "part": 32,
+      "first_segment": 149,
+      "last_segment": 221,
+      "heading": "推进、变化可以与信息同时完成",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B005",
+      "part": 32,
+      "first_segment": 222,
+      "last_segment": 287,
+      "heading": "动作中进、动作中出：把黑帮老大吃面那场掐头去尾",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B006",
+      "part": 32,
+      "first_segment": 288,
+      "last_segment": 345,
+      "heading": "对抗和反转；只交代吃面爱好的戏可以搬走信息",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B007",
+      "part": 32,
+      "first_segment": 346,
+      "last_segment": 368,
+      "heading": "课堂放映：《风骚律师》第一季第一集碰瓷片段",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B008",
+      "part": 32,
+      "first_segment": 369,
+      "last_segment": 421,
+      "heading": "碰瓷场的信息：争取客户、穷困与不循规蹈矩",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B009",
+      "part": 32,
+      "first_segment": 422,
+      "last_segment": 436,
+      "heading": "这次相遇怎样推动后面的过激行动",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B010",
+      "part": 32,
+      "first_segment": 437,
+      "last_segment": 466,
+      "heading": "再检查进出、对抗和反转",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B011",
+      "part": 32,
+      "first_segment": 467,
+      "last_segment": 486,
+      "heading": "先有故事大纲，再安排每场任务",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B012",
+      "part": 33,
+      "first_segment": 1,
+      "last_segment": 59,
+      "heading": "对白不靠堆文采；流行句子未必可以照着模仿",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B013",
+      "part": 33,
+      "first_segment": 60,
+      "last_segment": 109,
+      "heading": "《夏洛特烦恼》问路笑场与马云发型的比喻",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B014",
+      "part": 33,
+      "first_segment": 110,
+      "last_segment": 179,
+      "heading": "两条自己走过的弯路：文艺对仗与故意答非所问",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B015",
+      "part": 33,
+      "first_segment": 180,
+      "last_segment": 216,
+      "heading": "第一类好对白来自人物：《楚门的世界》",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "京剧／虎门的世界",
+          "cleaned": "金句／《楚门的世界》",
+          "basis": "明确讨论对白类别与角色楚门。"
+        }
+      ]
+    },
+    {
+      "id": "L14-B016",
+      "part": 33,
+      "first_segment": 217,
+      "last_segment": 252,
+      "heading": "《当幸福来敲门》：父亲先打击梦想，再意识到自己也在追梦",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B017",
+      "part": 33,
+      "first_segment": 253,
+      "last_segment": 269,
+      "heading": "蜘蛛侠、综艺话语和道明寺：一句话显出人",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B018",
+      "part": 33,
+      "first_segment": 270,
+      "last_segment": 311,
+      "heading": "《泰坦尼克号》晚餐：一句话同时落在人、关系和故事走向上",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B019",
+      "part": 33,
+      "first_segment": 312,
+      "last_segment": 349,
+      "heading": "第二类来自情境：冲突够强，话反而要少",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B020",
+      "part": 33,
+      "first_segment": 350,
+      "last_segment": 388,
+      "heading": "《无间道》：身份冲突使三个字有分量",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B021",
+      "part": 33,
+      "first_segment": 389,
+      "last_segment": 415,
+      "heading": "方法一：分角色写，代入并表演着写",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B022",
+      "part": 33,
+      "first_segment": 416,
+      "last_segment": 436,
+      "heading": "方法二：调用素材库，记录真实说话方式",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B023",
+      "part": 33,
+      "first_segment": 437,
+      "last_segment": 493,
+      "heading": "方法三：小心用问答硬搬背景资料",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B024",
+      "part": 33,
+      "first_segment": 494,
+      "last_segment": 519,
+      "heading": "方法四：先写潜台词，再换成角色真正说的话",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B025",
+      "part": 33,
+      "first_segment": 520,
+      "last_segment": 558,
+      "heading": "方法五：替主要人物写当天的日记",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B026",
+      "part": 33,
+      "first_segment": 559,
+      "last_segment": 621,
+      "heading": "回收五个方法，再补一种素材：总爱提名人的人",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B027",
+      "part": 33,
+      "first_segment": 622,
+      "last_segment": 641,
+      "heading": "课堂放映：《泰坦尼克号》上层餐厅片段",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L14-B028",
+      "part": 33,
+      "first_segment": 642,
+      "last_segment": 669,
+      "heading": "作业：把两场已拍好的戏反写成剧本",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "两段英语放映ASR均存在识别缺口，明确作为放映区段处理，未补造完整外语字幕。",
+    "对白示例按课堂逻辑释义；假想角色日记与影片事实区分。",
+    "投毒寓言仅保留冲突与结果，不展开具体用料和载体。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第14课.md",
+  "output_sha256": "ae24d3a8c9b8b4f58fab1764bef5d83ae2f241fbe06a1076a492832f925c10d4",
+  "reader_navigation_update": {
+    "previous_output_sha256": "a75e5f54db1df619aba85dfc6dffe9cb6b5038bc26f483d0dec76b845b1940ff",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

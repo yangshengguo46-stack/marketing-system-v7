@@ -1,0 +1,26 @@
+{
+  "materials/public-research.md": {
+    "bytes": 2822,
+    "sha256": "05a32d5898c293979c302bfe3001bde45af7c04c40fcca88d1ecfb3849408c8b"
+  },
+  "materials/mission.md": {
+    "bytes": 1885,
+    "sha256": "0d243a7a030754032ff07acbe9f5010cc69eb4706708d7a3219f99f994b1918f"
+  },
+  "materials/source-import.json": {
+    "bytes": 374,
+    "sha256": "78ddd461482e8aec87ac6026f5e79d68e726643f16118483254c65b7c7eea4d7"
+  },
+  "materials/content-package-contract.md": {
+    "bytes": 842,
+    "sha256": "a30e69ec61e6b309348ec15f18cc2b5fc1445aa502e8c48689c061d46c529266"
+  },
+  "materials/content-package.schema.json": {
+    "bytes": 2425,
+    "sha256": "45da861436162573fa73401d3e39de46ee648b5dd7ba30ad84e7ebc11e0c1bc2"
+  },
+  "materials/v6-a115-history.md": {
+    "bytes": 6138,
+    "sha256": "b6261512762ad63b3e7c6253887f597c1c80862a21d667016005d41b444e555a"
+  }
+}

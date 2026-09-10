@@ -1,0 +1,20 @@
+{
+  "part": 73,
+  "status": "full_machine_text_comparison_complete",
+  "source_segments": 551,
+  "jobs": [
+    "p073-c001",
+    "p073-c002",
+    "p073-c003",
+    "p073-c004",
+    "p073-c005",
+    "p073-c006",
+    "p073-c007"
+  ],
+  "reviewer": "Lead",
+  "scope": "全部源ASR顺读与七份清洗结果全文对照，逐批记录见lead_full_review",
+  "limits": [
+    "无新增逐句听校或连续视听核验",
+    "故事版本、市场历史、演员安排和宣传效果均按课堂归属保留，未外部核实"
+  ]
+}

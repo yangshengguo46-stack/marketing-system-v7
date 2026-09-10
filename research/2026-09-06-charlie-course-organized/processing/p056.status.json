@@ -1,0 +1,51 @@
+{
+  "part": 56,
+  "title": "三十课-人类为什么需要影视剧30",
+  "state": "completed",
+  "started_at": "2026-09-06T11:05:18.184526+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 56,
+    "cid": 383686698,
+    "title": "三十课-人类为什么需要影视剧30",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=56",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十课-人类为什么需要影视剧30.mp4",
+    "sha256": "df5e7224ccbb7655819337cfd86025020819fb337506d6ed565b7dd82c40a016",
+    "bytes": 386077642,
+    "mtime_ns": 1788682061029889347,
+    "actual_duration_seconds": 5041.706333
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 5041.706688,
+  "segment_count": 1152,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T11:23:20.990056+00:00",
+  "elapsed_seconds": 1082.789,
+  "completed_at": "2026-09-06T11:23:20.990004+00:00",
+  "text_characters": 19911,
+  "rtf": 0.214766,
+  "max_rss_bytes_macos": 590225408,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 5041.7066875,
+    "duration_delta_seconds": 0.000354,
+    "vad_speech_seconds": 3665.984,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p056.source-time.txt": "529b90496ca7d29787557d8d83332a667decc07726a0bd32309445d904e4c94f",
+    "p056.source-time.srt": "c8b68e25b22023b43a9d6c109dc3cffb3ab49cf62c40aa75d8b86e180c6ba1d8"
+  }
+}

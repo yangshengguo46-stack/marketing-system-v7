@@ -1,0 +1,102 @@
+{
+  "part": 4,
+  "source_sha256": "92f00104f44b306d101d3cb01f1cd9bc6afaf7eec46c2e0bc93e5e44385ca84f",
+  "method": "FFmpeg 原视频单帧抽取；全帧 JPEG；通过 view_image 人工视觉核对；未校听。",
+  "frames": [
+    {
+      "source_seconds": 600,
+      "path": "frames/p004-0600.jpg",
+      "sha256": "485985e0649d2a90c4e728922c0cdd916f5a99964f5cf2bd12a88e349cb2b17c",
+      "visible_text": "跟她也建立共情",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 610,
+      "path": "frames/p004-0610.jpg",
+      "sha256": "010c2d6e228deb2a82de9673a0c7b6281f925bae6704012e11a50d0bca09125b",
+      "visible_text": "再讲最后一个",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 630,
+      "path": "frames/p004-0630.jpg",
+      "sha256": "68641cdef2b7fd0de91f1ba9b15e7ef8ed419e202de515452ebd4547ed4bc913",
+      "visible_text": "跟我一起学习研究一下",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 640,
+      "path": "frames/p004-0640.jpg",
+      "sha256": "3c61db6a307c37a913d8b650311ead040f65ac93b18dd972325c9109ef3cea55",
+      "visible_text": "无烧录字幕；课堂板书",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 647,
+      "path": "frames/p004-0647.jpg",
+      "sha256": "f069e10c5428dbd03d6ed43e0ac459a5f11d11b8a295c6771e78f315d001c26b",
+      "visible_text": "写下一个你的幻想",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 655,
+      "path": "frames/p004-0655.jpg",
+      "sha256": "5840944c38fc59cbe8851811e41b10aada709119501d732a628506837a5dbc9c",
+      "visible_text": "无烧录字幕；板书作业1 幻想",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 660,
+      "path": "frames/p004-0660.jpg",
+      "sha256": "a02fc9f98ac78ae6e55d32b2f3494f349540683be9f195bca39687e4e9462b35",
+      "visible_text": "人人都有幻想",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 667,
+      "path": "frames/p004-0667.jpg",
+      "sha256": "4742baa8d63f1118bbdcca642a565a3f2b97b9c70470d5a9f005b3a90ea0d3e9",
+      "visible_text": "或者是职业生涯的",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 675,
+      "path": "frames/p004-0675.jpg",
+      "sha256": "1ff79062b9dbf8410a442a73ecd4efef96c72bde9a8a57b3b285b644b94c10ce",
+      "visible_text": "不用不好意思 我告诉你不用不好意思",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 690,
+      "path": "frames/p004-0690.jpg",
+      "sha256": "77415bd37e12fd8dfe8e2adb17edd9196bebd6fbca18d975a3cb21fa1b0a52b2",
+      "visible_text": "你不会只想你拥有多少钱的",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 700,
+      "path": "frames/p004-0700.jpg",
+      "sha256": "50c27566460fddc645422b52dd2002d15606455807e45a53cc62abbb3706ffc5",
+      "visible_text": "拥有挣这个钱之后",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 710,
+      "path": "frames/p004-0710.jpg",
+      "sha256": "deba7002ca0456e52206dfdab47c83569e449b89721ccf2417b7d5ec35d87641",
+      "visible_text": "你给我把它描述出来",
+      "visually_read": true
+    },
+    {
+      "source_seconds": 717,
+      "path": "frames/p004-0717.jpg",
+      "sha256": "f0ea8eadc1f2cc5a55c9689db0bbd80f9b713a7120e63105f3d1f6419939aed5",
+      "visible_text": "这就是第一课的作业",
+      "visually_read": true
+    }
+  ],
+  "limits": [
+    "离散画面用于确认烧录字幕与定位，不等于完整视听核读",
+    "完整作业要求须与全文ASR交叉核对"
+  ]
+}

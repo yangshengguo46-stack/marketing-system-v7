@@ -1,0 +1,874 @@
+{
+  "scope": "第七版北极星下的完整IP运营Agent研究",
+  "sources": [
+    {
+      "title": "第七版总体规格，§1 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:12",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "第七版总体规格，§7.5、§8 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:281",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "五类验证项目 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:63",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Marketing OS 执行台账 | EXECUTION_LEDGER.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/projects/marketing-os-desktop/docs/marketing-os/current/EXECUTION_LEDGER.md:125",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "final_artifacts.py | final_artifacts.py",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/第四版营销系统/backend/packages/harness/deerflow/personal_ip/final_artifacts.py:499",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "V5 台账 | LEDGER.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第五版营销系统/docs/mcn-incubation-v5/LEDGER.md:1134",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "V6 台账 | LEDGER.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第六版营销系统/docs/content-intelligence-v6/LEDGER.md:2344",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "旧指标实现 | metric_labels.py",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/projects/marketing-os-desktop/agent/marketing/intelligence/metric_labels.py:88",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "ContentPackage 合同 | content_package.rs",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-domain/src/content_package.rs:82",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "当前 Runtime 提示 | prompt.rs",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-runtime/src/prompt.rs:4",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "case_factory 实际投影 | case_factory.py",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/scripts/ai_ip/eval_lab/case_factory.py:234",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "07B 执行控制器 | batch_controller.py",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/.worktrees/07b-isolated-batch-runner/scripts/ai_ip/eval_lab/batch_controller.py:270",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "第七版 Codex 映射与数据边界 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:167",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Effective harnesses for long-running agents",
+      "publisher_or_author": "Justin Young / Anthropic",
+      "publication_or_update_date": "2025-11-26",
+      "url": "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents",
+      "access_notes": "完整官方文章；软件开发演示，不是IP研究",
+      "native_provenance": "turn10view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory",
+      "publisher_or_author": "Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, Dong Yu",
+      "publication_or_update_date": "2024-10-14；v2 2025-03-04",
+      "url": "https://arxiv.org/abs/2410.10813",
+      "access_notes": "原论文HTML和摘要；ICLR2025；500道记忆问答",
+      "native_provenance": "turn10view1 / turn30view3",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Assisting in Writing Wikipedia-like Articles From Scratch with Large Language Models",
+      "publisher_or_author": "Yijia Shao et al. / NAACL",
+      "publication_or_update_date": "2024",
+      "url": "https://aclanthology.org/2024.naacl-long.347/",
+      "access_notes": "原论文全文；100篇FreshWiki，10位编辑；方法与边界已核查",
+      "native_provenance": "turn32view2 / turn33view1",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Into the Unknown Unknowns: Engaged Human Learning through Participation in Language Model Agent Conversations",
+      "publisher_or_author": "Yucheng Jiang, Yijia Shao, Dekun Ma, Sina J. Semnani, Monica S. Lam",
+      "publication_or_update_date": "2024；v2 2024-10-17",
+      "url": "https://arxiv.org/abs/2408.15232",
+      "access_notes": "原论文全文；20名招募，19份有效评估，不是营销评价",
+      "native_provenance": "turn33view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "STORM 去重源码 | stanford-oval/storm",
+      "publisher_or_author": "stanford-oval/storm maintainers",
+      "publication_or_update_date": "2025-09-30",
+      "url": "https://github.com/stanford-oval/storm/blob/fb951af7744dab086e34962e9bc6fe878e145f83/knowledge_storm/storm_wiki/modules/storm_dataclass.py#L66",
+      "access_notes": "官方源码静态阅读；commit fb951af7744dab086e34962e9bc6fe878e145f83；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "第七版历史经验边界 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:924",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Analogical encoding facilitates knowledge transfer in negotiation",
+      "publisher_or_author": "Jeffrey Loewenstein, Leigh Thompson, Dedre Gentner",
+      "publication_or_update_date": "1999-12",
+      "url": "https://groups.psych.northwestern.edu/gentner/papers/LoewensteinThompsonGentner99.pdf",
+      "access_notes": "作者PDF全文；根代理复核p591不显著收益反证；未把人类效果外推LLM",
+      "native_provenance": "turn30view1 / turn31view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Learning and Transfer: A General Role for Analogical Encoding",
+      "publisher_or_author": "Dedre Gentner, Jeffrey Loewenstein, Leigh Thompson",
+      "publication_or_update_date": "2003",
+      "url": "https://groups.psych.northwestern.edu/gentner/papers/GentnerLoewensteinThompson03.pdf",
+      "access_notes": "研究代理深读作者PDF，实验2与3；人类谈判迁移",
+      "native_provenance": "worker plan_audit, original PDF",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Break It Down, Pass It On: Cross-Task Skill Transfer in LLM Agents",
+      "publisher_or_author": "Yiyang Feng, Biddut Sarker Bijoy, Niranjan Balasubramanian, Jiawei Zhou",
+      "publication_or_update_date": "2026-08-20",
+      "url": "https://arxiv.org/html/2608.20274v1",
+      "access_notes": "预印本；全文方法、模型、数据及局限核查；英文任务",
+      "native_provenance": "turn26view0 / turn27view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Demystifying Agent Skills: Why They Work-Until They Don't",
+      "publisher_or_author": "Zhiyuan Jiang et al.",
+      "publication_or_update_date": "2026-08-14",
+      "url": "https://arxiv.org/abs/2608.14036",
+      "access_notes": "预印本；HTML方法及摘要，未复现研究",
+      "native_provenance": "turn24view0 / turn26view1",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "ViMax: Agentic Video Generation",
+      "publisher_or_author": "Lingxuan Huang, Sizhe He, Hengji Zhou, Liqiang Nie, Lianghao Xia, Chao Huang",
+      "publication_or_update_date": "2026-06-02",
+      "url": "https://arxiv.org/html/2606.07649v1",
+      "access_notes": "原论文全文；35个视频样本；不等同营销与目标供应商效果",
+      "native_provenance": "turn18view0 / turn27view4",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "候选选择源码 | HKUDS/ViMax",
+      "publisher_or_author": "HKUDS/ViMax maintainers",
+      "publication_or_update_date": "2026-07-29",
+      "url": "https://github.com/HKUDS/ViMax/blob/05a48943878312d88fe5a016c12a9654940ecc43/agents/best_image_selector.py#L141",
+      "access_notes": "官方源码静态阅读；commit 05a48943878312d88fe5a016c12a9654940ecc43；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "OpenTimelineIO Documentation",
+      "publisher_or_author": "Academy Software Foundation / OpenTimelineIO contributors",
+      "publication_or_update_date": "访问2026-09-05；页面未给单一发布日期",
+      "url": "https://opentimelineio.readthedocs.io/en/latest/index.html",
+      "access_notes": "官方文档；时间线交换，非渲染器",
+      "native_provenance": "turn7search7",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "FFmpeg License and Legal Considerations",
+      "publisher_or_author": "FFmpeg project",
+      "publication_or_update_date": "访问2026-09-05；页面未给单一发布日期",
+      "url": "https://ffmpeg.org/legal.html",
+      "access_notes": "官方许可页面；具体发行二进制仍需按启用组件核查",
+      "native_provenance": "turn18view2",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Generative AI enhances individual creativity but reduces the collective diversity of novel content",
+      "publisher_or_author": "Anil R. Doshi, Oliver P. Hauser / Science Advances",
+      "publication_or_update_date": "2024-07-12",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11244532/",
+      "access_notes": "原文全文；293个作者，600个评阅者；8句英文故事，非专业IP运营",
+      "native_provenance": "turn30view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "第七版发布与学习规格 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:498",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Psychological Strategies for Winning a Geopolitical Forecasting Tournament",
+      "publisher_or_author": "Barbara Mellers et al. / Psychological Science",
+      "publication_or_update_date": "2014-03-21",
+      "url": "https://faculty.wharton.upenn.edu/wp-content/uploads/2015/07/2014---psychological-strategies-for-winning-a-tournament.pdf",
+      "access_notes": "作者全文PDF；训练与校准；人类地缘政治预测不是内容干预",
+      "native_provenance": "turn30view2 / turn31view1",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "A Comparison of Approaches to Advertising Measurement: Evidence from Big Field Experiments at Facebook",
+      "publisher_or_author": "Brett R. Gordon, Florian Zettelmeyer, Neha Bhargava, Dan Chapsky / Marketing Science",
+      "publication_or_update_date": "2019-04-04 online；38(2):193-225",
+      "url": "https://pubsonline.informs.org/doi/10.1287/mksc.2018.1135",
+      "access_notes": "正式期刊摘要；15实验500百万用户实验观察；与2016白皮书12实验口径区分",
+      "native_provenance": "turn18view1 / turn31view2",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "STORM 固定快照 | stanford-oval/storm",
+      "publisher_or_author": "stanford-oval/storm maintainers",
+      "publication_or_update_date": "2025-09-30",
+      "url": "https://github.com/stanford-oval/storm/tree/fb951af7744dab086e34962e9bc6fe878e145f83",
+      "access_notes": "官方源码静态阅读；commit fb951af7744dab086e34962e9bc6fe878e145f83；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "ACE 固定快照 | ace-agent/ace",
+      "publisher_or_author": "ace-agent/ace maintainers",
+      "publication_or_update_date": "2026-08-24",
+      "url": "https://github.com/ace-agent/ace/tree/82709de050e1db6e6ef2f07bcb0393560b94992a",
+      "access_notes": "官方源码静态阅读；commit 82709de050e1db6e6ef2f07bcb0393560b94992a；Apache-2.0；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "GEPA 固定快照 | gepa-ai/gepa",
+      "publisher_or_author": "gepa-ai/gepa maintainers",
+      "publication_or_update_date": "2026-09-01 UTC",
+      "url": "https://github.com/gepa-ai/gepa/tree/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407",
+      "access_notes": "官方源码静态阅读；commit 0632cdb5dcc052e690eab439e1b4a7e3e9cfe407；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "ViMax 固定快照 | HKUDS/ViMax",
+      "publisher_or_author": "HKUDS/ViMax maintainers",
+      "publication_or_update_date": "2026-07-29",
+      "url": "https://github.com/HKUDS/ViMax/tree/05a48943878312d88fe5a016c12a9654940ecc43",
+      "access_notes": "官方源码静态阅读；commit 05a48943878312d88fe5a016c12a9654940ecc43；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "OTIO 固定快照 | AcademySoftwareFoundation/OpenTimelineIO",
+      "publisher_or_author": "AcademySoftwareFoundation/OpenTimelineIO maintainers",
+      "publication_or_update_date": "2026-08-07",
+      "url": "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/tree/bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072",
+      "access_notes": "官方源码静态阅读；commit bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072；Apache-2.0；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models",
+      "publisher_or_author": "Qizheng Zhang et al.",
+      "publication_or_update_date": "2025-10-06；v3 2026-03-29",
+      "url": "https://arxiv.org/abs/2510.04618",
+      "access_notes": "根代理核对v3摘要；工作代理深读v2方法/限制；官方源码独立核验，未声称精确复现实验",
+      "native_provenance": "turn32view1",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "条目操作 | ace-agent/ace",
+      "publisher_or_author": "ace-agent/ace maintainers",
+      "publication_or_update_date": "2026-08-24",
+      "url": "https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/playbook_utils.py#L96",
+      "access_notes": "官方源码静态阅读；commit 82709de050e1db6e6ef2f07bcb0393560b94992a；Apache-2.0；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "生成器 | ace-agent/ace",
+      "publisher_or_author": "ace-agent/ace maintainers",
+      "publication_or_update_date": "2026-08-24",
+      "url": "https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/ace/core/generator.py#L59",
+      "access_notes": "官方源码静态阅读；commit 82709de050e1db6e6ef2f07bcb0393560b94992a；Apache-2.0；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning",
+      "publisher_or_author": "Lakshya A Agrawal et al.",
+      "publication_or_update_date": "2025-07-25；v2 2026-02-14",
+      "url": "https://arxiv.org/abs/2507.19457",
+      "access_notes": "ICLR2026；论文和官方代码；结果非中文营销",
+      "native_provenance": "turn32view0",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "适配接口 | gepa-ai/gepa",
+      "publisher_or_author": "gepa-ai/gepa maintainers",
+      "publication_or_update_date": "2026-09-01 UTC",
+      "url": "https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/core/adapter.py#L83",
+      "access_notes": "官方源码静态阅读；commit 0632cdb5dcc052e690eab439e1b4a7e3e9cfe407；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "验证集默认 | gepa-ai/gepa",
+      "publisher_or_author": "gepa-ai/gepa maintainers",
+      "publication_or_update_date": "2026-09-01 UTC",
+      "url": "https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/api.py#L231",
+      "access_notes": "官方源码静态阅读；commit 0632cdb5dcc052e690eab439e1b4a7e3e9cfe407；MIT；未安装运行，不能继承论文性能",
+      "native_provenance": "GitHub raw / API / local static read",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+      "publisher_or_author": "Jie Huang et al.",
+      "publication_or_update_date": "2023-10-03；ICLR2024",
+      "url": "https://arxiv.org/abs/2310.01798",
+      "access_notes": "摘要及原始研究记录；只作限定任务反证，非2026模型能力上限",
+      "native_provenance": "turn22academia12 / turn22search1",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "Large Language Models Can Self-Correct with Key Condition Verification",
+      "publisher_or_author": "Zhenyu Wu, Qingkai Zeng, Zhihan Zhang, Zhaoxuan Tan, Chao Shen, Meng Jiang",
+      "publication_or_update_date": "2024-05-23；v3 2024-10-03",
+      "url": "https://arxiv.org/abs/2405.14092",
+      "access_notes": "EMNLP2024；摘要原论文记录；任务与验证条件不同",
+      "native_provenance": "turn24view2",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "现役质量与 Beta 标准 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:765",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "本地 App Server 文档 | README.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/app-server/README.md:296",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "现役仓内改造边界 | 2026-08-24-ip-agent-saas-design.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:204",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    },
+    {
+      "title": "总路线与依赖 | 2026-08-25-00-codex-ai-ip-master-roadmap.md",
+      "publisher_or_author": "项目仓库与Git台账",
+      "publication_or_update_date": "审计快照2026-09-05",
+      "url": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md:65",
+      "access_notes": "本地文件链接便于访问；历史结论以报告第03节明确提交为准，旧工作树存在未提交改动",
+      "native_provenance": "local exec / Git show",
+      "accessed_at": "2026-09-05"
+    }
+  ],
+  "claims": [
+    {
+      "section": "01 直接结论：保留第七版，改变能力落地与积累的方式",
+      "claim_context": "第七版的北极星是：一站式帮助用户持续产出更可能成为爆款的内容，建立影响力，并带来可衡量的关注、信任或业务行动。其产品范围明确覆盖业务理解、IP 策略、研究、选题、叙事、编导制作、成片、人工发布、数据回收与策略学习。[第七版总体规格，§1](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:12>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:12"
+      ]
+    },
+    {
+      "section": "02 用户最终应该得到怎样的工作体验",
+      "claim_context": "IP 的长期一致性，也不等于每条都重复一个“内容根”。个人 IP 要保持真实身份、表达和经历的连续性；组织 IP 要保持承诺、责任和不同出镜者之间的一致性。形式、选题和战术可以变化。[第七版总体规格，§7.5、§8](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:281>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:281"
+      ]
+    },
+    {
+      "section": "02 用户最终应该得到怎样的工作体验",
+      "claim_context": "对于只有身份标签的素人，系统要帮助发现其可持续表达的真实材料和兴趣；不能凭标签发明履历或自动指定一个赛道。它可以一边观察和访谈，一边完成不依赖未知事实的小型创作。原规格的五类项目正是为了检验这种差异，不能当作生产模板。[五类验证项目](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:63>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:63"
+      ]
+    },
+    {
+      "section": "03 历史说明了什么：可继承的资产比“上一版输赢”更重要",
+      "claim_context": "证据入口：早期素材提交 `c3ce67266`、指标循环 `42a9978a0`，见 [Marketing OS 执行台账](</Users/yangyucheng/projects/marketing-os-desktop/docs/marketing-os/current/EXECUTION_LEDGER.md:125>)；V4 成片合同 `da5e23eb`，见 [final_artifacts.py](</Users/yangyucheng/Documents/第四版营销系统/backend/packages/harness/deerflow/personal_ip/final_artifacts.py:499>)；V5 E39 结果 `add604c3`、A59 修正 `8d9defec`、E40 结果 `65e5716e`，见 [V5 台账](</Users/yangyucheng/Documents/ChatGPT/第五版营销系统/docs/mcn-incubation-v5/LEDGER.md:1134>)；V6 A122 `085d00fd`、A132 结果 `02c3bacb`、A136 `d14ca51f`、A149 `326eab3b`，见 [V6 台账](</Users/yangyucheng/Documents/ChatGPT/第六版营销系统/docs/content-intelligence-v6/LEDGER.md:2344>)。",
+      "source_urls": [
+        "/Users/yangyucheng/projects/marketing-os-desktop/docs/marketing-os/current/EXECUTION_LEDGER.md:125",
+        "/Users/yangyucheng/Documents/第四版营销系统/backend/packages/harness/deerflow/personal_ip/final_artifacts.py:499",
+        "/Users/yangyucheng/Documents/ChatGPT/第五版营销系统/docs/mcn-incubation-v5/LEDGER.md:1134",
+        "/Users/yangyucheng/Documents/ChatGPT/第六版营销系统/docs/content-intelligence-v6/LEDGER.md:2344"
+      ]
+    },
+    {
+      "section": "03 历史说明了什么：可继承的资产比“上一版输赢”更重要",
+      "claim_context": "还有一项不应迁移的“经验”：早期代码曾把互动近似为信任。这是未校准代理指标，不能成为北极星中真实信任或商业行动的测量真值。[旧指标实现](</Users/yangyucheng/projects/marketing-os-desktop/agent/marketing/intelligence/metric_labels.py:88>)",
+      "source_urls": [
+        "/Users/yangyucheng/projects/marketing-os-desktop/agent/marketing/intelligence/metric_labels.py:88"
+      ]
+    },
+    {
+      "section": "04 第七版站在哪里：设计明确，完整运营能力尚待形成",
+      "claim_context": "关键代码：[ContentPackage 合同](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-domain/src/content_package.rs:82>)、[当前 Runtime 提示](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-runtime/src/prompt.rs:4>)、[case_factory 实际投影](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/scripts/ai_ip/eval_lab/case_factory.py:234>)、[07B 执行控制器](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/.worktrees/07b-isolated-batch-runner/scripts/ai_ip/eval_lab/batch_controller.py:270>)。",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-domain/src/content_package.rs:82",
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/ai-ip-runtime/src/prompt.rs:4",
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/scripts/ai_ip/eval_lab/case_factory.py:234",
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/.worktrees/07b-isolated-batch-runner/scripts/ai_ip/eval_lab/batch_controller.py:270"
+      ]
+    },
+    {
+      "section": "05 以完整运营周期组织产品，以当前问题组织执行",
+      "claim_context": "运行证据与业务权威必须区别。Thread 记录执行过程；有效业务状态来自已提交、带版本与来源的项目产物。新会话需要取回当前版本、相关材料和未完成事项，不是把全部历史聊天和方法手册重新灌入上下文。[第七版 Codex 映射与数据边界](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:167>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:167"
+      ]
+    },
+    {
+      "section": "05 以完整运营周期组织产品，以当前问题组织执行",
+      "claim_context": "长期 Agent 的工程研究也发现，单靠压缩上下文不足以保证持续完成任务；清楚的进度产物和可观察验证有帮助。不过 Anthropic 的相关演示针对软件开发，不能直接当 IP 运营能力证明。[Justin Young，Anthropic，2025-11-26](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)",
+      "source_urls": [
+        "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"
+      ]
+    },
+    {
+      "section": "06 持续理解一个 IP：保存现实，而不是固化模型猜测",
+      "claim_context": "LongMemEval 把长期记忆拆成提取、多会话推理、时间推理、知识更新和适当不回答。这些维度适合转成项目回归题：能否区分旧承诺与新承诺、不同账号的材料、上次草稿与实际发布版。它的 500 道问答不是长期 IP 经营实验，因此只借其诊断维度。[Wu 等，ICLR 2025，LongMemEval](https://arxiv.org/abs/2410.10813)",
+      "source_urls": [
+        "https://arxiv.org/abs/2410.10813"
+      ]
+    },
+    {
+      "section": "07 让 Lead 做有依据的取舍，而不是只完成表格",
+      "claim_context": "STORM 的方法可帮助组织调查，Co-STORM 则尝试从未用资料中引出新问题。其研究对象是知识探索和长文；这支持方法候选，不能证明会选营销题。源码只按 URL 合并并对片段精确去重，也不能证明多个网站是独立证据。[Shao 等，NAACL 2024](https://aclanthology.org/2024.naacl-long.347/)、[Jiang 等，Co-STORM，2024](https://arxiv.org/abs/2408.15232)、[STORM 去重源码](https://github.com/stanford-oval/storm/blob/fb951af7744dab086e34962e9bc6fe878e145f83/knowledge_storm/storm_wiki/modules/storm_dataclass.py#L66)",
+      "source_urls": [
+        "https://aclanthology.org/2024.naacl-long.347/",
+        "https://arxiv.org/abs/2408.15232",
+        "https://github.com/stanford-oval/storm/blob/fb951af7744dab086e34962e9bc6fe878e145f83/knowledge_storm/storm_wiki/modules/storm_dataclass.py#L66"
+      ]
+    },
+    {
+      "section": "08 跨行业泛化：迁移有条件的方法，并在现实中重新落地",
+      "claim_context": "旧版内容地图可保留为一种临时研究产物：帮助展开可能的事件、关系、问题与材料。它不能成为所有任务必须先通过的唯一选根器，也不应自动成为账号的永久承诺。本建议不恢复第七版明确禁止调用的旧内容地图 Skill。[第七版历史经验边界](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:924>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:924"
+      ]
+    },
+    {
+      "section": "08 跨行业泛化：迁移有条件的方法，并在现实中重新落地",
+      "claim_context": "认知研究提供了有限但有用的依据。Loewenstein、Thompson、Gentner 的人类谈判实验中，比较相同案例使后续采用条件契约的比例由 16% 到 48%；但总体谈判收益差异并不显著。2003 年的后续研究继续支持结构比较帮助原则迁移。它们不证明 LLM 已学会开放营销判断，却提醒我们分别检验“方法被采用”和“业务有收益”。[1999 作者原文](https://groups.psych.northwestern.edu/gentner/papers/LoewensteinThompsonGentner99.pdf)、[2003 作者原文](https://groups.psych.northwestern.edu/gentner/papers/GentnerLoewensteinThompson03.pdf)",
+      "source_urls": [
+        "https://groups.psych.northwestern.edu/gentner/papers/LoewensteinThompsonGentner99.pdf",
+        "https://groups.psych.northwestern.edu/gentner/papers/GentnerLoewensteinThompson03.pdf"
+      ]
+    },
+    {
+      "section": "08 跨行业泛化：迁移有条件的方法，并在现实中重新落地",
+      "claim_context": "近期 LLM 研究也发现，按子任务提炼的文字经验平均比整项任务轨迹更容易迁移；但研究使用英文 AppWorld、OfficeBench、KramaBench，有模型例外，且目前是 2026 年 8 月预印本。本项目可试验“小范围方法经验”，不能照搬其效果量或把代码工具视为无用。[Feng 等，2026-08-20](https://arxiv.org/html/2608.20274v1)",
+      "source_urls": [
+        "https://arxiv.org/html/2608.20274v1"
+      ]
+    },
+    {
+      "section": "08 跨行业泛化：迁移有条件的方法，并在现实中重新落地",
+      "claim_context": "因此，V5 的 Skill 资产应重组为按任务需要可找到的短方法与参考材料。例如查证一个动机、保留叙事证据、对齐口播与镜头、校对字幕、核实发布版本。对“整个行业如何起号”的大答案保持审慎。技能目录需要检验实际选择与使用，而非以文件数量评估能力；另一项新预印本也提示技能可能稳定程序执行，但会受检索困难和不相容假设影响。[Jiang 等，2026-08-14](https://arxiv.org/abs/2608.14036)",
+      "source_urls": [
+        "https://arxiv.org/abs/2608.14036"
+      ]
+    },
+    {
+      "section": "09 创作与媒体：让内容意图真正进入画面和声音",
+      "claim_context": "交付层要区分“生成成功”“文件已到本地”“草稿质量”“用户可使用”和“实际已发布”。图片或视频供应商返回成功不等于成片可用。单个镜头需要重做时，应复用未变化的参考、声音与其他片段；改变脚本后，只重做受影响的部分。V4 的文件身份与 QA 绑定合同可作为这一层的回归资产。[V4 成片封存](</Users/yangyucheng/Documents/第四版营销系统/backend/packages/harness/deerflow/personal_ip/final_artifacts.py:499>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/第四版营销系统/backend/packages/harness/deerflow/personal_ip/final_artifacts.py:499"
+      ]
+    },
+    {
+      "section": "09 创作与媒体：让内容意图真正进入画面和声音",
+      "claim_context": "ViMax 为分镜、参考图和跨镜头依赖提供了可研究实现，其论文有 35 个视频案例的偏好评价。它没有验证品牌真实主张、IP 增长或本项目目标供应商。本次源码还发现，图像评审返回非法索引时会退到候选 0；这种运行兜底不能被解释为质量已通过。[Huang 等，ViMax，2026-06-02](https://arxiv.org/html/2606.07649v1)、[候选选择源码](https://github.com/HKUDS/ViMax/blob/05a48943878312d88fe5a016c12a9654940ecc43/agents/best_image_selector.py#L141)",
+      "source_urls": [
+        "https://arxiv.org/html/2606.07649v1",
+        "https://github.com/HKUDS/ViMax/blob/05a48943878312d88fe5a016c12a9654940ecc43/agents/best_image_selector.py#L141"
+      ]
+    },
+    {
+      "section": "09 创作与媒体：让内容意图真正进入画面和声音",
+      "claim_context": "生产上可借它的参考关联和局部制作思路，保留 Codex 调度与第七版媒体合同。FFmpeg 继续负责确定性后期；OpenTimelineIO 可在需要编辑器交换时评估，它表达剪辑信息和媒体引用，本身不渲染影片，也不负责完整业务谱系。[OTIO 官方文档](https://opentimelineio.readthedocs.io/en/latest/index.html)、[FFmpeg 官方许可说明](https://ffmpeg.org/legal.html)",
+      "source_urls": [
+        "https://opentimelineio.readthedocs.io/en/latest/index.html",
+        "https://ffmpeg.org/legal.html"
+      ]
+    },
+    {
+      "section": "09 创作与媒体：让内容意图真正进入画面和声音",
+      "claim_context": "Doshi、Hauser 的 293 篇八句英文故事实验同时观察到个体创意评价提高和作品相似性上升。因此，长期 IP 还应检查题材、关系、证据和表达是否重复；该研究不能推成专业短视频或商业转化增益。[Science Advances，2024-07-12](https://pmc.ncbi.nlm.nih.gov/articles/PMC11244532/)",
+      "source_urls": [
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC11244532/"
+      ]
+    },
+    {
+      "section": "10 运营与学习：让下一轮确实利用上一轮的结果",
+      "claim_context": "第一步是记录实际发生了什么。锁版时保存 Prediction，记录目标事件、观察窗口、比较基线、预期变化与失败信号。发布后登记实际标题、正文、成片和时间；用户改过内容，就依据实际版本复盘。数据回收保持首版规定的人工链接、表单或截图入口，不新增自动登录发布承诺。[第七版发布与学习规格](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:498>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:498"
+      ]
+    },
+    {
+      "section": "10 运营与学习：让下一轮确实利用上一轮的结果",
+      "claim_context": "人类预测研究说明，有可结算事件、持续反馈和概率训练，才能检验校准与辨别力。可借鉴其预测记录方法，但不能把地缘政治预测结果外推为内容运营。[Mellers 等，Psychological Science，2014](https://faculty.wharton.upenn.edu/wp-content/uploads/2015/07/2014---psychological-strategies-for-winning-a-tournament.pdf)",
+      "source_urls": [
+        "https://faculty.wharton.upenn.edu/wp-content/uploads/2015/07/2014---psychological-strategies-for-winning-a-tournament.pdf"
+      ]
+    },
+    {
+      "section": "10 运营与学习：让下一轮确实利用上一轮的结果",
+      "claim_context": "真实业务归因更难。Gordon 等在 Facebook 随机广告实验中发现，观察性方法常无法复原随机实验效果；2019 年正式论文使用 15 个实验，不能与其 2016 年白皮书的 12 个实验混用。这里借其识别偏差的结论，不用展示广告样本规模规定自然流量 IP 的试验规模。[Marketing Science，2019](https://pubsonline.informs.org/doi/10.1287/mksc.2018.1135)",
+      "source_urls": [
+        "https://pubsonline.informs.org/doi/10.1287/mksc.2018.1135"
+      ]
+    },
+    {
+      "section": "11 开源取舍：提取机制，保留一个运行底座",
+      "claim_context": "来源：[STORM 固定快照](https://github.com/stanford-oval/storm/tree/fb951af7744dab086e34962e9bc6fe878e145f83)、[ACE 固定快照](https://github.com/ace-agent/ace/tree/82709de050e1db6e6ef2f07bcb0393560b94992a)、[GEPA 固定快照](https://github.com/gepa-ai/gepa/tree/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407)、[ViMax 固定快照](https://github.com/HKUDS/ViMax/tree/05a48943878312d88fe5a016c12a9654940ecc43)、[OTIO 固定快照](https://github.com/AcademySoftwareFoundation/OpenTimelineIO/tree/bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072)。",
+      "source_urls": [
+        "https://github.com/stanford-oval/storm/tree/fb951af7744dab086e34962e9bc6fe878e145f83",
+        "https://github.com/ace-agent/ace/tree/82709de050e1db6e6ef2f07bcb0393560b94992a",
+        "https://github.com/gepa-ai/gepa/tree/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407",
+        "https://github.com/HKUDS/ViMax/tree/05a48943878312d88fe5a016c12a9654940ecc43",
+        "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/tree/bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072"
+      ]
+    },
+    {
+      "section": "11 开源取舍：提取机制，保留一个运行底座",
+      "claim_context": "ACE 的限制需要具体看源码。当前默认生成路径把整本 playbook 拼入提示，条目更新函数只实现 ADD，UPDATE、MERGE、DELETE 仍是 TODO；另有语义合并器，但默认关闭。因此，本项目要自行保证项目隔离、版本、撤销、过期和有界读取，不能宣称“装了 ACE 就有成熟记忆”。其论文的正面结果来自 AppWorld 和财务类基准，依赖可用反馈，不等于能从营销噪声中自动学对。[ACE 论文](https://arxiv.org/abs/2510.04618)、[条目操作](https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/playbook_utils.py#L96)、[生成器](https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/ace/core/generator.py#L59)",
+      "source_urls": [
+        "https://arxiv.org/abs/2510.04618",
+        "https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/playbook_utils.py#L96",
+        "https://github.com/ace-agent/ace/blob/82709de050e1db6e6ef2f07bcb0393560b94992a/ace/core/generator.py#L59"
+      ]
+    },
+    {
+      "section": "11 开源取舍：提取机制，保留一个运行底座",
+      "claim_context": "GEPA 的适配接口可让 Codex 正常执行，由外部提供评估、产物与反馈；不需要把生产系统换成 DSPy。风险是默认未给 valset 时会复用训练集，官方也说明可能复制训练词语或过拟合评分。建议一次只优化一个可辨识的文字组件，明确分开训练、验证和最终测试。其六项任务结果不证明中文 IP 运营增益。[GEPA 论文，ICLR 2026](https://arxiv.org/abs/2507.19457)、[适配接口](https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/core/adapter.py#L83)、[验证集默认](https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/api.py#L231)",
+      "source_urls": [
+        "https://arxiv.org/abs/2507.19457",
+        "https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/core/adapter.py#L83",
+        "https://github.com/gepa-ai/gepa/blob/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407/src/gepa/api.py#L231"
+      ]
+    },
+    {
+      "section": "11 开源取舍：提取机制，保留一个运行底座",
+      "claim_context": "没有足够证据支持把“多 Agent”“自我反思”单独当成解决方案。自我纠错研究的正反结果随任务和验证方法而变，不能用旧模型结论断言当前模型永远做不到，也不能假定多问几遍就会更好。[Huang 等，ICLR 2024](https://arxiv.org/abs/2310.01798)、[Wu 等，EMNLP 2024](https://arxiv.org/abs/2405.14092)",
+      "source_urls": [
+        "https://arxiv.org/abs/2310.01798",
+        "https://arxiv.org/abs/2405.14092"
+      ]
+    },
+    {
+      "section": "12 怎样知道它在变好：把检验嵌入真实工作",
+      "claim_context": "第七版已有 70% 配对胜率与封闭 Beta 目标；它们是验收要求，当前尚未证明达到。六周、至少四个客户项目加自营销、合计不少于六十条发布，也不自动等于完成严格因果识别。小规模研发诊断只指导下一次修改，不授予 G2 或客户发布资格。[现役质量与 Beta 标准](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:765>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:765"
+      ]
+    },
+    {
+      "section": "13 接到现有 Codex：近期应该补什么",
+      "claim_context": "已读 Codex App Server 支持 thread/start、thread/resume、turn/start、Skill 与 MCP 接口；无需为这些能力另造运行时。业务 Project 的长期权威不能直接等同于上游通用工作区 Project。正式协议扩展仍走 v2，状态管理按原规格使用独立业务数据库及产品配置根。[本地 App Server 文档](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/app-server/README.md:296>)、[现役仓内改造边界](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:204>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/codex-rs/app-server/README.md:296",
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/specs/2026-08-24-ip-agent-saas-design.md:204"
+      ]
+    },
+    {
+      "section": "14 建设顺序：每个切片都朝北极星交付",
+      "claim_context": "这与现有计划有需要明确处理的先后关系。Plan 01 负责最小业务证明，Plans 02、03 负责业务内核和内容能力，Plans 09、10 负责媒体与发布学习；总路线要求 Plan 03 通过后才启动 Plans 04 至 15。**若采用本报告建议，提前做切片二、三的研发验证，必须把试验范围和材料、费用、调用边界明确写入现役 child 的调整，不能默默视为正式 Plans 05、09、10 已获准开工。** 现有 G2、客户发布、财务和供应商资格没有被本报告变更。[总路线与依赖](</Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md:65>)",
+      "source_urls": [
+        "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/docs/superpowers/plans/2026-08-25-00-codex-ai-ip-master-roadmap.md:65"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)。Justin Young / Anthropic；2025-11-26。完整官方文章；软件开发演示，不是IP研究。",
+      "source_urls": [
+        "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory](https://arxiv.org/abs/2410.10813)。Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, Dong Yu；2024-10-14；v2 2025-03-04。原论文HTML和摘要；ICLR2025；500道记忆问答。",
+      "source_urls": [
+        "https://arxiv.org/abs/2410.10813"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Assisting in Writing Wikipedia-like Articles From Scratch with Large Language Models](https://aclanthology.org/2024.naacl-long.347/)。Yijia Shao et al. / NAACL；2024。原论文全文；100篇FreshWiki，10位编辑；方法与边界已核查。",
+      "source_urls": [
+        "https://aclanthology.org/2024.naacl-long.347/"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Into the Unknown Unknowns: Engaged Human Learning through Participation in Language Model Agent Conversations](https://arxiv.org/abs/2408.15232)。Yucheng Jiang, Yijia Shao, Dekun Ma, Sina J. Semnani, Monica S. Lam；2024；v2 2024-10-17。原论文全文；20名招募，19份有效评估，不是营销评价。",
+      "source_urls": [
+        "https://arxiv.org/abs/2408.15232"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Analogical encoding facilitates knowledge transfer in negotiation](https://groups.psych.northwestern.edu/gentner/papers/LoewensteinThompsonGentner99.pdf)。Jeffrey Loewenstein, Leigh Thompson, Dedre Gentner；1999-12。作者PDF全文；已核对 p.591 的不显著收益反证；未把人类效果外推LLM。",
+      "source_urls": [
+        "https://groups.psych.northwestern.edu/gentner/papers/LoewensteinThompsonGentner99.pdf"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Learning and Transfer: A General Role for Analogical Encoding](https://groups.psych.northwestern.edu/gentner/papers/GentnerLoewensteinThompson03.pdf)。Dedre Gentner, Jeffrey Loewenstein, Leigh Thompson；2003。已读取作者 PDF 全文，实验2与3；人类谈判迁移。",
+      "source_urls": [
+        "https://groups.psych.northwestern.edu/gentner/papers/GentnerLoewensteinThompson03.pdf"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Break It Down, Pass It On: Cross-Task Skill Transfer in LLM Agents](https://arxiv.org/html/2608.20274v1)。Yiyang Feng, Biddut Sarker Bijoy, Niranjan Balasubramanian, Jiawei Zhou；2026-08-20。预印本；全文方法、模型、数据及局限核查；英文任务。",
+      "source_urls": [
+        "https://arxiv.org/html/2608.20274v1"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Demystifying Agent Skills: Why They Work-Until They Don't](https://arxiv.org/abs/2608.14036)。Zhiyuan Jiang et al.；2026-08-14。预印本；HTML方法及摘要，未复现研究。",
+      "source_urls": [
+        "https://arxiv.org/abs/2608.14036"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[ViMax: Agentic Video Generation](https://arxiv.org/html/2606.07649v1)。Lingxuan Huang, Sizhe He, Hengji Zhou, Liqiang Nie, Lianghao Xia, Chao Huang；2026-06-02。原论文全文；35个视频样本；不等同营销与目标供应商效果。",
+      "source_urls": [
+        "https://arxiv.org/html/2606.07649v1"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[OpenTimelineIO Documentation](https://opentimelineio.readthedocs.io/en/latest/index.html)。Academy Software Foundation / OpenTimelineIO contributors；访问2026-09-05；页面未给单一发布日期。官方文档；时间线交换，非渲染器。",
+      "source_urls": [
+        "https://opentimelineio.readthedocs.io/en/latest/index.html"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[FFmpeg License and Legal Considerations](https://ffmpeg.org/legal.html)。FFmpeg project；访问2026-09-05；页面未给单一发布日期。官方许可页面；具体发行二进制仍需按启用组件核查。",
+      "source_urls": [
+        "https://ffmpeg.org/legal.html"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Generative AI enhances individual creativity but reduces the collective diversity of novel content](https://pmc.ncbi.nlm.nih.gov/articles/PMC11244532/)。Anil R. Doshi, Oliver P. Hauser / Science Advances；2024-07-12。原文全文；293个作者，600个评阅者；8句英文故事，非专业IP运营。",
+      "source_urls": [
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC11244532/"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Psychological Strategies for Winning a Geopolitical Forecasting Tournament](https://faculty.wharton.upenn.edu/wp-content/uploads/2015/07/2014---psychological-strategies-for-winning-a-tournament.pdf)。Barbara Mellers et al. / Psychological Science；2014-03-21。作者全文PDF；训练与校准；人类地缘政治预测不是内容干预。",
+      "source_urls": [
+        "https://faculty.wharton.upenn.edu/wp-content/uploads/2015/07/2014---psychological-strategies-for-winning-a-tournament.pdf"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[A Comparison of Approaches to Advertising Measurement: Evidence from Big Field Experiments at Facebook](https://pubsonline.informs.org/doi/10.1287/mksc.2018.1135)。Brett R. Gordon, Florian Zettelmeyer, Neha Bhargava, Dan Chapsky / Marketing Science；2019-04-04 online；38(2):193-225。正式期刊摘要；15实验500百万用户实验观察；与2016白皮书12实验口径区分。",
+      "source_urls": [
+        "https://pubsonline.informs.org/doi/10.1287/mksc.2018.1135"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models](https://arxiv.org/abs/2510.04618)。Qizheng Zhang et al.；2025-10-06；v3 2026-03-29。已核对 v3 摘要及 v2 方法与限制；官方源码独立核验，未声称精确复现实验。",
+      "source_urls": [
+        "https://arxiv.org/abs/2510.04618"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning](https://arxiv.org/abs/2507.19457)。Lakshya A Agrawal et al.；2025-07-25；v2 2026-02-14。ICLR2026；论文和官方代码；结果非中文营销。",
+      "source_urls": [
+        "https://arxiv.org/abs/2507.19457"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Large Language Models Cannot Self-Correct Reasoning Yet](https://arxiv.org/abs/2310.01798)。Jie Huang et al.；2023-10-03；ICLR2024。摘要及原始研究记录；只作限定任务反证，非2026模型能力上限。",
+      "source_urls": [
+        "https://arxiv.org/abs/2310.01798"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[Large Language Models Can Self-Correct with Key Condition Verification](https://arxiv.org/abs/2405.14092)。Zhenyu Wu, Qingkai Zeng, Zhihan Zhang, Zhaoxuan Tan, Chao Shen, Meng Jiang；2024-05-23；v3 2024-10-03。EMNLP2024；摘要原论文记录；任务与验证条件不同。",
+      "source_urls": [
+        "https://arxiv.org/abs/2405.14092"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[stanford-oval/storm 官方仓库](https://github.com/stanford-oval/storm/tree/fb951af7744dab086e34962e9bc6fe878e145f83)。维护者：stanford-oval/storm 项目团队；快照 2025-09-30；commit `fb951af7744dab086e34962e9bc6fe878e145f83`；许可 MIT。仅静态阅读关键实现与许可证，未安装运行。",
+      "source_urls": [
+        "https://github.com/stanford-oval/storm/tree/fb951af7744dab086e34962e9bc6fe878e145f83"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[ace-agent/ace 官方仓库](https://github.com/ace-agent/ace/tree/82709de050e1db6e6ef2f07bcb0393560b94992a)。维护者：ace-agent/ace 项目团队；快照 2026-08-24；commit `82709de050e1db6e6ef2f07bcb0393560b94992a`；许可 Apache-2.0。仅静态阅读关键实现与许可证，未安装运行。",
+      "source_urls": [
+        "https://github.com/ace-agent/ace/tree/82709de050e1db6e6ef2f07bcb0393560b94992a"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[gepa-ai/gepa 官方仓库](https://github.com/gepa-ai/gepa/tree/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407)。维护者：gepa-ai/gepa 项目团队；快照 2026-09-01 UTC；commit `0632cdb5dcc052e690eab439e1b4a7e3e9cfe407`；许可 MIT。仅静态阅读关键实现与许可证，未安装运行。",
+      "source_urls": [
+        "https://github.com/gepa-ai/gepa/tree/0632cdb5dcc052e690eab439e1b4a7e3e9cfe407"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[HKUDS/ViMax 官方仓库](https://github.com/HKUDS/ViMax/tree/05a48943878312d88fe5a016c12a9654940ecc43)。维护者：HKUDS/ViMax 项目团队；快照 2026-07-29；commit `05a48943878312d88fe5a016c12a9654940ecc43`；许可 MIT。仅静态阅读关键实现与许可证，未安装运行。",
+      "source_urls": [
+        "https://github.com/HKUDS/ViMax/tree/05a48943878312d88fe5a016c12a9654940ecc43"
+      ]
+    },
+    {
+      "section": "16 文献与源码来源注记",
+      "claim_context": "[AcademySoftwareFoundation/OpenTimelineIO 官方仓库](https://github.com/AcademySoftwareFoundation/OpenTimelineIO/tree/bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072)。维护者：AcademySoftwareFoundation/OpenTimelineIO 项目团队；快照 2026-08-07；commit `bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072`；许可 Apache-2.0。仅静态阅读关键实现与许可证，未安装运行。\n",
+      "source_urls": [
+        "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/tree/bc5fe2d78dc3f8b2a8feb7e04483d85a12e80072"
+      ]
+    }
+  ],
+  "source_classes": [
+    "现役规格与计划",
+    "历史台账+Git diff+产物回执",
+    "原创论文及作者PDF",
+    "官方开源固定提交及许可证"
+  ],
+  "limitations": [
+    "未逐行审阅所有历史代码",
+    "未复跑历史实验或新付费模型",
+    "原始指标与商业因果效果未新增验证",
+    "开源当前提交并非论文精确复现版本"
+  ],
+  "search_log": [
+    {
+      "wave": 1,
+      "families": [
+        "GEPA",
+        "STORM Co-STORM",
+        "analogical encoding",
+        "AI creative diversity"
+      ],
+      "purpose": "发现局部能力方案"
+    },
+    {
+      "wave": 2,
+      "families": [
+        "北极星完整运营范围复核",
+        "历史关键Git与正反证",
+        "LongMemEval长期记忆",
+        "long-running harness",
+        "ViMax媒体",
+        "OTIO交换",
+        "广告测量",
+        "技能迁移反证"
+      ],
+      "purpose": "补全长期IP、媒体、业务学习与方法边界"
+    },
+    {
+      "wave": 3,
+      "families": [
+        "ACE作者官方性",
+        "GEPA验证集默认",
+        "STORM来源去重",
+        "ViMax质量兜底",
+        "A122叙事传递diff",
+        "A59词义修正diff",
+        "论文样本与正式年份"
+      ],
+      "purpose": "独立复核高影响结论"
+    }
+  ],
+  "stop_reason": "各主要能力环节已有本地依据、相关原始研究或明确不确定性；下一步关键增量需真实项目实验，继续检索框架收益降低",
+  "local_reference_errors": [],
+  "final_review": {
+    "history_review": "A136替补研究改为待验证需求；无其他新增重大问题",
+    "scope_review": "完整IP运营保留；运行与业务验收分开；明确既有gate调整边界"
+  }
+}

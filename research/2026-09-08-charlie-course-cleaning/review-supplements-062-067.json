@@ -1,0 +1,260 @@
+{
+  "reviewer": "clean_core_25_34",
+  "scope": [
+    62,
+    63,
+    64,
+    67
+  ],
+  "method": "独立逐段顺读全部ASR并与全部clean正文对照；未逐句听校，非原话核验；只修订clean JSON，不改汇编Markdown",
+  "parts": {
+    "62": {
+      "status": "完整独立复核完成",
+      "source_segments": 133,
+      "reviewed_segments": 133,
+      "files": 2,
+      "all_source_segments_read": true,
+      "all_clean_blocks_compared": true
+    },
+    "67": {
+      "status": "完整独立复核完成",
+      "source_segments": 22,
+      "reviewed_segments": 22,
+      "files": 1,
+      "all_source_segments_read": true,
+      "all_clean_blocks_compared": true
+    },
+    "63": {
+      "status": "完整独立复核完成",
+      "source_segments": 399,
+      "reviewed_segments": 399,
+      "files": 4,
+      "all_source_segments_read": true,
+      "all_clean_blocks_compared": true
+    },
+    "64": {
+      "status": "完整独立复核完成",
+      "source_segments": 614,
+      "reviewed_segments": 614,
+      "files": 5,
+      "all_source_segments_read": true,
+      "all_clean_blocks_compared": true
+    }
+  },
+  "files": [
+    {
+      "job": "p062-c001",
+      "part": 62,
+      "first_segment": 1,
+      "last_segment": 64,
+      "block_count": 11,
+      "issues": [
+        "S16、S51开头被放入前块导致正文归属越界，已归回覆盖该segment的块。",
+        "横屏平台“甚是芒果TV”未充分听清，撤回将“甚是”定为“甚至”的猜测。",
+        "付费模型“请自付/中付费”结合本P“重付费”明确解释并保留待听校；不改成重复付费。",
+        "收益及盈利断言明确归讲师当时自述。"
+      ],
+      "changed_blocks": 6,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p062-c001-before-independent-full-review.json",
+      "clean_sha256": "2bb79ea6e1d37a79440480d656e6dcd75b60022292317ea178a54105e7668526",
+      "source_json_sha256": "e8dbddeb40e3a8a570dd02c9c37892d58b621a5ec3d8c0fd67186b171d162272"
+    },
+    {
+      "job": "p062-c002",
+      "part": 62,
+      "first_segment": 65,
+      "last_segment": 133,
+      "block_count": 8,
+      "issues": [
+        "无单位的“100”被补成100亿，撤回单位并纠正疑点原段号。",
+        "把重付费改成重复付费、把“上爱优腾”改成“上线”，改变原意，已修回并标不稳。",
+        "S84传统长剧排序起句、S114总述起句跨块归属不准，已归回。",
+        "“年度”疑黏度而非悬念；S86压力/解压残词和S82八年来标疑。",
+        "推广尾段保留全部条件与宣传内容，同时明确录课时广告性质，不作为当前招生保证。"
+      ],
+      "changed_blocks": 8,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p062-c002-before-independent-full-review.json",
+      "clean_sha256": "7395691bd6fd049b2efcfba4b4fb3ea763450dba28861835a4aa1868283a071f",
+      "source_json_sha256": "e8dbddeb40e3a8a570dd02c9c37892d58b621a5ec3d8c0fd67186b171d162272"
+    },
+    {
+      "job": "p067-c001",
+      "part": 67,
+      "first_segment": 1,
+      "last_segment": 22,
+      "block_count": 4,
+      "issues": [
+        "S20残句被擅自补成“内容写作也更容易入门”，撤回推断完整断言。",
+        "S15火热、S17友好等源残句在正文明确标为概括推断，不使读者误认原话；推广与规模自述明确归属。"
+      ],
+      "changed_blocks": 2,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p067-c001-before-independent-full-review.json",
+      "clean_sha256": "0453cf3c6ef4004efaee558783e9e45eacfa27528ad06bb2793d20d5f54e3373",
+      "source_json_sha256": "f95cad3caa198ead5ed64e434cf38ad7f88bcd122347506cb6e52dadd7469963"
+    },
+    {
+      "job": "p063-c001",
+      "part": 63,
+      "first_segment": 1,
+      "last_segment": 133,
+      "block_count": 7,
+      "issues": [
+        "AI能力、采用率、替代预测为讲师录课时判断，正文新增明确归属，防止成为已验证事实。",
+        "S54“这四个等”被补成四个等级，改为四项能力，保留截断限制。",
+        "S73–76新能力列举有重复，理顺判断、沟通、鉴赏三项，保留后续解释；不添新能力。"
+      ],
+      "changed_blocks": 5,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p063-c001-before-independent-full-review.json",
+      "clean_sha256": "6cb21cde8be3a0ab33e169677e835063826479f9ee419c9be5e924a99614a5c8",
+      "source_json_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942"
+    },
+    {
+      "job": "p063-c002",
+      "part": 63,
+      "first_segment": 134,
+      "last_segment": 234,
+      "block_count": 8,
+      "issues": [
+        "S164开头“不可能”被提前放到151–163块，S193重复偷听结句提前到182–192块，已按段归回；S234开场转问遗漏补回。",
+        "《我不是药神》引用位于S233而非旧疑点记载S234，正文保留原例。",
+        "版权、AI机制与人脑类比明确为讲师观点，不输出法律/技术结论。"
+      ],
+      "changed_blocks": 6,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p063-c002-before-independent-full-review.json",
+      "clean_sha256": "1340040acd137cf8ec02c22d70a6b50926359eac22175befa71446bab9efe959",
+      "source_json_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942"
+    },
+    {
+      "job": "p063-c003",
+      "part": 63,
+      "first_segment": 235,
+      "last_segment": 337,
+      "block_count": 7,
+      "issues": [
+        "开头“用AI之前就一直用AI”不通，依上下文恢复此前/最近的时间对比。",
+        "S327我们这一代人跨块移位已归回；AI比以前窗口更猛烈的比较句补回明确比较关系。",
+        "文生图视频方法与平台能力是当时经验；年份与必然翻身均保留原话意义但标观点，未当现行操作保证。"
+      ],
+      "changed_blocks": 6,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p063-c003-before-independent-full-review.json",
+      "clean_sha256": "2d974074c9797f490a31ae33f812e6ab9dae4e7c12beb5a310c2a3f913cb142f",
+      "source_json_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942"
+    },
+    {
+      "job": "p063-c004",
+      "part": 63,
+      "first_segment": 338,
+      "last_segment": 399,
+      "block_count": 4,
+      "issues": [
+        "卖冰棍完整经历、同学接近时反应和假想重返校园人设/流量/变现三步均在，无案例过程缺失。",
+        "S357讲故事开场、S378怎么回事承接句从相邻块移回；未新增作业。",
+        "中国第一部网剧、学习成绩与收入轶事为讲师自述。"
+      ],
+      "changed_blocks": 3,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p063-c004-before-independent-full-review.json",
+      "clean_sha256": "0322ac9974e4809cb116f427484616b47228dd89858af929535869881097829d",
+      "source_json_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942"
+    },
+    {
+      "job": "p064-c001",
+      "part": 64,
+      "first_segment": 1,
+      "last_segment": 90,
+      "block_count": 9,
+      "issues": [
+        "前四块明显跨段：1–13提前收14–15，14–15提前收16–19，16–23提前收24–26，逐一恢复归属。",
+        "S79自我表达争论提前放在70–78块，已归回。",
+        "短剧经济价值及抵制互联网/歌手等说法明确定性为讲师经历或观点，未核验；“刀拉”正文原先未标疑，已标。"
+      ],
+      "changed_blocks": 7,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p064-c001-before-independent-full-review.json",
+      "clean_sha256": "94f454d3373d175cc5e1d87beb12b7ddb63eebea3be324afab0607a92da627b8",
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19"
+    },
+    {
+      "job": "p064-c002",
+      "part": 64,
+      "first_segment": 91,
+      "last_segment": 226,
+      "block_count": 5,
+      "issues": [
+        "S167“不合算”提前在140–166块，已移回。",
+        "典型/反差/极致三种人物及设定创新反例均完整，无新增例片或作业。",
+        "男频战王属题材语境，可释读但保留原词；“郑和正义”不补实体。"
+      ],
+      "changed_blocks": 3,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p064-c002-before-independent-full-review.json",
+      "clean_sha256": "e5b470f2912d3093cc264bc7fb05d7faa19bc0e03f0f2cb8a6e5a8ed610b1d70",
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19"
+    },
+    {
+      "job": "p064-c003",
+      "part": 64,
+      "first_segment": 227,
+      "last_segment": 354,
+      "block_count": 6,
+      "issues": [
+        "S261放低要真诚提前到上一块、S285转句后移、S300破产电影否定提前到上块，已恢复段归属。",
+        "哥哥养育例中ASR否定断裂被原样拼成哥哥没撑家，与全例相反；按前后供读书逻辑释读并标否定待核。",
+        "第三种共情例恢复先灭门目击、后村中犯罪的原推演顺序，保留为虚构写作示例，非讲师亲历；性暴力维持非露骨说明。",
+        "《抓娃娃》对价值观、社会机会与市场反响的判断明归讲师；没有补票房数字。"
+      ],
+      "changed_blocks": 6,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p064-c003-before-independent-full-review.json",
+      "clean_sha256": "bad06313d1c8a4b6f6704ec19138555e16ead565396c575fe0d473e143edad24",
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19"
+    },
+    {
+      "job": "p064-c004",
+      "part": 64,
+      "first_segment": 355,
+      "last_segment": 496,
+      "block_count": 7,
+      "issues": [
+        "“期待是脉络，要克制”误把吸引要求安到期待上，与整课相反；已按S437–446恢复吸引卖弄克制、共情放低真诚、期待画饼豪放。",
+        "S414–417被提前放入406–413块，已归回。",
+        "霸凌案件完整保留五元钱、绕路未成、目睹反抗被打、被伪称兄弟、游戏厅/录像厅、遭威胁十年隐瞒和小县城处境，明确是假设剧情。",
+        "坟前侵害情节仅非露骨叙述保留教学对照，不增写性暴力动作；原稿未明确的侵害不擅自命名。"
+      ],
+      "changed_blocks": 7,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p064-c004-before-independent-full-review.json",
+      "clean_sha256": "87609e5e447bbdaebdad55ab3c55d0f460b7ed707f18cd33aa773b8b5d855933",
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19"
+    },
+    {
+      "job": "p064-c005",
+      "part": 64,
+      "first_segment": 497,
+      "last_segment": 614,
+      "block_count": 5,
+      "issues": [
+        "S507接入剧情的转句提前在500–506块，已移回。",
+        "“父亲神仙下凡”被当确定关系，“继续场”被硬改继续讲，已去确定化并标疑。",
+        "信息差六集案例完整保留，但补回原讲师对第四/五/六集的口头改口，不定唯一时间表。",
+        "汽车比喻被误写成加满油后一点油也不加，改变只加油不开车的原论证；已回到反复推进期待的意思并标残词。"
+      ],
+      "changed_blocks": 4,
+      "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p064-c005-before-independent-full-review.json",
+      "clean_sha256": "3a3f3f2aa77b113201d8b7eec43238523ebf5558eb0a924f35e59248dbba04b8",
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19"
+    }
+  ],
+  "validation": {
+    "parts": [
+      62,
+      63,
+      64,
+      67
+    ],
+    "source_segments": 1168,
+    "reviewed_clean_files": 12,
+    "all_parts_continuous_coverage": true,
+    "backup_sha256_verified": true,
+    "clean_sha256_verified": true,
+    "original_raw_responses_untouched": true,
+    "compiled_markdown_untouched": true,
+    "new_assignments_added": false,
+    "status": "PASS"
+  }
+}

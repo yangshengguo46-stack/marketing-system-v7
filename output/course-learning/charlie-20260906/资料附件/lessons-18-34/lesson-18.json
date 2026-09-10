@@ -1,0 +1,162 @@
+{
+  "lesson": 18,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 40,
+      "title": "十八课-拿人的开场18.1",
+      "cid": 207918303,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=40",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十八课-拿人的开场18.1.mp4",
+      "sha256": "670b8270f8a8d58d02158771a2bc8485347be0a00ab27eb37417f2e8abb96072",
+      "duration_seconds": 3065
+    },
+    {
+      "part": 41,
+      "title": "十八课-拿人的开场18.2",
+      "cid": 207918389,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=41",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十八课-拿人的开场18.2.mp4",
+      "sha256": "1de95aafd44f9c72013abe2ab006e43cd7a6f080b8dd85e31f0140acb3a72827",
+      "duration_seconds": 5217
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "版权话题与《隐秘的角落》开场引入",
+      "part": 40,
+      "start_seconds": 10,
+      "end_seconds": 461
+    },
+    {
+      "label": "拿人并非所有开场的必需；建制交代世界、人物、现状，媒介/演员条件影响选择",
+      "part": 40,
+      "start_seconds": 485,
+      "end_seconds": 1286
+    },
+    {
+      "label": "常规开场也能拿人：世界、人物、现状与救猫咪",
+      "part": 40,
+      "start_seconds": 1288,
+      "end_seconds": 2427
+    },
+    {
+      "label": "《风骚律师》开场：一场戏同时交代世界、人物和现状",
+      "part": 40,
+      "start_seconds": 2428,
+      "end_seconds": 2999
+    },
+    {
+      "label": "常规开场的条件及非常规方式预告",
+      "part": 40,
+      "start_seconds": 3001,
+      "end_seconds": 3059
+    },
+    {
+      "label": "非常规之一：把激励事件提到开场，后补建制",
+      "part": 41,
+      "start_seconds": 11,
+      "end_seconds": 1096
+    },
+    {
+      "label": "非常规之二：有趣且有用的前史开场；解释前课为何限制新手前史/闪回",
+      "part": 41,
+      "start_seconds": 1097,
+      "end_seconds": 2526
+    },
+    {
+      "label": "非常规之三：结局或最大悬念提前",
+      "part": 41,
+      "start_seconds": 2527,
+      "end_seconds": 3166
+    },
+    {
+      "label": "非常规之四：从中段选体现意境、色调或主题的片段",
+      "part": 41,
+      "start_seconds": 3169,
+      "end_seconds": 4551
+    },
+    {
+      "label": "全课回顾：是否拿人与常规/非常规的逻辑关系",
+      "part": 41,
+      "start_seconds": 4552,
+      "end_seconds": 4648
+    },
+    {
+      "label": "课堂示范：为《我不是药神》试写四类开场并说明原片平静开场更合适",
+      "part": 41,
+      "start_seconds": 4650,
+      "end_seconds": 5211
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "回头观看本课所举影片/剧集的相关开场；重点学习《风骚律师》这一场戏。属建议性观摩，未指定交付。",
+      "part": 40,
+      "start_seconds": 2949,
+      "end_seconds": 2953,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "全文机器稿阅读；尚未逐句听校。另见 P40 33:08–33:27、40:04–40:17。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "观看《金氏漂流记》并理解其激励事件前置、随后补现状的写法。建议观摩，未指定作业提交。",
+      "part": 41,
+      "start_seconds": 832,
+      "end_seconds": 1093,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "机器稿全文阅读；片名已对照 P41 13:53 字幕。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "回去观看本课列举的剧/电影，观察开场方式；特别推荐《情侣们》等。",
+      "part": 41,
+      "start_seconds": 4419,
+      "end_seconds": 4439,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "建议性观摩，非明确课后作业；另见 P41 46:55–47:06。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    40,
+    41
+  ],
+  "limits": [
+    "P40、P41 已按原次序全文阅读机器稿，未逐句人工听校。",
+    "插播外语片段存在较多误识，案例用途根据老师中文讲解；少量片名已用原视频字幕抽帧核正。",
+    "老师对影片开场的分析及假想改写保留为课堂意见，不升级为影片创作史事实。",
+    "未发现明确课后提交、字数、模板、期限、批改安排；不补造。"
+  ],
+  "explicit_assignment_status": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "prior_assignment_recap_status": "未找到明确的上次作业回顾；前课知识回顾另列。",
+  "frame_checks": [
+    {
+      "part": 40,
+      "seconds": 1729,
+      "file": "frame-checks/p040-at-1729s.jpg",
+      "confirms": "衰女翻身"
+    },
+    {
+      "part": 41,
+      "seconds": 833,
+      "file": "frame-checks/p041-at-833s.jpg",
+      "confirms": "金氏漂流记"
+    },
+    {
+      "part": 41,
+      "seconds": 2583,
+      "file": "frame-checks/p041-at-2583s.jpg",
+      "confirms": "宿醉"
+    },
+    {
+      "part": 41,
+      "seconds": 4219,
+      "file": "frame-checks/p041-at-4219s.jpg",
+      "confirms": "狱前教育"
+    }
+  ]
+}

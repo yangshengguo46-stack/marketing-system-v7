@@ -1,0 +1,363 @@
+{
+  "lesson": 21,
+  "source_parts": [
+    {
+      "part": 44,
+      "source_json_sha256": "d586eca9e66ee2f6076463132e28d0bcfcc77ea4dad8d17ed39da13c71aa07ae",
+      "segment_count": 571
+    },
+    {
+      "part": 45,
+      "source_json_sha256": "8977aeb355f7f1a1c71c803731a51f8048b92d1dde36c25ecd6f4935cd975fb4",
+      "segment_count": 465
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L21-B001",
+      "part": 44,
+      "first_segment": 1,
+      "last_segment": 35,
+      "heading": "开场：更新承诺与课外问题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B002",
+      "part": 44,
+      "first_segment": 36,
+      "last_segment": 99,
+      "heading": "天赋与努力：先弄清自己追求什么",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "成局而成腕／卷／word",
+          "cleaned": "成角儿、成腕儿",
+          "basis": "前后连续解释行业顶尖人物，可确定为同一口语。"
+        },
+        {
+          "original": "许佳印",
+          "cleaned": "许家印",
+          "basis": "与王健林并列的房地产富豪语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B003",
+      "part": 44,
+      "first_segment": 100,
+      "last_segment": 127,
+      "heading": "篮球的类比：行业贡献不只发生在顶端",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B004",
+      "part": 44,
+      "first_segment": 128,
+      "last_segment": 162,
+      "heading": "产品与艺术：标准化为什么有必要",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B005",
+      "part": 44,
+      "first_segment": 163,
+      "last_segment": 223,
+      "heading": "格律、创造与情感：讲师对艺术之美的解释",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B006",
+      "part": 44,
+      "first_segment": 224,
+      "last_segment": 231,
+      "heading": "关于反例的插话：不要用个案抹掉总体判断",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B007",
+      "part": 44,
+      "first_segment": 232,
+      "last_segment": 290,
+      "heading": "生活里确实发生，不等于放进故事就成立",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B008",
+      "part": 44,
+      "first_segment": 291,
+      "last_segment": 344,
+      "heading": "艺术真实的几个方面，以及“五毛特效”的玩笑",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "特效吕棚",
+          "cleaned": "特效、绿棚",
+          "basis": "与动作捕捉、电脑特效并列，影视制作语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B009",
+      "part": 44,
+      "first_segment": 345,
+      "last_segment": 376,
+      "heading": "从审项目中发现的进阶问题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B010",
+      "part": 44,
+      "first_segment": 377,
+      "last_segment": 407,
+      "heading": "头大身子小：检查中点是否发生了转折",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "终点／重点",
+          "cleaned": "中点",
+          "basis": "反复定义为片长一半，且关联伪胜利、伪失败；可明确订正。"
+        },
+        {
+          "original": "少写前十／快速尽隙／激励前提",
+          "cleaned": "少写前史、快速进戏、把激励事件往前提",
+          "basis": "连续列举避免开场过长的方法；依前文“激励”术语和“前提”语音，将末项按往前提的动词结构整理。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B011",
+      "part": 44,
+      "first_segment": 408,
+      "last_segment": 429,
+      "heading": "《菊次郎的夏天》：找到了妈妈，却没找到母爱",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "徐次郎／橘次郎",
+          "cleaned": "菊次郎",
+          "basis": "同段多次明确出现《菊次郎的夏天》。"
+        },
+        {
+          "original": "白野务",
+          "cleaned": "北野武",
+          "basis": "《菊次郎的夏天》及饰演角色语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B012",
+      "part": 44,
+      "first_segment": 430,
+      "last_segment": 454,
+      "heading": "《阿凡达》：卧底成功之后选择新的立场",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B013",
+      "part": 44,
+      "first_segment": 455,
+      "last_segment": 499,
+      "heading": "人物设定少写形容词，多写价值与态度",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B014",
+      "part": 44,
+      "first_segment": 500,
+      "last_segment": 541,
+      "heading": "安迪与瑞德：对希望的不同观点",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "reb／read",
+          "cleaned": "瑞德（Red）",
+          "basis": "与安迪并列，明确指《肖申克的救赎》中摩根·弗里曼饰演的叙述者。"
+        },
+        {
+          "original": "摩根弗利",
+          "cleaned": "摩根·弗里曼",
+          "basis": "对应同一角色的演员语境。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B015",
+      "part": 44,
+      "first_segment": 542,
+      "last_segment": 571,
+      "heading": "持续写信建图书馆：态度如何落实为情节",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B016",
+      "part": 45,
+      "first_segment": 1,
+      "last_segment": 58,
+      "heading": "主角从平凡中来，也可带着影响主线的“血统”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "出现／出生问题",
+          "cleaned": "出身问题",
+          "basis": "后文讨论平凡开场、背景与家庭关系，所指明确。"
+        },
+        {
+          "original": "周一为",
+          "cleaned": "周一围",
+          "basis": "《我不是药神》警察角色演员语境明确。"
+        },
+        {
+          "original": "巡游／谁油",
+          "cleaned": "神油",
+          "basis": "与开场卖印度神油首尾对应。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B017",
+      "part": 45,
+      "first_segment": 59,
+      "last_segment": 117,
+      "heading": "《加勒比海盗》：铁匠的隐藏身份与未敢承认的爱情",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "克纳",
+          "cleaned": "特纳",
+          "basis": "同段反复清晰称特纳并提奥兰多·布鲁姆。"
+        },
+        {
+          "original": "死亡／s望小姐",
+          "cleaned": "斯旺小姐",
+          "basis": "伊丽莎白角色姓氏及敬称语境明确，英文拼写未据原音核对。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B018",
+      "part": 45,
+      "first_segment": 118,
+      "last_segment": 145,
+      "heading": "主角至少要有两次真正可以退回去的选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B019",
+      "part": 45,
+      "first_segment": 146,
+      "last_segment": 175,
+      "heading": "蜕变不只有死人：重生、牺牲与脱俗",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B020",
+      "part": 45,
+      "first_segment": 176,
+      "last_segment": 224,
+      "heading": "《我不是药神》中的“脱俗”解释",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "陈勇",
+          "cleaned": "程勇",
+          "basis": "同段清晰出现程勇，角色一致。"
+        },
+        {
+          "original": "传军",
+          "cleaned": "王传君",
+          "basis": "课堂指《我不是药神》对应演员，补全常见姓名。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B021",
+      "part": 45,
+      "first_segment": 225,
+      "last_segment": 282,
+      "heading": "伙伴的大方向相同，私人目标要能影响主线",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "逼故史／逼护室",
+          "cleaned": "B故事",
+          "basis": "与A故事及伙伴私人目标成组讨论。"
+        },
+        {
+          "original": "吕受义",
+          "cleaned": "吕受益",
+          "basis": "《我不是药神》角色语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L21-B022",
+      "part": 45,
+      "first_segment": 283,
+      "last_segment": 308,
+      "heading": "反派要具体、有计划，并且步步紧逼",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B023",
+      "part": 45,
+      "first_segment": 309,
+      "last_segment": 355,
+      "heading": "主角讲小道理，对手可以讲大道理",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B024",
+      "part": 45,
+      "first_segment": 356,
+      "last_segment": 390,
+      "heading": "把场景当成能够传递信息的元素",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B025",
+      "part": 45,
+      "first_segment": 391,
+      "last_segment": 438,
+      "heading": "给对白增加势能：同样的信息可以带着不同目的",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L21-B026",
+      "part": 45,
+      "first_segment": 439,
+      "last_segment": 465,
+      "heading": "课后行动：先写项目，再用问题清单检查",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "P045课堂提到的哲学、审美、片中时间金额、备案期限及行业结果均为讲师原有说法或当时经验，未升级为通用事实。",
+    "成人情境只保留非露骨的叙事作用；来源中不清的短语与自相矛盾数字均作说明。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第21课.md",
+  "output_sha256": "276bcceb54728fee7d7a8b36a938d683e81151db4f2b90a42c16df5a50eade87",
+  "reader_navigation_update": {
+    "previous_output_sha256": "88bcac66d0b8e0ebebf60639fbf30f721bfd67483160217ee91ceb193a068f9f",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

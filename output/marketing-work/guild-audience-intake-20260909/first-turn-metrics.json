@@ -1,0 +1,32 @@
+{
+  "seed-direct": {
+    "turnId": "01a0867c-560f-7a13-9efa-1dd2de8c138f",
+    "status": "completed",
+    "durationMs": 74212,
+    "usage": {
+      "totalTokens": 10821,
+      "inputTokens": 8761,
+      "cachedInputTokens": 0,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 2060,
+      "reasoningOutputTokens": 657
+    },
+    "answerCharacters": 2095,
+    "rawFirstAnswerMatches": true
+  },
+  "seed-method": {
+    "turnId": "01a0867d-311b-7090-966f-efefe983449d",
+    "status": "completed",
+    "durationMs": 121367,
+    "usage": {
+      "totalTokens": 12244,
+      "inputTokens": 8869,
+      "cachedInputTokens": 1848,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3375,
+      "reasoningOutputTokens": 1073
+    },
+    "answerCharacters": 3519,
+    "rawFirstAnswerMatches": true
+  }
+}

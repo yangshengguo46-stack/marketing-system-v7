@@ -16,6 +16,10 @@ use serde_json::json;
 use tempfile::TempDir;
 use tokio::time::timeout;
 
+// Native app-server cold startup can exceed ten seconds on macOS and Windows.
+#[cfg(any(target_os = "macos", windows))]
+const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
+#[cfg(not(any(target_os = "macos", windows)))]
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
 fn assert_local_refs_resolve(root: &Value, value: &Value) {
@@ -89,7 +93,7 @@ async fn turn_start_sends_strict_content_package_schema() -> Result<()> {
     MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
     let mut app_server = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .build_initialized()
+        .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
     let ThreadStartResponse { thread, .. } = app_server

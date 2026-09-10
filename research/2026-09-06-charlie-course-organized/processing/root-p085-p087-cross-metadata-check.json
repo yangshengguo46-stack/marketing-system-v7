@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-06T12:20:38.060400+00:00",
+  "parts": [
+    {
+      "part": 85,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p061-p068-092/p085.json",
+      "segment_count": 250,
+      "errors": [],
+      "read_scope": "metadata and assignment timestamp neighborhoods only; no repeated full substantive review"
+    },
+    {
+      "part": 87,
+      "path": "research/2026-09-06-charlie-course-organized/reviews/supplements-p061-p068-092/p087.json",
+      "segment_count": 162,
+      "errors": [],
+      "read_scope": "metadata and assignment timestamp neighborhoods only; no repeated full substantive review"
+    }
+  ],
+  "failures": []
+}

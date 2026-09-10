@@ -1,0 +1,51 @@
+{
+  "part": 67,
+  "title": "编剧库3.0大升级来了！快来参与普查，订单主动找你对接",
+  "state": "completed",
+  "started_at": "2026-09-06T10:22:56.814193+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 67,
+    "cid": 33428148085,
+    "title": "编剧库3.0大升级来了！快来参与普查，订单主动找你对接",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=67",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧库3.0大升级来了！快来参与普查，订单主动找你对接.mp4",
+    "sha256": "b8c50d3d6b4954166ed183234239923f9e6d6efc253f371edbf6f399ab2d4ec0",
+    "bytes": 4272063,
+    "mtime_ns": 1788682141178989816,
+    "actual_duration_seconds": 127.105805
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 127.106062,
+  "segment_count": 22,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T10:23:25.681323+00:00",
+  "elapsed_seconds": 28.868,
+  "completed_at": "2026-09-06T10:23:25.681295+00:00",
+  "text_characters": 577,
+  "rtf": 0.227117,
+  "max_rss_bytes_macos": 622092288,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 127.1060625,
+    "duration_delta_seconds": 0.000257,
+    "vad_speech_seconds": 109.908,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p067.source-time.txt": "bafcbdd90389da4bc62c9b8aa878191620c09f97f390a29b584e901f5b6540a6",
+    "p067.source-time.srt": "73beabc7d6921b3583ae3ac9fc69ebfb69cd062641c4de1801919b601d7330dc"
+  }
+}

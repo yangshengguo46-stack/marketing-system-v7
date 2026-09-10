@@ -1,0 +1,138 @@
+[
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_86aas8iral4endx5vzvan7rs",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/Agent入口.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_86aas8iral4endx5vzvan7rs.txt",
+    "sha256": "9fdc8b7a07ed4c78314ca328fe6631c44de69f9bf1723ac6e56da0f2d7f6aff3",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_wshbfijmkc3ggowobi1j1hwr",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-题目.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_wshbfijmkc3ggowobi1j1hwr.txt",
+    "sha256": "9428ec5603e81855ff59394a20e5954d21f7073fd45c8bad047dcb92924c5c3a",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_4ohih8b46iavwh3ra5v9zc99",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/课程/第04课.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_4ohih8b46iavwh3ra5v9zc99.txt",
+    "sha256": "9d9d7a6f033b18be7f405c8ccfa86c32d844572f91803fa3b53f0b5118d17447",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_av8gy7owc8c51v22fclibjl0",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/课程/第05课.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_av8gy7owc8c51v22fclibjl0.txt",
+    "sha256": "80ada3d904c7d838ef674460b5f31dca7c51567c3a29345bd8c4ef07846e3260",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_vzdn6ec8oa0e3c9r6vmslw35",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_vzdn6ec8oa0e3c9r6vmslw35.txt",
+    "sha256": "75c8fc581d6e3e0ef63692d92be0254623cb78d8099e9358416caa8add2aa51a",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+    "callId": "call_prv8zeqv8jo2dnm7xj71i1wp",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/第一份故事的学习与作业路线.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_prv8zeqv8jo2dnm7xj71i1wp.txt",
+    "sha256": "b11c7d930650a139d4dd647ff5478528ae90b776bfb8e4556a05a3ebc7451be2",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_k7l2nq4x5e8cdk24y3ri2lqx",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-独立评阅.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_k7l2nq4x5e8cdk24y3ri2lqx.txt",
+    "sha256": "fed2c64a2f383f6bd8d6b38fdbb6d669ea99f99f45955a77d25b0548f5239f6f",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_ixxzwjvhtjnxsdkhrjbqq5hx",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-返工要求.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_ixxzwjvhtjnxsdkhrjbqq5hx.txt",
+    "sha256": "4b321f428c937fae805c1f149ceb0d7143ffd45288d733cbf1f64df239959e00",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_2wiz76d4ct4dlv0p0prvw7pg",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_2wiz76d4ct4dlv0p0prvw7pg.txt",
+    "sha256": "0476ac25262f585db636edd692c586b5b088eef43c1a22de1d980683f33b19cb",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_0rabtt737f13f7ydvo9fys7r",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/沿因果返工.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_0rabtt737f13f7ydvo9fys7r.txt",
+    "sha256": "13ca0406f55109a1d64ef334e0dd1d5604ecac236546158bb21a332cef08cfcc",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_066k2swpw4aq73twelunz0ao",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/把一场戏写得具体.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_066k2swpw4aq73twelunz0ao.txt",
+    "sha256": "268eb458eac4321f1fe2212d44b2e19761aea52c99f9d8af5b308db83011eaa7",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_c774us9a3mopuurfgdw81jbe",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/课程/第34课.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_c774us9a3mopuurfgdw81jbe.txt",
+    "sha256": "a9dc074d05632da5c2dd0f4e35e505df81ecb9d4ba447b49f7d793f9673c4604",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+    "callId": "call_tm6qns0qyfquz84gfon2ih3v",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-v1.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_tm6qns0qyfquz84gfon2ih3v.txt",
+    "sha256": "72e75fa80cf6de17971db88d009d1c87c6c08098e85ec3587c7d8af7965c90f0",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076c8-3017-7df0-a5e1-d26510e42924",
+    "callId": "call_52icchz4jsbn65nssw8cmmaj",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-v2复核.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_52icchz4jsbn65nssw8cmmaj.txt",
+    "sha256": "30c5ccc9fe3b41b44975446d54b0620d2a68c9edcf8ed65b41ca0642d001d0c2",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076c8-3017-7df0-a5e1-d26510e42924",
+    "callId": "call_ju9m19oyu83kwdz840ld0nlf",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/练习/第一份故事-v2.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_ju9m19oyu83kwdz840ld0nlf.txt",
+    "sha256": "3d08d5d6060dd2d22cb701ce653d543484f18bcb49b8f638f68a49055f23533c",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076c8-3017-7df0-a5e1-d26510e42924",
+    "callId": "call_dcgascgw3k8ca1hnid3rxjxm",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_dcgascgw3k8ca1hnid3rxjxm.txt",
+    "sha256": "6798b2ceb2a85557636b252f954bfd37b7948b14e5d7212bc15d26aa8cb0c118",
+    "contains_truncation_warning": false
+  },
+  {
+    "turnId": "01a076c8-3017-7df0-a5e1-d26510e42924",
+    "callId": "call_zeva57g106c1qrhz6ymnzt7n",
+    "source_file": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-learning/charlie-20260906/方法/让信息变成事件.md",
+    "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_zeva57g106c1qrhz6ymnzt7n.txt",
+    "sha256": "4fb627ff3206f1db80f8e200d789db3f41e751e6cc8481614243f1ef8454bfbe",
+    "contains_truncation_warning": false
+  }
+]

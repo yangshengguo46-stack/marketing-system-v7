@@ -1,0 +1,375 @@
+{
+  "lesson": 23,
+  "source_parts": [
+    {
+      "part": 48,
+      "source_json_sha256": "f65949d992cb5d8954c1241091a346d91a210f87ec2fcef32a2e9cabd3aa755c",
+      "segment_count": 486
+    },
+    {
+      "part": 49,
+      "source_json_sha256": "e5c8ba210e8a47ad61d246e16a09ea3bd326faba0e30d352e3562a515979f6e0",
+      "segment_count": 585
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L23-B001",
+      "part": 48,
+      "first_segment": 1,
+      "last_segment": 33,
+      "heading": "开场：被同学发现瘦了，于是提前录课",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B002",
+      "part": 48,
+      "first_segment": 34,
+      "last_segment": 67,
+      "heading": "减肥岔题：讲师自述饮食变化",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B003",
+      "part": 48,
+      "first_segment": 68,
+      "last_segment": 84,
+      "heading": "运动岔题：先恢复活动，再谈坚持",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B004",
+      "part": 48,
+      "first_segment": 85,
+      "last_segment": 118,
+      "heading": "为什么这节课只叫“浅谈喜剧”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B005",
+      "part": 48,
+      "first_segment": 119,
+      "last_segment": 165,
+      "heading": "把新方法接到自己的知识体系上",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B006",
+      "part": 48,
+      "first_segment": 166,
+      "last_segment": 201,
+      "heading": "几种历史定义：只作课堂转述，注意媒介变化",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B007",
+      "part": 48,
+      "first_segment": 202,
+      "last_segment": 233,
+      "heading": "讲师自己的定义：同一困境，观看位置不同",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B008",
+      "part": 48,
+      "first_segment": 234,
+      "last_segment": 267,
+      "heading": "雨天摔倒的例子：距离如何改变反应",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B009",
+      "part": 48,
+      "first_segment": 268,
+      "last_segment": 300,
+      "heading": "喜剧的评价地位与演员标签",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B010",
+      "part": 48,
+      "first_segment": 301,
+      "last_segment": 346,
+      "heading": "喜剧可以叠加在不同故事类型上",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B011",
+      "part": 48,
+      "first_segment": 347,
+      "last_segment": 383,
+      "heading": "喜剧人物：小人物与明显的不相称",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B012",
+      "part": 48,
+      "first_segment": 384,
+      "last_segment": 403,
+      "heading": "身份反差：不会识字的人却要教语文",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B013",
+      "part": 48,
+      "first_segment": 404,
+      "last_segment": 427,
+      "heading": "标签与外化特征：让矛盾更快被看见",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B014",
+      "part": 48,
+      "first_segment": 428,
+      "last_segment": 448,
+      "heading": "欲望反差：人物想得到远超自身条件的东西",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B015",
+      "part": 48,
+      "first_segment": 449,
+      "last_segment": 486,
+      "heading": "动作的难点：观众不赞成，却仍愿意跟着看",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B016",
+      "part": 49,
+      "first_segment": 1,
+      "last_segment": 10,
+      "heading": "《定制伴郎》：荒唐办法背后要有可理解的窘迫",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B017",
+      "part": 49,
+      "first_segment": 11,
+      "last_segment": 36,
+      "heading": "《狱前教育》：双方都不具备资格，却开始培训",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "御前教育／以前教育",
+          "cleaned": "《狱前教育》",
+          "basis": "凯文·哈特及入狱前培训的故事设定明确对应片名。"
+        }
+      ]
+    },
+    {
+      "id": "L23-B018",
+      "part": 49,
+      "first_segment": 37,
+      "last_segment": 50,
+      "heading": "《录取通知》：为一个小目标付出荒唐的大成本",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B019",
+      "part": 49,
+      "first_segment": 51,
+      "last_segment": 98,
+      "heading": "事件层面：大小错位、巧合与困境",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B020",
+      "part": 49,
+      "first_segment": 99,
+      "last_segment": 107,
+      "heading": "《羞羞的铁拳》：身体与经验不匹配",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B021",
+      "part": 49,
+      "first_segment": 108,
+      "last_segment": 158,
+      "heading": "主题层面的喜剧：讲师怎样理解黑色幽默",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B022",
+      "part": 49,
+      "first_segment": 159,
+      "last_segment": 198,
+      "heading": "喜剧内部的高低评价，也不必当成创作等级",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B023",
+      "part": 49,
+      "first_segment": 199,
+      "last_segment": 244,
+      "heading": "反转例子：寻找父亲，却先认了哥哥的父亲",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "how爱没to mother／巴你／巴黎",
+          "cleaned": "《老爸老妈的浪漫史》（How I Met Your Mother）／巴尼",
+          "basis": "剧名与角色在同段多次明确指向。"
+        }
+      ]
+    },
+    {
+      "id": "L23-B024",
+      "part": 49,
+      "first_segment": 245,
+      "last_segment": 289,
+      "heading": "同一反转为何又好笑又心酸",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B025",
+      "part": 49,
+      "first_segment": 290,
+      "last_segment": 307,
+      "heading": "排比：重复同一结构，再逐步升级",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B026",
+      "part": 49,
+      "first_segment": 308,
+      "last_segment": 328,
+      "heading": "《老友记》的对比：同一消息，两种回应长度",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B027",
+      "part": 49,
+      "first_segment": 329,
+      "last_segment": 341,
+      "heading": "解构经典：借观众熟悉的形象制造错位",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "结构经典",
+          "cleaned": "解构经典",
+          "basis": "后文明确说颠覆传统认知，并清晰出现“被解构”。"
+        }
+      ]
+    },
+    {
+      "id": "L23-B028",
+      "part": 49,
+      "first_segment": 342,
+      "last_segment": 374,
+      "heading": "两种喜剧台词：情境长出来的，与人物主动幽默的",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "肖dom",
+          "cleaned": "谢尔顿〔人名据读音与标签化人物语境推定，待听校〕",
+          "basis": "ASR为混合拼写，正文保留推定限度，未作绝对确证。"
+        },
+        {
+          "original": "canderer／签在这／交椅／rose",
+          "cleaned": "钱德勒／乔伊／罗斯",
+          "basis": "《老友记》角色组与上下文明确。"
+        }
+      ]
+    },
+    {
+      "id": "L23-B029",
+      "part": 49,
+      "first_segment": 375,
+      "last_segment": 400,
+      "heading": "制造预期、打破预期：把关注点故意错开",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B030",
+      "part": 49,
+      "first_segment": 401,
+      "last_segment": 429,
+      "heading": "重复与callback：同一句话怎样积累力量",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B031",
+      "part": 49,
+      "first_segment": 430,
+      "last_segment": 447,
+      "heading": "类比的后劲：一个对应关系能带出后续笑料",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B032",
+      "part": 49,
+      "first_segment": 448,
+      "last_segment": 504,
+      "heading": "北京同事的故事：借双眼皮类比揭出话语结构",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B033",
+      "part": 49,
+      "first_segment": 505,
+      "last_segment": 528,
+      "heading": "流行语，以及讲师工作中的喜剧分类",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B034",
+      "part": 49,
+      "first_segment": 529,
+      "last_segment": 561,
+      "heading": "无厘头争议：不能把缺少因果直接当成笑点",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L23-B035",
+      "part": 49,
+      "first_segment": 562,
+      "last_segment": 585,
+      "heading": "结课：方法可以拆，边界仍需自己判断",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "饮食运动内容完整保留为讲师个人自述，未作为营养或减重建议；历史定义、地域与性别泛化均明确归于讲师或角色。",
+    "谢尔顿姓名为有限语境推定并标待听校；未报片名的电影不补猜。",
+    "成人及骚扰例子只保留非露骨的叙事机制，不扩展细节。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第23课.md",
+  "output_sha256": "1944062cfdbb88143ff35fbfbbff29679b30868b1b9af3e8ba031af9754f4e62",
+  "reader_navigation_update": {
+    "previous_output_sha256": "d845c1284ba6553f2f237451b95dafa98cfc0dc3214106a0eb47299aaa23fba5",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

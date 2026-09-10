@@ -1,0 +1,166 @@
+{
+  "blocks": [
+    {
+      "first_segment": 93,
+      "last_segment": 102,
+      "heading": "影片英文片段：电话、销售动员与财富",
+      "text": "〔接着播放IPO动员演说。以下英文依ASR完整保留，非逐句听校字幕；不将缺失的否定、主语或宾语补成流利英文。〕\n\n〔S93〕All right, we want all you to focus for a second, see those little black boxes, they're called telephones, I'm going to let you on a little secret about these telephones and not going to dial themselves, okay, without you, they're just worthless hunks of plastic, like a loaded M16 without a train re to pull the trigger.\n\n〔S94〕And in the case of the telephone.\n\n〔S95〕It's up to each and every one of you.\n\n〔S96〕My highly trained strattonites.\n\n〔S97〕My killers.\n\n〔S98〕My killers who will not take no for an answer.\n\n〔S99〕fuckinguck warriors who will not hang up the phone until their client either buys or fucking die.\n\n〔S100〕Let me there is no nobility in poverty, I have been a rich man and I have been a poor man, and I choose rich every fucking time.\n\n〔S101〕when I have to face my problems, I show up in the back of a limo wearing a $2,000 suit and a $40,000 gold fucking watch.\n\n〔S102〕Thinks I'm superficial or materialistic. go get a job at fucking McDonald's, because that's why you fucking belong.\n\n〔可辨大意：把黑盒子称为电话，强调电话离不开拨打它的人，并用装填好的M16与扣扳机者作比喻；把员工称为不接受拒绝、直到客户买或死才肯挂电话的战士。接着说贫穷并不高尚，自己经历过贫富，每次都选富，提到豪车、两千美元西装、四万美元金表，并以去麦当劳工作来反击“肤浅、物质”的评价。S93“and not going to dial themselves”“train re”、S102的条件句与why/where仍有识别疑点，以上只是可辨内容整理，不冒充准确原话。〕",
+      "corrections": [
+        {
+          "original": "let you on a little secret",
+          "cleaned": "let you on a little secret〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "train re",
+          "cleaned": "train re〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Let me there is",
+          "cleaned": "Let me there is〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Thinks I'm superficial",
+          "cleaned": "Thinks I'm superficial〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "that's why you fucking belong",
+          "cleaned": "that's why you fucking belong〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ]
+    },
+    {
+      "first_segment": 103,
+      "last_segment": 109,
+      "heading": "影片英文片段：旧车新车对比、三种困境与强推股票",
+      "text": "〔下半段演说，源英文记录如下。车型、身旁人物描述、衣着及若干断句严重错识，撤销Pinto、Porsche、degenerate、growth、shirt等由常识补出的确定词。〕\n\n〔S103〕But before you depart this room for the winners.\n\n〔S104〕I want you to take a good look at the person next year go on.\n\n〔S105〕Cause sometime in the not so distant future, you're going to be pulling up to a red light and you beat up old fucking pinnel and that person is going to be pulling up right alongside you in that brand new poors.\n\n〔S106〕Some disgusting wild debe with three days a raiseous stubble in a sleeveless mo crammed in next you a call load full of groceries from a fucking price club. That's who you're gonna be sitting next. So you listen to me and you listen well, Are you behind on your credit card bills, Go pick up the phone and start dialing. is your landlord ready to evict you.\n\n〔S107〕Good, pick up the phone and start dialing Does your girlfriend think you're a fucking worthless loser, Good pick up the phone and start dialing I want you to deal with your problems by becoming rich All you have to do today is pick up that phone.\n\n〔S108〕peak the words that I have taught you, and I will make you richer than the most powerful CEO in the United States of F America I want you to go out there.\n\n〔S109〕I want you to ram Steve Maddenstock down your client' throats till they fucking choke on it till they choke on it and they buy10000 shares, That's what I want You be ferocious, You'd be relentless, You be telephone fucking.\n\n〔可辨内容延续胜者与穷人的对比：让人看身边的同伴，想象未来红灯前自己的旧车和别人新车并排；其后是带侮辱性的同行者/购物物品描述，但具体人貌、衣着和句法不清，不重造一幅确定画面。之后列举信用卡欠款、房东赶人、女友认为自己失败等困境，反复要求拿起电话拨号，通过变富解决问题。又要求说出教过的话，声称能让员工比美国最有权力的CEO更富；最后命令把Steve Madden股票卖给客户，提到买一万股，并强调凶猛、坚持。结尾“telephone fucking”截断，不补后面的称号。所有财富承诺均属影片人物的演说。〕",
+      "corrections": [
+        {
+          "original": "pinnel",
+          "cleaned": "pinnel〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "poors",
+          "cleaned": "poors〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "wild debe",
+          "cleaned": "wild debe〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "raiseous",
+          "cleaned": "raiseous〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "sleeveless mo",
+          "cleaned": "sleeveless mo〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "a call load full",
+          "cleaned": "a call load full〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "peak the words",
+          "cleaned": "peak the words〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "Maddenstock",
+          "cleaned": "Maddenstock〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "F America",
+          "cleaned": "F America〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        },
+        {
+          "original": "telephone fucking",
+          "cleaned": "telephone fucking〔源词保留，未听校〕",
+          "basis": "独立复核撤销按通顺度、常见姓名/车型或记忆补成的英文；现正文完整保留源ASR并标疑。"
+        }
+      ]
+    },
+    {
+      "first_segment": 110,
+      "last_segment": 114,
+      "heading": "老师讲解：这场戏的正面意义——用三段式说服别人",
+      "text": "老师：常牛一戏〔待核〕啊。\n\n跟大家说一下，你看像刚才这个，同学们，我为什么说这场电影其实它有些地方还是有正面意义的，它最起码说对了一件事情，就是关于赚钱——如何快速地获得别人的注意力。他刚才说golden ticket啊，这个非常对。你用三段式怎么回答、说服别人？第一段、第一段——\n\n你赚不到钱，是因为你没有买票。先讲一个让他思考、觉得奇怪的事实。什么票呢？坐在有钱人那桌的门票。你没有这个门票，你就没有坐在有钱人那桌。因为有钱人里面有90%的人并不知道咱自己是怎么赚到钱的。\n\n他只是坐对了桌。因为发明方法论的只有10%的人。第三点，你也不需要知道方法论，你不需要知道世界运行的规律，你只需要坐在有钱人那一桌。\n\n这就是三段式啊，三段式正好结合他在讲赚钱，大家去体会一下如何用三段式写台词，包括去说服别人。\n\n〔90%和10%是讲师用“三段式”举例时的说服性断言，未提供统计来源；这里保留的是台词/说服结构示例，不当作关于富人群体的已核实比例。〕",
+      "corrections": [
+        {
+          "original": "常牛一戏",
+          "cleaned": "常牛一戏〔待核〕",
+          "basis": "教师口语，常牛一词无法确定原意，疑为一场牛戏之类说法"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S93原train re等词保留，不补trained soldier；not相关句式仍未听校。",
+    "S100 Let me there is原样保留，不加tell you。",
+    "S102 Thinks与why原样保留，不补条件句或where。",
+    "S105—S106 pinnel、poors、wild debe、raiseous、sleeveless mo、call load等保留，不猜车型、人物描述或衣着。",
+    "S109：'telephone fucking'后截断，无法确定后续词",
+    "S110：'常牛一戏'教师口语，无法确定原意",
+    "影片英文对白未逐句对照原片，多处误识已标疑但未声称准确"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p080-c004",
+  "part": 80,
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "output_text_characters": 3426,
+  "length_ratio": 1.3269,
+  "review_length_flag": false,
+  "thread_id": "01a07f32-bb6d-7e60-9f8e-610c024ad933",
+  "usage": {
+    "total": {
+      "totalTokens": 15663,
+      "inputTokens": 10044,
+      "cachedInputTokens": 8640,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5619,
+      "reasoningOutputTokens": 3919
+    },
+    "last": {
+      "totalTokens": 15663,
+      "inputTokens": 10044,
+      "cachedInputTokens": 8640,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 5619,
+      "reasoningOutputTokens": 3919
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null,
+  "independent_full_review": {
+    "date": "2026-09-08",
+    "reviewer": "clean_core_25_34",
+    "scope": "全文顺读P080 S93—S114并对照本文件全部正文块；全章243段均已读完。",
+    "first_segment": 93,
+    "last_segment": 114,
+    "segment_count": 22,
+    "block_count": 3,
+    "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+    "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c004-before-independent-full-review.json",
+    "before_sha256": "793e3aaf5fc176d24e242715e1937e027a6105fed877b3193ad699d826d396ad",
+    "changes": [
+      "两段英语逐段与源对照；撤回流利化补句和Pinto/Porsche等猜定车型，原文与可辨内容整理并存，不删原残句。",
+      "完整保留M16比喻、2000/40000金额、旧新车对比、信用卡/房东/女友三困境及10000股。",
+      "讲师golden ticket三段式论点完整，90%/10%明确为未核口述例。"
+    ],
+    "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+    "preserved_review_keys": []
+  }
+}

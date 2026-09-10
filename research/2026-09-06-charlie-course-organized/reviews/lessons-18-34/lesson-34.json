@@ -1,0 +1,145 @@
+{
+  "lesson": 34,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 60,
+      "title": "三十四课-查理小三角创作法",
+      "cid": 713227009,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=60",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十四课-查理小三角创作法.mp4",
+      "sha256": "8614f394e619f763777124605d5e11513d1729eb103aa78fc7c94ead6810a2d9",
+      "duration_seconds": 2844
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "已收作业共性：结构完整、单场流水账",
+      "part": 60,
+      "start_seconds": 10,
+      "end_seconds": 188
+    },
+    {
+      "label": "妈妈爱孩子：创作诉求不等于具体事件",
+      "part": 60,
+      "start_seconds": 191,
+      "end_seconds": 310
+    },
+    {
+      "label": "原方法1：核心对抗，目标/对手/困境至少一种入口",
+      "part": 60,
+      "start_seconds": 311,
+      "end_seconds": 509
+    },
+    {
+      "label": "原方法2：单场转折变化",
+      "part": 60,
+      "start_seconds": 510,
+      "end_seconds": 551
+    },
+    {
+      "label": "原方法3：延续前后线索与观众期待",
+      "part": 60,
+      "start_seconds": 552,
+      "end_seconds": 617
+    },
+    {
+      "label": "原方法4：事件/选择贴合人设",
+      "part": 60,
+      "start_seconds": 618,
+      "end_seconds": 917
+    },
+    {
+      "label": "将旧正戏反写模型化为小三角",
+      "part": 60,
+      "start_seconds": 918,
+      "end_seconds": 997
+    },
+    {
+      "label": "可怜小孩：先独立坚强再露出渴望，点到为止",
+      "part": 60,
+      "start_seconds": 998,
+      "end_seconds": 1336
+    },
+    {
+      "label": "穷：先装大方再被拆穿",
+      "part": 60,
+      "start_seconds": 1338,
+      "end_seconds": 1428
+    },
+    {
+      "label": "关系不好/好：反向事件再回诉求；兼容前四法",
+      "part": 60,
+      "start_seconds": 1429,
+      "end_seconds": 1668
+    },
+    {
+      "label": "耳朵大有福片段",
+      "part": 60,
+      "start_seconds": 1669,
+      "end_seconds": 1983
+    },
+    {
+      "label": "耳朵大有福四项逐步分析与小三角",
+      "part": 60,
+      "start_seconds": 1988,
+      "end_seconds": 2253
+    },
+    {
+      "label": "当幸福来敲门引介和片段",
+      "part": 60,
+      "start_seconds": 2253,
+      "end_seconds": 2549
+    },
+    {
+      "label": "无处住→冒险游戏→敲门返回绝境",
+      "part": 60,
+      "start_seconds": 2550,
+      "end_seconds": 2605
+    },
+    {
+      "label": "两部分作业、网站、自学班范围",
+      "part": 60,
+      "start_seconds": 2608,
+      "end_seconds": 2668
+    },
+    {
+      "label": "公开课与孵化营说明、直播选典型点评",
+      "part": 60,
+      "start_seconds": 2669,
+      "end_seconds": 2839
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "创造一个小三角情节：先写/画三角结构公式及关键词，再根据公式写具体一场戏/一段剧情。",
+      "part": 60,
+      "start_seconds": 2608.262,
+      "end_seconds": 2657.068,
+      "submission_spec": "两部分：三角公式+具体场戏；录课时交 bianjuke.cn，针对全体自学班；未规定字数、截止日期或指定人物。",
+      "teacher_review": "47:02–47:14说在直播课选典型作业批改点评，非每份必批；本P尚未执行。",
+      "uncertainty": "44:03/44:06已核两部分字幕，44:11域名字幕已核；网站现状未核。"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "近期收到作业共性：大结构完整，但单个事件、单场、信息包寡淡，通篇流水账。",
+      "part": 60,
+      "start_seconds": 56.166,
+      "end_seconds": 86.924,
+      "submission_spec": "本课未指原题或展示原稿。",
+      "teacher_review": "实际已收稿共性反馈，用于引出本课；不能认作某个已编号作业回收。",
+      "uncertainty": "没有证据挂到32课游戏方案或其他具体题。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    60
+  ],
+  "limits": [
+    "全P机器稿逐段读完；播放电影尤其英文段识别差，未逐句听校。",
+    "小三角作用于单场/事件/信息包，是原四项方法的补充；不是整片固定三幕模板。",
+    "目标/对手/困境至少一种入口，不是每场三份方案。",
+    "回到诉求须点到为止；不把示例假坚强当儿童心理事实。",
+    "结尾尼采归属未核，不引用为可靠名言；网站为录课时渠道，非现状。"
+  ]
+}

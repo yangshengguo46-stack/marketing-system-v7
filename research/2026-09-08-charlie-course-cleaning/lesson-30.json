@@ -1,0 +1,220 @@
+{
+  "lesson": 30,
+  "source_parts": [
+    {
+      "part": 56,
+      "source_json_sha256": "8f71013ef40d90159cef736da3b597f0ec0a8db1c71c26866f01c7b8f7dea982",
+      "segment_count": 1152
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L30-B001",
+      "part": 56,
+      "first_segment": 1,
+      "last_segment": 79,
+      "heading": "停更、线下课与网络骂声的开场说明",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B002",
+      "part": 56,
+      "first_segment": 80,
+      "last_segment": 139,
+      "heading": "技巧不能盖过初心，初稿受批评也要继续练",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B003",
+      "part": 56,
+      "first_segment": 140,
+      "last_segment": 206,
+      "heading": "艺术作为语言表达的补充：绘画的例子",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B004",
+      "part": 56,
+      "first_segment": 207,
+      "last_segment": 264,
+      "heading": "音乐、唱词与主流价值观的课堂观点",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B005",
+      "part": 56,
+      "first_segment": 265,
+      "last_segment": 347,
+      "heading": "生存环境：所有媒介都在争夺注意力与时间",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B006",
+      "part": 56,
+      "first_segment": 348,
+      "last_segment": 403,
+      "heading": "影视是综合艺术，也可理解为共同的梦",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B007",
+      "part": 56,
+      "first_segment": 404,
+      "last_segment": 460,
+      "heading": "全面、引人入胜，与心理参与空间较少",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B008",
+      "part": 56,
+      "first_segment": 461,
+      "last_segment": 533,
+      "heading": "审美与自我认同：爱情和资助的类比",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B009",
+      "part": 56,
+      "first_segment": 534,
+      "last_segment": 599,
+      "heading": "海龟与藤壶视频：观众在为谁感动",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B010",
+      "part": 56,
+      "first_segment": 600,
+      "last_segment": 653,
+      "heading": "把一眼吸引变成长久关注：期待与追索型注意力",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B011",
+      "part": 56,
+      "first_segment": 654,
+      "last_segment": 689,
+      "heading": "刺激性开场的作用与限制",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B012",
+      "part": 56,
+      "first_segment": 690,
+      "last_segment": 755,
+      "heading": "让观众验证自己的期待；不要只让作者炫智",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B013",
+      "part": 56,
+      "first_segment": 756,
+      "last_segment": 815,
+      "heading": "期待视域：文化与年代会改变观众所想",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "期待世域／失欲／食欲／私欲／诗欲／庇护室",
+          "cleaned": "期待视域／B故事",
+          "basis": "同段明确解释期待范围及反战与回家的双线术语；按上下文规范"
+        }
+      ]
+    },
+    {
+      "id": "L30-B014",
+      "part": 56,
+      "first_segment": 816,
+      "last_segment": 850,
+      "heading": "从观众看三段：吸引、预期、满足",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B015",
+      "part": 56,
+      "first_segment": 851,
+      "last_segment": 943,
+      "heading": "钓鱼模型：明确欲望为何连路人一秒也拿得到",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "通汇河／通会河／看他的头／欲望保险／忘他",
+          "cleaned": "通惠河／看他的桶／欲望模型〔末尾英文词待核〕",
+          "basis": "S855地名音形；钓鱼桶内有无鱼的后续明确说明；S897–943的行动目标语境"
+        }
+      ]
+    },
+    {
+      "id": "L30-B016",
+      "part": 56,
+      "first_segment": 944,
+      "last_segment": 1021,
+      "heading": "下棋、脱困、中奖，怎样连到故事类型",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B017",
+      "part": 56,
+      "first_segment": 1022,
+      "last_segment": 1060,
+      "heading": "从一秒到几分钟：钓鱼人加身份，再加缺陷",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B018",
+      "part": 56,
+      "first_segment": 1061,
+      "last_segment": 1094,
+      "heading": "再放大目标、加入对手、时间锁与死亡赌注",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B019",
+      "part": 56,
+      "first_segment": 1095,
+      "last_segment": 1135,
+      "heading": "没有钩子不是缺一个类型名，而是没牵住观众",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L30-B020",
+      "part": 56,
+      "first_segment": 1136,
+      "last_segment": 1152,
+      "heading": "最后一项：真实感让观众愿意投入",
+      "disposition": "正文清洗",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "仅依据本课全部机器 ASR segments 顺读整理；未逐句听校，非逐字原话。",
+    "时间为原 P 内 ASR/VAD 边界；源 ASR 可能漏识，段落覆盖不替代音视频核验。",
+    "作品剧情、行业经验及评价均保留为讲师课堂表述，未作外部事实核验。",
+    "病因在原课未明说，不推断为具体疾病、接种或其他干预；匿名集市观看形式、战争片、刘若英歌曲不补名。",
+    "费里尼、黑格尔、余秋雨相关话语均为课堂转述，未核出处；艺术定义、职业数量、财富、流量、文化心理等均是讲师观点。",
+    "原课注意力与时间先说相加后说相乘，未人为统一成数学公式。",
+    "对新人悬疑写作的“前二十年”是本课强烈口头建议，未与其他课混为一条普遍硬规则。",
+    "钓鱼冠军及纪录、盲钓、孙女、对手、持枪人均是教学虚构和分支备选；海龟/藤壶场景未作生态核验。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第30课.md",
+  "output_sha256": "d67bf2134a635c2d80c9661a9605ffda232302598e7b1f9cf81bc27f06aa6f03",
+  "reader_navigation_update": {
+    "previous_output_sha256": "e7d7d8bda80797c3ae7234502f299f13ae9c80269eeed085899ba7dfe38659e9",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

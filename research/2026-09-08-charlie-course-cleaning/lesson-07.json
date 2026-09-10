@@ -1,0 +1,131 @@
+{
+  "lesson": 7,
+  "source_parts": [
+    {
+      "part": 14,
+      "source_json_sha256": "7c5108310d39656f927de21df5424bf1217f9276376951abe06704fd645751e3",
+      "segment_count": 265
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L07-B001",
+      "part": 14,
+      "first_segment": 1,
+      "last_segment": 23,
+      "heading": "从前课故事作业，走到万字纲",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "梗盖／万字钢",
+          "cleaned": "梗概／万字纲",
+          "basis": "本课反复定义的文稿阶段名称。"
+        }
+      ]
+    },
+    {
+      "id": "L07-B002",
+      "part": 14,
+      "first_segment": 24,
+      "last_segment": 35,
+      "heading": "不是把一千五百字扩写成一万字",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L07-B003",
+      "part": 14,
+      "first_segment": 36,
+      "last_segment": 68,
+      "heading": "“外表冷漠，内心狂热”的老李，怎样让观众知道",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L07-B004",
+      "part": 14,
+      "first_segment": 69,
+      "last_segment": 80,
+      "heading": "能不能让人物用台词介绍自己的性格",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L07-B005",
+      "part": 14,
+      "first_segment": 81,
+      "last_segment": 125,
+      "heading": "三幕式、四幕式与起承转合",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "商务式／三木／限制／启程转壳",
+          "cleaned": "三幕式／三幕／建制／起承转合",
+          "basis": "S091–094及后续板书重复给出阶段名称，前后定义一致。"
+        }
+      ]
+    },
+    {
+      "id": "L07-B006",
+      "part": 14,
+      "first_segment": 126,
+      "last_segment": 163,
+      "heading": "四段为什么需要五个事件点",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L07-B007",
+      "part": 14,
+      "first_segment": 164,
+      "last_segment": 179,
+      "heading": "五件骨架事件各自做什么",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "绝对大反击／股价",
+          "cleaned": "绝地大反击／骨架",
+          "basis": "前者依危机反击语境整理，后者为五大事件支撑结构的明确含义。"
+        }
+      ]
+    },
+    {
+      "id": "L07-B008",
+      "part": 14,
+      "first_segment": 180,
+      "last_segment": 208,
+      "heading": "八要素没有被五事件推翻：一个是纵轴，一个是横轴",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L07-B009",
+      "part": 14,
+      "first_segment": 209,
+      "last_segment": 265,
+      "heading": "把八要素填进五个事件的变化表；课后继续做",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "主力／开场时间／激励世界／负加值／钱让",
+          "cleaned": "阻力／开场事件／激励事件／负价值／填上",
+          "basis": "八要素与五事件表格的反复明确语境。"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "沿用第5课约1500字故事，明确命名为梗概；本课推进为万字纲与八要素×五事件表。未添加新截止日期、格式或额外故事篇数。",
+    "P014 S198开场“殉职”保留为求死行为的演示，不推断已经死亡；S223–226“变成父亲”保留当课说法。",
+    "一百分钟四等分及高潮即结束均为课堂骨架示意；转折常是一次动作失败/二次动作是讲师明确自述的解释。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第07课.md",
+  "output_sha256": "9c25fe671daff2021acac422e713add2e539698c04b2ae25c78e3c7101283d7b",
+  "reader_navigation_update": {
+    "previous_output_sha256": "ea4f35781a33aa46504d7851ebe6360a4ce210262adc7f09a7b805ae7dd4b171",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

@@ -1,0 +1,1007 @@
+{
+  "created_at_utc": "2026-09-08T02:05:28.000110+00:00",
+  "book": "output/course-learning/charlie-20260906/完整课程/课程全文-机器提取底稿.md",
+  "book_sha256": "3eff300232248dcf7c21f6f7c25431ddc468f0c520f78ff5491e67223cef2f6b",
+  "book_bytes": 4986327,
+  "parts": 92,
+  "original_lessons": 34,
+  "supplements": 33,
+  "segments": 42340,
+  "asr_text_characters": 938432,
+  "all_segment_text_exact": true,
+  "all_source_json_match_previous_verified_hashes": true,
+  "scope": "Complete existing ASR text compilation; no semantic cleaning, new transcription, full audio listening or visual transcription.",
+  "source_parts": [
+    {
+      "part": 2,
+      "cid": 167845774,
+      "source_json_sha256": "4ed1a22686973a19bd7cc76c0d0f9659cae8d6b80c6cd6af24207afa3ff45f10",
+      "segment_count": 178,
+      "text_characters": 4512
+    },
+    {
+      "part": 3,
+      "cid": 167847370,
+      "source_json_sha256": "f3a674869a75aa9a6f6bb4d3e253f7407d7207bcada58d3a47cc40a97d330048",
+      "segment_count": 299,
+      "text_characters": 5378
+    },
+    {
+      "part": 4,
+      "cid": 167849613,
+      "source_json_sha256": "5fd3097cfe1709bb0fbd1738462f6f87ccc590f6fbc130353102ec03f5be359f",
+      "segment_count": 175,
+      "text_characters": 2791
+    },
+    {
+      "part": 5,
+      "cid": 167850841,
+      "source_json_sha256": "4b7882c878b028d2279501d65a5ca8e672e58e11c62613c2838328975e4666bc",
+      "segment_count": 298,
+      "text_characters": 4800
+    },
+    {
+      "part": 6,
+      "cid": 167853069,
+      "source_json_sha256": "10c6a131ecbff08be2316e3d42eb828162e3139d71fd3fe556b6188ea4c50df1",
+      "segment_count": 423,
+      "text_characters": 6917
+    },
+    {
+      "part": 7,
+      "cid": 167856598,
+      "source_json_sha256": "a92861c862169ded217ec85cd26e1947a610b5cbd575e579baefa98c6884a00c",
+      "segment_count": 398,
+      "text_characters": 5725
+    },
+    {
+      "part": 8,
+      "cid": 167859809,
+      "source_json_sha256": "c172614c951fc36fa60fd5145afd9238cfd23cb2572195fecddeaf8aaa7cae19",
+      "segment_count": 526,
+      "text_characters": 6717
+    },
+    {
+      "part": 9,
+      "cid": 167864038,
+      "source_json_sha256": "48f73af67a16a56fde078eacae8572b7616425a349fb8b4fe5cd5f395f420cd1",
+      "segment_count": 306,
+      "text_characters": 5123
+    },
+    {
+      "part": 10,
+      "cid": 167867112,
+      "source_json_sha256": "ce63fce1b654d1a1a0b4b89bca19afaa7358e126f7fb4dd708f08b1910dca094",
+      "segment_count": 342,
+      "text_characters": 6135
+    },
+    {
+      "part": 11,
+      "cid": 167870818,
+      "source_json_sha256": "1fe33af04c9165e8cab8955eb9987bb6bb78ff2a9eafe132856bb539cbe9dbec",
+      "segment_count": 331,
+      "text_characters": 5955
+    },
+    {
+      "part": 12,
+      "cid": 167874116,
+      "source_json_sha256": "2974e529ddeb5b3415ef689b367f3c88187f5532ef1544bbc6578957a8ff6400",
+      "segment_count": 284,
+      "text_characters": 4589
+    },
+    {
+      "part": 13,
+      "cid": 167877064,
+      "source_json_sha256": "b27966ae0e4baf3882aa277fdd6d3fdd09f98bbe2ac2b4db8753a01525caa7ab",
+      "segment_count": 328,
+      "text_characters": 7666
+    },
+    {
+      "part": 14,
+      "cid": 167881562,
+      "source_json_sha256": "7c5108310d39656f927de21df5424bf1217f9276376951abe06704fd645751e3",
+      "segment_count": 265,
+      "text_characters": 4159
+    },
+    {
+      "part": 15,
+      "cid": 167884665,
+      "source_json_sha256": "66885e42af6fa546ac9feddce63b6659a4a5e6877456a8fbce29d80c2eebe878",
+      "segment_count": 510,
+      "text_characters": 8349
+    },
+    {
+      "part": 16,
+      "cid": 168276930,
+      "source_json_sha256": "9f170558dd59f244404ce023880817089f5f77858dad9c7092830c85dfa1dee2",
+      "segment_count": 383,
+      "text_characters": 6304
+    },
+    {
+      "part": 17,
+      "cid": 168277841,
+      "source_json_sha256": "a9448ad8a7c9c98010820f0cbf533529658d789c7098845580f0916d472bd571",
+      "segment_count": 469,
+      "text_characters": 7852
+    },
+    {
+      "part": 18,
+      "cid": 170763096,
+      "source_json_sha256": "1327e5d785381a18b83048412cb929a246df1199ff48dd0a739c8870f8f65f69",
+      "segment_count": 716,
+      "text_characters": 10527
+    },
+    {
+      "part": 19,
+      "cid": 170789570,
+      "source_json_sha256": "7bb812d79bac9db9beb6a29b306dba42ad7cce794f77916477d56cfe51f8659e",
+      "segment_count": 557,
+      "text_characters": 8103
+    },
+    {
+      "part": 20,
+      "cid": 171645463,
+      "source_json_sha256": "61a6e3a2d078a92005ab61248593d1c738493de31dc90e766cd2ac55313d8dd7",
+      "segment_count": 524,
+      "text_characters": 8841
+    },
+    {
+      "part": 21,
+      "cid": 171668148,
+      "source_json_sha256": "336b26b2a3f8c533bf887137757c82143bfabe168bf9ed416ebd28ab2a520d5f",
+      "segment_count": 349,
+      "text_characters": 5182
+    },
+    {
+      "part": 22,
+      "cid": 173862838,
+      "source_json_sha256": "788203152995e5ed6c9d2c296b10c2c1e0e61199c35f03c69f1629230f383018",
+      "segment_count": 439,
+      "text_characters": 7342
+    },
+    {
+      "part": 23,
+      "cid": 173863407,
+      "source_json_sha256": "2231c8b225248949fd2b13e3713b44a4312fa019c21433c02b47b3c7d06ef1a2",
+      "segment_count": 470,
+      "text_characters": 7226
+    },
+    {
+      "part": 24,
+      "cid": 173861080,
+      "source_json_sha256": "4f53326eba91df733d913db69c391b7578e64c07fb2f0201ba03d4ecf68f6994",
+      "segment_count": 295,
+      "text_characters": 5666
+    },
+    {
+      "part": 25,
+      "cid": 174056852,
+      "source_json_sha256": "e9bd7db86ba188d68bd2c5b962a2c024fef2ddd866c1b5b2198c74204af93010",
+      "segment_count": 355,
+      "text_characters": 6214
+    },
+    {
+      "part": 26,
+      "cid": 174057044,
+      "source_json_sha256": "2b114916d7f4a59db161e794788fbb0736289bb72b2710d1ccdb3dca618bad20",
+      "segment_count": 414,
+      "text_characters": 6104
+    },
+    {
+      "part": 27,
+      "cid": 174057108,
+      "source_json_sha256": "7757ae797cec9ac070ee639e4a5184060f40fcb926dcf13ef9dac1c3a42343e5",
+      "segment_count": 476,
+      "text_characters": 6884
+    },
+    {
+      "part": 28,
+      "cid": 177384361,
+      "source_json_sha256": "7a7e1a0aae3e699f1e00ba315a467a288537c3f798ee4ea6255f4fc5d79be15c",
+      "segment_count": 387,
+      "text_characters": 7852
+    },
+    {
+      "part": 29,
+      "cid": 177383899,
+      "source_json_sha256": "adc5146c1d738c411a1ac915514d2ebc2d090c20f4e937d5c3eb04577c7b9c89",
+      "segment_count": 339,
+      "text_characters": 6227
+    },
+    {
+      "part": 30,
+      "cid": 177384367,
+      "source_json_sha256": "e512d4422b6fcbff3099a12f3a1322510f1dfa3da400adcceb75efe70d4263ce",
+      "segment_count": 438,
+      "text_characters": 6710
+    },
+    {
+      "part": 31,
+      "cid": 177384393,
+      "source_json_sha256": "31aa43befdbf8b9060f6e2152877bc20e75ce47922e6d3fb72ec0f889b85c913",
+      "segment_count": 364,
+      "text_characters": 7253
+    },
+    {
+      "part": 32,
+      "cid": 181727234,
+      "source_json_sha256": "7c04898961043e6b3308de8ad3d3462fad5236dd0465626ad8e4709757cce5b6",
+      "segment_count": 486,
+      "text_characters": 10521
+    },
+    {
+      "part": 33,
+      "cid": 181763918,
+      "source_json_sha256": "c2f04fa02d7500b1838ed5906725d395378348f3fe64be1b90ad1104e8df24a9",
+      "segment_count": 669,
+      "text_characters": 12651
+    },
+    {
+      "part": 34,
+      "cid": 190273161,
+      "source_json_sha256": "8a4d12859790c5e45ec9b00bd70e74492cee5a7ae32c30d301db9a9399f49900",
+      "segment_count": 374,
+      "text_characters": 7764
+    },
+    {
+      "part": 35,
+      "cid": 190303059,
+      "source_json_sha256": "1a4239fbf6710979c5edc7709dcf7e3b8b26d44de905037845c0b05e60b5772c",
+      "segment_count": 496,
+      "text_characters": 9197
+    },
+    {
+      "part": 36,
+      "cid": 190316428,
+      "source_json_sha256": "cc2851d5953281fd88eb643b62f33195425567879681bc2b6caf7c53bf2e3d47",
+      "segment_count": 219,
+      "text_characters": 4906
+    },
+    {
+      "part": 37,
+      "cid": 190331356,
+      "source_json_sha256": "8539f8e0efe8209bb04bb75529efb7c41b0aabedbffed5eae0bea2df1833f9ff",
+      "segment_count": 285,
+      "text_characters": 6052
+    },
+    {
+      "part": 38,
+      "cid": 202189245,
+      "source_json_sha256": "a9cd0b021c83cb6a2de6e02ef77017fea3e3034848da4ca198707c0f31f15965",
+      "segment_count": 790,
+      "text_characters": 13436
+    },
+    {
+      "part": 39,
+      "cid": 202545835,
+      "source_json_sha256": "ca9bd323fc9c976f5fadd3ea27946eaf5e0e09b752ba26c73042a0897b4fcb73",
+      "segment_count": 677,
+      "text_characters": 12017
+    },
+    {
+      "part": 40,
+      "cid": 207918303,
+      "source_json_sha256": "5923d94c00ac14145b4c0766d32f8c163c265b15641f3da77cf236d14acf8b7f",
+      "segment_count": 491,
+      "text_characters": 11203
+    },
+    {
+      "part": 41,
+      "cid": 207918389,
+      "source_json_sha256": "4bc33b8dfb50e332584a732c40744178c67631bbf6bfc3d59c9ae9837cc859a2",
+      "segment_count": 780,
+      "text_characters": 19564
+    },
+    {
+      "part": 42,
+      "cid": 212090316,
+      "source_json_sha256": "3d852b82758a1a6f8184e4eff9402285ba97d7a6e8f472a28ac6a4a3c53e9245",
+      "segment_count": 675,
+      "text_characters": 10059
+    },
+    {
+      "part": 43,
+      "cid": 227072905,
+      "source_json_sha256": "a6ae29baace71f81a2109de50d3ef10c342aa6a8f538e9f7f85de1a9c7429d87",
+      "segment_count": 784,
+      "text_characters": 16356
+    },
+    {
+      "part": 44,
+      "cid": 239866710,
+      "source_json_sha256": "d586eca9e66ee2f6076463132e28d0bcfcc77ea4dad8d17ed39da13c71aa07ae",
+      "segment_count": 571,
+      "text_characters": 9295
+    },
+    {
+      "part": 45,
+      "cid": 239868634,
+      "source_json_sha256": "8977aeb355f7f1a1c71c803731a51f8048b92d1dde36c25ecd6f4935cd975fb4",
+      "segment_count": 465,
+      "text_characters": 7700
+    },
+    {
+      "part": 46,
+      "cid": 252711256,
+      "source_json_sha256": "a1c694ce8a2557c771b603c644f0938e9e84a494af3bdbc816a9a0407bd2202f",
+      "segment_count": 496,
+      "text_characters": 11124
+    },
+    {
+      "part": 47,
+      "cid": 252782284,
+      "source_json_sha256": "25a2a7f36c88082433d106fdefc5ae16245ca289340ad0483e7cf275c16e74f3",
+      "segment_count": 376,
+      "text_characters": 9041
+    },
+    {
+      "part": 48,
+      "cid": 254049644,
+      "source_json_sha256": "f65949d992cb5d8954c1241091a346d91a210f87ec2fcef32a2e9cabd3aa755c",
+      "segment_count": 486,
+      "text_characters": 10274
+    },
+    {
+      "part": 49,
+      "cid": 254051910,
+      "source_json_sha256": "e5c8ba210e8a47ad61d246e16a09ea3bd326faba0e30d352e3562a515979f6e0",
+      "segment_count": 585,
+      "text_characters": 11738
+    },
+    {
+      "part": 50,
+      "cid": 266235698,
+      "source_json_sha256": "dc6487a3f370441dc7387aeef955f59a31b10adf5c5c9b5cee39202063a2af0d",
+      "segment_count": 1174,
+      "text_characters": 18009
+    },
+    {
+      "part": 51,
+      "cid": 272336072,
+      "source_json_sha256": "49f61e428c95b6ec4b3dd00d34dc2d1dcebb31e045df4698897cd6dc12c42765",
+      "segment_count": 557,
+      "text_characters": 12111
+    },
+    {
+      "part": 52,
+      "cid": 275889704,
+      "source_json_sha256": "c90952e356ef663993580c6580bd02f9195fc0c97a14054a6c7ff782cf1fbf15",
+      "segment_count": 851,
+      "text_characters": 15545
+    },
+    {
+      "part": 53,
+      "cid": 310082561,
+      "source_json_sha256": "e16c1c5d476650f081ebe120ec2981b30b4599fd6f8a02b8134d93e1ac725ad2",
+      "segment_count": 1050,
+      "text_characters": 14325
+    },
+    {
+      "part": 54,
+      "cid": 327535922,
+      "source_json_sha256": "f3d261230e1ad8eab398390a3aa135df3a06ff843fa11f997200bea99ef9565f",
+      "segment_count": 1370,
+      "text_characters": 19178
+    },
+    {
+      "part": 55,
+      "cid": 333133917,
+      "source_json_sha256": "4cddcdb529e23acd3f05a0a1c0c7f4a4703dd81e513af57c7a6505974e8a6eb0",
+      "segment_count": 516,
+      "text_characters": 9031
+    },
+    {
+      "part": 56,
+      "cid": 383686698,
+      "source_json_sha256": "8f71013ef40d90159cef736da3b597f0ec0a8db1c71c26866f01c7b8f7dea982",
+      "segment_count": 1152,
+      "text_characters": 19911
+    },
+    {
+      "part": 57,
+      "cid": 385383259,
+      "source_json_sha256": "52d8bf84205cf2f7abdbd2205d22a32073a7bbf502566697ac70dc60927dbdb0",
+      "segment_count": 1018,
+      "text_characters": 17544
+    },
+    {
+      "part": 58,
+      "cid": 425876128,
+      "source_json_sha256": "add88771ce849f7af91f43ee2b97fcd2c916fc2b637b3eab66e2359c2ca62612",
+      "segment_count": 791,
+      "text_characters": 21261
+    },
+    {
+      "part": 59,
+      "cid": 542014362,
+      "source_json_sha256": "32578492cf700177f0aa070bf9e12d9f7596c541c898d0bf5f03455b03c8e451",
+      "segment_count": 642,
+      "text_characters": 10975
+    },
+    {
+      "part": 60,
+      "cid": 713227009,
+      "source_json_sha256": "a743e06764debe2928609d922c9f6defee6cd981e38dd86aad3f4e24de956634",
+      "segment_count": 627,
+      "text_characters": 11247
+    },
+    {
+      "part": 1,
+      "cid": 39755975667,
+      "source_json_sha256": "f305c10354aac7e0e6e58364980f64991dc2b62ab0f813edd29a9020b0db311c",
+      "segment_count": 176,
+      "text_characters": 12724
+    },
+    {
+      "part": 61,
+      "cid": 1118879677,
+      "source_json_sha256": "35b11edc67b4847f35893eab058bdc4fcfe08eb4434e82b8d94de7460d9afa0e",
+      "segment_count": 1087,
+      "text_characters": 26802
+    },
+    {
+      "part": 62,
+      "cid": 1348722777,
+      "source_json_sha256": "e8dbddeb40e3a8a570dd02c9c37892d58b621a5ec3d8c0fd67186b171d162272",
+      "segment_count": 133,
+      "text_characters": 5006
+    },
+    {
+      "part": 63,
+      "cid": 30110452996,
+      "source_json_sha256": "adc429d5008d8eb5bc066a4910a281c3089c8a43e8201166fada5f3ebaf0e942",
+      "segment_count": 399,
+      "text_characters": 8601
+    },
+    {
+      "part": 64,
+      "cid": 26532774570,
+      "source_json_sha256": "3af28085708851a427e73e671b32273c07ad146633294086ec5dd79495625a19",
+      "segment_count": 614,
+      "text_characters": 12792
+    },
+    {
+      "part": 65,
+      "cid": 28739110936,
+      "source_json_sha256": "c8aad041ac884028fe191baf8981495f968d8268a86f2876f0fba496e76df662",
+      "segment_count": 544,
+      "text_characters": 10597
+    },
+    {
+      "part": 66,
+      "cid": 31421369184,
+      "source_json_sha256": "cfbcb2bd45953be5bf193cd416631c9ed0d84f316d840a2a8df5b558e622eab6",
+      "segment_count": 594,
+      "text_characters": 17606
+    },
+    {
+      "part": 67,
+      "cid": 33428148085,
+      "source_json_sha256": "f95cad3caa198ead5ed64e434cf38ad7f88bcd122347506cb6e52dadd7469963",
+      "segment_count": 22,
+      "text_characters": 577
+    },
+    {
+      "part": 68,
+      "cid": 26225279963,
+      "source_json_sha256": "53e6c83738586c01bf9949fcf0b89e7a71b5fff726751c6723d5774867a73200",
+      "segment_count": 213,
+      "text_characters": 10948
+    },
+    {
+      "part": 69,
+      "cid": 26255689411,
+      "source_json_sha256": "fe6abb5cf7d4b23aae4d1922c4813228f778b1e70ed8c216c67e68f1442aafd2",
+      "segment_count": 97,
+      "text_characters": 6016
+    },
+    {
+      "part": 70,
+      "cid": 26314736392,
+      "source_json_sha256": "e9fab80db79a7b0d9bc35c07f1f4598bdd9a684514807500ab0ff9b394d4d6fc",
+      "segment_count": 121,
+      "text_characters": 9181
+    },
+    {
+      "part": 71,
+      "cid": 29819406039,
+      "source_json_sha256": "3543cc96719ac9f86f7854af37e4e91fae7dd98a28eb396c6e3548bbaa95dea7",
+      "segment_count": 97,
+      "text_characters": 6056
+    },
+    {
+      "part": 72,
+      "cid": 26454394257,
+      "source_json_sha256": "864215d9aa9e29e7472be118c36ad1c8bc4b0e78432c5391fe8a4b1106cd4d01",
+      "segment_count": 261,
+      "text_characters": 15129
+    },
+    {
+      "part": 73,
+      "cid": 27089243632,
+      "source_json_sha256": "f102c379e4d3ce911fce0d67fe03a0ec26aa658e1b88bb27cb23d22f03afcea6",
+      "segment_count": 551,
+      "text_characters": 16787
+    },
+    {
+      "part": 74,
+      "cid": 27089765971,
+      "source_json_sha256": "2057b6242281a0c6641694a80bd355780e73dd882fd7f60bffefb4fa03427071",
+      "segment_count": 277,
+      "text_characters": 11697
+    },
+    {
+      "part": 75,
+      "cid": 27433699594,
+      "source_json_sha256": "4c2873c422ab735b621a5a798a1192121903ea08bc281a6ec25c3231c7898c06",
+      "segment_count": 118,
+      "text_characters": 6711
+    },
+    {
+      "part": 76,
+      "cid": 28280883637,
+      "source_json_sha256": "86c3564ba72a84a6b249a1e373d918d6dc941c36ee4370b58c7c8fea65bfd964",
+      "segment_count": 497,
+      "text_characters": 9397
+    },
+    {
+      "part": 77,
+      "cid": 29816391796,
+      "source_json_sha256": "709394cc61107067cd01ffe15ff225332c912d9457d71fd7d3e8e3a8660ba305",
+      "segment_count": 713,
+      "text_characters": 19257
+    },
+    {
+      "part": 78,
+      "cid": 29816848633,
+      "source_json_sha256": "a7110e3ee0751ed503e2afda33843077b0ae6442b4bf71980166ff80f07dabe6",
+      "segment_count": 479,
+      "text_characters": 14352
+    },
+    {
+      "part": 79,
+      "cid": 29817176838,
+      "source_json_sha256": "7507e47bd9e975c56267ef23eaec784d4deb901bdcf32e201f3db442b1164a91",
+      "segment_count": 394,
+      "text_characters": 15389
+    },
+    {
+      "part": 80,
+      "cid": 29818162710,
+      "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+      "segment_count": 243,
+      "text_characters": 16030
+    },
+    {
+      "part": 81,
+      "cid": 29818619846,
+      "source_json_sha256": "45d147e09446e97d8038b5f297f44c7767103fa03078e882a39ae4ee39d03b2f",
+      "segment_count": 436,
+      "text_characters": 14167
+    },
+    {
+      "part": 82,
+      "cid": 29819538208,
+      "source_json_sha256": "2d15afbf52f7f9b199b097fbe790d4d01592edebcce48fe127b2a64f26da1e57",
+      "segment_count": 271,
+      "text_characters": 11126
+    },
+    {
+      "part": 83,
+      "cid": 29820388979,
+      "source_json_sha256": "8dbff298ae92cc9c4412d36c54ad381e6289420b3c371bbc39fdb07140eefc2f",
+      "segment_count": 410,
+      "text_characters": 13381
+    },
+    {
+      "part": 84,
+      "cid": 29820649585,
+      "source_json_sha256": "1c3450152e5f32b100c39797d2fb034badd88354b203b1c834e7ffb888911295",
+      "segment_count": 325,
+      "text_characters": 13708
+    },
+    {
+      "part": 85,
+      "cid": 29820912258,
+      "source_json_sha256": "991831c694a081d1d07aac3b1736f3abdf7399536b3cc921f81c265804c2feb6",
+      "segment_count": 250,
+      "text_characters": 10103
+    },
+    {
+      "part": 86,
+      "cid": 29821110472,
+      "source_json_sha256": "432f16b41eb88c5ab9e0685c660a91dfa8a17f0e301a82d2fd3d490ce5a7fa49",
+      "segment_count": 143,
+      "text_characters": 7221
+    },
+    {
+      "part": 87,
+      "cid": 29821305201,
+      "source_json_sha256": "28d0735eb52b0b2d7f0a9dfcf82123a214ffd8f6e5791ddf48b69e2470e0d445",
+      "segment_count": 162,
+      "text_characters": 7566
+    },
+    {
+      "part": 88,
+      "cid": 29821437004,
+      "source_json_sha256": "d394be3f5127deee90daa3802ae88a0dd29fb2405b443d01f6528e8bceab53ca",
+      "segment_count": 148,
+      "text_characters": 9646
+    },
+    {
+      "part": 89,
+      "cid": 29817505131,
+      "source_json_sha256": "dce1bbba5436aee575d535b036f5d03444b88068fddd344b8aa873650831361b",
+      "segment_count": 618,
+      "text_characters": 19371
+    },
+    {
+      "part": 90,
+      "cid": 29821570920,
+      "source_json_sha256": "005856fb8ba94d4201e881c5b20addadff39bf1c05580db006b1155b72c02fec",
+      "segment_count": 126,
+      "text_characters": 4853
+    },
+    {
+      "part": 91,
+      "cid": 29821699723,
+      "source_json_sha256": "10308c45da2430b1afac427560ce4fbdc5814c2a925b44ae9391074f73d79d6c",
+      "segment_count": 276,
+      "text_characters": 8490
+    },
+    {
+      "part": 92,
+      "cid": 29821895749,
+      "source_json_sha256": "c1f5e6578b56e053515347427faf53906c965f6fc7597c9983a395bb8849b192",
+      "segment_count": 454,
+      "text_characters": 12007
+    }
+  ],
+  "reading_chapters": 67,
+  "chapter_segment_sequence_matches_book": true,
+  "chapter_files": [
+    {
+      "file": "正课-01.md",
+      "sha256": "0b6ab5bb84a90e04b13a11748b99d8e7b017c6d08f04860264436929ea7e1363",
+      "segments": 652
+    },
+    {
+      "file": "正课-02.md",
+      "sha256": "d203427402aabff43269f352723966dc157e3d898b6a0f16ba183aab2f4f75c9",
+      "segments": 721
+    },
+    {
+      "file": "正课-03.md",
+      "sha256": "6564187cd34e54142ce76dc7d416fb1ab55cb4d3faa149289ff35e1a34a5ea28",
+      "segments": 924
+    },
+    {
+      "file": "正课-04.md",
+      "sha256": "1486987632d63741128573a54e4622b767a65e333925b9d44bcd2d2f99b98d36",
+      "segments": 648
+    },
+    {
+      "file": "正课-05.md",
+      "sha256": "f2ecd4df1c1347562952d8c7e10a782d06fc8cc6ab199ebf5a4571abb3fa6e9e",
+      "segments": 615
+    },
+    {
+      "file": "正课-06.md",
+      "sha256": "03c1955e088bd73185297af815d8ce47e815b523417d7507cb98003c4ac20b18",
+      "segments": 328
+    },
+    {
+      "file": "正课-07.md",
+      "sha256": "1d71341268c00f9c85eaf2c19a11bb28071e414090dbade040872f4fb06f43eb",
+      "segments": 265
+    },
+    {
+      "file": "正课-08.md",
+      "sha256": "3e4d0b83fc47ce57f2b93427a7895d7f8e1aa3bc5413d7e3683c982249e736cf",
+      "segments": 1362
+    },
+    {
+      "file": "正课-09.md",
+      "sha256": "bcbc379d3f832a73226b32e50d450917756446a3a99e584c165448bce345e6d1",
+      "segments": 1273
+    },
+    {
+      "file": "正课-10.md",
+      "sha256": "6c44610fecfacaa4c280733d36cd2ff00120dba6a9c7493d9d4d06349ae84f6b",
+      "segments": 873
+    },
+    {
+      "file": "正课-11.md",
+      "sha256": "eb3970b665bbca31f35857dcb5af83c70c07acac2685e4fc2ac573ccdff6d3a2",
+      "segments": 1204
+    },
+    {
+      "file": "正课-12.md",
+      "sha256": "ed7c4fb07ca15d633a4866f55cf458b8c46f80289b8bde65a1ea4fff70839496",
+      "segments": 1245
+    },
+    {
+      "file": "正课-13.md",
+      "sha256": "7947898f22b40d7e203104ab02dbc62bab3ea635cd135da1b12a67dfdca33c89",
+      "segments": 1528
+    },
+    {
+      "file": "正课-14.md",
+      "sha256": "3918c1994066e5ac8312ae9757501ce2c011c8eaff56271ca4c9c961e349c98f",
+      "segments": 1155
+    },
+    {
+      "file": "正课-15.md",
+      "sha256": "dead3478e63e9bfe044be05e1e7b9e1fe5f1bdffcad7a352b5708c3bc176cf68",
+      "segments": 1374
+    },
+    {
+      "file": "正课-16.md",
+      "sha256": "290b08eaf1ec4977289264f912e829d07f316dfd2e31937760c8a014229a52b1",
+      "segments": 790
+    },
+    {
+      "file": "正课-17.md",
+      "sha256": "22cd834691ef6244b3ca0cb1a2a246c017e90602a513110b8a31e7b41d55451e",
+      "segments": 677
+    },
+    {
+      "file": "正课-18.md",
+      "sha256": "8c7d144aa8eadd27f75eb0c31c509c7ebcea5dd2fba06692df53134f23ddda6a",
+      "segments": 1271
+    },
+    {
+      "file": "正课-19.md",
+      "sha256": "19ab00e0cb63485340f65526648a35a9579a4a3f231136450dd2957ad27977cf",
+      "segments": 675
+    },
+    {
+      "file": "正课-20.md",
+      "sha256": "95c4de7ec3e7b80c4861d2134becbe3f5908e70a4a87e4eb11b5f461621a8a41",
+      "segments": 784
+    },
+    {
+      "file": "正课-21.md",
+      "sha256": "7ed96171057d85aad22582bd142e167c87dcc78d0b5139fe7fe896bad5fb08ec",
+      "segments": 1036
+    },
+    {
+      "file": "正课-22.md",
+      "sha256": "5c45bccec22ee67ef0ab6333e517c59612d54c2ed7c68fd86266c146be5027c3",
+      "segments": 872
+    },
+    {
+      "file": "正课-23.md",
+      "sha256": "2c52f91b959c055489bb7fa09d1507061baba9078729a1286817a900174fdf6e",
+      "segments": 1071
+    },
+    {
+      "file": "正课-24.md",
+      "sha256": "67c79cb7167974edcaf9e9acbedf69e7c57295e8ac452bb2d568051537dceebf",
+      "segments": 1174
+    },
+    {
+      "file": "正课-25.md",
+      "sha256": "468116122ec1c45086ef18d73a641df0536daad105450f17b343c1b0f43c275f",
+      "segments": 557
+    },
+    {
+      "file": "正课-26.md",
+      "sha256": "d5a17e8cad18a05daa1edac989093b731457a137f5f714f6eff46824d260546a",
+      "segments": 851
+    },
+    {
+      "file": "正课-27.md",
+      "sha256": "c5cbb7cd18dc8c7985f68b1c7b6f00e8dbe9b7bb4a4c95fbe54935a0e5df99dd",
+      "segments": 1050
+    },
+    {
+      "file": "正课-28.md",
+      "sha256": "d6b6ad3873afb7985df37605c0d8372668b04d44eb2099ed0b43a116fbe5d043",
+      "segments": 1370
+    },
+    {
+      "file": "正课-29.md",
+      "sha256": "f54e6d70aab596673033f71ba4dc3174dc38ff9eadfc98d78567ddd511eff0c4",
+      "segments": 516
+    },
+    {
+      "file": "正课-30.md",
+      "sha256": "b2476559ce5c03f164d2503b5c845561448dcdecaecf398e18191253e814a434",
+      "segments": 1152
+    },
+    {
+      "file": "正课-31.md",
+      "sha256": "e8ff91aab16d6eab86c07da4c6a7c921323e79cfb976aea5633794fd2a42ed02",
+      "segments": 1018
+    },
+    {
+      "file": "正课-32.md",
+      "sha256": "a67e7488031deb72e0fca0f4da465eeea6b9a601437e621a544494049c49fd7c",
+      "segments": 791
+    },
+    {
+      "file": "正课-33.md",
+      "sha256": "69aceedd3013b94cfaa740bda39f825f6ddd60d91f7f6de0829c3c3a9dee29ef",
+      "segments": 642
+    },
+    {
+      "file": "正课-34.md",
+      "sha256": "5d93fb964b8a6cb8cb47b9f0a780f71910ea2b9d02a87cceef3231506ac5b147",
+      "segments": 627
+    },
+    {
+      "file": "补充-P001.md",
+      "sha256": "6312458a2f7333df4f95e52e2d65dde129a9ea57307669f30fab3987d0b3b0cd",
+      "segments": 176
+    },
+    {
+      "file": "补充-P061.md",
+      "sha256": "51189d1ce86987bac0f4b03cf862d4a24db2644d83346c8fb2eeb9ec8e93baec",
+      "segments": 1087
+    },
+    {
+      "file": "补充-P062.md",
+      "sha256": "34cbeefa49bdb1e814b032f352e175a4606b391d240899a924ae8413ed929f74",
+      "segments": 133
+    },
+    {
+      "file": "补充-P063.md",
+      "sha256": "bc88a5a4f219fe8d1f53eff17b74bad44fa7c50fb7195b4e81464383245c9038",
+      "segments": 399
+    },
+    {
+      "file": "补充-P064.md",
+      "sha256": "02e0818015a594307f606b26a47e5b3d89d5ead3bd5f1b2ba23555d91aa3358f",
+      "segments": 614
+    },
+    {
+      "file": "补充-P065.md",
+      "sha256": "b21381d13c042f40b81dc431580ab50b367f0b76cbc03317f9286dff490a62b9",
+      "segments": 544
+    },
+    {
+      "file": "补充-P066.md",
+      "sha256": "4b6d4e477e3e166e35a21ca3f364a77d60fe2e0267b3f8afd5d188c604aee4df",
+      "segments": 594
+    },
+    {
+      "file": "补充-P067.md",
+      "sha256": "cb9e3ccf68161afee2fefcf3f7b01ec9533b7e5719e29d92d278af768f1f657e",
+      "segments": 22
+    },
+    {
+      "file": "补充-P068.md",
+      "sha256": "55a4d3fc5b37011106acf6bb3495e174fb19a09a145e514c93d88e44e556093c",
+      "segments": 213
+    },
+    {
+      "file": "补充-P069.md",
+      "sha256": "5482ef104b51fdf2625346f3c55bf001623260e70a43be3cc957dffa4262e9c3",
+      "segments": 97
+    },
+    {
+      "file": "补充-P070.md",
+      "sha256": "59aebfb8e1763de3baa30466c0e6bc4703c17d0905ad6369739953fb44a86204",
+      "segments": 121
+    },
+    {
+      "file": "补充-P071.md",
+      "sha256": "b23f368aad8f621c0e11b0b0708c5b8b53ec11914d6fcc8e0149565947c74c6b",
+      "segments": 97
+    },
+    {
+      "file": "补充-P072.md",
+      "sha256": "aac7161f98d0fd0eaef626d8e70a66b350e5d2028c23659fc8587ae497d0fb2b",
+      "segments": 261
+    },
+    {
+      "file": "补充-P073.md",
+      "sha256": "62b817a064b128f4571f7ce04fb92307df3de1c087b64f8766eb76f8ee52d8b9",
+      "segments": 551
+    },
+    {
+      "file": "补充-P074.md",
+      "sha256": "74e3481fe0252c4d2985ce88dfcd52c67d497591267a06025c4fb53210f3f8a7",
+      "segments": 277
+    },
+    {
+      "file": "补充-P075.md",
+      "sha256": "f6182996264336909d7f5e7cb60a74098c071aa9f408a2386ae41c45b55fe831",
+      "segments": 118
+    },
+    {
+      "file": "补充-P076.md",
+      "sha256": "7d904392bd3a7cb8c3709789525f0c16c4d8217095e88fe87718a916157af9f6",
+      "segments": 497
+    },
+    {
+      "file": "补充-P077.md",
+      "sha256": "422de5e85a5b470ac9178d364a2f574343df78c578ac928b1fa268e6a1f8af9b",
+      "segments": 713
+    },
+    {
+      "file": "补充-P078.md",
+      "sha256": "c4ab7f185f84872eb717b650664915dd8adea8ea311eeaa181ac1f2085c53c9a",
+      "segments": 479
+    },
+    {
+      "file": "补充-P079.md",
+      "sha256": "5bb4eb20770a633e6a3eb1659b189e4187f5507a80edfacbe432cd55c9b913c2",
+      "segments": 394
+    },
+    {
+      "file": "补充-P080.md",
+      "sha256": "3f2f954839255c86c6913e7af5e82c5e6baefa292d60b0552f546ef8e5121ec4",
+      "segments": 243
+    },
+    {
+      "file": "补充-P081.md",
+      "sha256": "47d90b039233a9b40fee6b83b987e46b59ad723a6afb32cf8901d97e20575879",
+      "segments": 436
+    },
+    {
+      "file": "补充-P082.md",
+      "sha256": "71dc841d68579e78ad9d3b2e1c88b166da170806cf02656be0353dfc038557f4",
+      "segments": 271
+    },
+    {
+      "file": "补充-P083.md",
+      "sha256": "b800948dc8d11bc587be455abdf40473b7d687aae5282b33dc54f42412b5306f",
+      "segments": 410
+    },
+    {
+      "file": "补充-P084.md",
+      "sha256": "51c8824cf0a49ea1d7c557e9345e9970d9b7a9b9c48b56456dcf94dde62c82f3",
+      "segments": 325
+    },
+    {
+      "file": "补充-P085.md",
+      "sha256": "7a986fa4572efcd7f54ee69b1bcd7b6c5f52c5ce8603e61578e4e7c49bb91ecf",
+      "segments": 250
+    },
+    {
+      "file": "补充-P086.md",
+      "sha256": "012888bc567deda6f6c1941dbe9a814b313df81dd4b5780da08ce290ae840f35",
+      "segments": 143
+    },
+    {
+      "file": "补充-P087.md",
+      "sha256": "19ea4cc4f8a770d3ce6d3efdb6e09af49cda33db11624930b57f04764fe04b8f",
+      "segments": 162
+    },
+    {
+      "file": "补充-P088.md",
+      "sha256": "18aa39a0c7e9d223d9fea5968eab6054e9bfd94ddfa52d10fd93cd450c0d2fa8",
+      "segments": 148
+    },
+    {
+      "file": "补充-P089.md",
+      "sha256": "48ebb441ec6084e25e371b7bd544fbe0f532de46be208da819254ad50601a1b1",
+      "segments": 618
+    },
+    {
+      "file": "补充-P090.md",
+      "sha256": "ce7d3769c9ff22e7b6e3c3943485a64f56c22e5e8bc0b391d450965102f83290",
+      "segments": 126
+    },
+    {
+      "file": "补充-P091.md",
+      "sha256": "b921af2042fe2742ef8d6fcb186d4fac763436df532eb14a180d4286a15a16ab",
+      "segments": 276
+    },
+    {
+      "file": "补充-P092.md",
+      "sha256": "bfceabc7977319f16b27e1edfc04d8a98f8db29243bcb231acfc9172467cb689",
+      "segments": 454
+    }
+  ],
+  "final_checks": {
+    "markdown_files": 69,
+    "local_links": 590,
+    "link_errors": [],
+    "hashes_match": true,
+    "git_diff_check_exit_code": 0,
+    "git_diff_check_output": ""
+  }
+}

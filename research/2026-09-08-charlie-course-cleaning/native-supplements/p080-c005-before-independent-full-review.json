@@ -1,0 +1,208 @@
+{
+  "blocks": [
+    {
+      "first_segment": 115,
+      "last_segment": 116,
+      "heading": "FBI逼近与贿赂谈崩",
+      "text": "22拍87分钟，对手逼近，FBI继续调查，主角开始担心开口对策。然后23拍，主角去约谈对手，试图贿赂对方，结果谈崩了，而且把自己暴露了，正式宣战。我们说故事来到了终点，正式宣战。",
+      "corrections": [
+        {
+          "original": "23盘",
+          "cleaned": "23拍",
+          "basis": "通篇用\"拍\"标记镜头编号，\"盘\"为误识"
+        },
+        {
+          "original": "正式宣价",
+          "cleaned": "正式宣战",
+          "basis": "上下文为对手对抗、谈崩暴露，应为\"宣战\""
+        }
+      ]
+    },
+    {
+      "first_segment": 117,
+      "last_segment": 118,
+      "heading": "转换目标：海外转移、飞机困境与瑞士银行",
+      "text": "24拍98分钟转换目标了，就是进入第三步转换目标，开始要把资产转移到海外了，因为对方确实意识到对方要干自己。25拍100分钟在飞机上闯祸，飞机上闯祸这场戏为什么单拎出来呢？是因为在暗示他的几个困境：药物困境和家庭困境，以及他的伙伴，这些都是暴雷的，他的药物困扰已经很严重了。26拍102分钟去到瑞士的银行，谈如何藏钱。在这场戏里大家也看到，所谓的中立国的这种银行，其实嘴里也不咋地。27拍105分钟进到下一个目标，他在欧洲藏钱的话，需要找一个欧洲亲戚，也就是那个姨妈。",
+      "corrections": [
+        {
+          "original": "股是",
+          "cleaned": "就是",
+          "basis": "上下文为\"就是进入第三步\"，应为\"就是\""
+        },
+        {
+          "original": "闯货",
+          "cleaned": "闯祸",
+          "basis": "上下文为飞机上出状况，应为\"闯祸\""
+        },
+        {
+          "original": "在这个店里",
+          "cleaned": "在这场戏里",
+          "basis": "语境为看电影场景中的银行，应为\"在这场戏里\""
+        },
+        {
+          "original": "中帝国",
+          "cleaned": "中立国",
+          "basis": "瑞士为中立国，结合语境应为\"中立国\"〔待核〕"
+        }
+      ]
+    },
+    {
+      "first_segment": 119,
+      "last_segment": 120,
+      "heading": "人肉运钱、团队矛盾与危机爆发",
+      "text": "28拍109分钟，人肉往欧洲运钱，钱藏在人身上。但是开始暗示团队内部有矛盾隐患了，就是他两个伙伴，最不靠谱的两个伙伴有矛盾。29拍112分钟，这个矛盾直接引发危机了，其中一个被警察抓了。30拍115分钟，为了掩盖失误，他的伙伴给他下药，两个人一起嗨。我们说那个胖子确实挺碍事的。31拍118分钟危机爆发，药效也爆发，他试图回家，这也是一场名场面的戏，这场戏拍得也非常有意思——他认为自己是怎么回家的，以及第二天复盘是怎么回家的，特别有意思。",
+      "corrections": [
+        {
+          "original": "闯在人身上",
+          "cleaned": "藏在人身上",
+          "basis": "上下文为人肉运钱，应为\"藏在人身上\""
+        },
+        {
+          "original": "被警他抓了",
+          "cleaned": "被警察抓了",
+          "basis": "\"警他\"为\"警察\"的误识"
+        },
+        {
+          "original": "明场面的戏",
+          "cleaned": "名场面的戏",
+          "basis": "\"名场面\"为常用词，意为经典场景"
+        }
+      ]
+    },
+    {
+      "first_segment": 121,
+      "last_segment": 122,
+      "heading": "妻子与伙伴冲突、被捕与危机暂度",
+      "text": "32拍124分钟，妻子和他的伙伴在家里战斗，包括急救，也出现一个濒死状态、人工呼吸。33拍127分钟醒来之后被警察抓起来，因为危险驾驶。34拍129分钟，危机暂时度过去了，但是对手盯他盯得更紧了，他产生了一个新的解决方案。",
+      "corrections": [
+        {
+          "original": "女呢",
+          "cleaned": "妻子",
+          "basis": "上下文为主角妻子与伙伴冲突，应为\"妻子\"〔待核〕"
+        },
+        {
+          "original": "34盘",
+          "cleaned": "34拍",
+          "basis": "\"盘\"为\"拍\"的误识，通篇用\"拍\"标记镜头编号"
+        }
+      ]
+    },
+    {
+      "first_segment": 123,
+      "last_segment": 125,
+      "heading": "认罪方案与辞职演说戏引入",
+      "text": "本来是往欧洲运钱，现在又有一个新的解决方案，也就是认罪。认罪的话就代表他要辞职，认罪交罚款，他辞职就不能干这个了。结果来到35拍132分钟，他开始了自己的辞职演说。但是这个人特别是口才太好了，说着说着自己又入戏了，结果撕毁协议，决定继续战斗。而且也呼应了他开场的那个狼之歌，我们来看一下这场戏吧，这场戏写来还是非常不错的。",
+      "corrections": [
+        {
+          "original": "口口才",
+          "cleaned": "口才",
+          "basis": "\"口口\"为重复误识，应为\"口才\""
+        },
+        {
+          "original": "司会协议",
+          "cleaned": "撕毁协议",
+          "basis": "上下文为决定继续战斗，应为\"撕毁协议\"〔待核〕"
+        }
+      ]
+    },
+    {
+      "first_segment": 126,
+      "last_segment": 131,
+      "heading": "影片对白：辞职演说——开场与Kimmy登场",
+      "text": "以下为影片对白：\nI want to thank you all for your years of loyalty and admiration, but the point is this.\nDonnie's leadership along with Nikki Kosoff and Robbie Feinberg moving into key management positions, this place really it's going to be better than ever that I promise see.\nThis is Ellis Island you people Okay who you are, where you're from, whether your relatives came over on the fucking Mayflower or an int from Haiti, this right here the land of opportunity Stratton Oakmont is America.\nAll of you know Kimmy Bels are right Yes we do you Come on Jimmymy, which you probably didn't know is Kimmy was one of the first brokers here, one of Stratton's original 20.\nMost of you met Kimmy, the beautiful, sophisticated woman that she is today, a woman that wears $3000 armmani suits, drives a brand new Mercedes Benz.\nA woman who spends her winters in the Bahamas and the summers in the Hamptons.",
+      "corrections": [
+        {
+          "original": "armmani",
+          "cleaned": "Armani",
+          "basis": "Armani为品牌名，机器误识为armmani"
+        }
+      ]
+    },
+    {
+      "first_segment": 132,
+      "last_segment": 145,
+      "heading": "影片对白：Kimmy往事与情感高潮",
+      "text": "Something kid that I met.\nKimmy that I met didn't have two nickels to rub together.\nShe was a single mom on the balls of a with an eight year old son.\nShe was three months behind on her rent.\nAnd when she came to me and asked me for a job.\nShe asked for a $5,000 advance just so she could pay a son's tuition.\nWhat do.\nYou wrote me a check.\n$25000.\nAnd you know where that is?\nbelved的你。\nBecause I believed in you coming.\nJust like I believe in each and every one of you here today, I fucking love you, Jordan, fucking I fucking love you, I love you, I fucking love you too.\nI love all youI love all you my my.",
+      "corrections": [
+        {
+          "original": "Kim me",
+          "cleaned": "Kimmy",
+          "basis": "角色名Kimmy，机器误识为\"Kim me\""
+        }
+      ]
+    },
+    {
+      "first_segment": 146,
+      "last_segment": 150,
+      "heading": "影片对白：永不接受拒绝",
+      "text": "For years, I've been telling you guys never to take no for an answer, right?\nPushing to never hang up the phone.\nYou get what you want.\nYou all deserve it.\nYou know this fucking deal that I'm about to sign.",
+      "corrections": [
+        {
+          "original": "You allt deserve it",
+          "cleaned": "You all deserve it",
+          "basis": "\"allt\"为\"all\"的误识"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S115\"开口对策\"疑为\"开始对策\"或\"开口谈对策\"，原词保留",
+    "S116\"正式宣价\"订正为\"正式宣战\"，但原词可能为其他表述",
+    "S117\"闯货\"订正为\"闯祸\"，依据语境但未回原片验证",
+    "S118\"在这个店里\"订正为\"在这场戏里\"，但\"店\"也可能指银行机构本身",
+    "S118\"中帝国\"订正为\"中立国\"，依据瑞士为中立国，但原词待核",
+    "S120\"明场面的戏\"订正为\"名场面的戏\"，依据常用词但未验证",
+    "S122\"女呢\"疑为\"妻子\"或其他称呼，原词破碎，未回片验证",
+    "S124\"司会协议\"疑为\"撕毁协议\"，依据上下文但原词待核",
+    "S125\"这场戏写来还是非常不错的\"中\"写来\"用法不确定，也可能是\"想来\"，原词保留",
+    "S127\"that I promise see\"末尾\"see\"疑为误识，原词保留",
+    "S128\"an int from Haiti\"疑为\"an immigrant from Haiti\"，但未逐句校原片",
+    "S129\"Kimmy Bels are right\"疑为\"Kimmy Belfort, am I right?\"，原词破碎",
+    "S129\"Jimmymy\"疑为\"Jimmy\"，但未确认",
+    "S132\"Something kid\"疑为\"Some kid\"，原词保留",
+    "S134\"on the balls of a\"疑为\"on the balls of her feet\"，短语不完整",
+    "S138\"What do.\"疑为\"What did I do?\"或对话片段，原词保留",
+    "S142\"belved的你\"严重破碎，疑为\"Belvedere\"等专名，无法辨认原词",
+    "S143\"Because I believed in you coming\"末尾\"coming\"疑为误识，原词保留",
+    "S145\"I love all youI love all you my my\"疑似重复误识，原词保留",
+    "S146—S150为影片对白结尾，未逐句校原片译文",
+    "大量英文对白为所播影片台词，未逐句复核原文"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p080-c005",
+  "part": 80,
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "output_text_characters": 2523,
+  "length_ratio": 0.9817120622568093,
+  "review_length_flag": false,
+  "thread_id": "01a07f1f-1923-7142-8ed8-7a92324743b6",
+  "usage": {
+    "total": {
+      "totalTokens": 30448,
+      "inputTokens": 10280,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 20168,
+      "reasoningOutputTokens": 18051
+    },
+    "last": {
+      "totalTokens": 30448,
+      "inputTokens": 10280,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 20168,
+      "reasoningOutputTokens": 18051
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": {
+    "library": "json-repair 0.63.4",
+    "kind": "Repair each explicit block separately with inner-quote escaping; JSON syntax only",
+    "non_structural_characters_preserved": true
+  },
+  "lead_review": [
+    "疑点数组内引号转义恢复，正文未改。"
+  ]
+}

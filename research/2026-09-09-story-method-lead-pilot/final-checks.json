@@ -1,0 +1,55 @@
+{
+  "status": "checks_completed",
+  "checked_at": "2026-09-09T13:35:50.841073+00:00",
+  "preservation": {
+    "preserved_prior_course_and_story_files": {
+      "count": 86,
+      "mismatches": []
+    },
+    "input-manifest.json": {
+      "count": 3,
+      "mismatches": []
+    },
+    "method-diagnostic-freeze.json": {
+      "count": 4,
+      "mismatches": []
+    },
+    "first-draft-freeze-private.json": {
+      "count": 8,
+      "mismatches": []
+    },
+    "native-first-draft-freeze.json": {
+      "count": 3,
+      "mismatches": []
+    },
+    "native-final-freeze.json": {
+      "count": 4,
+      "mismatches": []
+    }
+  },
+  "anonymous_copies_equal": {
+    "blind/reader-1/case-01-甲.md": true,
+    "blind/reader-1/case-01-乙.md": true,
+    "blind/reader-2/case-01-丙.md": true,
+    "blind/reader-2/case-01-丁.md": true,
+    "blind/reader-1/case-02-甲.md": true,
+    "blind/reader-1/case-02-乙.md": true,
+    "blind/reader-2/case-02-丙.md": true,
+    "blind/reader-2/case-02-丁.md": true
+  },
+  "new_research_and_method_markdown_count": 38,
+  "local_links_checked": 69,
+  "broken_links": [],
+  "link_scope_limit": "Local targets and used heading/explicit anchors in new research and canonical method pack only; native byte-identical input snapshots retain original-location relative links and are navigated through the explicit exercise entry. No remote URL or audiovisual verification.",
+  "json_files_parsed": 16,
+  "final_native_body_exact_equal_after_trailing_whitespace_normalization": true,
+  "current_native_work_equals_frozen_final_snapshot": true,
+  "final_review_flags": [
+    false,
+    false,
+    false
+  ],
+  "source_or_product_code_changed_this_turn": false,
+  "rust_tests_fmt": "Not applicable: only Markdown/JSON/research artifacts changed; prior engineering tests are not rerun or reclassified as business evidence.",
+  "business_limit": "No stable quality improvement over direct GPT-6 established; model opinions only; no human adoption or audience/business data."
+}

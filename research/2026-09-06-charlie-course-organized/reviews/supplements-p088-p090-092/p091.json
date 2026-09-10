@@ -1,0 +1,181 @@
+{
+  "part": 91,
+  "title": "编剧视角拉片励志电影《肖申克的救赎》二",
+  "parts": [
+    91
+  ],
+  "source": {
+    "part": 91,
+    "cid": 29821699723,
+    "title": "编剧视角拉片励志电影《肖申克的救赎》二",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=91",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》二.mp4",
+    "sha256": "a0ca60f747f83177740f65f4324b16e309b47a8e2e9b50567a1c9bfa4cdde2e0",
+    "bytes": 61232418,
+    "mtime_ns": 1788682381500058776,
+    "actual_duration_seconds": 1914.117234
+  },
+  "full_transcript_read_parts": [
+    91
+  ],
+  "transcript_source": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-charlie-course-organized/transcripts/p091.json",
+  "transcript_sha256": "10308c45da2430b1afac427560ce4fbdc5814c2a925b44ae9391074f73d79d6c",
+  "read_segment_indexes": {
+    "first": 1,
+    "last": 276,
+    "total": 276
+  },
+  "reading_method": "最终JSON276段分1–100/101–200/201–276原序完整阅读；非关键词抽样",
+  "reviewed_at": "2026-09-06T12:15:25.208600+00:00",
+  "review_status": "full_machine_transcript_read_not_human_listening",
+  "asr_quality": "离线SenseVoice机器稿；英文电影段明显失真，未逐句听校",
+  "teaching_nodes": [
+    {
+      "label": "12包与节拍大小原则",
+      "part": 91,
+      "start_seconds": 12,
+      "end_seconds": 94,
+      "summary": "刻棋子、认罪；不按场数时长划。"
+    },
+    {
+      "label": "13/14包墙皮与海报短伏笔",
+      "part": 91,
+      "start_seconds": 94,
+      "end_seconds": 155,
+      "summary": "初看未知完整计划，复盘才连上。"
+    },
+    {
+      "label": "15/16包对抗回馈与伙伴认可",
+      "part": 91,
+      "start_seconds": 155,
+      "end_seconds": 228,
+      "summary": "先帮狱警后获保护，伙伴送礼。"
+    },
+    {
+      "label": "17/18包查房、圣经与知识尊重",
+      "part": 91,
+      "start_seconds": 228,
+      "end_seconds": 338,
+      "summary": "秘密假排除、试探可用性与咨询动作。"
+    },
+    {
+      "label": "19/20包图书馆努力与老布结局",
+      "part": 91,
+      "start_seconds": 338,
+      "end_seconds": 438,
+      "summary": "旧囚犯典型结局，经来信回叙述者。"
+    },
+    {
+      "label": "21/22包阶段巅峰、禁闭、假释再拒与口琴",
+      "part": 91,
+      "start_seconds": 456,
+      "end_seconds": 641,
+      "summary": "待遇和精神自由尚未实现最终自由。"
+    },
+    {
+      "label": "23/24包图书馆/洗钱伏笔/汤米师徒",
+      "part": 91,
+      "start_seconds": 641,
+      "end_seconds": 784,
+      "summary": "新资源被利用，长时段可以一拍。"
+    },
+    {
+      "label": "25/26包翻案希望被摧毁",
+      "part": 91,
+      "start_seconds": 785,
+      "end_seconds": 868,
+      "summary": "汤米被杀，灵魂黑夜。"
+    },
+    {
+      "label": "27–29包反思邀请、假自杀预期与越狱",
+      "part": 91,
+      "start_seconds": 869,
+      "end_seconds": 1000,
+      "summary": "回溯长年挖掘，认识变化不等于凭空成功。"
+    },
+    {
+      "label": "越狱片段放映",
+      "part": 91,
+      "start_seconds": 1003,
+      "end_seconds": 1352,
+      "summary": "电影英文ASR失真，不作准确台本。"
+    },
+    {
+      "label": "携带棋子/圣经与累计的精神自由",
+      "part": 91,
+      "start_seconds": 1352,
+      "end_seconds": 1545,
+      "summary": "最后自由应保留此前争取的意义。"
+    },
+    {
+      "label": "30包安迪结局与颗粒度",
+      "part": 91,
+      "start_seconds": 1545,
+      "end_seconds": 1681,
+      "summary": "多个后果为观众情绪安放，可再细拆。"
+    },
+    {
+      "label": "31包瑞德结局与主角讨论引子",
+      "part": 91,
+      "start_seconds": 1681,
+      "end_seconds": 1863,
+      "summary": "假释三次呼应、希望区别于老布，配角有独立弧线。"
+    },
+    {
+      "label": "31拍与正负十允许范围；接下一P讨论",
+      "part": 91,
+      "start_seconds": 1863,
+      "end_seconds": 1910,
+      "summary": "数量非固定标准，解释功能颗粒度。"
+    }
+  ],
+  "examples": [
+    {
+      "label": "先帮税务换来后续保护与尊重",
+      "start_seconds": 196,
+      "end_seconds": 338,
+      "teaching_point": "回馈有前因，避免空降贵人"
+    },
+    {
+      "label": "老布来信与瑞德结局对照",
+      "start_seconds": 372,
+      "end_seconds": 438,
+      "teaching_point": "告知范围与人物典型结局；后段瑞德以希望走另一结局"
+    },
+    {
+      "label": "多个后果合为安迪结局一包",
+      "start_seconds": 1545,
+      "end_seconds": 1681,
+      "teaching_point": "按功能聚合，可另细拆；31并非固定数"
+    }
+  ],
+  "assignments": [],
+  "practice_suggestions": [
+    {
+      "kind": "classroom_exercise",
+      "task": "继续记笔记并按功能理解节拍颗粒度，自己的拆法不必与老师精确一致。",
+      "part": 91,
+      "start_seconds": 1545.318,
+      "end_seconds": 1550.316,
+      "submission_spec": "课堂建议；无提交格式/期限/固定31拍要求。",
+      "teacher_review": "回应不同拆分；31:08字幕确认数量正负十可接受，非仅比数量评分。",
+      "uncertainty": "未见实际提交稿表。"
+    }
+  ],
+  "actual_assignment_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校。笔记建议及讨论单列；下一P继续课程。",
+  "connections": [
+    "接P90第11包自由尝试，本P完成第12–31包后接P92类型/主角/一句话。",
+    "老布来信符合第27课视角解释；自由高潮呼应第22课。",
+    "31拍±10字幕已核，不能把本次拆分当统一规格。"
+  ],
+  "uncertainties": [
+    "成片分钟、19/20年等有口述/ASR不一致，不作为准确电影时码。",
+    "电影英语段识别差；不转录作台本。",
+    "赎罪/道德解释为课堂观点，非现实罪责判断。"
+  ],
+  "limits": [
+    "最终276段完整读，未逐句听校。",
+    "成片分析不是原作者创作过程实录。",
+    "本P主角判断后面继续辩论，不能截断定论。"
+  ]
+}

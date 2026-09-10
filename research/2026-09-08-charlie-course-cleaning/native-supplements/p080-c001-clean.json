@@ -1,0 +1,203 @@
+{
+  "blocks": [
+    {
+      "first_segment": 1,
+      "last_segment": 5,
+      "heading": "电影时长与推荐理由：老师个人给力量的几部电影",
+      "text": "〔整理说明：以下保留讲师语态和判断，仅依据ASR全文整理，未逐句听校。剧情、真人经历、创作意图、行业史与获奖评价均按讲师本次说法保留，不作为原著/电影准确事实或外部核验。英文播放片段的可辨内容及难辨处分别保留，不补成流利字幕。〕\n\n《华尔街之狼》这部电影时长是3个小时，讲师称国内有个“净化版”〔原“进化版”，指后述删减版本，确切称呼待核〕，两个半小时，删掉了半小时之多，说明这部电影确实尺度非常大，水肌精华〔待核〕也可以来学习一下这部电影。有几个原因：第一，这部电影确实是一个传世佳作，《华尔街之狼》是很多商界人没有精神了就看一遍这个电影，包括老师本人。\n同学们，在老师的人生当中，有几部电影是低潮的时候或者心情不好的时候就会去看一遍的、给我力量的电影，《华尔街之狼》就是其中一部。当然了，还有《绿野仙踪》，1939年的《绿野仙踪》。还有丹泽尔·华盛顿的《深渊人》〔待核〕，有的是爆米花电影，有的是这种。当然了，还有《喜剧之王》。这几部电影在老师人生当中都是看过几十遍的。",
+      "corrections": [
+        {
+          "original": "水肌精华",
+          "cleaned": "水肌精华〔待核〕",
+          "basis": "机器转录不清，无法确定具体指代"
+        },
+        {
+          "original": "深渊人",
+          "cleaned": "深渊人〔待核〕",
+          "basis": "疑为丹泽尔·华盛顿某影片名误识，无法确认"
+        }
+      ]
+    },
+    {
+      "first_segment": 6,
+      "last_segment": 8,
+      "heading": "狼性文化起源与导演、迪卡普里奥的小金人遗憾",
+      "text": "在人生低潮的时候，可以给人以力量。《华尔街之狼》呢，就是在你商业上进行得不顺的时候，给你一种狼性文化。狼性文化就是90年代从美国的销售，七八十、八九十年代从美国的销售兴起的，所以说这部电影叫《华尔街之狼》嘛。\n另外，马丁·斯科塞斯导演在这部电影里展现了极致的疯狂、极致的想象力。迪卡普利奥在这部电影里面配得上一座小金人，但是没有给他，败给谁了来着，老师有点忘了。《华尔街之狼》是迪卡普利奥没有得到小金人最委屈的一次，他那年是真应该得。",
+      "corrections": []
+    },
+    {
+      "first_segment": 9,
+      "last_segment": 14,
+      "heading": "荒野猎人的补偿与马修·麦康纳之争",
+      "text": "小金人即便是他后来通过《荒野猎人》弥补了这个遗憾，但说实话，《荒野猎人》老师觉得是业界去安慰迪卡普利奥，给了他一个小金人，相当于向他道歉。《华尔街之狼》没有给他，《华尔街之狼》确实是应该拿到最佳男主角了。\n另外这个故事里面的感情线，就是小丑女，也演过《芭比》的那个女演员，也是值得欣赏的。对，那一届给了马修了。当然了，迪卡普利奥你说输给马修·麦康纳冤不冤呢？其实不冤，这就是神仙打架嘛。",
+      "corrections": []
+    },
+    {
+      "first_segment": 15,
+      "last_segment": 18,
+      "heading": "迪卡普利奥演技巅峰与“太帅的诅咒”",
+      "text": "但问题确实是，《华尔街之狼》是迪卡普利奥演技生涯的巅峰，输给马修·麦康纳不冤，他的《华尔街之狼》是他演技的一个巅峰。迪卡普利奥饱受他的长相困扰，这个演员从十几岁出道之后就一直饱受长相的困扰，因为他长得实在是太帅了，曾经有多年被评为世界上最帅的人。这个事情严重影响了大家对他演技的认可。长得太帅可能也是一种诅咒吧，这个咱们大部分人并没有这个体验，很难共情，他太帅了。这个故事节拍也比较长，非常长。",
+      "corrections": [
+        {
+          "original": "华尔街之郎",
+          "cleaned": "华尔街之狼",
+          "basis": "片名上下文，疑为同音误识"
+        },
+        {
+          "original": "输给马修布员",
+          "cleaned": "输给马修·麦康纳不冤",
+          "basis": "S13明确问冤不冤并回答其实不冤，S15同一意思重复，否定不能遗漏。"
+        }
+      ]
+    },
+    {
+      "first_segment": 19,
+      "last_segment": 25,
+      "heading": "第一拍：插叙开场与成功后的疯狂状态",
+      "text": "来，说一下第一拍，第一分钟。这个故事显然有点插叙，先把后面的一场戏拎上来。拎的哪一场呢？拎的是十几拍〔待核〕的时候，待会再说，后面是一场拎上来，展现成功后的他的疯狂状态。首先上来就展现了这个人对别人极不尊重，欺负弱势群体，小侏儒。配上独白自我介绍。看过的同学都知道这部电影各种独白，因为是传记体嘛，必须是主角自己的声音，特有代入感。他非常成功，也交代了一下他的出身，他现在的生活是什么：豪车、豪宅、美女、游艇、飞机，富豪生活，而且传播了一定的生活理念。这部电影演讲很多，待会我们看一些名场面可以简单看一下。",
+      "corrections": [
+        {
+          "original": "第一排",
+          "cleaned": "第一拍",
+          "basis": "此处讲的是故事节拍（beat），非座位排"
+        },
+        {
+          "original": "实几拍",
+          "cleaned": "十几拍〔待核〕",
+          "basis": "机器转录不清，疑为“十几拍”，无法确定原词"
+        },
+        {
+          "original": "机器不重用",
+          "cleaned": "极不尊重",
+          "basis": "上下文为“欺负弱势群体”，“机器不重用”疑为“极不尊重”误识"
+        },
+        {
+          "original": "名卡面",
+          "cleaned": "名场面",
+          "basis": "上下文“看一些名场面”"
+        }
+      ]
+    },
+    {
+      "first_segment": 26,
+      "last_segment": 28,
+      "heading": "第二拍：从巅峰往下写的结构与他天生的销售天赋",
+      "text": "来到第二拍第五分钟，简单回顾一下他是怎么成长起来的。很多同学认为这部电影讲的是一个人的成功和失败，对吧？如果让我们写传记体，我们可能会写这个人的成功和失败，然后在中间做一个转点，就是他肯定要往下走，这是我们一般人会这么写。但是这部电影其实是从巅峰开始写的，他的那个下位史〔待核〕只是简单交代，基本上是讲一个人的堕落，他是从顶往下写的，讲的是一个人逐步堕落，逐步被FBI击败。\n第二拍第五分钟，回忆他的创业初期来到华尔街。第一份工作在罗斯柴尔德做电话销售，展现了他的环境和技能。他是个天生的seller，由于是真人改编，这个人是一个天生的销售，跟老师一样，属marketing，玩的是sales。\n\n〔“罗斯柴尔德”的机构指称、主角真人销售天赋与讲师自比营销人员，均按源口述保留，不另补公司全名或真人履历。〕",
+      "corrections": [
+        {
+          "original": "第二排",
+          "cleaned": "第二拍",
+          "basis": "此处讲的是故事节拍（beat），非座位排"
+        },
+        {
+          "original": "传题体",
+          "cleaned": "传记体",
+          "basis": "电影类型术语，疑为同音误识"
+        },
+        {
+          "original": "可定要下",
+          "cleaned": "肯定要下",
+          "basis": "上下文语义，“可定”疑为“肯定”误识"
+        },
+        {
+          "original": "下位史",
+          "cleaned": "下位史〔待核〕",
+          "basis": "上下文提到“从巅峰开始写”“只是简单交代”，疑为“发迹史”或“堕落史”误识，无法确定原词"
+        }
+      ]
+    },
+    {
+      "first_segment": 29,
+      "last_segment": 32,
+      "heading": "第三拍：马修·麦康纳名场面与“神仙打架”",
+      "text": "来到第三拍第七分钟，导师，一个名场面。马修·麦康纳在这部电影里面轻微地客串了一下，教我们的主角如何成为一个真正的销售。因为他本身就很有天赋，但还是需要导师点拨。而且马修·麦康纳唱出的那个狼之歌，那个歌，在后面有个呼应，我们看一下吧。\n这场戏堪称神仙打架。如此彪悍的迪卡普利奥，在马修·麦康纳的控制下，基本上节奏就被带跑偏了，因为很多演员都反映说跟马修·麦康纳一起对戏，会完全被他带走。看一下大神怎么演戏。这部电影太长了，我们能看的片段不多，就珍惜一下。\n嗯嗯，对不起。",
+      "corrections": [
+        {
+          "original": "呼影",
+          "cleaned": "呼应",
+          "basis": "上下文“在后面有个呼应”，疑为同音误识"
+        },
+        {
+          "original": "马修麦康娜",
+          "cleaned": "马修·麦康纳",
+          "basis": "人名，疑为同音误识"
+        }
+      ]
+    },
+    {
+      "first_segment": 33,
+      "last_segment": 39,
+      "heading": "影片对白播放：马修·麦康纳与迪卡普利奥的午餐戏",
+      "text": "（影片对白播放，机器转录，未逐句校对）\n“can straight precisely seven and one after that you're going to bring us two more then two more after that every five until one of us passes the sir'm good you.”〔对白标疑〕\n“Its his first day on Wall Street, give him time thank you thank you.”〔对白标疑〕\n“re able to.”〔对白残片标疑〕\n“During the and then still' else would you do this job cocaine anders my friend?”〔对白标疑〕\n“I got to say I'm incredibly excited to be a party firm.”〔对白标疑〕\n“Clients you have are absolutely fuck the clients.”〔对白标疑〕\n“Your only responsibility is to put meat on the table.”〔对白标疑〕",
+      "corrections": [
+        {
+          "original": "a party firm",
+          "cleaned": "a party firm〔对白标疑〕",
+          "basis": "疑为“a part of the firm”误识，未逐句听校原片，不补改"
+        },
+        {
+          "original": "cocaine anders",
+          "cleaned": "cocaine anders〔对白标疑〕",
+          "basis": "机器转录破碎，无法辨认原对白，保留原词标疑"
+        }
+      ]
+    }
+  ],
+  "uncertainties": [
+    "S003：“水肌精华”无法确定指代，保留原词标疑。",
+    "S0005：“深渊人”疑为丹泽尔·华盛顿某部影片名误识，无法确认具体片名。",
+    "S0022：“实几拍”原词不清，疑为“十几拍”，无法确定。",
+    "S0027：“下位史”疑为“发迹史”或“堕落史”误识，上下文提到“从巅峰开始写”“只是简单交代”，无法确定原词。",
+    "S0033—S0039：影片对白为机器转录，多句破碎难辨（如“cocaine anders”“a party firm”“re able to”等），未逐句听校原片，保留原识别文字并标疑，不编造对白。",
+    "S0007：老师说迪卡普利奥“败给谁了来着，我有点忘了”，随后在S0013确认“那一届给了马修”，即马修·麦康纳获最佳男主角，此处为老师课堂回忆，未逐一核对颁奖年份。"
+  ],
+  "boundary_merges": [],
+  "metadata_normalization": [],
+  "unassigned_corrections": [],
+  "job": "p080-c001",
+  "part": 80,
+  "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+  "output_text_characters": 2443,
+  "length_ratio": 1.0108,
+  "review_length_flag": false,
+  "thread_id": "01a07f33-4027-78b0-abcd-831ff6c3a7de",
+  "usage": {
+    "total": {
+      "totalTokens": 24197,
+      "inputTokens": 10545,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 13652,
+      "reasoningOutputTokens": 11403
+    },
+    "last": {
+      "totalTokens": 24197,
+      "inputTokens": 10545,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 13652,
+      "reasoningOutputTokens": 11403
+    },
+    "modelContextWindow": 258400
+  },
+  "syntax_repair": null,
+  "independent_full_review": {
+    "date": "2026-09-08",
+    "reviewer": "clean_core_25_34",
+    "scope": "全文顺读P080 S1—S39并对照本文件全部正文块；全章243段均已读完。",
+    "first_segment": 1,
+    "last_segment": 39,
+    "segment_count": 39,
+    "block_count": 8,
+    "source_json_sha256": "1498f351b22fcf6c2ac8560bf1073c93588365296299170f245290bdc28fc393",
+    "backup": "research/2026-09-08-charlie-course-cleaning/native-supplements/p080-c001-before-independent-full-review.json",
+    "before_sha256": "86f7e49a6b93bd066db7c25ef4096d49a60152da61fc35add7ca6a8cbdf8a83a",
+    "changes": [
+      "补回S15输给马修不冤的否定，S20第一分钟恢复；净化/进化版本名称显式标疑。",
+      "保留四部个人反复观看的片名来源及深渊人疑点、不猜影片；英文午餐片段原始难辨信息完整保留。",
+      "评分奖项、狼性文化、演员与公司经历等明确归讲师。"
+    ],
+    "remaining": "未听校，疑难英文、专名、数字与否定不强补；观点与电影/原著/真人事实不混称。",
+    "preserved_review_keys": []
+  }
+}

@@ -1,0 +1,310 @@
+{
+  "lesson": 12,
+  "title": "小蝌蚪找妈妈",
+  "parts": [
+    25,
+    26,
+    27
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    25,
+    26,
+    27
+  ],
+  "teaching_nodes": [
+    {
+      "label": "回应反馈与类型并用",
+      "part": 25,
+      "start_seconds": 9,
+      "end_seconds": 639
+    },
+    {
+      "label": "选择小蝌蚪共同案例",
+      "part": 25,
+      "start_seconds": 646,
+      "end_seconds": 812
+    },
+    {
+      "label": "金羊毛版本",
+      "part": 25,
+      "start_seconds": 813,
+      "end_seconds": 1588
+    },
+    {
+      "label": "情感版本与类型并用",
+      "part": 26,
+      "start_seconds": 3,
+      "end_seconds": 550
+    },
+    {
+      "label": "英雄版本",
+      "part": 26,
+      "start_seconds": 550,
+      "end_seconds": 811
+    },
+    {
+      "label": "鬼屋版本",
+      "part": 26,
+      "start_seconds": 815,
+      "end_seconds": 1059
+    },
+    {
+      "label": "侦探版本",
+      "part": 26,
+      "start_seconds": 1062,
+      "end_seconds": 1276
+    },
+    {
+      "label": "如愿以偿版本",
+      "part": 26,
+      "start_seconds": 1317,
+      "end_seconds": 1695
+    },
+    {
+      "label": "麻烦家伙版本",
+      "part": 27,
+      "start_seconds": 3,
+      "end_seconds": 310
+    },
+    {
+      "label": "变迁仪式版本",
+      "part": 27,
+      "start_seconds": 314,
+      "end_seconds": 804
+    },
+    {
+      "label": "愚者成功版本",
+      "part": 27,
+      "start_seconds": 805,
+      "end_seconds": 1285
+    },
+    {
+      "label": "被制度化版本",
+      "part": 27,
+      "start_seconds": 1289,
+      "end_seconds": 1899
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "推荐看阳光小美女",
+      "part": 25,
+      "start_seconds": 178.438,
+      "end_seconds": 195.532,
+      "asr_excerpt": "阳光小美女大家一定要去看一下",
+      "submission_spec": "未布置观后感",
+      "teacher_review": "未说明",
+      "uncertainty": "看片建议，非十类型写作任务"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "推荐看触不可及",
+      "part": 25,
+      "start_seconds": 399.558,
+      "end_seconds": 403.852,
+      "asr_excerpt": "触不可及，可以去看一下啊，挺好看的",
+      "submission_spec": "未布置报告",
+      "teacher_review": "未说明",
+      "uncertainty": "看片建议"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "material_continuity": {
+    "relation": "teacher_explicit_classroom_case_reuse",
+    "evidence": "p25 10:56–11:41回顾八要素时小蝌蚪例；新示范回应第11课信息量太大反馈",
+    "not_assignment_reuse": "未要求续写自选梗概或学生警察大纲"
+  },
+  "examples": [
+    {
+      "case_version": "tadpole_golden_fleece_lesson12",
+      "part": 25,
+      "start_seconds": 813,
+      "end_seconds": 1576,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "蝌蚪寻身世＋离家龟搭档，旅程建立自我价值"
+    },
+    {
+      "case_version": "tadpole_emotional_relationship_lesson12",
+      "part": 26,
+      "start_seconds": 24,
+      "end_seconds": 550,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "无尾机灵蝌蚪＋迟钝能行动的龟，相互需要与捕食威胁隔开"
+    },
+    {
+      "case_version": "tadpole_superhero_lesson12",
+      "part": 26,
+      "start_seconds": 550,
+      "end_seconds": 811,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "蝌蚪侠水中能力与限时弱点，寻母私仇扩公共使命"
+    },
+    {
+      "case_version": "tadpole_monster_in_house_lesson12",
+      "part": 26,
+      "start_seconds": 815,
+      "end_seconds": 1059,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "闯深水害母被拖走，在封闭池塘重新面对威胁"
+    },
+    {
+      "case_version": "tadpole_detective_lesson12",
+      "part": 26,
+      "start_seconds": 1062,
+      "end_seconds": 1276,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "查凶手与找生母汇合，亲情与警察责任的选择"
+    },
+    {
+      "case_version": "tadpole_wish_fulfillment_lesson12",
+      "part": 26,
+      "start_seconds": 1317,
+      "end_seconds": 1695,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "重选下海却扰乱哪吒与龙太子事件，回家求教"
+    },
+    {
+      "case_version": "tadpole_dude_with_problem_lesson12",
+      "part": 27,
+      "start_seconds": 3,
+      "end_seconds": 310,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "无辜蝌蚪母亲被饭店抓走，老龟训练后营救"
+    },
+    {
+      "case_version": "tadpole_rites_of_passage_lesson12",
+      "part": 27,
+      "start_seconds": 314,
+      "end_seconds": 804,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "龟养母与蛙儿子矛盾、离家寻同类、理解养育关系"
+    },
+    {
+      "case_version": "tadpole_fool_triumphant_lesson12",
+      "part": 27,
+      "start_seconds": 805,
+      "end_seconds": 1285,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "混进观赏鱼表演，成长变化后用自己的蛙类特长成功；未展开找妈妈"
+    },
+    {
+      "case_version": "tadpole_institutionalized_lesson12",
+      "part": 27,
+      "start_seconds": 1289,
+      "end_seconds": 1899,
+      "source_relation": "老师同题现场变体，与其他版本不自动连续；非学生作业",
+      "description": "抗争猫每日捕食的水坑群体规则，牺牲与自由；未展开妈妈线"
+    }
+  ],
+  "revision_steps": [
+    {
+      "part": 25,
+      "start_seconds": 870,
+      "end_seconds": 1467,
+      "input": "找妈妈为终点",
+      "change": "动作找妈妈，欲望寻身世，自我价值由旅程建立",
+      "effect": "未找到母亲也可完成欲望与成长"
+    },
+    {
+      "part": 25,
+      "start_seconds": 1060,
+      "end_seconds": 1395,
+      "input": "团队搭档待选",
+      "change": "选择龟而非鱼，后补龟倒下由蝌蚪救助",
+      "effect": "陆路互助和角色成长相互支撑"
+    },
+    {
+      "part": 26,
+      "start_seconds": 627,
+      "end_seconds": 692,
+      "input": "离水15分钟",
+      "change": "又提出变身5分钟",
+      "effect": "用于时间压力，数值未定稿"
+    },
+    {
+      "part": 26,
+      "start_seconds": 1545,
+      "end_seconds": 1606,
+      "input": "哪吒被杀",
+      "change": "撤回死亡，改未收服龙太子",
+      "effect": "留下纠正局面的空间"
+    },
+    {
+      "part": 27,
+      "start_seconds": 211,
+      "end_seconds": 285,
+      "input": "导师熟悉饭店可带路",
+      "change": "补逃离时灼盲，养殖场即饭店后院",
+      "effect": "可教路线但不能代劳"
+    },
+    {
+      "part": 27,
+      "start_seconds": 456,
+      "end_seconds": 800,
+      "input": "普通母子矛盾",
+      "change": "养母改龟并补共同遭灾救助前情",
+      "effect": "身世冲突与最后理解有呼应"
+    }
+  ],
+  "limits": [
+    "三P全文机器稿已读，未逐句听校",
+    "七帧已查看；5分钟和撤回哪吒死亡字幕已核，15分钟仍依ASR",
+    "十种是老师课堂变体，未布置十篇作文",
+    "最后两变体未展开母亲线，不补剧情",
+    "被制度化版雨后自由与先前工程具体因果未说明，不补因果",
+    "临时主题及性别化观众判断不扩普遍结论"
+  ],
+  "frames": [
+    {
+      "part": 25,
+      "source_seconds": 1193,
+      "path": "frames/p025-1193.jpg",
+      "sha256": "508b2d4944088f559786e3be6463ada413a9c155f59a0e0d6f2a96aa88f00423",
+      "visually_read": true
+    },
+    {
+      "part": 25,
+      "source_seconds": 1197,
+      "path": "frames/p025-1197.jpg",
+      "sha256": "5bf8c27cac3ae635090b71955b2daa058f8ebcd63ce322dd32d61569178bd4dc",
+      "visually_read": true
+    },
+    {
+      "part": 26,
+      "source_seconds": 631,
+      "path": "frames/p026-0631.jpg",
+      "sha256": "39962a76ec06e08116d9a43ac64dd75fc6eace063a159596fa93cbf8e7ec11e8",
+      "visually_read": true
+    },
+    {
+      "part": 26,
+      "source_seconds": 633,
+      "path": "frames/p026-0633.jpg",
+      "sha256": "78d6957b5b897db143b3382db3b92dbdb1de195a357e9d5e150e3e6ae13ab7bb",
+      "visually_read": true
+    },
+    {
+      "part": 26,
+      "source_seconds": 688,
+      "path": "frames/p026-0688.jpg",
+      "sha256": "faa32f96cde4dc6c42fe3f7bbdaa30cb223b30a88450c773b0f5261b94522003",
+      "visually_read": true
+    },
+    {
+      "part": 26,
+      "source_seconds": 1567,
+      "path": "frames/p026-1567.jpg",
+      "sha256": "0388af71f0bd6a381856939f1f14d5a9126ee5fd4312ce9c23461ee503c75d41",
+      "visually_read": true
+    },
+    {
+      "part": 26,
+      "source_seconds": 1570,
+      "path": "frames/p026-1570.jpg",
+      "sha256": "7f1945db180305e9ba4b8810e1ba6d5bb93cffb9e6084dd04731fa972fb68596",
+      "visually_read": true
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "lesson": 2,
+  "title": "故事的要素",
+  "parts": [
+    5,
+    6
+  ],
+  "full_transcript_read_parts": [
+    5,
+    6
+  ],
+  "transcript_source": "Full readings of legacy whisper.cpp base p005/p006 SRT and new SenseVoice p005/p006.source-time.txt",
+  "teaching_nodes": [
+    {
+      "label": "回顾真实幻想；从灵感到故事",
+      "part": 5,
+      "start_seconds": 0,
+      "end_seconds": 359
+    },
+    {
+      "label": "自身材料与共情",
+      "part": 5,
+      "start_seconds": 380,
+      "end_seconds": 684
+    },
+    {
+      "label": "两亿与偷的组合演示",
+      "part": 5,
+      "start_seconds": 730,
+      "end_seconds": 1106
+    },
+    {
+      "label": "素材矩阵",
+      "part": 5,
+      "start_seconds": 1174,
+      "end_seconds": 1272
+    },
+    {
+      "label": "持续记录素材；故事三要素",
+      "part": 6,
+      "start_seconds": 0,
+      "end_seconds": 499
+    },
+    {
+      "label": "三要素细拆八项并连成叙述",
+      "part": 6,
+      "start_seconds": 499,
+      "end_seconds": 1014
+    },
+    {
+      "label": "案例拆解",
+      "part": 6,
+      "start_seconds": 1025,
+      "end_seconds": 1868
+    },
+    {
+      "label": "八项串讲及下节预告",
+      "part": 6,
+      "start_seconds": 1868,
+      "end_seconds": 1943
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回收第1课写下最真实的幻想",
+      "part": 5,
+      "start_seconds": 282,
+      "end_seconds": 299,
+      "asr_excerpt": "昨天那个作业…写下一个你最真实的幻想…待会儿我告诉你怎么用",
+      "submission_spec": "本节未新增",
+      "teacher_review": "本节 p5 欲望与恐惧组合演示",
+      "uncertainty": "第1课原布置已完整核读并核字幕"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回顾刻意训练共情",
+      "part": 5,
+      "start_seconds": 520,
+      "end_seconds": 528,
+      "asr_excerpt": "大家刻意地训练共情",
+      "submission_spec": "本节未说明",
+      "teacher_review": "后续训练，未指定课号",
+      "uncertainty": "第1课原要求已完整核读，属于持续训练"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "整理相关灵感为素材矩阵，并持续在小本积累观察与体验",
+      "part": 5,
+      "start_seconds": 1202,
+      "end_seconds": 1257,
+      "asr_excerpt": "把所有的相关灵感…全部罗列出来…形成一个素材矩阵",
+      "submission_spec": "没有固定格式、数量、提交时间",
+      "teacher_review": "未说明",
+      "uncertainty": "矩阵有既有画面核对；是素材积累方法，未明确作为本节提交作业"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "初学前十个故事至少按八项连成叙述",
+      "part": 6,
+      "start_seconds": 981,
+      "end_seconds": 998,
+      "asr_excerpt": "上手的前10个故事至少…都要这么给我讲",
+      "submission_spec": "未要求本节交十篇",
+      "teacher_review": "未说明",
+      "uncertainty": "练习约束，不登记为一次十篇课后作业"
+    }
+  ],
+  "explicit_assignment_search_result": "老师在第3课p7 04:14–04:27直接确认上一节没有布置作业；原p7 04:16字幕已视觉核实。p5/p6全文机器稿亦未找到新明确布置。",
+  "limits": [
+    "p5/p6新旧全文机器稿均已读，未逐句听校",
+    "ASR时间为源视频回查导航",
+    "本节沿用既有六帧核对记录；本轮另核p7两张无作业字幕帧"
+  ],
+  "later_assignment_confirmation": {
+    "part": 7,
+    "start_seconds": 254.598,
+    "end_seconds": 267.18,
+    "asr_excerpt": "但我上一节课啊，我特意没布置作业，我没有让你们顺着这个写一下，我就是怕打击你们的信心",
+    "frame": "frames/p007-0256.jpg"
+  },
+  "review_state": "full_asr_read",
+  "current_batch_full_transcript_read_parts": [
+    5,
+    6
+  ]
+}

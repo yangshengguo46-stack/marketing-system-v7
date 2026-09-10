@@ -1,0 +1,38 @@
+{
+  "thread_id": "01a07f0d-3678-7dc0-8b38-105cbf8f44ee",
+  "turn_start": {
+    "turn": {
+      "id": "01a07f0d-3975-7f21-9af7-523ecafb05f6",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "messages": [
+    "```json\n{\n  \"blocks\": [\n    {\n      \"first_segment\": 530,\n      \"last_segment\": 537,\n      \"heading\": \"从物理与第一性原理看“区别”与课程定位\",\n      \"text\": \"或者说就没有区别，从物理的角度、从故事的角度、从第一性的角度没有区别。\\n我们的课程，是教大家讲故事的。人工智能，实际上是这种（运用）。但在生活中是综合运用的，下节课教大家用人工智能讲故事。好不好？\",\n      \"corrections\": [\n        {\"original\": \"从地一性的角度\", \"cleaned\": \"从第一性的角度\", \"basis\": \"语境为第一性原理，“地”系“第”的音近误识\"}\n      ]\n    },\n    {\n      \"first_segment\": 538,\n      \"last_segment\": 544,\n      \"heading\": \"新书首发优惠与下节课预告\",\n      \"text\": \"再说一下啊。咱们的书现在是首版首发，刚刚上架，所以现在是一个限时限量的对折，就是半价优惠。另外呢，在咱们平台上——你看到这个课程的平台——下单这本书的话，你可以联系咱们的小助手，去那个下单的页面、那个橱窗里面下单。下单了之后联系咱们的小助手，可以获赠咱们的免费课程，也可以加入咱们的书友会。现在是新书首发，第一批买的同学可以加书友会，咱们零距离交流，探讨一些创作方面的知识，好吧。\\n这节课就讲到这儿，下节课讲人工智能。\",\n      \"corrections\": [\n        {\"original\": \"呃，首版首发刚刚上架\", \"cleaned\": \"首版首发，刚刚上架\", \"basis\": \"“呃”为口头赘词，删去；句义不变\"}\n      ]\n    }\n  ],\n  \"uncertainties\": [\n    \"S534“实际上是这种”后省略了具体所指，讲师手势或上下文指向不明，保留原话语境未补全。\",\n    \"S542—S543中橱窗下单路径与小助手赠课流程为课程原话推广，未核实现行平台是否仍按此执行。\",\n    \"S530“第一性的角度”与上文“第一性原理”衔接，本卡按音近将“地一性”订为“第一性”，未逐句听校原片。\"\n  ]\n}\n```"
+  ],
+  "usage": {
+    "total": {
+      "totalTokens": 9818,
+      "inputTokens": 9252,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 566,
+      "reasoningOutputTokens": 60
+    },
+    "last": {
+      "totalTokens": 9818,
+      "inputTokens": 9252,
+      "cachedInputTokens": 2048,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 566,
+      "reasoningOutputTokens": 60
+    },
+    "modelContextWindow": 258400
+  },
+  "tool_items": []
+}

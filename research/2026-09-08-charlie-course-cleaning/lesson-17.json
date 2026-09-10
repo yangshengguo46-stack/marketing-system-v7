@@ -1,0 +1,237 @@
+{
+  "lesson": 17,
+  "source_parts": [
+    {
+      "part": 39,
+      "source_json_sha256": "ca9bd323fc9c976f5fadd3ea27946eaf5e0e09b752ba26c73042a0897b4fcb73",
+      "segment_count": 677
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L17-B001",
+      "part": 39,
+      "first_segment": 1,
+      "last_segment": 57,
+      "heading": "用共性问题替代无法完成的逐份批改",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B002",
+      "part": 39,
+      "first_segment": 58,
+      "last_segment": 108,
+      "heading": "选材过于自我：当事人觉得精彩的前提，观众未必拥有",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B003",
+      "part": 39,
+      "first_segment": 109,
+      "last_segment": 149,
+      "heading": "父亲的回忆与练习时暂避自传",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B004",
+      "part": 39,
+      "first_segment": 150,
+      "last_segment": 210,
+      "heading": "可怜只是人设的一面，不是一路写苦难",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B005",
+      "part": 39,
+      "first_segment": 211,
+      "last_segment": 248,
+      "heading": "抽象画拍卖的比方：模仿大师表面并不等于学会",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B006",
+      "part": 39,
+      "first_segment": 249,
+      "last_segment": 291,
+      "heading": "共情的具体问题：性格、目标和决定",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B007",
+      "part": 39,
+      "first_segment": 292,
+      "last_segment": 325,
+      "heading": "名字也会影响观众接近人物",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "robo／罗伯特语带来娜",
+          "cleaned": "罗伯特与戴安娜",
+          "basis": "S318明确完整男女主名"
+        },
+        {
+          "original": "富姓／腹线／复线",
+          "cleaned": "复姓",
+          "basis": "欧阳、端木、令狐的姓氏语境"
+        }
+      ]
+    },
+    {
+      "id": "L17-B008",
+      "part": 39,
+      "first_segment": 326,
+      "last_segment": 350,
+      "heading": "核心问题必须由主角亲自解决",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B009",
+      "part": 39,
+      "first_segment": 351,
+      "last_segment": 385,
+      "heading": "对手具体成人，并有能自圆其说的立场",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B010",
+      "part": 39,
+      "first_segment": 386,
+      "last_segment": 447,
+      "heading": "《我不是药神》中的行动冲突与亲属关系",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "我们是药神／我不需要什么",
+          "cleaned": "《我不是药神》",
+          "basis": "同段反复完整片名"
+        },
+        {
+          "original": "连接／链条",
+          "cleaned": "连襟",
+          "basis": "《绝命毒师》主角与缉毒警察亲属关系语境"
+        },
+        {
+          "original": "定律",
+          "cleaned": "定语",
+          "basis": "明确比较纪实风格与商业片主体"
+        }
+      ]
+    },
+    {
+      "id": "L17-B011",
+      "part": 39,
+      "first_segment": 448,
+      "last_segment": 463,
+      "heading": "对手要逼出最大成长，也可以更早出场",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B012",
+      "part": 39,
+      "first_segment": 464,
+      "last_segment": 470,
+      "heading": "转向第五个坑：铺垫太多",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B013",
+      "part": 39,
+      "first_segment": 471,
+      "last_segment": 497,
+      "heading": "铺垫现状，先删不必要的前史",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "钱使／前十／前使",
+          "cleaned": "前史",
+          "basis": "同段直接解释小时候、成长轨迹，与现状相对"
+        }
+      ]
+    },
+    {
+      "id": "L17-B014",
+      "part": 39,
+      "first_segment": 498,
+      "last_segment": 551,
+      "heading": "《我不是药神》开头怎样用少量场次交代现状",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "阿忠连充胖子",
+          "cleaned": "打肿脸充胖子",
+          "basis": "给儿子钱硬撑体面的明确语境"
+        },
+        {
+          "original": "三万块360块钱",
+          "cleaned": "先说三万后改三百六十〔待核〕",
+          "basis": "S518原文连说两个数，未听校"
+        },
+        {
+          "original": "吕秀义／吕受义／吕受益",
+          "cleaned": "吕受益",
+          "basis": "同一白血病患者求代购药角色的异写统一"
+        }
+      ]
+    },
+    {
+      "id": "L17-B015",
+      "part": 39,
+      "first_segment": 552,
+      "last_segment": 574,
+      "heading": "《夏洛特烦恼》把现状装进婚礼冲突",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B016",
+      "part": 39,
+      "first_segment": 575,
+      "last_segment": 601,
+      "heading": "第六个坑：用事件牵引，别总坐下聊天",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B017",
+      "part": 39,
+      "first_segment": 602,
+      "last_segment": 628,
+      "heading": "第七个坑：喜剧也要有眼泪与紧张",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L17-B018",
+      "part": 39,
+      "first_segment": 629,
+      "last_segment": 677,
+      "heading": "用色块检查情绪分布；本课的实际自查要求",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "P039 S031作业量“一百份”与前文“一千多份”矛盾；S212“想到小鸟”原词不清；S518买鞋钱连说“三万块、360块”，均未听校。",
+    "P039抽象画1500万美元、库布里克等为讲师现场比方与混用；《我不是药神》删戏及审查原因是讲师主张，未核实。电影开场数场有自纠，不作为实片分场表。",
+    "本课实际要求是对照七类问题检查已有作业、调整对手与情绪；未新增篇数、字数或期限，情绪场次数仅为示意。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第17课.md",
+  "output_sha256": "50fa5212726703f03f10fb476892e80830b97800a1cf7a1509762fea63566703",
+  "reader_navigation_update": {
+    "previous_output_sha256": "7048926db9479d6aa7edf307c77b41fad2193aef02ea5924f96677a37b7e999f",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

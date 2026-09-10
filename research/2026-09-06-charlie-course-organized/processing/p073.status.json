@@ -1,0 +1,51 @@
+{
+  "part": 73,
+  "title": "编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！",
+  "state": "completed",
+  "started_at": "2026-09-06T10:55:32.078124+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 73,
+    "cid": 27089243632,
+    "title": "编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=73",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《无间道》，双雄戏悬疑戏跟它学就对了！.mp4",
+    "sha256": "5d3f507074cbdb14f9e8aa791658bd3e24b63d4c45737603b09a560021165169",
+    "bytes": 128695912,
+    "mtime_ns": 1788682205593848448,
+    "actual_duration_seconds": 4221.813492
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 4221.80575,
+  "segment_count": 551,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T11:10:37.883299+00:00",
+  "elapsed_seconds": 905.794,
+  "completed_at": "2026-09-06T11:10:37.883272+00:00",
+  "text_characters": 16787,
+  "rtf": 0.214551,
+  "max_rss_bytes_macos": 615817216,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 4221.80575,
+    "duration_delta_seconds": -0.007742,
+    "vad_speech_seconds": 3326.89,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p073.source-time.txt": "ad6c55c17542ae6dd8474d89d1187969c8d0d62daacbf5cfeab219a7e7a93a05",
+    "p073.source-time.srt": "5e96ed7054931309420114d2108ab26bb334041f494605c0654851a5d794fc8d"
+  }
+}

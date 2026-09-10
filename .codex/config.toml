@@ -1,0 +1,7 @@
+# Development trials use explicit task materials, not automatic long-term memory.
+[features]
+memories = false
+
+[memories]
+generate_memories = false
+use_memories = false

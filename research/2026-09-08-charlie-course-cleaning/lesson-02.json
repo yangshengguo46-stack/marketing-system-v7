@@ -1,0 +1,509 @@
+{
+  "lesson": 2,
+  "source_parts": [
+    {
+      "part": 5,
+      "source_json_sha256": "4b7882c878b028d2279501d65a5ca8e672e58e11c62613c2838328975e4666bc",
+      "segment_count": 298
+    },
+    {
+      "part": 6,
+      "source_json_sha256": "10c6a131ecbff08be2316e3d42eb828162e3139d71fd3fe556b6188ea4c50df1",
+      "segment_count": 423
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L02-B001",
+      "part": 5,
+      "first_segment": 1,
+      "last_segment": 26,
+      "heading": "先补上“故事从哪里来”这一步",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B002",
+      "part": 5,
+      "first_segment": 27,
+      "last_segment": 50,
+      "heading": "灵感不是只有艺术家才有的神秘东西",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "一幅画一池15000",
+          "cleaned": "举高价画例，计价单位待核",
+          "basis": "待核"
+        }
+      ]
+    },
+    {
+      "id": "L02-B003",
+      "part": 5,
+      "first_segment": 51,
+      "last_segment": 78,
+      "heading": "回收真实幻想：始于心，成于脑",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "止于心／成语脑／成语呢",
+          "cleaned": "始于心，成于脑",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0330.jpg；“始于心”结合上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B004",
+      "part": 5,
+      "first_segment": 79,
+      "last_segment": 116,
+      "heading": "来自自身的欲望、幻想与恐惧",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "少钱",
+          "cleaned": "想得到钱",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "始于心诚于脑",
+          "cleaned": "始于心，成于脑",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0330.jpg"
+        }
+      ]
+    },
+    {
+      "id": "L02-B005",
+      "part": 5,
+      "first_segment": 117,
+      "last_segment": 158,
+      "heading": "共情是第二个来源，先用好自己的第一个故事",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "达沃尔的导演编剧",
+          "cleaned": "知名导演和编剧",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "扑到及巅峰",
+          "cleaned": "出道即巅峰",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "共琴",
+          "cleaned": "共情",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0540.jpg"
+        }
+      ]
+    },
+    {
+      "id": "L02-B006",
+      "part": 5,
+      "first_segment": 159,
+      "last_segment": 189,
+      "heading": "先有材料，再谈精彩：两亿愿望还不是故事",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "南登大雅之堂",
+          "cleaned": "难登大雅之堂",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "孔距",
+          "cleaned": "恐惧",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-0540.jpg"
+        }
+      ]
+    },
+    {
+      "id": "L02-B007",
+      "part": 5,
+      "first_segment": 190,
+      "last_segment": 220,
+      "heading": "“偷”的经历为什么能成为恐惧材料",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "投过／就偷个东西",
+          "cleaned": "偷过东西",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "那就不要偷东西",
+          "cleaned": "不是这里强调的那一种“偷”的恐惧",
+          "basis": "上下文判断：前后对比轻松面对和不愿面对；不据此判定行为性质"
+        },
+        {
+          "original": "就他们还没有发生过",
+          "cleaned": "当作没有发生",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B008",
+      "part": 5,
+      "first_segment": 221,
+      "last_segment": 250,
+      "heading": "把“两亿”与“偷”组合：银行案和身世秘密两条路",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "扣到2亿／投到了2亿／2亿也是投来的",
+          "cleaned": "偷到两亿／两亿也是偷来的",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-1250.jpg；结合上下文判断"
+        },
+        {
+          "original": "从哪宝捡来的／把你换掉了",
+          "cleaned": "从哪里被抱来或捡来、为什么换掉自己（关系待核）",
+          "basis": "待核"
+        }
+      ]
+    },
+    {
+      "id": "L02-B009",
+      "part": 5,
+      "first_segment": 251,
+      "last_segment": 263,
+      "heading": "听者开始追问，故事就开始上路",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B010",
+      "part": 5,
+      "first_segment": 264,
+      "last_segment": 288,
+      "heading": "把已有生活经验整理成素材矩阵",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B011",
+      "part": 5,
+      "first_segment": 289,
+      "last_segment": 298,
+      "heading": "两亿项目的素材包与下半节衔接",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "素材剧这里的素材包",
+          "cleaned": "素材包",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p005-1250.jpg；结合上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B012",
+      "part": 6,
+      "first_segment": 1,
+      "last_segment": 19,
+      "heading": "持续记录，让灵感变成日常素材库",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B013",
+      "part": 6,
+      "first_segment": 20,
+      "last_segment": 35,
+      "heading": "故事先分人物、事件、主题三要素",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B014",
+      "part": 6,
+      "first_segment": 36,
+      "last_segment": 54,
+      "heading": "主角：观众站在谁那边，希望谁成事",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B015",
+      "part": 6,
+      "first_segment": 55,
+      "last_segment": 97,
+      "heading": "主题通过人物的选择表现：侠客放下私仇",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "报酬／丝绸／小鱼／大意",
+          "cleaned": "报仇／私仇／小于／大义",
+          "basis": "上下文判断：放弃对国家民族英雄的私人复仇"
+        }
+      ]
+    },
+    {
+      "id": "L02-B016",
+      "part": 6,
+      "first_segment": 98,
+      "last_segment": 134,
+      "heading": "人物第一项：身份是当前事件中的角色",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "担保",
+          "cleaned": "单薄",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "戏种的身份／吃粉／税份／世界中的角色",
+          "cleaned": "戏中的身份／身份／事件中的角色",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg"
+        },
+        {
+          "original": "报酬",
+          "cleaned": "报仇",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B017",
+      "part": 6,
+      "first_segment": 135,
+      "last_segment": 160,
+      "heading": "人物第二、三项：欲望引出动作",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "欲网／时件",
+          "cleaned": "欲望／事件",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg"
+        },
+        {
+          "original": "want和ne",
+          "cleaned": "want和need",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "报酬",
+          "cleaned": "报仇",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B018",
+      "part": 6,
+      "first_segment": 161,
+      "last_segment": 184,
+      "heading": "事件三项：核心问题、障碍、结果",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "世件／上海",
+          "cleaned": "事件／障碍",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg"
+        }
+      ]
+    },
+    {
+      "id": "L02-B019",
+      "part": 6,
+      "first_segment": 185,
+      "last_segment": 207,
+      "heading": "主题两项：正负价值对抗，加起来成为八项",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "附加值／正负价值",
+          "cleaned": "负价值／正负价值",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg"
+        },
+        {
+          "original": "报酬／丝绸／幻面",
+          "cleaned": "报仇／私仇／幻灭",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B020",
+      "part": 6,
+      "first_segment": 208,
+      "last_segment": 222,
+      "heading": "把八项连成叙述：初学前十个故事的框架",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L02-B021",
+      "part": 6,
+      "first_segment": 223,
+      "last_segment": 254,
+      "heading": "《喜剧之王》：群演想出人头地，于是跑组",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "卡这8g／中心在戏中",
+          "cleaned": "按八项分析／周星驰角色在戏中",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "“人如果没有梦想，跟一条咸鱼有什么区别”作为本片例子",
+          "cleaned": "保留课堂引用，台词出处未核",
+          "basis": "待核"
+        }
+      ]
+    },
+    {
+      "id": "L02-B022",
+      "part": 6,
+      "first_segment": 255,
+      "last_segment": 289,
+      "heading": "机会屡次错过，平凡人仍能获得价值",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "世界",
+          "cleaned": "事件",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-0935.jpg"
+        },
+        {
+          "original": "狭义",
+          "cleaned": "开头副导演，具体名称待核",
+          "basis": "待核"
+        }
+      ]
+    },
+    {
+      "id": "L02-B023",
+      "part": 6,
+      "first_segment": 290,
+      "last_segment": 304,
+      "heading": "《西游记》：把师徒四人看作共同的取经人",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "心花怒放",
+          "cleaned": "《心花路放》",
+          "basis": "上下文判断：与《人在囧途》并提的电影名称"
+        },
+        {
+          "original": "师徒自人",
+          "cleaned": "师徒四人",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B024",
+      "part": 6,
+      "first_segment": 305,
+      "last_segment": 331,
+      "heading": "旁讲《疯狂的外星人》：把内心的两个选择外化",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "黄博生／刷猴／气候从商",
+          "cleaned": "黄渤的角色说／耍猴／放弃耍猴、改去经商",
+          "basis": "上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B025",
+      "part": 6,
+      "first_segment": 332,
+      "last_segment": 340,
+      "heading": "真正的人物关系与回到取经案例",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "黄冠",
+          "cleaned": "黄渤",
+          "basis": "上下文判断：同段持续讨论沈腾、黄渤角色"
+        }
+      ]
+    },
+    {
+      "id": "L02-B026",
+      "part": 6,
+      "first_segment": 341,
+      "last_segment": 365,
+      "heading": "取经人的欲望、行动、核心事件、障碍和结果",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "逃王／小称／大秤",
+          "cleaned": "唐王／小乘／大乘",
+          "basis": "上下文判断：西游取经讲解"
+        },
+        {
+          "original": "普渡钟生／得京成佛",
+          "cleaned": "普度众生／得经成佛",
+          "basis": "research/2026-09-06-course-to-capability/lesson-2-frames/p006-1785.jpg；“得经成佛”结合上下文判断"
+        }
+      ]
+    },
+    {
+      "id": "L02-B027",
+      "part": 6,
+      "first_segment": 366,
+      "last_segment": 393,
+      "heading": "取经故事的主题：一路善行本身就是修行",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "吃粉饼啊",
+          "cleaned": "保留机器稿短语并标待核，不补为观点",
+          "basis": "待核"
+        },
+        {
+          "original": "吸钱渠道的经营／关音",
+          "cleaned": "西天取到的经文／观音",
+          "basis": "上下文判断；具体版本和情节待核"
+        }
+      ]
+    },
+    {
+      "id": "L02-B028",
+      "part": 6,
+      "first_segment": 394,
+      "last_segment": 423,
+      "heading": "回串八项，具体写法留到下一课",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "欲句欢迎的",
+          "cleaned": "欲言又止",
+          "basis": "上下文判断"
+        },
+        {
+          "original": "头人／报酬",
+          "cleaned": "仇人／报仇",
+          "basis": "上下文判断"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "依据全部721个机器转录段整理，未逐句听校，不是讲师逐字原话。",
+    "S编号为新版transcripts JSON的1-based index；范围覆盖每个ASR段，不代表对VAD未识别音频的内容完整性作保证。",
+    "沿用已有字幕帧核对记录；本轮未新增听校、看片或外部事实核验。",
+    "P005 S040画价单位、S248–S250身世分叉关系，P006 S267副导演名称、S366衔接口头语待核。",
+    "《喜剧之王》课堂所引梦想台词出处、影片情节及《西游记》具体版本/封授/经文/观音转述均未核；保留为讲师解读。",
+    "95%以上、前25分钟点题、处女作质量等均保留讲师教学语境，不作为普遍事实。",
+    "本课无新作业；前十个故事为初学讲述约束，并非本次十篇提交要求。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第02课.md",
+  "output_sha256": "496566e6ee7da74ff97a8237dd3d73417d1c13077caad7a36272dfbf7ae2fec7",
+  "cleaned_at_utc": "2026-09-08T02:25:53.368847+00:00",
+  "self_review": {
+    "all_source_segments_read": true,
+    "coverage": "721/721，按分P原序连续且不重叠",
+    "semantic_focus": [
+      "两亿愿望非故事，与偷组合后发展为银行案和身世秘密两条分叉",
+      "侠客身份与职业区别；want与行动；障碍三层；正负价值冲突和限定",
+      "喜剧之王的机会、障碍组合、结局价值，课堂引句边界",
+      "西游师徒四人整体与疯狂外星人旁讲，真正多主角的关系说明",
+      "旧作业回收、持续记录建议、前十个故事约束、本课没有新作业"
+    ],
+    "remaining_uncertainties": "见limits和各块corrections；没有新增听校或外部核验"
+  }
+}

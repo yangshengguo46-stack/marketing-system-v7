@@ -1,0 +1,642 @@
+{
+  "audit_type": "native_v1_v2_evidence_cross_check",
+  "generated_at_utc": "2026-09-06T13:02:24.209325+00:00",
+  "scope": {
+    "included_versions": [
+      1,
+      2
+    ],
+    "excluded_versions": [
+      3
+    ],
+    "event_file": "output/course-learning/charlie-20260906/run/full-course-v1-events.ndjson",
+    "last_included_event_line": 10456,
+    "last_included_event_at_utc": "2026-09-06T12:38:16.208838+00:00",
+    "included_event_count": 10456,
+    "included_ndjson_prefix_sha256": "7cacf671d81b78863500867dc0137e3d3dfec48a69e8fceff803b17266839a9d",
+    "cutoff_rule": "Stop at the second turn/completed event even if later turns append more events.",
+    "not_accessed": [
+      "stderr files",
+      "configuration contents",
+      "credentials"
+    ],
+    "transport_boundary": "Evidence is native app-server thread/turn/raw tool events and local artifacts. No HTTP request capture or upstream wire-payload claim."
+  },
+  "model_evidence": {
+    "requested_model": "glm-5-2-260617",
+    "server_thread_start_reported_model": "glm-5-2-260617",
+    "thread_id": "01a076ad-7ca7-7470-a52c-9c9a7910201b",
+    "model_response_event_line": 7,
+    "interpretation": "Requested and native server-reported model identity agree; this does not independently attest upstream serving internals."
+  },
+  "turns": [
+    {
+      "version": 1,
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "status": "completed",
+      "error": null,
+      "started_at_utc": "2026-09-06T12:26:22+00:00",
+      "completed_at_utc": "2026-09-06T12:29:57+00:00",
+      "duration_ms": 215314,
+      "completion_event_line": 4328,
+      "event_received_at_utc": "2026-09-06T12:29:57.627304+00:00"
+    },
+    {
+      "version": 2,
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "status": "completed",
+      "error": null,
+      "started_at_utc": "2026-09-06T12:33:28+00:00",
+      "completed_at_utc": "2026-09-06T12:38:16+00:00",
+      "duration_ms": 287615,
+      "completion_event_line": 10456,
+      "event_received_at_utc": "2026-09-06T12:38:16.208838+00:00"
+    }
+  ],
+  "tool_summary": {
+    "native_function_calls": 32,
+    "matching_function_outputs": 32,
+    "marketing_work_calls": 7,
+    "marketing_work_observed_successes": 7,
+    "marketing_work_observed_failures": 0,
+    "completed_command_executions": 25,
+    "nonzero_or_failed_command_executions": []
+  },
+  "marketing_work_events": [
+    {
+      "call_id": "call_fkqja2z30hyvtgrgrwzzdxx2",
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "action": "open",
+      "stage": null,
+      "call_event_line": 3426,
+      "output_event_line": 3428,
+      "observed_success": true,
+      "next_stage": "research",
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        null,
+        null,
+        null
+      ],
+      "response_sha256": "4763168320c3feca4a103d6f14f2f08df8bc854ad5d89637d2b408520434fbee"
+    },
+    {
+      "call_id": "call_z9t48c7t9h7fsn1l2zhvjiwa",
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "action": "record",
+      "stage": "research",
+      "call_event_line": 3431,
+      "output_event_line": 3433,
+      "observed_success": true,
+      "next_stage": "direction",
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        null,
+        null
+      ],
+      "response_sha256": "e92292e0478dc5efb1033ccec6265fba44e9da344f8a51dbc93a963996f7f72a",
+      "record_body_sha256": "a52e6605b92ada492c16fd142f82d98a752a2b9a8821327b6be0024d83ea9f27"
+    },
+    {
+      "call_id": "call_zqebg0ig8r1pweks0bmx5ulx",
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "action": "record",
+      "stage": "direction",
+      "call_event_line": 3444,
+      "output_event_line": 3446,
+      "observed_success": true,
+      "next_stage": "draft",
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        false,
+        null
+      ],
+      "response_sha256": "cc997a14068a08509a44826facfdedc1a210ad6531184a0838771e4730bb7b7d",
+      "record_body_sha256": "274d6773c08e053b5cbeabfb6362ab57158ec3590daa3a083fd228ae4d6599b5"
+    },
+    {
+      "call_id": "call_f56o9pjk02cglmlmvek4s928",
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "action": "record",
+      "stage": "draft",
+      "call_event_line": 3703,
+      "output_event_line": 3706,
+      "observed_success": true,
+      "next_stage": null,
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        false,
+        false
+      ],
+      "response_sha256": "5f5bfe541b28cd503e5537bc5bcea2a9b20681577da89af29be5a78c1bb792e3",
+      "record_body_sha256": "a300230268e0480292fceb1fc93575faa578651428b1b96a49d84f3cd72116f5"
+    },
+    {
+      "call_id": "call_baz0e41feawn3oo7kuucl2zm",
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "action": "record",
+      "stage": "research",
+      "call_event_line": 9546,
+      "output_event_line": 9548,
+      "observed_success": true,
+      "next_stage": "direction",
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        true,
+        true
+      ],
+      "response_sha256": "d764135bd73ae9877b2175d4a0f8147c33dca58c6043bd7a5bc19dc9bc4fd8c8",
+      "record_body_sha256": "13fe0fb278cab1fce3382c0a7e6a9b038e9f06703f94eb6bfb2034c9e65b75a3"
+    },
+    {
+      "call_id": "call_3k11y9kle63i1h146no72li0",
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "action": "record",
+      "stage": "direction",
+      "call_event_line": 9551,
+      "output_event_line": 9553,
+      "observed_success": true,
+      "next_stage": "draft",
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        false,
+        true
+      ],
+      "response_sha256": "b22b37c5fd07ef682af180751e06a9db90e289aaf27af119c4d67d1e5495c1c0",
+      "record_body_sha256": "6dab7658dab7c11f2171faae305f2368370e726d697c32231fc51b88536a1382"
+    },
+    {
+      "call_id": "call_d6vungfkllyehy9a1rp6o2sq",
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "action": "record",
+      "stage": "draft",
+      "call_event_line": 9567,
+      "output_event_line": 9569,
+      "observed_success": true,
+      "next_stage": null,
+      "needs_review_order": [
+        "research",
+        "direction",
+        "draft"
+      ],
+      "needs_review": [
+        false,
+        false,
+        false
+      ],
+      "response_sha256": "6555347f48700563549347a447e16df7010b9198d937c6d7fcba627df107c888",
+      "record_body_sha256": "c1eb3de584659fe5cc840b51399d1b59cd9fe4cbd8a24093056daf5b7f747af2"
+    }
+  ],
+  "version_state_and_story_checks": [
+    {
+      "version": 1,
+      "snapshot_file": "output/course-learning/charlie-20260906/run/work-after-v1.json",
+      "snapshot_sha256": "47424a14f86228de57a6920c603f71f9a22f316d54a3aa8f5948906308d784fe",
+      "top_level_keys": [
+        "brief",
+        "materials",
+        "startAt",
+        "results"
+      ],
+      "stages": [
+        {
+          "stage": "research",
+          "call_id": "call_z9t48c7t9h7fsn1l2zhvjiwa",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "a52e6605b92ada492c16fd142f82d98a752a2b9a8821327b6be0024d83ea9f27",
+          "needs_review": false
+        },
+        {
+          "stage": "direction",
+          "call_id": "call_zqebg0ig8r1pweks0bmx5ulx",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "274d6773c08e053b5cbeabfb6362ab57158ec3590daa3a083fd228ae4d6599b5",
+          "needs_review": false
+        },
+        {
+          "stage": "draft",
+          "call_id": "call_f56o9pjk02cglmlmvek4s928",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "a300230268e0480292fceb1fc93575faa578651428b1b96a49d84f3cd72116f5",
+          "needs_review": false
+        }
+      ],
+      "story_file": "output/course-learning/charlie-20260906/练习/第一份故事-v1.md",
+      "story_file_sha256": "72e75fa80cf6de17971db88d009d1c87c6c08098e85ec3587c7d8af7965c90f0",
+      "story_equals_draft_plus_one_final_lf": true,
+      "difference": "Markdown file has exactly one trailing LF beyond the recorded draft; no text difference.",
+      "body_visible_characters_excluding_title_and_whitespace": 1556,
+      "body_cjk_characters": 1336
+    },
+    {
+      "version": 2,
+      "snapshot_file": "output/course-learning/charlie-20260906/run/work-after-v2.json",
+      "snapshot_sha256": "d08258c90041dcb95394bdb52e8d35f513a021decb5ff7c18c1015776943309c",
+      "top_level_keys": [
+        "brief",
+        "materials",
+        "startAt",
+        "results"
+      ],
+      "stages": [
+        {
+          "stage": "research",
+          "call_id": "call_baz0e41feawn3oo7kuucl2zm",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "13fe0fb278cab1fce3382c0a7e6a9b038e9f06703f94eb6bfb2034c9e65b75a3",
+          "needs_review": false
+        },
+        {
+          "stage": "direction",
+          "call_id": "call_3k11y9kle63i1h146no72li0",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "6dab7658dab7c11f2171faae305f2368370e726d697c32231fc51b88536a1382",
+          "needs_review": false
+        },
+        {
+          "stage": "draft",
+          "call_id": "call_d6vungfkllyehy9a1rp6o2sq",
+          "body_exactly_matches_record_argument": true,
+          "body_sha256": "c1eb3de584659fe5cc840b51399d1b59cd9fe4cbd8a24093056daf5b7f747af2",
+          "needs_review": false
+        }
+      ],
+      "story_file": "output/course-learning/charlie-20260906/练习/第一份故事-v2.md",
+      "story_file_sha256": "3d08d5d6060dd2d22cb701ce653d543484f18bcb49b8f638f68a49055f23533c",
+      "story_equals_draft_plus_one_final_lf": true,
+      "difference": "Markdown file has exactly one trailing LF beyond the recorded draft; no text difference.",
+      "body_visible_characters_excluding_title_and_whitespace": 1964,
+      "body_cjk_characters": 1685
+    }
+  ],
+  "downstream_invalidation": {
+    "verified": true,
+    "research_update_call_id": "call_baz0e41feawn3oo7kuucl2zm",
+    "research_update_output_line": 9548,
+    "after_research": [
+      false,
+      true,
+      true
+    ],
+    "direction_update_call_id": "call_3k11y9kle63i1h146no72li0",
+    "direction_update_output_line": 9553,
+    "after_direction": [
+      false,
+      false,
+      true
+    ],
+    "draft_update_output_line": 9569,
+    "after_draft": [
+      false,
+      false,
+      false
+    ],
+    "scope": "Flags observed in tool outputs; intermediate on-disk snapshots were not provided. These flags are workflow state, not quality scores."
+  },
+  "actual_input_reads": [
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_86aas8iral4endx5vzvan7rs",
+      "call_event_line": 42,
+      "output_event_line": 48,
+      "source_file": "output/course-learning/charlie-20260906/Agent入口.md",
+      "command": "cat \"output/course-learning/charlie-20260906/Agent入口.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 1231,
+      "output_body_lines": 29,
+      "output_body_sha256": "9fdc8b7a07ed4c78314ca328fe6631c44de69f9bf1723ac6e56da0f2d7f6aff3",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_86aas8iral4endx5vzvan7rs.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_wshbfijmkc3ggowobi1j1hwr",
+      "call_event_line": 43,
+      "output_event_line": 50,
+      "source_file": "output/course-learning/charlie-20260906/练习/第一份故事-题目.md",
+      "command": "cat \"output/course-learning/charlie-20260906/练习/第一份故事-题目.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 676,
+      "output_body_lines": 23,
+      "output_body_sha256": "9428ec5603e81855ff59394a20e5954d21f7073fd45c8bad047dcb92924c5c3a",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_wshbfijmkc3ggowobi1j1hwr.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_4ohih8b46iavwh3ra5v9zc99",
+      "call_event_line": 171,
+      "output_event_line": 176,
+      "source_file": "output/course-learning/charlie-20260906/课程/第04课.md",
+      "command": "cat \"output/course-learning/charlie-20260906/课程/第04课.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 3176,
+      "output_body_lines": 68,
+      "output_body_sha256": "9d9d7a6f033b18be7f405c8ccfa86c32d844572f91803fa3b53f0b5118d17447",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_4ohih8b46iavwh3ra5v9zc99.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_av8gy7owc8c51v22fclibjl0",
+      "call_event_line": 172,
+      "output_event_line": 179,
+      "source_file": "output/course-learning/charlie-20260906/课程/第05课.md",
+      "command": "cat \"output/course-learning/charlie-20260906/课程/第05课.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 3620,
+      "output_body_lines": 74,
+      "output_body_sha256": "80ada3d904c7d838ef674460b5f31dca7c51567c3a29345bd8c4ef07846e3260",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_av8gy7owc8c51v22fclibjl0.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_vzdn6ec8oa0e3c9r6vmslw35",
+      "call_event_line": 199,
+      "output_event_line": 204,
+      "source_file": "output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+      "command": "cat \"output/course-learning/charlie-20260906/方法/从材料写完整故事.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 1894,
+      "output_body_lines": 53,
+      "output_body_sha256": "75c8fc581d6e3e0ef63692d92be0254623cb78d8099e9358416caa8add2aa51a",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_vzdn6ec8oa0e3c9r6vmslw35.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076af-1ab3-7721-9a9d-8e6194c294b1",
+      "call_id": "call_prv8zeqv8jo2dnm7xj71i1wp",
+      "call_event_line": 200,
+      "output_event_line": 207,
+      "source_file": "output/course-learning/charlie-20260906/第一份故事的学习与作业路线.md",
+      "command": "cat \"output/course-learning/charlie-20260906/第一份故事的学习与作业路线.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 3007,
+      "output_body_lines": 73,
+      "output_body_sha256": "b11c7d930650a139d4dd647ff5478528ae90b776bfb8e4556a05a3ebc7451be2",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_prv8zeqv8jo2dnm7xj71i1wp.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_k7l2nq4x5e8cdk24y3ri2lqx",
+      "call_event_line": 4351,
+      "output_event_line": 4358,
+      "source_file": "output/course-learning/charlie-20260906/练习/第一份故事-独立评阅.md",
+      "command": "cat \"output/course-learning/charlie-20260906/练习/第一份故事-独立评阅.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 1097,
+      "output_body_lines": 31,
+      "output_body_sha256": "fed2c64a2f383f6bd8d6b38fdbb6d669ea99f99f45955a77d25b0548f5239f6f",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_k7l2nq4x5e8cdk24y3ri2lqx.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": null
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_ixxzwjvhtjnxsdkhrjbqq5hx",
+      "call_event_line": 4350,
+      "output_event_line": 4357,
+      "source_file": "output/course-learning/charlie-20260906/练习/第一份故事-返工要求.md",
+      "command": "cat \"output/course-learning/charlie-20260906/练习/第一份故事-返工要求.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 957,
+      "output_body_lines": 19,
+      "output_body_sha256": "4b321f428c937fae805c1f149ceb0d7143ffd45288d733cbf1f64df239959e00",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_ixxzwjvhtjnxsdkhrjbqq5hx.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": null
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_2wiz76d4ct4dlv0p0prvw7pg",
+      "call_event_line": 4368,
+      "output_event_line": 4373,
+      "source_file": "output/course-learning/charlie-20260906/方法/从材料写完整故事.md",
+      "command": "cat \"output/course-learning/charlie-20260906/方法/从材料写完整故事.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 2035,
+      "output_body_lines": 55,
+      "output_body_sha256": "0476ac25262f585db636edd692c586b5b088eef43c1a22de1d980683f33b19cb",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_2wiz76d4ct4dlv0p0prvw7pg.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": false
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_0rabtt737f13f7ydvo9fys7r",
+      "call_event_line": 4369,
+      "output_event_line": 4376,
+      "source_file": "output/course-learning/charlie-20260906/方法/沿因果返工.md",
+      "command": "cat \"output/course-learning/charlie-20260906/方法/沿因果返工.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 2077,
+      "output_body_lines": 54,
+      "output_body_sha256": "13ca0406f55109a1d64ef334e0dd1d5604ecac236546158bb21a332cef08cfcc",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_0rabtt737f13f7ydvo9fys7r.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_066k2swpw4aq73twelunz0ao",
+      "call_event_line": 4379,
+      "output_event_line": 4384,
+      "source_file": "output/course-learning/charlie-20260906/方法/把一场戏写得具体.md",
+      "command": "cat \"output/course-learning/charlie-20260906/方法/把一场戏写得具体.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 1183,
+      "output_body_lines": 41,
+      "output_body_sha256": "268eb458eac4321f1fe2212d44b2e19761aea52c99f9d8af5b308db83011eaa7",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_066k2swpw4aq73twelunz0ao.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_c774us9a3mopuurfgdw81jbe",
+      "call_event_line": 4380,
+      "output_event_line": 4387,
+      "source_file": "output/course-learning/charlie-20260906/课程/第34课.md",
+      "command": "cat \"output/course-learning/charlie-20260906/课程/第34课.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 2840,
+      "output_body_lines": 70,
+      "output_body_sha256": "a9dc074d05632da5c2dd0f4e35e505df81ecb9d4ba447b49f7d793f9673c4604",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_c774us9a3mopuurfgdw81jbe.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": true
+    },
+    {
+      "turn_id": "01a076b5-9c01-7dc2-b66c-877f5eff7946",
+      "call_id": "call_tm6qns0qyfquz84gfon2ih3v",
+      "call_event_line": 4410,
+      "output_event_line": 4414,
+      "source_file": "output/course-learning/charlie-20260906/练习/第一份故事-v1.md",
+      "command": "cat \"output/course-learning/charlie-20260906/练习/第一份故事-v1.md\"",
+      "observed_full_read_command": true,
+      "output_exit_code_zero": true,
+      "output_contains_truncation_warning": false,
+      "output_body_characters": 1625,
+      "output_body_lines": 63,
+      "output_body_sha256": "72e75fa80cf6de17971db88d009d1c87c6c08098e85ec3587c7d8af7965c90f0",
+      "saved_output": "output/course-learning/charlie-20260906/run/read-snapshots/call_tm6qns0qyfquz84gfon2ih3v.txt",
+      "saved_output_exactly_matches_native_output": true,
+      "index_sha256_matches": true,
+      "matches_before_v1_manifest_when_present": null
+    }
+  ],
+  "method_version_evidence": {
+    "v1_call_id": "call_vzdn6ec8oa0e3c9r6vmslw35",
+    "v1_sha256": "75c8fc581d6e3e0ef63692d92be0254623cb78d8099e9358416caa8add2aa51a",
+    "v2_call_id": "call_2wiz76d4ct4dlv0p0prvw7pg",
+    "v2_sha256": "0476ac25262f585db636edd692c586b5b088eef43c1a22de1d980683f33b19cb",
+    "v1_matches_saved_method_before_v1": true,
+    "v1_to_v2_observed_diff": [
+      "--- actually_read_by_v1",
+      "+++ actually_read_by_v2",
+      "@@ -36,6 +36,8 @@",
+      " ",
+      " 先让一个未读分析笔记的读者，只看正文复述“谁要什么、先做什么、为什么后来改了、最终怎样”。这只是检查是否讲清，不等于吸引力验证。",
+      " ",
+      "+将故事按发生顺序实际走一遍：关键物件现在在谁手里，人物已经答应或知道什么，时间是否够用，新的动作是否与这些状态相容。再查结尾所称的代价有没有在正文里真的发生；不能一面写“必须现在走”，一面靠后补宽裕时间取消困难。这是本项目首轮完整作业暴露问题后补的检查，不冒称原课另有同名流程。",
+      "+",
+      " 发现理解断点时回到对应段落：动机缺证据就补处境或行为；下一件事像凭空降临就修补前因；结尾依赖新人物突然解围就检查是否有此前行动支持。改完同时检查受影响的前文和结尾，不要仅替换一句解释。想进一步发展场面，接[让信息变成事件](让信息变成事件.md)。",
+      " ",
+      " 保留初稿、修改稿和具体改动依据。模型自评可以指出候选问题，是否愿意继续读仍需真实读者判断。"
+    ],
+    "interpretation": "v1 did not read the post-v1 continuity/time/cost check paragraph. v2 did read it. No current-method hash is used to backdate later numeric-calculation prompts to either earlier turn."
+  },
+  "current_workfile_sample": {
+    "sampled_at_utc": "2026-09-06T13:02:24.208913+00:00",
+    "file": "output/marketing-work/course-full-story-20260906.json",
+    "sha256": "36d6cf67f354389e177067611a8856c342c872026d74172fc2cb6d7ca47821e3",
+    "equals_v1_snapshot": false,
+    "equals_v2_snapshot": false,
+    "top_level_keys": [
+      "brief",
+      "materials",
+      "startAt",
+      "results"
+    ],
+    "result_headings": [
+      "## 修订研究（v3 局部收尾，覆盖 v2 已失效计算）",
+      "## 修订方向（v3 局部收尾，覆盖 v2 已失效取舍）",
+      "# 最后一针"
+    ],
+    "interpretation": "Live workFile was already updated by turn 3 at sampling. It is not used as the v2 historical baseline; turn 3 success/failure and content quality are excluded from this audit."
+  },
+  "findings": [
+    {
+      "id": "v2-workfile-history-claim",
+      "severity": "material_reporting_error",
+      "status": "contradicted_by_state_evidence",
+      "claim": "v1的原生记录保留在workFile JSON中，未被删除。",
+      "source_event_line": 10456,
+      "evidence": "work-after-v2.json has only brief/materials/startAt/results, with three current-stage bodies matching v2 record arguments. No version/history collection exists; all three v1 bodies were replaced. Some v1 statements are quoted in new analysis, which is not preservation of the original v1 state.",
+      "correction": "v1 history is retained externally in work-after-v1.json, 第一份故事-v1.md and the native event prefix; current workFile is a latest-state document, not automatic version storage."
+    },
+    {
+      "id": "v2-time-calculation-claim",
+      "severity": "content_self_report_overstates_validation",
+      "status": "contradicted_by_v2_story",
+      "claim": "这是诚实的时间计算结果；3:59实际出发，4:12到。",
+      "source_event_line": 10456,
+      "evidence": [
+        "v2 body says 3:52, fastest five minutes, then concludes completion exactly at 4:00; 3:52 + 5 is 3:57.",
+        "v2 states 3:59 departure and twelve-minute ride, but gives 4:12 arrival; that sum is 4:11 without another explicitly accounted minute."
+      ],
+      "correction": "Tool execution and saved text consistency passed, but the v2 claim that its timing is already accurate is unsupported. No conclusion about turn 3 corrections is included."
+    },
+    {
+      "id": "v1-segmented-reading-wording",
+      "severity": "minor_reporting_inaccuracy",
+      "status": "reading_complete_but_mechanism_misreported",
+      "claim": "长文分段读取，未截断。",
+      "source_event_line": 4328,
+      "evidence": "The six v1 content reads were full cat commands after wc -l sizing; no segmented sed/head/tail reads of those six inputs occurred. Their complete outputs match the before-v1 source hashes and are untruncated.",
+      "correction": "Read the six selected files in full with cat; no truncation observed. Do not describe this as segmented reading."
+    }
+  ],
+  "overall_conclusion": "Both included turns completed; all 7 marketing_work calls and all 25 command executions succeeded. Complete selected source pages appeared in native tool outputs; version snapshots and story files agree with recorded bodies. Downstream needsReview propagation is directly observed. There are two material overstatements in v2 reporting plus one minor v1 reading-mechanism wording issue.",
+  "limits": [
+    "Read evidence covers selected material/method/course-page content, not all 92 original transcript texts.",
+    "Source-page exposure is not proof the model understood, followed or mastered the full course.",
+    "Story coherence, reader appeal and teacher approval are not established by native completion or needsReview=false.",
+    "Current live workFile may continue to change; the two frozen after-version snapshots define this audit.",
+    "No third-round model/tool count, status or quality result is included."
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "part": 78,
+  "reviewer": "clean_core_05_14",
+  "source_segments_read_in_full": 479,
+  "jobs_confirmed": [
+    {
+      "job": "p078-c001",
+      "first_segment": 1,
+      "last_segment": 64
+    },
+    {
+      "job": "p078-c002",
+      "first_segment": 65,
+      "last_segment": 152
+    },
+    {
+      "job": "p078-c003",
+      "first_segment": 153,
+      "last_segment": 222
+    },
+    {
+      "job": "p078-c004",
+      "first_segment": 223,
+      "last_segment": 310
+    },
+    {
+      "job": "p078-c005",
+      "first_segment": 311,
+      "last_segment": 419
+    },
+    {
+      "job": "p078-c006",
+      "first_segment": 420,
+      "last_segment": 479
+    }
+  ],
+  "chunks_reviewed": [
+    {
+      "job": "p078-c001",
+      "first_segment": 1,
+      "last_segment": 64,
+      "issues": [
+        "S47第九拍、S50—51第20分钟与动物园回收说明移回对应源块；不靠覆盖数字掩盖正文错位。",
+        "S23发狂、惨死与会议失败完整保留，但不补死亡和会议被打断的先后关系。",
+        "前史、副线按本课语境订正；S29数字重复、母猩猩名字及S63地点名称就地保留疑点，不外部补英文代号。",
+        "前史长短影响打点、仪式性相识、父亲研究动因与赐名、女兽医解说/预言功能及绿皮书类比逐段核对保留。"
+      ],
+      "output_sha256": "4b5e4bb4faac5ead88a680a7b47a1b3d64f0659f6a2c143c9f6fb67ddc777829"
+    },
+    {
+      "job": "p078-c002",
+      "first_segment": 65,
+      "last_segment": 152,
+      "issues": [
+        "“前十”统一为前史；S93与S104误放相邻块的内容移回真实源范围。",
+        "S108不据前后编号强确定21拍；S131场/分钟和S133悬疑改口在正文标疑。",
+        "童年/成长前史可延至25分钟、项圈后座、邻居车祸、两次虐待、画窗擦窗与母亲棉衣类比完整保留。"
+      ],
+      "output_sha256": "1f94989cab79aafc42d7268ac81f33cec14f706496444ca7152fdcb8675c40ee"
+    },
+    {
+      "job": "p078-c003",
+      "first_segment": 153,
+      "last_segment": 222,
+      "issues": [
+        "S153“终点”依同段目标调整及随后第三幕标疑订为中点，未改成故事已结束。",
+        "S166第31拍与S172第34拍内容移回对应范围；S172“612分钟”不强定61分钟；S207造反引入及S215杀人有点早也移回原范围。",
+        "S194—195甜筒/甜头/饼干保留改口；三种收服方法、锁链与同伴注视两项关门原因、偷药踩车和集体启智过程完整。",
+        "S209未识完整对白不补著名台词；S220“不”与上下文矛盾就地标疑；误杀另一管理员和阻止同伴故意杀人没有相互覆盖。"
+      ],
+      "output_sha256": "fc8b24134749e2734386980023749959660557a3d60bd29229ef20190f619fea"
+    },
+    {
+      "job": "p078-c004",
+      "first_segment": 223,
+      "last_segment": 310,
+      "issues": [
+        "S227—228是“人类射杀猩猩”，原清洗错误断句将加害主语反转，已修复，保留其与凯撒阻止同伴杀人的剪辑对比。",
+        "S231原数12不直接改92；默许/明示科巴杀老板与之前误杀管理员两处说法都保留，未用后段概括覆盖前段事件。",
+        "S241—247破碎汉语、外语及停顿保留原识别缺口，不猜完整告别台词；大导演spec里不按常识补人名。",
+        "中点与终点、S275人类社会/新型社会的冲突就地标疑；威尔的象征性男主与实际男2、平视站位、俯瞰城市的续集暗示完整保留。",
+        "英雄神话与斯奈德十类的源流关系只作为讲师说法，定义不宣称原著逐字原话；不新增影片事实或练习。"
+      ],
+      "output_sha256": "d2466c8f21899deba6bd92ab03904243db1c597152d5e94c06f11ce1dec054d9"
+    },
+    {
+      "job": "p078-c005",
+      "first_segment": 311,
+      "last_segment": 419,
+      "issues": [
+        "保留原lead_review全部条目及S330父亲残句、S375明白吧，不覆盖旧格式修复。",
+        "明确英雄/神话/王的诞生与斯奈德超级英雄类型并非同一分类；理论承继和作者致敬属于讲师判断。",
+        "S367人类被当主角是待解释的误解，不是老师另行宣布威尔主角；人类伙伴二人分工及强化父亲/弱化威尔开放练习完整。",
+        "错误corrections.original从结构化订正栏撤出并保留记录，避免伪造源词引文。"
+      ],
+      "output_sha256": "30eb7503463e9757c3a92901e92475cb936ec73346fd15c5878e499121e4febf"
+    },
+    {
+      "job": "p078-c006",
+      "first_segment": 420,
+      "last_segment": 479,
+      "issues": [
+        "保留长前史为何可行与不建议初学者照做的区别，古木式只标五幕式可能性。",
+        "“信息胞”在同课术语内订为信息包，不猜信息量。",
+        "四阶段/两个世界十二节拍按讲师归属保留，欧美延迟的主语逻辑纠正并标源断句限度。",
+        "哪吒/阿凡达/第九区为原拓展观看建议，无新增作业字数、次数或提交要求；全部末段问答保留。"
+      ],
+      "output_sha256": "742296aaa0aa177618f04beb7f9aab80d0327089dedc94e691f32583145b3af9"
+    }
+  ],
+  "pending_chunks": [],
+  "status": "complete",
+  "limits": "未逐句听校；未直接修改汇编MD，现有lead_review完整保留。",
+  "source_json_sha256": "a7110e3ee0751ed503e2afda33843077b0ae6442b4bf71980166ff80f07dabe6",
+  "source_review_focus": {
+    "p078-c001": [
+      "前史先定十几分钟，后段允许延至25分钟，不能合成唯一第一幕边界。",
+      "绿眼母猩猩名字/英文含混；兽医被讲师判为解说功能配角，不补成爱情主角。",
+      "相识原先要安乐死但下不了手、父病研究动机、祖辈赐名、路过动物园与绿皮书类比均需完整。"
+    ],
+    "p078-c003": [
+      "S153终点语境明显是中点和改目标，需明确订正或标疑。",
+      "三种方法争取三个不同同伴、父亲去世、贿赂后自己关门、朋友注视和锁链两个细节不可缩掉。",
+      "回家偷药与踩邻居车、助手病死、首次说话与阻止杀人/误杀看守要分别保存。"
+    ],
+    "p078-c004": [
+      "桥上阻止杀人与人类射杀对剪、骑马三路战斗、直升机与银背牺牲、默许科巴杀老板需保留过程。",
+      "讲师先说误杀后说主角没杀人，不能清洗成全片从未致死。",
+      "林中平等对话外语乱码要保留缺口，俯瞰城市/森林的续集分析与多种类型讨论不要缩成类别标签。",
+      "spec里不能猜成斯皮尔伯格等熟悉导演；神话原著/斯奈德师承是课堂解释，不擅补权威。"
+    ]
+  },
+  "validation": {
+    "source_segments": 479,
+    "chunks": [
+      {
+        "job": "p078-c001",
+        "range": [
+          1,
+          64
+        ],
+        "blocks": 10,
+        "output_text_characters": 2360,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      },
+      {
+        "job": "p078-c002",
+        "range": [
+          65,
+          152
+        ],
+        "blocks": 6,
+        "output_text_characters": 2287,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      },
+      {
+        "job": "p078-c003",
+        "range": [
+          153,
+          222
+        ],
+        "blocks": 11,
+        "output_text_characters": 2442,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      },
+      {
+        "job": "p078-c004",
+        "range": [
+          223,
+          310
+        ],
+        "blocks": 5,
+        "output_text_characters": 2786,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      },
+      {
+        "job": "p078-c005",
+        "range": [
+          311,
+          419
+        ],
+        "blocks": 6,
+        "output_text_characters": 2472,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      },
+      {
+        "job": "p078-c006",
+        "range": [
+          420,
+          479
+        ],
+        "blocks": 5,
+        "output_text_characters": 1544,
+        "source_coverage": "continuous_exactly_once",
+        "backup_sha256_verified": true,
+        "existing_lead_review_preserved": true,
+        "independent_full_review": true
+      }
+    ],
+    "blocks": 43,
+    "output_text_characters": 13891,
+    "all_source_segments_covered_exactly_once": true,
+    "all_source_segments_read_in_full": true,
+    "all_clean_blocks_compared": true,
+    "source_and_output_sha256_verified": true,
+    "all_backups_sha256_verified": true,
+    "all_existing_lead_review_preserved": true,
+    "correction_originals_are_source_substrings": true
+  }
+}

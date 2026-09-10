@@ -1,0 +1,115 @@
+{
+  "lesson": 24,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 50,
+      "title": "二十四课-剖析烂片24",
+      "cid": 266235698,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=50",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十四课-剖析烂片24.mp4",
+      "sha256": "774a1d8c55812c91f96f24ab9a32657b62696624a831da7476a8052c2e16f732",
+      "duration_seconds": 4619
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "学习不太好看的片子：问题、成因与解决；《战国》速看和人物/爱情结构复盘",
+      "part": 50,
+      "start_seconds": 10,
+      "end_seconds": 718
+    },
+    {
+      "label": "烂片成因与一般锚定：普通人也会犯错，应靠方法和努力；个人经历延伸",
+      "part": 50,
+      "start_seconds": 718,
+      "end_seconds": 2104
+    },
+    {
+      "label": "表演爆发力/控制力与导演整体要求；复杂表情案例和自愿模仿",
+      "part": 50,
+      "start_seconds": 2105,
+      "end_seconds": 2513
+    },
+    {
+      "label": "四方面诊断：结构、元素看点、情感、情绪；先分析爱情的互补和沟壑",
+      "part": 50,
+      "start_seconds": 2515,
+      "end_seconds": 2905
+    },
+    {
+      "label": "相知相爱如何成立：渊源/承诺、互相牺牲、共谋；课堂假设示范",
+      "part": 50,
+      "start_seconds": 2911,
+      "end_seconds": 3247
+    },
+    {
+      "label": "元素看点：历史风貌、奇谋、浪漫、危机悬疑与多部门完成",
+      "part": 50,
+      "start_seconds": 3248,
+      "end_seconds": 3453
+    },
+    {
+      "label": "情感：观众入戏与人设、救猫咪、技能缺陷；评价孙膑和田夕",
+      "part": 50,
+      "start_seconds": 3454,
+      "end_seconds": 3645
+    },
+    {
+      "label": "情绪：观众紧张/悲伤等反应；四方面可有侧重，《狂怒》《疯狂的麦克斯》对照",
+      "part": 50,
+      "start_seconds": 3647,
+      "end_seconds": 3887
+    },
+    {
+      "label": "重构方向一：若必须爱情，孙膑—庞婉更有渊源和阻力",
+      "part": 50,
+      "start_seconds": 3889,
+      "end_seconds": 4238
+    },
+    {
+      "label": "重构方向二：孙膑—庞涓双男主兄弟相爱相杀；方向三：金羊毛复仇与成长",
+      "part": 50,
+      "start_seconds": 4240,
+      "end_seconds": 4488
+    },
+    {
+      "label": "布置重构故事：三方向选一或自找方向，先写梗概；重申一般锚定",
+      "part": 50,
+      "start_seconds": 4490,
+      "end_seconds": 4611
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "根据《战国》现有人物与信息重新构建故事。可以选孙膑与庞婉的爱情、孙膑与庞涓的兄弟情、孙膑复仇并从私仇到更大责任的金羊毛方向；三个方向自己挑一个，也可以自己另找方向。先写故事梗概。",
+      "part": 50,
+      "start_seconds": 4495.174,
+      "end_seconds": 4608.78,
+      "submission_spec": "先写故事梗概；前段也说写故事/大纲，末尾具体落为梗概。未规定字数、文件格式、截止日期、提交渠道。",
+      "teacher_review": "本课未指定回收或讲评方式。",
+      "uncertainty": "关键末句已抽帧核实；非要求三个版本全写，明确允许另找方向。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "对表演有兴趣的同学，可对镜子或手机试演老师举的火车站受助者三句台词和笑中有泪、又观察对方的复杂表情。",
+      "part": 50,
+      "start_seconds": 2421.99,
+      "end_seconds": 2473.676,
+      "submission_spec": "自愿表演练习；老师说演出来可以发给他，未规定提交渠道、文件或时限。",
+      "teacher_review": "“你发给我，我算你牛逼”是课堂挑战语气，未承诺正式评分。",
+      "uncertainty": "老师明确说自己不完全记得三句原话；未补造准确台词。不是全班编剧作业。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    50
+  ],
+  "limits": [
+    "P50全文机器稿已读，未逐句听校。",
+    "P50 16:40字幕及板书核一般/特殊“锚定”，末尾76:45帧核“先写个故事梗概吧”。",
+    "电影成因、演员能力、主创动机、行业比例和自我认知百分比均按老师当堂观点理解，不当作经外部验证的事实；不复述私人外貌评价作为教学要求。",
+    "重构方案是老师假设，不能当成原电影情节或史实；法律/历史顺带说法未外部核实。",
+    "本课未见第22课家人故事回收讲评；仅同样使用基础人物/类型知识。"
+  ]
+}

@@ -1,0 +1,562 @@
+{
+  "lesson": 4,
+  "source_parts": [
+    {
+      "part": 9,
+      "source_json_sha256": "48f73af67a16a56fde078eacae8572b7616425a349fb8b4fe5cd5f395f420cd1",
+      "segment_count": 306
+    },
+    {
+      "part": 10,
+      "source_json_sha256": "ce63fce1b654d1a1a0b4b89bca19afaa7358e126f7fb4dd708f08b1910dca094",
+      "segment_count": 342
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L04-B001",
+      "part": 9,
+      "first_segment": 1,
+      "last_segment": 35,
+      "heading": "本课目标：写下自己的第一个故事",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L04-B002",
+      "part": 9,
+      "first_segment": 36,
+      "last_segment": 73,
+      "heading": "青春题材示例与讲师对重复套路的批评",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "处女座",
+          "cleaned": "处女作",
+          "basis": "同段明确讨论导演首作；既有课程案例一致"
+        },
+        {
+          "original": "荷尔蒙萌栋",
+          "cleaned": "荷尔蒙萌动",
+          "basis": "紧邻青春期小伙子语境的同音误字"
+        },
+        {
+          "original": "打牌／打开",
+          "cleaned": "打胎",
+          "basis": "S055–069连续讨论人流、身体与生命的一部分，非另起话题"
+        }
+      ]
+    },
+    {
+      "id": "L04-B003",
+      "part": 9,
+      "first_segment": 74,
+      "last_segment": 96,
+      "heading": "从本能回忆走向创造；明确本课作业",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "可能的共情素材，为什么要训练",
+          "cleaned": "前面为什么要训练共情、积累素材",
+          "basis": "S079–080接续第1课基本功，既有第4课核读卡明确为共情与素材积累；起首破碎词不作原话补全"
+        },
+        {
+          "original": "不要给我写青春／不要给我写街头",
+          "cleaned": "本次不要只写自己的青春、自己的街头经历",
+          "basis": "S092–095完整上下文，既有核读卡p009-0339和0344字幕证据确认本课写作要求；不扩大成永久禁写题材"
+        },
+        {
+          "original": "首版整理注：未给出字数、篇数、格式、提交渠道或期限。",
+          "cleaned": "未给出字数、格式、提交渠道或期限。",
+          "basis": "独立复核后回读P009 S092–S095，原课明确一个自己的故事，并要求本次不要直接写自己的青春、街头回忆。"
+        }
+      ]
+    },
+    {
+      "id": "L04-B004",
+      "part": 9,
+      "first_segment": 97,
+      "last_segment": 140,
+      "heading": "回看想殉职的警察：找到第一笔的落点",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L04-B005",
+      "part": 9,
+      "first_segment": 141,
+      "last_segment": 181,
+      "heading": "第一种入口：身份反差；《单身毒妈》",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "八要书",
+          "cleaned": "八要素",
+          "basis": "既有课卡及S146–148明确八要素身份项"
+        },
+        {
+          "original": "附加值的定语",
+          "cleaned": "负价值的定语",
+          "basis": "既有第4课术语核读卡；S179明确说定语跟身份价值相反"
+        },
+        {
+          "original": "单身独妈",
+          "cleaned": "《单身毒妈》",
+          "basis": "既有第4课核读卡确认片名，S173–178毒贩母亲语境一致"
+        },
+        {
+          "original": "富人娶的妈妈",
+          "cleaned": "富人区里的妈妈",
+          "basis": "S171与后文混迹上流社会的明确上下文"
+        },
+        {
+          "original": "定律",
+          "cleaned": "定语",
+          "basis": "S161–162先说身份定语，S179再解释其价值相反"
+        }
+      ]
+    },
+    {
+      "id": "L04-B006",
+      "part": 9,
+      "first_segment": 182,
+      "last_segment": 203,
+      "heading": "《逍遥医生》：从不合通常认知的人设往下写",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "rush",
+          "cleaned": "Rush",
+          "basis": "同段明确为《逍遥医生》的英文名，规范大小写"
+        },
+        {
+          "original": "他受枪杀了",
+          "cleaned": "有人中枪",
+          "basis": "S191随后为中了三枪、取弹头的现场模拟，不能把伤者改判为已经死亡"
+        }
+      ]
+    },
+    {
+      "id": "L04-B007",
+      "part": 9,
+      "first_segment": 204,
+      "last_segment": 230,
+      "heading": "第二种入口：激励事件／干扰事件",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "激地事件",
+          "cleaned": "激励事件",
+          "basis": "S204标题和既有第4课术语核读卡均为激励事件"
+        }
+      ]
+    },
+    {
+      "id": "L04-B008",
+      "part": 9,
+      "first_segment": 231,
+      "last_segment": 254,
+      "heading": "小人物出大事：功夫、外卖与外星人",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "一年哥这个乾坤大挪移",
+          "cleaned": "靠意念做出类似“乾坤大挪移”的事情",
+          "basis": "S249同段明确超能力及高等外星人的语境；原词“意念”仍属上下文规范，并未听校"
+        },
+        {
+          "original": "醋辣式",
+          "cleaned": "出大事",
+          "basis": "S248–250为耍猴人遇外星人，承接重复口诀"
+        },
+        {
+          "original": "激励世界",
+          "cleaned": "激励事件",
+          "basis": "本节已定义术语，S251上下文为故事起点"
+        }
+      ]
+    },
+    {
+      "id": "L04-B009",
+      "part": 9,
+      "first_segment": 255,
+      "last_segment": 274,
+      "heading": "大人物遇小事：强人带孩子、回校园",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "龙龙有浅滩",
+          "cleaned": "龙游浅滩",
+          "basis": "紧随虎落平阳的固定成语语境"
+        },
+        {
+          "original": "头师傅一体",
+          "cleaned": "《头师父一体》",
+          "basis": "既有第4课核读卡确认规范片名"
+        },
+        {
+          "original": "黑帮二帮家",
+          "cleaned": "黑帮二当家",
+          "basis": "S266–272明确黑帮副手要接班大佬的叙述"
+        }
+      ]
+    },
+    {
+      "id": "L04-B010",
+      "part": 9,
+      "first_segment": 275,
+      "last_segment": 295,
+      "heading": "《冒牌天神》与“超人不是也出大事吗”的提问",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "金凯丽金凯瑞",
+          "cleaned": "金·凯瑞",
+          "basis": "讲话中的即时自纠及《冒牌天神》例子；既有第4课卡片一致"
+        },
+        {
+          "original": "激励世界／干扰世件",
+          "cleaned": "激励事件／干扰事件",
+          "basis": "本节反复明确的术语"
+        }
+      ]
+    },
+    {
+      "id": "L04-B011",
+      "part": 9,
+      "first_segment": 296,
+      "last_segment": 306,
+      "heading": "可以由事件倒推人物，也可以由人物推出事件",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L04-B012",
+      "part": 10,
+      "first_segment": 1,
+      "last_segment": 43,
+      "heading": "第三种入口：过激行为，也叫二次动作",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "欲往",
+          "cleaned": "欲望",
+          "basis": "八要素动作接在欲望后，S023立刻重复定义"
+        },
+        {
+          "original": "依次动作",
+          "cleaned": "一次动作",
+          "basis": "S038–043持续比较第一次惯性行动和二次动作；保留关键次序"
+        }
+      ]
+    },
+    {
+      "id": "L04-B013",
+      "part": 10,
+      "first_segment": 44,
+      "last_segment": 71,
+      "heading": "《录取通知书》：假通知书怎样发展成假大学",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "国际行为支撑起来骗子",
+          "cleaned": "过激行为支撑起来的片子",
+          "basis": "S044–048承接已定义过激行为并引出电影"
+        },
+        {
+          "original": "串工",
+          "cleaned": "串供",
+          "basis": "伪造相同录取通知书以便统一说法的明确上下文"
+        },
+        {
+          "original": "哈尔格旗",
+          "cleaned": "“哈尔格旗”〔字形待核〕",
+          "basis": "ASR原词，讲师现场举例中未提供其他字形证据；不擅自替换为地名或影片校名"
+        },
+        {
+          "original": "定点大牌子",
+          "cleaned": "做一个大牌子",
+          "basis": "S063租地方、招人假扮大学的明确语境；“定点”具体口语待核"
+        }
+      ]
+    },
+    {
+      "id": "L04-B014",
+      "part": 10,
+      "first_segment": 72,
+      "last_segment": 100,
+      "heading": "二次动作为什么能撑起故事；《哆啦A梦》两次演示",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "企眼／企业",
+          "cleaned": "起点",
+          "basis": "S076–080连续解释过激行为作为故事起点；不规范为无证据的新术语"
+        },
+        {
+          "original": "几百上千级",
+          "cleaned": "几百上千集",
+          "basis": "讨论连续动画剧集的语境"
+        },
+        {
+          "original": "大熊／大学",
+          "cleaned": "大雄",
+          "basis": "既有第4课核读卡《哆啦A梦》案例及S087–090角色上下文"
+        },
+        {
+          "original": "炮鼓",
+          "cleaned": "胖虎",
+          "basis": "S088已写胖虎，紧接同一棒球例子"
+        }
+      ]
+    },
+    {
+      "id": "L04-B015",
+      "part": 10,
+      "first_segment": 101,
+      "last_segment": 138,
+      "heading": "第四种入口：悬念；《生死时速》的持续危机",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "世界的第一个",
+          "cleaned": "事件层面首先有一个",
+          "basis": "本段接八要素核心问题和悬念，依既有课卡事件部分整理"
+        },
+        {
+          "original": "Kiano瑞s／基诺里维斯／基洛里维斯／基诺李维斯",
+          "cleaned": "基努·里维斯",
+          "basis": "本段同一演员多次异写，与既有片名《生死时速》上下文对应；未据此核验电影细节"
+        },
+        {
+          "original": "8090",
+          "cleaned": "“八十、九十，低于一个速度”〔数值和单位待核〕",
+          "basis": "S121–123是“比如说”口头估数，不能落为80或90的确定影片阈值"
+        },
+        {
+          "original": "炸台／爆价",
+          "cleaned": "炸弹／爆炸",
+          "basis": "S120–133明确公交车炸弹悬念"
+        }
+      ]
+    },
+    {
+      "id": "L04-B016",
+      "part": 10,
+      "first_segment": 139,
+      "last_segment": 158,
+      "heading": "假身份：一开始就埋着会被揭穿的危机",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "让子弹废",
+          "cleaned": "《让子弹飞》",
+          "basis": "S144已清楚给出片名，紧接重复异写"
+        },
+        {
+          "original": "悬而未觉",
+          "cleaned": "悬而未决",
+          "basis": "S152已出现相同悬念定义，规范同音字"
+        }
+      ]
+    },
+    {
+      "id": "L04-B017",
+      "part": 10,
+      "first_segment": 159,
+      "last_segment": 175,
+      "heading": "《金装律师》：从逃避追捕到伪装成律师",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "犯大麻／deer",
+          "cleaned": "贩卖大麻／dealer",
+          "basis": "同段S172–173明确毒贩、贩毒；英文按贩卖者语义规范"
+        },
+        {
+          "original": "蔑试／应应聘／不按厂理出牌",
+          "cleaned": "面试／应聘／不按常理出牌",
+          "basis": "S164–171明确招聘面试语境与性格描述"
+        }
+      ]
+    },
+    {
+      "id": "L04-B018",
+      "part": 10,
+      "first_segment": 176,
+      "last_segment": 188,
+      "heading": "未记起名称的假警长剧；灰姑娘的时间锁",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "伟人状",
+          "cleaned": "委任状",
+          "basis": "S178警长身份凭证，前文S149同类假身份使用委任状"
+        },
+        {
+          "original": "马走日",
+          "cleaned": "“马走日”〔人物称呼待核〕",
+          "basis": "仅保留S176机器稿，原课未另给证据，不自行改成其他角色名"
+        },
+        {
+          "original": "除了假设",
+          "cleaned": "除了假身份",
+          "basis": "S139–183连续讨论假身份，随后转向时间锁"
+        }
+      ]
+    },
+    {
+      "id": "L04-B019",
+      "part": 10,
+      "first_segment": 189,
+      "last_segment": 202,
+      "heading": "第五种入口：环境先让人想追问",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "缓节",
+          "cleaned": "环境",
+          "basis": "S189–200明确第五种入口和荒岛环境，S194为同词误识"
+        }
+      ]
+    },
+    {
+      "id": "L04-B020",
+      "part": 10,
+      "first_segment": 203,
+      "last_segment": 232,
+      "heading": "环境怎样成为障碍；修道院与精神病院",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "一个妓女",
+          "cleaned": "一个歌女〔保留讲师先误说再自纠的过程〕",
+          "basis": "S204之后S207明确说“不算一个妓女，算一个歌女”"
+        },
+        {
+          "original": "飞跃疯人怨",
+          "cleaned": "《飞越疯人院》",
+          "basis": "既有第4课核读卡确认片名，同段精神病院情境一致"
+        }
+      ]
+    },
+    {
+      "id": "L04-B021",
+      "part": 10,
+      "first_segment": 233,
+      "last_segment": 264,
+      "heading": "把五种起点重新连回八要素",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "大人物贪小事",
+          "cleaned": "大人物遇小事",
+          "basis": "P009 S214–217已明确口诀，既有核读卡同"
+        },
+        {
+          "original": "粗细的环境",
+          "cleaned": "能出戏的环境",
+          "basis": "S260紧接矛盾重重，前文环境产生故事的论证；“粗细”按此上下文整理"
+        }
+      ]
+    },
+    {
+      "id": "L04-B022",
+      "part": 10,
+      "first_segment": 265,
+      "last_segment": 288,
+      "heading": "一个强点起步，再增加其他强点",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "补其他5个",
+          "cleaned": "补故事其他部分〔原数目待核〕",
+          "basis": "S274在八要素与五入口语境下所指不明，不能凭推算覆盖原数目"
+        }
+      ]
+    },
+    {
+      "id": "L04-B023",
+      "part": 10,
+      "first_segment": 289,
+      "last_segment": 299,
+      "heading": "“一半海水，一半火焰”：创意与预期",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "完全挑出惯性思维",
+          "cleaned": "完全跳出惯性思维",
+          "basis": "S291同句已明确跳脱惯性思维；保留“不能”的关键否定"
+        }
+      ]
+    },
+    {
+      "id": "L04-B024",
+      "part": 10,
+      "first_segment": 300,
+      "last_segment": 330,
+      "heading": "黑帮大哥回高中：设定已经给出的承诺",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "大荣遇小事儿",
+          "cleaned": "大人物遇小事",
+          "basis": "前文反复明确的口诀"
+        },
+        {
+          "original": "学生打嗝",
+          "cleaned": "学生大哥",
+          "basis": "S317后S318明确学生大哥立威，同一人物"
+        },
+        {
+          "original": "一个大头",
+          "cleaned": "一个大佬",
+          "basis": "S303前后均黑社会大哥；S321–322明确大佬；口头重复合并"
+        }
+      ]
+    },
+    {
+      "id": "L04-B025",
+      "part": 10,
+      "first_segment": 331,
+      "last_segment": 342,
+      "heading": "结课衔接：创新与兑现承诺的尺度",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "这个胸围",
+          "cleaned": "〔待核；依前文概括为另一半符合观众预期〕",
+          "basis": "S338机器词不明，S291–299已完整解释创意和预期各半，不能断言S338原话"
+        },
+        {
+          "original": "我不会撂下来",
+          "cleaned": "不会把这个问题就此丢下〔原词待核〕",
+          "basis": "S340后紧接S341咱们回头详细说，保留承诺后讲的上下文意义"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "仅依据P009/P010全部机器ASR段落及既有第04课核读卡整理；未逐句听校，非讲师逐字原话。",
+    "段落时间为原P源时间VAD边界；原ASR可能已漏掉静音、非语音或未识别语音。连续覆盖segments不等于原音视频逐秒逐字核验。",
+    "影片剧情、历史相对时间、创作起点推测、群体概括与强点数量评价均按讲师课堂表述归属，不当作经外部验证的事实或硬性规则。",
+    "待核：P009 S017“我的笑眯眯”；P009 S258–259“特工奶爸”“临时保姆”是否确切片名；P010 S043“顺撇而大”、S059“哈尔格旗”、S063“定点大牌子”、S094“太公”、S122速度数值及单位、S176“马走日”、S274“补其他5个”、S338“这个胸围”、S340“我不会撂下来”。",
+    "假警长美剧在原课未记起片名，未补名；《修女也疯狂》保留讲师从“妓女”到“歌女”的自纠过程。",
+    "本课仅要求开始写一个自己的故事，没有字数、格式、期限或五种入口各写一篇要求；未倒灌第5课的具体要求。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第04课.md",
+  "output_sha256": "b131524ef45bf16a677c6d3469bd818ad570f76121661861f398a23e545279ae",
+  "independent_review": {
+    "scope": "P010 S001–S100二次动作因果与案例；P009 S090–S096明确作业；正文篇数/字数检查。非全课独立复核。",
+    "reviewer": "clean_lesson_02",
+    "findings_applied": [
+      "删除与“一个自己的故事”矛盾的“未给出篇数”",
+      "将“本次不要只写自己的青春、自己的街头经历”收紧为“本次不要直接写自己的青春、街头回忆”"
+    ],
+    "root_review": "Lead顺读完整清洗正文；未新增听校。"
+  },
+  "reader_navigation_update": {
+    "previous_output_sha256": "0f6252fb2a1102faef66f3328510d04cc2c252d927c7b49589b0e52e5abc94e1",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

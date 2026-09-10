@@ -1,0 +1,250 @@
+{
+  "lesson": 20,
+  "source_parts": [
+    {
+      "part": 43,
+      "source_json_sha256": "a6ae29baace71f81a2109de50d3ef10c342aa6a8f538e9f7f85de1a9c7429d87",
+      "segment_count": 784
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L20-B001",
+      "part": 43,
+      "first_segment": 1,
+      "last_segment": 26,
+      "heading": "更新节奏与边学边写",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B002",
+      "part": 43,
+      "first_segment": 27,
+      "last_segment": 66,
+      "heading": "实验班与首次入行成果",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B003",
+      "part": 43,
+      "first_segment": 67,
+      "last_segment": 94,
+      "heading": "考试为什么不能天天办",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B004",
+      "part": 43,
+      "first_segment": 95,
+      "last_segment": 165,
+      "heading": "考题一：给“爸爸接女儿放学”增加烈度",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B005",
+      "part": 43,
+      "first_segment": 166,
+      "last_segment": 209,
+      "heading": "考题二：一槽脏碗配感人旁白",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B006",
+      "part": 43,
+      "first_segment": 210,
+      "last_segment": 260,
+      "heading": "旁白评分的取舍与是枝裕和引出的追问",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "失之愈合／是吃愈合",
+          "cleaned": "是枝裕和",
+          "basis": "同段导演、作者电影及后续阿部宽的语境"
+        }
+      ]
+    },
+    {
+      "id": "L20-B007",
+      "part": 43,
+      "first_segment": 261,
+      "last_segment": 305,
+      "heading": "编剧别把薄弱故事寄托给好导演与好演员",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "阿布宽",
+          "cleaned": "阿部宽",
+          "basis": "是枝裕和电影演员语境"
+        }
+      ]
+    },
+    {
+      "id": "L20-B008",
+      "part": 43,
+      "first_segment": 306,
+      "last_segment": 348,
+      "heading": "用《阿凡达》练习：先简述主角和世界",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B009",
+      "part": 43,
+      "first_segment": 349,
+      "last_segment": 406,
+      "heading": "三股势力中的选择与主角行动全程",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B010",
+      "part": 43,
+      "first_segment": 407,
+      "last_segment": 451,
+      "heading": "拉片第一步：看设定怎样提供动力与对抗",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B011",
+      "part": 43,
+      "first_segment": 452,
+      "last_segment": 510,
+      "heading": "跨族中间人与A/B线的对应",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B012",
+      "part": 43,
+      "first_segment": 511,
+      "last_segment": 515,
+      "heading": "接着观察配角的出场设计",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B013",
+      "part": 43,
+      "first_segment": 516,
+      "last_segment": 525,
+      "heading": "用反差建立人物的第一印象",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B014",
+      "part": 43,
+      "first_segment": 526,
+      "last_segment": 553,
+      "heading": "想象力也能拆成可练习的方法",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B015",
+      "part": 43,
+      "first_segment": 554,
+      "last_segment": 577,
+      "heading": "身体转换的机制，以及两次性质不同的选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B016",
+      "part": 43,
+      "first_segment": 578,
+      "last_segment": 598,
+      "heading": "拉片既要学优点，也要看取舍",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B017",
+      "part": 43,
+      "first_segment": 599,
+      "last_segment": 640,
+      "heading": "课堂质疑：蓝色身体承担的戏剧功能是否充分",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "跳伞",
+          "cleaned": "跳反",
+          "basis": "上下文连续讨论主角改变阵营，按语义订正。"
+        }
+      ]
+    },
+    {
+      "id": "L20-B018",
+      "part": 43,
+      "first_segment": 641,
+      "last_segment": 666,
+      "heading": "另一个假设：让人类身体直接进入原住民世界",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B019",
+      "part": 43,
+      "first_segment": 667,
+      "last_segment": 696,
+      "heading": "复杂设定的成本，以及接受与原谅是否写够",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B020",
+      "part": 43,
+      "first_segment": 697,
+      "last_segment": 704,
+      "heading": "再看中间位置：单场戏如何服务整体转折",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B021",
+      "part": 43,
+      "first_segment": 705,
+      "last_segment": 744,
+      "heading": "播放片段：任务结算、加入族群与感情选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B022",
+      "part": 43,
+      "first_segment": 745,
+      "last_segment": 772,
+      "heading": "中点的假胜利：原来的任务完成，新的目标出现",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L20-B023",
+      "part": 43,
+      "first_segment": 773,
+      "last_segment": 784,
+      "heading": "课后练习：自己拆一遍《加勒比海盗》",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "电影播放段的英语ASR多处破碎，仅转述可辨识内容；没有补写完整对白或未观察的画面。",
+    "假设改写均与电影复述区分；尺寸、制作与行业说法以及中点位置沿用课堂口径，未外部核验。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第20课.md",
+  "output_sha256": "df8be172efe86e48adaffef228a94477909c1e6d4c6e9dd07a5fa231c6b0e196",
+  "reader_navigation_update": {
+    "previous_output_sha256": "842ced9c33700315217d7bc33c844d135c3890036b09185aedea67f82e7e283e",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "part": 69,
+  "title": "【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）",
+  "source": {
+    "part": 69,
+    "cid": 26255689411,
+    "title": "【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=69",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【编剧视角拉片】保姆级拆解《玩具总动员》看完你也能复刻！（二）.mp4",
+    "sha256": "182b72f7d8ea206a52016f1a1e77e9a56eb4f6d079c18116b5a663b38d555cdd",
+    "bytes": 67281033,
+    "mtime_ns": 1788682171212985876,
+    "actual_duration_seconds": 1157.377211
+  },
+  "full_transcript_read_parts": [
+    69
+  ],
+  "transcript_segment_count": 97,
+  "transcript_artifact_sha256": {
+    "p069.source-time.txt": "a22a99269b869261807da5a2f58181005a46ff85ae0fdafc3a224e89cc4a06ba",
+    "p069.source-time.srt": "02d92c10bce9524c3301f9fa46f24672534ef32c45bce65d6e8648bd5ddce7f3"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "label": "第26包多个时间限制同时到期；第27包再次受挫，胡迪联合重组玩具营救巴斯、暴露生命秘密吓退反派。",
+      "part": 69,
+      "start_seconds": 19,
+      "end_seconds": 118,
+      "application_limit": "老师指出影片没有充分交代暴露的代价，若有规则铺垫，这一招的分量可以更大。拆片也能找不足，不必替影片补完未展示的规则。"
+    },
+    {
+      "label": "打败邻家孩子后，还要赶上搬家的车；胡迪召回原伙伴参与，巴斯开始舍身救胡迪，双方再互救。",
+      "part": 69,
+      "start_seconds": 119,
+      "end_seconds": 255,
+      "application_limit": "两组伙伴承担不同环节；胡迪恢复领袖关系，需要与原伙伴发生实际合作。课堂认为两组安排也有篇幅分散问题。"
+    },
+    {
+      "label": "第29包，两人合作点燃火箭；火柴熄灭、飞过头等再次意外。巴斯第三次飞行，终于在合作中完成英雄行动。",
+      "part": 69,
+      "start_seconds": 256,
+      "end_seconds": 308,
+      "application_limit": "高潮的意外与已有道具、技能及人物成长相接，不能只写“最终克服困难”。"
+    },
+    {
+      "label": "第30包，新家再次拆礼物；巴斯坐上原来胡迪的位置，胡迪说巴斯的口头禅。",
+      "part": 69,
+      "start_seconds": 308,
+      "end_seconds": 419,
+      "application_limit": "回到相似场景，但反应不同，具体显示双方从对方身上学到什么。"
+    },
+    {
+      "label": "拆完30包后才归纳主线与主题：胡迪想夺回爱与地位，在行动中理解爱需要责任与付出。",
+      "part": 69,
+      "start_seconds": 420,
+      "end_seconds": 489,
+      "application_limit": "一句话故事来自整条行动线；“爱”只是主题范围，还需说明对爱的看法怎样被行为支持。"
+    },
+    {
+      "label": "拆两人的互补设定：既得利益者／原住民与闯入者，现实主义、利己和要面子对理想主义、英雄梦、狂妄。对照《马大帅》《触不可及》讨论不同组合；成长意味着吸收优点，不是照搬对方所有缺点。",
+      "part": 69,
+      "start_seconds": 489,
+      "end_seconds": 781,
+      "application_limit": "双主角仍可一主一次。“妄人”可以在不同关系位置，不能把固定身份和性格绑定为唯一配方。"
+    },
+    {
+      "label": "回到三次飞行；插讲前辈建议创作中尝试飞翔或自由坠落。",
+      "part": 69,
+      "start_seconds": 782,
+      "end_seconds": 836,
+      "application_limit": "飞行在本片已有三次不同作用；前辈的泛化建议是轶事，不能要求每个故事都加跳跃或坠落。"
+    },
+    {
+      "label": "补充伙伴作用不足的看法、反派设定，以及对政治隐喻的不同解释和巴斯名字轶事。",
+      "part": 69,
+      "start_seconds": 837,
+      "end_seconds": 961,
+      "application_limit": "属作品解释及背景自述，未取得制作方原始材料证明意图；不纳入硬性方法。"
+    },
+    {
+      "label": "总结关系开场：争夺位置时伤害了另一个人，带着愧疚去补偿；不能只解释一下，要由更多付出改变关系。推荐用其他双主角作品比较。",
+      "part": 69,
+      "start_seconds": 962,
+      "end_seconds": 1106,
+      "application_limit": "这是本次拆出的可选关系模式，不是所有友情或爱情故事的必经套路。"
+    },
+    {
+      "label": "回答观众担心人物缺陷使观众弃剧的问题：区分可理解的缺点与突兀追加的严重恶行，不必先塑造成完美人物再揭底。",
+      "part": 69,
+      "start_seconds": 1107,
+      "end_seconds": 1149,
+      "application_limit": "缺点需要实际内容和呈现方式；“有缺陷就更好看”本身不能当验收条件。"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "用《马大帅》比较原住民、闯入者和妄人的不同组合",
+      "part": 69,
+      "start_seconds": 587,
+      "end_seconds": 655,
+      "submission_spec": "拓展观看和比较，未要求提交",
+      "teacher_review": "本次为教师影片分析或课堂观察，无个人交稿讲评记录",
+      "uncertainty": "据完整机器稿核读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "比较《触不可及》中闯入者如何帮助原住民",
+      "part": 69,
+      "start_seconds": 656,
+      "end_seconds": 714,
+      "submission_spec": "课堂分析提示，未给独立作业规格",
+      "teacher_review": "本次为教师影片分析或课堂观察，无个人交稿讲评记录",
+      "uncertainty": "据完整机器稿核读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "争宠后的伤害与补偿改变关系",
+      "parts": [
+        68,
+        69
+      ],
+      "case_type": "teacher_film_analysis"
+    },
+    {
+      "label": "巴斯三次飞行，动作重复而情境和含义不同",
+      "parts": [
+        68,
+        69
+      ],
+      "case_type": "teacher_film_analysis"
+    }
+  ],
+  "source_relations": [
+    {
+      "kind": "explicit_continuation",
+      "other_part": 68,
+      "note": "同一电影拉片分为两段，信息包1–25与26–30连续"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "角色名有同音错字；片中英语和长播放片段转录稀少，不能据其还原全部视听内容。"
+  },
+  "limits": [
+    "观众反应是老师分析，未用实际读者检验。",
+    "电影史、名字来历和创作意图未独立查证。",
+    "影片信息包数量不作为全部写作任务的定额。"
+  ],
+  "visual_spotchecks": [
+    {
+      "seconds": 620,
+      "file": "frames/p069-0620.jpg",
+      "scope": "selected subtitle location only; not full visual review"
+    },
+    {
+      "seconds": 726,
+      "file": "frames/p069-0726.jpg",
+      "scope": "selected subtitle location only; not full visual review"
+    }
+  ]
+}

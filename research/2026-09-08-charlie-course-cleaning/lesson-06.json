@@ -1,0 +1,173 @@
+{
+  "lesson": 6,
+  "source_parts": [
+    {
+      "part": 13,
+      "source_json_sha256": "b27966ae0e4baf3882aa277fdd6d3fdd09f98bbe2ac2b4db8753a01525caa7ab",
+      "segment_count": 328
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L06-B001",
+      "part": 13,
+      "first_segment": 1,
+      "last_segment": 20,
+      "heading": "第二阶段先插讲格式",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B002",
+      "part": 13,
+      "first_segment": 21,
+      "last_segment": 47,
+      "heading": "一场戏第一行写什么",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "厂／唐浩／唐景／日夜成昏",
+          "cleaned": "场／场号／场景／日夜晨昏",
+          "basis": "整段为场标题四项，且S041释义明确晨与昏。"
+        }
+      ]
+    },
+    {
+      "id": "L06-B003",
+      "part": 13,
+      "first_segment": 48,
+      "last_segment": 82,
+      "heading": "办公室走到阳台，或者电话切到家里，要不要换场",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B004",
+      "part": 13,
+      "first_segment": 83,
+      "last_segment": 111,
+      "heading": "标明内外景，是为了让拍摄部门准备",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "日夜乾坤",
+          "cleaned": "日夜晨昏",
+          "basis": "S039–044已经逐项定义同一时间四选项。"
+        }
+      ]
+    },
+    {
+      "id": "L06-B005",
+      "part": 13,
+      "first_segment": 112,
+      "last_segment": 141,
+      "heading": "场内三种内容：描述、行动、对白",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B006",
+      "part": 13,
+      "first_segment": 142,
+      "last_segment": 159,
+      "heading": "括号、小符号和工作参考的原则",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B007",
+      "part": 13,
+      "first_segment": 160,
+      "last_segment": 188,
+      "heading": "在A4纸上示范；为什么有对白居中的排法",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B008",
+      "part": 13,
+      "first_segment": 189,
+      "last_segment": 208,
+      "heading": "中文模仿排版，不自动得到同样的时长刻度",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B009",
+      "part": 13,
+      "first_segment": 209,
+      "last_segment": 228,
+      "heading": "岔题：用“警察”比较语言表达长度",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "牙／拆",
+          "cleaned": "“衙／差”〔待核〕",
+          "basis": "本段古文职业称谓的近音整理，证据不足以定字。"
+        }
+      ]
+    },
+    {
+      "id": "L06-B010",
+      "part": 13,
+      "first_segment": 229,
+      "last_segment": 268,
+      "heading": "岔题：叫父亲吃饭怎样被讲成一段歌",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "毫无意义毫无意义",
+          "cleaned": "毫无歧义",
+          "basis": "S267反复以明确指向对比多义误解，按语境整理，仍非听校。"
+        }
+      ]
+    },
+    {
+      "id": "L06-B011",
+      "part": 13,
+      "first_segment": 269,
+      "last_segment": 279,
+      "heading": "岔题：两类歌词的文字密度",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B012",
+      "part": 13,
+      "first_segment": 280,
+      "last_segment": 305,
+      "heading": "回到剧本：字号、页数、字数和场数只是估算",
+      "disposition": "正文清洗",
+      "corrections": []
+    },
+    {
+      "id": "L06-B013",
+      "part": 13,
+      "first_segment": 306,
+      "last_segment": 328,
+      "heading": "一行字可能拍很久；编剧也要想着拍摄",
+      "disposition": "正文清洗",
+      "corrections": [
+        {
+          "original": "头文字低／阴章／所用组／长景组／四丸字",
+          "cleaned": "《头文字D》／阴招／摄影组／场景组／四万字",
+          "basis": "同段赛车片、策略、拍摄部门和电影剧本文字量语境。"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "仅依据所列源P全部ASR segments顺读清洗，未逐句听校，非逐字原话。",
+    "时间为原P源ASR/VAD边界；segments连续覆盖不等于音视频逐秒核验，不能排除机器漏听。",
+    "讲师的影片剧情、行业评价、历史与群体概括均为课堂表述，未外部核验。",
+    "本课包含很长语言/民族/歌曲岔题，已保留其假设、推演、评价和改口；未把音节效率、词源或群体音乐能力概括作为已证实知识。",
+    "P013 S213–218古文职业字形、police音节数量，S219西语词，S230日语模仿、S268效率高低矛盾均待核。",
+    "页数、字数、时长、场数均为讲师估算，不是统一格式标准或成片时长保证；公众号分享为原课安排。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第06课.md",
+  "output_sha256": "78010d6f099224daa4f38a77d398201ee1f68486a591a5e2213aef2ba64e6b32",
+  "reader_navigation_update": {
+    "previous_output_sha256": "6a8ca70037222bc8d6c9dc07b31ae0a047b8f9608162ccac7a8e4138b9440bfc",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

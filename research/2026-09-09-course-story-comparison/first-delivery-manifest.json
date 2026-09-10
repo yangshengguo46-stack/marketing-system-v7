@@ -1,0 +1,49 @@
+{
+  "frozen_at": "2026-09-09T11:55:23.216313+00:00",
+  "rows": [
+    {
+      "case": "01",
+      "arm": "a",
+      "title": "拉到头以前",
+      "story_path": "outputs/01-a/story.md",
+      "sha256": "97e9247c77dbeef0757748ceaa42406691d22a5ac5496b8a707400e5c6c99e4e",
+      "body_han_chars": 1527,
+      "body_nonwhitespace_chars": 1788,
+      "notes_han_chars": 229,
+      "notes_sha256": "8fc77acc222dcc53b93170a7ac77957d3a7694c7e4e21d61448fd2c247a0a1db"
+    },
+    {
+      "case": "01",
+      "arm": "b",
+      "title": "那张没看镜头的照片",
+      "story_path": "outputs/01-b/story.md",
+      "sha256": "cbf3e27608aaf59ca137a30fa09746e9a4e3d1610c74af7644f9da90dc22ac6e",
+      "body_han_chars": 1335,
+      "body_nonwhitespace_chars": 1540,
+      "notes_han_chars": 219,
+      "notes_sha256": "89feb462ec93e58719b05bd5da8ad98a73ea31dd9ca28ccb8b8763972e836cfc"
+    },
+    {
+      "case": "02",
+      "arm": "a",
+      "title": "六个名字",
+      "story_path": "outputs/02-a/story.md",
+      "sha256": "457f409e66a5f213e22789e2cd4e32aba4fc7692ab9b68e41ef0d80e64e9104c",
+      "body_han_chars": 1391,
+      "body_nonwhitespace_chars": 1643,
+      "notes_han_chars": 189,
+      "notes_sha256": "88efd7166d60433244b96a620e662c52c3ebd23a10db7f54833f021096c32323"
+    },
+    {
+      "case": "02",
+      "arm": "b",
+      "title": "第七个人",
+      "story_path": "outputs/02-b/story.md",
+      "sha256": "59d6abc4e533e35715a44bb2372c52818a09dc4c99037c1be89d70bf3a94fd50",
+      "body_han_chars": 1386,
+      "body_nonwhitespace_chars": 1627,
+      "notes_han_chars": 187,
+      "notes_sha256": "b569d41959e94ed1152fdb7741f714f7f896604bca9d16bf39ce86a9d94fac65"
+    }
+  ]
+}

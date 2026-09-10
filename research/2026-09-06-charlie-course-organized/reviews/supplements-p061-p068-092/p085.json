@@ -1,0 +1,102 @@
+{
+  "part": 85,
+  "title": "编剧视角拉片烧脑神作《致命ID》",
+  "source": {
+    "part": 85,
+    "cid": 29820912258,
+    "title": "编剧视角拉片烧脑神作《致命ID》",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=85",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片烧脑神作《致命ID》.mp4",
+    "sha256": "48dcb253d177c60ff680abf368c8c2ad6e6318361ab0d13282ecef9f98207d5e",
+    "bytes": 84254295,
+    "mtime_ns": 1788682340277660692,
+    "actual_duration_seconds": 2264.901769
+  },
+  "full_transcript_read_parts": [
+    85
+  ],
+  "transcript_segment_count": 250,
+  "transcript_artifact_sha256": {
+    "p085.source-time.txt": "f65f8f3893d7e2d24f1c9cf2f1df26ca281db82d56912be52096c02dc1f8a7d2",
+    "p085.source-time.srt": "4e17451aa5be83e2c0e34720a16d1bf86e4051f9cab80dfabbd4b15465e3bae4"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 85,
+      "start_seconds": 0,
+      "end_seconds": 110,
+      "label": "题材与选片"
+    },
+    {
+      "part": 85,
+      "start_seconds": 110,
+      "end_seconds": 1440,
+      "label": "33包、封闭环境与嫌疑变化"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1440,
+      "end_seconds": 1635,
+      "label": "人物关系、秘密、受压行为"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1636,
+      "end_seconds": 1648,
+      "label": "十人群像作业"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1648,
+      "end_seconds": 1758,
+      "label": "共同目标与信息差"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1759,
+      "end_seconds": 1928,
+      "label": "类型结构归纳"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1929,
+      "end_seconds": 1977,
+      "label": "视听联系虚实"
+    },
+    {
+      "part": 85,
+      "start_seconds": 1978,
+      "end_seconds": 2208,
+      "label": "影片片段风险暗示"
+    },
+    {
+      "part": 85,
+      "start_seconds": 2208,
+      "end_seconds": 2261,
+      "label": "随局面变化理解结构"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "part": 85,
+      "task": "结合本土背景设定鬼屋中的十个人物",
+      "start_seconds": 1636.5,
+      "end_seconds": 1647.9,
+      "submission_spec": "设计身份、关系、秘密和受压行为；明确数量十人，无字数、渠道、期限或整剧本要求",
+      "teacher_review": "当堂布置，未见后续作业回收与批改",
+      "uncertainty": "27:24字幕核实十人；其余全文机器稿未逐句听校",
+      "assignment_form": "人物群像设定"
+    }
+  ],
+  "review_status": "full_machine_transcript_read_not_full_listen",
+  "uncertainty": "完整机器稿全文核读，不等于逐句听校或全片视听观看；教师解释不等于外部事实",
+  "frame_checks": [
+    {
+      "seconds": 1644,
+      "file": "frames/p085-1644.jpg",
+      "verified": "鬼屋里的10个人物作业"
+    }
+  ]
+}

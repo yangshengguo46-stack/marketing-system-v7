@@ -1,0 +1,102 @@
+{
+  "scope": "Complete text observed in native tool outputs; native HTTP request payloads were not separately recorded. Final local edits were not resent after 403.",
+  "reads": [
+    {
+      "material": "mission.md",
+      "fullTextObserved": true,
+      "matches": [
+        {
+          "callId": "call_hp0b7336l9fo84f512crbbzv",
+          "eventIndex": 146
+        }
+      ]
+    },
+    {
+      "material": "public-research.md",
+      "fullTextObserved": true,
+      "matches": [
+        {
+          "callId": "call_q1v58zbuc6ikhho1bilpov5l",
+          "eventIndex": 140
+        }
+      ]
+    },
+    {
+      "material": "v6-a115-history.md",
+      "fullTextObserved": true,
+      "matches": [
+        {
+          "callId": "call_xr0rfildlfyqral9klsjf559",
+          "eventIndex": 145
+        }
+      ]
+    },
+    {
+      "material": "content-package-contract.md",
+      "fullTextObserved": true,
+      "matches": [
+        {
+          "callId": "call_h5zg93pb4yjjw8km9t197jug",
+          "eventIndex": 213
+        },
+        {
+          "callId": "call_365iwt4yrtdq1pzw9ab881xc",
+          "eventIndex": 8736
+        }
+      ]
+    },
+    {
+      "material": "content-package.schema.json",
+      "fullTextObserved": true,
+      "matches": [
+        {
+          "callId": "call_uhlh5y3xd1uj1bi0ahnuxqhu",
+          "eventIndex": 8733
+        }
+      ]
+    },
+    {
+      "stage": "research",
+      "version": "native-before-final-local-edit",
+      "fullTextObserved": true,
+      "bodyUtf8Bytes": 7028,
+      "matches": [
+        {
+          "callId": "call_tpe1iueuumzj6n1c3zwgalr7",
+          "eventIndex": 6497
+        }
+      ]
+    },
+    {
+      "stage": "direction",
+      "version": "native-before-final-local-edit",
+      "fullTextObserved": true,
+      "bodyUtf8Bytes": 4415,
+      "matches": [
+        {
+          "callId": "call_t6mpwn0n1cykl39xytmk3ad5",
+          "eventIndex": 6533
+        },
+        {
+          "callId": "call_kouy0j50zuf9fyutxu7mtysk",
+          "eventIndex": 8696
+        }
+      ]
+    },
+    {
+      "stage": "draft",
+      "version": "native-before-final-local-edit",
+      "fullTextObserved": true,
+      "bodyUtf8Bytes": 5978,
+      "matches": [
+        {
+          "callId": "call_jkpt43hv26trf91kprxdj3vt",
+          "eventIndex": 16675
+        }
+      ]
+    }
+  ],
+  "truncatedReadCallIds": [
+    "call_nr2cblltfapvt6b61dyr43wl"
+  ]
+}

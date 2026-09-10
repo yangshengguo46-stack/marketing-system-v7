@@ -1,0 +1,168 @@
+[
+  {
+    "repository": "alchaincyf/nuwa-skill",
+    "commit": "fe0374687037c4cc51a65c1e0c145afe2981dc69",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 1072,
+        "sha256": "d0952e801d7484cc5344f41cc0378567d20a3c996b784eb97460287adde9ab37",
+        "source": "https://raw.githubusercontent.com/alchaincyf/nuwa-skill/fe0374687037c4cc51a65c1e0c145afe2981dc69/LICENSE"
+      },
+      {
+        "path": "SKILL.md",
+        "bytes": 38280,
+        "sha256": "cc9dd6188bf151666671a7ff99bdb65fdae020dcc0b8669b93f2bc9d86f3ab03",
+        "source": "https://raw.githubusercontent.com/alchaincyf/nuwa-skill/fe0374687037c4cc51a65c1e0c145afe2981dc69/SKILL.md"
+      }
+    ]
+  },
+  {
+    "repository": "alchaincyf/darwin-skill",
+    "commit": "5539516444cff4eed7865daf61a707590acda485",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 1076,
+        "sha256": "0d42df9f8e8f49debfe0b33187a2f9d6fe78b6c376a299c1dad681c796e9b202",
+        "source": "https://raw.githubusercontent.com/alchaincyf/darwin-skill/5539516444cff4eed7865daf61a707590acda485/LICENSE"
+      },
+      {
+        "path": "SKILL.md",
+        "bytes": 31198,
+        "sha256": "207ad05f3efbdbd14f26c54bdb79713d1fb850f8ac9c253cb0cb2b00d4b16249",
+        "source": "https://raw.githubusercontent.com/alchaincyf/darwin-skill/5539516444cff4eed7865daf61a707590acda485/SKILL.md"
+      }
+    ]
+  },
+  {
+    "repository": "Yeadon8888/cangjie-skill",
+    "commit": "c489ba54a420631ac4291966dae3ad5374db4a47",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 1083,
+        "sha256": "264ab23e5eca9d9871b3686d8ad9703420e458e392c47a49d3662364543b7b9c",
+        "source": "https://raw.githubusercontent.com/Yeadon8888/cangjie-skill/c489ba54a420631ac4291966dae3ad5374db4a47/LICENSE"
+      },
+      {
+        "path": "SKILL.md",
+        "bytes": 8936,
+        "sha256": "9d48cbe1e541241117c73d7a1f874308887f5c8cae78ec822f6725b005f2536c",
+        "source": "https://raw.githubusercontent.com/Yeadon8888/cangjie-skill/c489ba54a420631ac4291966dae3ad5374db4a47/SKILL.md"
+      },
+      {
+        "path": "references/extraction-framework.md",
+        "bytes": 10645,
+        "sha256": "e15f0e57cd953ed440f11413ced36303fa833e5bcf32bc9ef3c93a7c05fdece2",
+        "source": "https://raw.githubusercontent.com/Yeadon8888/cangjie-skill/c489ba54a420631ac4291966dae3ad5374db4a47/references/extraction-framework.md"
+      },
+      {
+        "path": "scripts/quality_check.py",
+        "bytes": 10144,
+        "sha256": "8c253e0a394acc9fe515ae2e8bd269a44fd1b821c916c4ae82b1e89f3f91f361",
+        "source": "https://raw.githubusercontent.com/Yeadon8888/cangjie-skill/c489ba54a420631ac4291966dae3ad5374db4a47/scripts/quality_check.py"
+      }
+    ]
+  },
+  {
+    "repository": "anthropics/skills",
+    "commit": "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f",
+    "files": [
+      {
+        "path": "LICENSE",
+        "error": "HTTP Error 404: Not Found"
+      },
+      {
+        "path": "skills/skill-creator/SKILL.md",
+        "bytes": 33168,
+        "sha256": "dcd4803e61e913e6fc27294184cd3a71f09f5e924ff20c8a9a20173e7b3c2bcf",
+        "source": "https://raw.githubusercontent.com/anthropics/skills/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator/SKILL.md"
+      },
+      {
+        "path": "skills/skill-creator/agents/comparator.md",
+        "bytes": 7287,
+        "sha256": "fe1fc9787c495d864c5d6eada47396478572325fde1b33a96d78bf4b849b7a3e",
+        "source": "https://raw.githubusercontent.com/anthropics/skills/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator/agents/comparator.md"
+      }
+    ]
+  },
+  {
+    "repository": "yusufkaraaslan/Skill_Seekers",
+    "commit": "f3972efa33fa79634b96936acf1fac321cdcf7c1",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 1072,
+        "sha256": "fbc4fbffc4598eef4178b4432a4afaa08af9bf9e22724dfd0b45c912a75a1999",
+        "source": "https://raw.githubusercontent.com/yusufkaraaslan/Skill_Seekers/f3972efa33fa79634b96936acf1fac321cdcf7c1/LICENSE"
+      },
+      {
+        "path": "README.md",
+        "bytes": 20659,
+        "sha256": "2f657e42c5aa7c8241ddecc3a36c83bb1d3b8aeee112880b994f5baffba99263",
+        "source": "https://raw.githubusercontent.com/yusufkaraaslan/Skill_Seekers/f3972efa33fa79634b96936acf1fac321cdcf7c1/README.md"
+      },
+      {
+        "path": "src/skill_seekers/cli/video_scraper.py",
+        "bytes": 40859,
+        "sha256": "b02f124cfee3310a015eed72ad7c43fa82709ee2c1e4cc7059ebb12a7b78523c",
+        "source": "https://raw.githubusercontent.com/yusufkaraaslan/Skill_Seekers/f3972efa33fa79634b96936acf1fac321cdcf7c1/src/skill_seekers/cli/video_scraper.py"
+      }
+    ]
+  },
+  {
+    "repository": "kangarooking/cangjie-skill",
+    "commit": "34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 1056,
+        "sha256": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/LICENSE"
+      },
+      {
+        "path": "SKILL.md",
+        "bytes": 11715,
+        "sha256": "ef6d440f45f0e96ff3a054ed4bc2b651927c684af05e1d1ba292d03fbfe25382",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/SKILL.md"
+      },
+      {
+        "path": "methodology/03-stage1.5-triple-verify.md",
+        "bytes": 4159,
+        "sha256": "9929c6909b33f87d2bde2ca7624b9094e86e5f20741ab8100eff9ec2107c45a4",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/methodology/03-stage1.5-triple-verify.md"
+      },
+      {
+        "path": "methodology/04-stage2-ria-plus.md",
+        "bytes": 5294,
+        "sha256": "45f3bc4555135a92a05e68bebfda11e27d4fb7f253fd4e30c7462dae46c9e5f7",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/methodology/04-stage2-ria-plus.md"
+      },
+      {
+        "path": "methodology/06-stage4-pressure-test.md",
+        "bytes": 5346,
+        "sha256": "a3f003696fe41022c1594753c3274ba291df6fa8849213ee82de7a90bdee073e",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/methodology/06-stage4-pressure-test.md"
+      },
+      {
+        "path": "extractors/counter-example-extractor.md",
+        "bytes": 3034,
+        "sha256": "b926fb35a9c75de4c3a085ba48346ab88cf977f0a3760d2ffd2afc8c6aca0e84",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/extractors/counter-example-extractor.md"
+      },
+      {
+        "path": "scripts/run_output_evals.py",
+        "bytes": 5612,
+        "sha256": "2c286a144bf51ce6098bff7f96b57c151a9ea94c465a024cdeaf4f950317e40e",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/scripts/run_output_evals.py"
+      },
+      {
+        "path": "benchmarks/naval/metrics-v2/benchmark.md",
+        "bytes": 447,
+        "sha256": "eae4bb3018c1c0551527fed63030e5e52b943a5e025e6b3d60abffb9265c5e0b",
+        "source": "https://raw.githubusercontent.com/kangarooking/cangjie-skill/34e34bc5c7eb1c7d6cae9f84a9bcc62acb2a971b/benchmarks/naval/metrics-v2/benchmark.md"
+      }
+    ]
+  }
+]

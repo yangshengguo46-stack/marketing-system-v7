@@ -1,0 +1,51 @@
+{
+  "part": 13,
+  "title": "第六课-剧本的格式6",
+  "state": "completed",
+  "started_at": "2026-09-06T10:07:38.473688+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 13,
+    "cid": 167877064,
+    "title": "第六课-剧本的格式6",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=13",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/第六课-剧本的格式6.mp4",
+    "sha256": "6c081651506265a9544cea6b2c2553118bbf5ce94b6a5b3f1022e8a5669b09d0",
+    "bytes": 122936115,
+    "mtime_ns": 1788681340319486691,
+    "actual_duration_seconds": 1849.74737
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 1849.748063,
+  "segment_count": 328,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T10:12:10.242531+00:00",
+  "elapsed_seconds": 271.766,
+  "completed_at": "2026-09-06T10:12:10.242505+00:00",
+  "text_characters": 7666,
+  "rtf": 0.146921,
+  "max_rss_bytes_macos": 600920064,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 1849.7480625,
+    "duration_delta_seconds": 0.000693,
+    "vad_speech_seconds": 1478.496,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p013.source-time.txt": "f0f78155b66103081efa8da46f3716f91da54e821ace0402f313faaa2acaf5d1",
+    "p013.source-time.srt": "1d6d7d68e06f22dbf9d1b47a4621f87fc7b77b81e584f2fbf1bda515b6d0b6c6"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "business-facts.md": {
+    "bytes": 1844,
+    "sha256": "4cc9f76b5f2e2d78e100a980e2a597a17eb6b8f79f51b820d697f13388d084ec"
+  },
+  "content-finding.md": {
+    "bytes": 3081,
+    "sha256": "20985992710b5a4d17aa1c8a8f6ceed75b46122a4af2c15fe1b2001db46262b5"
+  },
+  "director-process-evidence.md": {
+    "bytes": 3735,
+    "sha256": "864a1d236641bc564036c0de10eabe7d1673e44bdc97187a1fb4f2efdc9879b7"
+  },
+  "failure-review.md": {
+    "bytes": 842,
+    "sha256": "60cf3206c2ec9a09bf505c5cf9a8cad7dad787ff18e095e05ecf97f7ae71946a"
+  },
+  "mission.md": {
+    "bytes": 2721,
+    "sha256": "7c58cdd7d129c55ee37f1ca0d3970e8ba03febc31de2649f334862691af1b13d"
+  },
+  "source-observations.md": {
+    "bytes": 3115,
+    "sha256": "860fe6301e15fed7becb49c2c01c3cf2d620d9c3f800d0393328361841ef00e1"
+  },
+  "working-methods.md": {
+    "bytes": 2181,
+    "sha256": "4688947bef8a18662524deec1ae2aa17a3934d9f9ffcb563c8b9787520c12b20"
+  }
+}

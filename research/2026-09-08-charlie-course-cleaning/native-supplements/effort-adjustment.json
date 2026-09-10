@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-08T03:31:19.955706+00:00",
+  "workers": [
+    "resumed-5",
+    "resumed-2",
+    "recovered-0",
+    "recovered-1",
+    "recovered-3",
+    "recovered-4"
+  ],
+  "from": "medium",
+  "to": "low",
+  "scope": "Generated isolated course-cleaning worker configuration only; applies when native new thread reloads config. Current turns continue unchanged. Actual effective effort must be checked in native thread response.",
+  "basis": "Local app-server ThreadStart -> config_manager.load_for_cwd -> ConfigBuilder reloads generated config per new thread; reduce disproportionate reasoning during bounded transcription editing, retaining identical source and content checks."
+}

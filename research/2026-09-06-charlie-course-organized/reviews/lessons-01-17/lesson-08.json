@@ -1,0 +1,301 @@
+{
+  "lesson": 8,
+  "title": "勾勒画面",
+  "parts": [
+    15,
+    16,
+    17
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    15,
+    16,
+    17
+  ],
+  "teaching_nodes": [
+    {
+      "label": "梗概信息变成环境动作对白",
+      "part": 15,
+      "start_seconds": 3.558,
+      "end_seconds": 419
+    },
+    {
+      "label": "复习四段五关键事件",
+      "part": 15,
+      "start_seconds": 424.166,
+      "end_seconds": 623.436
+    },
+    {
+      "label": "幕序列场与十序列",
+      "part": 15,
+      "start_seconds": 624.23,
+      "end_seconds": 1089.548
+    },
+    {
+      "label": "十序列功能逐项说明",
+      "part": 15,
+      "start_seconds": 1090.022,
+      "end_seconds": 1520.268
+    },
+    {
+      "label": "旁白闪回的初学限制",
+      "part": 15,
+      "start_seconds": 1521.862,
+      "end_seconds": 1823.148
+    },
+    {
+      "label": "夫妻似乎吵架的可视化改写",
+      "part": 15,
+      "start_seconds": 1823.878,
+      "end_seconds": 2078.156
+    },
+    {
+      "label": "八项纵轴与序列横轴",
+      "part": 15,
+      "start_seconds": 2078.662,
+      "end_seconds": 2307.276
+    },
+    {
+      "label": "回收课代表警察改写版",
+      "part": 16,
+      "start_seconds": 3.526,
+      "end_seconds": 203.372
+    },
+    {
+      "label": "单主角与配角从事件而来",
+      "part": 16,
+      "start_seconds": 206.534,
+      "end_seconds": 313.708
+    },
+    {
+      "label": "开场事件现场构想",
+      "part": 16,
+      "start_seconds": 316.166,
+      "end_seconds": 607.116
+    },
+    {
+      "label": "切入事件现场构想",
+      "part": 16,
+      "start_seconds": 608.582,
+      "end_seconds": 1015.212
+    },
+    {
+      "label": "激励事件现场构想",
+      "part": 16,
+      "start_seconds": 1018.662,
+      "end_seconds": 1246.028
+    },
+    {
+      "label": "进展转折及即时重排",
+      "part": 16,
+      "start_seconds": 1247.494,
+      "end_seconds": 1616.844
+    },
+    {
+      "label": "旧失职击破虚假胜利并推向危机",
+      "part": 17,
+      "start_seconds": 3.27,
+      "end_seconds": 522.508
+    },
+    {
+      "label": "导入高潮与结局变体",
+      "part": 17,
+      "start_seconds": 524.038,
+      "end_seconds": 931.052
+    },
+    {
+      "label": "全程重走十序列并回改",
+      "part": 17,
+      "start_seconds": 932.614,
+      "end_seconds": 1895.66
+    },
+    {
+      "label": "警察十序列大纲作业",
+      "part": 17,
+      "start_seconds": 1896.902,
+      "end_seconds": 1986.092
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "就用本课抚恤金版想殉职的警察故事，把十个关节写成一个大纲；每序列可包含多场。",
+      "part": 17,
+      "start_seconds": 1906.278,
+      "end_seconds": 1982.38,
+      "asr_excerpt": "布置的作业…你也不用自己创作了…将要殉职的警察这10个关节自己去写一下…写一个大纲…十个序列不是只有十场戏…就写这个故事",
+      "submission_spec": "一个十序列大纲，内容须能转为画面与声音；本次未明确字数、文件格式、期限、渠道。开头一两万字是大纲一般规模介绍。",
+      "teacher_review": "第9课p19 02:14–03:51继续用夜摊案例讲配角，未说在评学生警察大纲。第9课匿名少年稿反馈未指明作业课号，不能挂到本任务。",
+      "uncertainty": "作业名称、固定题材、大纲、十序列非十场、就写这个故事均已核原字幕；原ASR“布置的作业”原帧实为“布置个作业”"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "观察日常气氛变化中触发感觉的细节，积累可见可听的表达素材。",
+      "part": 15,
+      "start_seconds": 1990.726,
+      "end_seconds": 2010.124,
+      "asr_excerpt": "你下次经历这种事情的时候，好好观察一下，是什么触发了你这个感受",
+      "submission_spec": "无独立上交报告",
+      "teacher_review": "本课夫妻刚吵架的表达演示",
+      "uncertainty": "持续观察建议"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "此前千字八要素故事就是梗概，回顾为何需要大纲阶段。",
+      "part": 15,
+      "start_seconds": 13.702,
+      "end_seconds": 39.34,
+      "asr_excerpt": "我也让大家写了个故事，以千来字包含八要素…那个东西叫梗概…梗概跟剧本之间…大纲",
+      "submission_spec": "无新增交付",
+      "teacher_review": "本课示范大纲；结尾另指定课堂警察为本次题材",
+      "uncertainty": "不把开头通用承接误读为本次必须续写自选梗概"
+    }
+  ],
+  "examples": [
+    {
+      "case_version": "police_class_representative_lesson08",
+      "label": "想殉职的警察：抚恤金版",
+      "part": 16,
+      "start_seconds": 134.886,
+      "end_seconds": 168.588,
+      "source_relation": "老师明确采用课代表最后改出的例子，再现场发展十序列；课代表原稿未展示",
+      "motivation": "妻女仍在，想用殉职抚恤金留钱给她们",
+      "previous_case_version": "police_teacher_live_lesson03",
+      "changed_motivation": "第3课为女儿已亡、希望殉职后继续保护她；本课另用妻女仍在、留下抚恤金",
+      "revision_steps": [
+        {
+          "part": 16,
+          "start_seconds": 1356.902,
+          "end_seconds": 1416.524,
+          "input": "升职加薪",
+          "change": "删加薪，先给表彰荣誉",
+          "effect": "保留缺钱核心困境，让荣誉成为虚假胜利"
+        },
+        {
+          "part": 16,
+          "start_seconds": 1419.046,
+          "end_seconds": 1534.636,
+          "input": "一次无效尝试即表彰",
+          "change": "多次尝试，较大事件后移",
+          "effect": "积累进展及表彰依据，一序列可多场"
+        },
+        {
+          "part": 17,
+          "start_seconds": 41.158,
+          "end_seconds": 458.828,
+          "input": "表彰后上扬",
+          "change": "回收开场失职导致的严重后果，加家庭继续拒绝",
+          "effect": "击破虚假胜利，内疚来自自身前史，转向承担责任"
+        },
+        {
+          "part": 17,
+          "start_seconds": 1202.022,
+          "end_seconds": 1261.772,
+          "input": "突然因抚恤金产生念头可能突兀",
+          "change": "备选回前段加强打击并先埋短暂求死念头",
+          "effect": "令激励成为有铺垫的触发"
+        },
+        {
+          "part": 17,
+          "start_seconds": 1354.918,
+          "end_seconds": 1469.708,
+          "input": "抽象虚假胜利",
+          "change": "同事改观、被正式警员邀请聚餐",
+          "effect": "待遇可视化，家庭现实再产生落差"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "三P全文机器稿已读，未逐句听校",
+    "12帧已视觉核对；原ASR保持不改字",
+    "十序列为本课初学方法，老师承认其他划分",
+    "课代表原稿未展示，不推断完整交稿过程"
+  ],
+  "frames": [
+    {
+      "part": 15,
+      "source_seconds": 1515,
+      "path": "frames/p015-1515.jpg",
+      "sha256": "03d8413307dfa6787878b91de7c57035e062d711dcb0aedd98ba7ea3dac09afe",
+      "visually_read": true
+    },
+    {
+      "part": 15,
+      "source_seconds": 2290,
+      "path": "frames/p015-2290.jpg",
+      "sha256": "762f37e14a8d772ede9ff2c8c8af3457de176ee0c861a3270493350e633fdc91",
+      "visually_read": true
+    },
+    {
+      "part": 16,
+      "source_seconds": 136,
+      "path": "frames/p016-0136.jpg",
+      "sha256": "d6e5e2786175eb6819f430c47b25c880249d6aa49dc440b70773d1799f72cdcc",
+      "visually_read": true
+    },
+    {
+      "part": 16,
+      "source_seconds": 139,
+      "path": "frames/p016-0139.jpg",
+      "sha256": "3f76e967b0765f459cce9fe8d56e6f68dd2ea609b0698c93a8322edbe6a360a7",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1906,
+      "path": "frames/p017-1906.jpg",
+      "sha256": "d51c5efa05f1d8d9c90f7ee1480c794977f65dd5a81a1b6adf8a198d83fb806c",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1907,
+      "path": "frames/p017-1907.jpg",
+      "sha256": "0b83c2441b697f708264ea4cb710f15be91e13567be703158ac9dacf93d5de12",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1909,
+      "path": "frames/p017-1909.jpg",
+      "sha256": "906522ed65089333465b9b6e03c085f5736afdabc084a89e0f76dd81ff529715",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1910,
+      "path": "frames/p017-1910.jpg",
+      "sha256": "51a903a8d3e8545810dc9855bd1f0f15a09a76c98dd9340dd99a1775b4323f74",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1914,
+      "path": "frames/p017-1914.jpg",
+      "sha256": "9e71e06921a81c41e65063582cfb783df4dabe1830abd3bbd83fe4ad8876924d",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1917,
+      "path": "frames/p017-1917.jpg",
+      "sha256": "f21916c2c32c58ad01b2281cdae1bf2ad6a3b7f0e2d6c0edcdb0b8d70b604dae",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1922,
+      "path": "frames/p017-1922.jpg",
+      "sha256": "f16d382ec8a6fa47dac029668af4bb2376048f2a1c61e841c60b1c03e7d15479",
+      "visually_read": true
+    },
+    {
+      "part": 17,
+      "source_seconds": 1981,
+      "path": "frames/p017-1981.jpg",
+      "sha256": "6025fb17f49a069f256b7cfa97571addcc3696370882574c7f824033f41b3eb9",
+      "visually_read": true
+    }
+  ]
+}

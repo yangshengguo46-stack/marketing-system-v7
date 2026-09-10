@@ -1,0 +1,328 @@
+{
+  "lesson": 14,
+  "title": "场景与对白",
+  "parts": [
+    32,
+    33
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    32,
+    33
+  ],
+  "teaching_nodes": [
+    {
+      "part": 32,
+      "start_seconds": 2,
+      "end_seconds": 429,
+      "label": "从大纲到场"
+    },
+    {
+      "part": 32,
+      "start_seconds": 432,
+      "end_seconds": 1023,
+      "label": "场的信息、推进、转折"
+    },
+    {
+      "part": 32,
+      "start_seconds": 1026,
+      "end_seconds": 1656,
+      "label": "有效动作进出与删并"
+    },
+    {
+      "part": 32,
+      "start_seconds": 1656,
+      "end_seconds": 2444,
+      "label": "风骚律师成片与分析"
+    },
+    {
+      "part": 33,
+      "start_seconds": 3,
+      "end_seconds": 798,
+      "label": "名台词外形误区"
+    },
+    {
+      "part": 33,
+      "start_seconds": 801,
+      "end_seconds": 1669,
+      "label": "人设与情境两种来源"
+    },
+    {
+      "part": 33,
+      "start_seconds": 1671,
+      "end_seconds": 2676,
+      "label": "五个对白写法"
+    },
+    {
+      "part": 33,
+      "start_seconds": 2678,
+      "end_seconds": 2950,
+      "label": "聚餐成片与反写作业"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "explicit_assignment",
+      "task": "将课堂播放的两场成片1:1反写成剧本，读稿检查环境、动作、对白是否清楚",
+      "part": 33,
+      "start_seconds": 2908.774,
+      "end_seconds": 2947.884,
+      "asr_excerpt": "这是这节课的作业，把这两场戏翻回翻回剧本",
+      "submission_spec": "两场：风骚律师S1E1碰瓷、泰坦尼克号餐厅聚餐；未说明字数、截止、渠道",
+      "teacher_review": "指定自查读稿；第15–17课未指这两份反写作业的专门讲评，第17课仅共性群批",
+      "uncertainty": "作业与两场字幕已核；1:1句保留ASR，影片边界已看帧"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "分角色代入并表演着单写对白",
+      "part": 33,
+      "start_seconds": 1694.15,
+      "end_seconds": 1782.444,
+      "asr_excerpt": "甲写完再写乙，再写丙",
+      "submission_spec": "方法，无另交份数",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "调用此前小本的说话素材记录",
+      "part": 33,
+      "start_seconds": 1785.19,
+      "end_seconds": 1871.692,
+      "asr_excerpt": "你那个小本要大量的记素材，在这个地方是要发挥作用的",
+      "submission_spec": "持续观察素材在对白处续用",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "先写人物潜台词，再转成表面台词",
+      "part": 33,
+      "start_seconds": 2146.246,
+      "end_seconds": 2265.772,
+      "asr_excerpt": "你先写出来，然后再把它变化成真正的台词",
+      "submission_spec": "创作习惯，无独立提交",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "重要角色分别为共同经历写日记",
+      "part": 33,
+      "start_seconds": 2269.702,
+      "end_seconds": 2432.108,
+      "asr_excerpt": "我建议你…每个人写一篇日记…当然，这个不出现在正文里",
+      "submission_spec": "角色视角练习，不进剧本正文，未定篇幅",
+      "teacher_review": "未说明",
+      "uncertainty": ""
+    }
+  ],
+  "assignment_inputs": [
+    {
+      "title": "风骚律师S1E1碰瓷戏",
+      "part": 32,
+      "replay_start_seconds": 1656,
+      "replay_end_seconds": 1818,
+      "start_transition_bracket_seconds": [
+        1656,
+        1658
+      ],
+      "end_transition_bracket_seconds": [
+        1816,
+        1818
+      ],
+      "boundary_basis": "已看前后原帧，切点限于2秒区间；未逐帧定帧号",
+      "source_file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.1.mp4",
+      "source_sha256": "9000277988599c352f30c945e3a51a41786519224203aa462fbab5f748225a8f",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=32&t=1656",
+      "continuous_clip_viewing": false,
+      "input_requirement": "实际反写需连续看原视频与画面字幕；英文ASR及教师摘要不足以1:1还原",
+      "source_file_absolute": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.1.mp4"
+    },
+    {
+      "title": "泰坦尼克号上层餐厅聚餐",
+      "part": 33,
+      "replay_start_seconds": 2694,
+      "replay_end_seconds": 2848,
+      "start_transition_bracket_seconds": [
+        2694,
+        2696
+      ],
+      "end_transition_bracket_seconds": [
+        2846,
+        2848
+      ],
+      "boundary_basis": "已看前后原帧，切点限于2秒区间；未逐帧定帧号",
+      "source_file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.2.mp4",
+      "source_sha256": "800ec7bda7b267df2fe58fab6bffbedfb02cc0095e8dd2a88d56fd052256146e",
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=33&t=2694",
+      "continuous_clip_viewing": false,
+      "input_requirement": "实际反写需连续看原视频与画面字幕；英文ASR及教师摘要不足以1:1还原",
+      "source_file_absolute": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/十四课-场景与对白14.2.mp4"
+    }
+  ],
+  "material_continuity": {
+    "relation": "teacher_explicit_method_reuse_material_switch",
+    "evidence": "开头补此前格式课未解决的场景问题；结尾换用两段指定成片",
+    "old_assignment": "未要求继续警察大纲"
+  },
+  "examples": [
+    {
+      "case_version": "boss_noodle_scene_revision",
+      "source_relation": "老师现场例与修改",
+      "part": 32,
+      "start_seconds": 1182,
+      "end_seconds": 1603,
+      "input": "从吃面到汇报到离开再沉思",
+      "change": "从闯入打断开始，消息逐级加码，摔碗起身结束；单纯吃面背景可并到审问",
+      "effect": "信息随对抗进入，去掉无效起止，减少独立信息场"
+    },
+    {
+      "case_version": "boss_dialogue_allegory_vs_short_decision",
+      "source_relation": "前例续用；长寓言为老师自示反例，短句参考片名未记清的旧片",
+      "part": 33,
+      "start_seconds": 599,
+      "end_seconds": 1529,
+      "input": "问是否处置叛徒，老大讲数分钟儿时狗寓言",
+      "change": "先营造情境，再让简短决定呈现人物",
+      "effect": "对白力量来自眼前局面，而非故作深沉篇幅"
+    },
+    {
+      "case_version": "subtext_to_surface_wealth",
+      "source_relation": "老师课堂示例",
+      "part": 33,
+      "start_seconds": 2206,
+      "end_seconds": 2265,
+      "input": "我比你有钱的意图",
+      "change": "转成向服务员问门口宝马停车",
+      "effect": "表面关心停车，同时向旧同学展示财力"
+    }
+  ],
+  "limits": [
+    "两P全文机器稿已读，未逐句听校",
+    "未连续观看两段影片；仅影片边界和原课板书作业选帧已看",
+    "原课对成片为教师分析，不是原始创作记录",
+    "分角色单写等为本课推荐教法，未验证所有写作者适用"
+  ],
+  "frames": [
+    {
+      "part": 32,
+      "source_seconds": 1598,
+      "path": "frames/p032-1598.jpg",
+      "sha256": "71b3d10ac754e12825a73a9becd42cb6fbdd6a4f83a2400b1cc48dacc6a2e79a",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1656,
+      "path": "frames/p032-1656.jpg",
+      "sha256": "2769ce499add76ce6c6a31544a8773f02311ead46b78c1183e7b556ac00c3271",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1658,
+      "path": "frames/p032-1658.jpg",
+      "sha256": "636cc7b27adddcdfddf83494c0d7a108794fae6ccaede2993d25a1aca3f82ce1",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1660,
+      "path": "frames/p032-1660.jpg",
+      "sha256": "83202845c4759c29e6b2cd51404aba01a8e92e464516a2f2491e4fd7f6cdbbbb",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1816,
+      "path": "frames/p032-1816.jpg",
+      "sha256": "a994d5e1b161ad50728212150a981ce23d28375b4112c58556f91faff2f1c79d",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1818,
+      "path": "frames/p032-1818.jpg",
+      "sha256": "90b0ed3434d3f93e5e7820c991124bfce9e89d5d5ee51cd0e4f19d67a1c65277",
+      "visually_read": true
+    },
+    {
+      "part": 32,
+      "source_seconds": 1820,
+      "path": "frames/p032-1820.jpg",
+      "sha256": "efa489c9ed52d07b7d06e2b5b0a198cf2db5f7cf04e07f355159bc0562bab388",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2510,
+      "path": "frames/p033-2510.jpg",
+      "sha256": "a5fbb94586d2c17cd83b711337a5a76de2760ce8d5f7f3bf8e6bedf4c4cdcfa7",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2694,
+      "path": "frames/p033-2694.jpg",
+      "sha256": "785fcce1fae2f9a995fbbd730253eb65f7afb2042a6d42ff70cefd7468c5488d",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2696,
+      "path": "frames/p033-2696.jpg",
+      "sha256": "d1b219edbb6916d6193effd6b0c06a45b41fe2277ee089b77b444901ef58868b",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2846,
+      "path": "frames/p033-2846.jpg",
+      "sha256": "2908ee2002dd19cf308aad7b474b9718c9f13ce9b0260eba4efe3d89fd632dbb",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2848,
+      "path": "frames/p033-2848.jpg",
+      "sha256": "904d2dce6fbf065c0c082de9d9b8417db09a37789dbe66e46fcc57b4be5dd3c2",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2924,
+      "path": "frames/p033-2924.jpg",
+      "sha256": "ca453935823845890b85cf3b891ad465ba03ff0b828be673ac4a81b17d0d7d96",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2930,
+      "path": "frames/p033-2930.jpg",
+      "sha256": "db757c1790a8ca547cdbd8e633bf35ba06fb7c8518701b90404aa4ae27158e39",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2944,
+      "path": "frames/p033-2944.jpg",
+      "sha256": "1d4a838172127b7529c3885fd31bc7e7a5b5f634c279259da460dd61314a65d8",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2945,
+      "path": "frames/p033-2945.jpg",
+      "sha256": "27e1fa3f1b6acafd2e4903a1d6c5de35fd2cf09a7e6f85602e3dce7fe7e6cb77",
+      "visually_read": true
+    },
+    {
+      "part": 33,
+      "source_seconds": 2947,
+      "path": "frames/p033-2947.jpg",
+      "sha256": "c22b359a1ac76c2cb5f67881a360cbcb079894dfbccc44c7ab695371b7074c37",
+      "visually_read": true
+    }
+  ]
+}

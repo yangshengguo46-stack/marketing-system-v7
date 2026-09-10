@@ -1,0 +1,11 @@
+{
+  "frozen_at": "2026-09-09T12:56:59.200700+00:00",
+  "model": "gpt-6-astra",
+  "fork_turns": "none",
+  "inputs_sha256": {
+    "inputs/case-01.md": "71f09089a7f7b9d5a9d860da39c416d91b6c1ee69c4d54192b5f2ae37551fd45",
+    "inputs/case-02.md": "ab6b3111d1889d1b6e3c8982935b29120b07ad1bc6b799bbb8824731d6eb17cb",
+    "inputs/common.md": "0dce1b5608694ef5ff32f7a44d2bdf26e6541e995f9e0367cb3b2c0c56b7ba82"
+  },
+  "design": "same task and model; method inputs added only to assisted writers; no external feedback before first delivery"
+}

@@ -1,0 +1,51 @@
+{
+  "part": 81,
+  "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+  "state": "completed",
+  "started_at": "2026-09-06T11:38:18.385249+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 81,
+    "cid": 29818619846,
+    "title": "编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=81",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《蝴蝶效应》！反转 结构 悬疑 脑洞...这部电影值得你再刷N遍.mp4",
+    "sha256": "95a24a987c9ccb696791ea6c07c846456f31382b071c0171d1cac145b1f8a355",
+    "bytes": 138294007,
+    "mtime_ns": 1788682317182677205,
+    "actual_duration_seconds": 3142.989297
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 3142.983438,
+  "segment_count": 436,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T11:52:15.666528+00:00",
+  "elapsed_seconds": 837.277,
+  "completed_at": "2026-09-06T11:52:15.666504+00:00",
+  "text_characters": 14167,
+  "rtf": 0.266396,
+  "max_rss_bytes_macos": 615817216,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 3142.9834375,
+    "duration_delta_seconds": -0.00586,
+    "vad_speech_seconds": 2700.776,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p081.source-time.txt": "c194720389a34719827555ef1902fd57a4efa68f33364ccddf8ade968494b4e8",
+    "p081.source-time.srt": "82715efccfb17bd839dbe2c1356349651e16c1148d1e5fbca6f692a4adf617ed"
+  }
+}

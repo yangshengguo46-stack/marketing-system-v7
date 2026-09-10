@@ -1,0 +1,115 @@
+{
+  "checked_at_utc": "2026-09-08T01:59:58.959809+00:00",
+  "status": "passed",
+  "branch": "codex/marketing-work-chain",
+  "markdown_files_checked": 190,
+  "local_links_checked": 776,
+  "errors": [],
+  "story_versions_unchanged": [
+    {
+      "version": 1,
+      "sha256": "72e75fa80cf6de17971db88d009d1c87c6c08098e85ec3587c7d8af7965c90f0",
+      "unchanged": true
+    },
+    {
+      "version": 2,
+      "sha256": "3d08d5d6060dd2d22cb701ce653d543484f18bcb49b8f638f68a49055f23533c",
+      "unchanged": true
+    },
+    {
+      "version": 3,
+      "sha256": "618e9352e307b0a968d1d9931096c9ef6dea91f36038e82edd50e9f9df828585",
+      "unchanged": true
+    }
+  ],
+  "new_story_version": false,
+  "root_reread_source_windows": [
+    {
+      "part": 37,
+      "requested_start_seconds": 1104,
+      "requested_end_seconds": 1247,
+      "first_segment": 239,
+      "last_segment": 260,
+      "source_json_sha256": "8539f8e0efe8209bb04bb75529efb7c41b0aabedbffed5eae0bea2df1833f9ff"
+    },
+    {
+      "part": 44,
+      "requested_start_seconds": 2107,
+      "requested_end_seconds": 2198,
+      "first_segment": 473,
+      "last_segment": 499,
+      "source_json_sha256": "d586eca9e66ee2f6076463132e28d0bcfcc77ea4dad8d17ed39da13c71aa07ae"
+    },
+    {
+      "part": 44,
+      "requested_start_seconds": 2250,
+      "requested_end_seconds": 2447,
+      "first_segment": 513,
+      "last_segment": 561,
+      "source_json_sha256": "d586eca9e66ee2f6076463132e28d0bcfcc77ea4dad8d17ed39da13c71aa07ae"
+    },
+    {
+      "part": 45,
+      "requested_start_seconds": 1548,
+      "requested_end_seconds": 1622,
+      "first_segment": 344,
+      "last_segment": 355,
+      "source_json_sha256": "8977aeb355f7f1a1c71c803731a51f8048b92d1dde36c25ecd6f4935cd975fb4"
+    },
+    {
+      "part": 50,
+      "requested_start_seconds": 2505,
+      "requested_end_seconds": 2595,
+      "first_segment": 614,
+      "last_segment": 642,
+      "source_json_sha256": "dc6487a3f370441dc7387aeef955f59a31b10adf5c5c9b5cee39202063a2af0d"
+    },
+    {
+      "part": 50,
+      "requested_start_seconds": 4040,
+      "requested_end_seconds": 4480,
+      "first_segment": 1017,
+      "last_segment": 1134,
+      "source_json_sha256": "dc6487a3f370441dc7387aeef955f59a31b10adf5c5c9b5cee39202063a2af0d"
+    },
+    {
+      "part": 60,
+      "requested_start_seconds": 0,
+      "requested_end_seconds": 315,
+      "first_segment": 1,
+      "last_segment": 73,
+      "source_json_sha256": "a743e06764debe2928609d922c9f6defee6cd981e38dd86aad3f4e24de956634"
+    },
+    {
+      "part": 81,
+      "requested_start_seconds": 2880,
+      "requested_end_seconds": 3010,
+      "first_segment": 402,
+      "last_segment": 422,
+      "source_json_sha256": "45d147e09446e97d8038b5f297f44c7767103fa03078e882a39ae4ee39d03b2f"
+    },
+    {
+      "part": 92,
+      "requested_start_seconds": 2500,
+      "requested_end_seconds": 2629,
+      "first_segment": 440,
+      "last_segment": 454,
+      "source_json_sha256": "c1f5e6578b56e053515347427faf53906c965f6fc7597c9983a395bb8849b192"
+    }
+  ],
+  "source_review": "theme-source-review.md; targeted original time-transcript rereading and bounded cross-review, not new audiovisual verification",
+  "editorial_review": "story-center-review.md; independent model reading, no human quality acceptance",
+  "synthesis_corrections": [
+    "Attributed open-question writing allowance to project boundary, not a unified teacher rule.",
+    "Narrowed catalyst-protagonist source to P092 41:20-42:00."
+  ],
+  "git_diff_check_exit_code": 0,
+  "git_diff_check_output": "",
+  "runtime_and_testing": "Markdown and JSON records only. No product code changes, Rust tests or fmt rerun this round. No new native ARK writing/API trial, transcription or media generation.",
+  "limits": [
+    "Local links checked for existence only; external URLs and heading anchors not validated.",
+    "Source timestamps are machine transcription positions; no new full listening/visual checks.",
+    "New overall guidance is not yet tested through new story generation or reader feedback.",
+    "All prior draft and technical validation scopes remain unchanged; no commit, merge or push."
+  ]
+}

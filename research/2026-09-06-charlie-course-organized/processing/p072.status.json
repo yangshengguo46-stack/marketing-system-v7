@@ -1,0 +1,51 @@
+{
+  "part": 72,
+  "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+  "state": "completed",
+  "started_at": "2026-09-06T10:51:41.893196+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 72,
+    "cid": 26454394257,
+    "title": "【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=72",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/【专业编剧带你拉片】科幻神作！细读《星际穿越》，爱是唯一可以超越时间与空间的事.mp4",
+    "sha256": "8116f583120ffde48080157495b0d74c3a994677b25c7b3998da58445216bcf5",
+    "bytes": 121442267,
+    "mtime_ns": 1788682212691109732,
+    "actual_duration_seconds": 3136.742902
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 3136.73725,
+  "segment_count": 261,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T11:05:18.115193+00:00",
+  "elapsed_seconds": 816.213,
+  "completed_at": "2026-09-06T11:05:18.115166+00:00",
+  "text_characters": 15129,
+  "rtf": 0.260211,
+  "max_rss_bytes_macos": 590225408,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 3136.73725,
+    "duration_delta_seconds": -0.005652,
+    "vad_speech_seconds": 2805.71,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p072.source-time.txt": "da25fe0e8c23ed4ebe034668b557a068e2eb9b1e752c7de6e9e2b5f3883b56c2",
+    "p072.source-time.srt": "9a3c8dcbbc51f4f1d75cd32a4d5cf947ca99b4463e9201b79813e25496eba589"
+  }
+}

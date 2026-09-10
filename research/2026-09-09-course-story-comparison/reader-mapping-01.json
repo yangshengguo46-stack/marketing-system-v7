@@ -1,0 +1,12 @@
+{
+  "甲": {
+    "arm": "b",
+    "source": "research/2026-09-09-course-story-comparison/outputs/01-b/story.md",
+    "sha256": "cbf3e27608aaf59ca137a30fa09746e9a4e3d1610c74af7644f9da90dc22ac6e"
+  },
+  "乙": {
+    "arm": "a",
+    "source": "research/2026-09-09-course-story-comparison/outputs/01-a/story.md",
+    "sha256": "97e9247c77dbeef0757748ceaa42406691d22a5ac5496b8a707400e5c6c99e4e"
+  }
+}

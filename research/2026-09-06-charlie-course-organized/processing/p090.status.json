@@ -1,0 +1,51 @@
+{
+  "part": 90,
+  "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+  "state": "completed",
+  "started_at": "2026-09-06T12:01:22.882763+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 90,
+    "cid": 29821570920,
+    "title": "编剧视角拉片励志电影《肖申克的救赎》一",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=90",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片励志电影《肖申克的救赎》一.mp4",
+    "sha256": "795a8c00726c926edfb9f4415c18e0ac18c98063c72c8e3fbcb65db0f5cc303a",
+    "bytes": 30426927,
+    "mtime_ns": 1788682366589727150,
+    "actual_duration_seconds": 1036.586984
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 1036.58525,
+  "segment_count": 126,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T12:05:32.103754+00:00",
+  "elapsed_seconds": 249.218,
+  "completed_at": "2026-09-06T12:05:32.103732+00:00",
+  "text_characters": 4853,
+  "rtf": 0.240422,
+  "max_rss_bytes_macos": 694833152,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 1036.58525,
+    "duration_delta_seconds": -0.001734,
+    "vad_speech_seconds": 931.316,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p090.source-time.txt": "fdbf3dce7c7000a861c6bd5d0daafab29575bfab90f729c252ec1fabed3cf121",
+    "p090.source-time.srt": "511e4037da47c6f7e251d2975fb3f887f176c34e2b9bcf073bf2e4f82fc072d7"
+  }
+}

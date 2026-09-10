@@ -1,0 +1,12 @@
+{
+  "甲": {
+    "condition": "b",
+    "source": "research/2026-09-09-gpt6-business-baseline/b-work.md",
+    "sha256": "f49a7f473249e0b32e60185cb52cbc5a6f2a8b41d89d60b7e0dab1e1b27cedb2"
+  },
+  "乙": {
+    "condition": "a",
+    "source": "research/2026-09-09-gpt6-business-baseline/a-work.md",
+    "sha256": "24543ae1005fb72e050630ee1056b1f1c795c6e4c2f31c08045be7cf8766cc23"
+  }
+}

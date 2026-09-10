@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "4 frozen input hashes",
+    "6 original trial hashes/native draft texts",
+    "2 raw ASR artifact hash sets",
+    "22 authored Markdown files: local links",
+    "Lead/native final text: one terminal newline only",
+    "Python helper syntax checked before fmt",
+    "Swift helper compiled and actually processed 76 frames",
+    "just fmt exit0",
+    "git diff --check exit0"
+  ],
+  "scope": "Artifact/provenance and helper execution only; no story-quality or audience-effect pass",
+  "prior_check_corrections": [
+    "Python syntax checker was mistakenly invoked on Swift; corrected Python check passed, Swift was separately compiled/run",
+    "Initial link scan included automatically populated App Server state caches and third-party Markdown examples. Excluded those unrelated generated caches from authored-artifact link scope; prior output retained."
+  ]
+}

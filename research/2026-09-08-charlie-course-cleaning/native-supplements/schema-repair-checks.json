@@ -1,0 +1,21 @@
+{
+  "cases": [
+    {
+      "job": "p061-c002",
+      "native_raw_sha256": "5a577e649a766b49912696b86ef4156cbfcfab36deec8e5e922dcaebbae0b36a",
+      "recovered_blocks": 10,
+      "coverage_passed": true,
+      "all_non_structural_characters_preserved": true
+    },
+    {
+      "job": "p063-c001",
+      "native_raw_sha256": "1543933aa07fc8bf67ea964b7e5d3c7d62833d47950d3cbbd1a852907a32d717",
+      "recovered_blocks": 7,
+      "coverage_passed": true,
+      "all_non_structural_characters_preserved": true
+    }
+  ],
+  "root_cause": "Unescaped quotes made whole-document best-effort parsing put later blocks into an incorrect nesting level. Character preservation alone did not validate schema.",
+  "fix": "Parse explicit block boundaries independently, verify field types and complete contiguous coverage, and compare non-structural characters.",
+  "source": "https://github.com/mangiucugna/json_repair"
+}

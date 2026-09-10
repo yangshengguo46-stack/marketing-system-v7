@@ -1,0 +1,38 @@
+{
+  "thread_id": "01a07f13-6b60-74e3-90e0-d0a333a54f88",
+  "turn_start": {
+    "turn": {
+      "id": "01a07f13-6c5c-72f0-9f10-0539af5f831a",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "inProgress",
+      "error": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  },
+  "messages": [
+    "```json\n{\"blocks\":[{\"first_segment\":40,\"last_segment\":42,\"heading\":\"影片对白：客户的钱与华尔街第一条铁律\",\"text\":\"影片中播放对白。\"You got a girlfriend'm married\"〔待核，原词破碎〕——这个游戏就是把客户口袋里的钱挪进你自己口袋，但如果你同时能让客户也赚钱，对所有人都有利，correct？No。\\n\\n华尔街第一条铁律：不管你是沃伦·巴菲特还是吉米·巴菲特，没人知道股票会涨、会跌、横盘还是他妈打转，股票经纪人尤其不可能知道。那全是fugazi〔待核，原识别作fuhazi、fuzi isgezi、fuuzzzi等多个变体〕——是假的，是woozy，是fairy dust，它不存在，从未着陆过，什么都不是，不在元素周期表上，它他妈不是真的。\\n\\n〔现场反应：再问，没……嗯哼。〕\",\"corrections\":[{\"original\":\"Thereesaulationesa\",\"cleaned\":\"〔待核，原词破碎〕\",\"basis\":\"S40影片对白，机器转录严重破碎，无法辨认原词\"},{\"original\":\"everyonem\",\"cleaned\":\"everyone\",\"basis\":\"S40影片对白，末尾多出m，疑为转录粘连\"},{\"original\":\"fuhazi you know fuzi isgezi, it's a fake fuzi fuuzzzi\",\"cleaned\":\"fugazi, you know, fugazi, it's a fake, fugazi, fugazi〔待核，原词多次误识〕\",\"basis\":\"S41影片对白，影片中该词为fugazi（意大利裔美语俚语，意为'假的'），机器转录为多种变体\"},{\"original\":\"are in fucking circles\",\"cleaned\":\"or in fucking circles\",\"basis\":\"S41影片对白，are疑为or误识，原片台词为'sideways, or in fucking circles'\"}]},{\"first_segment\":43,\"last_segment\":45,\"heading\":\"影片对白：经纪人不创造任何东西，不让客户套现\",\"text\":\"我们不创造任何东西，我们不建造任何东西。所以如果你的客户八块钱买的股票涨到了十六，他高兴得要命，想套现、拿着钱跑回家——你不能让他那么做，因为那就变成真的了。你怎么办？你再给他一个绝妙的主意、一个特别的主意，另一个情境，另一只股票，让他把收益再投进去。然后他每一次都会答应，因为他们他妈上瘾了。你就一遍又一遍地这么干，与此同时他觉得自己在发大财——在账面上他确实在发——但你我这些经纪人，靠佣金每个月往家拿的是实打实的现金。\\n\\nRight.\",\"corrections\":[]},{\"first_segment\":46,\"last_segment\":54,\"heading\":\"影片对白：成功的两把钥匙之一——保持放松\",\"text\":\"\"太不可思议了，先生，我有多激动你都看不出来。\"\"你应该激动。做经纪人这行，成功的钥匙有两把。首先——你得保持放松。\"\\n\\n〔现场反应：你觉得……多多支狗哎〔待核，原词破碎〕。〕\\n\\n\"Yeah, how many times a week?\"\"Like three, three-four, three-four times maybe.\"\"把这个数字往上加加，在这行那是菜鸟的量。我自己一天至少两次，早上健完身一次，然后午饭后一次。\"\"真的？\"\"嗯。不是为了享受，是因为我他妈需要。\"\\n\\n\"You're dealing with〔待核，原词破碎：dayal high frequencies acidardeseing〕。\"\"This tip this prescription if you don't〔待核，原词破碎：happen run bathroom anyll be about money〕。\",\"corrections\":[{\"original\":\"多多支狗哎\",\"cleaned\":\"〔待核，原词破碎〕\",\"basis\":\"S49，机器转录破碎，无法辨认原词\"},{\"original\":\"dayal high frequencies acidardeseing\",\"cleaned\":\"〔待核，原词破碎〕\",\"basis\":\"S53影片对白，机器转录严重破碎，无法辨认原词\"},{\"original\":\"This tip this prescription if you dont happen run bathroom anyll be about money\",\"cleaned\":\"This tip this prescription if you don't〔待核，原词破碎〕\",\"basis\":\"S54影片对白，机器转录严重破碎，后半段无法辨认原词\"}]},{\"first_segment\":55,\"last_segment\":63,\"heading\":\"影片对白：成功的第二把钥匙——可卡因\",\"text\":\"这行成功的第二把钥匙就是这个小东西——可卡因。它能让你保持头脑清醒，还能让你的手指拨号更快，你猜怎么着，那对我有好处。\\n\\nYes。\\n\\n〔待核，原词破碎：Revols you follows keep the clients on the fairs will〕……公园全天候开放，24/7/365，每个十年、每个他妈的世纪都如此，这就是游戏的名字。\\n\\n〔现场反应：嗯，than you……嗯嗯……嗯嗯哼……嗯嗯嗯嗯嗯嗯……误。〕\",\"corrections\":[{\"original\":\"Revols you follows keep the clients on the fairs will\",\"cleaned\":\"〔待核，原词破碎〕\",\"basis\":\"S58影片对白，机器转录严重破碎，无法辨认原词，仅后半段'park is open 24/7/365'可辨\"}]},{\"first_segment\":64,\"last_segment\":64,\"heading\":\"老师点评：这才是真正的演技\",\"text\":\"包括评奖也是这样，总觉得挨打、受虐就是演技。其实不是——挨打受虐或者为角色牺牲，那是一种意志力。演技其实是你看这种戏，这才叫演技，这才是真正的影帝，能让你一秒入戏，让你相信他就是这个角色。包括迪卡普里奥在对面演出来的那种第一天上班的菜鸟——他们叫rookie——的那种尴尬，对吧？老板说一些很不着调的话，你的上司说一些很不着调的话，在公共场合行为很不雅，然后呢……\",\"corrections\":[{\"original\":\"迪卡布利奥\",\"cleaned\":\"迪卡普里奥\",\"basis\":\"S64，Leonardo DiCaprio的通用中文译名，机器稿误识\"}]}],\"uncertainties\":[\"S40 'You got a girlfriend'm married have Thereesaulationesa'——原词严重破碎，疑含人名或对话碎片，无法复原\",\"S41 fugazi一词机器转录为fuhazi、fuzi isgezi、fuuzzzi等多个变体，据影片台词订正但未逐句听校\",\"S49 '多多支狗哎'——无法辨认是中文反应还是英语碎片\",\"S53 'dayal high frequencies acidardeseing'——原词完全破碎，无法辨认\",\"S54 'happen run bathroom anyll be about money'——原词破碎，后半段无法辨认\",\"S58 'Revols you follows keep the clients on the fairs will'——原词破碎，仅后半句'park is open 24/7/365'可辨\",\"S59 'than you'疑为'thank you'误识，未确认\",\"S63 '误'——不确定是语气词还是'误'字\",\"S64 '对面'指片中与乔丹对戏的另一方，具体指哪个角色未在本段明确说明，需结合前后文确认\"]}\n```"
+  ],
+  "usage": {
+    "total": {
+      "totalTokens": 22080,
+      "inputTokens": 10034,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 12046,
+      "reasoningOutputTokens": 10490
+    },
+    "last": {
+      "totalTokens": 22080,
+      "inputTokens": 10034,
+      "cachedInputTokens": 8192,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 12046,
+      "reasoningOutputTokens": 10490
+    },
+    "modelContextWindow": 258400
+  },
+  "tool_items": []
+}

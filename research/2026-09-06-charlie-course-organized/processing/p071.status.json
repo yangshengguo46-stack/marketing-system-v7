@@ -1,0 +1,51 @@
+{
+  "part": 71,
+  "title": "编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））",
+  "state": "completed",
+  "started_at": "2026-09-06T10:43:37.970748+00:00",
+  "engine_id": "sensevoice-small-int8-2024-07-17-zh-itn-silero-stream-v1",
+  "source": {
+    "part": 71,
+    "cid": 29819406039,
+    "title": "编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=71",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《夏洛特烦恼》逐帧分析创作思路！全程干货拉满！（二））.mp4",
+    "sha256": "710425654af931bf89fb1426f13cf8505480a06f430a55bd147fcd8adc40c384",
+    "bytes": 58171584,
+    "mtime_ns": 1788682185151638081,
+    "actual_duration_seconds": 1143.44542
+  },
+  "review_status": "machine_asr_not_human_verified",
+  "disclaimer": "离线 ASR 机器转录，未人工听校；可能有错字、漏字或断句错误，不能直接等同于老师逐字原话。",
+  "decoded_audio_seconds": 1143.443438,
+  "segment_count": 97,
+  "source_integrity": "bytes_and_mtime_match_download_verification; sha256_reused_from_verified_manifest",
+  "updated_at": "2026-09-06T10:53:13.925317+00:00",
+  "elapsed_seconds": 575.947,
+  "completed_at": "2026-09-06T10:53:13.925293+00:00",
+  "text_characters": 6056,
+  "rtf": 0.503695,
+  "max_rss_bytes_macos": 609624064,
+  "coverage": {
+    "input_audio_decoded_from_seconds": 0,
+    "input_audio_decoded_through_seconds": 1143.4434375,
+    "duration_delta_seconds": -0.001982,
+    "vad_speech_seconds": 1069.19,
+    "full_input_processed": true,
+    "silence_and_non_speech_may_be_omitted_by_vad": true,
+    "not_a_human_full_listen_or_visual_review": true
+  },
+  "model": {
+    "path": "/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx",
+    "language": "zh",
+    "use_itn": true,
+    "asr_threads": 1,
+    "vad_config": "VadModelConfig(silero_vad=SileroVadModelConfig(model=\"/Users/yangyucheng/Documents/ChatGPT/第七版营销系统/research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=512, neg_threshold=-1), ten_vad=TenVadModelConfig(model=\"\", threshold=0.5, min_silence_duration=0.5, min_speech_duration=0.25, max_speech_duration=20, window_size=256), sample_rate=16000, num_threads=1, provider=\"cpu\", debug=False)",
+    "pcm_sample_rate": 16000
+  },
+  "timestamp_semantics": "VAD speech boundaries on original source audio timeline; token positions approximate, not manually aligned.",
+  "artifact_sha256": {
+    "p071.source-time.txt": "d9d318381b473bfe8207f0597c1c0ba12914a8ecea73533b9a251138936e8f54",
+    "p071.source-time.srt": "14746b72808728cac02e01995904b49d83d9a087d97d58447031b75184543ce2"
+  }
+}

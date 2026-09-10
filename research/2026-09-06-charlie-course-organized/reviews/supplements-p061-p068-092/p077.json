@@ -1,0 +1,186 @@
+{
+  "part": 77,
+  "title": "编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!",
+  "source": {
+    "part": 77,
+    "cid": 29816391796,
+    "title": "编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!",
+    "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=77",
+    "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/编剧视角拉片《闻香识女人》两个截然不同的灵魂在困境中相互救赎!.mp4",
+    "sha256": "5404854a0abc1bb04b5edf4650663402c69704a38afc4644b0391286503b5fb9",
+    "bytes": 142492402,
+    "mtime_ns": 1788682265634808339,
+    "actual_duration_seconds": 4321.172086
+  },
+  "full_transcript_read_parts": [
+    77
+  ],
+  "transcript_segment_count": 713,
+  "transcript_artifact_sha256": {
+    "p077.source-time.txt": "e4117d82ef2ad1d2cb4599fbe4b1449e6ae52a80116269c1a547a6b8d83df8bd",
+    "p077.source-time.srt": "aad9628ce4243389890d665738d3c73ea6779933a26ca65058916e3172a797de"
+  },
+  "sequential_read_final_journal_matches": true,
+  "teaching_nodes": [
+    {
+      "part": 77,
+      "start_seconds": 0,
+      "end_seconds": 160,
+      "label": "先拆信息包再判断类型与主题"
+    },
+    {
+      "part": 77,
+      "start_seconds": 161,
+      "end_seconds": 449,
+      "label": "人物处境及初次见面"
+    },
+    {
+      "part": 77,
+      "start_seconds": 449,
+      "end_seconds": 644,
+      "label": "学校困境、时限与共同旅程"
+    },
+    {
+      "part": 77,
+      "start_seconds": 648,
+      "end_seconds": 897,
+      "label": "价值观、学校问题与寻死计划"
+    },
+    {
+      "part": 77,
+      "start_seconds": 898,
+      "end_seconds": 1212,
+      "label": "具体帮助与家庭拜访使关系发展"
+    },
+    {
+      "part": 77,
+      "start_seconds": 1244,
+      "end_seconds": 1378,
+      "label": "电影争执片段"
+    },
+    {
+      "part": 77,
+      "start_seconds": 1381,
+      "end_seconds": 1572,
+      "label": "朋友式交流、困境、共谋与探戈"
+    },
+    {
+      "part": 77,
+      "start_seconds": 1573,
+      "end_seconds": 1765,
+      "label": "愿望完成后的失落及主动支持"
+    },
+    {
+      "part": 77,
+      "start_seconds": 1766,
+      "end_seconds": 2085,
+      "label": "互相支持度过两条危机及结尾行为"
+    },
+    {
+      "part": 77,
+      "start_seconds": 2087,
+      "end_seconds": 2340,
+      "label": "飞机上的价值观名场面"
+    },
+    {
+      "part": 77,
+      "start_seconds": 2341,
+      "end_seconds": 2711,
+      "label": "探戈及课堂异议"
+    },
+    {
+      "part": 77,
+      "start_seconds": 2715,
+      "end_seconds": 3037,
+      "label": "听证演讲播放"
+    },
+    {
+      "part": 77,
+      "start_seconds": 3042,
+      "end_seconds": 3479,
+      "label": "主题需同时解释两条困境"
+    },
+    {
+      "part": 77,
+      "start_seconds": 3480,
+      "end_seconds": 3697,
+      "label": "三类故事机制与邻近作品比较"
+    },
+    {
+      "part": 77,
+      "start_seconds": 3698,
+      "end_seconds": 4082,
+      "label": "互补保留共同点，以处境产生差异"
+    },
+    {
+      "part": 77,
+      "start_seconds": 4083,
+      "end_seconds": 4315,
+      "label": "联系具体受众处境、延伸建议与反绝对化"
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "part": 77,
+      "task": "根据两条人物困境及演讲讨论主题",
+      "start_seconds": 3248,
+      "end_seconds": 3479,
+      "submission_spec": "课堂讨论、记笔记或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "当堂回应与老师分析，不是实际新作业提交后的讲评",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 77,
+      "task": "比较三部影片中伙伴、变迁与公路元素",
+      "start_seconds": 3536,
+      "end_seconds": 3697,
+      "submission_spec": "课堂讨论、记笔记或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "当堂回应与老师分析，不是实际新作业提交后的讲评",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 77,
+      "task": "记录人物互补原则并延伸观看推荐电影",
+      "start_seconds": 3725,
+      "end_seconds": 3730,
+      "submission_spec": "课堂讨论、记笔记或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "当堂回应与老师分析，不是实际新作业提交后的讲评",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    },
+    {
+      "kind": "classroom_exercise",
+      "part": 77,
+      "task": "自行思考生活处境，延伸观看《触不可及》《绿皮书》《花生酱猎鹰》",
+      "start_seconds": 4172,
+      "end_seconds": 4315,
+      "submission_spec": "课堂讨论、记笔记或延伸观看，未规定独立提交、字数、期限",
+      "teacher_review": "当堂回应与老师分析，不是实际新作业提交后的讲评",
+      "uncertainty": "完整机器稿已读，未逐句听校"
+    }
+  ],
+  "examples": [
+    {
+      "label": "双主角困难与共同选择的对应",
+      "source_type": "teacher_retroactive_film_analysis"
+    },
+    {
+      "label": "互补人物保留共同优点，用处境制造差异",
+      "source_type": "teacher_correction_of_student_interpretation"
+    }
+  ],
+  "asr_quality": {
+    "full_audio_input_processed": true,
+    "full_machine_transcript_read": true,
+    "human_full_listen": false,
+    "film_excerpts_fully_visually_reviewed": false,
+    "notes": "英文片段识别破碎，不能重构完整表演。文化与观众判断仅是教师观点，未验证。"
+  },
+  "limits": [
+    "未找到新独立提交作业",
+    "案例拆分31包不作配额",
+    "类型组合与人生困境不保证观众效果或商业表现"
+  ]
+}

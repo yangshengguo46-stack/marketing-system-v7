@@ -1,0 +1,266 @@
+{
+  "lesson": 16,
+  "source_parts": [
+    {
+      "part": 38,
+      "source_json_sha256": "a9cd0b021c83cb6a2de6e02ef77017fea3e3034848da4ca198707c0f31f15965",
+      "segment_count": 790
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L16-B001",
+      "part": 38,
+      "first_segment": 1,
+      "last_segment": 20,
+      "heading": "继续学习，也可以随时动笔",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B002",
+      "part": 38,
+      "first_segment": 21,
+      "last_segment": 63,
+      "heading": "普通人能不能学会编剧：减肥的类比",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B003",
+      "part": 38,
+      "first_segment": 64,
+      "last_segment": 116,
+      "heading": "捷径、天赋与教练能够做的事",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B004",
+      "part": 38,
+      "first_segment": 117,
+      "last_segment": 173,
+      "heading": "行业忙碌与前辈对职业的尖刻分类",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B005",
+      "part": 38,
+      "first_segment": 174,
+      "last_segment": 230,
+      "heading": "讲师为何选择安心做手艺人",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "颜值",
+          "cleaned": "《言志》",
+          "basis": "同段明确诗题和连续四句"
+        },
+        {
+          "original": "青山脉／商故／做禅",
+          "cleaned": "青山卖／商贾／坐禅",
+          "basis": "同音字与讲师卖画、不做买卖及修禅解释相互支持"
+        },
+        {
+          "original": "画长锦促",
+          "cleaned": "花团锦簇",
+          "basis": "名声排场语境"
+        }
+      ]
+    },
+    {
+      "id": "L16-B006",
+      "part": 38,
+      "first_segment": 231,
+      "last_segment": 280,
+      "heading": "实战课区分事前知识与事后知识",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B007",
+      "part": 38,
+      "first_segment": 281,
+      "last_segment": 328,
+      "heading": "分类有研究价值，实战要能在写之前帮上忙",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B008",
+      "part": 38,
+      "first_segment": 329,
+      "last_segment": 381,
+      "heading": "悬念的第一要素：未知性",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "悬而未觉／悬肉一绝",
+          "cleaned": "悬而未决",
+          "basis": "悬念的字面定义与后续解释"
+        },
+        {
+          "original": "同步游轮",
+          "cleaned": "《恐怖游轮》",
+          "basis": "S361、362明确片名"
+        },
+        {
+          "original": "旋律",
+          "cleaned": "悬念",
+          "basis": "本节持续定义悬念，与反转相区分"
+        }
+      ]
+    },
+    {
+      "id": "L16-B009",
+      "part": 38,
+      "first_segment": 382,
+      "last_segment": 398,
+      "heading": "第二要素：给观众可以猜测的可能性",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B010",
+      "part": 38,
+      "first_segment": 399,
+      "last_segment": 421,
+      "heading": "第三要素：压迫感使问题不能被轻易放下",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B011",
+      "part": 38,
+      "first_segment": 422,
+      "last_segment": 445,
+      "heading": "桌下炸弹如何改变一场爱情对话",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B012",
+      "part": 38,
+      "first_segment": 446,
+      "last_segment": 512,
+      "heading": "制造悬念的第一种办法：观众失去控制感",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "熄火／识控",
+          "cleaned": "失控",
+          "basis": "S462、467明确说失控及失去控制感"
+        }
+      ]
+    },
+    {
+      "id": "L16-B013",
+      "part": 38,
+      "first_segment": 513,
+      "last_segment": 540,
+      "heading": "第二、第三种：角色落后，或角色与观众一起失控",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "决策失候／角色时候／同时指控",
+          "cleaned": "角色失控／同时失控",
+          "basis": "与观众信息多寡相对的三种方法语境"
+        }
+      ]
+    },
+    {
+      "id": "L16-B014",
+      "part": 38,
+      "first_segment": 541,
+      "last_segment": 567,
+      "heading": "三种失控与大中小悬念套接",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B015",
+      "part": 38,
+      "first_segment": 568,
+      "last_segment": 613,
+      "heading": "反转不是悬念；误导与隐藏信息是两种办法",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B016",
+      "part": 38,
+      "first_segment": 614,
+      "last_segment": 676,
+      "heading": "公交车上的老太太：关键背景如何改变理解",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B017",
+      "part": 38,
+      "first_segment": 677,
+      "last_segment": 703,
+      "heading": "从冲突到帮助；悬念公开挂问，反转暗藏信息",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B018",
+      "part": 38,
+      "first_segment": 704,
+      "last_segment": 733,
+      "heading": "讲师记忆中的《盲侠座头市》与被误导的感觉",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "盲侠做头饰／盲瞎做头事",
+          "cleaned": "《盲侠座头市》〔版本待核〕",
+          "basis": "同段日本盲武士片名语音及既有课名语境"
+        },
+        {
+          "original": "听声变位",
+          "cleaned": "听声辨位",
+          "basis": "依声音判断对手位置的连续解释"
+        },
+        {
+          "original": "放开死了",
+          "cleaned": "反派死了",
+          "basis": "S721–726最终决斗、一刀致死的明确语境"
+        }
+      ]
+    },
+    {
+      "id": "L16-B019",
+      "part": 38,
+      "first_segment": 734,
+      "last_segment": 775,
+      "heading": "悬念与反转的共同风险：像放风筝一样控制距离",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L16-B020",
+      "part": 38,
+      "first_segment": 776,
+      "last_segment": 790,
+      "heading": "结课：可以短暂让观众失控，不能失去观众",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "待核：P038 S164“穿户”、S236–238“额乐金德”、理论史人名“乔治普尔地/普尔帝”“卡罗科奇”；理论分类数量及归属未核。",
+    "P038 S703“它不是减法”与同句前文相反，正文保留否定矛盾；S749车上人物指代不一。",
+    "《盲侠座头市》为讲师自述二十多年前观影回忆，行动目标本就记不清，具体版本及结局未核。公交老太太例子保留投币两元改老年卡的现场改设，不转写为真实新闻或地方政策。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第16课.md",
+  "output_sha256": "30d9dae97e95251720a0490fb8c58e89abe2033942e3459b1d5e8222052747a8",
+  "reader_navigation_update": {
+    "previous_output_sha256": "ec921a6112be3d832dfc0127ae1d592792ebf5aa753059d5c4c71264677e5033",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

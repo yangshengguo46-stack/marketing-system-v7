@@ -1,0 +1,296 @@
+{
+  "lesson": 22,
+  "source_parts": [
+    {
+      "part": 46,
+      "source_json_sha256": "a1c694ce8a2557c771b603c644f0938e9e84a494af3bdbc816a9a0407bd2202f",
+      "segment_count": 496
+    },
+    {
+      "part": 47,
+      "source_json_sha256": "25a2a7f36c88082433d106fdefc5ae16245ca289340ad0483e7cf275c16e74f3",
+      "segment_count": 376
+    }
+  ],
+  "blocks": [
+    {
+      "id": "L22-B001",
+      "part": 46,
+      "first_segment": 1,
+      "last_segment": 37,
+      "heading": "开场：棉袄、帽子与不要送礼",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B002",
+      "part": 46,
+      "first_segment": 38,
+      "last_segment": 60,
+      "heading": "班委、教务支持与恢复作业的安排",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B003",
+      "part": 46,
+      "first_segment": 61,
+      "last_segment": 117,
+      "heading": "高潮不能只写成“英勇搏斗，战胜坏人”",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "五指／无指／吴指",
+          "cleaned": "武指（武术指导）",
+          "basis": "连续讨论动作戏分工。"
+        },
+        {
+          "original": "三布式／思耐德",
+          "cleaned": "三幕式／斯奈德",
+          "basis": "结构及节拍器语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L22-B004",
+      "part": 46,
+      "first_segment": 118,
+      "last_segment": 157,
+      "heading": "为什么结尾的解决如此重要",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B005",
+      "part": 46,
+      "first_segment": 158,
+      "last_segment": 199,
+      "heading": "先想高潮还是边写边解决：两种工作路径",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B006",
+      "part": 46,
+      "first_segment": 200,
+      "last_segment": 226,
+      "heading": "第一项：以未曾想到的方式满足期待",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B007",
+      "part": 46,
+      "first_segment": 227,
+      "last_segment": 248,
+      "heading": "第二项：节奏加快，情绪螺旋上升",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B008",
+      "part": 46,
+      "first_segment": 249,
+      "last_segment": 293,
+      "heading": "第三、四项：兑现伏笔，再发生有铺垫的意外",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B009",
+      "part": 46,
+      "first_segment": 294,
+      "last_segment": 310,
+      "heading": "第五项：把烈度真正用到高潮里",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B010",
+      "part": 46,
+      "first_segment": 311,
+      "last_segment": 338,
+      "heading": "第六项：危机中的重大抉择与自我牺牲",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B011",
+      "part": 46,
+      "first_segment": 339,
+      "last_segment": 365,
+      "heading": "主角亲自解决：从既有条件中挖掘潜力",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B012",
+      "part": 46,
+      "first_segment": 366,
+      "last_segment": 409,
+      "heading": "第七项：A故事与B故事在解决中合题",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B013",
+      "part": 46,
+      "first_segment": 410,
+      "last_segment": 419,
+      "heading": "先从文戏看高潮：《定制伴郎》",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": [
+        {
+          "original": "定制霸郎／定制半拉",
+          "cleaned": "《定制伴郎》",
+          "basis": "后文清晰重复片名。"
+        },
+        {
+          "original": "海文哈特",
+          "cleaned": "凯文·哈特",
+          "basis": "片名与演员语境明确。"
+        }
+      ]
+    },
+    {
+      "id": "L22-B014",
+      "part": 46,
+      "first_segment": 420,
+      "last_segment": 460,
+      "heading": "播放片段：婚礼假象破裂，关系重新确认",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B015",
+      "part": 46,
+      "first_segment": 461,
+      "last_segment": 482,
+      "heading": "婚礼为什么能成为高潮：失控、反转与主动放弃",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B016",
+      "part": 46,
+      "first_segment": 483,
+      "last_segment": 496,
+      "heading": "假朋友变成真朋友：舍弃A，完成B",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B017",
+      "part": 47,
+      "first_segment": 1,
+      "last_segment": 90,
+      "heading": "《肖申克的救赎》播放：罪责、希望与离开的约定",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B018",
+      "part": 47,
+      "first_segment": 91,
+      "last_segment": 106,
+      "heading": "播放续段：越过污水通道，逃离监狱",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B019",
+      "part": 47,
+      "first_segment": 107,
+      "last_segment": 152,
+      "heading": "越狱与救赎：外在自由、心灵自由",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B020",
+      "part": 47,
+      "first_segment": 153,
+      "last_segment": 169,
+      "heading": "救赎也涉及其他人物，以及转向下一个例子",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B021",
+      "part": 47,
+      "first_segment": 170,
+      "last_segment": 236,
+      "heading": "《阳光小美女》播放：比赛与家庭的选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B022",
+      "part": 47,
+      "first_segment": 237,
+      "last_segment": 267,
+      "heading": "一家人的困境，怎样在支持女孩时得到回应",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B023",
+      "part": 47,
+      "first_segment": 268,
+      "last_segment": 283,
+      "heading": "外界认可与自我认可：两种合题解释",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B024",
+      "part": 47,
+      "first_segment": 284,
+      "last_segment": 315,
+      "heading": "《加勒比海盗》播放：最后的动作对抗",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B025",
+      "part": 47,
+      "first_segment": 316,
+      "last_segment": 334,
+      "heading": "藏宝洞决战：打斗中仍有意外与人物选择",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B026",
+      "part": 47,
+      "first_segment": 335,
+      "last_segment": 351,
+      "heading": "找爱人与找自己：身份成为取胜的条件",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    },
+    {
+      "id": "L22-B027",
+      "part": 47,
+      "first_segment": 352,
+      "last_segment": 376,
+      "heading": "本课作业：以第三人称写一位家人的故事",
+      "disposition": "正文清洗，保留论证、例子及问答，合并口头重复",
+      "corrections": []
+    }
+  ],
+  "limits": [
+    "依据本课全部机器ASR顺读清洗；未逐句听校，非讲师逐字原话。",
+    "源时间为各P内部ASR/VAD边界；段落覆盖不能证明原音视频无漏听。",
+    "影片剧情、行业判断、社会及历史主张均为讲师课堂转述，未外部核验。",
+    "电影播放中英语、音乐和空白识别较多；只保留可辨信息与讲师紧接的分析，没有补齐画面或台词。",
+    "《阳光小美女》儿童表演仅保留非性化的比赛及家庭冲突说明；没有展开成人动作。",
+    "作业仅为第三人称写一位家人，未新增数量、篇幅或期限。"
+  ],
+  "output": "output/course-learning/charlie-20260906/清洗讲义/第22课.md",
+  "output_sha256": "8299442bf2990b8dc60107638c13977d678ab1baab49ca44e0ba948b745ba4f7",
+  "reader_navigation_update": {
+    "previous_output_sha256": "de399ec0bcce0479bd341ffb7a180c3523cb08a8e343390a39a08438000324e4",
+    "change": "Reader navigation only; lecture body unchanged"
+  }
+}

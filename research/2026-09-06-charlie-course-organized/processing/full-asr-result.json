@@ -1,0 +1,48 @@
+{
+  "completed_parts": 92,
+  "decoded_audio_seconds": 226737.469375,
+  "segment_count": 42340,
+  "text_characters": 938432,
+  "initial_batch_wall_seconds": 8387.276,
+  "aggregate_audio_seconds_per_wall_second": 27.034,
+  "verification_complete": true,
+  "verification_failures": [],
+  "resumed_reused_parts": 92,
+  "resumed_queued_parts": 0,
+  "resumed_tasks": 0,
+  "reviewed_supplement_parts": [
+    1,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    70,
+    71,
+    73,
+    76,
+    78,
+    80,
+    82,
+    84,
+    86,
+    89
+  ],
+  "output_contract": {
+    "final_raw": "transcripts/pNNN.json",
+    "timestamp_text": "transcripts/pNNN.source-time.txt",
+    "subtitles": "transcripts/pNNN.source-time.srt",
+    "incremental_journal": "processing/pNNN.segments.jsonl",
+    "part_status": "processing/pNNN.status.json"
+  },
+  "source_integrity_policy": "Original MP4/model caches retained. Manifest source SHA256 reused; source size/mtime checked by transcription. Full source hashes were not recomputed by final verification.",
+  "limits": [
+    "Machine ASR not human-listened or word-accuracy scored.",
+    "VAD segment source timestamps, not forced-aligned word timestamps.",
+    "Full decoded input coverage is not a claim of complete or accurate speech recognition.",
+    "Korean/English source-film clips may contain garbled text; course-card summaries rely on readable continuous Chinese teaching.",
+    "Assignment completeness comes from sequential machine-transcript reading, not keyword scanning or this technical audit."
+  ],
+  "remaining_free_gib": 23.45
+}

@@ -1,0 +1,130 @@
+{
+  "lesson": 20,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 43,
+      "title": "二十课-编剧拉片20",
+      "cid": 227072905,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=43",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/二十课-编剧拉片20.mp4",
+      "sha256": "e4033027c4ed5f08d60c527e2f9eef2120480a49d99f9a029e5b32cbdcdca59c",
+      "duration_seconds": 4218
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "课程进入随实践问题补充的阶段；实验班与考试情况回顾",
+      "part": 43,
+      "start_seconds": 11,
+      "end_seconds": 508
+    },
+    {
+      "label": "旧考试题一：给爸爸接女儿放学增加烈度；方向与评分说明",
+      "part": 43,
+      "start_seconds": 512,
+      "end_seconds": 787
+    },
+    {
+      "label": "旧考试题二：给脏碗图配感人至深旁白；示范和评分说明",
+      "part": 43,
+      "start_seconds": 790,
+      "end_seconds": 1050
+    },
+    {
+      "label": "作者电影讨论与本课商业编剧学习范围；拉片要有重点",
+      "part": 43,
+      "start_seconds": 1053,
+      "end_seconds": 1448
+    },
+    {
+      "label": "《阿凡达》故事脉络；结构即设定与对抗的骨架",
+      "part": 43,
+      "start_seconds": 1456,
+      "end_seconds": 2248
+    },
+    {
+      "label": "种族/立场中间人、AB故事、人物弧线与配角对照",
+      "part": 43,
+      "start_seconds": 2249,
+      "end_seconds": 2572
+    },
+    {
+      "label": "奇幻想象的可分析方法、穿越机制与两次抉择",
+      "part": 43,
+      "start_seconds": 2574,
+      "end_seconds": 2882
+    },
+    {
+      "label": "从整体挑结构问题并设想改写；承認作品取舍未知",
+      "part": 43,
+      "start_seconds": 2884,
+      "end_seconds": 3625
+    },
+    {
+      "label": "中点三场戏：虚假胜利与之后转折；节拍分析演示",
+      "part": 43,
+      "start_seconds": 3628,
+      "end_seconds": 4159
+    },
+    {
+      "label": "课后练习：先拉《加勒比海盗》，后与老师讲解对照",
+      "part": 43,
+      "start_seconds": 4182,
+      "end_seconds": 4211
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "给“爸爸接女儿放学”这个单个事件增加烈度；此次题目暂不考虑整体人设、故事背景和剧本具体情况。",
+      "part": 43,
+      "start_seconds": 517,
+      "end_seconds": 787,
+      "submission_spec": "这是此前实验班选拔考试题，课中未展示原卷字数或格式要求。",
+      "teacher_review": "从对手、代价/奖励、阻力、时间锁等数个方向写即有机会得满分；自身阻力（如走错学校）还可带出父亲人设。老师说约半数满分。",
+      "uncertainty": "旧题回顾，非本课新交作业；12:55–13:06为评分口述。"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "给课中显示的一张洗碗槽脏碗图片配一段“感人至深的旁白”。",
+      "part": 43,
+      "start_seconds": 790,
+      "end_seconds": 1050,
+      "submission_spec": "旁白文本；没有口述字数要求。题图已保存原帧 p043-at-822s.jpg。",
+      "teacher_review": "有学生写的不是旁白；仅直说奶奶去世的答案得分但未满分。老师用丧偶女性回顾伴侣承诺、最后揭示抗洪牺牲作示范，比较含蓄揭示与情感力量。",
+      "uncertainty": "此前第二次考试的一题回顾；评分是老师对此题的偏好，不能推出所有感人故事都必须死亡。"
+    },
+    {
+      "kind": "explicit_assignment",
+      "task": "自己先拉《加勒比海盗》，分析其剧本结构与AB故事，随后与老师拟在下节课或直播给出的讲解比较。",
+      "part": 43,
+      "start_seconds": 4182,
+      "end_seconds": 4211,
+      "submission_spec": "推荐课后自行观看并拉《加勒比海盗》，分析结构与AB后同老师后续讲法对照；未规定书面交稿格式、字数、截止日期或提交渠道。",
+      "teacher_review": "后续第21课 P45 04:06–09:48实际回顾《加勒比海盗》主角/动机/首尾结构，05:22–05:26明确回指“我让大家拉片了”；未展示个别学生答案或逐份评分。",
+      "uncertainty": "开头是“我推荐大家”，属于明确留出的推荐练习，未称强制作业、未要求提交或规定篇幅；没有点明系列第几部。",
+      "source_excerpt": "我推荐大家自己去拉一下。加勒比海盗。……你们去拉一下，然后回头我们下节课呀或者是直播的时候……你自己拉的和我说的一不一样。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "按本课整体结构和节拍思路，继续自行研究《阿凡达》的其他场次。",
+      "part": 43,
+      "start_seconds": 4151,
+      "end_seconds": 4178,
+      "submission_spec": null,
+      "teacher_review": null,
+      "uncertainty": "课堂延伸建议，未要求提交。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    43
+  ],
+  "limits": [
+    "P43全文机器稿已读，未逐句人工听校。",
+    "两道考试题确为过往试题回顾，不能列为第20课新布置。",
+    "作业关键句与脏碗题图已核原视频帧。",
+    "电影技术史、主创真实考虑和市场效果未经外部核验；仅保留为课堂分析的边界。"
+  ],
+  "explicit_assignment_status": "有明确留出的推荐练习：《加勒比海盗》拉片；没有提交格式或硬性完成要求。"
+}

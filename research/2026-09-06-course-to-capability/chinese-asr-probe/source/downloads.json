@@ -1,0 +1,48 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/QwenAudio/SenseVoice/main/README.md",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/source/sensevoice-repository-readme.md",
+    "exit_code": 0,
+    "elapsed_seconds": 0.7333750040270388,
+    "bytes": 26173,
+    "sha256": "740d6fcd5879214c65daca8e5f2539a388c6f8e49e9af446a2e72cb857c2f9a8"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/v1.13.7/python-api-examples/generate-subtitles.py",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/source/generate-subtitles.py",
+    "exit_code": 0,
+    "elapsed_seconds": 0.6248379739990924,
+    "bytes": 26377,
+    "sha256": "f4c387a4981da2556db0069acf383e0ab8318e40806a8426c8ddc95b46c2e9ac"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/k2-fsa/sherpa/master/docs/source/onnx/sense-voice/python-api.rst",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/source/sense-voice-python-api.rst",
+    "exit_code": 0,
+    "elapsed_seconds": 0.8588931929843966,
+    "bytes": 16438,
+    "sha256": "18cfa0b7b84735e5229f3243e079ad19b5c896717e538212986d1c9dea5204e9"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/k2-fsa/sherpa/master/docs/source/onnx/sense-voice/pretrained.rst",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/source/sense-voice-pretrained.rst",
+    "exit_code": 0,
+    "elapsed_seconds": 0.6884936530259438,
+    "bytes": 31070,
+    "sha256": "f3bf36ad097ef66d03a721502411d77d16dbbbf2a16f7aa3715c92ce9ca4b860"
+  },
+  {
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/models/silero_vad.onnx",
+    "exit_code": 0,
+    "elapsed_seconds": 69.5585928579967,
+    "bytes": 643854,
+    "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+  },
+  {
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2",
+    "file": "research/2026-09-06-course-to-capability/chinese-asr-probe/models/sensevoice-int8.tar.bz2",
+    "exit_code": -15,
+    "elapsed_seconds": 251.52913780900417
+  }
+]

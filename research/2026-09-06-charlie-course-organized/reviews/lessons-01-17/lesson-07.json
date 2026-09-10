@@ -1,0 +1,101 @@
+{
+  "lesson": 7,
+  "title": "拿事儿说话",
+  "parts": [
+    14
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    14
+  ],
+  "teaching_nodes": [
+    {
+      "label": "梗概到大纲的明确衔接",
+      "part": 14,
+      "start_seconds": 3.366,
+      "end_seconds": 175.212
+    },
+    {
+      "label": "抽象设定必须变成事件",
+      "part": 14,
+      "start_seconds": 176.262,
+      "end_seconds": 408.62
+    },
+    {
+      "label": "三幕及四段事件定位",
+      "part": 14,
+      "start_seconds": 409.222,
+      "end_seconds": 599.564
+    },
+    {
+      "label": "五关键事件骨架",
+      "part": 14,
+      "start_seconds": 600.486,
+      "end_seconds": 843.884
+    },
+    {
+      "label": "八项纵向与五事件横向",
+      "part": 14,
+      "start_seconds": 846.47,
+      "end_seconds": 1074.86
+    },
+    {
+      "label": "表格的发展变化与课后尝试",
+      "part": 14,
+      "start_seconds": 1075.59,
+      "end_seconds": 1177.932
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "prior_assignment_recap",
+      "task": "此前约1500字八要素故事是梗概，带入大纲阶段",
+      "part": 14,
+      "start_seconds": 16.678,
+      "end_seconds": 49.868,
+      "asr_excerpt": "写1个1000字到2000字，1500左右吧…那个东西是个梗盖…你们现在手里的那个东西叫个梗盖",
+      "submission_spec": "复用第5课原稿",
+      "teacher_review": "说明旧作业用途，未逐稿点评",
+      "uncertainty": "梗盖为机器误字"
+    },
+    {
+      "kind": "explicit_assignment",
+      "task": "回去用自己的梗概尝试本课事件与八项发展表，将描述落实为事，向大纲推进",
+      "part": 14,
+      "start_seconds": 1168.198,
+      "end_seconds": 1175.788,
+      "asr_excerpt": "我们下节课再详细说…记住这个表格啊，自己回去比划比划",
+      "submission_spec": "未规定本次必须交一万字全文；未规定表格文件格式、渠道、期限；万字纲是发展目标",
+      "teacher_review": "第8课p15细化十序列，p16–17用警察案例示范；p17结尾另指定本课警察故事为大纲作业题材，无逐份评表承诺",
+      "uncertainty": "明确课后尝试要求，非结尾用“作业”标题布置；原字幕已核实。"
+    }
+  ],
+  "limits": [
+    "全文机器稿已读，未逐句听校",
+    "3帧原画面已视觉核对",
+    "表格是教学示意，未补成标准模板"
+  ],
+  "frames": [
+    {
+      "part": 14,
+      "source_seconds": 1120,
+      "path": "frames/p014-1120.jpg",
+      "sha256": "3f078c7f1916908a9ff0ef6d2d24868716f2ddd639d4e68d3b7675a4efd9b35b",
+      "visually_read": true
+    },
+    {
+      "part": 14,
+      "source_seconds": 1132,
+      "path": "frames/p014-1132.jpg",
+      "sha256": "0c6b056f0551af6eba9f3d3b3fc2ba342da93d5a166abc13e4e3f2e49a20b679",
+      "visually_read": true
+    },
+    {
+      "part": 14,
+      "source_seconds": 1173,
+      "path": "frames/p014-1173.jpg",
+      "sha256": "da2522afcc3bb05a64be80ac7062b2a80f937f9ddea0ae910a3059ebe81ed708",
+      "visually_read": true
+    }
+  ]
+}

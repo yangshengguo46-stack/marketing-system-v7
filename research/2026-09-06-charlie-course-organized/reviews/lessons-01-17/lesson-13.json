@@ -1,0 +1,231 @@
+{
+  "lesson": 13,
+  "title": "电视剧",
+  "parts": [
+    28,
+    29,
+    30,
+    31
+  ],
+  "review_state": "full_asr_read",
+  "full_transcript_read_parts": [
+    28,
+    29,
+    30,
+    31
+  ],
+  "teaching_nodes": [
+    {
+      "label": "先学电影基础与形式选择",
+      "part": 28,
+      "start_seconds": 3,
+      "end_seconds": 347
+    },
+    {
+      "label": "传统商业电视模型",
+      "part": 28,
+      "start_seconds": 349,
+      "end_seconds": 579
+    },
+    {
+      "label": "实操教学取向",
+      "part": 28,
+      "start_seconds": 581,
+      "end_seconds": 940
+    },
+    {
+      "label": "连续方式",
+      "part": 28,
+      "start_seconds": 941,
+      "end_seconds": 1041
+    },
+    {
+      "label": "个人观看史与刘老根例",
+      "part": 28,
+      "start_seconds": 1043,
+      "end_seconds": 1861
+    },
+    {
+      "label": "行业回顾延续",
+      "part": 29,
+      "start_seconds": 4,
+      "end_seconds": 191
+    },
+    {
+      "label": "送审回忆与不确定性旁论",
+      "part": 29,
+      "start_seconds": 193,
+      "end_seconds": 728
+    },
+    {
+      "label": "点播付费的形态变化",
+      "part": 29,
+      "start_seconds": 729,
+      "end_seconds": 848
+    },
+    {
+      "label": "技术机会与平台经历",
+      "part": 29,
+      "start_seconds": 850,
+      "end_seconds": 1481
+    },
+    {
+      "label": "多线与编织",
+      "part": 30,
+      "start_seconds": 7,
+      "end_seconds": 260
+    },
+    {
+      "label": "整剧人物表",
+      "part": 30,
+      "start_seconds": 274,
+      "end_seconds": 456
+    },
+    {
+      "label": "主角群与主副线",
+      "part": 30,
+      "start_seconds": 458,
+      "end_seconds": 839
+    },
+    {
+      "label": "绝命毒师对照",
+      "part": 30,
+      "start_seconds": 851,
+      "end_seconds": 1079
+    },
+    {
+      "label": "独立关系线与长篇序列",
+      "part": 30,
+      "start_seconds": 1080,
+      "end_seconds": 1570
+    },
+    {
+      "label": "单集任务转事件",
+      "part": 30,
+      "start_seconds": 1572,
+      "end_seconds": 1810
+    },
+    {
+      "label": "弧线重复与切片组织",
+      "part": 31,
+      "start_seconds": 3,
+      "end_seconds": 317
+    },
+    {
+      "label": "类型嵌入与反复推进",
+      "part": 31,
+      "start_seconds": 319,
+      "end_seconds": 511
+    },
+    {
+      "label": "第一集避免履历堆积",
+      "part": 31,
+      "start_seconds": 511,
+      "end_seconds": 688
+    },
+    {
+      "label": "经典叙事与长时段群像",
+      "part": 31,
+      "start_seconds": 692,
+      "end_seconds": 1111
+    },
+    {
+      "label": "单元剧与情景剧",
+      "part": 31,
+      "start_seconds": 1114,
+      "end_seconds": 1595
+    },
+    {
+      "label": "单集看点和追看牵挂对照",
+      "part": 31,
+      "start_seconds": 1596,
+      "end_seconds": 1715
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "可翻看编辑部的故事、我爱我家",
+      "part": 28,
+      "start_seconds": 1566.566,
+      "end_seconds": 1573.74,
+      "asr_excerpt": "可以翻出来看一看，一点儿不落伍",
+      "submission_spec": "没有读后报告",
+      "teacher_review": "未说明",
+      "uncertainty": "看片建议"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "体会把人物规划进分集表，另单列主角群关系线",
+      "part": 30,
+      "start_seconds": 1554.406,
+      "end_seconds": 1567.852,
+      "asr_excerpt": "你们先去体会一下啊，就是把人物…整个比如说20级…这张表里，然后单加一条人物关系…",
+      "submission_spec": "20集为示例，未指定新剧素材或提交要求",
+      "teacher_review": "本课已演示方法，未定逐份讲评",
+      "uncertainty": "课堂方法练习，非明确新二十集作业"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "比较连续剧与单元剧，检查当集看点和持续牵挂",
+      "part": 31,
+      "start_seconds": 1687.078,
+      "end_seconds": 1706.956,
+      "asr_excerpt": "保证每一集有单机看点…这两种句可以对比着自己去琢磨琢磨",
+      "submission_spec": "未布置表格或文章",
+      "teacher_review": "未说明",
+      "uncertainty": "课堂自查建议"
+    }
+  ],
+  "explicit_assignment_search_result": "全文机器稿检索与阅读未找到明确布置，未逐句听校",
+  "material_continuity": {
+    "relation": "teacher_explicit_theory_reuse",
+    "sources": [
+      8,
+      9,
+      11,
+      12
+    ],
+    "evidence": "p28 02:03–02:45先有电影基础；p30–31弧线、序列可反复；p31 05:51–06:50类型故事进入电视剧事件群",
+    "no_fixed_old_assignment_reuse": "未要求续自选梗概、警察大纲或蝌蚪变体"
+  },
+  "examples": [
+    {
+      "case_version": "tv_whole_to_episode_grid_lesson13",
+      "part": 30,
+      "start_seconds": 274,
+      "end_seconds": 1752,
+      "source_relation": "老师课堂规划与临时例，不是学生稿",
+      "input": "跨集人物弧线、共同事业、配角分布和关系变化任务",
+      "change": "先按集数规划人物，再切出某集任务，用少量事件同时承载",
+      "effect": "整剧连续性与单集事件可分别检查",
+      "limits": "车祸例未完整展示B选择与C激励，20集与角色数为示意"
+    },
+    {
+      "case_version": "tv_first_episode_entry_revision_lesson13",
+      "part": 31,
+      "start_seconds": 511,
+      "end_seconds": 680,
+      "source_relation": "教师给出的可选设计办法",
+      "input": "第一集堆满全员身份身世前史",
+      "change": "角色分集入场，或先以假对手身份参与眼前事件再揭误会",
+      "effect": "尽快进入剧情，减少第一集信息堆积"
+    }
+  ],
+  "limits": [
+    "四P全文机器稿已读，未逐句听校",
+    "一帧板书已查看，关系变化实际是底部另行",
+    "行业回忆与审查旁论不等于现行规则、报价或权威历史",
+    "老师明确将传统广告模型更新为点播付费模型",
+    "规划法是本课推荐，p31 18:17明确单列关系不是硬格式规矩"
+  ],
+  "frames": [
+    {
+      "part": 30,
+      "source_seconds": 1780,
+      "path": "frames/p030-1780.jpg",
+      "sha256": "d7ddc4c8898d9d4242a1384b7573536c7883e6ee6665654b27f75de3c74bae72",
+      "visually_read": true
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "scope": "Purposive term/negation checks against 9 visually inspected original subtitle frames; not CER, WER, a human accuracy percentage, or a representative all-course sample.",
+  "items": [
+    {
+      "subtitle_seconds": 600,
+      "reference": "灵感",
+      "whisper": "零感",
+      "sensevoice": "灵感",
+      "assessment": "SenseVoice matches visible course term"
+    },
+    {
+      "subtitle_seconds": 612,
+      "reference": "出道即巅峰",
+      "whisper": "出道即天风",
+      "sensevoice": "出道及巅峰",
+      "assessment": "Improved final two characters, but 即→及 remains wrong"
+    },
+    {
+      "subtitle_seconds": 630,
+      "reference": "天才有余",
+      "whisper": "天才有于",
+      "sensevoice": "天才有余",
+      "assessment": "SenseVoice matches visible term"
+    },
+    {
+      "subtitle_seconds": 630,
+      "reference": "技能不足",
+      "whisper": "技能不足",
+      "sensevoice": "技能不足",
+      "assessment": "Both preserve shortage meaning"
+    },
+    {
+      "subtitle_seconds": 640,
+      "reference": "共情",
+      "whisper": "共情",
+      "sensevoice": "共情",
+      "assessment": "Both match central concept"
+    },
+    {
+      "subtitle_seconds": 640,
+      "reference": "达不到",
+      "whisper": "打不到",
+      "sensevoice": "达不到",
+      "assessment": "SenseVoice fixes character; both preserve negative 不"
+    },
+    {
+      "subtitle_seconds": 644,
+      "reference": "不断",
+      "whisper": "不断",
+      "sensevoice": "不断",
+      "assessment": "Both preserve continuous-training meaning"
+    },
+    {
+      "subtitle_seconds": 648,
+      "reference": "发自内心",
+      "whisper": "发自内心",
+      "sensevoice": "发自内心",
+      "assessment": "Both match"
+    },
+    {
+      "subtitle_seconds": 668,
+      "reference": "枯竭",
+      "whisper": "孤减",
+      "sensevoice": "枯竭",
+      "assessment": "SenseVoice matches visible term"
+    }
+  ],
+  "additional_uncertainties": [
+    "SenseVoice repeats 肉体肉体 in 635–637 s, while the visible subtitle paraphrases this as 身体; audio not manually adjudicated.",
+    "SenseVoice produces 卖个好，不是 in the long 647–662 s segment; the wording and apparent self-correction have not been manually adjudicated.",
+    "Final 675–680 s segment is clipped mid-sentence by the intentionally fixed 90-second sample."
+  ]
+}

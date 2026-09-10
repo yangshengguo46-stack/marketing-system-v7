@@ -1,0 +1,102 @@
+{
+  "at": "2026-09-08T04:32:43.571447+00:00",
+  "raw_responses_tested": 163,
+  "raw_parse_passed": 146,
+  "final_clean_schema_passed": 163,
+  "raw_parse_needs_recorded_manual_repairs": [
+    {
+      "job": "p064-c004",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p072-c001",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p072-c006",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p073-c003",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p073-c004",
+      "error": "Unexpected block schema",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p074-c005",
+      "error": "Non-contiguous or incomplete source range: manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p078-c005",
+      "error": "'list' object has no attribute 'get'",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p080-c005",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p082-c003",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p083-c003",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p084-c001",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p084-c004",
+      "error": "Unexpected block schema",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p087-c002",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p088-c001",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p089-c003",
+      "error": "JSON syntax repair changed non-structural characters; manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p092-c001",
+      "error": "Unexpected correction schema",
+      "has_recorded_manual_recovery_or_review": true
+    },
+    {
+      "job": "p092-c004",
+      "error": "Non-contiguous or incomplete source range: manual review required",
+      "has_recorded_manual_recovery_or_review": true
+    }
+  ],
+  "older_manual_metadata_recovery_jobs": [
+    "p063-c004",
+    "p065-c002",
+    "p065-c003",
+    "p065-c004",
+    "p082-c005"
+  ],
+  "limits": "Reviewed final body not overwritten. Listed raw formatting errors require documented manual recovery; raw originals preserved.",
+  "last_additional_raw_verified": "p089-c001"
+}

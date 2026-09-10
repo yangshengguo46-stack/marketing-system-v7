@@ -1,0 +1,157 @@
+{
+  "lesson": 33,
+  "state": "full_machine_transcript_read",
+  "parts": [
+    {
+      "part": 59,
+      "title": "三十三课-怎样克服拖延症",
+      "cid": 542014362,
+      "url": "https://www.bilibili.com/video/BV1eE411F73t/?p=59",
+      "file": "output/course-materials/charlie-screenwriting-20260906/raw/【完整编剧教程】-从零基础到高阶实操【查理的编剧课-实战篇（合集）】（没完结！更着呢！）/三十三课-怎样克服拖延症.mp4",
+      "sha256": "4827174ce92498b86f2e7ca0b0742251b65068466be7edd563d64114d256639e",
+      "duration_seconds": 2536
+    }
+  ],
+  "teaching_nodes": [
+    {
+      "label": "训练营停更背景、完整毕业作品与公开课区别",
+      "part": 59,
+      "start_seconds": 10,
+      "end_seconds": 214
+    },
+    {
+      "label": "完成度作为入行能力证明及毕业作品提醒",
+      "part": 59,
+      "start_seconds": 216,
+      "end_seconds": 399
+    },
+    {
+      "label": "录课时网站、答疑、招聘与资料教务",
+      "part": 59,
+      "start_seconds": 400,
+      "end_seconds": 541
+    },
+    {
+      "label": "写作纪律、完美借口与解放天性",
+      "part": 59,
+      "start_seconds": 543,
+      "end_seconds": 824
+    },
+    {
+      "label": "延迟满足/即时反馈的课堂成因解释",
+      "part": 59,
+      "start_seconds": 825,
+      "end_seconds": 1273
+    },
+    {
+      "label": "方法1：大具体小频繁的奖励",
+      "part": 59,
+      "start_seconds": 1275,
+      "end_seconds": 1552
+    },
+    {
+      "label": "方法2：接任务当天拆解与做计划",
+      "part": 59,
+      "start_seconds": 1554,
+      "end_seconds": 1724
+    },
+    {
+      "label": "方法3：工作时关闭干扰",
+      "part": 59,
+      "start_seconds": 1725,
+      "end_seconds": 1895
+    },
+    {
+      "label": "方法4：先写十分钟启动",
+      "part": 59,
+      "start_seconds": 1897,
+      "end_seconds": 2007
+    },
+    {
+      "label": "方法5：先写最爱的一场戏",
+      "part": 59,
+      "start_seconds": 2008,
+      "end_seconds": 2076
+    },
+    {
+      "label": "方法6：为了谁，借外部期待激励",
+      "part": 59,
+      "start_seconds": 2077,
+      "end_seconds": 2266
+    },
+    {
+      "label": "方法7：搭档交流督促，可异地各写",
+      "part": 59,
+      "start_seconds": 2267,
+      "end_seconds": 2414
+    },
+    {
+      "label": "方法边界与写作过程本身的享受",
+      "part": 59,
+      "start_seconds": 2417,
+      "end_seconds": 2531
+    }
+  ],
+  "assignments": [
+    {
+      "kind": "classroom_exercise",
+      "task": "按个人条件设具体大目标奖励与频繁小奖励。",
+      "part": 59,
+      "start_seconds": 1275,
+      "end_seconds": 1552,
+      "submission_spec": "写作方法建议；无统一字数、时长打卡、表格、交稿或期限。",
+      "teacher_review": "未说明公开课本项验收。",
+      "uncertainty": "全文机器稿未逐句听校；十分钟已核板书。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "把已有项目从接任务当天拆成每日可执行量，不用单日最高产量倒推末日冲刺。",
+      "part": 59,
+      "start_seconds": 1554,
+      "end_seconds": 1724,
+      "submission_spec": "写作方法建议；无统一字数、时长打卡、表格、交稿或期限。",
+      "teacher_review": "未说明公开课本项验收。",
+      "uncertainty": "全文机器稿未逐句听校；十分钟已核板书。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "关闭干扰，先写十分钟；难下手时从自己最爱的一场开始。",
+      "part": 59,
+      "start_seconds": 1725,
+      "end_seconds": 2076,
+      "submission_spec": "写作方法建议；无统一字数、时长打卡、表格、交稿或期限。",
+      "teacher_review": "未说明公开课本项验收。",
+      "uncertainty": "全文机器稿未逐句听校；十分钟已核板书。"
+    },
+    {
+      "kind": "classroom_exercise",
+      "task": "尝试把写作连接到在意的人，或找可交流督促的搭档；可异地、可各写不同作品。",
+      "part": 59,
+      "start_seconds": 2077,
+      "end_seconds": 2414,
+      "submission_spec": "写作方法建议；无统一字数、时长打卡、表格、交稿或期限。",
+      "teacher_review": "未说明公开课本项验收。",
+      "uncertainty": "全文机器稿未逐句听校；十分钟已核板书。"
+    },
+    {
+      "kind": "prior_assignment_recap",
+      "task": "回忆另一个三个月训练营要求完整毕业剧本，并已批作业、看毕业作品。",
+      "part": 59,
+      "start_seconds": 53,
+      "end_seconds": 399,
+      "submission_spec": "仅训练营学生完整毕业剧本；不是第33课公开课新增全班题。",
+      "teacher_review": "03:12–03:31说明对训练营毕业作品详细诊断；本视频未展示原稿或具体修改。",
+      "uncertainty": "训练营正文不在本P；不能认作公开课旧题回收。"
+    }
+  ],
+  "full_transcript_read_parts": [
+    59
+  ],
+  "limits": [
+    "全文机器稿检索与阅读未找到明确布置，未逐句听校。",
+    "训练营完整剧本要求不可移作公开课必交题。",
+    "十分钟法则板书核实；机器稿数处1分钟是识别不一致。",
+    "心理/基因/成功者解释与伴随抑郁个案是老师观点或回忆，不作诊断/临床证据。",
+    "字数、报价、项目周期、招生与网站状态皆非新作业规定或经核现行事实。"
+  ]
+}
