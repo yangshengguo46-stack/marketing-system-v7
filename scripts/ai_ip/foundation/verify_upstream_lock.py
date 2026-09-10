@@ -12,6 +12,10 @@ from typing import Any
 OFFICIAL_UPSTREAM_REPOSITORY = "https://github.com/openai/codex.git"
 DISABLED_UPSTREAM_PUSH_URL = "disabled://openai-codex-upstream-read-only"
 PINNED_UPSTREAM_SHA = "4ef1d4b89bd419c976b04fefa0fd36844e898340"
+# Latest upstream commit merged into the fork. Distinct from PINNED_UPSTREAM_SHA,
+# which stays the original fork point because source_import's first parent must
+# remain exactly that commit. Upstream-owned files are compared against this one.
+CURRENT_UPSTREAM_SHA = "bf5ebd98c567931d82e873a4afdac7548bd85979"
 PLANNING_BASE_SHA = "58baf3b21da4768d5f608264c3224660338ef517"
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 
@@ -81,7 +85,7 @@ class VerificationError(RuntimeError):
 def modifications_required_markers() -> tuple[str, ...]:
     return (
         "# AI IP 1.1 modifications to OpenAI Codex",
-        f"Locked upstream commit: `{PINNED_UPSTREAM_SHA}`.",
+        f"Locked upstream commit: `{CURRENT_UPSTREAM_SHA}`.",
         "Product origin status at this checkpoint: `unconfigured`.",
         "DeerFlow is not a runtime dependency or fallback.",
         "All fork-specific patches are recorded in `docs/architecture/codex-fork-patch-ledger.md`.",
@@ -372,6 +376,7 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
             "repository",
             "sha",
             "source_import",
+            "current_upstream",
         },
     )
     product = _exact_section(
@@ -401,6 +406,7 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
     _require_equal(product["origin_status"], "unconfigured", "product.origin_status")
 
     upstream_sha = openai["sha"]
+    current_upstream = openai["current_upstream"]
     planning_base = openai["planning_base"]
     decision_tip = openai["decision_tip"]
     source_import = openai["source_import"]
@@ -408,9 +414,14 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         isinstance(decision_tip, str), "openai_codex.decision_tip must be a string"
     )
     _require_commit(repo, upstream_sha, "openai_codex.sha")
+    _require_commit(repo, current_upstream, "openai_codex.current_upstream")
     _require_commit(repo, planning_base, "openai_codex.planning_base")
     _require_commit(repo, decision_tip, "openai_codex.decision_tip")
     _require_commit(repo, source_import, "openai_codex.source_import")
+    _require(
+        _is_ancestor(repo, upstream_sha, current_upstream),
+        "original fork point is not an ancestor of the current upstream",
+    )
     head = _git_text(repo, "rev-parse", "HEAD")
     _require_commit(repo, head, "HEAD")
     _require(
@@ -492,6 +503,10 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         "upstream SHA is not an ancestor of HEAD",
     )
     _require(
+        _is_ancestor(repo, current_upstream, head),
+        "current upstream SHA is not an ancestor of HEAD",
+    )
+    _require(
         _is_ancestor(repo, decision_tip, head),
         "decision tip is not an ancestor of HEAD",
     )
@@ -548,17 +563,17 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         f"origin_status is unconfigured but remote origin exists or is configured: {origin}",
     )
 
-    upstream_license = _git_bytes(repo, "show", f"{upstream_sha}:LICENSE")
+    upstream_license = _git_bytes(repo, "show", f"{current_upstream}:LICENSE")
     _require(
         (repo / "LICENSE").read_bytes() == upstream_license,
         "LICENSE must remain byte-identical to pinned upstream",
     )
-    upstream_agents = _git_bytes(repo, "show", f"{upstream_sha}:AGENTS.md")
+    upstream_agents = _git_bytes(repo, "show", f"{current_upstream}:AGENTS.md")
     _require(
         (repo / "AGENTS.md").read_bytes() == upstream_agents,
         "AGENTS.md must remain byte-identical to pinned upstream",
     )
-    upstream_notice = _git_bytes(repo, "show", f"{upstream_sha}:NOTICE")
+    upstream_notice = _git_bytes(repo, "show", f"{current_upstream}:NOTICE")
     _require(
         (repo / "NOTICE").read_bytes()
         == upstream_notice + NOTICE_SUFFIX_TEXT.encode("utf-8"),
@@ -575,7 +590,9 @@ def verify_repository(repo: Path, *, require_clean: bool = True) -> dict[str, st
         ".ai-ip/AGENTS.override.md",
     )
 
-    upstream_attributes = _git_bytes(repo, "show", f"{upstream_sha}:.gitattributes")
+    upstream_attributes = _git_bytes(
+        repo, "show", f"{current_upstream}:.gitattributes"
+    )
     _require(
         (repo / ".gitattributes").read_bytes()
         == upstream_attributes + ATTRIBUTES_SUFFIX_TEXT.encode("utf-8"),

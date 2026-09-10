@@ -2,7 +2,9 @@
 
 AI IP 1.1 is a modified derivative of OpenAI Codex. The fork preserves the complete upstream Git ancestor and records each product-owned patch instead of treating a copied source snapshot as provenance.
 
-Locked upstream commit: `4ef1d4b89bd419c976b04fefa0fd36844e898340`.
+Locked upstream commit: `bf5ebd98c567931d82e873a4afdac7548bd85979`.
+
+Original fork point: `4ef1d4b89bd419c976b04fefa0fd36844e898340`. The fork is re-synced onto newer upstream commits periodically; `.ai-ip/upstream.lock.toml` records both the immutable fork point and the current synced upstream.
 
 Product origin status at this checkpoint: `unconfigured`.
 

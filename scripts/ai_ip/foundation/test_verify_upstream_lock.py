@@ -74,6 +74,19 @@ def _valid_repository(
     _write(repo / "AGENTS.md", "# Upstream rules\n")
     upstream_sha = _commit(repo, "upstream")
 
+    # A later upstream commit the fork re-syncs onto. upstream_sha stays the
+    # original fork point because source_import's first parent must be exactly
+    # it; upstream-owned files are compared against this later commit instead.
+    upstream_license_synced = "Apache License\nVersion 2.0\nSynced\n"
+    upstream_notice_synced = upstream_notice + "Synced notice line.\n"
+    upstream_attributes_synced = upstream_attributes + "synced/path text eol=lf\n"
+    upstream_agents_synced = "# Upstream rules\n\nSynced rules\n"
+    _write(repo / "LICENSE", upstream_license_synced)
+    _write(repo / "NOTICE", upstream_notice_synced)
+    _write(repo / ".gitattributes", upstream_attributes_synced)
+    _write(repo / "AGENTS.md", upstream_agents_synced)
+    current_upstream_sha = _commit(repo, "upstream sync target")
+
     _git(repo, "switch", "--orphan", "decisions")
     _git(repo, "rm", "-rf", "--ignore-unmatch", ".")
     _write(repo / "docs/decision.md", "planning base\n")
@@ -136,6 +149,14 @@ def _valid_repository(
         "source import",
     )
     source_import_sha = _git(repo, "rev-parse", "HEAD")
+    _git(
+        repo,
+        "merge",
+        "--no-ff",
+        current_upstream_sha,
+        "-m",
+        "upstream sync",
+    )
     _git(repo, "remote", "add", "upstream", verifier.OFFICIAL_UPSTREAM_REPOSITORY)
     _git(
         repo,
@@ -147,6 +168,7 @@ def _valid_repository(
     )
 
     monkeypatch.setattr(verifier, "PINNED_UPSTREAM_SHA", upstream_sha)
+    monkeypatch.setattr(verifier, "CURRENT_UPSTREAM_SHA", current_upstream_sha)
     monkeypatch.setattr(verifier, "PLANNING_BASE_SHA", planning_base_sha)
 
     lock = f'''[openai_codex]
@@ -157,6 +179,7 @@ license = "Apache-2.0"
 planning_base = "{planning_base_sha}"
 decision_tip = "{decision_tip_sha}"
 source_import = "{source_import_sha}"
+current_upstream = "{current_upstream_sha}"
 
 [product]
 name = "AI IP 1.1"
@@ -169,9 +192,9 @@ origin_status = "unconfigured"
     _write(repo / ".ai-ip/AGENTS.override.md", verifier.AI_IP_OVERRIDE_TEXT)
     _write(
         repo / ".gitattributes",
-        upstream_attributes + verifier.ATTRIBUTES_SUFFIX_TEXT,
+        upstream_attributes_synced + verifier.ATTRIBUTES_SUFFIX_TEXT,
     )
-    _write(repo / "NOTICE", upstream_notice + verifier.NOTICE_SUFFIX_TEXT)
+    _write(repo / "NOTICE", upstream_notice_synced + verifier.NOTICE_SUFFIX_TEXT)
     _write(
         repo / "MODIFICATIONS.md",
         "\n".join(verifier.modifications_required_markers()) + "\n",
@@ -600,9 +623,11 @@ def test_source_import_commit_must_bind_both_exact_parents(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     repo, upstream_sha, _, _ = _valid_repository(tmp_path, monkeypatch)
+    # rev-list lists newest first; the source import is the oldest merge after
+    # the fork point, followed by any later upstream sync merges.
     source_import_sha = _git(
         repo, "rev-list", "--first-parent", "--merges", f"{upstream_sha}..HEAD"
-    ).splitlines()[0]
+    ).splitlines()[-1]
     _replace_once(
         repo / ".ai-ip/upstream.lock.toml",
         f'source_import = "{source_import_sha}"',

@@ -6,6 +6,7 @@ license = "Apache-2.0"
 planning_base = "58baf3b21da4768d5f608264c3224660338ef517"
 decision_tip = "7a774b01933157ffd4437013543b8a5326c8cb31"
 source_import = "35261a3ea0704f09b6c0e85c815e30e870f9564c"
+current_upstream = "bf5ebd98c567931d82e873a4afdac7548bd85979"
 
 [product]
 name = "AI IP 1.1"
