@@ -95,3 +95,10 @@ CHANGELOG.ignore.md
 # Python bytecode files
 __pycache__/
 *.pyc
+
+# Course source media: large binaries kept on disk, excluded from Git.
+# Documentation and index files under the same tree stay tracked.
+output/course-materials/**/raw/
+output/course-materials/**/*.mp4
+output/course-materials/**/*.m4a
+output/course-materials/**/*.nfo
