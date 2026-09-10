@@ -1,0 +1,57 @@
+# Proposed product config, NOT a file accepted by the current Codex parser.
+# WP00/WP05 must implement/validate these fields. No secret values belong here.
+schema_version = 1
+
+[product]
+mode = "marketing"
+owned_core = true
+upstream_auto_merge = false
+mcp_core_marketing_enabled = false
+
+[models.production_primary]
+label = "SeedEvolving"
+profile_id = "configure-and-verify-primary"
+actual_model_id = "CONFIGURE_REAL_ACCOUNT_MODEL_ID"
+ready = false
+
+[models.production_alternative]
+label = "GLM 5.2"
+profile_id = "configure-and-verify-alternative"
+actual_model_id = "CONFIGURE_REAL_ACCOUNT_MODEL_ID"
+ready = false
+
+[models.review]
+policy = "same_as_active_production_profile"
+allow_research_reference_model = false
+silent_fallback = false
+
+[context]
+mission_max_tokens = 1800
+mission_max_window_fraction = 0.05
+capability_max_tokens = 500
+preserve_complete_records = true
+
+[completion]
+max_auto_repairs = 2
+max_review_findings = 16
+review_output_max_tokens = 2000
+review_timeout_seconds = 90
+repeat_issue_limit = 2
+require_candidate_revision_match = true
+
+[execution]
+paid_media_enabled = false
+external_publish_enabled = false
+media_max_concurrent_jobs = 1
+read_retry_limit = 2
+retry_unknown_external_write = false
+unrestricted_shell_mode = false
+
+[transport]
+kind = "stdio"
+public_listener_enabled = false
+
+[logging]
+raw_reasoning_enabled = false
+raw_payload_debug_enabled = false
+redact_secrets = true

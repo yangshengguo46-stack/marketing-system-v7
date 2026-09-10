@@ -1,0 +1,26 @@
+test_safe_example (test_contracts.ConfigurationTests.test_safe_example) ... ok
+test_actual_result_needs_receipt (test_contracts.DatabaseContractTests.test_actual_result_needs_receipt) ... ok
+test_approval_requires_issuer (test_contracts.DatabaseContractTests.test_approval_requires_issuer) ... ok
+test_arbitrary_json_rejected (test_contracts.DatabaseContractTests.test_arbitrary_json_rejected) ... ok
+test_budget_reserve_conditional_update (test_contracts.DatabaseContractTests.test_budget_reserve_conditional_update) ... ok
+test_cas_single_winner (test_contracts.DatabaseContractTests.test_cas_single_winner) ... ok
+test_cross_project_artifact_rejected (test_contracts.DatabaseContractTests.test_cross_project_artifact_rejected) ... ok
+test_duplicate_command_unique (test_contracts.DatabaseContractTests.test_duplicate_command_unique) ... ok
+test_invalid_digest_rejected (test_contracts.DatabaseContractTests.test_invalid_digest_rejected) ... ok
+test_invalid_mission_status_rejected (test_contracts.DatabaseContractTests.test_invalid_mission_status_rejected) ... ok
+test_missing_artifact_version_rejected (test_contracts.DatabaseContractTests.test_missing_artifact_version_rejected) ... ok
+test_mission_and_event_rollback_together (test_contracts.DatabaseContractTests.test_mission_and_event_rollback_together) ... ok
+test_negative_revision_rejected (test_contracts.DatabaseContractTests.test_negative_revision_rejected) ... ok
+test_released_requires_timestamp (test_contracts.DatabaseContractTests.test_released_requires_timestamp) ... ok
+test_schema_integrity (test_contracts.DatabaseContractTests.test_schema_integrity) ... ok
+test_allow_cannot_include_blocking_finding (test_contracts.JsonContractTests.test_allow_cannot_include_blocking_finding) ... ok
+test_example_valid (test_contracts.JsonContractTests.test_example_valid) ... ok
+test_finding_bound (test_contracts.JsonContractTests.test_finding_bound) ... ok
+test_revision_requires_findings (test_contracts.JsonContractTests.test_revision_requires_findings) ... ok
+test_schema_definition (test_contracts.JsonContractTests.test_schema_definition) ... ok
+test_unknown_field_rejected (test_contracts.JsonContractTests.test_unknown_field_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.775s
+
+OK

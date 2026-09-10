@@ -1,0 +1,312 @@
+{
+  "format_version": 1,
+  "source_scope": "conversation artifacts; byte-preserved",
+  "target_repository": "yangshengguo46-stack/marketing-system-v7",
+  "target_directory": "docs/superpowers/marketing-agent-v7",
+  "source_baseline_commit": "e08f1e1ad5bbc3ea036aa271894d8228e499ed61",
+  "active_spec_version": "1.2",
+  "files": [
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/BASELINE_v1_0_VALIDATION_LOG.txt",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/BASELINE_v1_0_VALIDATION_LOG.txt",
+      "bytes": 2310,
+      "sha256": "a7f584ee7594e4e9dbf989def81e4bf4336f29653d9d08092092a29f1aa78dc7",
+      "git_blob_sha1": "d40c3617eff205ea36ef2a60d1607fc98fbc6de7"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/BUSINESS_ARCHITECTURE.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/BUSINESS_ARCHITECTURE.md",
+      "bytes": 41754,
+      "sha256": "64c61e26a635a372fbcdd2024030b778261e8e20e10dc51edd502c61badfc070",
+      "git_blob_sha1": "8c2dead946c0d30a01bae2b4a3211f2745dc4f4a"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/DOCUMENT_CHECKS.txt",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/DOCUMENT_CHECKS.txt",
+      "bytes": 345,
+      "sha256": "3de13b44bdb06688f11cfa9c2be1d0ad2186a34b5bf2ba189cdd6c26bf8fbb5f",
+      "git_blob_sha1": "c362a59997a3a831cef38e7770b33dc240d6d85f"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/FINAL_SPEC.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/FINAL_SPEC.md",
+      "bytes": 113186,
+      "sha256": "0af78bc8f657d1762744275febdfc47046a8847855444212b103676ff3ba1e3b",
+      "git_blob_sha1": "f6ed1fcf0d449e587b1227dc3da8427298c8df4a"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/IMPLEMENTATION_TASKS.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/IMPLEMENTATION_TASKS.md",
+      "bytes": 18360,
+      "sha256": "e72c7b26f34f53c086fe4fbcd03cc487b00c5d445359c6b1c990e10f03bdf79f",
+      "git_blob_sha1": "9f67c5e3017829e2efe710e5b4955837d5bfdaba"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/MANIFEST.json",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/MANIFEST.json",
+      "bytes": 3067,
+      "sha256": "75162235ba60587431ac04e34553e25739e126c16f19fd6651cea61013ef902e",
+      "git_blob_sha1": "eda193b30c363bf23f9592961384f86a10d53194"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/README.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/README.md",
+      "bytes": 1056,
+      "sha256": "0b76bbfcc7f18dcc1ea20ed5d63fe605b4cfddb9e0db4d485f89fdec44031270",
+      "git_blob_sha1": "e28d8e19ca6ff0b88ef70a8e01edb887b0306a20"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/SOURCE_MAP.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/SOURCE_MAP.md",
+      "bytes": 4218,
+      "sha256": "a96c5fdc6bb28a1895fa6afb97c9112c32958f5dd990a29a96616826269904fd",
+      "git_blob_sha1": "de77646435b8c2253ad676aec75445b5f19f0d79"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/001_initial.sql",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/001_initial.sql",
+      "bytes": 5430,
+      "sha256": "1becd599be45d6207c5b712110b26ad275d5836c14de92fe54f32be3d1c2b504",
+      "git_blob_sha1": "2ff1a2f32d1209075852622dbb3aa5b5bfb58792"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/002_evidence.sql",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/002_evidence.sql",
+      "bytes": 3581,
+      "sha256": "6595018d43d25342b41f1d002e19adbaa783230b1445b25b5d5c53ee895a1910",
+      "git_blob_sha1": "7654ec8b8941deb047ca4d0cfe0be0600758dca1"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/003_review_budget.sql",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/003_review_budget.sql",
+      "bytes": 3142,
+      "sha256": "2045ee431b1f8687f8f41f4093b84b0ac730a2eb29d22eb5fff9d8057357fd85",
+      "git_blob_sha1": "130988344adbf2a86a6978ab3a04401a794f4e94"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/004_execution.sql",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/004_execution.sql",
+      "bytes": 2302,
+      "sha256": "cd36850e57bf887e3e8852581051b47fc8fc28e1f6a00cc7c9de743ea2e6e0a6",
+      "git_blob_sha1": "432ea79a8f2f355e705c0fabc6c3044201a6a482"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/STORE_TRANSACTION_REFERENCE.md",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/STORE_TRANSACTION_REFERENCE.md",
+      "bytes": 3262,
+      "sha256": "b5a03dd74a4293ee07702ac188f8c7c1d7baba2fba7b98bc189fdea940455345",
+      "git_blob_sha1": "5279d09f5e984d544f55c14d46b0b19bdc029ed4"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/completion_api.rs",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/completion_api.rs",
+      "bytes": 4871,
+      "sha256": "6a978fc4811d2ff0b5194f5339808daa630c91ec236915febde64cf6d2e59d83",
+      "git_blob_sha1": "f8a00fc69c8e69cf5ec13361d9f3dcb25107d8f6"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/defaults.example.toml",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/defaults.example.toml",
+      "bytes": 1404,
+      "sha256": "af2b11e9eac032547728145ed618f987ce9005676f2c947bfbf9fcf12e638478",
+      "git_blob_sha1": "68884adc677cdd47e36317f3720f678e27aa8b84"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/release_candidate.schema.json",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/release_candidate.schema.json",
+      "bytes": 1243,
+      "sha256": "3cae083af18b10bcc6289d0fe1f2d4d6bd652584da9e367fc449734f37f96b7f",
+      "git_blob_sha1": "ae7bbbf783f42878f975e1db7342b46b6121fe30"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/review.example.json",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/review.example.json",
+      "bytes": 649,
+      "sha256": "a90cf064276facd4237518ef9a3e167b6e9f788f8e5a0ba3ffbae47a2f05cdad",
+      "git_blob_sha1": "60ec88c38dc50f341bcc7802a5b0c1b16da5d1f2"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/contracts/review.schema.json",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/contracts/review.schema.json",
+      "bytes": 4085,
+      "sha256": "af71c951fa3eb0c386acb1546f2a6805681d5214c34c58143cc038fce4e9cf22",
+      "git_blob_sha1": "4f1832e18a9b941ccfb62204477c30ac99ca8d48"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/v1.2/tests/test_contracts.py",
+      "source_archive": "Marketing_Agent_v7_Business_Architecture_v1_2.zip",
+      "source_entry": "marketing_v7_integrated_v1_2/tests/test_contracts.py",
+      "bytes": 6954,
+      "sha256": "657232a7303263af523e613b0d6c7b28d1ee88f3f6d961852cfe78f70eb8903e",
+      "git_blob_sha1": "21407032f7ef94db4cc05a3d3ec47bddc87ef4c5"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/FINAL_SPEC.md",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/FINAL_SPEC.md",
+      "bytes": 68356,
+      "sha256": "289c849225337e061186d1944483276456ce78bb56a74be3e7465a0681b70d68",
+      "git_blob_sha1": "2cf80ec723e177fffdea4b0f60137a3f8fcfbeb6"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/IMPLEMENTATION_TASKS.md",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/IMPLEMENTATION_TASKS.md",
+      "bytes": 14943,
+      "sha256": "eb35c7a50988994f92fcb8d784b434dd877f9b152ebeaef09fc03024051a9288",
+      "git_blob_sha1": "881ba61b7f27c3c55a057deaec89ef767bf25601"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/MANIFEST.json",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/MANIFEST.json",
+      "bytes": 2420,
+      "sha256": "051bd2dff72868abd3140303feff01523522d54332e4cd96fb9b6b4f32ff4c83",
+      "git_blob_sha1": "b3ff552b49068f2efa5c8972cbd6ca3644039f32"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/README.md",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/README.md",
+      "bytes": 2260,
+      "sha256": "21b3c0e83eeceb0662ffa36a0080ea59588aa39dd9497c32bac79f8429aee758",
+      "git_blob_sha1": "4be64d8e3665c4ae5cca04c98f9795cbea19b954"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/SOURCE_MAP.md",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/SOURCE_MAP.md",
+      "bytes": 4218,
+      "sha256": "a96c5fdc6bb28a1895fa6afb97c9112c32958f5dd990a29a96616826269904fd",
+      "git_blob_sha1": "de77646435b8c2253ad676aec75445b5f19f0d79"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/VALIDATION_LOG.txt",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/VALIDATION_LOG.txt",
+      "bytes": 2310,
+      "sha256": "a7f584ee7594e4e9dbf989def81e4bf4336f29653d9d08092092a29f1aa78dc7",
+      "git_blob_sha1": "d40c3617eff205ea36ef2a60d1607fc98fbc6de7"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/001_initial.sql",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/001_initial.sql",
+      "bytes": 5430,
+      "sha256": "1becd599be45d6207c5b712110b26ad275d5836c14de92fe54f32be3d1c2b504",
+      "git_blob_sha1": "2ff1a2f32d1209075852622dbb3aa5b5bfb58792"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/002_evidence.sql",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/002_evidence.sql",
+      "bytes": 3581,
+      "sha256": "6595018d43d25342b41f1d002e19adbaa783230b1445b25b5d5c53ee895a1910",
+      "git_blob_sha1": "7654ec8b8941deb047ca4d0cfe0be0600758dca1"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/003_review_budget.sql",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/003_review_budget.sql",
+      "bytes": 3142,
+      "sha256": "2045ee431b1f8687f8f41f4093b84b0ac730a2eb29d22eb5fff9d8057357fd85",
+      "git_blob_sha1": "130988344adbf2a86a6978ab3a04401a794f4e94"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/004_execution.sql",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/004_execution.sql",
+      "bytes": 2302,
+      "sha256": "cd36850e57bf887e3e8852581051b47fc8fc28e1f6a00cc7c9de743ea2e6e0a6",
+      "git_blob_sha1": "432ea79a8f2f355e705c0fabc6c3044201a6a482"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/STORE_TRANSACTION_REFERENCE.md",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/STORE_TRANSACTION_REFERENCE.md",
+      "bytes": 3262,
+      "sha256": "b5a03dd74a4293ee07702ac188f8c7c1d7baba2fba7b98bc189fdea940455345",
+      "git_blob_sha1": "5279d09f5e984d544f55c14d46b0b19bdc029ed4"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/completion_api.rs",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/completion_api.rs",
+      "bytes": 4871,
+      "sha256": "6a978fc4811d2ff0b5194f5339808daa630c91ec236915febde64cf6d2e59d83",
+      "git_blob_sha1": "f8a00fc69c8e69cf5ec13361d9f3dcb25107d8f6"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/defaults.example.toml",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/defaults.example.toml",
+      "bytes": 1404,
+      "sha256": "af2b11e9eac032547728145ed618f987ce9005676f2c947bfbf9fcf12e638478",
+      "git_blob_sha1": "68884adc677cdd47e36317f3720f678e27aa8b84"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/release_candidate.schema.json",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/release_candidate.schema.json",
+      "bytes": 1243,
+      "sha256": "3cae083af18b10bcc6289d0fe1f2d4d6bd652584da9e367fc449734f37f96b7f",
+      "git_blob_sha1": "ae7bbbf783f42878f975e1db7342b46b6121fe30"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/review.example.json",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/review.example.json",
+      "bytes": 649,
+      "sha256": "a90cf064276facd4237518ef9a3e167b6e9f788f8e5a0ba3ffbae47a2f05cdad",
+      "git_blob_sha1": "60ec88c38dc50f341bcc7802a5b0c1b16da5d1f2"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/contracts/review.schema.json",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/contracts/review.schema.json",
+      "bytes": 4085,
+      "sha256": "af71c951fa3eb0c386acb1546f2a6805681d5214c34c58143cc038fce4e9cf22",
+      "git_blob_sha1": "4f1832e18a9b941ccfb62204477c30ac99ca8d48"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.0/tests/test_contracts.py",
+      "source_archive": "Marketing_Agent_v7_Final_Implementation_Pack.zip",
+      "source_entry": "marketing_agent_v7_final/tests/test_contracts.py",
+      "bytes": 6954,
+      "sha256": "657232a7303263af523e613b0d6c7b28d1ee88f3f6d961852cfe78f70eb8903e",
+      "git_blob_sha1": "21407032f7ef94db4cc05a3d3ec47bddc87ef4c5"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/v1.1/SCENARIO_MARKETING_BUSINESS_SPEC_v1_1.md",
+      "source_file": "SCENARIO_MARKETING_BUSINESS_SPEC_v1_1.md",
+      "bytes": 30253,
+      "sha256": "54c7501aaa7a92d2d5fc1aa70639659be471d56da15bef5284e657e94013f3e9",
+      "git_blob_sha1": "01079773169fa1128bb28a6a870036c1deaa2233"
+    },
+    {
+      "path": "docs/superpowers/marketing-agent-v7/archive/discussion/掌管营销的神-用户提供原稿.md",
+      "source_file": "粘贴的 markdown (1)。md",
+      "bytes": 29737,
+      "sha256": "2736123bd3a6bb7f053cdb9244e430f1af95b11ff0ba01138c7b6054d609abab",
+      "git_blob_sha1": "031c7325db88cb0efd4969ee39dafc219412b393"
+    }
+  ]
+}

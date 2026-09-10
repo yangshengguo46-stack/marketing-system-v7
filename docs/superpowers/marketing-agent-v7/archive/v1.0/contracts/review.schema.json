@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:marketing-agent:review:v1",
+  "title": "Bounded review output (proposed)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "verdict",
+    "candidateDigest",
+    "missionRevision",
+    "inputEpoch",
+    "findings",
+    "uncertainty"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "verdict": {
+      "enum": [
+        "allow",
+        "revise",
+        "wait",
+        "block",
+        "unavailable"
+      ]
+    },
+    "candidateDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "missionRevision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inputEpoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "category",
+          "severity",
+          "problem",
+          "basisRefs",
+          "acceptanceCondition"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "category": {
+            "enum": [
+              "task_fit",
+              "factuality",
+              "production",
+              "quality",
+              "authorization",
+              "other"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "advisory",
+              "blocking"
+            ]
+          },
+          "problem": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "basisRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 32
+          },
+          "acceptanceCondition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "artifactVersionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "location": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "start",
+              "end"
+            ],
+            "properties": {
+              "kind": {
+                "const": "text"
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "maxItems": 16
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096
+      },
+      "maxItems": 16
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "weak",
+          "acceptable",
+          "strong",
+          "not_applicable",
+          "unclear"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "enum": [
+              "revise",
+              "block"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "allow"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "not": {
+              "contains": {
+                "type": "object",
+                "required": [
+                  "severity"
+                ],
+                "properties": {
+                  "severity": {
+                    "const": "blocking"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

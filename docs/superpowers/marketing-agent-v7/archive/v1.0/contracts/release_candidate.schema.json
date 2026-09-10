@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:marketing-agent:release-candidate:v1",
+  "title": "Release candidate (host-created proposed contract)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "candidateId",
+    "missionId",
+    "missionRevision",
+    "inputEpoch",
+    "candidateDigest",
+    "acceptanceDigest",
+    "artifactVersionIds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "candidateId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "missionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "missionRevision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inputEpoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "candidateDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "acceptanceDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifactVersionIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true
+    }
+  }
+}

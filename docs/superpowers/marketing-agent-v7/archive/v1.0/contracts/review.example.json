@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "verdict": "revise",
+  "candidateDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "missionRevision": 12,
+  "inputEpoch": 3,
+  "findings": [
+    {
+      "id": "q_001",
+      "category": "task_fit",
+      "severity": "blocking",
+      "problem": "当前稿件面向消费者，但用户已确认受众是地区合作伙伴。",
+      "basisRefs": [
+        "user_message:example"
+      ],
+      "acceptanceCondition": "保留用户最新确认的受众和合作目标。",
+      "artifactVersionId": "av_example"
+    }
+  ],
+  "uncertainty": [
+    "传播效果未经真实发布验证。"
+  ]
+}
