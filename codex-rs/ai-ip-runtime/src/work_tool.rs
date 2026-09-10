@@ -53,12 +53,16 @@ pub fn install<C: Sync + 'static>(builder: &mut ExtensionRegistryBuilder<C>) {
 }
 
 impl ToolContributor for MarketingWork {
-    fn tools(&self, _: &ExtensionData, _: &ExtensionData) -> Vec<Arc<dyn ToolExecutor<ToolCall>>> {
+    fn tools(
+        &self,
+        _: &ExtensionData,
+        _: &ExtensionData,
+    ) -> Vec<Arc<dyn for<'call> ToolExecutor<ToolCall<'call>>>> {
         vec![Arc::new(MarketingWork)]
     }
 }
 
-impl ToolExecutor<ToolCall> for MarketingWork {
+impl<'call> ToolExecutor<ToolCall<'call>> for MarketingWork {
     fn tool_name(&self) -> ToolName {
         ToolName::plain("marketing_work")
     }
@@ -86,7 +90,10 @@ impl ToolExecutor<ToolCall> for MarketingWork {
         })
     }
 
-    fn handle(&self, call: ToolCall) -> ToolExecutorFuture<'_> {
+    fn handle<'a>(&'a self, call: ToolCall<'call>) -> ToolExecutorFuture<'a>
+    where
+        'call: 'a,
+    {
         Box::pin(async move {
             let args: Arguments =
                 serde_json::from_str(call.function_arguments()?).map_err(error)?;
