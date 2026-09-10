@@ -7,3 +7,4 @@ docs/evidence/**/*.stderr.log -text
 codex-rs/Cargo.lock text eol=lf
 MODULE.bazel.lock text eol=lf
 pnpm-lock.yaml text eol=lf
+third_party/voice/sources.json text eol=lf

@@ -33,6 +33,8 @@ use core_test_support::responses::assert_parent_turn;
 use core_test_support::responses::assert_root_turn;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
+use core_test_support::responses::ev_completed_with_tokens;
+use core_test_support::responses::ev_function_call;
 use core_test_support::responses::ev_function_call_with_namespace;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::ev_tool_search_call;
@@ -65,7 +67,10 @@ use tokio::time::sleep;
 use tokio::time::timeout;
 use tracing::Level;
 use tracing_test::internal::MockWriter;
+use wiremock::Mock;
 use wiremock::MockServer;
+use wiremock::matchers::method;
+use wiremock::matchers::path;
 
 const SPAWN_CALL_ID: &str = "spawn-call-1";
 const MULTI_AGENT_V1_NAMESPACE: &str = "multi_agent_v1";
@@ -74,15 +79,15 @@ const TURN_0_FORK_PROMPT: &str = "seed fork context";
 const TURN_1_PROMPT: &str = "spawn a child and continue";
 const TURN_2_NO_WAIT_PROMPT: &str = "follow up without wait";
 const CHILD_PROMPT: &str = "child: do work";
-const INHERITED_MODEL: &str = "gpt-5.2";
+const INHERITED_MODEL: &str = "gpt-5.5";
 const INHERITED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::XHigh;
-const REQUESTED_MODEL: &str = "gpt-5.4";
+const REQUESTED_MODEL: &str = "gpt-5.6-luna";
 const REQUESTED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::Low;
 const V2_DEFAULT_MODEL: &str = "gpt-5.6-terra";
 const V2_DEFAULT_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::High;
 const V2_REQUESTED_MODEL: &str = "gpt-5.6-sol";
 const V2_REQUESTED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::Low;
-const ROLE_MODEL: &str = "gpt-5.4";
+const ROLE_MODEL: &str = "gpt-5.5";
 const ROLE_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::High;
 const SUBAGENT_START_CONTEXT: &str = "subagent start context reaches child";
 const SUBAGENT_STOP_CONTINUATION: &str = "continue only the child";
@@ -274,7 +279,7 @@ print(json.dumps({{"systemMessage": "root stop complete"}}))
                 }]
             }],
             "SubagentStart": [{
-                "matcher": "worker",
+                "matcher": "worker|default",
                 "hooks": [{
                     "type": "command",
                     "command": format!("python3 {}", start_script_path.display()),
@@ -408,6 +413,7 @@ async fn setup_turn_one_with_spawned_child(
         }),
         child_response_delay,
         /*wait_for_parent_notification*/ true,
+        INHERITED_REASONING_EFFORT,
         |builder| builder,
     )
     .await?;
@@ -419,6 +425,7 @@ async fn setup_turn_one_with_custom_spawned_child(
     spawn_args: serde_json::Value,
     child_response_delay: Option<Duration>,
     wait_for_parent_notification: bool,
+    turn_reasoning_effort: ReasoningEffort,
     configure_test: impl FnOnce(
         core_test_support::test_codex::TestCodexBuilder,
     ) -> core_test_support::test_codex::TestCodexBuilder,
@@ -481,16 +488,32 @@ async fn setup_turn_one_with_custom_spawned_child(
     )
     .await;
 
-    let mut builder = configure_test(test_codex().with_config(|config| {
+    let configured_reasoning_effort = turn_reasoning_effort.clone();
+    let mut builder = configure_test(test_codex().with_config(move |config| {
         config
             .features
             .enable(Feature::Collab)
             .expect("test config should allow feature update");
         config.model = Some(INHERITED_MODEL.to_string());
-        config.model_reasoning_effort = Some(INHERITED_REASONING_EFFORT);
+        config.model_reasoning_effort = Some(configured_reasoning_effort);
     }));
     let test = builder.build_with_auto_env(server).await?;
-    test.submit_turn(TURN_1_PROMPT).await?;
+    test.codex
+        .start_or_steer_turn(
+            TurnInputRequest::user_input(vec![UserInput::Text {
+                text: TURN_1_PROMPT.to_string(),
+                text_elements: Vec::new(),
+            }])
+            .with_thread_settings(ThreadSettingsOverrides {
+                effort: Some(Some(turn_reasoning_effort)),
+                ..Default::default()
+            }),
+        )
+        .await?;
+    wait_for_event(&test.codex, |event| {
+        matches!(event, EventMsg::TurnComplete(_))
+    })
+    .await;
     if child_response_delay.is_none() && wait_for_parent_notification {
         let _ = wait_for_requests(&child_request_log).await?;
         let rollout_path = test
@@ -530,6 +553,7 @@ async fn spawn_child_and_capture_snapshot(
         spawn_args,
         /*child_response_delay*/ None,
         /*wait_for_parent_notification*/ false,
+        INHERITED_REASONING_EFFORT,
         configure_test,
     )
     .await?;
@@ -542,20 +566,70 @@ async fn spawn_child_and_capture_snapshot(
         .await)
 }
 
+#[test_case(
+    ReasoningEffort::Ultra,
+    ReasoningEffort::XHigh;
+    "absent catalog override uses highest non-ultra"
+)]
+#[test_case(
+    ReasoningEffort::High,
+    ReasoningEffort::High;
+    "non-ultra selection is unchanged"
+)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn subagent_start_replaces_session_start_and_injects_context() -> Result<()> {
+async fn spawned_agent_uses_multi_agent_reasoning_effort_for_requests(
+    selected_reasoning_effort: ReasoningEffort,
+    expected_request_reasoning_effort: ReasoningEffort,
+) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
+    let (_test, _spawned_id, child_request_log) = setup_turn_one_with_custom_spawned_child(
+        &server,
+        json!({ "message": CHILD_PROMPT }),
+        /*child_response_delay*/ None,
+        /*wait_for_parent_notification*/ false,
+        selected_reasoning_effort,
+        std::convert::identity,
+    )
+    .await?;
+
+    let child_request = wait_for_requests(&child_request_log)
+        .await?
+        .into_iter()
+        .next()
+        .expect("wait_for_requests should return a request");
+    assert_eq!(
+        child_request.body_json()["reasoning"]["effort"],
+        expected_request_reasoning_effort.to_string()
+    );
+
+    Ok(())
+}
+
+#[test_case(false; "fresh context")]
+#[test_case(true; "forked context")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn subagent_start_replaces_session_start_and_injects_context(
+    fork_context: bool,
+) -> Result<()> {
+    skip_if_no_network!(Ok(()));
+
+    let server = start_mock_server().await;
+    let agent_type = (!fork_context).then_some("worker");
+    let expected_agent_type = agent_type.unwrap_or("default");
     let spawn_args = serde_json::to_string(&json!({
         "message": CHILD_PROMPT,
         "task_name": "child",
-        "agent_type": "worker",
+        "agent_type": agent_type,
+        "fork_context": fork_context,
     }))?;
 
     mount_sse_once_match(
         &server,
-        |req: &wiremock::Request| body_contains(req, TURN_1_PROMPT),
+        |req: &wiremock::Request| {
+            body_contains(req, TURN_1_PROMPT) && !body_contains(req, SPAWN_CALL_ID)
+        },
         sse(vec![
             ev_response_created("resp-turn1-1"),
             ev_function_call_with_namespace(
@@ -575,7 +649,6 @@ async fn subagent_start_replaces_session_start_and_injects_context() -> Result<(
             body_contains(req, CHILD_PROMPT)
                 && body_contains(req, SUBAGENT_START_CONTEXT)
                 && !body_contains(req, "<subagent_notification>")
-                && !body_contains(req, SPAWN_CALL_ID)
         },
         sse(vec![
             ev_response_created("resp-child-1"),
@@ -587,7 +660,9 @@ async fn subagent_start_replaces_session_start_and_injects_context() -> Result<(
 
     let _turn1_followup = mount_sse_once_match(
         &server,
-        |req: &wiremock::Request| body_contains(req, SPAWN_CALL_ID),
+        |req: &wiremock::Request| {
+            body_contains(req, SPAWN_CALL_ID) && !body_contains(req, SUBAGENT_START_CONTEXT)
+        },
         sse(vec![
             ev_response_created("resp-turn1-2"),
             ev_assistant_message("msg-turn1-2", "parent done"),
@@ -608,6 +683,7 @@ async fn subagent_start_replaces_session_start_and_injects_context() -> Result<(
                 .enable(Feature::Collab)
                 .expect("test config should allow feature update");
         })
+        // Command hooks run on the host and require a host-native working directory.
         .build(&server)
         .await?;
 
@@ -621,7 +697,10 @@ async fn subagent_start_replaces_session_start_and_injects_context() -> Result<(
     )
     .await?;
     assert_eq!(start_inputs.len(), 1);
-    assert_eq!(start_inputs[0]["agent_type"].as_str(), Some("worker"));
+    assert_eq!(
+        start_inputs[0]["agent_type"].as_str(),
+        Some(expected_agent_type)
+    );
     let spawned_id = wait_for_spawned_thread_id(&test).await?;
     assert_eq!(
         start_inputs[0]["agent_id"].as_str(),
@@ -649,7 +728,10 @@ async fn subagent_start_replaces_session_start_and_injects_context() -> Result<(
         child_prompt_input["agent_id"].as_str(),
         Some(spawned_id.as_str())
     );
-    assert_eq!(child_prompt_input["agent_type"].as_str(), Some("worker"));
+    assert_eq!(
+        child_prompt_input["agent_type"].as_str(),
+        Some(expected_agent_type)
+    );
 
     let session_start_inputs = wait_for_hook_log(
         test.codex_home_path(),
@@ -959,6 +1041,7 @@ async fn spawned_child_receives_forked_parent_context(
     .await;
 
     let mut builder = test_codex()
+        .with_model_info_override(INHERITED_MODEL, |model| model.comp_hash = None)
         .with_history_mode(history_mode)
         .with_config(|config| {
             config
@@ -1059,6 +1142,254 @@ async fn spawned_child_receives_forked_parent_context(
     assert_parent_turn(&reused_child_body, Some(followup_parent_turn_id))?;
     assert_root_turn(&followup_parent_body, Some(followup_parent_turn_id))?;
     assert_root_turn(&reused_child_body, Some(followup_parent_turn_id))?;
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug)]
+enum GrandchildParentContext {
+    FullHistory,
+    LastTurn,
+    NoHistory,
+    Compacted,
+}
+
+#[test_case(GrandchildParentContext::FullHistory, ThreadHistoryMode::Legacy; "legacy full history")]
+#[test_case(GrandchildParentContext::LastTurn, ThreadHistoryMode::Legacy; "legacy last turn")]
+#[test_case(GrandchildParentContext::NoHistory, ThreadHistoryMode::Legacy; "legacy no history")]
+#[test_case(GrandchildParentContext::FullHistory, ThreadHistoryMode::Paginated; "paginated full history")]
+#[test_case(GrandchildParentContext::LastTurn, ThreadHistoryMode::Paginated; "paginated last turn")]
+#[test_case(GrandchildParentContext::NoHistory, ThreadHistoryMode::Paginated; "paginated no history")]
+#[test_case(GrandchildParentContext::Compacted, ThreadHistoryMode::Legacy; "legacy full history after compaction")]
+#[test_case(GrandchildParentContext::Compacted, ThreadHistoryMode::Paginated; "paginated full history after compaction")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn grandchild_full_fork_preserves_context_baseline(
+    parent_context: GrandchildParentContext,
+    history_mode: ThreadHistoryMode,
+) -> Result<()> {
+    skip_if_no_network!(Ok(()));
+
+    const ROOT_PROMPT: &str = "root: delegate the context check";
+    const CHILD_TASK: &str = "child: delegate the context check";
+    const GRANDCHILD_TASK: &str = "grandchild: check inherited context";
+    const ROOT_CALL: &str = "root-context-baseline-spawn";
+    const CHILD_CALL: &str = "child-context-baseline-spawn";
+    const INSTRUCTIONS: &str = "UNIQUE_CONTEXT_BASELINE_DEVELOPER_INSTRUCTIONS";
+    const COMPACT_PROMPT: &str = "CONTEXT_BASELINE_COMPACTION_PROMPT";
+    const COMPACT_SUMMARY: &str = "CONTEXT_BASELINE_COMPACTION_SUMMARY";
+    const PRELUDE_CALL: &str = "context-baseline-prelude-call";
+
+    let server = start_mock_server().await;
+    let (parent_fork_turns, compact_parent) = match parent_context {
+        GrandchildParentContext::FullHistory => ("all", false),
+        GrandchildParentContext::LastTurn => ("1", false),
+        GrandchildParentContext::NoHistory => ("none", false),
+        GrandchildParentContext::Compacted => ("all", true),
+    };
+    let root_spawn_args = serde_json::to_string(&json!({
+        "task_name": "child",
+        "message": CHILD_TASK,
+        "fork_turns": parent_fork_turns,
+    }))?;
+    let root_log = mount_sse_once_match(
+        &server,
+        |req: &wiremock::Request| {
+            body_contains(req, ROOT_PROMPT)
+                && !body_contains(req, CHILD_TASK)
+                && !body_contains(req, GRANDCHILD_TASK)
+                && !body_contains(req, ROOT_CALL)
+        },
+        sse(vec![
+            ev_response_created("baseline-root"),
+            ev_function_call_with_namespace(
+                ROOT_CALL,
+                MULTI_AGENT_V2_NAMESPACE,
+                "spawn_agent",
+                &root_spawn_args,
+            ),
+            ev_completed("baseline-root"),
+        ]),
+    )
+    .await;
+    let child_spawn_args = serde_json::to_string(&json!({
+        "task_name": "grandchild",
+        "message": GRANDCHILD_TASK,
+        "fork_turns": "all",
+    }))?;
+    if compact_parent {
+        mount_sse_once_match(
+            &server,
+            |req: &wiremock::Request| {
+                body_contains(req, CHILD_TASK)
+                    && !body_contains(req, ROOT_CALL)
+                    && !body_contains(req, PRELUDE_CALL)
+                    && !body_contains(req, COMPACT_SUMMARY)
+            },
+            sse(vec![
+                ev_response_created("baseline-prelude"),
+                ev_function_call(
+                    PRELUDE_CALL,
+                    "update_plan",
+                    r#"{"plan":[{"step":"Check inherited context","status":"in_progress"}]}"#,
+                ),
+                ev_completed_with_tokens("baseline-prelude", /*total_tokens*/ 250_000),
+            ]),
+        )
+        .await;
+        mount_sse_once_match(
+            &server,
+            |req: &wiremock::Request| body_contains(req, COMPACT_PROMPT),
+            sse(vec![
+                ev_response_created("baseline-compaction"),
+                ev_assistant_message("baseline-summary", COMPACT_SUMMARY),
+                ev_completed("baseline-compaction"),
+            ]),
+        )
+        .await;
+    }
+    let child_log = mount_sse_once_match(
+        &server,
+        move |req: &wiremock::Request| {
+            body_contains(
+                req,
+                if compact_parent {
+                    COMPACT_SUMMARY
+                } else {
+                    CHILD_TASK
+                },
+            ) && !body_contains(req, GRANDCHILD_TASK)
+                && !body_contains(req, ROOT_CALL)
+                && !body_contains(req, CHILD_CALL)
+                && !body_contains(req, COMPACT_PROMPT)
+        },
+        sse(vec![
+            ev_response_created("baseline-child"),
+            ev_function_call_with_namespace(
+                CHILD_CALL,
+                MULTI_AGENT_V2_NAMESPACE,
+                "spawn_agent",
+                &child_spawn_args,
+            ),
+            ev_completed("baseline-child"),
+        ]),
+    )
+    .await;
+    let grandchild_log = mount_sse_once_match(
+        &server,
+        |req: &wiremock::Request| {
+            body_contains(req, GRANDCHILD_TASK) && !body_contains(req, CHILD_CALL)
+        },
+        sse(vec![
+            ev_response_created("baseline-grandchild"),
+            ev_assistant_message("baseline-grandchild-answer", "done"),
+            ev_completed("baseline-grandchild"),
+        ]),
+    )
+    .await;
+    Mock::given(method("POST"))
+        .and(path("/v1/responses"))
+        .and(|req: &wiremock::Request| {
+            body_contains(req, ROOT_CALL) || body_contains(req, CHILD_CALL)
+        })
+        .respond_with(sse_response(sse(vec![ev_completed(
+            "baseline-parent-finished",
+        )])))
+        .with_priority(/*p*/ 6)
+        .mount(&server)
+        .await;
+    let test = test_codex()
+        .with_history_mode(history_mode)
+        .with_config(move |config| {
+            config
+                .features
+                .enable(Feature::Collab)
+                .expect("test config should allow feature update");
+            config
+                .features
+                .enable(Feature::MultiAgentV2)
+                .expect("test config should allow feature update");
+            config.model = Some(V2_DEFAULT_MODEL.to_string());
+            config.agent_default_subagent_model = Some(V2_DEFAULT_MODEL.to_string());
+            config.developer_instructions = Some(INSTRUCTIONS.to_string());
+            if compact_parent {
+                config.update_plan_enabled = true;
+                // Use local compaction so the test controls the replacement history.
+                config.model_provider.name = "test-provider".to_string();
+                config.compact_prompt = Some(COMPACT_PROMPT.to_string());
+                config.model_auto_compact_token_limit = Some(200_000);
+                config.model_context_window = Some(1_000_000);
+            }
+        })
+        .build_with_auto_env(&server)
+        .await?;
+
+    test.submit_turn(ROOT_PROMPT).await?;
+    let root_request = root_log.single_request();
+    let mut descendant_requests = Vec::new();
+    for (mock, agent_name) in [
+        (&child_log, "/root/child"),
+        (&grandchild_log, "/root/child/grandchild"),
+    ] {
+        let request = timeout(Duration::from_secs(/*secs*/ 10), async {
+            loop {
+                let request = mock.requests().into_iter().find(|request| {
+                    request.body_json()["client_metadata"]["x-codex-turn-metadata"]
+                        .as_str()
+                        .and_then(|text| serde_json::from_str::<Value>(text).ok())
+                        .is_some_and(|metadata| metadata["agent_name"] == agent_name)
+                        && (!compact_parent || request.body_contains_text(COMPACT_SUMMARY))
+                });
+                if let Some(request) = request {
+                    break request;
+                }
+                sleep(Duration::from_millis(/*millis*/ 10)).await;
+            }
+        })
+        .await?;
+        let thread_id = ThreadId::from_string(
+            request.body_json()["client_metadata"]["thread_id"]
+                .as_str()
+                .expect("descendant thread id"),
+        )?;
+        let thread = test.thread_manager.get_thread(thread_id).await?;
+        timeout(Duration::from_secs(/*secs*/ 10), async {
+            while !matches!(thread.agent_status().await, AgentStatus::Completed(_)) {
+                sleep(Duration::from_millis(/*millis*/ 10)).await;
+            }
+        })
+        .await?;
+        if agent_name == "/root/child/grandchild" {
+            assert_eq!(
+                thread.agent_status().await,
+                AgentStatus::Completed(Some("done".to_string()))
+            );
+        }
+        descendant_requests.push(request);
+    }
+    let context_counts = [
+        &root_request,
+        &descendant_requests[0],
+        &descendant_requests[1],
+    ]
+    .map(|request| {
+        (
+            request
+                .message_input_texts("developer")
+                .iter()
+                .filter(|text| text.contains(INSTRUCTIONS))
+                .count(),
+            request
+                .message_input_texts("user")
+                .iter()
+                .filter(|text| text.contains("<environment_context>"))
+                .count(),
+        )
+    });
+    assert_eq!(
+        context_counts,
+        [(1, 1); 3],
+        "Initial context should appear once per agent: {parent_context:?}, {history_mode:?}"
+    );
+    assert!(!descendant_requests[1].body_contains_text(CHILD_TASK));
     Ok(())
 }
 
@@ -1205,6 +1536,9 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                 .iter_mut()
                 .find(|model_info| model_info.slug == model)
                 .unwrap_or_else(|| panic!("{model} should exist in bundled models.json"));
+            if model == INHERITED_MODEL {
+                model_info.comp_hash = None;
+            }
             let multi_agent = model_info
                 .model_messages
                 .as_mut()
@@ -1662,6 +1996,7 @@ async fn spawned_agent_uses_summary_support_for_final_model(
         }),
         /*child_response_delay*/ Some(Duration::from_secs(1)),
         /*wait_for_parent_notification*/ false,
+        INHERITED_REASONING_EFFORT,
         move |builder| {
             builder.with_config(move |config| {
                 config.model_catalog = Some(model_catalog);
@@ -1692,9 +2027,9 @@ async fn spawned_agent_uses_summary_support_for_final_model(
     };
     assert_eq!(child_body["model"], json!(REQUESTED_MODEL));
     let expected_reasoning = if child_supports_summary {
-        json!({"effort": "medium", "summary": "detailed"})
+        json!({"effort": "medium", "summary": "detailed", "context": "all_turns"})
     } else {
-        json!({"effort": "medium"})
+        json!({"effort": "medium", "context": "all_turns"})
     };
     assert_eq!(child_body["reasoning"], expected_reasoning);
     assert_eq!(
@@ -2582,6 +2917,17 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
         )
     );
 
+    // Fresh turn input is sampled before queued mail is drained. Let that first
+    // request complete successfully so the next request can include the result.
+    mount_sse_once_match(
+        &server,
+        |request: &wiremock::Request| {
+            body_contains(request, READ_RESULT_PROMPT)
+                && !body_contains(request, "peer follow-up finished")
+        },
+        sse(vec![ev_completed("resp-routing-root-before-mail")]),
+    )
+    .await;
     let root_result_request = mount_sse_once_match(
         &server,
         |request: &wiremock::Request| {
@@ -2849,7 +3195,7 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
     assert_eq!(
         output.as_deref(),
         Some(
-            "Reasoning effort `ultra` is not supported for model `gpt-5.4`. Supported reasoning efforts: low, medium, high, xhigh"
+            "Reasoning effort `ultra` is not supported for model `gpt-5.5`. Supported reasoning efforts: low, medium, high, xhigh"
         )
     );
     Ok(())
@@ -2922,7 +3268,7 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
         role_block(&agent_type_description, "custom").expect("custom role description");
     assert_eq!(
         custom_role_description,
-        "custom: {\nCustom role\n- This role's model is set to `gpt-5.4` and its reasoning effort is set to `high`. These settings cannot be changed.\n}"
+        "custom: {\nCustom role\n- This role's model is set to `gpt-5.5` and its reasoning effort is set to `high`. These settings cannot be changed.\n}"
     );
 
     Ok(())
